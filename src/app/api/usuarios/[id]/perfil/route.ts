@@ -6,7 +6,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params;
     const usuario = await prisma.usuario.findUnique({
       where: { id },
-      select: { estiloAlimentario: true, comidasFavoritas: true, cumpleDia: true, cumpleMes: true, cumpleAnio: true, codigoRef: true, emailVerificado: true },
+      select: { estiloAlimentario: true, comidasFavoritas: true, emailVerificado: true },
     });
     if (!usuario) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
     return NextResponse.json(usuario);
