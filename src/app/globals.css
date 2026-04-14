@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/* ── Registrar todas las variables de tema como animables (Houdini @property) ── */
+@property --bg-primary   { syntax: "<color>"; inherits: true; initial-value: #1a0e05; }
+@property --bg-secondary { syntax: "<color>"; inherits: true; initial-value: #080d18; }
+@property --bg-section-alt { syntax: "<color>"; inherits: true; initial-value: #0d1a14; }
+@property --text-primary { syntax: "<color>"; inherits: true; initial-value: #fff8e0; }
+@property --text-muted   { syntax: "<color>"; inherits: true; initial-value: rgba(255,245,210,0.7); }
+@property --accent       { syntax: "<color>"; inherits: true; initial-value: #e8a84c; }
+@property --border-color { syntax: "<color>"; inherits: true; initial-value: rgba(232,168,76,0.28); }
+/* Legacy */
+@property --theme-bg     { syntax: "<color>"; inherits: true; initial-value: #1a0e05; }
+@property --theme-text   { syntax: "<color>"; inherits: true; initial-value: #fff8e0; }
+@property --theme-accent { syntax: "<color>"; inherits: true; initial-value: #e8a84c; }
+@property --color-title  { syntax: "<color>"; inherits: true; initial-value: #f5d080; }
+@property --color-link   { syntax: "<color>"; inherits: true; initial-value: #3db89e; }
+@property --color-label  { syntax: "<color>"; inherits: true; initial-value: rgba(255,245,210,0.55); }
+@property --color-text   { syntax: "<color>"; inherits: true; initial-value: rgba(255,245,210,0.85); }
+
+:root {
+  /* Transición suave de 2s entre todas las paletas */
+  transition:
+    --bg-primary   2s ease,
+    --bg-secondary 2s ease,
+    --text-primary 2s ease,
+    --text-muted   2s ease,
+    --accent       2s ease,
+    --border-color 2s ease,
+    --theme-bg     2s ease,
+    --theme-text   2s ease,
+    --theme-accent 2s ease,
+    --color-title  2s ease,
+    --color-link   2s ease,
+    --color-label  2s ease,
+    --color-text   2s ease;
+
+  /* Colores estáticos de diseño (no cambian con el tema) */
+  --oasis-teal:    #2a7a6f;
+  --oasis-bright:  #3db89e;
+  --oasis-glow:    #5ff0d0;
+  --magic-purple:  #7c3fa8;
+  --sand-gold:     #e8a84c;
+
+  /* Fuentes */
+  --font-display: var(--font-cinzel-decorative);
+  --font-heading: var(--font-cinzel);
+  --font-body:    var(--font-lato);
+}
+
+/* ── BASE GLOBAL DE TIPOGRAFÍA ── */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px rgba(30,15,5,0.98) inset !important;
+  -webkit-text-fill-color: #f5d080 !important;
+  border-color: rgba(232,168,76,0.3) !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+select option {
+  background-color: #0a0812 !important;
+  color: #f0ead6 !important;
+}
+
+select:focus {
+  outline: none !important;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  transition: background-color 2s ease, color 2s ease;
+}
+
+/* ── Párrafos globales ── */
+p {
+  font-size: 1rem;
+  line-height: 1.75;
+  font-weight: 400;
+}
+
+/* ── Títulos globales ── */
+h1, h2, h3, h4 {
+  font-weight: 700 !important;
+  -webkit-font-smoothing: antialiased;
+}
+h1 { font-size: clamp(1.8rem, 5vw, 3.5rem); line-height: 1.2; }
+h2 { font-size: clamp(1.5rem, 4vw, 2.8rem); line-height: 1.3; }
+h3 { font-size: clamp(1.1rem, 3vw, 1.6rem); line-height: 1.4; }
+
+/* Transición en todos los elementos que usen las variables de tema */
+section, div, nav, footer {
+  transition:
+    background-color 2s ease,
+    color 2s ease,
+    border-color 2s ease;
+}
+button, a {
+  transition: none;
+}
+
+@layer utilities {
+  .font-display { font-family: var(--font-display); }
+  .font-heading { font-family: var(--font-heading); }
+  .font-body    { font-family: var(--font-body); }
+}
+
+/* ── Clases reutilizables para tipografía de sección ── */
+.section-description, .hero-subtitle, p.description {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--color-text);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+/* ── Tipografía automática ── */
+main p, section p { font-size: 1.1rem; line-height: 1.8; color: var(--color-text); font-weight: 400; }
+main h2, section h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; }
+main h3, section h3 { font-size: clamp(1.1rem, 2.5vw, 1.4rem); font-weight: 600; line-height: 1.8; }
+
+@media (max-width: 768px) {
+  main p, section p { font-size: 1rem; line-height: 1.7; }
+  main h2, section h2 { font-size: clamp(1.6rem, 6vw, 2.2rem); }
+
+  /* Textos generales en móvil */
+  p {
+    font-size: 1rem !important;
+    line-height: 1.75 !important;
+    font-weight: 400 !important;
+  }
+
+  /* Textos de cards */
+  .card p, .card span, .card div {
+    font-size: 0.95rem !important;
+    font-weight: 400 !important;
+  }
+
+  /* Labels y etiquetas pequeñas */
+  small, .label, .badge {
+    font-size: 0.85rem !important;
+    font-weight: 500 !important;
+  }
+
+  /* Botones */
+  button, a[role="button"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+  }
+}

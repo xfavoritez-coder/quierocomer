@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeseoComer — 10 dias, 1 plataforma</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;800&family=Lato:wght@300;400;700&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0812; color: #f0ead6; font-family: 'Lato', sans-serif; overflow-x: hidden; }
+
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 30%, rgba(232,168,76,0.12) 0%, transparent 60%);
+    text-align: center; padding: 40px 24px; position: relative;
+  }
+  .hero-genie { font-size: 5rem; margin-bottom: 16px; animation: float 3s ease-in-out infinite; }
+  .hero h1 { font-family: 'Cinzel', serif; font-size: clamp(2.2rem, 6vw, 4rem); color: #e8a84c; margin-bottom: 12px; text-shadow: 0 0 80px rgba(232,168,76,0.3); }
+  .hero .tagline { font-size: clamp(1rem, 2.5vw, 1.2rem); color: rgba(240,234,214,0.45); max-width: 500px; line-height: 1.7; margin-bottom: 48px; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 600px; width: 100%; }
+  .stat { text-align: center; background: rgba(232,168,76,0.04); border: 1px solid rgba(232,168,76,0.1); border-radius: 12px; padding: 20px 8px; }
+  .stat-n { font-family: 'Cinzel', serif; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; color: #e8a84c; }
+  .stat-l { font-family: 'Cinzel', serif; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: rgba(240,234,214,0.3); margin-top: 4px; }
+
+  .scroll-hint { position: absolute; bottom: 28px; animation: bounce 2s infinite; }
+  .scroll-hint span { display: block; width: 18px; height: 18px; border-right: 2px solid rgba(232,168,76,0.3); border-bottom: 2px solid rgba(232,168,76,0.3); transform: rotate(45deg); }
+
+  .journey { max-width: 680px; margin: 0 auto; padding: 60px 24px 40px; }
+  .journey h2 { font-family: 'Cinzel', serif; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: rgba(232,168,76,0.5); text-align: center; margin-bottom: 40px; }
+
+  .day {
+    display: grid; grid-template-columns: 80px 1fr; gap: 0; margin-bottom: 0;
+    opacity: 0; transform: translateY(20px); transition: all 0.5s ease;
+  }
+  .day.visible { opacity: 1; transform: translateY(0); }
+
+  .day-left { display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
+  .day-num { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 800; color: #e8a84c; line-height: 1; }
+  .day-label { font-family: 'Cinzel', serif; font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(240,234,214,0.25); margin-top: 2px; }
+  .day-line { width: 1px; flex: 1; background: linear-gradient(to bottom, rgba(232,168,76,0.25), rgba(232,168,76,0.05)); margin-top: 12px; }
+
+  .day-right { padding: 0 0 40px 20px; }
+  .day-title { font-family: 'Cinzel', serif; font-size: 1rem; color: rgba(240,234,214,0.85); font-weight: 700; margin-bottom: 4px; }
+  .day-subtitle { font-family: 'Lato', sans-serif; font-size: 0.82rem; color: rgba(240,234,214,0.35); line-height: 1.6; margin-bottom: 12px; }
+  .day-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { font-family: 'Lato', sans-serif; font-size: 0.72rem; padding: 4px 10px; border-radius: 20px; background: rgba(232,168,76,0.06); border: 1px solid rgba(232,168,76,0.12); color: rgba(240,234,214,0.5); }
+  .pill.feat { background: rgba(61,184,158,0.08); border-color: rgba(61,184,158,0.2); color: rgba(61,184,158,0.7); }
+  .pill.big { background: rgba(232,168,76,0.1); border-color: rgba(232,168,76,0.25); color: #e8a84c; font-weight: 700; }
+
+  .finale {
+    text-align: center; padding: 80px 24px 60px;
+    background: radial-gradient(ellipse at 50% 100%, rgba(232,168,76,0.08) 0%, transparent 50%);
+  }
+  .finale .counter { font-family: 'Cinzel', serif; font-size: clamp(3rem, 8vw, 5rem); font-weight: 800; color: #e8a84c; margin-bottom: 8px; }
+  .finale .counter-label { font-family: 'Cinzel', serif; font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(240,234,214,0.3); margin-bottom: 32px; }
+  .finale p { font-size: 0.9rem; color: rgba(240,234,214,0.4); line-height: 1.8; max-width: 440px; margin: 0 auto 16px; }
+  .finale .heart { color: #e8a84c; animation: pulse 1.5s ease-in-out infinite; display: inline-block; }
+  .finale .brand { font-family: 'Cinzel', serif; font-size: 0.65rem; letter-spacing: 0.2em; color: rgba(240,234,214,0.15); margin-top: 32px; }
+
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+  @keyframes bounce { 0%,20%,50%,80%,100%{transform:translateY(0)} 40%{transform:translateY(8px)} 60%{transform:translateY(4px)} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.25)} }
+  @media(max-width:500px) { .stats{grid-template-columns:repeat(2,1fr)} .day{grid-template-columns:56px 1fr} .day-num{font-size:1.4rem} }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-genie">🧞</div>
+  <h1>DeseoComer</h1>
+  <p class="tagline">Una plataforma completa construida en 10 dias.<br>Esta es la historia.</p>
+  <div class="stats">
+    <div class="stat"><div class="stat-n">652</div><div class="stat-l">Commits</div></div>
+    <div class="stat"><div class="stat-n">10</div><div class="stat-l">Dias</div></div>
+    <div class="stat"><div class="stat-n">4.465</div><div class="stat-l">Locales</div></div>
+    <div class="stat"><div class="stat-n">50+</div><div class="stat-l">Usuarios</div></div>
+  </div>
+  <div class="scroll-hint"><span></span></div>
+</section>
+
+<div class="journey">
+  <h2>El camino</h2>
+
+  <div class="day"><div class="day-left"><div class="day-num">1</div><div class="day-label">28 Mar</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">El primer commit</div><div class="day-subtitle">De cero a un sitio con identidad. Paleta dorada, cards, referidos.</div>
+  <div class="day-pills"><span class="pill big">Next.js + Vercel</span><span class="pill">Diseño premium</span><span class="pill">Referidos</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">2</div><div class="day-label">29 Mar</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Nace el Genio 🧞</div><div class="day-subtitle">Asistente magico que recomienda restaurantes y recuerda tus gustos. 84 cambios en un dia.</div>
+  <div class="day-pills"><span class="pill big">El Genio</span><span class="pill feat">84 cambios</span><span class="pill">Panel locales</span><span class="pill">Supabase</span><span class="pill">Emails</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">3</div><div class="day-label">30 Mar</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Admin y base de datos</div><div class="day-subtitle">Todo conectado a datos reales. Admin completo, verificacion email, el Genio aprende.</div>
+  <div class="day-pills"><span class="pill big">Panel admin</span><span class="pill feat">89 cambios</span><span class="pill">Email verificado</span><span class="pill">Comunas</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">4</div><div class="day-label">31 Mar</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Lanzamiento</div><div class="day-subtitle">Cero mocks. Locales reales se registran, se aprueban, aparecen. El primer concurso esta listo.</div>
+  <div class="day-pills"><span class="pill big">Sitio en produccion</span><span class="pill">Aprobacion locales</span><span class="pill">Upload fotos</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">5</div><div class="day-label">1 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Primeros usuarios reales</div><div class="day-subtitle">Gente participando, ganando premios. Entrega, recordatorios. Todo funciona.</div>
+  <div class="day-pills"><span class="pill big">Concursos en vivo</span><span class="pill">Premios reales</span><span class="pill">Compartir en redes</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">6</div><div class="day-label">2 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Captadores y viralizacion</div><div class="day-subtitle">Red de personas trayendo locales. Email masivo. Instagram Stories para compartir.</div>
+  <div class="day-pills"><span class="pill big">Captadores</span><span class="pill">Campañas email</span><span class="pill">Stories</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">7</div><div class="day-label">3 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">Referidos multinivel</div><div class="day-subtitle">Tu referido refiere y tu ganas. Delivery, personalizacion, el Genio cada vez mas inteligente.</div>
+  <div class="day-pills"><span class="pill big">Nivel 2</span><span class="pill feat">74 cambios</span><span class="pill">Delivery</span><span class="pill">IA personalizada</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">8</div><div class="day-label">4 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">4.465 locales en una noche</div><div class="day-subtitle">Google Places API importa miles de restaurantes. Chile entero en DeseoComer. El dia mas intenso.</div>
+  <div class="day-pills"><span class="pill big">Google Places</span><span class="pill feat">87 cambios — record</span><span class="pill">Sorteos</span><span class="pill">Perfiles publicos</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">9</div><div class="day-label">5 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">La comunidad crece</div><div class="day-subtitle">100+ participantes en concursos con premios reales. Notificaciones en vivo, SEO, monitoreo.</div>
+  <div class="day-pills"><span class="pill big">100+ participantes</span><span class="pill">Notificaciones</span><span class="pill">SEO</span><span class="pill">Cron jobs</span></div></div></div>
+
+  <div class="day"><div class="day-left"><div class="day-num">10</div><div class="day-label">6 Abr</div><div class="day-line"></div></div>
+  <div class="day-right"><div class="day-title">La batalla contra el fraude</div><div class="day-subtitle">50 usuarios simultaneos. Alguien intenta hacer trampa con bots. Se construye un sistema anti-fraude completo en horas.</div>
+  <div class="day-pills"><span class="pill big">Anti-fraude</span><span class="pill feat">43 cambios bajo fuego</span><span class="pill">Captcha Cloudflare</span><span class="pill">Blacklist</span><span class="pill">Investigador admin</span></div></div></div>
+
+</div>
+
+<div class="finale">
+  <div class="counter">652</div>
+  <div class="counter-label">commits en 10 dias</div>
+  <p>Cada commit fue una decision.<br>Cada fix fue un acto de fe.<br>Cada feature, un paso mas cerca.</p>
+  <p style="color:rgba(240,234,214,0.55);margin-top:24px">Hecho con <span class="heart">♥</span> en Chile</p>
+  <p class="brand">DESEOCOMER — MARZO / ABRIL 2026</p>
+</div>
+
+<script>
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.day').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>

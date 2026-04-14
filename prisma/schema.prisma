@@ -1,0 +1,317 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Users ──────────────────────────────────────────────────────────────
+
+model Usuario {
+  id                String   @id @default(cuid())
+  nombre            String
+  email             String   @unique
+  password          String
+  telefono          String?
+  ciudad            String?  @default("santiago")
+  fotoUrl           String   @default("")
+  tipo              String   @default("usuario")
+  emailVerificado   Boolean  @default(false)
+  emailVerificadoAt DateTime?
+  tokenVerificacion String?
+  resetToken        String?
+  resetTokenExpira  DateTime?
+  estiloAlimentario String   @default("")
+  comidasFavoritas  String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+// ─── Restaurants ────────────────────────────────────────────────────────
+
+model Local {
+  id            String   @id @default(cuid())
+  slug          String?  @unique
+  nombre        String
+  email         String   @unique
+  password      String
+  telefono      String?
+  ciudad        String   @default("santiago")
+  categorias    String[] @default([])
+  descripcion   String?
+  direccion     String?
+  comuna        String?
+  lat           Float?
+  lng           Float?
+  instagram     String?
+  sitioWeb      String?
+  horarios      Json?
+  logoUrl       String?
+  portadaUrl    String?
+  activo        Boolean  @default(true)
+  vistas        Int      @default(0)
+  linkPedido    String?  @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  menuItems     MenuItem[]
+
+  @@index([activo])
+  @@index([comuna])
+}
+
+// ─── Menu Items ─────────────────────────────────────────────────────────
+
+model MenuItem {
+  id          String   @id @default(cuid())
+  localId     String
+  categoria   String
+  nombre      String
+  descripcion String?
+  precio      Float
+  imagenUrl   String?
+  destacado   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  ingredients     String[]
+  ingredientTags  IngredientTag[]
+  hungerLevel     HungerLevel?
+  isAvailable     Boolean         @default(true)
+  availableFrom   String?
+  availableTo     String?
+  totalViews      Int             @default(0)
+  totalSelected   Int             @default(0)
+  totalLoved      Int             @default(0)
+  avgRating       Float?
+
+  local           Local           @relation(fields: [localId], references: [id])
+  interactions    Interaction[]
+  ratings         DishRating[]
+}
+
+enum HungerLevel {
+  LIGHT
+  MEDIUM
+  HEAVY
+}
+
+// ─── Ingredients ────────────────────────────────────────────────────────
+
+model Ingredient {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  category    IngredientCategory
+  createdAt   DateTime           @default(now())
+  dishes      IngredientTag[]
+}
+
+enum IngredientCategory {
+  PROTEIN
+  VEGETABLE
+  FRUIT
+  DAIRY
+  CARB
+  SAUCE
+  SPICE
+  OTHER
+}
+
+model IngredientTag {
+  id           String     @id @default(cuid())
+  menuItemId   String
+  ingredientId String
+
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([menuItemId, ingredientId])
+}
+
+// ─── Interactions ───────────────────────────────────────────────────────
+
+model Interaction {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+
+  userId     String?
+  sessionId  String
+  visitId    String?
+  menuItemId String
+
+  action        InteractionAction
+  ctxCompany    CompanyContext?
+  ctxHunger     HungerLevel?
+  ctxBudget     Int?
+  ctxOccasion   OccasionContext?
+
+  weatherTemp      Float?
+  weatherCondition String?
+  weatherHumidity  Int?
+  userLat          Float?
+  userLng          Float?
+
+  hour      Int?
+  dayOfWeek Int?
+
+  menuItem  MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@index([userId])
+  @@index([sessionId])
+  @@index([visitId])
+  @@index([menuItemId])
+}
+
+enum InteractionAction {
+  VIEWED
+  SELECTED
+  IGNORED
+  LOVED
+  MEH
+  DISLIKED
+}
+
+enum CompanyContext {
+  SOLO
+  PAREJA
+  AMIGOS
+  FAMILIA
+}
+
+enum OccasionContext {
+  ALMUERZO_RAPIDO
+  CENA_TRANQUILA
+  ALGO_ESPECIAL
+  TRABAJAR_AQUI
+  CUMPLEANOS
+  CITA_ROMANTICA
+  JUNTA_AMIGOS
+  CON_NINOS
+  FAMILIAR
+}
+
+// ─── Ratings ────────────────────────────────────────────────────────────
+
+model DishRating {
+  id         String      @id @default(cuid())
+  createdAt  DateTime    @default(now())
+
+  userId     String?
+  sessionId  String
+  menuItemId String
+
+  score      RatingScore
+  comment    String?
+
+  menuItem   MenuItem    @relation(fields: [menuItemId], references: [id])
+
+  @@unique([userId, menuItemId])
+  @@index([menuItemId])
+}
+
+enum RatingScore {
+  LOVED
+  MEH
+  DISLIKED
+}
+
+// ─── User Taste Profile ─────────────────────────────────────────────────
+
+model UserTasteProfile {
+  id        String   @id @default(cuid())
+  updatedAt DateTime @updatedAt
+
+  userId    String   @unique
+  sessionId String?
+
+  favoriteIngredients String[]
+  avoidIngredients    String[]
+
+  typicalHunger    HungerLevel?
+  typicalCompany   CompanyContext?
+  typicalBudget    Int?
+
+  coldWeatherPrefs  String[]
+  hotWeatherPrefs   String[]
+
+  onboardingDone      Boolean     @default(false)
+  dietaryRestrictions String[]
+  riskProfile         RiskProfile @default(BALANCED)
+
+  fitnessMode      FitnessMode?
+  fitnessUpdatedAt DateTime?
+}
+
+enum FitnessMode {
+  GAINING
+  CUTTING
+  MAINTAINING
+  NONE
+}
+
+enum RiskProfile {
+  SAFE
+  BALANCED
+  EXPLORER
+}
+
+// ─── Group Sessions ─────────────────────────────────────────────────────
+
+model GroupSession {
+  id            String   @id @default(cuid())
+  code          String   @unique
+  createdAt     DateTime @default(now())
+  expiresAt     DateTime
+  creatorId     String?
+  creatorSession String?
+  groupType     GroupType
+  totalMembers  Int
+  estado        GroupStatus @default(WAITING)
+  resultLocalId String?
+  members       GroupMember[]
+
+  @@index([code])
+}
+
+model GroupMember {
+  id            String   @id @default(cuid())
+  groupId       String
+  userId        String?
+  sessionId     String
+  nombre        String   @default("Invitado")
+  estado        MemberStatus @default(WAITING)
+  selectedDishes String[]
+  ctxHunger     String?
+  ctxBudget     Int?
+  recommendedDishId String?
+  joinedAt      DateTime @default(now())
+  readyAt       DateTime?
+
+  group         GroupSession @relation(fields: [groupId], references: [id])
+
+  @@unique([groupId, sessionId])
+  @@index([groupId])
+}
+
+enum GroupType {
+  PAREJA
+  AMIGOS
+  FAMILIA
+}
+
+enum GroupStatus {
+  WAITING
+  SELECTING
+  CALCULATING
+  READY
+  EXPIRED
+}
+
+enum MemberStatus {
+  WAITING
+  SELECTING
+  READY
+  RECALCULATING
+}
