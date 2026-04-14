@@ -217,7 +217,7 @@ function RegistroContent() {
                         border: sel ? "1px solid var(--accent)" : "1px solid rgba(232,168,76,0.15)",
                         color: sel ? "var(--accent)" : maxed ? "rgba(240,234,214,0.2)" : "rgba(240,234,214,0.55)",
                         fontFamily: "var(--font-body)", fontSize: "0.85rem", position: "relative",
-                      }}>{sel && <span style={{ position: "absolute", top: -6, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#FFD600", color: "#0D0D0D", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{orden}</span>}{c}</button>
+                      }}>{sel && <span style={{ position: "absolute", top: -6, right: -4, width: 18, height: 18, borderRadius: "50%", background: "#0D0D0D", color: "#FFD600", fontSize: "0.65rem", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{orden}</span>}{c}</button>
                     );
                   });
                 })()}

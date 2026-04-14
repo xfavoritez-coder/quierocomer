@@ -58,14 +58,23 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
       } catch {}
     };
 
+    // URL override for testing: ?weather=rain
+    const urlWeather = new URLSearchParams(window.location.search).get("weather");
+    if (urlWeather) { setWeather(urlWeather); return; }
+
     const cached = sessionStorage.getItem("genieWeatherCondition");
     if (cached) setWeather(cached);
     else fetchWeather();
   }, [isAdmin, isAuth]);
 
+  // Debug log
+  if (typeof window !== "undefined" && weather !== "clear") {
+    console.log("Weather condition:", weather);
+  }
+
   if (!ready) return (
-    <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#FFD600" }}>🧞</p>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D" }}>🧞</p>
     </div>
   );
 
@@ -75,18 +84,18 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   const hideNav = pathname.includes("/context") || pathname.includes("/result") || pathname.includes("/feedback") || (pathname.includes("/grupo/") && pathname !== "/grupo");
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0D0D0D", paddingBottom: hideNav ? 0 : 72, position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", paddingBottom: hideNav ? 0 : 72, position: "relative" }}>
       <WeatherAmbience condition={weather} />
       <div style={{ position: "relative", zIndex: 1 }}>
         {children}
       </div>
 
       {!hideNav && (
-        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#0D0D0D", borderTop: "1px solid #2A2A2A", display: "flex", justifyContent: "center", zIndex: 50, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
+        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #E0E0E0", display: "flex", justifyContent: "center", zIndex: 50, backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" }}>
           {NAV.map(n => {
             const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
             return (
-              <Link key={n.href} href={n.href} style={{ flex: 1, maxWidth: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "10px 0 8px", textDecoration: "none", color: active ? "#FFD600" : "#888888" }}>
+              <Link key={n.href} href={n.href} style={{ flex: 1, maxWidth: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "10px 0 8px", textDecoration: "none", color: active ? "#0D0D0D" : "#AAAAAA" }}>
                 <span style={{ fontSize: 20 }}>{n.icon}</span>
                 <span style={{ fontFamily: "var(--font-display)", fontSize: "0.6rem", letterSpacing: "0.06em" }}>{n.label}</span>
               </Link>

@@ -15,7 +15,7 @@ export default function GenieContext() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 20px" }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 20px" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <p style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🧞</p>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#FFD600", textAlign: "center", marginBottom: 24 }}>Cuanta hambre tienes?</h2>
@@ -28,11 +28,11 @@ export default function GenieContext() {
           ].map(o => {
             const active = hunger === o.v;
             return (
-              <button key={o.v} onClick={() => select(o.v)} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#1A1A1A", border: active ? "1px solid #FFD600" : "1px solid #2A2A2A", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
+              <button key={o.v} onClick={() => select(o.v)} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
                 <span style={{ fontSize: 28 }}>{o.emoji}</span>
                 <div>
                   <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: active ? "#FFD600" : "#FFFFFF", display: "block" }}>{o.l}</span>
-                  <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#888888" }}>{o.sub}</span>
+                  <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666" }}>{o.sub}</span>
                 </div>
               </button>
             );

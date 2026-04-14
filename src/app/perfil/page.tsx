@@ -93,16 +93,16 @@ export default function GeniePerfil() {
 
   const chip = (active: boolean): React.CSSProperties => ({
     padding: "8px 14px", borderRadius: 99, cursor: "pointer",
-    background: active ? "rgba(255,214,0,0.12)" : "#222222",
-    border: active ? "1px solid #FFD600" : "1px solid #2A2A2A",
+    background: active ? "rgba(255,214,0,0.12)" : "#EEEEEE",
+    border: active ? "1px solid #FFD600" : "1px solid #E0E0E0",
     fontFamily: "var(--font-body)", fontSize: "0.82rem",
-    color: active ? "#FFD600" : "#888888",
+    color: active ? "#FFD600" : "#666666",
   });
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ fontFamily: "var(--font-display)", color: "#888888" }}>Cargando...</p></div>;
+  if (loading) return <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ fontFamily: "var(--font-display)", color: "#666666" }}>Cargando...</p></div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0D0D0D", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px) 80px" }}>
+    <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px) 80px" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
         {toast && <div style={{ position: "fixed", top: 20, right: 20, background: "#3db89e", color: "#fff", padding: "10px 20px", borderRadius: 10, fontFamily: "var(--font-display)", fontSize: "0.82rem", zIndex: 100 }}>{toast}</div>}
 
@@ -159,7 +159,7 @@ export default function GeniePerfil() {
             {/* Lo que el genio aprendió */}
             <section style={{ marginBottom: 24 }}>
               <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#FFD600", letterSpacing: "0.1em", marginBottom: 10 }}>LO QUE EL GENIO APRENDIO</h2>
-              <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: 14 }}>
+              <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 14 }}>
                 {(profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0) ? (
                   <>
                     {profile.favoriteIngredients?.length > 0 && (
@@ -184,7 +184,7 @@ export default function GeniePerfil() {
                     )}
                   </>
                 ) : (
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#888888", textAlign: "center", lineHeight: 1.6 }}>Aun no tenemos suficiente info. Sigue usando el Genio 🧞</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666", textAlign: "center", lineHeight: 1.6 }}>Aun no tenemos suficiente info. Sigue usando el Genio 🧞</p>
                 )}
               </div>
             </section>
@@ -192,9 +192,9 @@ export default function GeniePerfil() {
         )}
 
         {!user && (
-          <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.88rem", color: "#888888", lineHeight: 1.6, marginBottom: 16 }}>Crea una cuenta para que el Genio recuerde tus gustos entre sesiones</p>
-            <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 700, textDecoration: "none" }}>Crear cuenta gratis</Link>
+          <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 20, textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.88rem", color: "#666666", lineHeight: 1.6, marginBottom: 16 }}>Crea una cuenta para que el Genio recuerde tus gustos entre sesiones</p>
+            <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#0D0D0D", color: "#FFD600", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 700, textDecoration: "none" }}>Crear cuenta gratis</Link>
           </div>
         )}
       </div>
