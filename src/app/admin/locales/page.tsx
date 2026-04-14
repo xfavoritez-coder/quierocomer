@@ -77,8 +77,8 @@ export default function AdminLocales() {
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "20px" }}>
         <div style={{ width: "52px", height: "52px", borderRadius: "50%", background: sel.logoUrl ? "transparent" : "linear-gradient(135deg, #2a7a6f, #3db89e)", border: "2px solid rgba(232,168,76,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", fontWeight: 700, color: "#fff", flexShrink: 0, overflow: "hidden" }}>{sel.logoUrl ? <img src={sel.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : sel.nombre?.charAt(0).toUpperCase()}</div>
         <div style={{ minWidth: 0 }}>
-          <h2 style={{ fontFamily: var(--font-display), color: "#FFD600", fontSize: "1.1rem", margin: 0, wordBreak: "break-word" }}>{sel.nombre}</h2>
-          <p style={{ fontFamily: var(--font-display), color: "rgba(240,234,214,0.5)", fontSize: "0.8rem", margin: "2px 0 0", wordBreak: "break-all" }}>{sel.email}</p>
+          <h2 style={{ fontFamily: "var(--font-display)", color: "#FFD600", fontSize: "1.1rem", margin: 0, wordBreak: "break-word" }}>{sel.nombre}</h2>
+          <p style={{ fontFamily: "var(--font-display)", color: "rgba(240,234,214,0.5)", fontSize: "0.8rem", margin: "2px 0 0", wordBreak: "break-all" }}>{sel.email}</p>
         </div>
       </div>
 
@@ -87,7 +87,7 @@ export default function AdminLocales() {
         {sel.captadorCodigo && <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#FFD600", background: "rgba(232,168,76,0.12)", border: "1px solid rgba(232,168,76,0.3)", borderRadius: "6px", padding: "3px 10px" }}>🤝 Captado por {sel.captadorCodigo}</span>}
       </div>
       {sel.captadorCodigo && !sel.activo && (
-        <p style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.5)", fontStyle: "italic", marginBottom: 16, background: "rgba(232,168,76,0.06)", border: "1px solid rgba(232,168,76,0.12)", borderRadius: 8, padding: "10px 14px" }}>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)", fontStyle: "italic", marginBottom: 16, background: "rgba(232,168,76,0.06)", border: "1px solid rgba(232,168,76,0.12)", borderRadius: 8, padding: "10px 14px" }}>
           Este local fue registrado por un captador ({sel.captadorCodigo}). Verifica que el local haya dado su consentimiento antes de activar.
         </p>
       )}
@@ -115,7 +115,7 @@ export default function AdminLocales() {
           {sel.tieneDelivery && <span style={{ fontSize: "0.72rem", padding: "3px 8px", borderRadius: "10px", background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", color: "#3db89e" }}>Delivery</span>}
           {sel.tieneRetiro && <span style={{ fontSize: "0.72rem", padding: "3px 8px", borderRadius: "10px", background: "rgba(232,168,76,0.1)", border: "1px solid rgba(232,168,76,0.2)", color: "#FFD600" }}>Retiro</span>}
         </div>
-        {sel.descripcion && <div style={{ marginTop: "8px", padding: "8px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}><p style={{ fontFamily: var(--font-display), fontSize: "0.82rem", color: "rgba(240,234,214,0.4)", marginBottom: "4px" }}>Descripción</p><p style={{ fontFamily: var(--font-display), fontSize: "0.88rem", color: "rgba(240,234,214,0.7)", lineHeight: 1.5 }}>{sel.descripcion}</p></div>}
+        {sel.descripcion && <div style={{ marginTop: "8px", padding: "8px 0", borderTop: "1px solid rgba(255,255,255,0.05)" }}><p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "rgba(240,234,214,0.4)", marginBottom: "4px" }}>Descripción</p><p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "rgba(240,234,214,0.7)", lineHeight: 1.5 }}>{sel.descripcion}</p></div>}
       </div>
 
       <div style={cardS}>
@@ -124,8 +124,8 @@ export default function AdminLocales() {
           {[["🏆", sel._count?.concursos ?? 0, "Concursos"], ["⚡", sel._count?.promociones ?? 0, "Promos"], ["💛", sel._count?.favoritos ?? 0, "Favs"], ["👁️", sel.vistas ?? 0, "Vistas"]].map(([icon, val, label]) => (
             <div key={String(label)} style={{ textAlign: "center", padding: "10px", background: "rgba(255,255,255,0.03)", borderRadius: "8px" }}>
               <p style={{ fontSize: "1rem", margin: "0 0 2px" }}>{icon}</p>
-              <p style={{ fontFamily: var(--font-display), fontSize: "1rem", color: "#FFD600", margin: 0 }}>{val}</p>
-              <p style={{ fontFamily: var(--font-display), fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: "2px 0 0" }}>{label}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", margin: 0 }}>{val}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: "2px 0 0" }}>{label}</p>
             </div>
           ))}
         </div>
@@ -161,7 +161,7 @@ export default function AdminLocales() {
             </div>
           </div>
           {(editData.lat || editData.lng) && (
-            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
+            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
               Lat: {editData.lat}, Lng: {editData.lng}
             </div>
           )}
@@ -184,21 +184,21 @@ export default function AdminLocales() {
                 return <button key={cat} type="button" disabled={maxed} onClick={() => {
                   const cur: string[] = editData.categorias ?? [];
                   setEditData(d => ({ ...d, categorias: sel2 ? cur.filter(c => c !== cat) : [...cur, cat] }));
-                }} style={{ padding: "5px 12px", borderRadius: "16px", border: sel2 ? (isPrimary ? "1px solid #FFD600" : "1px solid rgba(61,184,158,0.3)") : "1px solid rgba(232,168,76,0.15)", background: sel2 ? (isPrimary ? "rgba(232,168,76,0.15)" : "rgba(61,184,158,0.12)") : "transparent", color: sel2 ? (isPrimary ? "#FFD600" : "#3db89e") : maxed ? "rgba(240,234,214,0.2)" : "rgba(240,234,214,0.5)", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: maxed ? "default" : "pointer", opacity: maxed ? 0.3 : 1 }}>{CATEGORIA_EMOJI[cat] ?? "🍽️"} {cat}{isPrimary ? " ★" : ""}</button>;
+                }} style={{ padding: "5px 12px", borderRadius: "16px", border: sel2 ? (isPrimary ? "1px solid #FFD600" : "1px solid rgba(61,184,158,0.3)") : "1px solid rgba(232,168,76,0.15)", background: sel2 ? (isPrimary ? "rgba(232,168,76,0.15)" : "rgba(61,184,158,0.12)") : "transparent", color: sel2 ? (isPrimary ? "#FFD600" : "#3db89e") : maxed ? "rgba(240,234,214,0.2)" : "rgba(240,234,214,0.5)", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: maxed ? "default" : "pointer", opacity: maxed ? 0.3 : 1 }}>{CATEGORIA_EMOJI[cat] ?? "🍽️"} {cat}{isPrimary ? " ★" : ""}</button>;
               })}
             </div>
           </div>
           <div style={{ marginBottom: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <label style={labelS}>Sirve en mesa</label>
-            <button type="button" onClick={() => setEditData(d => ({ ...d, sirveEnMesa: !d.sirveEnMesa }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.sirveEnMesa ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.sirveEnMesa ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.sirveEnMesa ? "#3db89e" : "#ff6b6b", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: "pointer" }}>{editData.sirveEnMesa ? "Sí" : "No"}</button>
+            <button type="button" onClick={() => setEditData(d => ({ ...d, sirveEnMesa: !d.sirveEnMesa }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.sirveEnMesa ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.sirveEnMesa ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.sirveEnMesa ? "#3db89e" : "#ff6b6b", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: "pointer" }}>{editData.sirveEnMesa ? "Sí" : "No"}</button>
           </div>
           <div style={{ marginBottom: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <label style={labelS}>Tiene delivery</label>
-            <button type="button" onClick={() => setEditData(d => ({ ...d, tieneDelivery: !d.tieneDelivery }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.tieneDelivery ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.tieneDelivery ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.tieneDelivery ? "#3db89e" : "#ff6b6b", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: "pointer" }}>{editData.tieneDelivery ? "Sí" : "No"}</button>
+            <button type="button" onClick={() => setEditData(d => ({ ...d, tieneDelivery: !d.tieneDelivery }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.tieneDelivery ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.tieneDelivery ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.tieneDelivery ? "#3db89e" : "#ff6b6b", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: "pointer" }}>{editData.tieneDelivery ? "Sí" : "No"}</button>
           </div>
           <div style={{ marginBottom: "10px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <label style={labelS}>Tiene retiro</label>
-            <button type="button" onClick={() => setEditData(d => ({ ...d, tieneRetiro: !d.tieneRetiro }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.tieneRetiro ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.tieneRetiro ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.tieneRetiro ? "#3db89e" : "#ff6b6b", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: "pointer" }}>{editData.tieneRetiro ? "Sí" : "No"}</button>
+            <button type="button" onClick={() => setEditData(d => ({ ...d, tieneRetiro: !d.tieneRetiro }))} style={{ padding: "4px 14px", borderRadius: "20px", border: editData.tieneRetiro ? "1px solid #3db89e" : "1px solid rgba(255,80,80,0.3)", background: editData.tieneRetiro ? "rgba(61,184,158,0.12)" : "rgba(255,80,80,0.08)", color: editData.tieneRetiro ? "#3db89e" : "#ff6b6b", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: "pointer" }}>{editData.tieneRetiro ? "Sí" : "No"}</button>
           </div>
           <div style={{ marginBottom: "10px" }}>
             <label style={labelS}>Descripción</label>
@@ -217,12 +217,12 @@ export default function AdminLocales() {
             {DIAS_SEMANA.map((dia, i) => (
               <div key={dia} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                 <input type="checkbox" checked={editHorarios[i]?.activo ?? true} onChange={e => setEditHorarios(h => h.map((d, j) => j === i ? { ...d, activo: e.target.checked } : d))} style={{ accentColor: "#FFD600", width: "16px", height: "16px" }} />
-                <span style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.7)", width: "80px" }}>{dia}</span>
+                <span style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.7)", width: "80px" }}>{dia}</span>
                 {editHorarios[i]?.activo ? (<>
                   <input type="time" value={editHorarios[i]?.abre ?? "12:00"} onChange={e => setEditHorarios(h => h.map((d, j) => j === i ? { ...d, abre: e.target.value } : d))} style={{ ...inputS, width: "auto", padding: "6px 8px", fontSize: "0.78rem" }} />
                   <span style={{ color: "rgba(240,234,214,0.3)" }}>—</span>
                   <input type="time" value={editHorarios[i]?.cierra ?? "22:00"} onChange={e => setEditHorarios(h => h.map((d, j) => j === i ? { ...d, cierra: e.target.value } : d))} style={{ ...inputS, width: "auto", padding: "6px 8px", fontSize: "0.78rem" }} />
-                </>) : <span style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "#ff6b6b" }}>Cerrado</span>}
+                </>) : <span style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#ff6b6b" }}>Cerrado</span>}
               </div>
             ))}
           </div>
@@ -260,8 +260,8 @@ export default function AdminLocales() {
       {/* Delete confirm */}
       {deleteConfirm && (
         <div style={{ ...cardS, borderColor: "rgba(255,80,80,0.3)", textAlign: "center" }}>
-          <p style={{ fontFamily: var(--font-display), fontSize: "0.9rem", color: "#ff6b6b", fontWeight: 700, marginBottom: "6px" }}>¿Eliminar {sel.nombre}?</p>
-          <p style={{ fontFamily: var(--font-display), fontSize: "0.82rem", color: "rgba(240,234,214,0.5)", marginBottom: "14px" }}>Se borran todos sus datos. No se puede deshacer.</p>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#ff6b6b", fontWeight: 700, marginBottom: "6px" }}>¿Eliminar {sel.nombre}?</p>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "rgba(240,234,214,0.5)", marginBottom: "14px" }}>Se borran todos sus datos. No se puede deshacer.</p>
           <div style={{ display: "flex", gap: "8px" }}>
             <button onClick={async () => { setLoading(true); try { const r = await adminFetch(`/api/admin/locales/${sel.id}`, { method: "DELETE" }); if (r.ok) { setLocales(p => p.filter(l => l.id !== sel.id)); setSel(null); show("Eliminado"); } } catch {} setLoading(false); }} disabled={loading} style={{ ...btnPrimaryS, background: "#ff6b6b" }}>{loading ? "..." : "Eliminar"}</button>
             <button onClick={() => setDeleteConfirm(false)} style={btnSecS}>Cancelar</button>
@@ -291,7 +291,7 @@ export default function AdminLocales() {
     <div>
       {toast && <div style={toastS}>{toast}</div>}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "8px" }}>
-        <h1 style={{ fontFamily: var(--font-display), fontSize: "1.3rem", color: "#FFD600", margin: 0 }}>Locales ({locales.length})</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#FFD600", margin: 0 }}>Locales ({locales.length})</h1>
         <div style={{ display: "flex", gap: "6px" }}>
           <span style={{ fontSize: "0.8rem", color: "#ff8080", background: "rgba(255,100,100,0.1)", border: "1px solid rgba(255,100,100,0.2)", borderRadius: "6px", padding: "4px 10px" }}>{pendientes} pend.</span>
           <span style={{ fontSize: "0.8rem", color: "#3db89e", background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", borderRadius: "6px", padding: "4px 10px" }}>{activos} act.</span>
@@ -301,7 +301,7 @@ export default function AdminLocales() {
       <div style={{ display: "flex", gap: "8px", marginBottom: "16px", flexWrap: "wrap" }}>
         <input style={{ ...inputS, flex: 1, minWidth: "150px" }} placeholder="Buscar..." value={busq} onChange={e => setBusq(e.target.value)} />
         {["todos", "pendientes", "reclamados", "activos", "importados"].map(f => (
-          <button key={f} onClick={() => { setFiltro(f); if (f === "importados" && localesGoogle.length === 0) { adminFetch("/api/admin/locales?incluir=google").then(r => r.json()).then(d => setLocalesGoogle(Array.isArray(d) ? d : [])).catch(() => {}); } }} style={{ padding: "6px 12px", borderRadius: "6px", fontFamily: var(--font-display), fontSize: "0.78rem", textTransform: "uppercase", cursor: "pointer", background: filtro === f ? (f === "importados" ? "#7b9aff" : "#FFD600") : "transparent", color: filtro === f ? "#0D0D0D" : "rgba(240,234,214,0.5)", border: filtro === f ? "none" : "1px solid rgba(255,255,255,0.1)" }}>{f === "importados" ? "Google" : f}</button>
+          <button key={f} onClick={() => { setFiltro(f); if (f === "importados" && localesGoogle.length === 0) { adminFetch("/api/admin/locales?incluir=google").then(r => r.json()).then(d => setLocalesGoogle(Array.isArray(d) ? d : [])).catch(() => {}); } }} style={{ padding: "6px 12px", borderRadius: "6px", fontFamily: "var(--font-display)", fontSize: "0.78rem", textTransform: "uppercase", cursor: "pointer", background: filtro === f ? (f === "importados" ? "#7b9aff" : "#FFD600") : "transparent", color: filtro === f ? "#0D0D0D" : "rgba(240,234,214,0.5)", border: filtro === f ? "none" : "1px solid rgba(255,255,255,0.1)" }}>{f === "importados" ? "Google" : f}</button>
         ))}
       </div>
 
@@ -337,7 +337,7 @@ export default function AdminLocales() {
             </div>
           </div>
           {(crearData.lat !== 0 || crearData.lng !== 0) && (
-            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
+            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
               Lat: {crearData.lat}, Lng: {crearData.lng}
             </div>
           )}
@@ -357,7 +357,7 @@ export default function AdminLocales() {
                 const maxed = cats.length >= 3 && !sel2;
                 return <button key={cat} type="button" disabled={maxed} onClick={() => {
                   setCrearData(d => ({ ...d, categorias: sel2 ? cats.filter((c: string) => c !== cat) : [...cats, cat] }));
-                }} style={{ padding: "5px 12px", borderRadius: "16px", border: sel2 ? "1px solid #FFD600" : "1px solid rgba(232,168,76,0.15)", background: sel2 ? "rgba(232,168,76,0.15)" : "transparent", color: sel2 ? "#FFD600" : maxed ? "rgba(240,234,214,0.2)" : "rgba(240,234,214,0.5)", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: maxed ? "default" : "pointer", opacity: maxed ? 0.3 : 1 }}>{CATEGORIA_EMOJI[cat] ?? "🍽️"} {cat}</button>;
+                }} style={{ padding: "5px 12px", borderRadius: "16px", border: sel2 ? "1px solid #FFD600" : "1px solid rgba(232,168,76,0.15)", background: sel2 ? "rgba(232,168,76,0.15)" : "transparent", color: sel2 ? "#FFD600" : maxed ? "rgba(240,234,214,0.2)" : "rgba(240,234,214,0.5)", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: maxed ? "default" : "pointer", opacity: maxed ? 0.3 : 1 }}>{CATEGORIA_EMOJI[cat] ?? "🍽️"} {cat}</button>;
               })}
             </div>
           </div>
@@ -384,7 +384,7 @@ export default function AdminLocales() {
         </div>
       )}
 
-      {isGoogleFilter && <p style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.4)", marginBottom: "12px" }}>Locales importados desde Google Places ({filtered.length}). Puedes editarlos o eliminarlos.</p>}
+      {isGoogleFilter && <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.4)", marginBottom: "12px" }}>Locales importados desde Google Places ({filtered.length}). Puedes editarlos o eliminarlos.</p>}
 
       {/* Card list (mobile-friendly) */}
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
@@ -393,17 +393,17 @@ export default function AdminLocales() {
             <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: l.logoUrl ? "transparent" : "linear-gradient(135deg, #2a7a6f, #3db89e)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem", fontWeight: 700, color: "#fff", flexShrink: 0, overflow: "hidden", border: "1px solid rgba(232,168,76,0.2)" }}>{l.logoUrl ? <img src={l.logoUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : l.nombre?.charAt(0).toUpperCase()}</div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <p style={{ fontFamily: var(--font-display), fontSize: "0.85rem", color: "#FFFFFF", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nombre}</p>
+                <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#FFFFFF", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nombre}</p>
                 {l.origenImportacion === "GOOGLE_PLACES" && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: "4px", background: "rgba(123,154,255,0.12)", border: "1px solid rgba(123,154,255,0.3)", color: "#7b9aff", flexShrink: 0 }}>Google</span>}
               </div>
-              <p style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "rgba(240,234,214,0.4)", margin: "2px 0 0" }}>{isGoogleFilter ? (l.comuna ?? "Sin comuna") + (l.googleRating ? ` · ⭐ ${l.googleRating}` : "") : l.email}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.4)", margin: "2px 0 0" }}>{isGoogleFilter ? (l.comuna ?? "Sin comuna") + (l.googleRating ? ` · ⭐ ${l.googleRating}` : "") : l.email}</p>
             </div>
             {l.activo ? (
               <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#3db89e", flexShrink: 0 }}>✓</span>
             ) : isGoogleFilter ? (
-              <button onClick={async (e) => { e.stopPropagation(); setLoading(true); try { const r = await adminFetch(`/api/admin/locales/${l.id}`, { method: "DELETE" }); if (r.ok) { setLocalesGoogle(p => p.filter(x => x.id !== l.id)); show("✓ Eliminado"); } } catch {} setLoading(false); }} style={{ padding: "4px 10px", background: "rgba(255,80,80,0.12)", border: "1px solid rgba(255,80,80,0.3)", borderRadius: "6px", color: "#ff6b6b", fontFamily: var(--font-display), fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Eliminar</button>
+              <button onClick={async (e) => { e.stopPropagation(); setLoading(true); try { const r = await adminFetch(`/api/admin/locales/${l.id}`, { method: "DELETE" }); if (r.ok) { setLocalesGoogle(p => p.filter(x => x.id !== l.id)); show("✓ Eliminado"); } } catch {} setLoading(false); }} style={{ padding: "4px 10px", background: "rgba(255,80,80,0.12)", border: "1px solid rgba(255,80,80,0.3)", borderRadius: "6px", color: "#ff6b6b", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Eliminar</button>
             ) : (
-              <button onClick={async (e) => { e.stopPropagation(); setLoading(true); try { const res = await adminFetch(`/api/admin/locales/${l.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "aprobar" }) }); if (res.ok) { setLocales(p => p.map(x => x.id === l.id ? { ...x, activo: true } : x)); show("✓ " + l.nombre + " activado"); } } catch {} setLoading(false); }} style={{ padding: "4px 10px", background: "rgba(61,184,158,0.15)", border: "1px solid rgba(61,184,158,0.4)", borderRadius: "6px", color: "#3db89e", fontFamily: var(--font-display), fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Activar</button>
+              <button onClick={async (e) => { e.stopPropagation(); setLoading(true); try { const res = await adminFetch(`/api/admin/locales/${l.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accion: "aprobar" }) }); if (res.ok) { setLocales(p => p.map(x => x.id === l.id ? { ...x, activo: true } : x)); show("✓ " + l.nombre + " activado"); } } catch {} setLoading(false); }} style={{ padding: "4px 10px", background: "rgba(61,184,158,0.15)", border: "1px solid rgba(61,184,158,0.4)", borderRadius: "6px", color: "#3db89e", fontFamily: "var(--font-display)", fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap" }}>Activar</button>
             )}
           </div>
         ))}
@@ -413,15 +413,15 @@ export default function AdminLocales() {
 }
 
 function Row({ label, value }: { label: string; value: string }) {
-  return <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><span style={{ fontFamily: var(--font-display), fontSize: "0.8rem", color: "rgba(240,234,214,0.5)" }}>{label}</span><span style={{ fontFamily: var(--font-display), fontSize: "0.8rem", color: "#FFFFFF", textAlign: "right", maxWidth: "60%", wordBreak: "break-word" }}>{value}</span></div>;
+  return <div style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}><span style={{ fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "rgba(240,234,214,0.5)" }}>{label}</span><span style={{ fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "#FFFFFF", textAlign: "right", maxWidth: "60%", wordBreak: "break-word" }}>{value}</span></div>;
 }
 
-const toastS: React.CSSProperties = { position: "fixed", top: "16px", right: "16px", background: "rgba(13,7,3,0.97)", border: "1px solid rgba(232,168,76,0.4)", borderRadius: "10px", padding: "10px 18px", fontFamily: var(--font-display), fontSize: "0.8rem", color: "#FFD600", zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" };
-const backS: React.CSSProperties = { background: "none", border: "none", color: "rgba(240,234,214,0.5)", fontFamily: var(--font-display), fontSize: "0.85rem", cursor: "pointer", padding: 0, marginBottom: "16px" };
+const toastS: React.CSSProperties = { position: "fixed", top: "16px", right: "16px", background: "rgba(13,7,3,0.97)", border: "1px solid rgba(232,168,76,0.4)", borderRadius: "10px", padding: "10px 18px", fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "#FFD600", zIndex: 9999, boxShadow: "0 4px 20px rgba(0,0,0,0.5)" };
+const backS: React.CSSProperties = { background: "none", border: "none", color: "rgba(240,234,214,0.5)", fontFamily: "var(--font-display)", fontSize: "0.85rem", cursor: "pointer", padding: 0, marginBottom: "16px" };
 const cardS: React.CSSProperties = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", padding: "16px", marginBottom: "12px" };
-const cardTitleS: React.CSSProperties = { fontFamily: var(--font-display), fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,234,214,0.4)", marginBottom: "10px", margin: "0 0 10px" };
-const inputS: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#FFFFFF", fontFamily: var(--font-display), fontSize: "0.85rem", outline: "none", boxSizing: "border-box" };
-const labelS: React.CSSProperties = { fontFamily: var(--font-display), fontSize: "0.75rem", color: "rgba(240,234,214,0.4)", display: "block", marginBottom: "4px" };
-const btnPrimaryS: React.CSSProperties = { flex: 1, padding: "10px", background: "#FFD600", border: "none", borderRadius: "8px", color: "#0D0D0D", fontFamily: var(--font-display), fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" };
-const btnSecS: React.CSSProperties = { flex: 1, padding: "10px", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(240,234,214,0.5)", fontFamily: var(--font-display), fontSize: "0.8rem", cursor: "pointer" };
-const btnOutlineS: React.CSSProperties = { display: "block", width: "100%", padding: "10px", background: "none", border: "1px solid rgba(232,168,76,0.2)", borderRadius: "8px", color: "#FFD600", fontFamily: var(--font-display), fontSize: "0.78rem", cursor: "pointer", textAlign: "left" };
+const cardTitleS: React.CSSProperties = { fontFamily: "var(--font-display)", fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "rgba(240,234,214,0.4)", marginBottom: "10px", margin: "0 0 10px" };
+const inputS: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#FFFFFF", fontFamily: "var(--font-display)", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" };
+const labelS: React.CSSProperties = { fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "rgba(240,234,214,0.4)", display: "block", marginBottom: "4px" };
+const btnPrimaryS: React.CSSProperties = { flex: 1, padding: "10px", background: "#FFD600", border: "none", borderRadius: "8px", color: "#0D0D0D", fontFamily: "var(--font-display)", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" };
+const btnSecS: React.CSSProperties = { flex: 1, padding: "10px", background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "rgba(240,234,214,0.5)", fontFamily: "var(--font-display)", fontSize: "0.8rem", cursor: "pointer" };
+const btnOutlineS: React.CSSProperties = { display: "block", width: "100%", padding: "10px", background: "none", border: "1px solid rgba(232,168,76,0.2)", borderRadius: "8px", color: "#FFD600", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: "pointer", textAlign: "left" };

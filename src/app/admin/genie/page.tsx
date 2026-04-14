@@ -36,8 +36,8 @@ export default function AdminGenie() {
       .catch(() => setLoading(false));
   }, []);
 
-  if (loading) return <p style={{ fontFamily: var(--font-display), color: "rgba(240,234,214,0.4)", padding: 40 }}>Cargando...</p>;
-  if (!data) return <p style={{ fontFamily: var(--font-display), color: "#ff6b6b", padding: 40 }}>Error al cargar</p>;
+  if (loading) return <p style={{ fontFamily: "var(--font-display)", color: "rgba(240,234,214,0.4)", padding: 40 }}>Cargando...</p>;
+  if (!data) return <p style={{ fontFamily: "var(--font-display)", color: "#ff6b6b", padding: 40 }}>Error al cargar</p>;
 
   const { stats, sessions } = data;
   const actionMap: Record<string, number> = {};
@@ -45,7 +45,7 @@ export default function AdminGenie() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h1 style={{ fontFamily: var(--font-display), fontSize: "1.4rem", color: "#FFD600", marginBottom: 20 }}>🧞 Sesiones del Genio</h1>
+      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#FFD600", marginBottom: 20 }}>🧞 Sesiones del Genio</h1>
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 24 }}>
@@ -56,8 +56,8 @@ export default function AdminGenie() {
           { label: "Ratings", value: stats.totalRatings, color: "#ec4899" },
         ].map(s => (
           <div key={s.label} style={{ background: "rgba(45,26,8,0.7)", border: "1px solid rgba(232,168,76,0.12)", borderRadius: 12, padding: "12px 18px", flex: "1 1 0", minWidth: 100, textAlign: "center" }}>
-            <p style={{ fontFamily: var(--font-display), fontSize: "1.3rem", color: s.color, margin: "0 0 2px", fontWeight: 700 }}>{s.value}</p>
-            <p style={{ fontFamily: var(--font-display), fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: 0 }}>{s.label}</p>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: s.color, margin: "0 0 2px", fontWeight: 700 }}>{s.value}</p>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: 0 }}>{s.label}</p>
           </div>
         ))}
       </div>
@@ -65,7 +65,7 @@ export default function AdminGenie() {
       {/* Action breakdown */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 20 }}>
         {Object.entries(ACTION_EMOJI).map(([action, emoji]) => (
-          <span key={action} style={{ padding: "4px 10px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", fontFamily: var(--font-display), fontSize: "0.75rem", color: "rgba(240,234,214,0.5)" }}>
+          <span key={action} style={{ padding: "4px 10px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "rgba(240,234,214,0.5)" }}>
             {emoji} {action}: {actionMap[action] ?? 0}
           </span>
         ))}
@@ -73,7 +73,7 @@ export default function AdminGenie() {
 
       {/* Sessions list */}
       {sessions.length === 0 ? (
-        <p style={{ fontFamily: var(--font-display), color: "rgba(240,234,214,0.3)", textAlign: "center", padding: 40 }}>Sin sesiones aún</p>
+        <p style={{ fontFamily: "var(--font-display)", color: "rgba(240,234,214,0.3)", textAlign: "center", padding: 40 }}>Sin sesiones aún</p>
       ) : (
         sessions.map((s: Session) => {
           const isOpen = expanded === s.sessionId;
@@ -86,15 +86,15 @@ export default function AdminGenie() {
               {/* Header */}
               <div onClick={() => setExpanded(isOpen ? null : s.sessionId)} style={{ padding: "12px 16px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <span style={{ fontFamily: var(--font-display), fontSize: "0.85rem", color: "#FFD600" }}>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#FFD600" }}>
                     {s.userId ? "👤" : "👻"} {s.sessionId.slice(0, 8)}
                   </span>
-                  <span style={{ fontFamily: var(--font-display), fontSize: "0.72rem", color: "rgba(240,234,214,0.3)", marginLeft: 10 }}>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "rgba(240,234,214,0.3)", marginLeft: 10 }}>
                     {new Date(s.lastSeen).toLocaleDateString("es-CL")} {new Date(s.lastSeen).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
                   </span>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <span style={{ fontFamily: var(--font-display), fontSize: "0.7rem", color: "rgba(240,234,214,0.35)" }}>👁️{viewed} ✅{selected} ❌{ignored}</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "rgba(240,234,214,0.35)" }}>👁️{viewed} ✅{selected} ❌{ignored}</span>
                   {s.weather && <span style={{ fontSize: 14 }}>{WEATHER_EMOJI[s.weather.condition] ?? "🌡️"} {s.weather.temp}°</span>}
                   <span style={{ color: "rgba(240,234,214,0.3)", fontSize: 12 }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
@@ -113,7 +113,7 @@ export default function AdminGenie() {
                     </div>
                   )}
                   {s.weather && (
-                    <p style={{ fontFamily: var(--font-display), fontSize: "0.72rem", color: "rgba(240,234,214,0.3)", margin: "4px 0" }}>
+                    <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "rgba(240,234,214,0.3)", margin: "4px 0" }}>
                       {WEATHER_EMOJI[s.weather.condition]} {s.weather.temp}°C | {s.weather.condition} | {s.weather.humidity}% humedad
                     </p>
                   )}
@@ -121,7 +121,7 @@ export default function AdminGenie() {
                     const geoKey = `${s.location.lat?.toFixed(4)},${s.location.lng?.toFixed(4)}`;
                     if (!geoCache[geoKey]) reverseGeocode(s.location.lat, s.location.lng);
                     return (
-                      <p style={{ fontFamily: var(--font-display), fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: "4px 0" }}>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "rgba(240,234,214,0.4)", margin: "4px 0" }}>
                         📍 {geoCache[geoKey] || "Cargando ubicación..."}
                       </p>
                     );
@@ -130,12 +130,12 @@ export default function AdminGenie() {
                   {/* Insight */}
                   {s.insight?.conclusion && (
                     <div style={{ background: "rgba(232,168,76,0.06)", border: "1px solid rgba(232,168,76,0.15)", borderRadius: 10, padding: "10px 14px", marginTop: 10, marginBottom: 8 }}>
-                      <p style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "#FFD600", margin: "0 0 6px", fontWeight: 700 }}>Perfil de sesion</p>
-                      <p style={{ fontFamily: var(--font-display), fontSize: "0.75rem", color: "rgba(240,234,214,0.55)", margin: 0, lineHeight: 1.6 }}>{s.insight.conclusion}</p>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#FFD600", margin: "0 0 6px", fontWeight: 700 }}>Perfil de sesion</p>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "rgba(240,234,214,0.55)", margin: 0, lineHeight: 1.6 }}>{s.insight.conclusion}</p>
                       {s.insight.topIngredients?.length > 0 && (
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 6 }}>
                           {s.insight.topIngredients.map((ing: string) => (
-                            <span key={ing} style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(61,184,158,0.08)", border: "1px solid rgba(61,184,158,0.2)", fontFamily: var(--font-display), fontSize: "0.65rem", color: "#3db89e" }}>{ing}</span>
+                            <span key={ing} style={{ padding: "2px 6px", borderRadius: 6, background: "rgba(61,184,158,0.08)", border: "1px solid rgba(61,184,158,0.2)", fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "#3db89e" }}>{ing}</span>
                           ))}
                         </div>
                       )}
@@ -147,9 +147,9 @@ export default function AdminGenie() {
                     {s.actions.map((a: any, i: number) => (
                       <div key={a.id} style={{ display: "flex", gap: 8, alignItems: "center", padding: "4px 0", borderBottom: i < s.actions.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none" }}>
                         <span style={{ fontSize: 14, width: 20, textAlign: "center" }}>{ACTION_EMOJI[a.action] ?? "•"}</span>
-                        <span style={{ fontFamily: var(--font-display), fontSize: "0.78rem", color: "#FFFFFF", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.menuItem.nombre}</span>
-                        <span style={{ fontFamily: var(--font-display), fontSize: "0.68rem", color: "rgba(240,234,214,0.25)" }}>{a.menuItem.local.nombre}</span>
-                        <span style={{ fontFamily: var(--font-display), fontSize: "0.65rem", color: "rgba(240,234,214,0.2)" }}>
+                        <span style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#FFFFFF", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.menuItem.nombre}</span>
+                        <span style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "rgba(240,234,214,0.25)" }}>{a.menuItem.local.nombre}</span>
+                        <span style={{ fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "rgba(240,234,214,0.2)" }}>
                           {a.hour != null ? `${a.hour}h` : ""} {a.dayOfWeek != null ? DAY_NAMES[a.dayOfWeek] : ""}
                         </span>
                       </div>
@@ -165,4 +165,4 @@ export default function AdminGenie() {
   );
 }
 
-const chipStyle: React.CSSProperties = { padding: "3px 8px", borderRadius: 8, background: "rgba(232,168,76,0.08)", border: "1px solid rgba(232,168,76,0.15)", fontFamily: var(--font-display), fontSize: "0.68rem", color: "#FFD600" };
+const chipStyle: React.CSSProperties = { padding: "3px 8px", borderRadius: 8, background: "rgba(232,168,76,0.08)", border: "1px solid rgba(232,168,76,0.15)", fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#FFD600" };
