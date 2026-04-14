@@ -24,7 +24,7 @@ export default function CrearGrupo() {
   const create = async (type: string, total: number) => {
     setStep("creating");
     const sid = getSessionId();
-    const res = await fetch("/api/group", {
+    const res = await fetch("/api/genie/group", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ groupType: type, totalMembers: total, userId: user?.id || null, sessionId: sid, nombre: nombre || "Tú" }),

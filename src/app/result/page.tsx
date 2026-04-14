@@ -55,7 +55,7 @@ export default function GenieResult() {
 
       // Register SELECTED interactions with full context
       const sid = localStorage.getItem("genie_session_id") ?? "";
-      fetch("/api/interaction", {
+      fetch("/api/genie/interaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -76,7 +76,7 @@ export default function GenieResult() {
 
       // Get recommendations
       try {
-        const res = await fetch("/api/recommend", {
+        const res = await fetch("/api/genie/recommend", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -103,8 +103,8 @@ export default function GenieResult() {
           const localId = recsArr[0].local?.id;
           if (localId) {
             Promise.all([
-              fetch(`/api/extras?localId=${localId}&type=postres`).then(r => r.json()).catch(() => []),
-              fetch(`/api/extras?localId=${localId}&type=bebidas`).then(r => r.json()).catch(() => []),
+              fetch(`/api/genie/extras?localId=${localId}&type=postres`).then(r => r.json()).catch(() => []),
+              fetch(`/api/genie/extras?localId=${localId}&type=bebidas`).then(r => r.json()).catch(() => []),
             ]).then(([p, b]) => {
               setPostres(Array.isArray(p) ? p : []);
               setBebidas(Array.isArray(b) ? b : []);

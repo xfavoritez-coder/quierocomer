@@ -106,7 +106,7 @@ export default function GeniePage() {
   const submitFeedback = async (score: "LOVED" | "MEH" | "DISLIKED") => {
     if (!pendingFeedback) return;
     const sid = getSessionId();
-    await fetch("/api/feedback", {
+    await fetch("/api/genie/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ interactionId: pendingFeedback.interactionId, score, userId: user?.id || null, sessionId: sid }),
@@ -159,13 +159,13 @@ export default function GeniePage() {
     if (exclude) params.set("exclude", exclude);
 
     try {
-      const res = await fetch(`/api/dishes?${params}`);
+      const res = await fetch(`/api/genie/dishes?${params}`);
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setDishes(data);
         // Don't clear selections — keep previously selected dishes
         // Register VIEWED
-        fetch("/api/interaction", {
+        fetch("/api/genie/interaction", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -194,7 +194,7 @@ export default function GeniePage() {
     const sid = getSessionId();
     const ignored = dishes.filter(d => !selected.has(d.id)).map(d => d.id);
     if (ignored.length > 0) {
-      fetch("/api/interaction", {
+      fetch("/api/genie/interaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ menuItemIds: ignored, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
@@ -214,7 +214,7 @@ export default function GeniePage() {
     const sid = getSessionId();
     const ignoredIds = dishes.filter(d => !selected.has(d.id)).map(d => d.id);
     if (ignoredIds.length > 0) {
-      fetch("/api/interaction", {
+      fetch("/api/genie/interaction", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ menuItemIds: ignoredIds, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
@@ -236,7 +236,7 @@ export default function GeniePage() {
     // Save to localStorage for guests
     localStorage.setItem("genieOnboardingData", JSON.stringify(onboardingData));
 
-    await fetch("/api/onboarding", {
+    await fetch("/api/genie/onboarding", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -22,7 +22,7 @@ export default function GenieFeedback() {
   const submit = async (score: "LOVED" | "MEH" | "DISLIKED") => {
     setSaving(true);
     const sid = localStorage.getItem("genie_session_id") ?? "";
-    await fetch("/api/feedback", {
+    await fetch("/api/genie/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
