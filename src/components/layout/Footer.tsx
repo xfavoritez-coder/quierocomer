@@ -8,7 +8,7 @@ export default function Footer() {
           {/* Logo y descripción */}
           <div>
             <p style={{
-              fontFamily: "var(--font-cinzel-decorative)",
+              fontFamily: "var(--font-display)",
               fontSize: "1.2rem",
               color: "var(--accent)",
               textShadow: "0 0 20px color-mix(in srgb, var(--accent) 50%, transparent)",
@@ -17,7 +17,7 @@ export default function Footer() {
               🏮 QuieroComer
             </p>
             <p style={{
-              fontFamily: "var(--font-lato)",
+              fontFamily: "var(--font-body)",
               fontSize: "0.9rem",
               color: "var(--text-muted)",
               lineHeight: 1.8,
@@ -66,7 +66,7 @@ export default function Footer() {
           ].map(col => (
             <div key={col.titulo}>
               <p style={{
-                fontFamily: "var(--font-cinzel)",
+                fontFamily: "var(--font-display)",
                 fontSize: "0.75rem",
                 letterSpacing: "0.2em",
                 textTransform: "uppercase",
@@ -80,7 +80,7 @@ export default function Footer() {
                   href={link.href}
                   style={{
                     display: "block",
-                    fontFamily: "var(--font-lato)",
+                    fontFamily: "var(--font-body)",
                     fontSize: "0.95rem",
                     color: "var(--text-muted)",
                     textDecoration: "none",
@@ -112,14 +112,14 @@ export default function Footer() {
           gap: "16px",
         }}>
           <p style={{
-            fontFamily: "var(--font-lato)",
+            fontFamily: "var(--font-body)",
             fontSize: "0.85rem",
             color: "var(--text-muted)",
           }}>
             © {new Date().getFullYear()} QuieroComer.com
           </p>
           <p style={{
-            fontFamily: "var(--font-cinzel)",
+            fontFamily: "var(--font-display)",
             fontSize: "0.75rem",
             letterSpacing: "0.15em",
             color: "var(--text-muted)",

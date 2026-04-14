@@ -92,27 +92,27 @@ export default function GeniePerfil() {
   };
 
   const chip = (active: boolean): React.CSSProperties => ({
-    padding: "8px 14px", borderRadius: 10, cursor: "pointer",
-    background: active ? "rgba(232,168,76,0.12)" : "rgba(255,255,255,0.03)",
-    border: active ? "1px solid #e8a84c" : "1px solid rgba(255,255,255,0.06)",
-    fontFamily: "var(--font-lato)", fontSize: "0.82rem",
-    color: active ? "#e8a84c" : "rgba(240,234,214,0.5)",
+    padding: "8px 14px", borderRadius: 99, cursor: "pointer",
+    background: active ? "rgba(255,214,0,0.12)" : "#222222",
+    border: active ? "1px solid #FFD600" : "1px solid #2A2A2A",
+    fontFamily: "var(--font-body)", fontSize: "0.82rem",
+    color: active ? "#FFD600" : "#888888",
   });
 
-  if (loading) return <div style={{ minHeight: "100vh", background: "#0a0812", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ fontFamily: "var(--font-cinzel)", color: "rgba(240,234,214,0.4)" }}>Cargando...</p></div>;
+  if (loading) return <div style={{ minHeight: "100vh", background: "#0D0D0D", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ fontFamily: "var(--font-display)", color: "#888888" }}>Cargando...</p></div>;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0812", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px) 80px" }}>
+    <div style={{ minHeight: "100vh", background: "#0D0D0D", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px) 80px" }}>
       <div style={{ maxWidth: 480, margin: "0 auto" }}>
-        {toast && <div style={{ position: "fixed", top: 20, right: 20, background: "#3db89e", color: "#fff", padding: "10px 20px", borderRadius: 10, fontFamily: "var(--font-cinzel)", fontSize: "0.82rem", zIndex: 100 }}>{toast}</div>}
+        {toast && <div style={{ position: "fixed", top: 20, right: 20, background: "#3db89e", color: "#fff", padding: "10px 20px", borderRadius: 10, fontFamily: "var(--font-display)", fontSize: "0.82rem", zIndex: 100 }}>{toast}</div>}
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <p style={{ fontSize: 32, marginBottom: 4 }}>👤</p>
-          <h1 style={{ fontFamily: "var(--font-cinzel-decorative)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#f5d080", marginBottom: 4 }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#FFD600", marginBottom: 4 }}>
             {user ? user.nombre : "Invitado"}
           </h1>
           {!user && (
-            <Link href="/login" style={{ fontFamily: "var(--font-lato)", fontSize: "0.82rem", color: "#e8a84c", textDecoration: "underline" }}>
+            <Link href="/login" style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#FFD600", textDecoration: "underline" }}>
               Crear cuenta para guardar tus gustos
             </Link>
           )}
@@ -122,7 +122,7 @@ export default function GeniePerfil() {
           <>
             {/* Restricciones */}
             <section style={{ marginBottom: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.75rem", color: "#e8a84c", letterSpacing: "0.1em", marginBottom: 10 }}>QUE NO COMES</h2>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#FFD600", letterSpacing: "0.1em", marginBottom: 10 }}>QUE NO COMES</h2>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {RESTRICTIONS.map(r => (
                   <button key={r.v} onClick={() => toggleRestriction(r.v)} style={chip((profile.dietaryRestrictions ?? []).includes(r.v))}>
@@ -134,7 +134,7 @@ export default function GeniePerfil() {
 
             {/* Fitness */}
             <section style={{ marginBottom: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.75rem", color: "#e8a84c", letterSpacing: "0.1em", marginBottom: 10 }}>MODO ACTUAL</h2>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#FFD600", letterSpacing: "0.1em", marginBottom: 10 }}>MODO ACTUAL</h2>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {FITNESS.map(f => (
                   <button key={f.v} onClick={() => { setProfile((p: any) => ({ ...p, fitnessMode: f.v })); save({ fitnessMode: f.v === "NONE" ? null : f.v }); }} style={chip(profile.fitnessMode === f.v)}>
@@ -146,7 +146,7 @@ export default function GeniePerfil() {
 
             {/* Risk profile */}
             <section style={{ marginBottom: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.75rem", color: "#e8a84c", letterSpacing: "0.1em", marginBottom: 10 }}>COMO ERES PARA COMER</h2>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#FFD600", letterSpacing: "0.1em", marginBottom: 10 }}>COMO ERES PARA COMER</h2>
               <div style={{ display: "flex", gap: 6 }}>
                 {RISK.map(r => (
                   <button key={r.v} onClick={() => { setProfile((p: any) => ({ ...p, riskProfile: r.v })); save({ riskProfile: r.v }); }} style={{ ...chip(profile.riskProfile === r.v), flex: 1, textAlign: "center" }}>
@@ -158,33 +158,33 @@ export default function GeniePerfil() {
 
             {/* Lo que el genio aprendió */}
             <section style={{ marginBottom: 24 }}>
-              <h2 style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.75rem", color: "#e8a84c", letterSpacing: "0.1em", marginBottom: 10 }}>LO QUE EL GENIO APRENDIO</h2>
-              <div style={{ background: "rgba(45,26,8,0.5)", border: "1px solid rgba(232,168,76,0.1)", borderRadius: 14, padding: 14 }}>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#FFD600", letterSpacing: "0.1em", marginBottom: 10 }}>LO QUE EL GENIO APRENDIO</h2>
+              <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: 14 }}>
                 {(profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0) ? (
                   <>
                     {profile.favoriteIngredients?.length > 0 && (
                       <div style={{ marginBottom: 10 }}>
-                        <p style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.68rem", color: "#3db89e", marginBottom: 6 }}>Te gusta</p>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#3db89e", marginBottom: 6 }}>Te gusta</p>
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                           {profile.favoriteIngredients.slice(0, 8).map((i: string) => (
-                            <span key={i} style={{ padding: "3px 8px", borderRadius: 8, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", fontFamily: "var(--font-lato)", fontSize: "0.72rem", color: "#3db89e" }}>{i}</span>
+                            <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", fontFamily: "var(--font-body)", fontSize: "0.72rem", color: "#3db89e" }}>{i}</span>
                           ))}
                         </div>
                       </div>
                     )}
                     {profile.avoidIngredients?.length > 0 && (
                       <div>
-                        <p style={{ fontFamily: "var(--font-cinzel)", fontSize: "0.68rem", color: "#ff6b6b", marginBottom: 6 }}>Evita</p>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#ff6b6b", marginBottom: 6 }}>Evita</p>
                         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                           {profile.avoidIngredients.slice(0, 8).map((i: string) => (
-                            <span key={i} style={{ padding: "3px 8px", borderRadius: 8, background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.2)", fontFamily: "var(--font-lato)", fontSize: "0.72rem", color: "#ff6b6b" }}>{i}</span>
+                            <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.2)", fontFamily: "var(--font-body)", fontSize: "0.72rem", color: "#ff6b6b" }}>{i}</span>
                           ))}
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
-                  <p style={{ fontFamily: "var(--font-lato)", fontSize: "0.82rem", color: "rgba(240,234,214,0.3)", textAlign: "center", lineHeight: 1.6 }}>Aun no tenemos suficiente info. Sigue usando el Genio 🧞</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#888888", textAlign: "center", lineHeight: 1.6 }}>Aun no tenemos suficiente info. Sigue usando el Genio 🧞</p>
                 )}
               </div>
             </section>
@@ -192,9 +192,9 @@ export default function GeniePerfil() {
         )}
 
         {!user && (
-          <div style={{ background: "rgba(45,26,8,0.5)", border: "1px solid rgba(232,168,76,0.1)", borderRadius: 14, padding: 20, textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-lato)", fontSize: "0.88rem", color: "rgba(240,234,214,0.45)", lineHeight: 1.6, marginBottom: 16 }}>Crea una cuenta para que el Genio recuerde tus gustos entre sesiones</p>
-            <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#e8a84c", color: "#0a0812", borderRadius: 12, fontFamily: "var(--font-cinzel)", fontSize: "0.85rem", fontWeight: 700, textDecoration: "none" }}>Crear cuenta gratis</Link>
+          <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: 20, textAlign: "center" }}>
+            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.88rem", color: "#888888", lineHeight: 1.6, marginBottom: 16 }}>Crea una cuenta para que el Genio recuerde tus gustos entre sesiones</p>
+            <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 700, textDecoration: "none" }}>Crear cuenta gratis</Link>
           </div>
         )}
       </div>

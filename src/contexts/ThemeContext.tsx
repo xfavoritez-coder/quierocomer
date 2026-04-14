@@ -7,7 +7,7 @@ export interface TimeTheme {
   icon: string;
 }
 
-const defaultTheme: TimeTheme = { period: "dia", accent: "#e8a84c", icon: "" };
+const defaultTheme: TimeTheme = { period: "dia", accent: "#FFD600", icon: "" };
 
 export const ThemeContext = createContext<TimeTheme>(defaultTheme);
 

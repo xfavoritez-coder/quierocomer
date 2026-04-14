@@ -112,15 +112,15 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
         {previewUrl ? (
           <img src={previewUrl} alt="preview" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         ) : uploading ? (
-          <span style={{ fontFamily: "var(--font-lato)", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>Subiendo...</span>
+          <span style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>Subiendo...</span>
         ) : (
           <div style={{ textAlign: "center", padding: "12px" }}>
             <div style={{ fontSize: "1.5rem", marginBottom: "6px" }}>📷</div>
-            <span style={{ fontFamily: "var(--font-lato)", fontSize: "0.78rem", color: "rgba(240,234,214,0.4)" }}>{label}</span>
+            <span style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "rgba(240,234,214,0.4)" }}>{label}</span>
           </div>
         )}
       </div>
-      {error && <p style={{ fontFamily: "var(--font-lato)", fontSize: "0.82rem", color: "#ff6b6b", marginTop: "6px" }}>{error}</p>}
+      {error && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#ff6b6b", marginTop: "6px" }}>{error}</p>}
     </div>
   );
 }
