@@ -40,7 +40,7 @@ export default function GroupRoom() {
   const joinGroup = async () => {
     try {
       // First check if group exists
-      const gRes = await fetch(`/api/group/${code}`);
+      const gRes = await fetch(`/api/genie/group/${code}`);
       if (!gRes.ok) { setError("Sala no encontrada o expirada"); return; }
       const groupData = await gRes.json();
       setGroup(groupData);
@@ -67,7 +67,7 @@ export default function GroupRoom() {
   };
 
   const doJoin = async () => {
-    const res = await fetch(`/api/group/${code}/join`, {
+    const res = await fetch(`/api/genie/group/${code}/join`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: sid, userId: user?.id || null, nombre: nombre || "Invitado" }),
@@ -88,7 +88,7 @@ export default function GroupRoom() {
     if (pollRef.current) return;
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/group/${code}`);
+        const res = await fetch(`/api/genie/group/${code}`);
         if (!res.ok) return;
         const data = await res.json();
         setGroup(data);
@@ -118,7 +118,7 @@ export default function GroupRoom() {
     const params = new URLSearchParams({ sessionId: sid });
     if (user?.id) params.set("userId", user.id);
     try {
-      const res = await fetch(`/api/dishes?${params}`);
+      const res = await fetch(`/api/genie/dishes?${params}`);
       const data = await res.json();
       if (Array.isArray(data)) setDishes(data);
     } catch {}
@@ -132,7 +132,7 @@ export default function GroupRoom() {
   const markReady = async () => {
     if (selected.size === 0) return;
     const coords = JSON.parse(sessionStorage.getItem("userCoords") ?? "{}");
-    await fetch(`/api/group/${code}/ready`, {
+    await fetch(`/api/genie/group/${code}/ready`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: sid, selectedDishes: [...selected], userLat: coords.lat, userLng: coords.lng }),
@@ -144,7 +144,7 @@ export default function GroupRoom() {
   useEffect(() => {
     if (phase === "result" && !result) {
       const coords = JSON.parse(sessionStorage.getItem("userCoords") ?? "{}");
-      fetch(`/api/group/${code}/result?lat=${coords.lat ?? ""}&lng=${coords.lng ?? ""}`)
+      fetch(`/api/genie/group/${code}/result?lat=${coords.lat ?? ""}&lng=${coords.lng ?? ""}`)
         .then(r => r.json())
         .then(d => setResult(d))
         .catch(() => {});

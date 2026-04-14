@@ -68,7 +68,7 @@ export default function GeniePage() {
       else setPhase("onboarding");
       return;
     }
-    fetch(`/api/onboarding?userId=${user.id}`)
+    fetch(`/api/genie/onboarding?userId=${user.id}`)
       .then(r => r.json())
       .then(d => {
         if (d.onboardingDone) { checkFeedback(); requestGeo(); }
@@ -83,7 +83,7 @@ export default function GeniePage() {
     const params = new URLSearchParams({ sessionId: sid });
     if (user?.id) params.set("userId", user.id);
     try {
-      const res = await fetch(`/api/pending-feedback?${params}`);
+      const res = await fetch(`/api/genie/pending-feedback?${params}`);
       const data = await res.json();
       if (data?.interactionId) {
         setPendingFeedback(data);

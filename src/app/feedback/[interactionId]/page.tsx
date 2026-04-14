@@ -13,7 +13,7 @@ export default function GenieFeedback() {
 
   useEffect(() => {
     // Fetch interaction details to show the dish
-    fetch(`/api/interaction/${interactionId}`)
+    fetch(`/api/genie/interaction/${interactionId}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setDish(d); })
       .catch(() => {});
