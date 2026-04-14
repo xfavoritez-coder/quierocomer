@@ -290,7 +290,7 @@ export async function POST(req: NextRequest) {
                 <p style="margin:4px 0"><strong>Contraseña:</strong> ${passwordPlain}</p>
               </div>
               <p style="text-align:center;margin:24px 0">
-                <a href="https://quierocomer.com/login-local" style="background:#e8a84c;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">Entrar al panel →</a>
+                <a href="https://quierocomer.cl/login-local" style="background:#e8a84c;color:#fff;padding:14px 32px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block">Entrar al panel →</a>
               </p>
               <p style="font-size:13px;color:#888">Para aparecer en QuieroComer, completa tu perfil: sube tu logo, foto de portada, dirección, horarios y categoría.</p>
               <hr style="border:none;border-top:1px solid #eee;margin:20px 0" />
