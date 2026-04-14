@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { rateLimit } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password, tipo } = await req.json();
-
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
-    const { ok: allowed } = rateLimit(`login_${ip}_${email}`, 10, 900_000);
-    if (!allowed) return NextResponse.json({ error: "Demasiados intentos. Espera 15 minutos." }, { status: 429 });
 
     if (tipo === "local") {
       const local = await prisma.local.findUnique({ where: { email } });

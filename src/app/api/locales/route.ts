@@ -2,9 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { makeLocalSlug } from "@/lib/slugify";
-import { CATEGORIAS } from "@/lib/categorias";
-import { COMUNAS_MAESTRAS } from "@/lib/comunas";
-import { enriquecerLocalConGoogle } from "@/lib/enriquecer-local-google";
 
 // Aliases for categories that users might type differently
 const CATEGORIA_ALIASES: Record<string, string> = {
@@ -48,7 +45,8 @@ function parseSearchQuery(q: string): { comunaDetected: string | null; categoria
   let categoriaDetected: string | null = null;
 
   // Try to extract comuna — check longest names first to match "Quinta Normal" before "Normal"
-  const comunasSorted = [...COMUNAS_MAESTRAS].sort((a, b) => b.length - a.length);
+  const COMUNAS_LIST = ["Providencia", "Santiago Centro", "Ñuñoa", "Las Condes", "Vitacura", "San Miguel", "Maipú", "La Florida", "Pudahuel", "Peñalolén", "Macul", "La Reina", "Lo Barnechea", "Huechuraba", "Recoleta", "Independencia", "Estación Central", "Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "La Cisterna", "La Granja", "La Pintana", "Lo Espejo", "Lo Prado", "Quilicura", "Quinta Normal", "Renca", "San Bernardo", "San Joaquín", "San Ramón", "Padre Hurtado", "Puente Alto", "Pirque", "Colina", "Lampa", "Melipilla", "Talagante", "Pedro Aguirre Cerda", "Buin"];
+  const comunasSorted = [...COMUNAS_LIST].sort((a, b) => b.length - a.length);
   for (const comuna of comunasSorted) {
     const idx = text.indexOf(comuna.toLowerCase());
     if (idx !== -1) {
@@ -87,7 +85,8 @@ function parseSearchQuery(q: string): { comunaDetected: string | null; categoria
   }
   // Also check exact category names
   if (!categoriaDetected) {
-    for (const cat of CATEGORIAS) {
+    const CATEGORIAS_LIST = ["Sushi", "Pizza", "Hamburguesa", "Mexicano", "Vegano", "Vegetariano", "Saludable", "Pastas", "Pollo", "Mariscos", "Carnes / Parrilla", "Árabe", "Peruano", "India", "Coreano", "Thai", "Ramen", "Fusión", "Café", "Postres", "Brunch", "Chifa", "Empanadas", "Poke Bowl", "Sandwich", "Jugos y Smoothies", "Mediterráneo", "Sin gluten"];
+    for (const cat of CATEGORIAS_LIST) {
       if (text.includes(cat.toLowerCase())) {
         categoriaDetected = cat;
         text = text.replace(new RegExp(cat, "i"), "").trim();
@@ -207,8 +206,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const { nombre, nombreDueno, nombreEncargado, email, password, telefono, ciudad, registroRapido, passwordPlain, captadorCodigo, categorias: rawCategorias } = await req.json();
+    const VALID_CATEGORIAS = ["Sushi", "Pizza", "Hamburguesa", "Mexicano", "Vegano", "Vegetariano", "Saludable", "Pastas", "Pollo", "Mariscos", "Carnes / Parrilla", "Árabe", "Peruano", "India", "Coreano", "Thai", "Ramen", "Fusión", "Café", "Postres", "Brunch", "Chifa", "Empanadas", "Poke Bowl", "Sandwich", "Jugos y Smoothies", "Mediterráneo", "Sin gluten"];
     const categorias = Array.isArray(rawCategorias)
-      ? rawCategorias.filter((c: string) => (CATEGORIAS as readonly string[]).includes(c)).slice(0, 3)
+      ? rawCategorias.filter((c: string) => VALID_CATEGORIAS.includes(c)).slice(0, 3)
       : [];
 
     if (!nombre || !email || !password) {
@@ -302,8 +302,6 @@ export async function POST(req: NextRequest) {
         console.error("[Email registro rápido]", emailErr);
       }
     }
-
-    enriquecerLocalConGoogle(local.id).catch(() => {});
 
     const { password: _, ...localSinPassword } = local;
     return NextResponse.json(localSinPassword, { status: 201 });

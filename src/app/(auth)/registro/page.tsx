@@ -3,8 +3,6 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { getPendingRef, hasEmailCounted, markEmailCounted, incrementRef, clearPendingRef, savePendingRef, getRefUserName } from "@/lib/referrals";
-import { CATEGORIAS as CATEGORIAS_MASTER } from "@/lib/categorias";
 
 function OjoIcon({ visible }: { visible: boolean }) {
   return (
@@ -20,12 +18,8 @@ function RegistroContent() {
   const { register } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const refCodeUrl = searchParams.get("ref");
-  const concursoIdUrl = searchParams.get("concurso");
-  // Fallback: si no hay params en URL, leer de localStorage (pendingRef)
-  const pending = getPendingRef();
-  const refCode = refCodeUrl || pending?.refCode || null;
-  const concursoId = concursoIdUrl || pending?.concursoId || null;
+  const refCode = searchParams.get("ref");
+  const concursoId = searchParams.get("concurso");
   const [form, setForm] = useState({ nombre: "", email: "", password: "", confirm: "", terms: false });
   const [showPw, setShowPw] = useState(false);
   const [showConf, setShowConf] = useState(false);
@@ -64,7 +58,6 @@ function RegistroContent() {
     }, 1000);
     return () => clearInterval(interval);
   }, []);
-  useEffect(() => { if (refCode && concursoId) savePendingRef(refCode, concursoId); }, [refCode, concursoId]);
   useEffect(() => { fetch("/api/categorias").then(r => r.json()).then(data => { if (Array.isArray(data)) setCategoriasDB(data); }).catch(() => {}); }, []);
 
   function checkEmailTypo(email: string): string {
@@ -137,11 +130,9 @@ function RegistroContent() {
       const effectiveRef = refCode;
       const effectiveConcurso = concursoId;
       if (effectiveRef && res.userId && effectiveRef !== res.userId) {
-        const fn = getRefUserName(effectiveRef);
-        const refName = fn || (await fetch(`/api/usuarios/by-refcode?code=${encodeURIComponent(effectiveRef)}`).then(r => r.ok ? r.json() : null).then(d => d?.nombre).catch(() => null));
-        msg = refName ? `📧 Activa tu cuenta desde tu correo para sumarle 3 puntos a ${refName} y ganar tú también 3 puntos.` : "📧 Activa tu cuenta desde tu correo — ambos ganan 3 puntos automáticamente.";
+        const refName = await fetch(`/api/usuarios/by-refcode?code=${encodeURIComponent(effectiveRef)}`).then(r => r.ok ? r.json() : null).then(d => d?.nombre).catch(() => null);
+        msg = refName ? `Activa tu cuenta desde tu correo para sumarle 3 puntos a ${refName} y ganar tu tambien 3 puntos.` : "Activa tu cuenta desde tu correo — ambos ganan 3 puntos automaticamente.";
         if (effectiveConcurso) redirectToPath = `/concursos/${effectiveConcurso}`;
-        clearPendingRef();
       }
       setRefMsg(msg); setSuccess(true);
       // Show verification message
@@ -213,7 +204,7 @@ function RegistroContent() {
                   const estiloExcluir = estilo === "vegano" ? ["Vegano"] : estilo === "vegetariano" ? ["Vegetariano"] : [];
                   const opciones = usarDB
                     ? categoriasDB.filter(c => !c.estiloExcluido.includes(estilo) && !estiloExcluir.includes(c.nombre)).map(c => c.nombre)
-                    : (() => { const excluir = estilo === "vegano" ? ["Pollo", "Carnes / Parrilla", "Mariscos", "Sushi", "Vegano"] : estilo === "vegetariano" ? ["Pollo", "Carnes / Parrilla", "Vegetariano"] : []; return [...CATEGORIAS_MASTER].filter(c => !excluir.includes(c)); })();
+                    : (() => { const todas = ["Sushi", "Pizza", "Hamburguesa", "Mexicano", "Vegano", "Vegetariano", "Saludable", "Pastas", "Pollo", "Mariscos", "Carnes / Parrilla", "Cafe", "Postres"]; const excluir = estilo === "vegano" ? ["Pollo", "Carnes / Parrilla", "Mariscos", "Sushi", "Vegano"] : estilo === "vegetariano" ? ["Pollo", "Carnes / Parrilla", "Vegetariano"] : []; return todas.filter(c => !excluir.includes(c)); })();
                   const totalSel = comidasSel.length + customComidas.length;
                   return opciones.map(c => {
                     const sel = comidasSel.includes(c);

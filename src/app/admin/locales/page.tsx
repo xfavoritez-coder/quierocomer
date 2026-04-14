@@ -1,10 +1,10 @@
 "use client";
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { adminFetch } from "@/lib/adminFetch";
 import SubirFoto from "@/components/SubirFoto";
-import { CATEGORIAS as CATEGORIAS_MASTER, CATEGORIA_EMOJI } from "@/lib/categorias";
 
-const MapaUbicacion = lazy(() => import("@/components/panel/MapaUbicacion"));
+const CATEGORIAS_MASTER: string[] = ["Sushi", "Pizza", "Hamburguesa", "Mexicano", "Vegano", "Vegetariano", "Saludable", "Pastas", "Pollo", "Mariscos", "Carnes / Parrilla", "Árabe", "Peruano", "India", "Coreano", "Thai", "Ramen", "Fusión", "Café", "Postres", "Brunch", "Chifa", "Empanadas", "Poke Bowl", "Sandwich", "Jugos y Smoothies", "Mediterráneo", "Sin gluten"];
+const CATEGORIA_EMOJI: Record<string, string> = { "Sushi": "🍣", "Pizza": "🍕", "Hamburguesa": "🍔", "Mexicano": "🌮", "Vegano": "🌿", "Vegetariano": "🌱", "Saludable": "🥗", "Pastas": "🍝", "Pollo": "🍗", "Mariscos": "🦐", "Carnes / Parrilla": "🥩", "Árabe": "🧆", "Peruano": "🇵🇪", "India": "🍛", "Coreano": "🇰🇷", "Thai": "🍜", "Ramen": "🍜", "Fusión": "🍽️", "Café": "☕", "Postres": "🍰", "Brunch": "🥞", "Chifa": "🥡", "Empanadas": "🥟", "Poke Bowl": "🥙", "Sandwich": "🥪", "Jugos y Smoothies": "🧃", "Mediterráneo": "🫒", "Sin gluten": "🌾" };
 
 const COMUNAS = ["Providencia", "Santiago Centro", "Ñuñoa", "Las Condes", "Vitacura", "San Miguel", "Maipú", "La Florida", "Pudahuel", "Peñalolén", "Macul", "La Reina", "Lo Barnechea", "Huechuraba", "Recoleta", "Independencia", "Estación Central", "Cerrillos", "Cerro Navia", "Conchalí", "El Bosque", "La Cisterna", "La Granja", "La Pintana", "Lo Espejo", "Lo Prado", "Quilicura", "Quinta Normal", "Renca", "San Bernardo", "San Joaquín", "San Ramón", "Padre Hurtado", "Puente Alto", "Pirque", "Colina", "Lampa", "Melipilla", "Talagante", "Pedro Aguirre Cerda", "Buin"];
 
@@ -161,10 +161,8 @@ export default function AdminLocales() {
             </div>
           </div>
           {(editData.lat || editData.lng) && (
-            <div style={{ marginBottom: "10px" }}>
-              <Suspense fallback={<div style={{ height: 220, background: "rgba(0,0,0,0.2)", borderRadius: 12 }} />}>
-                <MapaUbicacion lat={editData.lat || -33.4489} lng={editData.lng || -70.6693} onChange={(lat, lng) => setEditData(d => ({ ...d, lat, lng }))} />
-              </Suspense>
+            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: "Georgia", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
+              Lat: {editData.lat}, Lng: {editData.lng}
             </div>
           )}
           <div style={{ marginBottom: "10px" }}>
@@ -339,10 +337,8 @@ export default function AdminLocales() {
             </div>
           </div>
           {(crearData.lat !== 0 || crearData.lng !== 0) && (
-            <div style={{ marginBottom: "10px" }}>
-              <Suspense fallback={<div style={{ height: 220, background: "rgba(0,0,0,0.2)", borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "rgba(240,234,214,0.3)", fontFamily: "Georgia", fontSize: "0.8rem" }}>Cargando mapa...</span></div>}>
-                <MapaUbicacion lat={crearData.lat} lng={crearData.lng} onChange={(lat, lng) => setCrearData(d => ({ ...d, lat, lng }))} />
-              </Suspense>
+            <div style={{ marginBottom: "10px", padding: "8px 12px", background: "rgba(0,0,0,0.2)", borderRadius: 12, fontFamily: "Georgia", fontSize: "0.78rem", color: "rgba(240,234,214,0.5)" }}>
+              Lat: {crearData.lat}, Lng: {crearData.lng}
             </div>
           )}
           <div style={{ marginBottom: "10px" }}>

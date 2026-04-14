@@ -1,9 +1,15 @@
 "use client";
 import { createContext, useContext } from "react";
-import { getThemeByPeriod } from "@/hooks/useTimeTheme";
-import type { TimeTheme } from "@/hooks/useTimeTheme";
 
-export const ThemeContext = createContext<TimeTheme>(getThemeByPeriod("dia"));
+export interface TimeTheme {
+  period: string;
+  accent: string;
+  icon: string;
+}
+
+const defaultTheme: TimeTheme = { period: "dia", accent: "#e8a84c", icon: "" };
+
+export const ThemeContext = createContext<TimeTheme>(defaultTheme);
 
 export function useTheme(): TimeTheme {
   return useContext(ThemeContext);
