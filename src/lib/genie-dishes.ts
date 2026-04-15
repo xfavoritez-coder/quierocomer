@@ -161,7 +161,12 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     if (idx > 20) break;
   }
 
-  return balanced.slice(0, 9).map(d => ({
+  // Max 2 placeholders (no photo), prioritize dishes with photos
+  const withPhoto = balanced.filter(d => d.imagenUrl);
+  const noPhoto = balanced.filter(d => !d.imagenUrl);
+  const final = [...withPhoto.slice(0, 9), ...noPhoto.slice(0, Math.max(0, 2 - Math.max(0, 9 - withPhoto.length)))].slice(0, 9);
+
+  return final.map(d => ({
     id: d.id,
     nombre: d.nombre,
     categoria: d.categoria,

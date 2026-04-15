@@ -484,10 +484,10 @@ export default function GeniePage() {
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
-        {/* Compact header */}
+        {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <p className="font-body" style={{ fontSize: 13, color: "#888", marginBottom: 6 }}>🧞 {(() => { const h = new Date().getHours(); const greeting = h >= 6 && h < 12 ? "Buenos días" : h >= 12 && h < 19 ? "Buenas tardes" : "Buenas noches"; const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${greeting}, ${n}` : "Hola"; })()}</p>
-          <h1 className="font-display" style={{ fontSize: 18, fontWeight: 700, color: "#0D0D0D", marginBottom: 10 }}>¿Qué te llama la atención?</h1>
+          <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
+          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
         </div>
 
         {/* Category filters */}

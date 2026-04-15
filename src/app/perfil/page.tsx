@@ -225,8 +225,8 @@ export default function GeniePerfil() {
               <h2 className="font-display" style={sectionTitle}>LO QUE EL GENIO APRENDIÓ DE TI</h2>
               {!user ? (
                 <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "24px 16px", position: "relative", overflow: "hidden" }}>
-                  {/* Blurred fake data */}
-                  <div style={{ filter: "blur(6px)", opacity: 0.3, pointerEvents: "none" }}>
+                  {/* Blurred fake data — visible enough to tease */}
+                  <div style={{ filter: "blur(5px)", opacity: 0.7, pointerEvents: "none" }}>
                     <p style={{ fontSize: 11, color: "#666", fontWeight: 700, marginBottom: 6 }}>Te interesa</p>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
                       <span style={{ padding: "3px 8px", borderRadius: 99, background: "#E0E0E0", fontSize: "0.72rem", color: "#999" }}>Sushi (5)</span>
@@ -241,7 +241,7 @@ export default function GeniePerfil() {
                     </div>
                   </div>
                   {/* Overlay with CTA */}
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.6)" }}>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.4)" }}>
                     <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500 }}>Regístrate para ver qué aprendió el Genio de ti</p>
                     <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.85rem", textDecoration: "none" }}>Crear cuenta gratis</Link>
                   </div>
