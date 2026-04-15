@@ -11,7 +11,7 @@ const RESTRICTION_MAP: Record<string, string[]> = {
   "sin frutos secos": ["maní", "nuez", "almendra", "avellana", "pistacho", "castaña"],
 };
 
-export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = []) {
+export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = [], guestDietRestrictions?: string[]) {
   // Get user profile if exists
   let profile: { avoidIngredients: string[]; dietaryRestrictions: string[]; fitnessMode: string | null; favoriteIngredients: string[] } | null = null;
   if (userId) {
@@ -19,6 +19,11 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       where: { userId },
       select: { avoidIngredients: true, dietaryRestrictions: true, fitnessMode: true, favoriteIngredients: true },
     });
+  }
+
+  // For guests, use diet restrictions passed from client
+  if (!profile && guestDietRestrictions?.length) {
+    profile = { avoidIngredients: [], dietaryRestrictions: guestDietRestrictions, fitnessMode: null, favoriteIngredients: [] };
   }
 
   // Build excluded ingredients from restrictions + profile

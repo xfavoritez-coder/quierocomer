@@ -8,6 +8,8 @@ export async function GET(req: NextRequest) {
     const sessionId = req.nextUrl.searchParams.get("sessionId") ?? undefined;
     const exclude = req.nextUrl.searchParams.get("exclude");
     const excludeIds = exclude ? exclude.split(",").filter(Boolean) : [];
+    const diet = req.nextUrl.searchParams.get("diet");
+    const dietRestrictions = diet ? diet.split(",").filter(Boolean) : undefined;
     const desserts = req.nextUrl.searchParams.get("desserts") === "true";
 
     if (desserts) {
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
       })));
     }
 
-    const dishes = await getInitialDishes(userId, sessionId, excludeIds);
+    const dishes = await getInitialDishes(userId, sessionId, excludeIds, dietRestrictions);
     return NextResponse.json(dishes);
   } catch (e) {
     console.error("[Genie dishes]", e);

@@ -202,6 +202,16 @@ export default function GeniePage() {
     const params = new URLSearchParams({ sessionId: sid });
     if (user?.id) params.set("userId", user.id);
     if (exclude) params.set("exclude", exclude);
+    // Pass diet restrictions for guests (not in DB)
+    if (!user?.id) {
+      try {
+        const raw = localStorage.getItem("genieOnboardingData");
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data.dietaryRestrictions?.length) params.set("diet", data.dietaryRestrictions.join(","));
+        }
+      } catch {}
+    }
 
     try {
       const res = await fetch(`/api/genie/dishes?${params}`);
