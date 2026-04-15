@@ -166,7 +166,7 @@ export default function GroupRoom() {
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", marginBottom: 4 }}>Unirse a la sala</h2>
         <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#FFD600", letterSpacing: "0.2em", marginBottom: 20 }}>{code}</p>
         <div style={{ width: "100%", maxWidth: 300 }}>
-          <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontFamily: "var(--font-body)", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
+          <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "12px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontFamily: "var(--font-body)", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
           <button onClick={doJoin} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Entrar</button>
         </div>
       </div>
@@ -186,42 +186,55 @@ export default function GroupRoom() {
   // ── LOBBY ──
   if (phase === "lobby") {
     const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/grupo/${code}` : "";
+    const allHere = (group?.members?.length ?? 0) >= (group?.totalMembers ?? 99);
+    const enoughToStart = (group?.members?.length ?? 0) >= 2;
+
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>Sala de grupo</h2>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "#FFD600", letterSpacing: "0.3em", marginBottom: 16 }}>{code}</p>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", marginBottom: 20, textAlign: "center" }}>Comparte este codigo con tu grupo</p>
+        <h2 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>Sala de grupo</h2>
+        <p className="font-display" style={{ fontSize: "2.2rem", color: "#0D0D0D", letterSpacing: "0.3em", marginBottom: 8, fontWeight: 700 }}>{code}</p>
+
+        {/* Sharing instructions */}
+        <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "14px 18px", marginBottom: 20, maxWidth: 340, width: "100%" }}>
+          <p className="font-body" style={{ fontSize: "0.82rem", color: "#666", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
+            Dile a tu grupo que entre a <strong style={{ color: "#0D0D0D" }}>quierocomer.cl/grupo</strong> e ingrese el código <strong style={{ color: "#0D0D0D" }}>{code}</strong>
+          </p>
+        </div>
 
         {/* Share button */}
-        <button onClick={() => { if (navigator.share) navigator.share({ title: "Genio QuieroComer", text: `Entra a la sala ${code}`, url: shareUrl }); else navigator.clipboard.writeText(shareUrl); }} style={{ padding: "10px 24px", background: "rgba(255,214,0,0.1)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#FFD600", cursor: "pointer", marginBottom: 24 }}>
+        <button onClick={() => { if (navigator.share) navigator.share({ title: "QuieroComer", text: `Entra a la sala ${code} en quierocomer.cl/grupo/${code}`, url: shareUrl }); else { navigator.clipboard.writeText(shareUrl); } }} style={{ padding: "10px 24px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", marginBottom: 24 }}>
           Compartir link
         </button>
 
         {/* Members */}
         <div style={{ width: "100%", maxWidth: 320 }}>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#666666", letterSpacing: "0.1em", marginBottom: 10 }}>MIEMBROS ({group?.members?.length ?? 0}/{group?.totalMembers ?? "?"})</p>
+          <p className="font-display" style={{ fontSize: "0.72rem", color: "#999", letterSpacing: "0.1em", marginBottom: 10 }}>MIEMBROS ({group?.members?.length ?? 0}/{group?.totalMembers ?? "?"})</p>
           {(group?.members ?? []).map((m: any) => (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #E0E0E0" }}>
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid #F0F0F0" }}>
               <span style={{ fontSize: 16 }}>{STATUS_EMOJI[m.estado]}</span>
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#0D0D0D", flex: 1 }}>{m.nombre}{m.sessionId === sid ? " (tu)" : ""}</span>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: "0.72rem", color: "#666666" }}>{STATUS_TEXT[m.estado]}</span>
+              <span className="font-display" style={{ fontSize: "0.88rem", color: "#0D0D0D", flex: 1 }}>{m.nombre}{m.sessionId === sid ? " (tú)" : ""}</span>
+              <span className="font-body" style={{ fontSize: "0.72rem", color: "#999" }}>{STATUS_TEXT[m.estado]}</span>
             </div>
           ))}
-          {(group?.members?.length ?? 0) < (group?.totalMembers ?? 0) && (
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", opacity: 0.3 }}>
+          {!allHere && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", opacity: 0.4 }}>
               <span style={{ fontSize: 16 }}>⏳</span>
-              <span style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Esperando...</span>
+              <span className="font-body" style={{ fontSize: "0.82rem", color: "#999" }}>Esperando...</span>
             </div>
           )}
         </div>
 
-        {/* Start without waiting */}
-        {(group?.members?.length ?? 0) >= 2 && (
-          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, padding: "12px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#0D0D0D", cursor: "pointer" }}>
+        {/* CTA */}
+        {allHere ? (
+          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, width: "100%", maxWidth: 320, padding: 16, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
+            Todos listos — Comenzar 🧞
+          </button>
+        ) : enoughToStart ? (
+          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, padding: "12px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
             Empezar sin esperar a todos
           </button>
-        )}
+        ) : null}
       </div>
     );
   }
