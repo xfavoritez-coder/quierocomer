@@ -241,7 +241,7 @@ export default function GeniePerfil() {
                     </div>
                   </div>
                   {/* Overlay with CTA */}
-                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.4)" }}>
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.15)" }}>
                     <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500 }}>Regístrate para ver qué aprendió el Genio de ti</p>
                     <Link href="/registro" style={{ display: "inline-block", padding: "12px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.85rem", textDecoration: "none" }}>Crear cuenta gratis</Link>
                   </div>
