@@ -10,12 +10,12 @@ export default function WeatherAmbience({ condition }: Props) {
       {condition === "clear" && <ClearEffect />}
       {condition === "night" && <NightEffect />}
       {condition === "cloudy" && <CloudyEffect />}
-      {condition === "rain" && <RainEffect count={12} speed={1.5} opacity={0.06} />}
-      {condition === "drizzle" && <RainEffect count={6} speed={2.5} opacity={0.04} />}
+      {condition === "rain" && <RainEffect count={12} speed={1.5} opacity={0.12} />}
+      {condition === "drizzle" && <RainEffect count={6} speed={2.5} opacity={0.08} />}
       {condition === "snow" && <SnowEffect />}
 
       <style>{`
-        @keyframes qc-pulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.4; } }
+        @keyframes qc-pulse { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.5; } }
         @keyframes qc-fall { 0% { transform: translateY(-20px); opacity: 0; } 20% { opacity: 1; } 100% { transform: translateY(100vh); opacity: 0; } }
         @keyframes qc-snow { 0% { transform: translateY(-10px) translateX(0); opacity: 0; } 10% { opacity: 1; } 100% { transform: translateY(100vh) translateX(20px); opacity: 0; } }
         @media (prefers-reduced-motion: reduce) {
@@ -29,9 +29,9 @@ export default function WeatherAmbience({ condition }: Props) {
 function ClearEffect() {
   return (
     <div style={{
-      position: "absolute", top: -60, right: -60,
-      width: 300, height: 300, borderRadius: "50%",
-      background: "radial-gradient(circle, rgba(255,214,0,0.08) 0%, transparent 70%)",
+      position: "absolute", top: -40, right: -40,
+      width: 250, height: 250, borderRadius: "50%",
+      background: "radial-gradient(circle, rgba(255,214,0,0.12) 0%, transparent 70%)",
     }} />
   );
 }
@@ -50,7 +50,7 @@ function NightEffect() {
         <div key={i} data-weather-anim style={{
           position: "absolute", top: s.top, left: s.left,
           width: 3, height: 3, borderRadius: "50%",
-          background: "#FFD600", opacity: 0.3,
+          background: "#FFD600", opacity: 0.4,
           animation: `qc-pulse ${3 + (i % 2)}s ease-in-out ${s.delay}s infinite`,
         }} />
       ))}
@@ -62,14 +62,17 @@ function CloudyEffect() {
   return (
     <>
       <div style={{
-        position: "absolute", top: "5%", left: "10%",
-        width: 300, height: 80, borderRadius: "50%",
-        background: "rgba(136,136,136,0.04)", filter: "blur(40px)",
-      }} />
+        position: "absolute", top: "3%", left: "8%",
+        fontSize: 16, opacity: 0.15,
+      }}>☁️</div>
       <div style={{
-        position: "absolute", top: "12%", right: "5%",
-        width: 250, height: 60, borderRadius: "50%",
-        background: "rgba(136,136,136,0.04)", filter: "blur(40px)",
+        position: "absolute", top: "6%", right: "12%",
+        fontSize: 14, opacity: 0.12,
+      }}>☁️</div>
+      <div style={{
+        position: "absolute", top: "4%", left: "40%",
+        width: 200, height: 60, borderRadius: "50%",
+        background: "rgba(0,0,0,0.03)", filter: "blur(30px)",
       }} />
     </>
   );
@@ -108,7 +111,7 @@ function SnowEffect() {
         <div key={i} data-weather-anim style={{
           position: "absolute", top: -10, left: f.left,
           width: f.size, height: f.size, borderRadius: "50%",
-          background: "rgba(100,100,100,0.3)",
+          background: "rgba(0,0,0,0.15)",
           animation: `qc-snow 4s linear ${f.delay}s infinite`,
         }} />
       ))}

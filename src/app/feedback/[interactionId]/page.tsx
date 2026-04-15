@@ -40,7 +40,7 @@ export default function GenieFeedback() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 48, marginBottom: 16 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#FFD600", textAlign: "center", marginBottom: 8 }}>Guardado</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>Guardado</h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 28 }}>El Genio ya lo sabe 🧞</p>
         <button onClick={() => router.push("/")} style={{ padding: "14px 32px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Volver a descubrir</button>
       </div>
@@ -55,7 +55,7 @@ export default function GenieFeedback() {
         <img src={dish.imagenUrl} alt={dish.nombre} style={{ width: 180, height: 180, objectFit: "cover", borderRadius: 20, marginBottom: 16 }} />
       )}
 
-      <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#FFD600", textAlign: "center", marginBottom: 8 }}>
+      <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>
         Como estuvo{dish ? ` ${dish.nombre}` : ""}?
       </h2>
       <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", textAlign: "center", marginBottom: 28 }}>Tu respuesta mejora las recomendaciones</p>

@@ -130,7 +130,7 @@ export default function GenieResult() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#FFD600", textAlign: "center", marginBottom: 12 }}>No encontre platos para ti</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", textAlign: "center", marginBottom: 12 }}>No encontre platos para ti</h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 24 }}>Intenta con otras preferencias o vuelve cuando haya mas opciones.</p>
         <button onClick={() => router.push("/")} style={{ padding: "14px 28px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>Intentar de nuevo</button>
       </div>
@@ -145,7 +145,7 @@ export default function GenieResult() {
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
           <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#FFD600", marginBottom: 4 }}>El Genio recomienda</h1>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>El Genio recomienda</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Basado en tus gustos y el momento</p>
         </div>
 
@@ -167,19 +167,19 @@ export default function GenieResult() {
                 ))}
               </div>
             )}
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.15rem", color: "#FFD600", marginBottom: 4 }}>{main.nombre}</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.15rem", color: "#0D0D0D", marginBottom: 4 }}>{main.nombre}</h2>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", marginBottom: 8 }}>
               {main.local.nombre} · {main.distanceLabel ?? main.local.comuna}
               {main.avgRating != null && ` · ⭐ ${main.avgRating.toFixed(1)} (${main.totalRatings})`}
             </p>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", marginBottom: 14 }}>${Number(main.precio).toLocaleString("es-CL")}</p>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", marginBottom: 14 }}>${Number(main.precio).toLocaleString("es-CL")}</p>
 
             <div style={{ display: "flex", gap: 8 }}>
               {main.local.lat && main.local.lng && (
                 <a href={`https://www.google.com/maps/dir/?api=1&destination=${main.local.lat},${main.local.lng}`} target="_blank" rel="noopener" style={{ flex: 1, padding: 12, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.3)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#3db89e", textAlign: "center", textDecoration: "none", fontWeight: 700 }}>Como llegar</a>
               )}
               {main.local.linkPedido && (
-                <a href={main.local.linkPedido} target="_blank" rel="noopener" style={{ flex: 1, padding: 12, background: "rgba(255,214,0,0.1)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#FFD600", textAlign: "center", textDecoration: "none", fontWeight: 700 }}>Pedir aqui</a>
+                <a href={main.local.linkPedido} target="_blank" rel="noopener" style={{ flex: 1, padding: 12, background: "rgba(255,214,0,0.1)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#0D0D0D", textAlign: "center", textDecoration: "none", fontWeight: 700 }}>Pedir aqui</a>
               )}
             </div>
           </div>

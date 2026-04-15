@@ -258,7 +258,7 @@ export default function GeniePage() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 20px" }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "#FFD600", textAlign: "center", marginBottom: 8 }}>El Genio quiere conocerte</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>El Genio quiere conocerte</h1>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 32, maxWidth: 400 }}>3 preguntas rapidas para recomendarte mejor.</p>
 
         {/* Progress */}
@@ -269,14 +269,14 @@ export default function GeniePage() {
         {/* Step 0: Diet type */}
         {obStep === 0 && (
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", textAlign: "center", marginBottom: 16 }}>Que tipo de alimentacion tienes?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Que tipo de alimentacion tienes?</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {DIET_TYPES.map(d => {
                 const active = dietType === d.v;
                 return (
                   <button key={d.v} onClick={() => { setDietType(d.v); setTimeout(() => setObStep(1), 200); }} style={{ padding: "16px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
                     <span style={{ fontSize: 22 }}>{d.emoji}</span>
-                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: active ? "#FFD600" : "#FFFFFF" }}>{d.l}</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: active ? "#0D0D0D" : "#0D0D0D" }}>{d.l}</span>
                   </button>
                 );
               })}
@@ -287,7 +287,7 @@ export default function GeniePage() {
         {/* Step 1: Allergies */}
         {obStep === 1 && (
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restriccion?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restriccion?</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {ALLERGIES.map(a => {
                 const active = allergies.includes(a.v);
@@ -311,7 +311,7 @@ export default function GeniePage() {
         {/* Step 2: Fitness mode */}
         {obStep === 2 && (
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", textAlign: "center", marginBottom: 16 }}>En que modo estas?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>En que modo estas?</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {FITNESS_OPTIONS.map(f => {
                 const active = fitnessMode === f.v;
@@ -319,7 +319,7 @@ export default function GeniePage() {
                   <button key={f.v} onClick={() => setFitnessMode(f.v)} style={{ padding: "14px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
                     <span style={{ fontSize: 22 }}>{f.emoji}</span>
                     <div>
-                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: active ? "#FFD600" : "#FFFFFF", margin: 0 }}>{f.l}</p>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: active ? "#0D0D0D" : "#0D0D0D", margin: 0 }}>{f.l}</p>
                       {f.sub && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: 0 }}>{f.sub}</p>}
                     </div>
                   </button>
@@ -341,7 +341,7 @@ export default function GeniePage() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 32, marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#FFD600", textAlign: "center", marginBottom: 24 }}>Estas solo o con alguien?</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>Estas solo o con alguien?</h2>
         <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
           <button onClick={goSolo} style={{ padding: "18px 20px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
             <span style={{ fontSize: 24 }}>🧑</span>
@@ -364,10 +364,10 @@ export default function GeniePage() {
         {pendingFeedback.dishImage && (
           <img src={pendingFeedback.dishImage} alt="" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 20, marginBottom: 16 }} />
         )}
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#FFD600", textAlign: "center", marginBottom: 6 }}>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>
           Como estuvo?
         </h2>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#FFD600", textAlign: "center", marginBottom: 20 }}>{pendingFeedback.dishName}</p>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#0D0D0D", textAlign: "center", marginBottom: 20 }}>{pendingFeedback.dishName}</p>
 
         <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: 340 }}>
           {([["LOVED", "😍", "Me encanto"], ["MEH", "😐", "Regular"], ["DISLIKED", "😕", "No era lo mio"]] as const).map(([score, emoji, label]) => (
@@ -401,7 +401,7 @@ export default function GeniePage() {
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <p style={{ fontSize: 32, marginBottom: 6 }}>🧞</p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.6rem)", color: "#FFD600", marginBottom: 6 }}>Qué te llama la atención?</h1>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.6rem)", color: "#0D0D0D", marginBottom: 6 }}>Qué te llama la atención?</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666" }}>Toca los platos que te llamen</p>
         </div>
 
@@ -455,12 +455,12 @@ export default function GeniePage() {
                 <img src={previewDish.imagenUrl} alt={previewDish.nombre} style={{ width: "100%", height: 280, objectFit: "cover" }} />
               )}
               <div style={{ padding: "16px 20px" }}>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#FFD600", marginBottom: 4 }}>{previewDish.nombre}</h3>
+                <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 4 }}>{previewDish.nombre}</h3>
                 <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666", marginBottom: 8 }}>{previewDish.local?.nombre} · ${Number(previewDish.precio).toLocaleString("es-CL")}</p>
                 {previewDish.ingredients?.length > 0 && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
                     {previewDish.ingredients.map((ing: string) => (
-                      <span key={ing} style={{ padding: "2px 8px", borderRadius: 99, background: "#EEEEEE", border: "1px solid #E0E0E0", fontFamily: "var(--font-body)", fontSize: "0.7rem", color: "#FFD600" }}>{ing}</span>
+                      <span key={ing} style={{ padding: "2px 8px", borderRadius: 99, background: "#F5F5F5", border: "1px solid #E0E0E0", fontFamily: "var(--font-body)", fontSize: "0.7rem", color: "#666666" }}>{ing}</span>
                     ))}
                   </div>
                 )}

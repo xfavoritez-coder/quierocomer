@@ -108,7 +108,7 @@ export default function GeniePerfil() {
 
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <p style={{ fontSize: 32, marginBottom: 4 }}>👤</p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#FFD600", marginBottom: 4 }}>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>
             {user ? user.nombre : "Invitado"}
           </h1>
           {!user && (

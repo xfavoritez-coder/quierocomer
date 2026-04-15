@@ -163,7 +163,7 @@ export default function GroupRoom() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#FFD600", marginBottom: 4 }}>Unirse a la sala</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", marginBottom: 4 }}>Unirse a la sala</h2>
         <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#FFD600", letterSpacing: "0.2em", marginBottom: 20 }}>{code}</p>
         <div style={{ width: "100%", maxWidth: 300 }}>
           <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "12px 16px", background: "rgba(0,0,0,0.3)", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontFamily: "var(--font-body)", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
@@ -189,7 +189,7 @@ export default function GroupRoom() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#FFD600", marginBottom: 4 }}>Sala de grupo</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>Sala de grupo</h2>
         <p style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "#FFD600", letterSpacing: "0.3em", marginBottom: 16 }}>{code}</p>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", marginBottom: 20, textAlign: "center" }}>Comparte este codigo con tu grupo</p>
 
@@ -233,7 +233,7 @@ export default function GroupRoom() {
         <div style={{ maxWidth: 500, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <p style={{ fontSize: 28, marginBottom: 4 }}>🧞</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#FFD600", marginBottom: 4 }}>Qué te llama la atención?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#0D0D0D", marginBottom: 4 }}>Qué te llama la atención?</h2>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666" }}>Sala {code} · Elige tus platos</p>
           </div>
 
@@ -277,7 +277,7 @@ export default function GroupRoom() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#FFD600", marginBottom: 16 }}>Esperando al grupo...</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 16 }}>Esperando al grupo...</h2>
 
         <div style={{ width: "100%", maxWidth: 320 }}>
           {(group?.members ?? []).map((m: any) => (
@@ -313,13 +313,13 @@ export default function GroupRoom() {
         <div style={{ maxWidth: 500, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 20 }}>
             <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#FFD600", marginBottom: 4 }}>Vayan a</h1>
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>Vayan a</h1>
           </div>
 
           {/* Local card */}
           <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 20, padding: "20px", marginBottom: 16, textAlign: "center" }}>
             {best.local.logoUrl && <img src={best.local.logoUrl} alt="" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", marginBottom: 10 }} />}
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#FFD600", marginBottom: 4 }}>{best.local.nombre}</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", marginBottom: 4 }}>{best.local.nombre}</h2>
             <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", marginBottom: 12 }}>
               {best.local.direccion}{best.local.comuna ? `, ${best.local.comuna}` : ""}{best.local.distanceLabel ? ` · ${best.local.distanceLabel}` : ""}
             </p>
@@ -338,7 +338,7 @@ export default function GroupRoom() {
               <div key={m.id} style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: "0.72rem", color: m.sessionId === sid ? "#3db89e" : "#666666", marginBottom: 2 }}>{m.nombre}{m.sessionId === sid ? " (tu)" : ""}</p>
-                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#FFD600", marginBottom: 2 }}>{dish.nombre}</p>
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#0D0D0D", marginBottom: 2 }}>{dish.nombre}</p>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666" }}>${Number(dish.precio).toLocaleString("es-CL")}</p>
                 </div>
                 {dish.imagenUrl && <img src={dish.imagenUrl} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />}

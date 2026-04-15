@@ -39,7 +39,7 @@ export default function CrearGrupo() {
     <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 20px" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <p style={{ fontSize: 40, textAlign: "center", marginBottom: 8 }}>🧞</p>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,4vw,1.7rem)", color: "#FFD600", textAlign: "center", marginBottom: 8 }}>Con quien estas?</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,4vw,1.7rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>Con quien estas?</h1>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", textAlign: "center", marginBottom: 28 }}>Cada uno elige lo que le tinca y el Genio encuentra donde ir juntos</p>
 
         {step === "type" && (
@@ -69,7 +69,7 @@ export default function CrearGrupo() {
 
         {step === "count" && (
           <div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#FFD600", textAlign: "center", marginBottom: 20 }}>Cuantos son?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 20 }}>Cuantos son?</h2>
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 24 }}>
               {[2, 3, 4, 5, 6].map(n => (
                 <button key={n} onClick={() => setCount(n)} style={{ width: 52, height: 52, borderRadius: 14, background: count === n ? "rgba(255,214,0,0.15)" : "#F5F5F5", border: count === n ? "1px solid #FFD600" : "1px solid #E0E0E0", fontFamily: "var(--font-display)", fontSize: "1.1rem", color: count === n ? "#FFD600" : "#FFFFFF", cursor: "pointer" }}>{n}</button>

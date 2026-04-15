@@ -18,7 +18,7 @@ export default function GenieContext() {
     <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px 20px" }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <p style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#FFD600", textAlign: "center", marginBottom: 24 }}>Cuanta hambre tienes?</h2>
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>Cuanta hambre tienes?</h2>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {[
@@ -31,7 +31,7 @@ export default function GenieContext() {
               <button key={o.v} onClick={() => select(o.v)} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
                 <span style={{ fontSize: 28 }}>{o.emoji}</span>
                 <div>
-                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: active ? "#FFD600" : "#FFFFFF", display: "block" }}>{o.l}</span>
+                  <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: active ? "#0D0D0D" : "#0D0D0D", display: "block" }}>{o.l}</span>
                   <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666" }}>{o.sub}</span>
                 </div>
               </button>
