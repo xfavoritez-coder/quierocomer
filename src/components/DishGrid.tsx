@@ -6,6 +6,32 @@ import DishPlaceholder from "@/components/DishPlaceholder";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Dish = any;
 
+const CATEGORY_BADGE: Record<string, { emoji: string; label: string }> = {
+  SUSHI: { emoji: "🍣", label: "Sushi" },
+  MAIN_COURSE: { emoji: "🍽", label: "Fondo" },
+  SALAD: { emoji: "🥗", label: "Ensalada" },
+  SOUP: { emoji: "🍲", label: "Sopa" },
+  BREAKFAST: { emoji: "🍳", label: "Desayuno" },
+  BRUNCH: { emoji: "🥑", label: "Brunch" },
+  PASTA: { emoji: "🍝", label: "Pasta" },
+  PIZZA: { emoji: "🍕", label: "Pizza" },
+  BURGER: { emoji: "🍔", label: "Burger" },
+  SANDWICH: { emoji: "🥪", label: "Sándwich" },
+  SEAFOOD: { emoji: "🦐", label: "Mariscos" },
+  DESSERT: { emoji: "🍮", label: "Postre" },
+  ICE_CREAM: { emoji: "🍦", label: "Helado" },
+  VEGETARIAN: { emoji: "🥦", label: "Veggie" },
+  VEGAN: { emoji: "🌱", label: "Vegano" },
+  COFFEE: { emoji: "☕", label: "Café" },
+  JUICE: { emoji: "🧃", label: "Jugo" },
+  DRINK: { emoji: "🥤", label: "Bebida" },
+  SMOOTHIE: { emoji: "🥤", label: "Smoothie" },
+  COCKTAIL: { emoji: "🍹", label: "Cóctel" },
+  BEER: { emoji: "🍺", label: "Cerveza" },
+  WINE: { emoji: "🍷", label: "Vino" },
+  OTHER: { emoji: "🍴", label: "Plato" },
+};
+
 interface Props {
   dishes: Dish[];
   selected: Set<string>;
@@ -77,7 +103,12 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
               <div style={{ height: 200 }}><DishPlaceholder categoria={previewDish.categoria} /></div>
             )}
             <div style={{ padding: "16px 20px" }}>
-              <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 2 }}>{previewDish.nombre}</h3>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+                <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", margin: 0 }}>{previewDish.nombre}</h3>
+                {(() => { const cat = CATEGORY_BADGE[previewDish.categoria] ?? CATEGORY_BADGE.OTHER; return (
+                  <span style={{ background: "#F5F5F5", color: "#0D0D0D", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, padding: "4px 10px", borderRadius: 99, border: "1px solid #E0E0E0", whiteSpace: "nowrap", flexShrink: 0 }}>{cat.emoji} {cat.label}</span>
+                ); })()}
+              </div>
               <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 6 }}>{previewDish.local?.nombre} · <span style={{ color: "#0D0D0D" }}>${Number(previewDish.precio).toLocaleString("es-CL")}</span></p>
               {previewDish.descripcion && (
                 <p className="font-body" style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.5, marginBottom: 10 }}>{previewDish.descripcion}</p>

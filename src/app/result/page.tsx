@@ -4,10 +4,35 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
-import HighlightText from "@/components/ui/HighlightText";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rec = any;
+
+const CATEGORY_BADGE: Record<string, { emoji: string; label: string }> = {
+  SUSHI: { emoji: "🍣", label: "Sushi" },
+  MAIN_COURSE: { emoji: "🍽", label: "Fondo" },
+  SALAD: { emoji: "🥗", label: "Ensalada" },
+  SOUP: { emoji: "🍲", label: "Sopa" },
+  BREAKFAST: { emoji: "🍳", label: "Desayuno" },
+  BRUNCH: { emoji: "🥑", label: "Brunch" },
+  PASTA: { emoji: "🍝", label: "Pasta" },
+  PIZZA: { emoji: "🍕", label: "Pizza" },
+  BURGER: { emoji: "🍔", label: "Burger" },
+  SANDWICH: { emoji: "🥪", label: "Sándwich" },
+  SEAFOOD: { emoji: "🦐", label: "Mariscos" },
+  DESSERT: { emoji: "🍮", label: "Postre" },
+  ICE_CREAM: { emoji: "🍦", label: "Helado" },
+  VEGETARIAN: { emoji: "🥦", label: "Veggie" },
+  VEGAN: { emoji: "🌱", label: "Vegano" },
+  COFFEE: { emoji: "☕", label: "Café" },
+  JUICE: { emoji: "🧃", label: "Jugo" },
+  DRINK: { emoji: "🥤", label: "Bebida" },
+  SMOOTHIE: { emoji: "🥤", label: "Smoothie" },
+  COCKTAIL: { emoji: "🍹", label: "Cóctel" },
+  BEER: { emoji: "🍺", label: "Cerveza" },
+  WINE: { emoji: "🍷", label: "Vino" },
+  OTHER: { emoji: "🍴", label: "Plato" },
+};
 
 const TAG_COLORS: Record<string, string> = {
   "Mas pedido": "#ec4899",
@@ -153,7 +178,7 @@ export default function GenieResult() {
           <a href="/" style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#999", textDecoration: "none" }}>← Empezar de nuevo</a>
         </div>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>Esto es lo que el Genio <HighlightText>eligió para ti</HighlightText></h1>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>Esto es lo que el Genio eligió para ti</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Basado en tus gustos y el momento</p>
         </div>
 
@@ -267,7 +292,12 @@ export default function GenieResult() {
                 <Image src={previewRec.imagenUrl} alt={previewRec.nombre} width={400} height={260} sizes="90vw" style={{ width: "100%", height: 260, objectFit: "cover" }} />
               )}
               <div style={{ padding: "16px 20px" }}>
-                <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 2 }}>{previewRec.nombre}</h3>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 2 }}>
+                  <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", margin: 0 }}>{previewRec.nombre}</h3>
+                  {(() => { const cat = CATEGORY_BADGE[previewRec.categoria] ?? CATEGORY_BADGE.OTHER; return (
+                    <span style={{ background: "#F5F5F5", color: "#0D0D0D", fontFamily: "var(--font-body)", fontWeight: 500, fontSize: 11, padding: "4px 10px", borderRadius: 99, border: "1px solid #E0E0E0", whiteSpace: "nowrap", flexShrink: 0 }}>{cat.emoji} {cat.label}</span>
+                  ); })()}
+                </div>
                 {previewRec.local?.nombre && (
                   <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 6 }}>{previewRec.local.nombre}</p>
                 )}

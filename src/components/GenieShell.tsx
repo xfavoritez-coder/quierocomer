@@ -55,10 +55,10 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
           {NAV.map(n => {
             const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
             return (
-              <Link key={n.href} href={n.href} style={{ flex: 1, maxWidth: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "8px 0 6px", textDecoration: "none", color: active ? "#0D0D0D" : "#AAAAAA" }}>
-                {active && <div style={{ width: 20, height: 3, borderRadius: 99, background: "#FFD600", marginBottom: 2 }} />}
+              <Link key={n.href} href={n.href} style={{ flex: 1, maxWidth: 120, display: "flex", flexDirection: "column", alignItems: "center", gap: 2, padding: "8px 0 6px", textDecoration: "none" }}>
+                <div style={{ width: 20, height: 3, borderRadius: 99, background: active ? "#FFD600" : "transparent", marginBottom: 2 }} />
                 <span style={{ fontSize: 18 }}>{n.icon}</span>
-                <span className="font-display" style={{ fontSize: "0.58rem", letterSpacing: "0.06em", fontWeight: active ? 700 : 400 }}>{n.label}</span>
+                <span className="font-display" style={{ fontSize: "0.58rem", letterSpacing: "0.06em", fontWeight: active ? 700 : 400, color: active ? "#0D0D0D" : "#888888" }}>{n.label}</span>
               </Link>
             );
           })}

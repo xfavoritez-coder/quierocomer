@@ -51,53 +51,64 @@ function getGreeting(): string {
 }
 
 function getSubtitle(): string {
-  const h = new Date().getHours();
-  if (h >= 6 && h < 10) {
-    const msgs = [
-      "Hora de partir el día con algo rico",
-      "Un buen desayuno cambia todo",
-      "¿Algo dulce o salado para empezar?",
-    ];
-    return msgs[Math.floor(Math.random() * msgs.length)];
-  }
-  if (h >= 10 && h < 12) {
-    const msgs = [
-      "¿Brunch? El Genio tiene ideas",
-      "Todavía hay tiempo para un desayuno tardío",
-      "Algo entre desayuno y almuerzo, perfecto",
-    ];
-    return msgs[Math.floor(Math.random() * msgs.length)];
-  }
-  if (h >= 12 && h < 16) {
-    const msgs = [
-      "Es hora de almorzar, elige lo que te tiente",
-      "El Genio sabe lo que necesitas al mediodía",
-      "Almuerzo: la comida más importante del día laboral",
-    ];
-    return msgs[Math.floor(Math.random() * msgs.length)];
-  }
-  if (h >= 16 && h < 19) {
-    const msgs = [
-      "¿Once, snack o algo dulce?",
-      "La hora perfecta para un antojo",
-      "Algo liviano para la tarde",
-    ];
-    return msgs[Math.floor(Math.random() * msgs.length)];
-  }
-  if (h >= 19 && h < 23) {
-    const msgs = [
+  const hour = new Date().getHours();
+  const minutes = new Date().getMinutes();
+  const timeDecimal = hour + minutes / 60;
+
+  const franja =
+    timeDecimal >= 6    && timeDecimal < 10   ? 'morning' :
+    timeDecimal >= 10   && timeDecimal < 12.5 ? 'brunch' :
+    timeDecimal >= 12.5 && timeDecimal < 17   ? 'lunch' :
+    timeDecimal >= 17   && timeDecimal < 19   ? 'once' :
+    timeDecimal >= 19   && timeDecimal < 23   ? 'dinner' :
+    'latenight';
+
+  const mensajes: Record<string, string[]> = {
+    morning: [
+      "Buen momento para un desayuno",
+      "El día recién empieza, hay que cargarlo bien",
+      "¿Con qué arrancamos hoy?",
+      "Mañana de esas que piden algo rico",
+      "El Genio ya sabe que buscas desayunar",
+    ],
+    brunch: [
+      "Hora del brunch, el mejor momento",
+      "¿Un brunch para arrancar bien el día?",
+      "El Genio tiene ideas para el brunch",
+      "Mañana perfecta para un brunch",
+      "Brunch, porque el desayuno se quedó corto",
+    ],
+    lunch: [
+      "¿Qué se te antoja para almorzar?",
+      "Almuerzo, la hora más importante del día",
+      "El estómago ya está hablando",
+      "Algo bueno para el almuerzo, vamos",
+      "El Genio tiene ideas para el almuerzo",
+    ],
+    once: [
+      "Algo para la once quizás",
+      "Esa hora entre el almuerzo y la cena",
+      "¿Un café con algo dulce?",
+      "La once no se negocia",
+      "Hora de algo rico para la tarde",
+    ],
+    dinner: [
+      "Una buena noche para cenar bien",
       "¿Qué se te antoja para la cena?",
-      "El Genio te ayuda a cerrar el día bien",
-      "Hora de cenar, elige sin culpa",
-    ];
-    return msgs[Math.floor(Math.random() * msgs.length)];
-  }
-  // latenight 23-06
-  const msgs = [
-    "Antojo nocturno, el Genio no juzga",
-    "¿Hambre a esta hora? El Genio entiende",
-    "Algo para el alma nocturna",
-  ];
+      "El Genio tiene algo bueno para la noche",
+      "Noche de esas que piden algo especial",
+      "Termina bien el día con algo rico",
+    ],
+    latenight: [
+      "¿Antojo de noche?",
+      "El Genio no duerme, tú tampoco",
+      "Noche larga, hay que comer algo",
+      "¿Qué se come a esta hora?",
+      "Antojo nocturno, el Genio entiende",
+    ],
+  };
+
+  const msgs = mensajes[franja];
   return msgs[Math.floor(Math.random() * msgs.length)];
 }
 
@@ -539,11 +550,11 @@ export default function GeniePage() {
         <div style={{ textAlign: "center", marginBottom: 10 }}>
           <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
           <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
-          <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginTop: 4 }}>{getSubtitle()}</p>
+          <p className="font-body" style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{getSubtitle()}</p>
         </div>
 
         {/* Category filters */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", msOverflowStyle: "none" }}>
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, justifyContent: "center" }}>
           {([
             { v: "PLATOS" as const, emoji: "🍽", label: "Platos" },
             { v: "DULCE" as const, emoji: "🍰", label: "Dulce" },

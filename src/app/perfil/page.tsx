@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-import HighlightText from "@/components/ui/HighlightText";
+
 
 const DIET_TYPES = [
   { v: "como de todo", l: "Como de todo" },
@@ -166,9 +166,9 @@ export default function GeniePerfil() {
                   <span style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(61,184,158,0.1)", fontSize: "0.72rem", color: "#3db89e" }}>Queso</span>
                 </div>
               </div>
-              {/* Overlay with CTA */}
-              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.15)", padding: "0 20px" }}>
-                <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500, textAlign: "center" }}><HighlightText>Regístrate para ver todo lo que el Genio aprendió de ti</HighlightText></p>
+              {/* Overlay with CTA — low opacity so blur shows through */}
+              <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.10)", padding: "0 20px" }}>
+                <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500, textAlign: "center" }}>Regístrate para descubrir lo que el Genio aprendió de ti</p>
                 <Link href="/registro" style={{ display: "block", width: "100%", padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.88rem", textDecoration: "none", textAlign: "center", boxSizing: "border-box" }}>Crear cuenta gratis</Link>
               </div>
             </div>
