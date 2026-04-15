@@ -229,7 +229,7 @@ export default function GeniePerfil() {
               {!user ? (
                 <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "24px 16px", position: "relative", overflow: "hidden" }}>
                   {/* Blurred fake data */}
-                  <div style={{ filter: "blur(8px)", opacity: 0.5, pointerEvents: "none" }}>
+                  <div style={{ filter: "blur(6px)", opacity: 0.3, pointerEvents: "none" }}>
                     <p style={{ fontSize: 11, color: "#666", fontWeight: 700, marginBottom: 6 }}>Te interesa</p>
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
                       <span style={{ padding: "3px 8px", borderRadius: 99, background: "#E0E0E0", fontSize: "0.72rem", color: "#999" }}>Sushi (5)</span>

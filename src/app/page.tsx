@@ -61,6 +61,7 @@ export default function GeniePage() {
   const router = useRouter();
   const { user } = useAuth();
   const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "dishes" | "solo_or_group">("loading");
+  const [activeFilter, setActiveFilter] = useState<"PLATOS" | "DULCE" | "BEBESTIBLE">("PLATOS");
   const [pendingFeedback, setPendingFeedback] = useState<{ interactionId: string; dishName: string; dishImage: string | null } | null>(null);
 
   // Onboarding state
@@ -193,13 +194,13 @@ export default function GeniePage() {
   // Load dishes when entering dishes phase
   useEffect(() => {
     if (phase === "dishes") loadDishes();
-  }, [phase]);
+  }, [phase, activeFilter]);
 
   const loadDishes = async () => {
     setLoadingDishes(true);
     const sid = getSessionId();
     const exclude = seenIdsRef.current.join(",");
-    const params = new URLSearchParams({ sessionId: sid });
+    const params = new URLSearchParams({ sessionId: sid, category: activeFilter });
     if (user?.id) params.set("userId", user.id);
     if (exclude) params.set("exclude", exclude);
     // Pass diet restrictions for guests (not in DB)
@@ -479,27 +480,24 @@ export default function GeniePage() {
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
-        <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
-          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", marginBottom: 8 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.greeting}</p>}
-          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D", marginBottom: 4 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
-          <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
+        {/* Compact header */}
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <p className="font-body" style={{ fontSize: 13, color: "#888", marginBottom: 6 }}>🧞 {(() => { const h = new Date().getHours(); const greeting = h >= 6 && h < 12 ? "Buenos días" : h >= 12 && h < 19 ? "Buenas tardes" : "Buenas noches"; const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${greeting}, ${n}` : "Hola"; })()}</p>
+          <h1 className="font-display" style={{ fontSize: 18, fontWeight: 700, color: "#0D0D0D", marginBottom: 10 }}>¿Qué te llama la atención?</h1>
         </div>
 
-        <button onClick={async () => {
-          setLoadingDishes(true);
-          const sid = getSessionId();
-          const params = new URLSearchParams({ sessionId: sid, desserts: "true" });
-          if (user?.id) params.set("userId", user.id);
-          try {
-            const res = await fetch(`/api/genie/dishes?${params}`);
-            const data = await res.json();
-            if (Array.isArray(data) && data.length > 0) setDishes(data);
-          } catch {}
-          setLoadingDishes(false);
-        }} style={{ display: "block", margin: "0 auto 16px", padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
-          Solo quiero algo dulce 🍰
-        </button>
+        {/* Category filters */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", scrollbarWidth: "none", WebkitOverflowScrolling: "touch", msOverflowStyle: "none" }}>
+          {([
+            { v: "PLATOS" as const, emoji: "🍽", label: "Platos" },
+            { v: "DULCE" as const, emoji: "🍰", label: "Dulce" },
+            { v: "BEBESTIBLE" as const, emoji: "☕", label: "Bebestible" },
+          ]).map(f => (
+            <button key={f.v} onClick={() => { setActiveFilter(f.v); setDishes([]); seenIdsRef.current = []; }} style={{ padding: "8px 16px", background: activeFilter === f.v ? "#0D0D0D" : "#F5F5F5", color: activeFilter === f.v ? "#FFF" : "#0D0D0D", border: activeFilter === f.v ? "1px solid #0D0D0D" : "1px solid #E0E0E0", borderRadius: 99, fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {f.emoji} {f.label}
+            </button>
+          ))}
+        </div>
 
         <DishGrid dishes={dishes} selected={selected} onToggleSelect={toggleSelect} loading={loadingDishes} />
 

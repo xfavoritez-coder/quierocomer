@@ -18,6 +18,11 @@ const CAT_MAP: Record<string, { emoji: string; label: string }> = {
   VEGAN: { emoji: "🌱", label: "VEGANO" },
   COFFEE: { emoji: "☕", label: "CAFÉ" },
   JUICE: { emoji: "🧃", label: "JUGO" },
+  DRINK: { emoji: "🥤", label: "BEBIDA" },
+  SMOOTHIE: { emoji: "🥤", label: "SMOOTHIE" },
+  COCKTAIL: { emoji: "🍹", label: "CÓCTEL" },
+  BEER: { emoji: "🍺", label: "CERVEZA" },
+  WINE: { emoji: "🍷", label: "VINO" },
   STARTER: { emoji: "🥢", label: "ENTRADA" },
   COMBO: { emoji: "🎁", label: "COMBO" },
   SHARING: { emoji: "🍢", label: "COMPARTIR" },
@@ -28,9 +33,9 @@ const CAT_MAP: Record<string, { emoji: string; label: string }> = {
 export default function DishPlaceholder({ categoria }: { categoria?: string }) {
   const cat = CAT_MAP[categoria ?? ""] ?? CAT_MAP.OTHER;
   return (
-    <div style={{ width: "100%", height: "100%", background: "#0D0D0D", borderRadius: 10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
-      <span style={{ fontSize: 32 }}>{cat.emoji}</span>
-      <span className="font-display" style={{ fontSize: 9, color: "#FFD600", letterSpacing: "0.5px", fontWeight: 700 }}>{cat.label}</span>
+    <div style={{ width: "100%", height: "100%", background: "#F0F0F0", borderRadius: 10, border: "1px solid #E0E0E0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 4 }}>
+      <span style={{ fontSize: 28, opacity: 0.4 }}>{cat.emoji}</span>
+      <span className="font-display" style={{ fontSize: 9, color: "#0D0D0D", letterSpacing: "0.5px", fontWeight: 700, opacity: 0.4 }}>{cat.label}</span>
     </div>
   );
 }

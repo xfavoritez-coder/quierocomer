@@ -10,14 +10,21 @@ export async function GET(req: NextRequest) {
     const excludeIds = exclude ? exclude.split(",").filter(Boolean) : [];
     const diet = req.nextUrl.searchParams.get("diet");
     const dietRestrictions = diet ? diet.split(",").filter(Boolean) : undefined;
-    const desserts = req.nextUrl.searchParams.get("desserts") === "true";
+    const category = req.nextUrl.searchParams.get("category") ?? "PLATOS";
 
-    if (desserts) {
-      // Return desserts/sweets directly
+    // Category filter mapping
+    const CAT_MAP: Record<string, string[]> = {
+      PLATOS: ["MAIN_COURSE", "PASTA", "PIZZA", "SUSHI", "BURGER", "SANDWICH", "SEAFOOD", "SALAD", "SOUP", "STARTER", "VEGETARIAN", "VEGAN", "BRUNCH", "BREAKFAST", "WOK", "SHARING", "COMBO"],
+      DULCE: ["DESSERT", "ICE_CREAM"],
+      BEBESTIBLE: ["COFFEE", "TEA", "JUICE", "DRINK", "SMOOTHIE", "COCKTAIL", "BEER", "WINE"],
+    };
+
+    if (category === "DULCE" || category === "BEBESTIBLE") {
+      const allowedCats = CAT_MAP[category];
       const dishes = await prisma.menuItem.findMany({
         where: {
           isAvailable: true,
-          categoria: { in: ["DESSERT", "ICE_CREAM"] },
+          categoria: { in: allowedCats },
         },
         include: {
           ingredientTags: { include: { ingredient: true } },
