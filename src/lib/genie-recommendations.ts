@@ -158,9 +158,11 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
         score += Math.round(overlapRatio * 10); // up to +10 for 100% overlap
       }
 
-      // Category match — important signal
+      // Category match — DOMINANT signal: if user picked brunch, recommend brunch
       if (selectedCategoryCounts[c.categoria]) {
-        score += 8; // Always strong: if user picked sushi, recommend sushi
+        score += 20;
+        // Extra boost proportional to how many times user picked this category
+        score += (selectedCategoryCounts[c.categoria] - 1) * 5;
       }
 
       // Same local boost

@@ -125,9 +125,20 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
               {previewDish.totalLoved > 0 && (
                 <p className="font-body" style={{ fontSize: "0.78rem", color: "#3db89e", marginBottom: 10 }}>{previewDish.totalLoved} personas lo recomiendan</p>
               )}
-              <button onClick={() => { onToggleSelect(previewDish.id); setPreviewDish(null); }} style={{ width: "100%", padding: 14, background: selected.has(previewDish.id) ? "#F5F5F5" : "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", color: selected.has(previewDish.id) ? "#ff6b6b" : "#0D0D0D", cursor: "pointer" }}>
-                {selected.has(previewDish.id) ? "Quitar selección" : "Me llama la atención"}
-              </button>
+              {!selected.has(previewDish.id) ? (
+                <button onClick={() => { onToggleSelect(previewDish.id); setPreviewDish(null); }} style={{ width: "100%", padding: 14, background: "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", color: "#0D0D0D", cursor: "pointer" }}>
+                  Me llama la atención
+                </button>
+              ) : (
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ width: "100%", padding: 14, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.3)", borderRadius: 99, fontWeight: 600, fontSize: "0.88rem", color: "#3db89e", marginBottom: 8 }}>
+                    Seleccionado ✓
+                  </div>
+                  <button onClick={() => { onToggleSelect(previewDish.id); setPreviewDish(null); }} style={{ background: "transparent", border: "none", fontSize: "0.75rem", color: "#999", cursor: "pointer", padding: 4 }}>
+                    Quitar selección
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </>,

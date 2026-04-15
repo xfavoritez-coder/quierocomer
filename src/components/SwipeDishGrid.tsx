@@ -14,19 +14,26 @@ interface Props {
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
   onLoadMore: (currentPageDishes: Dish[]) => Promise<Dish[]>;
+  onProceed?: () => void;
   loading?: boolean;
 }
 
-export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect, onLoadMore, loading }: Props) {
+export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect, onLoadMore, onProceed, loading }: Props) {
   const [pages, setPages] = useState<Page[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [swiping, setSwiping] = useState(false);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [loadingNext, setLoadingNext] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(true);
   // Slide transition: "idle" | "exit-left" | "exit-right"
   const [slideState, setSlideState] = useState<"idle" | "exit-left" | "exit-right">("idle");
   const [enterFrom, setEnterFrom] = useState<"left" | "right" | null>(null);
+
+  // Detect touch vs desktop
+  useEffect(() => {
+    setIsTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
+  }, []);
 
   const trackRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -244,12 +251,9 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
 
   const currentDishes = pages[currentPage]?.dishes ?? [];
 
-  // Nudge messages based on selection count
-  const nudgeMessage = selected.size >= 5
-    ? "Ya tenemos suficiente, ¿vemos qué encontró el Genio?"
-    : selected.size >= 3
-    ? "El Genio ya tiene ideas para ti"
-    : null;
+  // Show nudge modal when user has enough selections
+  const [nudgeDismissed, setNudgeDismissed] = useState(false);
+  const showNudgeModal = selected.size >= 3 && !nudgeDismissed && !loadingNext;
 
   if (loading && pages.length === 0) {
     return <p className="font-body" style={{ color: "#999", textAlign: "center", padding: 40 }}>Cargando platos...</p>;
@@ -282,8 +286,8 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
 
   return (
     <div style={{ position: "relative", userSelect: "none" }}>
-      {/* Swipe hint overlay */}
-      {showHint && (
+      {/* Swipe hint overlay — touch only */}
+      {showHint && isTouchDevice && (
         <div
           onClick={dismissHint}
           style={{
@@ -306,6 +310,16 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
             }
           `}</style>
         </div>
+      )}
+
+      {/* Desktop arrows */}
+      {!isTouchDevice && !loadingNext && slideState === "idle" && (
+        <>
+          {currentPage > 0 && (
+            <button onClick={() => transitionToPage("prev")} style={{ position: "absolute", left: -44, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 36, height: 36, borderRadius: "50%", background: "#FFF", border: "1px solid #E0E0E0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "#0D0D0D" }}>←</button>
+          )}
+          <button onClick={() => transitionToPage("next")} style={{ position: "absolute", right: -44, top: "50%", transform: "translateY(-50%)", zIndex: 10, width: 36, height: 36, borderRadius: "50%", background: "#FFF", border: "1px solid #E0E0E0", boxShadow: "0 2px 8px rgba(0,0,0,0.08)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, color: "#0D0D0D" }}>→</button>
+        </>
       )}
 
       {/* Loading state — shown when next page is being fetched */}
@@ -359,20 +373,29 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
         </div>
       )}
 
-      {/* Nudge message */}
-      {nudgeMessage && (
+      {/* Nudge modal — appears when user has 3+ selections */}
+      {showNudgeModal && (
         <div style={{
-          textAlign: "center", padding: "8px 16px", marginTop: 4,
-          background: selected.size >= 5 ? "rgba(255,214,0,0.15)" : "transparent",
-          borderRadius: 12, transition: "all 0.3s ease",
+          position: "absolute", inset: 0, zIndex: 12,
+          background: "rgba(0,0,0,0.5)", borderRadius: 14,
+          display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+          gap: 12, padding: 20,
         }}>
-          <p className="font-display" style={{
-            fontSize: "0.82rem",
-            color: selected.size >= 5 ? "#0D0D0D" : "#999",
-            fontWeight: selected.size >= 5 ? 600 : 400,
-          }}>
-            🧞 {nudgeMessage}
+          <p style={{ fontSize: 36 }}>🧞</p>
+          <p className="font-display" style={{ color: "#FFF", fontSize: "1rem", textAlign: "center", fontWeight: 700 }}>
+            {selected.size >= 5 ? "El Genio ya sabe qué recomendarte" : "El Genio ya tiene ideas para ti"}
           </p>
+          <p className="font-body" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", textAlign: "center" }}>
+            {selected.size} plato{selected.size > 1 ? "s" : ""} seleccionado{selected.size > 1 ? "s" : ""}
+          </p>
+          {onProceed && (
+            <button onClick={onProceed} style={{ padding: "14px 32px", background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", marginTop: 4 }}>
+              Ver sugerencia del Genio →
+            </button>
+          )}
+          <button onClick={() => setNudgeDismissed(true)} style={{ padding: "8px 16px", background: "transparent", border: "none", color: "rgba(255,255,255,0.6)", fontSize: "0.78rem", cursor: "pointer", fontFamily: "var(--font-body)" }}>
+            Quiero seguir viendo platos
+          </button>
         </div>
       )}
     </div>

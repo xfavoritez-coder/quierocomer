@@ -122,9 +122,10 @@ function getVisitId(): string {
 export default function GeniePage() {
   const router = useRouter();
   const { user } = useAuth();
-  const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "dishes" | "solo_or_group">("loading");
+  const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "hunger" | "dishes">("loading");
   const [activeFilter, setActiveFilter] = useState<"PLATOS" | "DULCE" | "BEBESTIBLE">("PLATOS");
   const [pendingFeedback, setPendingFeedback] = useState<{ interactionId: string; dishName: string; dishImage: string | null } | null>(null);
+  const [hungerLevel, setHungerLevel] = useState("MEDIUM");
 
   // Onboarding state
   const [obStep, setObStep] = useState(0);
@@ -208,7 +209,7 @@ export default function GeniePage() {
         sessionStorage.setItem("genieShowPostres", "true");
       }
     }
-    setPhase("dishes");
+    setPhase("hunger");
   };
 
   const submitFeedback = async (score: "LOVED" | "MEH" | "DISLIKED") => {
@@ -220,7 +221,7 @@ export default function GeniePage() {
       body: JSON.stringify({ interactionId: pendingFeedback.interactionId, score, userId: user?.id || null, sessionId: sid }),
     });
     setPendingFeedback(null);
-    setPhase("dishes");
+    setPhase("hunger");
   };
 
   // Geolocation
@@ -373,13 +374,11 @@ export default function GeniePage() {
       }).catch(() => {});
     }
 
-    // Save selected to session
+    // Save selected + hunger context, go straight to results
     sessionStorage.setItem("genieSelectedDishes", JSON.stringify([...selected]));
-    setPhase("solo_or_group");
+    sessionStorage.setItem("genieContext", JSON.stringify({ ctxHunger: hungerLevel }));
+    router.push("/result");
   };
-
-  const goSolo = () => router.push("/context");
-  const goGroup = () => router.push("/grupo");
 
 
   const saveOnboarding = async () => {
@@ -412,7 +411,7 @@ export default function GeniePage() {
       router.push(`/grupo/${returnGroup}`);
       return;
     }
-    setPhase("dishes");
+    setPhase("hunger");
     requestGeo();
   };
 
@@ -516,26 +515,6 @@ export default function GeniePage() {
     );
   }
 
-  // ── SOLO OR GROUP ──
-  if (phase === "solo_or_group") {
-    return (
-      <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <p style={{ fontSize: 32, marginBottom: 12 }}>🧞</p>
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>Estas solo o con alguien?</h2>
-        <div style={{ width: "100%", maxWidth: 340, display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={goSolo} style={{ padding: "18px 20px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 24 }}>🧑</span>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: "#0D0D0D" }}>Voy solo</span>
-          </button>
-          <button onClick={goGroup} style={{ padding: "18px 20px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14 }}>
-            <span style={{ fontSize: 24 }}>👥</span>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: "#0D0D0D" }}>Estoy con alguien</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   // ── FEEDBACK ──
   if (phase === "feedback" && pendingFeedback) {
     return (
@@ -558,9 +537,39 @@ export default function GeniePage() {
           ))}
         </div>
 
-        <button onClick={() => { setPendingFeedback(null); setPhase("dishes"); }} style={{ marginTop: 16, padding: 10, background: "transparent", border: "none", fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666", cursor: "pointer" }}>
+        <button onClick={() => { setPendingFeedback(null); setPhase("hunger"); }} style={{ marginTop: 16, padding: 10, background: "transparent", border: "none", fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666", cursor: "pointer" }}>
           Saltar
         </button>
+      </div>
+    );
+  }
+
+  // ── HUNGER ──
+  if (phase === "hunger") {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+        <div style={{ width: "100%", maxWidth: 420 }}>
+          <p style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🧞</p>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>¿Cuánta hambre tienes?</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { v: "LIGHT", emoji: "🥗", l: "Poca", sub: "algo liviano" },
+              { v: "MEDIUM", emoji: "🍽️", l: "Normal", sub: "un plato está bien" },
+              { v: "HEAVY", emoji: "🍔", l: "Mucha", sub: "entrada + plato o más" },
+            ].map(o => {
+              const active = hungerLevel === o.v;
+              return (
+                <button key={o.v} onClick={() => { setHungerLevel(o.v); setTimeout(() => setPhase("dishes"), 200); }} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
+                  <span style={{ fontSize: 28 }}>{o.emoji}</span>
+                  <div>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: "#0D0D0D", display: "block" }}>{o.l}</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666" }}>{o.sub}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }
@@ -604,6 +613,7 @@ export default function GeniePage() {
           selected={selected}
           onToggleSelect={toggleSelect}
           onLoadMore={loadMoreDishes}
+          onProceed={selected.size > 0 ? handleNext : undefined}
           loading={loadingDishes}
         />
 
