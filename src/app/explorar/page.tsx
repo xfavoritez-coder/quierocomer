@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import DishPlaceholder from "@/components/DishPlaceholder";
 import { useAuth } from "@/contexts/AuthContext";
@@ -70,26 +70,60 @@ export default function ExplorarPage() {
   const { user } = useAuth();
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [category, setCategory] = useState("");
   const [search, setSearch] = useState("");
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
   const [userDiet, setUserDiet] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setUserDiet(getUserDiet());
   }, []);
 
-  useEffect(() => {
-    setLoading(true);
+  const fetchDishes = useCallback(async (cursor?: string) => {
     const params = new URLSearchParams();
     if (category) params.set("cat", category);
     if (search) params.set("q", search);
     if (userDiet) params.set("diet", userDiet);
-    fetch("/api/explorar?" + params)
-      .then(r => r.json())
-      .then(d => { setDishes(Array.isArray(d) ? d : []); setLoading(false); })
-      .catch(() => setLoading(false));
+    if (cursor) params.set("cursor", cursor);
+    const res = await fetch("/api/explorar?" + params);
+    const data = await res.json();
+    return { dishes: data.dishes ?? [], nextCursor: data.nextCursor ?? null };
   }, [category, search, userDiet]);
+
+  // Initial load + reset on filter/search change
+  useEffect(() => {
+    setLoading(true);
+    setDishes([]);
+    setNextCursor(null);
+    fetchDishes()
+      .then(({ dishes: d, nextCursor: nc }) => { setDishes(d); setNextCursor(nc); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [fetchDishes]);
+
+  // Infinite scroll with IntersectionObserver
+  useEffect(() => {
+    if (!sentinelRef.current || !nextCursor) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && nextCursor && !loadingMore) {
+          setLoadingMore(true);
+          fetchDishes(nextCursor)
+            .then(({ dishes: d, nextCursor: nc }) => {
+              setDishes(prev => [...prev, ...d]);
+              setNextCursor(nc);
+              setLoadingMore(false);
+            })
+            .catch(() => setLoadingMore(false));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [nextCursor, loadingMore, fetchDishes]);
 
   const displayName = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null;
 
@@ -170,6 +204,14 @@ export default function ExplorarPage() {
                 </div>
               );
             })}
+            {/* Sentinel for infinite scroll */}
+            <div ref={sentinelRef} style={{ height: 1 }} />
+            {loadingMore && (
+              <p className="font-body" style={{ color: "#999", textAlign: "center", padding: 16, fontSize: "0.82rem" }}>Cargando más...</p>
+            )}
+            {!nextCursor && dishes.length > 0 && (
+              <p className="font-body" style={{ color: "#E0E0E0", textAlign: "center", padding: 16, fontSize: "0.78rem" }}>No hay más platos</p>
+            )}
           </div>
         )}
 

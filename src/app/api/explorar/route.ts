@@ -7,11 +7,14 @@ const DIET_TO_DIETTYPE: Record<string, string[]> = {
   pescetariano: ["VEGAN", "VEGETARIAN"],
 };
 
+const PAGE_SIZE = 20;
+
 export async function GET(req: NextRequest) {
   try {
     const cat = req.nextUrl.searchParams.get("cat");
     const q = req.nextUrl.searchParams.get("q");
     const diet = req.nextUrl.searchParams.get("diet");
+    const cursor = req.nextUrl.searchParams.get("cursor");
 
     const where: any = { isAvailable: true };
     if (cat) where.categoria = cat;
@@ -30,22 +33,27 @@ export async function GET(req: NextRequest) {
         local: { select: { nombre: true } },
       },
       orderBy: [{ totalLoved: "desc" }, { avgRating: "desc" }],
-      take: 80,
+      take: PAGE_SIZE + 1,
+      ...(cursor ? { skip: 1, cursor: { id: cursor } } : {}),
     });
+
+    const hasMore = dishes.length > PAGE_SIZE;
+    const page = hasMore ? dishes.slice(0, PAGE_SIZE) : dishes;
+    const nextCursor = hasMore ? page[page.length - 1].id : null;
 
     // Sort diet-matching dishes first
     if (diet && DIET_TO_DIETTYPE[diet]) {
       const preferred = DIET_TO_DIETTYPE[diet];
-      dishes.sort((a, b) => {
+      page.sort((a, b) => {
         const aMatch = preferred.includes(a.dietType) ? 0 : 1;
         const bMatch = preferred.includes(b.dietType) ? 0 : 1;
         return aMatch - bMatch;
       });
     }
 
-    return NextResponse.json(dishes);
+    return NextResponse.json({ dishes: page, nextCursor });
   } catch (e) {
     console.error("[Explorar]", e);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ dishes: [], nextCursor: null }, { status: 500 });
   }
 }
