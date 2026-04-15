@@ -29,16 +29,15 @@ export async function getGroupRecommendation(groupId: string, userLat?: number, 
   for (const member of group.members) {
     // Get user taste profile if exists
     let avoidIngredients: string[] = [];
+    let dietRestrictions: string[] = [];
     if (member.userId) {
       const profile = await prisma.userTasteProfile.findUnique({
         where: { userId: member.userId },
         select: { avoidIngredients: true, dietaryRestrictions: true },
       });
       avoidIngredients = profile?.avoidIngredients ?? [];
+      dietRestrictions = profile?.dietaryRestrictions ?? [];
     }
-
-    // Get diet type from restrictions
-    const dietRestrictions = profile?.dietaryRestrictions ?? [];
     const isVegan = dietRestrictions.includes("vegano");
     const isVegetarian = dietRestrictions.includes("vegetariano");
     const isPescetarian = dietRestrictions.includes("pescetariano");
