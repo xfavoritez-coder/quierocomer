@@ -470,10 +470,10 @@ export default function GeniePage() {
     <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
-          <p style={{ fontSize: 32, marginBottom: 6 }}>🧞</p>
-          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D", marginBottom: 6 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
+          <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
+          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", marginBottom: 8 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.greeting}</p>}
+          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D", marginBottom: 4 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
           <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
-          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", textAlign: "center", marginTop: 6 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.greeting}, {weatherInfo.city}</p>}
         </div>
 
         {dishes.length === 0 ? (

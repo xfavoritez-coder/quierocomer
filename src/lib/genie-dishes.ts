@@ -46,12 +46,25 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
   // Categories to exclude from initial selection (desserts, coffee, etc)
   const FOOD_ONLY_EXCLUDE = ["DESSERT", "ICE_CREAM", "COFFEE", "TEA", "SMOOTHIE", "JUICE", "DRINK", "BEER", "WINE", "COCKTAIL", "OTHER"];
 
-  // Fetch candidate dishes (food only, no desserts/drinks)
+  // Determine diet filter from user restrictions
+  const userDietRestrictions = profile?.dietaryRestrictions ?? [];
+  const isVegan = userDietRestrictions.includes("vegano");
+  const isVegetarian = userDietRestrictions.includes("vegetariano");
+  const isPescetarian = userDietRestrictions.includes("pescetariano");
+
+  // Diet type filter: vegans see only VEGAN, vegetarians see VEGAN+VEGETARIAN, etc.
+  const allowedDietTypes = isVegan ? ["VEGAN"]
+    : isVegetarian ? ["VEGAN", "VEGETARIAN"]
+    : isPescetarian ? ["VEGAN", "VEGETARIAN", "PESCETARIAN"]
+    : ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"];
+
+  // Fetch candidate dishes (food only, no desserts/drinks, diet compatible)
   const dishes = await prisma.menuItem.findMany({
     where: {
       isAvailable: true,
       imagenUrl: { not: null },
       categoria: { notIn: FOOD_ONLY_EXCLUDE },
+      dietType: { in: allowedDietTypes },
       ...(allExcludeIds.length > 0 ? { id: { notIn: allExcludeIds } } : {}),
     },
     include: {

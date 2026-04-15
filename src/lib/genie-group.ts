@@ -5,6 +5,7 @@ interface MemberProfile {
   ctxHunger?: string;
   ctxBudget?: number;
   avoidIngredients: string[];
+  allowedDiet: string[];
 }
 
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -36,12 +37,23 @@ export async function getGroupRecommendation(groupId: string, userLat?: number, 
       avoidIngredients = profile?.avoidIngredients ?? [];
     }
 
+    // Get diet type from restrictions
+    const dietRestrictions = profile?.dietaryRestrictions ?? [];
+    const isVegan = dietRestrictions.includes("vegano");
+    const isVegetarian = dietRestrictions.includes("vegetariano");
+    const isPescetarian = dietRestrictions.includes("pescetariano");
+    const allowedDiet = isVegan ? ["VEGAN"]
+      : isVegetarian ? ["VEGAN", "VEGETARIAN"]
+      : isPescetarian ? ["VEGAN", "VEGETARIAN", "PESCETARIAN"]
+      : ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"];
+
     profiles.push({
       memberId: member.id,
       selectedDishes: member.selectedDishes,
       ctxHunger: member.ctxHunger ?? undefined,
       ctxBudget: member.ctxBudget ?? undefined,
       avoidIngredients,
+      allowedDiet,
     });
   }
 
@@ -117,6 +129,9 @@ export async function getGroupRecommendation(groupId: string, userLat?: number, 
 
       for (const dish of localMenuDishes) {
         if (usedDishIds.has(dish.id)) continue; // Don't assign same dish to two people
+
+        // Diet type check — this member can only eat compatible dishes
+        if (!member.allowedDiet.includes(dish.dietType ?? "OMNIVORE")) continue;
 
         // Check avoid ingredients
         const dishIngs = dish.ingredientTags.map(t => t.ingredient.name.toLowerCase());

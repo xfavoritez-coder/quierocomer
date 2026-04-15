@@ -78,6 +78,7 @@ model MenuItem {
 
   ingredients     String[]
   ingredientTags  IngredientTag[]
+  dietType        DietType        @default(OMNIVORE)
   hungerLevel     HungerLevel?
   isAvailable     Boolean         @default(true)
   availableFrom   String?
@@ -96,6 +97,13 @@ enum HungerLevel {
   LIGHT
   MEDIUM
   HEAVY
+}
+
+enum DietType {
+  VEGAN
+  VEGETARIAN
+  PESCETARIAN
+  OMNIVORE
 }
 
 // ─── Ingredients ────────────────────────────────────────────────────────

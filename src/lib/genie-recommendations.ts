@@ -103,6 +103,16 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
   // Exclude non-food categories from recommendations
   const FOOD_ONLY_EXCLUDE = ["DESSERT", "ICE_CREAM", "COFFEE", "TEA", "SMOOTHIE", "JUICE", "DRINK", "BEER", "WINE", "COCKTAIL", "OTHER"];
 
+  // Diet filter for recommendations
+  const userDiet = profile?.dietaryRestrictions ?? [];
+  const isVegan = userDiet.includes("vegano");
+  const isVegetarian = userDiet.includes("vegetariano");
+  const isPescetarian = userDiet.includes("pescetariano");
+  const allowedDietTypes = isVegan ? ["VEGAN"]
+    : isVegetarian ? ["VEGAN", "VEGETARIAN"]
+    : isPescetarian ? ["VEGAN", "VEGETARIAN", "PESCETARIAN"]
+    : ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"];
+
   // 2. Fetch candidates
   const candidates = await prisma.menuItem.findMany({
     where: {
@@ -110,6 +120,7 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
       imagenUrl: { not: null },
       id: { notIn: ctx.selectedDishIds },
       categoria: { notIn: FOOD_ONLY_EXCLUDE },
+      dietType: { in: allowedDietTypes },
     },
     include: {
       ingredientTags: { include: { ingredient: true } },
