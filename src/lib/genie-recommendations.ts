@@ -270,7 +270,10 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
     : ctx.ctxHunger?.toUpperCase() === "HEAVY" ? 3
     : 2;
 
-  const results = scored.slice(0, hungerCount);
+  // All recommendations should be from the same local as the top result
+  const topLocal = scored[0]?.local?.id;
+  const sameLocalScored = topLocal ? scored.filter(s => s.local.id === topLocal) : scored;
+  const results = sameLocalScored.slice(0, hungerCount);
 
   // Add role tags based on position and hunger
   if (hungerCount >= 3 && results.length >= 3) {

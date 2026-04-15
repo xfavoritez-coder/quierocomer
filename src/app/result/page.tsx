@@ -10,7 +10,7 @@ type Rec = any;
 
 const TAG_COLORS: Record<string, string> = {
   "Mas pedido": "#ec4899",
-  "Coincide con tus gustos": "#FFD600",
+  "Coincide con tus gustos": "#0D0D0D",
   "Liviano": "#3db89e",
   "Abundante": "#a78bfa",
   "Cerca tuyo": "#3db89e",
@@ -178,7 +178,7 @@ export default function GenieResult() {
             {main.tags?.length > 0 && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
                 {main.tags.map((t: string) => (
-                  <span key={t} style={{ padding: "3px 10px", borderRadius: 99, background: "#EEEEEE", border: `1px solid ${TAG_COLORS[t] ?? "#FFD600"}33`, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: TAG_COLORS[t] ?? "#FFD600", letterSpacing: "0.04em" }}>{t}</span>
+                  <span key={t} style={{ padding: "3px 10px", borderRadius: 99, background: "#EEEEEE", border: `1px solid ${TAG_COLORS[t] ?? "#666"}33`, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: TAG_COLORS[t] ?? "#666", letterSpacing: "0.04em" }}>{t}</span>
                 ))}
               </div>
             )}

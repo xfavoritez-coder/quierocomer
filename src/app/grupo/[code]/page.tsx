@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import DishGrid from "@/components/DishGrid";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Group = any;
@@ -271,53 +272,16 @@ export default function GroupRoom() {
             <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666" }}>Sala {code} · Elige tus platos</p>
           </div>
 
-          {selected.size > 0 && (
-            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#3db89e", textAlign: "center", marginBottom: 10 }}>
-              {selected.size} seleccionado{selected.size > 1 ? "s" : ""}
-            </p>
-          )}
+          <DishGrid dishes={dishes} selected={selected} onToggleSelect={toggleSelect} loading={loadingDishes} />
 
-          {loadingDishes ? (
-            <p style={{ fontFamily: "var(--font-body)", color: "#666666", textAlign: "center", padding: 40 }}>Cargando platos...</p>
-          ) : (
+          {dishes.length > 0 && (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8, marginBottom: 16 }}>
-                {dishes.map((d: Dish) => {
-                  const isSel = selected.has(d.id);
-                  return (
-                    <div key={d.id} onClick={() => setPreviewDish(d)} style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer", background: "#F5F5F5" }}>
-                      {d.imagenUrl ? <img src={d.imagenUrl} alt={d.nombre} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: isSel ? 0.7 : 1 }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>}
-                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
-                    </div>
-                  );
-                })}
-              </div>
-
               <button onClick={() => selected.size > 0 && setPhase("hunger")} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "#E0E0E0", color: selected.size > 0 ? "#0D0D0D" : "#999", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 8 }}>
                 {selected.size > 0 ? `Siguiente (${selected.size}) →` : "Selecciona al menos 1"}
               </button>
               <button onClick={loadDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
                 Ver otros platos
               </button>
-            </>
-          )}
-          {/* Preview modal */}
-          {previewDish && (
-            <>
-              <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100 }} />
-              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 16, overflow: "hidden", background: "#FFF", border: "1px solid #E0E0E0" }}>
-                {previewDish.imagenUrl && <img src={previewDish.imagenUrl} alt={previewDish.nombre} style={{ width: "100%", height: 240, objectFit: "cover" }} />}
-                <div style={{ padding: "14px 18px" }}>
-                  <h3 className="font-display" style={{ fontSize: "1rem", color: "#0D0D0D", marginBottom: 4 }}>{previewDish.nombre}</h3>
-                  <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 12 }}>{previewDish.local?.nombre}</p>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => { toggleSelect(previewDish.id); setPreviewDish(null); }} style={{ flex: 1, padding: 12, background: selected.has(previewDish.id) ? "#F5F5F5" : "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.82rem", color: selected.has(previewDish.id) ? "#ff6b6b" : "#0D0D0D", cursor: "pointer" }}>
-                      {selected.has(previewDish.id) ? "Quitar" : "Me llama la atención"}
-                    </button>
-                    <button onClick={() => setPreviewDish(null)} style={{ padding: "12px 18px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>Cerrar</button>
-                  </div>
-                </div>
-              </div>
             </>
           )}
         </div>
