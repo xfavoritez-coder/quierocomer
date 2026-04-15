@@ -126,6 +126,15 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       if (d.hungerLevel === "HEAVY") score += 1;
     }
 
+    // Time-based bonus
+    const hour = new Date().getHours();
+    const timeBonus: Record<string, number> = {};
+    if (hour >= 6 && hour < 12) { timeBonus.BREAKFAST = 10; timeBonus.BRUNCH = 8; }
+    else if (hour >= 12 && hour < 16) { timeBonus.MAIN_COURSE = 8; timeBonus.PASTA = 6; timeBonus.PIZZA = 6; timeBonus.SUSHI = 6; timeBonus.BURGER = 5; timeBonus.SANDWICH = 5; }
+    else if (hour >= 16 && hour < 19) { timeBonus.SANDWICH = 8; timeBonus.SALAD = 6; timeBonus.SNACK = 6; }
+    else if (hour >= 19 && hour < 23) { timeBonus.MAIN_COURSE = 8; timeBonus.SUSHI = 8; timeBonus.SEAFOOD = 6; }
+    score += timeBonus[d.categoria] ?? 0;
+
     // Larger random factor for variety
     score += Math.random() * 4;
 

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
 import Image from "next/image";
+import HighlightText from "@/components/ui/HighlightText";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rec = any;
@@ -152,7 +153,7 @@ export default function GenieResult() {
           <a href="/" style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#999", textDecoration: "none" }}>← Empezar de nuevo</a>
         </div>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>El Genio recomienda</h1>
+          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>Esto es lo que el Genio <HighlightText>eligió para ti</HighlightText></h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Basado en tus gustos y el momento</p>
         </div>
 
