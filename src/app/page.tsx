@@ -477,7 +477,18 @@ export default function GeniePage() {
           <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
         </div>
 
-        <button onClick={() => { sessionStorage.setItem("genieWantsDessert", "true"); router.push("/context"); }} style={{ display: "block", margin: "0 auto 16px", padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
+        <button onClick={async () => {
+          setLoadingDishes(true);
+          const sid = getSessionId();
+          const params = new URLSearchParams({ sessionId: sid, desserts: "true" });
+          if (user?.id) params.set("userId", user.id);
+          try {
+            const res = await fetch(`/api/genie/dishes?${params}`);
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0) setDishes(data);
+          } catch {}
+          setLoadingDishes(false);
+        }} style={{ display: "block", margin: "0 auto 16px", padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
           Solo quiero algo dulce 🍰
         </button>
 
@@ -510,7 +521,9 @@ export default function GeniePage() {
                       <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,0.55)", borderRadius: 99, padding: "2px 6px", fontSize: 10, color: "#fff", display: "flex", alignItems: "center", gap: 2 }}>🌿</div>
                     )}
                     {/* Checkbox top-right */}
-                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
+                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 0, right: 0, width: 40, height: 40, background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
+                      <span style={{ width: 26, height: 26, borderRadius: "50%", background: isSel ? "#FFD600" : "rgba(0,0,0,0.3)", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: isSel ? "#0D0D0D" : "#fff", fontWeight: 800 }}>{isSel ? "✓" : ""}</span>
+                    </button>
                   </div>
                 );
               })}

@@ -3,7 +3,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
-    const { interactionId, score, comment, userId, sessionId } = await req.json();
+    const { interactionId, score, stars, comment, userId, sessionId } = await req.json();
+    const userName = typeof localStorage !== "undefined" ? null : null; // Server-side, get from body if needed
 
     if (!interactionId || !score || !sessionId) {
       return NextResponse.json({ error: "Campos requeridos faltantes" }, { status: 400 });
@@ -19,6 +20,7 @@ export async function POST(req: NextRequest) {
     // Create or update rating
     const ratingData = {
       score,
+      stars: stars ? Number(stars) : null,
       comment: comment || null,
       sessionId,
       userId: userId || null,
@@ -28,7 +30,7 @@ export async function POST(req: NextRequest) {
     if (userId) {
       await prisma.dishRating.upsert({
         where: { userId_menuItemId: { userId, menuItemId: interaction.menuItemId } },
-        update: { score, comment: comment || null },
+        update: { score, stars: stars ? Number(stars) : undefined, comment: comment || null },
         create: ratingData,
       });
     } else {

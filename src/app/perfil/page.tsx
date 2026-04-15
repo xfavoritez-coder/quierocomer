@@ -225,7 +225,20 @@ export default function GeniePerfil() {
 
             {/* Lo que el genio aprendió */}
             <section style={{ marginBottom: 24 }}>
-              <h2 className="font-display" style={sectionTitle}>LO QUE EL GENIO APRENDIÓ</h2>
+              <h2 className="font-display" style={sectionTitle}>LO QUE EL GENIO APRENDIÓ DE TI</h2>
+              {!user ? (
+                <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "20px 16px", textAlign: "center", position: "relative", overflow: "hidden" }}>
+                  <div style={{ filter: "blur(4px)", opacity: 0.3, pointerEvents: "none", marginBottom: 12 }}>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "center" }}>
+                      <span style={{ padding: "3px 8px", borderRadius: 99, background: "#E0E0E0", fontSize: "0.72rem", color: "#999" }}>Sushi</span>
+                      <span style={{ padding: "3px 8px", borderRadius: 99, background: "#E0E0E0", fontSize: "0.72rem", color: "#999" }}>Pizza</span>
+                      <span style={{ padding: "3px 8px", borderRadius: 99, background: "#E0E0E0", fontSize: "0.72rem", color: "#999" }}>Palta</span>
+                    </div>
+                  </div>
+                  <p className="font-body" style={{ fontSize: "0.82rem", color: "#666", marginBottom: 12 }}>Regístrate para ver qué aprendió el Genio de ti</p>
+                  <Link href="/registro" style={{ display: "inline-block", padding: "10px 24px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.82rem", textDecoration: "none" }}>Crear cuenta</Link>
+                </div>
+              ) : (
               <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 14 }}>
                 {(() => {
                   const hasProfileData = (profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0);
@@ -306,6 +319,7 @@ export default function GeniePerfil() {
                   );
                 })()}
               </div>
+              )}
             </section>
           </>
         )}

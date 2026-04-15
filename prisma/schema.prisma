@@ -211,7 +211,9 @@ model DishRating {
   menuItemId String
 
   score      RatingScore
+  stars      Int?
   comment    String?
+  userName   String?
 
   menuItem   MenuItem    @relation(fields: [menuItemId], references: [id])
 

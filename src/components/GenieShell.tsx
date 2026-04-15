@@ -5,6 +5,7 @@ import Link from "next/link";
 
 const NAV = [
   { icon: "🔍", label: "Descubrir", href: "/" },
+  { icon: "🍽", label: "Explorar", href: "/explorar" },
   { icon: "👥", label: "Grupo", href: "/grupo" },
   { icon: "👤", label: "Perfil", href: "/perfil" },
 ];
@@ -50,7 +51,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
       </div>
 
       {!hideNav && (
-        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #EEEEEE", display: "flex", justifyContent: "center", zIndex: 50 }}>
+        <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#FFFFFF", borderTop: "1px solid #EEEEEE", display: "flex", justifyContent: "center", zIndex: 50, paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
           {NAV.map(n => {
             const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
             return (
