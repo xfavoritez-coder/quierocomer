@@ -81,7 +81,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   // Admin and auth pages render without shell
   if (isAdmin || isAuth) return <>{children}</>;
 
-  const hideNav = pathname.includes("/context") || pathname.includes("/result") || pathname.includes("/feedback") || (pathname.includes("/grupo/") && pathname !== "/grupo");
+  const hideNav = false; // Nav always visible
 
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", paddingBottom: hideNav ? 0 : 72, position: "relative" }}>

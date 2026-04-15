@@ -167,7 +167,7 @@ export default function GroupRoom() {
         <p style={{ fontFamily: "var(--font-display)", fontSize: "1.5rem", color: "#FFD600", letterSpacing: "0.2em", marginBottom: 20 }}>{code}</p>
         <div style={{ width: "100%", maxWidth: 300 }}>
           <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "12px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontFamily: "var(--font-body)", fontSize: "0.9rem", outline: "none", boxSizing: "border-box", marginBottom: 12 }} />
-          <button onClick={doJoin} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Entrar</button>
+          <button onClick={doJoin} style={{ width: "100%", padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Entrar</button>
         </div>
       </div>
     );
@@ -192,7 +192,7 @@ export default function GroupRoom() {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
-        <h2 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>Sala de grupo</h2>
+        <h2 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>{group?.groupType === "PAREJA" ? "Sala en pareja" : group?.groupType === "FAMILIA" ? "Sala familiar" : "Sala con amigos"}</h2>
         <p className="font-display" style={{ fontSize: "2.2rem", color: "#0D0D0D", letterSpacing: "0.3em", marginBottom: 8, fontWeight: 700 }}>{code}</p>
 
         {/* Sharing instructions */}
@@ -203,8 +203,8 @@ export default function GroupRoom() {
         </div>
 
         {/* Share button */}
-        <button onClick={() => { if (navigator.share) navigator.share({ title: "QuieroComer", text: `Entra a la sala ${code} en quierocomer.cl/grupo/${code}`, url: shareUrl }); else { navigator.clipboard.writeText(shareUrl); } }} style={{ padding: "10px 24px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", marginBottom: 24 }}>
-          Compartir link
+        <button onClick={() => { if (navigator.share) navigator.share({ title: "QuieroComer", text: `Entra a la sala ${code} en quierocomer.cl/grupo/${code}`, url: shareUrl }); else { navigator.clipboard.writeText(shareUrl); } }} style={{ padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#666", cursor: "pointer", marginBottom: 24 }}>
+          📋 Copiar link
         </button>
 
         {/* Members */}
@@ -227,12 +227,12 @@ export default function GroupRoom() {
 
         {/* CTA */}
         {allHere ? (
-          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, width: "100%", maxWidth: 320, padding: 16, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
-            Todos listos — Comenzar 🧞
+          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, width: "100%", maxWidth: 320, padding: 16, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
+            Comenzar
           </button>
         ) : enoughToStart ? (
-          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, padding: "12px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
-            Empezar sin esperar a todos
+          <button onClick={() => { if (confirm("¿Quieres comenzar sin esperar a los demás?")) setPhase("selecting"); }} style={{ marginTop: 20, padding: "12px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
+            Comenzar sin esperar
           </button>
         ) : null}
       </div>
