@@ -79,6 +79,7 @@ model MenuItem {
   ingredients     String[]
   ingredientTags  IngredientTag[]
   dietType        DietType        @default(OMNIVORE)
+  mealTimes       String[]        @default([])
   hungerLevel     HungerLevel?
   isAvailable     Boolean         @default(true)
   availableFrom   String?
