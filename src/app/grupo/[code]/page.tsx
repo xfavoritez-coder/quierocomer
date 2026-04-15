@@ -17,7 +17,7 @@ export default function GroupRoom() {
   const router = useRouter();
   const { user } = useAuth();
   const [group, setGroup] = useState<Group>(null);
-  const [phase, setPhase] = useState<"joining" | "lobby" | "selecting" | "waiting" | "result">("joining");
+  const [phase, setPhase] = useState<"joining" | "lobby" | "selecting" | "hunger" | "waiting" | "result">("joining");
   const [myMemberId, setMyMemberId] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [nombre, setNombre] = useState(user?.nombre?.split(" ")[0] ?? "");
@@ -29,6 +29,7 @@ export default function GroupRoom() {
   const [loadingDishes, setLoadingDishes] = useState(false);
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
   const [result, setResult] = useState<any>(null);
+  const [myHunger, setMyHunger] = useState("");
 
   const sid = getSessionId();
 
@@ -136,13 +137,13 @@ export default function GroupRoom() {
     setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
   };
 
-  const markReady = async () => {
+  const markReady = async (hunger: string) => {
     if (selected.size === 0) return;
     const coords = JSON.parse(sessionStorage.getItem("userCoords") ?? "{}");
     await fetch(`/api/genie/group/${code}/ready`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: sid, selectedDishes: [...selected], userLat: coords.lat, userLng: coords.lng }),
+      body: JSON.stringify({ sessionId: sid, selectedDishes: [...selected], ctxHunger: hunger, userLat: coords.lat, userLng: coords.lng }),
     });
     setPhase("waiting");
   };
@@ -292,8 +293,8 @@ export default function GroupRoom() {
                 })}
               </div>
 
-              <button onClick={markReady} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "#E0E0E0", color: selected.size > 0 ? "#0D0D0D" : "#999", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 8 }}>
-                {selected.size > 0 ? `Estoy listo (${selected.size}) ✓` : "Selecciona al menos 1"}
+              <button onClick={() => selected.size > 0 && setPhase("hunger")} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "#E0E0E0", color: selected.size > 0 ? "#0D0D0D" : "#999", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 8 }}>
+                {selected.size > 0 ? `Siguiente (${selected.size}) →` : "Selecciona al menos 1"}
               </button>
               <button onClick={loadDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
                 Ver otros platos
@@ -319,6 +320,34 @@ export default function GroupRoom() {
               </div>
             </>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // ── HUNGER ──
+  if (phase === "hunger") {
+    return (
+      <div style={{ padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
+        <div style={{ maxWidth: 420, margin: "0 auto", paddingTop: 40, textAlign: "center" }}>
+          <p style={{ fontSize: 32, marginBottom: 8 }}>🧞</p>
+          <h2 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 20 }}>Cuánta hambre tienes?</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { v: "LIGHT", emoji: "🥗", l: "Poca", sub: "Algo liviano" },
+              { v: "MEDIUM", emoji: "🍽️", l: "Normal", sub: "Un plato está bien" },
+              { v: "HEAVY", emoji: "🍔", l: "Mucha", sub: "Entrada + plato" },
+            ].map(h => (
+              <button key={h.v} onClick={() => { setMyHunger(h.v); markReady(h.v); }} style={{ padding: "16px 18px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
+                <span style={{ fontSize: 24 }}>{h.emoji}</span>
+                <div>
+                  <span className="font-display" style={{ fontSize: "0.92rem", color: "#0D0D0D", display: "block" }}>{h.l}</span>
+                  <span className="font-body" style={{ fontSize: "0.72rem", color: "#999" }}>{h.sub}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setPhase("selecting")} style={{ marginTop: 12, padding: 12, background: "transparent", border: "none", fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>← Volver a seleccionar</button>
         </div>
       </div>
     );
@@ -350,59 +379,85 @@ export default function GroupRoom() {
   if (phase === "result") {
     if (!result?.result) {
       return (
-        <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <div style={{ minHeight: "100vh", background: "#FFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
           <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-          <p style={{ fontFamily: "var(--font-display)", color: "#666666" }}>Calculando resultado...</p>
+          <p className="font-display" style={{ color: "#999" }}>Armando el pedido...</p>
         </div>
       );
     }
 
     const best = result.result.bestLocal;
     const members = result.group?.members ?? [];
+    const hungryMembers = members.filter((m: any) => m.ctxHunger === "HEAVY");
+    const totalPrecio = members.reduce((sum: number, m: any) => sum + (best.dishesPerMember[m.id]?.precio ?? 0), 0);
 
     return (
-      <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
+      <div style={{ padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
         <div style={{ maxWidth: 500, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: 20 }}>
-            <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
-            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>Vayan a</h1>
+          {/* Header */}
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <p style={{ fontSize: 28, marginBottom: 4 }}>🧞</p>
+            <h1 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 2 }}>El Genio recomienda</h1>
           </div>
 
-          {/* Local card */}
-          <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 20, padding: "20px", marginBottom: 16, textAlign: "center" }}>
-            {best.local.logoUrl && <img src={best.local.logoUrl} alt="" style={{ width: 60, height: 60, borderRadius: "50%", objectFit: "cover", marginBottom: 10 }} />}
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", marginBottom: 4 }}>{best.local.nombre}</h2>
-            <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666", marginBottom: 12 }}>
-              {best.local.direccion}{best.local.comuna ? `, ${best.local.comuna}` : ""}{best.local.distanceLabel ? ` · ${best.local.distanceLabel}` : ""}
-            </p>
-            {best.local.lat && best.local.lng && (
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${best.local.lat},${best.local.lng}`} target="_blank" rel="noopener" style={{ display: "inline-block", padding: "10px 24px", background: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", textDecoration: "none", fontWeight: 700 }}>Como llegar</a>
-            )}
+          {/* Local */}
+          <div style={{ background: "#F5F5F5", borderRadius: 16, padding: "16px 18px", marginBottom: 20, display: "flex", alignItems: "center", gap: 12 }}>
+            {best.local.logoUrl && <img src={best.local.logoUrl} alt="" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
+            <div style={{ flex: 1 }}>
+              <p className="font-display" style={{ fontSize: "0.95rem", color: "#0D0D0D", margin: 0 }}>{best.local.nombre}</p>
+              <p className="font-body" style={{ fontSize: "0.75rem", color: "#999", margin: 0 }}>{best.local.comuna}{best.local.distanceLabel ? ` · ${best.local.distanceLabel}` : ""}</p>
+            </div>
           </div>
 
-          {/* Dish per member */}
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", letterSpacing: "0.12em", color: "#666666", marginBottom: 10 }}>PLATO SUGERIDO PARA CADA UNO</p>
+          {/* Shared starter — if anyone has HEAVY hunger */}
+          {hungryMembers.length > 0 && best.sharedStarter && (
+            <>
+              <p className="font-display" style={{ fontSize: 11, fontWeight: 700, color: "#0D0D0D", letterSpacing: "1px", marginBottom: 8 }}>🥢 PARA COMPARTIR</p>
+              <div style={{ background: "#FFF", border: "1px solid #E0E0E0", borderRadius: 12, padding: "12px 14px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+                {best.sharedStarter.imagenUrl && <img src={best.sharedStarter.imagenUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
+                <div style={{ flex: 1 }}>
+                  <p className="font-display" style={{ fontSize: "0.88rem", color: "#0D0D0D", margin: 0 }}>{best.sharedStarter.nombre}</p>
+                  <p className="font-body" style={{ fontSize: "0.72rem", color: "#AAAAAA", margin: 0 }}>${Number(best.sharedStarter.precio).toLocaleString("es-CL")}</p>
+                </div>
+              </div>
+            </>
+          )}
 
+          {/* Individual plates */}
+          <p className="font-display" style={{ fontSize: 11, fontWeight: 700, color: "#0D0D0D", letterSpacing: "1px", marginBottom: 8 }}>🍽️ PLATOS</p>
           {members.map((m: any) => {
             const dish = best.dishesPerMember[m.id];
             if (!dish) return null;
+            const isMe = m.sessionId === sid;
             return (
-              <div key={m.id} style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "14px 16px", marginBottom: 8, display: "flex", alignItems: "center", gap: 12 }}>
+              <div key={m.id} style={{ background: "#FFF", border: "1px solid #E0E0E0", borderRadius: 12, padding: "12px 14px", marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                {dish.imagenUrl && <img src={dish.imagenUrl} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />}
                 <div style={{ flex: 1 }}>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.72rem", color: m.sessionId === sid ? "#3db89e" : "#666666", marginBottom: 2 }}>{m.nombre}{m.sessionId === sid ? " (tu)" : ""}</p>
-                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#0D0D0D", marginBottom: 2 }}>{dish.nombre}</p>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666" }}>${Number(dish.precio).toLocaleString("es-CL")}</p>
+                  <p className="font-body" style={{ fontSize: "0.68rem", color: isMe ? "#3db89e" : "#AAAAAA", margin: "0 0 1px" }}>{m.nombre}{isMe ? " (tú)" : ""}</p>
+                  <p className="font-display" style={{ fontSize: "0.88rem", color: "#0D0D0D", margin: 0 }}>{dish.nombre}</p>
+                  <p className="font-body" style={{ fontSize: "0.72rem", color: "#AAAAAA", margin: 0 }}>${Number(dish.precio).toLocaleString("es-CL")}</p>
                 </div>
-                {dish.imagenUrl && <img src={dish.imagenUrl} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />}
               </div>
             );
           })}
 
-          {/* Actions */}
-          <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button onClick={recalculate} style={{ flex: 1, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>No me convence</button>
-            <button onClick={() => router.push("/")} style={{ flex: 1, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>Ir solo</button>
-          </div>
+          {/* Total */}
+          {totalPrecio > 0 && (
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 4px", marginTop: 4, marginBottom: 16 }}>
+              <span className="font-body" style={{ fontSize: "0.78rem", color: "#999" }}>Total estimado</span>
+              <span className="font-display" style={{ fontSize: "0.88rem", color: "#0D0D0D" }}>${totalPrecio.toLocaleString("es-CL")}</span>
+            </div>
+          )}
+
+          {/* CTA */}
+          <button onClick={() => {
+            if (best.local.lat && best.local.lng) window.open(`https://www.google.com/maps/dir/?api=1&destination=${best.local.lat},${best.local.lng}`, "_blank");
+          }} style={{ width: "100%", padding: 16, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer", marginBottom: 8 }}>
+            Esto pedimos →
+          </button>
+          <button onClick={recalculate} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
+            Ver otra opción
+          </button>
         </div>
       </div>
     );

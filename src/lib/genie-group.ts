@@ -196,8 +196,26 @@ export async function getGroupRecommendation(groupId: string, userLat?: number, 
 
   if (localScores.length === 0) return null;
 
+  // Find a shared starter from the best local
+  const bestLocalId = localScores[0].localId;
+  const anyHungry = profiles.some(p => p.ctxHunger === "HEAVY");
+  let sharedStarter = null;
+  if (anyHungry) {
+    const starters = allDishesFromLocals.filter(d =>
+      d.localId === bestLocalId && d.categoria === "STARTER" && d.isAvailable
+    );
+    if (starters.length > 0) {
+      sharedStarter = {
+        id: starters[0].id,
+        nombre: starters[0].nombre,
+        precio: starters[0].precio,
+        imagenUrl: starters[0].imagenUrl,
+      };
+    }
+  }
+
   return {
-    bestLocal: localScores[0],
+    bestLocal: { ...localScores[0], sharedStarter },
     alternatives: localScores.slice(1, 3),
   };
 }

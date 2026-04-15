@@ -492,7 +492,8 @@ export default function GeniePage() {
                 const isSel = selected.has(d.id);
                 return (
                   <div key={d.id}
-                    style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer", background: "#F5F5F5" }}
+                    className="skeleton"
+                    style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer" }}
                     onClick={() => setPreviewDish(d)}>
                     {d.imagenUrl ? (
                       <Image src={d.imagenUrl} alt={d.nombre} fill sizes="(max-width: 500px) 33vw, 160px" style={{ objectFit: "cover", opacity: isSel ? 0.7 : 1, transition: "opacity 0.15s" }} loading="lazy" />
