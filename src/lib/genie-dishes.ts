@@ -162,6 +162,7 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     descripcion: d.descripcion,
     precio: d.precio,
     imagenUrl: d.imagenUrl,
+    dietType: d.dietType,
     hungerLevel: d.hungerLevel,
     avgRating: d.avgRating,
     totalLoved: d.totalLoved,

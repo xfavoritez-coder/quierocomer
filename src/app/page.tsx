@@ -499,6 +499,10 @@ export default function GeniePage() {
                     ) : (
                       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>
                     )}
+                    {/* Vegan badge */}
+                    {d.dietType === "VEGAN" && (
+                      <div style={{ position: "absolute", top: 6, left: 6, background: "rgba(0,0,0,0.55)", borderRadius: 99, padding: "2px 6px", fontSize: 10, color: "#fff", display: "flex", alignItems: "center", gap: 2 }}>🌿</div>
+                    )}
                     {/* Checkbox top-right */}
                     <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
                   </div>
@@ -521,33 +525,36 @@ export default function GeniePage() {
         {previewDish && (
           <>
             <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100 }} />
-            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 20, overflow: "hidden", background: "#F5F5F5", border: "1px solid #E0E0E0" }}>
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 20, overflow: "hidden", background: "#FFF", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+              {/* X close button */}
+              <button onClick={() => setPreviewDish(null)} style={{ position: "absolute", top: 12, right: 12, zIndex: 2, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
               {previewDish.imagenUrl && (
-                <Image src={previewDish.imagenUrl} alt={previewDish.nombre} width={400} height={280} sizes="90vw" style={{ width: "100%", height: 280, objectFit: "cover" }} />
+                <div style={{ position: "relative" }}>
+                  <Image src={previewDish.imagenUrl} alt={previewDish.nombre} width={400} height={260} sizes="90vw" style={{ width: "100%", height: 260, objectFit: "cover" }} />
+                  {previewDish.dietType === "VEGAN" && (
+                    <div style={{ position: "absolute", bottom: 10, left: 10, background: "rgba(0,0,0,0.6)", borderRadius: 99, padding: "3px 10px", fontSize: 11, color: "#fff", display: "flex", alignItems: "center", gap: 4 }}>🌿 Vegano</div>
+                  )}
+                </div>
               )}
               <div style={{ padding: "16px 20px" }}>
-                <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 4 }}>{previewDish.nombre}</h3>
-                <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666", marginBottom: 8 }}>{previewDish.local?.nombre} · ${Number(previewDish.precio).toLocaleString("es-CL")}</p>
+                <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 2 }}>{previewDish.nombre}</h3>
+                <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 6 }}>{previewDish.local?.nombre} · <span style={{ color: "#0D0D0D" }}>${Number(previewDish.precio).toLocaleString("es-CL")}</span></p>
+                {previewDish.descripcion && (
+                  <p className="font-body" style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.5, marginBottom: 10 }}>{previewDish.descripcion}</p>
+                )}
                 {previewDish.ingredients?.length > 0 && (
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 12 }}>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
                     {previewDish.ingredients.map((ing: string) => (
-                      <span key={ing} style={{ padding: "2px 8px", borderRadius: 99, background: "#F5F5F5", border: "1px solid #E0E0E0", fontFamily: "var(--font-body)", fontSize: "0.7rem", color: "#666666" }}>{ing}</span>
+                      <span key={ing} style={{ padding: "2px 8px", borderRadius: 99, background: "#F5F5F5", fontSize: "0.7rem", color: "#666" }}>{ing}</span>
                     ))}
                   </div>
                 )}
-                {(previewDish.avgRating != null || previewDish.totalLoved > 0) && (
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666", marginBottom: 12 }}>
-                    {previewDish.totalLoved > 0 && <span style={{ color: "#3db89e" }}>{previewDish.totalLoved} personas lo recomiendan</span>}
-                  </p>
+                {previewDish.totalLoved > 0 && (
+                  <p className="font-body" style={{ fontSize: "0.78rem", color: "#3db89e", marginBottom: 10 }}>{previewDish.totalLoved} personas lo recomiendan</p>
                 )}
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => { toggleSelect(previewDish.id); setPreviewDish(null); }} style={{ flex: 1, padding: 12, background: selected.has(previewDish.id) ? "rgba(255,80,80,0.1)" : "#3db89e", border: "none", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 700, color: selected.has(previewDish.id) ? "#ff6b6b" : "#fff", cursor: "pointer" }}>
-                    {selected.has(previewDish.id) ? "Quitar" : "Me llama la atención"}
-                  </button>
-                  <button onClick={() => setPreviewDish(null)} style={{ padding: "12px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#666666", cursor: "pointer" }}>
-                    Cerrar
-                  </button>
-                </div>
+                <button onClick={() => { toggleSelect(previewDish.id); setPreviewDish(null); }} style={{ width: "100%", padding: 14, background: selected.has(previewDish.id) ? "#F5F5F5" : "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", color: selected.has(previewDish.id) ? "#ff6b6b" : "#0D0D0D", cursor: "pointer" }}>
+                  {selected.has(previewDish.id) ? "Quitar selección" : "Me llama la atención"}
+                </button>
               </div>
             </div>
           </>
