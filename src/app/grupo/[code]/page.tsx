@@ -34,6 +34,13 @@ export default function GroupRoom() {
 
   // Join group on load
   useEffect(() => {
+    // Check if onboarding is done — if not, redirect to home with return URL
+    const onboardingDone = localStorage.getItem("genieOnboardingDone");
+    if (onboardingDone !== "true") {
+      localStorage.setItem("genieReturnToGroup", code);
+      router.push("/");
+      return;
+    }
     joinGroup();
   }, [code]);
 

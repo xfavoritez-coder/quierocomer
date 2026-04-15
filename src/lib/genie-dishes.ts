@@ -58,8 +58,8 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       ingredientTags: { include: { ingredient: true } },
       local: { select: { id: true, nombre: true, comuna: true, direccion: true, lat: true, lng: true, logoUrl: true, linkPedido: true } },
     },
-    orderBy: [{ destacado: "desc" }, { totalLoved: "desc" }, { avgRating: "desc" }],
-    take: 100,
+    orderBy: [{ destacado: "desc" }, { totalLoved: "desc" }],
+    take: 200,
   });
 
   // Filter out dishes containing excluded ingredients
@@ -96,16 +96,18 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     // +1 for destacado
     if (d.destacado) score += 1;
 
-    // Fitness mode boost
+    // Fitness mode boost (subtle, not dominant)
     if (profile?.fitnessMode === "CUTTING") {
-      score += d.ingredientTags.filter(t => t.ingredient.category === "PROTEIN").length;
-      score -= d.ingredientTags.filter(t => t.ingredient.category === "CARB").length;
+      const hasProtein = d.ingredientTags.some(t => t.ingredient.category === "PROTEIN");
+      const hasCarb = d.ingredientTags.some(t => t.ingredient.category === "CARB");
+      if (hasProtein) score += 1;
+      if (hasCarb) score -= 1;
     } else if (profile?.fitnessMode === "GAINING") {
-      if (d.hungerLevel === "HEAVY") score += 2;
+      if (d.hungerLevel === "HEAVY") score += 1;
     }
 
-    // Small random factor to keep it fresh each time
-    score += Math.random() * 2;
+    // Larger random factor for variety
+    score += Math.random() * 4;
 
     return { ...d, _score: score };
   });

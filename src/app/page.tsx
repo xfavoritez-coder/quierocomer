@@ -47,6 +47,7 @@ export default function GeniePage() {
   const [dietType, setDietType] = useState("");
   const [allergies, setAllergies] = useState<string[]>([]);
   const [fitnessMode, setFitnessMode] = useState("NONE");
+  const [userName, setUserName] = useState("");
   const [savingOb, setSavingOb] = useState(false);
 
   // Dishes state
@@ -233,9 +234,10 @@ export default function GeniePage() {
       ...(dietType && dietType !== "como de todo" ? [dietType] : []),
       ...allergies.filter(a => a !== "ninguna"),
     ];
-    const onboardingData = { dietType, allergies, fitnessMode, dietaryRestrictions: finalRestrictions };
+    const onboardingData = { dietType, allergies, fitnessMode, dietaryRestrictions: finalRestrictions, userName: userName.trim() };
     // Save to localStorage for guests
     localStorage.setItem("genieOnboardingData", JSON.stringify(onboardingData));
+    if (userName.trim()) localStorage.setItem("genieUserName", userName.trim());
 
     await fetch("/api/genie/onboarding", {
       method: "POST",
@@ -249,6 +251,13 @@ export default function GeniePage() {
     });
     setSavingOb(false);
     localStorage.setItem("genieOnboardingDone", "true");
+    // Check if there's a pending group redirect
+    const returnGroup = localStorage.getItem("genieReturnToGroup");
+    if (returnGroup) {
+      localStorage.removeItem("genieReturnToGroup");
+      router.push(`/grupo/${returnGroup}`);
+      return;
+    }
     setPhase("dishes");
     requestGeo();
   };
@@ -263,7 +272,7 @@ export default function GeniePage() {
 
         {/* Progress */}
         <div style={{ display: "flex", gap: 8, marginBottom: 28, width: "100%", maxWidth: 300 }}>
-          {[0, 1, 2].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= obStep ? "#FFD600" : "rgba(255,214,0,0.15)" }} />)}
+          {[0, 1, 2, 3].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= obStep ? "#FFD600" : "#E0E0E0" }} />)}
         </div>
 
         {/* Step 0: Diet type */}
@@ -328,7 +337,20 @@ export default function GeniePage() {
             </div>
             <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
               <button onClick={() => setObStep(1)} style={{ flex: 1, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#0D0D0D", cursor: "pointer" }}>Atras</button>
-              <button onClick={saveOnboarding} disabled={savingOb} style={{ flex: 2, padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", opacity: savingOb ? 0.5 : 1 }}>{savingOb ? "Guardando..." : "Listo, recomiendame"}</button>
+              <button onClick={() => setObStep(3)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Siguiente</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Name */}
+        {obStep === 3 && (
+          <div style={{ width: "100%", maxWidth: 400 }}>
+            <h2 className="font-display" style={{ fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>Cómo te llamas?</h2>
+            <p className="font-body" style={{ fontSize: "0.8rem", color: "#999", textAlign: "center", marginBottom: 16 }}>Para que el Genio te conozca</p>
+            <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "14px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "1rem", outline: "none", boxSizing: "border-box", textAlign: "center", marginBottom: 16 }} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.85rem", color: "#999", cursor: "pointer" }}>Atrás</button>
+              <button onClick={saveOnboarding} disabled={savingOb || !userName.trim()} style={{ flex: 2, padding: 14, background: userName.trim() ? "#FFD600" : "#E0E0E0", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: userName.trim() ? "pointer" : "default" }}>{savingOb ? "..." : "Listo, recomiéndame 🧞"}</button>
             </div>
           </div>
         )}
@@ -401,8 +423,8 @@ export default function GeniePage() {
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <p style={{ fontSize: 32, marginBottom: 6 }}>🧞</p>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.6rem)", color: "#0D0D0D", marginBottom: 6 }}>Qué te llama la atención?</h1>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: "0.85rem", color: "#666666" }}>Toca los platos que te llamen</p>
+          <h1 className="font-display" style={{ fontSize: "clamp(1.2rem,3.5vw,1.6rem)", color: "#0D0D0D", marginBottom: 6 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
+          <p className="font-body" style={{ fontSize: "0.85rem", color: "#666666" }}>Toca los platos que te llamen</p>
         </div>
 
         {dishes.length === 0 ? (
