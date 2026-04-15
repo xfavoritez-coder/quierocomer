@@ -29,6 +29,14 @@ const FITNESS_OPTIONS = [
   { v: "MAINTAINING", emoji: "😐", l: "Sin preferencia", sub: "" },
 ];
 
+const WEATHER_EMOJI_MAP: Record<number, string> = {
+  0: "☀️",
+  1: "⛅", 2: "⛅", 3: "⛅",
+  51: "🌧", 53: "🌧", 55: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
+  56: "🌨", 57: "🌨", 66: "🌨", 67: "🌨",
+  71: "❄️", 73: "❄️", 75: "❄️", 77: "❄️",
+};
+
 function getSessionId(): string {
   return localStorage.getItem("genie_session_id") ?? "";
 }
@@ -57,6 +65,28 @@ export default function GeniePage() {
   const seenIdsRef = useRef<string[]>([]);
   const geoRequested = useRef(false);
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
+
+  // Weather state
+  const [weatherInfo, setWeatherInfo] = useState<{icon: string, temp: number, city: string} | null>(null);
+
+  // Fetch weather
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const raw = sessionStorage.getItem("userCoords");
+        const coords = raw ? JSON.parse(raw) : { lat: -33.4569, lng: -70.6483 };
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,weathercode`);
+        if (res.ok) {
+          const data = await res.json();
+          const code = data.current?.weathercode ?? 0;
+          const icon = WEATHER_EMOJI_MAP[code] ?? "⛅";
+          const temp = data.current?.temperature_2m ?? 0;
+          setWeatherInfo({ icon, temp, city: "Santiago" });
+        }
+      } catch {}
+    };
+    fetchWeather();
+  }, []);
 
   // Check onboarding status
   const { isLoading: authLoading } = useAuth();
@@ -311,8 +341,8 @@ export default function GeniePage() {
               })}
             </div>
             <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button onClick={() => setObStep(0)} style={{ flex: 1, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#0D0D0D", cursor: "pointer" }}>Atras</button>
-              <button onClick={() => setObStep(2)} style={{ flex: 2, padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Siguiente</button>
+              <button onClick={() => setObStep(0)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atras</button>
+              <button onClick={() => setObStep(2)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Siguiente</button>
             </div>
           </div>
         )}
@@ -336,7 +366,7 @@ export default function GeniePage() {
               })}
             </div>
             <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button onClick={() => setObStep(1)} style={{ flex: 1, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#0D0D0D", cursor: "pointer" }}>Atras</button>
+              <button onClick={() => setObStep(1)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atras</button>
               <button onClick={() => setObStep(3)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Siguiente</button>
             </div>
           </div>
@@ -349,7 +379,7 @@ export default function GeniePage() {
             <p className="font-body" style={{ fontSize: "0.8rem", color: "#999", textAlign: "center", marginBottom: 16 }}>Para que el Genio te conozca</p>
             <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "14px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "1rem", outline: "none", boxSizing: "border-box", textAlign: "center", marginBottom: 16 }} />
             <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.85rem", color: "#999", cursor: "pointer" }}>Atrás</button>
+              <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
               <button onClick={saveOnboarding} disabled={savingOb || !userName.trim()} style={{ flex: 2, padding: 14, background: userName.trim() ? "#FFD600" : "#E0E0E0", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: userName.trim() ? "pointer" : "default" }}>{savingOb ? "..." : "Listo, recomiéndame 🧞"}</button>
             </div>
           </div>
@@ -423,8 +453,9 @@ export default function GeniePage() {
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         <div style={{ textAlign: "center", marginBottom: 24 }}>
           <p style={{ fontSize: 32, marginBottom: 6 }}>🧞</p>
-          <h1 className="font-display" style={{ fontSize: "clamp(1.2rem,3.5vw,1.6rem)", color: "#0D0D0D", marginBottom: 6 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
-          <p className="font-body" style={{ fontSize: "0.85rem", color: "#666666" }}>Toca los platos que te llamen</p>
+          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D", marginBottom: 6 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
+          <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
+          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", textAlign: "center", marginTop: 6 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.city}</p>}
         </div>
 
         {dishes.length === 0 ? (
@@ -451,17 +482,17 @@ export default function GeniePage() {
                       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>
                     )}
                     {/* Checkbox top-right */}
-                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 6, background: isSel ? "#3db89e" : "rgba(0,0,0,0.5)", border: isSel ? "2px solid #3db89e" : "2px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
+                    <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
                   </div>
                 );
               })}
             </div>
 
-            <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "rgba(255,214,0,0.15)", color: selected.size > 0 ? "#FFFFFF" : "#666666", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.92rem", fontWeight: 700, cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 10 }}>
+            <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "rgba(255,214,0,0.15)", color: selected.size > 0 ? "#0D0D0D" : "#666666", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.92rem", fontWeight: 700, cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 10 }}>
               {selected.size > 0 ? `Estos me llaman la atención (${selected.size}) →` : "Selecciona al menos 1"}
             </button>
 
-            <button onClick={handleOtherDishes} style={{ width: "100%", padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>
+            <button onClick={handleOtherDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>
               {selected.size > 0 ? "Quiero ver mas opciones" : "Ver otros platos"}
             </button>
 

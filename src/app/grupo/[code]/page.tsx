@@ -185,7 +185,7 @@ export default function GroupRoom() {
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
         <p style={{ fontFamily: "var(--font-display)", color: "#ff6b6b", textAlign: "center" }}>{error}</p>
-        <button onClick={() => router.push("/")} style={{ marginTop: 16, padding: "10px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>Ir al Genio solo</button>
+        <button onClick={() => router.push("/")} style={{ marginTop: 16, padding: "10px 24px", background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>Ir al Genio solo</button>
       </div>
     );
   }
@@ -210,7 +210,7 @@ export default function GroupRoom() {
         </div>
 
         {/* Share button */}
-        <button onClick={() => { if (navigator.share) navigator.share({ title: "QuieroComer", text: `Entra a la sala ${code} en quierocomer.cl/grupo/${code}`, url: shareUrl }); else { navigator.clipboard.writeText(shareUrl); } }} style={{ padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#666", cursor: "pointer", marginBottom: 24 }}>
+        <button onClick={() => { if (navigator.share) navigator.share({ title: "QuieroComer", text: `Entra a la sala ${code} en quierocomer.cl/grupo/${code}`, url: shareUrl }); else { navigator.clipboard.writeText(shareUrl); } }} style={{ padding: "8px 20px", background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer", marginBottom: 24 }}>
           📋 Copiar link
         </button>
 
@@ -238,7 +238,7 @@ export default function GroupRoom() {
             Comenzar
           </button>
         ) : enoughToStart ? (
-          <button onClick={() => { if (confirm("¿Quieres comenzar sin esperar a los demás?")) setPhase("selecting"); }} style={{ marginTop: 20, padding: "12px 24px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
+          <button onClick={() => { if (confirm("¿Quieres comenzar sin esperar a los demás?")) setPhase("selecting"); }} style={{ marginTop: 20, padding: "12px 24px", background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>
             Comenzar sin esperar
           </button>
         ) : null}
@@ -276,13 +276,13 @@ export default function GroupRoom() {
                       <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "18px 6px 6px" }}>
                         <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(0.5rem,1.3vw,0.65rem)", color: "#0D0D0D", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.nombre}</p>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 26, height: 26, borderRadius: 6, background: isSel ? "#3db89e" : "rgba(0,0,0,0.5)", border: isSel ? "2px solid #3db89e" : "2px solid rgba(255,255,255,0.4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, color: "#fff", cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
+                      <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
                     </div>
                   );
                 })}
               </div>
 
-              <button onClick={markReady} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#3db89e" : "rgba(61,184,158,0.15)", color: selected.size > 0 ? "#fff" : "#666666", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.92rem", fontWeight: 700, cursor: selected.size > 0 ? "pointer" : "default" }}>
+              <button onClick={markReady} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "rgba(255,214,0,0.15)", color: selected.size > 0 ? "#0D0D0D" : "#666666", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.92rem", fontWeight: 700, cursor: selected.size > 0 ? "pointer" : "default" }}>
                 Estoy listo ✓
               </button>
             </>
@@ -344,7 +344,7 @@ export default function GroupRoom() {
               {best.local.direccion}{best.local.comuna ? `, ${best.local.comuna}` : ""}{best.local.distanceLabel ? ` · ${best.local.distanceLabel}` : ""}
             </p>
             {best.local.lat && best.local.lng && (
-              <a href={`https://www.google.com/maps/dir/?api=1&destination=${best.local.lat},${best.local.lng}`} target="_blank" rel="noopener" style={{ display: "inline-block", padding: "10px 24px", background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.3)", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#3db89e", textDecoration: "none", fontWeight: 700 }}>Como llegar</a>
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${best.local.lat},${best.local.lng}`} target="_blank" rel="noopener" style={{ display: "inline-block", padding: "10px 24px", background: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", textDecoration: "none", fontWeight: 700 }}>Como llegar</a>
             )}
           </div>
 
@@ -368,8 +368,8 @@ export default function GroupRoom() {
 
           {/* Actions */}
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button onClick={recalculate} style={{ flex: 1, padding: 12, background: "transparent", border: "1px solid rgba(255,80,80,0.2)", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#ff6b6b", cursor: "pointer" }}>No me convence</button>
-            <button onClick={() => router.push("/")} style={{ flex: 1, padding: 12, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#0D0D0D", cursor: "pointer" }}>Ir solo</button>
+            <button onClick={recalculate} style={{ flex: 1, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>No me convence</button>
+            <button onClick={() => router.push("/")} style={{ flex: 1, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>Ir solo</button>
           </div>
         </div>
       </div>

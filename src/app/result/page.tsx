@@ -133,7 +133,7 @@ export default function GenieResult() {
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", textAlign: "center", marginBottom: 12 }}>No encontre platos para ti</h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 24 }}>Intenta con otras preferencias o vuelve cuando haya mas opciones.</p>
-        <button onClick={() => router.push("/")} style={{ padding: "14px 28px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>Intentar de nuevo</button>
+        <button onClick={() => router.push("/")} style={{ padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>Intentar de nuevo</button>
       </div>
     );
   }
@@ -184,7 +184,7 @@ export default function GenieResult() {
               if (main.local.lat && main.local.lng) {
                 window.open(`https://www.google.com/maps/dir/?api=1&destination=${main.local.lat},${main.local.lng}`, "_blank");
               }
-            }} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
+            }} style={{ width: "100%", padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
               Esto quiero →
             </button>
           </div>
@@ -247,7 +247,7 @@ export default function GenieResult() {
         )}
 
         {/* Actions */}
-        <button onClick={() => { setRecs([]); setLoading(true); setPostres([]); setBebidas([]); setRefreshKey(k => k + 1); }} style={{ width: "100%", marginTop: 16, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>
+        <button onClick={() => { setRecs([]); setLoading(true); setPostres([]); setBebidas([]); setRefreshKey(k => k + 1); }} style={{ width: "100%", marginTop: 16, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>
           Mostrar otras sugerencias
         </button>
       </div>

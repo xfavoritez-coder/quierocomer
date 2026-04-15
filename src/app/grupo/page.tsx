@@ -72,7 +72,7 @@ export default function CrearGrupo() {
             <button onClick={() => { if (joinCode.length >= 3) router.push(`/grupo/${joinCode}`); }} disabled={joinCode.length < 3} style={{ width: "100%", padding: 14, background: joinCode.length >= 3 ? "#FFD600" : "#E0E0E0", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: joinCode.length >= 3 ? "pointer" : "default" }}>
               Unirme
             </button>
-            <button onClick={() => setStep("choose")} style={{ width: "100%", marginTop: 8, padding: 12, background: "transparent", border: "none", fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>← Atrás</button>
+            <button onClick={() => setStep("choose")} style={{ width: "100%", marginTop: 8, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>← Atrás</button>
           </div>
         )}
 
@@ -95,7 +95,7 @@ export default function CrearGrupo() {
                 </button>
               ))}
             </div>
-            <button onClick={() => setStep("choose")} style={{ width: "100%", marginTop: 8, padding: 12, background: "transparent", border: "none", fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>← Atrás</button>
+            <button onClick={() => setStep("choose")} style={{ width: "100%", marginTop: 8, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>← Atrás</button>
           </div>
         )}
 
@@ -111,7 +111,7 @@ export default function CrearGrupo() {
             <button onClick={() => create(groupType, count)} style={{ width: "100%", padding: 16, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
               Crear sala
             </button>
-            <button onClick={() => setStep("type")} style={{ width: "100%", marginTop: 8, padding: 12, background: "transparent", border: "none", fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>← Atrás</button>
+            <button onClick={() => setStep("type")} style={{ width: "100%", marginTop: 8, padding: 12, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>← Atrás</button>
           </div>
         )}
 
