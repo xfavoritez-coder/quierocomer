@@ -13,6 +13,8 @@ export async function GET(req: NextRequest) {
     const category = req.nextUrl.searchParams.get("category") ?? "PLATOS";
     const sel = req.nextUrl.searchParams.get("selected");
     const selectedIds = sel ? sel.split(",").filter(Boolean) : [];
+    const negCats = req.nextUrl.searchParams.get("negativeCats");
+    const negativeCats = negCats ? negCats.split(",").filter(Boolean) : [];
 
     // Category filter mapping
     const CAT_MAP: Record<string, string[]> = {
@@ -43,7 +45,7 @@ export async function GET(req: NextRequest) {
       })));
     }
 
-    const dishes = await getInitialDishes(userId, sessionId, excludeIds, dietRestrictions, selectedIds);
+    const dishes = await getInitialDishes(userId, sessionId, excludeIds, dietRestrictions, selectedIds, negativeCats);
     return NextResponse.json(dishes);
   } catch (e) {
     console.error("[Genie dishes]", e);

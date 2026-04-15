@@ -11,7 +11,7 @@ const RESTRICTION_MAP: Record<string, string[]> = {
   "sin frutos secos": ["maní", "nuez", "almendra", "avellana", "pistacho", "castaña"],
 };
 
-export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = [], guestDietRestrictions?: string[], selectedIds: string[] = []) {
+export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = [], guestDietRestrictions?: string[], selectedIds: string[] = [], negativeCats: string[] = []) {
   // Get user profile if exists
   let profile: { avoidIngredients: string[]; dietaryRestrictions: string[]; fitnessMode: string | null; favoriteIngredients: string[] } | null = null;
   if (userId) {
@@ -177,6 +177,11 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     };
     const boostedCats = TIME_CAT_BOOST[currentMeal] ?? [];
     if (boostedCats.includes(d.categoria)) score += 15;
+
+    // Negative signal: deprioritize categories user showed no interest in
+    if (negativeCats.length > 0 && negativeCats.includes(d.categoria)) {
+      score -= 10;
+    }
 
     // Random factor: smaller when we have selections (smart mode), larger for first load
     score += Math.random() * (selectedIds.length > 0 ? 2 : 4);

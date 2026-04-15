@@ -125,7 +125,8 @@ export default function GeniePage() {
   const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "hunger" | "dishes">("loading");
   const [activeFilter, setActiveFilter] = useState<"PLATOS" | "DULCE" | "BEBESTIBLE">("PLATOS");
   const [pendingFeedback, setPendingFeedback] = useState<{ interactionId: string; dishName: string; dishImage: string | null } | null>(null);
-  const [hungerLevel, setHungerLevel] = useState("MEDIUM");
+  const [hungerLevel, setHungerLevel] = useState("");
+  const [subtitle] = useState(() => getSubtitle()); // Stable per session, no re-roll on re-render
 
   // Onboarding state
   const [obStep, setObStep] = useState(0);
@@ -309,7 +310,7 @@ export default function GeniePage() {
   };
 
   // Called by SwipeDishGrid when user swipes to load next set
-  const loadMoreDishes = useCallback(async (currentPageDishes: Dish[]): Promise<Dish[]> => {
+  const loadMoreDishes = useCallback(async (currentPageDishes: Dish[], negativeCats: string[] = []): Promise<Dish[]> => {
     // Register IGNORED for non-selected dishes on current page
     const sid = getSessionId();
     const ignoredIds = currentPageDishes.filter((d: Dish) => !selected.has(d.id)).map((d: Dish) => d.id);
@@ -331,6 +332,9 @@ export default function GeniePage() {
     // Pass current selections for smart scoring
     const selectedArr = [...selected];
     if (selectedArr.length > 0) params.set("selected", selectedArr.join(","));
+
+    // Pass negative categories to deprioritize
+    if (negativeCats.length > 0) params.set("negativeCats", negativeCats.join(","));
 
     try {
       const res = await fetch(`/api/genie/dishes?${params}`);
@@ -502,8 +506,7 @@ export default function GeniePage() {
         {/* Step 3: Name */}
         {obStep === 3 && (
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>Cómo te llamas?</h2>
-            <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", textAlign: "center", marginBottom: 32 }}>Para que el Genio te conozca</p>
+            <h2 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 32 }}>Cómo te llamas?</h2>
             <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "16px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "1.05rem", outline: "none", boxSizing: "border-box", textAlign: "center", marginBottom: 32 }} />
             <div style={{ display: "flex", gap: 12 }}>
               <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
@@ -586,13 +589,13 @@ export default function GeniePage() {
 
   // ── DISHES GRID ──
   return (
-    <div style={{ minHeight: "100dvh", background: "#FFFFFF", padding: "16px clamp(16px,3vw,24px) 20px" }}>
+    <div style={{ background: "#FFFFFF", padding: "16px clamp(16px,3vw,24px) 20px" }}>
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 10 }}>
           <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
           <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
-          <p className="font-body" style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{getSubtitle()}</p>
+          <p className="font-body" style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{subtitle}</p>
         </div>
 
         {/* Category filters */}

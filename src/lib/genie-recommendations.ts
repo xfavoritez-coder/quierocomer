@@ -245,52 +245,71 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
     })
     .sort((a, b) => b.score - a.score);
 
-  // If no results, relax filters and try again
-  if (scored.length === 0) {
-    // Return any available dishes
-    const fallback = candidates.slice(0, 3).map(c => {
-      let distanceKm: number | null = null;
-      if (ctx.userLat && ctx.userLng && c.local.lat && c.local.lng) {
-        distanceKm = haversineKm(ctx.userLat, ctx.userLng, c.local.lat, c.local.lng);
-      }
-      return {
-        id: c.id, nombre: c.nombre, categoria: c.categoria, descripcion: c.descripcion,
-        precio: c.precio, imagenUrl: c.imagenUrl, hungerLevel: c.hungerLevel,
-        avgRating: c.avgRating, totalRatings: c._count.ratings, totalLoved: c.totalLoved,
-        ingredients: c.ingredientTags.map(t => t.ingredient.name),
-        local: c.local, distanceKm,
-        distanceLabel: distanceKm !== null ? formatDistance(distanceKm) : null,
-        tags: [], score: 0, role: null as string | null,
-      };
-    });
-    return fallback;
+  // ── Build results: selected dishes are the BASE, Genio complements ──
+
+  // Fetch full local data for selected dishes
+  const selectedWithLocal = await prisma.menuItem.findMany({
+    where: { id: { in: ctx.selectedDishIds } },
+    include: {
+      ingredientTags: { include: { ingredient: true } },
+      local: { select: { id: true, nombre: true, slug: true, comuna: true, direccion: true, lat: true, lng: true, logoUrl: true, linkPedido: true } },
+      _count: { select: { ratings: true } },
+    },
+  });
+
+  // Selected dishes = the base of the recommendation
+  const base = selectedWithLocal.map(d => {
+    let distanceKm: number | null = null;
+    if (ctx.userLat && ctx.userLng && d.local?.lat && d.local?.lng) {
+      distanceKm = haversineKm(ctx.userLat, ctx.userLng, d.local.lat, d.local.lng);
+    }
+    const formatted = {
+      id: d.id, nombre: d.nombre, categoria: d.categoria, descripcion: d.descripcion,
+      precio: d.precio, imagenUrl: d.imagenUrl, hungerLevel: d.hungerLevel,
+      avgRating: d.avgRating, totalRatings: d._count.ratings, totalLoved: d.totalLoved,
+      ingredients: d.ingredientTags.map(t => t.ingredient.name),
+      local: d.local, distanceKm,
+      distanceLabel: distanceKm !== null ? formatDistance(distanceKm) : null,
+      tags: [] as string[], score: 100, role: null as string | null,
+    };
+    // Tags for selected dishes
+    if (d.totalLoved > 5) formatted.tags.push("Mas pedido");
+    formatted.tags.push("Lo que elegiste");
+    return formatted;
+  });
+
+  // How many complements based on hunger
+  // LIGHT: 0 complements (just what you picked)
+  // MEDIUM: 1 complement
+  // HEAVY: 2 complements
+  const complementCount = ctx.ctxHunger?.toUpperCase() === "LIGHT" ? 0
+    : ctx.ctxHunger?.toUpperCase() === "HEAVY" ? 2
+    : 1;
+
+  const complements: typeof base = [];
+  if (complementCount > 0 && scored.length > 0) {
+    // Prefer complements from the same local as the first selected dish
+    const preferredLocal = selectedWithLocal[0]?.local?.id;
+    const sameLocal = preferredLocal ? scored.filter(s => s.local.id === preferredLocal) : scored;
+    const pool = sameLocal.length > 0 ? sameLocal : scored;
+
+    for (const c of pool) {
+      if (complements.length >= complementCount) break;
+      // Don't duplicate selected dishes
+      if (ctx.selectedDishIds.includes(c.id)) continue;
+      c.role = complements.length === 0 ? "El Genio sugiere" : "Complemento";
+      complements.push(c);
+    }
   }
 
-  // Number of recommendations based on hunger
-  // LIGHT: 1 dish, MEDIUM: 2 dishes, HEAVY: 3 dishes (entry + main + extra)
-  const hungerCount = ctx.ctxHunger?.toUpperCase() === "LIGHT" ? 1
-    : ctx.ctxHunger?.toUpperCase() === "HEAVY" ? 3
-    : 2;
+  // First the user's picks, then complements
+  const results = [...base, ...complements];
 
-  // All recommendations should be from the same local as the top result
-  const topLocal = scored[0]?.local?.id;
-  const sameLocalScored = topLocal ? scored.filter(s => s.local.id === topLocal) : scored;
-  const results = sameLocalScored.slice(0, hungerCount);
-
-  // Add role tags based on position and hunger
-  if (hungerCount >= 3 && results.length >= 3) {
-    // Try to make first one a STARTER if available
-    const starterIdx = results.findIndex(r => r.categoria === "STARTER");
-    if (starterIdx > 0) {
-      const [starter] = results.splice(starterIdx, 1);
-      results.unshift(starter);
-    }
-    results[0].role = "Entrada";
-    results[1].role = "Plato principal";
-    results[2].role = "Complemento";
-  } else if (hungerCount >= 2 && results.length >= 2) {
-    results[0].role = "Plato principal";
-    results[1].role = "Tambien te puede gustar";
+  // Label roles
+  if (base.length === 1) {
+    base[0].role = "Tu elección";
+  } else {
+    base.forEach((b, i) => { b.role = i === 0 ? "Tu elección principal" : "También elegiste"; });
   }
 
   return results;

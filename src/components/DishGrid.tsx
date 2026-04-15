@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import DishPlaceholder from "@/components/DishPlaceholder";
@@ -37,13 +37,21 @@ interface Props {
   dishes: Dish[];
   selected: Set<string>;
   onToggleSelect: (id: string) => void;
+  onPreviewDismiss?: (dish: Dish) => void; // Opened modal but didn't select
   loading?: boolean;
 }
 
-export default function DishGrid({ dishes, selected, onToggleSelect, loading }: Props) {
+export default function DishGrid({ dishes, selected, onToggleSelect, onPreviewDismiss, loading }: Props) {
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
   useEffect(() => { setPortalRoot(document.body); }, []);
+
+  const closePreview = useCallback((didSelect: boolean) => {
+    if (previewDish && !didSelect && onPreviewDismiss) {
+      onPreviewDismiss(previewDish);
+    }
+    setPreviewDish(null);
+  }, [previewDish, onPreviewDismiss]);
 
   if (loading) {
     return <p className="font-body" style={{ color: "#999", textAlign: "center", padding: 40 }}>Cargando platos...</p>;
@@ -91,9 +99,9 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
       {/* Preview modal — rendered via portal to escape transform/overflow ancestors */}
       {previewDish && portalRoot && createPortal(
         <>
-          <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
+          <div onClick={() => closePreview(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
           <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 1001, borderRadius: 20, overflow: "hidden", background: "#FFF", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
-            <button onClick={() => setPreviewDish(null)} style={{ position: "absolute", top: 12, right: 12, zIndex: 2, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            <button onClick={() => closePreview(false)} style={{ position: "absolute", top: 12, right: 12, zIndex: 2, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             {previewDish.imagenUrl ? (
               <div style={{ position: "relative" }}>
                 <Image src={previewDish.imagenUrl} alt={previewDish.nombre} width={400} height={260} sizes="90vw" style={{ width: "100%", height: 260, objectFit: "cover" }} />
@@ -126,7 +134,7 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
                 <p className="font-body" style={{ fontSize: "0.78rem", color: "#3db89e", marginBottom: 10 }}>{previewDish.totalLoved} personas lo recomiendan</p>
               )}
               {!selected.has(previewDish.id) ? (
-                <button onClick={() => { onToggleSelect(previewDish.id); setPreviewDish(null); }} style={{ width: "100%", padding: 14, background: "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", color: "#0D0D0D", cursor: "pointer" }}>
+                <button onClick={() => { onToggleSelect(previewDish.id); closePreview(true); }} style={{ width: "100%", padding: 14, background: "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", color: "#0D0D0D", cursor: "pointer" }}>
                   Me llama la atención
                 </button>
               ) : (
@@ -134,7 +142,7 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
                   <div style={{ width: "100%", padding: 14, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.3)", borderRadius: 99, fontWeight: 600, fontSize: "0.88rem", color: "#3db89e", marginBottom: 8 }}>
                     Seleccionado ✓
                   </div>
-                  <button onClick={() => { onToggleSelect(previewDish.id); setPreviewDish(null); }} style={{ background: "transparent", border: "none", fontSize: "0.75rem", color: "#999", cursor: "pointer", padding: 4 }}>
+                  <button onClick={() => { onToggleSelect(previewDish.id); closePreview(true); }} style={{ background: "transparent", border: "none", fontSize: "0.75rem", color: "#999", cursor: "pointer", padding: 4 }}>
                     Quitar selección
                   </button>
                 </div>
