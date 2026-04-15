@@ -209,7 +209,11 @@ export default function GeniePage() {
         const raw = localStorage.getItem("genieOnboardingData");
         if (raw) {
           const data = JSON.parse(raw);
-          if (data.dietaryRestrictions?.length) params.set("diet", data.dietaryRestrictions.join(","));
+          const restrictions: string[] = [...(data.dietaryRestrictions ?? [])];
+          if (data.dietType && data.dietType !== "como de todo" && !restrictions.includes(data.dietType)) {
+            restrictions.push(data.dietType);
+          }
+          if (restrictions.length) params.set("diet", restrictions.join(","));
         }
       } catch {}
     }

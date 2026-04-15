@@ -141,17 +141,14 @@ export default function GeniePerfil() {
             <p style={{ fontSize: 40, marginBottom: 4 }}>👤</p>
           )}
           <h1 className="font-display" style={{ fontSize: "1.3rem", color: "#0D0D0D", marginBottom: 2 }}>
-            {displayName}
+            {user ? displayName : "Invitado"}
           </h1>
-          {!user && guestName && (
-            <p className="font-body" style={{ fontSize: "0.75rem", color: "#AAAAAA", marginBottom: 4 }}>Invitado</p>
-          )}
         </div>
 
         {/* Crear cuenta — moved to top for guests */}
         {!user && (
           <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 20, textAlign: "center", marginBottom: 16 }}>
-            <p className="font-body" style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6, marginBottom: 14 }}>Crea una cuenta para que el Genio recuerde tus gustos</p>
+            <p className="font-body" style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6, marginBottom: 14 }}>{guestName ? `${guestName}, crea` : "Crea"} una cuenta para que el Genio recuerde tus gustos</p>
             <Link href="/registro" style={{ display: "inline-block", padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", textDecoration: "none" }}>Crear cuenta gratis</Link>
           </div>
         )}
