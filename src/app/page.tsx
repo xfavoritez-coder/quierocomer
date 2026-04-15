@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import DishGrid from "@/components/DishGrid";
+import SwipeDishGrid from "@/components/SwipeDishGrid";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Dish = any;
@@ -258,14 +258,10 @@ export default function GeniePage() {
     if (phase === "dishes") loadDishes();
   }, [phase, activeFilter]);
 
-  const loadDishes = async () => {
-    setLoadingDishes(true);
+  const buildDishParams = useCallback(() => {
     const sid = getSessionId();
-    const exclude = seenIdsRef.current.join(",");
     const params = new URLSearchParams({ sessionId: sid, category: activeFilter });
     if (user?.id) params.set("userId", user.id);
-    if (exclude) params.set("exclude", exclude);
-    // Pass diet restrictions for guests (not in DB)
     if (!user?.id) {
       try {
         const raw = localStorage.getItem("genieOnboardingData");
@@ -279,6 +275,14 @@ export default function GeniePage() {
         }
       } catch {}
     }
+    return params;
+  }, [activeFilter, user]);
+
+  const loadDishes = async () => {
+    setLoadingDishes(true);
+    const params = buildDishParams();
+    const exclude = seenIdsRef.current.join(",");
+    if (exclude) params.set("exclude", exclude);
 
     try {
       const res = await fetch(`/api/genie/dishes?${params}`);
@@ -286,8 +290,7 @@ export default function GeniePage() {
       if (!res.ok) console.error("Dishes API error:", data);
       if (Array.isArray(data) && data.length > 0) {
         setDishes(data);
-        // Don't clear selections — keep previously selected dishes
-        // Register VIEWED
+        const sid = getSessionId();
         fetch("/api/genie/interaction", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -303,6 +306,52 @@ export default function GeniePage() {
     } catch {}
     setLoadingDishes(false);
   };
+
+  // Called by SwipeDishGrid when user swipes to load next set
+  const loadMoreDishes = useCallback(async (currentPageDishes: Dish[]): Promise<Dish[]> => {
+    // Register IGNORED for non-selected dishes on current page
+    const sid = getSessionId();
+    const ignoredIds = currentPageDishes.filter((d: Dish) => !selected.has(d.id)).map((d: Dish) => d.id);
+    if (ignoredIds.length > 0) {
+      fetch("/api/genie/interaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItemIds: ignoredIds, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
+      }).catch(() => {});
+    }
+
+    // Add current dishes to seen list
+    seenIdsRef.current.push(...currentPageDishes.map((d: Dish) => d.id));
+
+    const params = buildDishParams();
+    const exclude = seenIdsRef.current.join(",");
+    if (exclude) params.set("exclude", exclude);
+
+    // Pass current selections for smart scoring
+    const selectedArr = [...selected];
+    if (selectedArr.length > 0) params.set("selected", selectedArr.join(","));
+
+    try {
+      const res = await fetch(`/api/genie/dishes?${params}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        // Register VIEWED for new dishes
+        fetch("/api/genie/interaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menuItemIds: data.map((d: Dish) => d.id),
+            action: "VIEWED",
+            userId: user?.id || null,
+            sessionId: sid,
+            visitId: getVisitId(),
+          }),
+        }).catch(() => {});
+        return data;
+      }
+    } catch {}
+    return [];
+  }, [selected, user, buildDishParams]);
 
   const toggleSelect = (id: string) => {
     setSelected(prev => {
@@ -332,22 +381,6 @@ export default function GeniePage() {
   const goSolo = () => router.push("/context");
   const goGroup = () => router.push("/grupo");
 
-  const handleOtherDishes = () => {
-    // Register IGNORED for non-selected current dishes
-    const sid = getSessionId();
-    const ignoredIds = dishes.filter(d => !selected.has(d.id)).map(d => d.id);
-    if (ignoredIds.length > 0) {
-      fetch("/api/genie/interaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuItemIds: ignoredIds, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
-      }).catch(() => {});
-    }
-
-    // Keep selected dishes, exclude all seen from next load
-    seenIdsRef.current.push(...dishes.map(d => d.id));
-    loadDishes();
-  };
 
   const saveOnboarding = async () => {
     setSavingOb(true);
@@ -533,7 +566,7 @@ export default function GeniePage() {
   }
 
   // ── LOADING ──
-  if (phase === "loading" || loadingDishes) {
+  if (phase === "loading" || (loadingDishes && dishes.length === 0)) {
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
         <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
@@ -566,18 +599,18 @@ export default function GeniePage() {
           ))}
         </div>
 
-        <DishGrid dishes={dishes} selected={selected} onToggleSelect={toggleSelect} loading={loadingDishes} />
+        <SwipeDishGrid
+          initialDishes={dishes}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+          onLoadMore={loadMoreDishes}
+          loading={loadingDishes}
+        />
 
         {dishes.length > 0 && (
-          <>
-            <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 15, background: selected.size > 0 ? "#FFD600" : "#F0F0F0", color: selected.size > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: selected.size > 0 ? 700 : 500, fontSize: 15, cursor: selected.size > 0 ? "pointer" : "not-allowed", marginBottom: 10 }}>
-              {selected.size > 0 ? "Estos me llaman la atención →" : "Selecciona al menos 1"}
-            </button>
-
-            <button onClick={handleOtherDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
-              {selected.size > 0 ? "Quiero ver más opciones" : "Ver otros platos"}
-            </button>
-          </>
+          <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 15, background: selected.size > 0 ? "#FFD600" : "#F0F0F0", color: selected.size > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: selected.size > 0 ? 700 : 500, fontSize: 15, cursor: selected.size > 0 ? "pointer" : "not-allowed", marginTop: 6 }}>
+            {selected.size > 0 ? "Estos me llaman la atención →" : "Selecciona al menos 1"}
+          </button>
         )}
       </div>
     </div>

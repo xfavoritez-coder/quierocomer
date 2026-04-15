@@ -11,7 +11,7 @@ const RESTRICTION_MAP: Record<string, string[]> = {
   "sin frutos secos": ["maní", "nuez", "almendra", "avellana", "pistacho", "castaña"],
 };
 
-export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = [], guestDietRestrictions?: string[]) {
+export async function getInitialDishes(userId?: string, sessionId?: string, excludeIds: string[] = [], guestDietRestrictions?: string[], selectedIds: string[] = []) {
   // Get user profile if exists
   let profile: { avoidIngredients: string[]; dietaryRestrictions: string[]; fitnessMode: string | null; favoriteIngredients: string[] } | null = null;
   if (userId) {
@@ -94,6 +94,21 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     });
   }
 
+  // Build context from selected dishes for smart scoring
+  let selectedCategories = new Set<string>();
+  let selectedIngredients = new Set<string>();
+  if (selectedIds.length > 0) {
+    const selectedDishes = await prisma.menuItem.findMany({
+      where: { id: { in: selectedIds } },
+      select: { categoria: true, ingredients: true, ingredientTags: { include: { ingredient: true } } },
+    });
+    for (const sd of selectedDishes) {
+      selectedCategories.add(sd.categoria);
+      for (const i of sd.ingredients) selectedIngredients.add(i.toLowerCase());
+      for (const t of sd.ingredientTags) selectedIngredients.add(t.ingredient.name.toLowerCase());
+    }
+  }
+
   // Personalized scoring
   const favSet = new Set((profile?.favoriteIngredients ?? []).map(i => i.toLowerCase()));
 
@@ -103,6 +118,18 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       ...d.ingredients.map(i => i.toLowerCase()),
       ...d.ingredientTags.map(t => t.ingredient.name.toLowerCase()),
     ];
+
+    // Smart scoring: boost dishes similar to what user selected
+    if (selectedCategories.size > 0) {
+      if (selectedCategories.has(d.categoria)) score += 5;
+    }
+    if (selectedIngredients.size > 0) {
+      let ingredientOverlap = 0;
+      for (const ing of ings) {
+        if (selectedIngredients.has(ing)) ingredientOverlap++;
+      }
+      score += ingredientOverlap * 3;
+    }
 
     // +3 per favorite ingredient match
     for (const ing of ings) {
@@ -137,8 +164,8 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       : "SNACK";
     if (d.mealTimes?.includes(currentMeal)) score += 10;
 
-    // Larger random factor for variety
-    score += Math.random() * 4;
+    // Random factor: smaller when we have selections (smart mode), larger for first load
+    score += Math.random() * (selectedIds.length > 0 ? 2 : 4);
 
     return { ...d, _score: score };
   });
