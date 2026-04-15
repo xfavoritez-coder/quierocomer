@@ -53,7 +53,8 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
   const isPescetarian = userDietRestrictions.includes("pescetariano");
 
   // Diet type filter: vegans see only VEGAN, vegetarians see VEGAN+VEGETARIAN, etc.
-  const allowedDietTypes = isVegan ? ["VEGAN"]
+  type DT = "VEGAN" | "VEGETARIAN" | "PESCETARIAN" | "OMNIVORE";
+  const allowedDietTypes: DT[] = isVegan ? ["VEGAN"]
     : isVegetarian ? ["VEGAN", "VEGETARIAN"]
     : isPescetarian ? ["VEGAN", "VEGETARIAN", "PESCETARIAN"]
     : ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"];
