@@ -50,6 +50,57 @@ function getGreeting(): string {
   return "Buenas noches";
 }
 
+function getSubtitle(): string {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 10) {
+    const msgs = [
+      "Hora de partir el día con algo rico",
+      "Un buen desayuno cambia todo",
+      "¿Algo dulce o salado para empezar?",
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+  if (h >= 10 && h < 12) {
+    const msgs = [
+      "¿Brunch? El Genio tiene ideas",
+      "Todavía hay tiempo para un desayuno tardío",
+      "Algo entre desayuno y almuerzo, perfecto",
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+  if (h >= 12 && h < 16) {
+    const msgs = [
+      "Es hora de almorzar, elige lo que te tiente",
+      "El Genio sabe lo que necesitas al mediodía",
+      "Almuerzo: la comida más importante del día laboral",
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+  if (h >= 16 && h < 19) {
+    const msgs = [
+      "¿Once, snack o algo dulce?",
+      "La hora perfecta para un antojo",
+      "Algo liviano para la tarde",
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+  if (h >= 19 && h < 23) {
+    const msgs = [
+      "¿Qué se te antoja para la cena?",
+      "El Genio te ayuda a cerrar el día bien",
+      "Hora de cenar, elige sin culpa",
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+  // latenight 23-06
+  const msgs = [
+    "Antojo nocturno, el Genio no juzga",
+    "¿Hambre a esta hora? El Genio entiende",
+    "Algo para el alma nocturna",
+  ];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
 function getSessionId(): string {
   return localStorage.getItem("genie_session_id") ?? "";
 }
@@ -488,6 +539,7 @@ export default function GeniePage() {
         <div style={{ textAlign: "center", marginBottom: 10 }}>
           <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
           <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
+          <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginTop: 4 }}>{getSubtitle()}</p>
         </div>
 
         {/* Category filters */}
@@ -507,8 +559,8 @@ export default function GeniePage() {
 
         {dishes.length > 0 && (
           <>
-            <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "#E0E0E0", color: selected.size > 0 ? "#0D0D0D" : "#999", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 10 }}>
-              {selected.size > 0 ? `Estos me llaman la atención (${selected.size}) →` : "Selecciona al menos 1"}
+            <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 15, background: selected.size > 0 ? "#FFD600" : "#F0F0F0", color: selected.size > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: selected.size > 0 ? 700 : 500, fontSize: 15, cursor: selected.size > 0 ? "pointer" : "not-allowed", marginBottom: 10 }}>
+              {selected.size > 0 ? "Estos me llaman la atención →" : "Selecciona al menos 1"}
             </button>
 
             <button onClick={handleOtherDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
