@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import Image from "next/image";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Dish = any;
@@ -477,7 +478,7 @@ export default function GeniePage() {
                     style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer", background: "#F5F5F5" }}
                     onClick={() => setPreviewDish(d)}>
                     {d.imagenUrl ? (
-                      <img src={d.imagenUrl} alt={d.nombre} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: isSel ? 0.7 : 1, transition: "opacity 0.15s" }} />
+                      <Image src={d.imagenUrl} alt={d.nombre} fill sizes="(max-width: 500px) 33vw, 160px" style={{ objectFit: "cover", opacity: isSel ? 0.7 : 1, transition: "opacity 0.15s" }} loading="lazy" />
                     ) : (
                       <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>
                     )}
@@ -505,7 +506,7 @@ export default function GeniePage() {
             <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100 }} />
             <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 20, overflow: "hidden", background: "#F5F5F5", border: "1px solid #E0E0E0" }}>
               {previewDish.imagenUrl && (
-                <img src={previewDish.imagenUrl} alt={previewDish.nombre} style={{ width: "100%", height: 280, objectFit: "cover" }} />
+                <Image src={previewDish.imagenUrl} alt={previewDish.nombre} width={400} height={280} sizes="90vw" style={{ width: "100%", height: 280, objectFit: "cover" }} />
               )}
               <div style={{ padding: "16px 20px" }}>
                 <h3 style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 4 }}>{previewDish.nombre}</h3>

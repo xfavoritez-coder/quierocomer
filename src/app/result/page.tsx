@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
+import Image from "next/image";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Rec = any;
@@ -157,7 +158,7 @@ export default function GenieResult() {
         {/* Main recommendation */}
         <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 20, overflow: "hidden", marginBottom: 14 }}>
           {main.imagenUrl && (
-            <img src={main.imagenUrl} alt={main.nombre} style={{ width: "100%", height: 220, objectFit: "cover" }} />
+            <Image src={main.imagenUrl} alt={main.nombre} width={500} height={220} sizes="(max-width: 500px) 100vw, 500px" style={{ width: "100%", height: 220, objectFit: "cover" }} loading="eager" />
           )}
           <div style={{ padding: "16px 18px" }}>
             {/* Role label */}
@@ -194,7 +195,7 @@ export default function GenieResult() {
         {secondary.map((rec: Rec) => (
           <div key={rec.id} style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, overflow: "hidden", marginBottom: 10, display: "flex" }}>
             {rec.imagenUrl && (
-              <img src={rec.imagenUrl} alt={rec.nombre} style={{ width: 100, height: 100, objectFit: "cover", flexShrink: 0 }} />
+              <Image src={rec.imagenUrl} alt={rec.nombre} width={100} height={100} sizes="100px" style={{ width: 100, height: 100, objectFit: "cover", flexShrink: 0 }} loading="lazy" />
             )}
             <div style={{ padding: "12px 14px", flex: 1, minWidth: 0 }}>
               {rec.role && (
