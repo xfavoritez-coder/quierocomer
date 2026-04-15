@@ -161,6 +161,7 @@ export default function GeniePage() {
     try {
       const res = await fetch(`/api/genie/dishes?${params}`);
       const data = await res.json();
+      if (!res.ok) console.error("Dishes API error:", data);
       if (Array.isArray(data) && data.length > 0) {
         setDishes(data);
         // Don't clear selections — keep previously selected dishes

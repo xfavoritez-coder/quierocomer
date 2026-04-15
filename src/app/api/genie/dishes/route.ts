@@ -12,6 +12,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(dishes);
   } catch (e) {
     console.error("[Genie dishes]", e);
-    return NextResponse.json({ error: "Error al cargar platos" }, { status: 500 });
+    return NextResponse.json({ error: "Error al cargar platos", detail: String(e) }, { status: 500 });
   }
 }
