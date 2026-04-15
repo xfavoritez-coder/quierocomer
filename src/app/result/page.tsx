@@ -24,6 +24,7 @@ export default function GenieResult() {
   const [postres, setPostres] = useState<Rec[]>([]);
   const [bebidas, setBebidas] = useState<Rec[]>([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [previewRec, setPreviewRec] = useState<any>(null);
 
   useEffect(() => {
     const run = async () => {
@@ -97,7 +98,7 @@ export default function GenieResult() {
         const recsArr = Array.isArray(data) ? data : [];
         setRecs(recsArr);
 
-        // Save timestamp for postre timing
+        // Save preference silently
         localStorage.setItem("genieLastResultAt", String(Date.now()));
 
         // Fetch extras from recommended local(s)
@@ -155,8 +156,16 @@ export default function GenieResult() {
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Basado en tus gustos y el momento</p>
         </div>
 
-        {/* Main recommendation */}
-        <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 20, overflow: "hidden", marginBottom: 14 }}>
+        {/* Preference saved confirmation */}
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#3db89e", marginBottom: 2 }}>Preferencia guardada 🧞</p>
+          <p style={{ fontFamily: "var(--font-body)", fontSize: "0.72rem", color: "#999" }}>Tus recomendaciones mejorarán con cada visita</p>
+        </div>
+
+        {/* Main recommendation — large card */}
+        <div
+          onClick={() => setPreviewRec(main)}
+          style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 20, overflow: "hidden", marginBottom: 14, cursor: "pointer" }}>
           {main.imagenUrl && (
             <Image src={main.imagenUrl} alt={main.nombre} width={500} height={220} sizes="(max-width: 500px) 100vw, 500px" style={{ width: "100%", height: 220, objectFit: "cover" }} loading="eager" />
           )}
@@ -178,39 +187,26 @@ export default function GenieResult() {
               {main.local.nombre} · {main.distanceLabel ?? main.local.comuna}
               {main.avgRating != null && ` · ⭐ ${main.avgRating.toFixed(1)} (${main.totalRatings})`}
             </p>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", marginBottom: 14 }}>${Number(main.precio).toLocaleString("es-CL")}</p>
-
-            <button onClick={() => {
-              localStorage.setItem("genieLastResultAt", String(Date.now()));
-              if (main.local.lat && main.local.lng) {
-                window.open(`https://www.google.com/maps/dir/?api=1&destination=${main.local.lat},${main.local.lng}`, "_blank");
-              }
-            }} style={{ width: "100%", padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
-              Esto quiero →
-            </button>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D" }}>${Number(main.precio).toLocaleString("es-CL")}</p>
           </div>
         </div>
 
-        {/* Secondary recommendations */}
+        {/* Secondary recommendations — horizontal cards */}
         {secondary.map((rec: Rec) => (
-          <div key={rec.id} style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, overflow: "hidden", marginBottom: 10, display: "flex" }}>
+          <div
+            key={rec.id}
+            onClick={() => setPreviewRec(rec)}
+            style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, overflow: "hidden", marginBottom: 10, display: "flex", cursor: "pointer" }}>
             {rec.imagenUrl && (
-              <Image src={rec.imagenUrl} alt={rec.nombre} width={100} height={100} sizes="100px" style={{ width: 100, height: 100, objectFit: "cover", flexShrink: 0 }} loading="lazy" />
+              <Image src={rec.imagenUrl} alt={rec.nombre} width={60} height={60} sizes="60px" style={{ width: 60, height: 60, objectFit: "cover", flexShrink: 0 }} loading="lazy" />
             )}
-            <div style={{ padding: "12px 14px", flex: 1, minWidth: 0 }}>
+            <div style={{ padding: "10px 14px", flex: 1, minWidth: 0 }}>
               {rec.role && (
                 <p style={{ fontFamily: "var(--font-display)", fontSize: "0.6rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#666666", margin: "0 0 3px" }}>{rec.role}</p>
               )}
-              {rec.tags?.length > 0 && (
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 4 }}>
-                  {rec.tags.slice(0, 2).map((t: string) => (
-                    <span key={t} style={{ padding: "1px 6px", borderRadius: 99, background: "#EEEEEE", fontFamily: "var(--font-display)", fontSize: "0.55rem", color: TAG_COLORS[t] ?? "#FFD600" }}>{t}</span>
-                  ))}
-                </div>
-              )}
               <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#0D0D0D", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rec.nombre}</p>
-              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: "0 0 4px" }}>{rec.local.nombre} · {rec.distanceLabel ?? rec.local.comuna}</p>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", margin: 0 }}>${Number(rec.precio).toLocaleString("es-CL")}</p>
+              <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: "0 0 2px" }}>{rec.local.nombre} · {rec.distanceLabel ?? rec.local.comuna}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#AAAAAA", margin: 0 }}>${Number(rec.precio).toLocaleString("es-CL")}</p>
             </div>
           </div>
         ))}
@@ -221,7 +217,7 @@ export default function GenieResult() {
             <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", letterSpacing: "0.12em", color: "#666666", marginBottom: 8 }}>PARA ACOMPAÑAR</p>
             <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
               {bebidas.map((b: Rec) => (
-                <div key={b.id} style={{ minWidth: 120, background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, padding: 10, textAlign: "center", flexShrink: 0 }}>
+                <div key={b.id} onClick={() => setPreviewRec(b)} style={{ minWidth: 120, background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, padding: 10, textAlign: "center", flexShrink: 0, cursor: "pointer" }}>
                   {b.imagenUrl && <img src={b.imagenUrl} alt="" style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 8, marginBottom: 6 }} />}
                   <p style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#0D0D0D", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.nombre}</p>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: "0.65rem", color: "#666666", margin: 0 }}>${Number(b.precio).toLocaleString("es-CL")}</p>
@@ -231,19 +227,26 @@ export default function GenieResult() {
           </div>
         )}
 
-        {/* Postres */}
+        {/* Postres — foto + nombre only, no price */}
         {postres.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", letterSpacing: "0.12em", color: "#666666", marginBottom: 8 }}>DESPUES DE COMER, VUELVE POR EL POSTRE 🍰</p>
             <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4 }}>
               {postres.map((p: Rec) => (
-                <div key={p.id} style={{ minWidth: 120, background: "#F5F5F5", border: "1px solid rgba(236,72,153,0.1)", borderRadius: 12, padding: 10, textAlign: "center", flexShrink: 0 }}>
+                <div key={p.id} onClick={() => setPreviewRec(p)} style={{ minWidth: 120, background: "#F5F5F5", border: "1px solid rgba(236,72,153,0.1)", borderRadius: 12, padding: 10, textAlign: "center", flexShrink: 0, cursor: "pointer" }}>
                   {p.imagenUrl && <img src={p.imagenUrl} alt="" style={{ width: 50, height: 50, objectFit: "cover", borderRadius: 8, marginBottom: 6 }} />}
-                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#0D0D0D", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nombre}</p>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "0.65rem", color: "#666666", margin: 0 }}>${Number(p.precio).toLocaleString("es-CL")}</p>
+                  <p style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#0D0D0D", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nombre}</p>
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Guest registration banner */}
+        {!user && (
+          <div style={{ background: "#F5F5F5", borderRadius: 14, padding: "14px 18px", marginTop: 16, textAlign: "center" }}>
+            <p className="font-body" style={{ fontSize: "0.82rem", color: "#666", marginBottom: 8 }}>Regístrate para que el Genio recuerde tus gustos</p>
+            <a href="/registro" style={{ display: "inline-block", padding: "12px 24px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.85rem", textDecoration: "none" }}>Crear cuenta gratis</a>
           </div>
         )}
 
@@ -251,6 +254,39 @@ export default function GenieResult() {
         <button onClick={() => { setRecs([]); setLoading(true); setPostres([]); setBebidas([]); setRefreshKey(k => k + 1); }} style={{ width: "100%", marginTop: 16, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", fontWeight: 500, cursor: "pointer" }}>
           Mostrar otras sugerencias
         </button>
+
+        {/* Preview modal */}
+        {previewRec && (
+          <>
+            <div onClick={() => setPreviewRec(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", zIndex: 100 }} />
+            <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 20, overflow: "hidden", background: "#FFF", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
+              {/* X close button */}
+              <button onClick={() => setPreviewRec(null)} style={{ position: "absolute", top: 12, right: 12, zIndex: 2, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              {previewRec.imagenUrl && (
+                <Image src={previewRec.imagenUrl} alt={previewRec.nombre} width={400} height={260} sizes="90vw" style={{ width: "100%", height: 260, objectFit: "cover" }} />
+              )}
+              <div style={{ padding: "16px 20px" }}>
+                <h3 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", marginBottom: 2 }}>{previewRec.nombre}</h3>
+                {previewRec.local?.nombre && (
+                  <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 6 }}>{previewRec.local.nombre}</p>
+                )}
+                {previewRec.precio != null && (
+                  <p className="font-body" style={{ fontSize: "0.85rem", color: "#AAAAAA", marginBottom: 8 }}>${Number(previewRec.precio).toLocaleString("es-CL")}</p>
+                )}
+                {previewRec.descripcion && (
+                  <p className="font-body" style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.5, marginBottom: 10 }}>{previewRec.descripcion}</p>
+                )}
+                {previewRec.ingredients?.length > 0 && (
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 10 }}>
+                    {previewRec.ingredients.map((ing: string) => (
+                      <span key={ing} style={{ padding: "2px 8px", borderRadius: 99, background: "#F5F5F5", fontSize: "0.7rem", color: "#666" }}>{ing}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

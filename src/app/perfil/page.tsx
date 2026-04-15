@@ -134,6 +134,14 @@ export default function GeniePerfil() {
           )}
         </div>
 
+        {/* Crear cuenta — moved to top for guests */}
+        {!user && (
+          <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 20, textAlign: "center", marginBottom: 16 }}>
+            <p className="font-body" style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6, marginBottom: 14 }}>Crea una cuenta para que el Genio recuerde tus gustos</p>
+            <Link href="/registro" style={{ display: "inline-block", padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", textDecoration: "none" }}>Crear cuenta gratis</Link>
+          </div>
+        )}
+
         {profile && (
           <>
             {/* Diet type */}
@@ -152,6 +160,9 @@ export default function GeniePerfil() {
             <section style={{ marginBottom: 24 }}>
               <h2 className="font-display" style={sectionTitle}>ALERGIAS O RESTRICCIONES</h2>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                <button onClick={() => { setProfile((p: any) => ({ ...p, dietaryRestrictions: [] })); save({ dietaryRestrictions: [] }); }} style={chip((profile.dietaryRestrictions ?? []).length === 0)}>
+                  Ninguna
+                </button>
                 {RESTRICTIONS.map(r => (
                   <button key={r.v} onClick={() => toggleRestriction(r.v)} style={chip((profile.dietaryRestrictions ?? []).includes(r.v))}>
                     {r.l}
@@ -202,43 +213,53 @@ export default function GeniePerfil() {
             <section style={{ marginBottom: 24 }}>
               <h2 className="font-display" style={sectionTitle}>LO QUE EL GENIO APRENDIÓ</h2>
               <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 14 }}>
-                {(profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0) ? (
-                  <>
-                    {profile.favoriteIngredients?.length > 0 && (
-                      <div style={{ marginBottom: 10 }}>
-                        <p className="font-display" style={{ fontSize: 11, color: "#3db89e", marginBottom: 6, fontWeight: 700 }}>Te gusta</p>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {profile.favoriteIngredients.slice(0, 8).map((i: string) => (
-                            <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", fontSize: "0.72rem", color: "#3db89e" }}>{i}</span>
-                          ))}
+                {(() => {
+                  const hasProfileData = (profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0);
+                  let onboardingDiet: string | null = null;
+                  try {
+                    const raw = typeof window !== "undefined" ? localStorage.getItem("genieOnboardingData") : null;
+                    if (raw) {
+                      const data = JSON.parse(raw);
+                      if (data.dietType && data.dietType !== "como de todo") onboardingDiet = data.dietType;
+                    }
+                  } catch {}
+                  if (!hasProfileData && !onboardingDiet) {
+                    return <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", textAlign: "center", lineHeight: 1.6 }}>Usa el Genio más veces para que aprenda tus gustos</p>;
+                  }
+                  return (
+                    <>
+                      {onboardingDiet && (
+                        <div style={{ marginBottom: 10 }}>
+                          <p className="font-display" style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: 700 }}>Tu estilo</p>
+                          <span style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(255,214,0,0.12)", border: "1px solid rgba(255,214,0,0.3)", fontSize: "0.72rem", color: "#0D0D0D" }}>{onboardingDiet.charAt(0).toUpperCase() + onboardingDiet.slice(1)}</span>
                         </div>
-                      </div>
-                    )}
-                    {profile.avoidIngredients?.length > 0 && (
-                      <div>
-                        <p className="font-display" style={{ fontSize: 11, color: "#ff6b6b", marginBottom: 6, fontWeight: 700 }}>Evita</p>
-                        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                          {profile.avoidIngredients.slice(0, 8).map((i: string) => (
-                            <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.2)", fontSize: "0.72rem", color: "#ff6b6b" }}>{i}</span>
-                          ))}
+                      )}
+                      {profile.favoriteIngredients?.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                          <p className="font-display" style={{ fontSize: 11, color: "#3db89e", marginBottom: 6, fontWeight: 700 }}>Te gusta</p>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {profile.favoriteIngredients.slice(0, 8).map((i: string) => (
+                              <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", fontSize: "0.72rem", color: "#3db89e" }}>{i}</span>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", textAlign: "center", lineHeight: 1.6 }}>Aún no tenemos suficiente info. Sigue usando el Genio 🧞</p>
-                )}
+                      )}
+                      {profile.avoidIngredients?.length > 0 && (
+                        <div>
+                          <p className="font-display" style={{ fontSize: 11, color: "#ff6b6b", marginBottom: 6, fontWeight: 700 }}>Evita</p>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {profile.avoidIngredients.slice(0, 8).map((i: string) => (
+                              <span key={i} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(255,80,80,0.08)", border: "1px solid rgba(255,80,80,0.2)", fontSize: "0.72rem", color: "#ff6b6b" }}>{i}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </section>
           </>
-        )}
-
-        {/* Crear cuenta */}
-        {!user && (
-          <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 20, textAlign: "center", marginBottom: 16 }}>
-            <p className="font-body" style={{ fontSize: "0.85rem", color: "#666", lineHeight: 1.6, marginBottom: 14 }}>Crea una cuenta para que el Genio recuerde tus gustos</p>
-            <Link href="/registro" style={{ display: "inline-block", padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontWeight: 700, fontSize: "0.88rem", textDecoration: "none" }}>Crear cuenta gratis</Link>
-          </div>
         )}
 
         {/* Reset */}

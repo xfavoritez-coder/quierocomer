@@ -476,6 +476,10 @@ export default function GeniePage() {
           <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
         </div>
 
+        <button onClick={() => { sessionStorage.setItem("genieWantsDessert", "true"); router.push("/context"); }} style={{ display: "block", margin: "0 auto 16px", padding: "8px 20px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.78rem", color: "#999", cursor: "pointer" }}>
+          Solo quiero algo dulce 🍰
+        </button>
+
         {dishes.length === 0 ? (
           <p style={{ fontFamily: "var(--font-body)", color: "#666666", textAlign: "center", padding: 40 }}>No hay platos disponibles aun. Vuelve pronto.</p>
         ) : (
