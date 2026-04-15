@@ -24,18 +24,29 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [loadingNext, setLoadingNext] = useState(false);
   const [showHint, setShowHint] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Slide transition: "idle" | "exit-left" | "exit-right"
+  const [slideState, setSlideState] = useState<"idle" | "exit-left" | "exit-right">("idle");
+  const [enterFrom, setEnterFrom] = useState<"left" | "right" | null>(null);
+
+  const trackRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const touchCurrentX = useRef(0);
   const isHorizontalSwipe = useRef<boolean | null>(null);
+  const containerWidth = useRef(0);
+
+  // Measure container width
+  useEffect(() => {
+    if (trackRef.current) {
+      containerWidth.current = trackRef.current.offsetWidth;
+    }
+  });
 
   // Initialize with first page
   useEffect(() => {
     if (initialDishes.length > 0) {
       setPages(prev => {
         if (prev.length === 0) return [{ dishes: initialDishes }];
-        // Update first page if dishes changed (e.g. filter switch)
         const updated = [...prev];
         updated[0] = { dishes: initialDishes };
         return updated;
@@ -51,6 +62,8 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
       setPages([{ dishes: initialDishes }]);
       setCurrentPage(0);
       setSwipeOffset(0);
+      setSlideState("idle");
+      setEnterFrom(null);
     }
     prevInitialRef.current = key;
   }, [initialDishes]);
@@ -74,43 +87,65 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     localStorage.setItem("genieSwipeHintSeen", "true");
   }, []);
 
-  const goToPage = useCallback(async (direction: "next" | "prev") => {
+  // Animate page transition
+  const transitionToPage = useCallback(async (direction: "next" | "prev") => {
     if (direction === "prev" && currentPage > 0) {
-      setCurrentPage(p => p - 1);
+      // Slide current page out to the right, then show previous page entering from left
+      setSlideState("exit-right");
+      setTimeout(() => {
+        setCurrentPage(p => p - 1);
+        setEnterFrom("left");
+        setSlideState("idle");
+        // After a frame, trigger enter animation
+        requestAnimationFrame(() => setEnterFrom(null));
+      }, 280);
       return;
     }
 
     if (direction === "next") {
       dismissHint();
 
-      // If next page already loaded, just go there
+      // If next page already loaded
       if (currentPage + 1 < pages.length) {
-        setCurrentPage(p => p + 1);
+        setSlideState("exit-left");
+        setTimeout(() => {
+          setCurrentPage(p => p + 1);
+          setEnterFrom("right");
+          setSlideState("idle");
+          requestAnimationFrame(() => setEnterFrom(null));
+        }, 280);
         return;
       }
 
-      // Load new page — pass current page dishes for context
-      setLoadingNext(true);
-      try {
-        const currentDishes = pages[currentPage]?.dishes ?? [];
-        const newDishes = await onLoadMore(currentDishes);
-        if (newDishes.length > 0) {
-          setPages(prev => [...prev, { dishes: newDishes }]);
-          setCurrentPage(p => p + 1);
-        }
-      } catch {}
-      setLoadingNext(false);
+      // Need to load new page — slide out first, show loader, then slide in
+      setSlideState("exit-left");
+      setTimeout(async () => {
+        setSlideState("idle");
+        setLoadingNext(true);
+        try {
+          const currentDishes = pages[currentPage]?.dishes ?? [];
+          const newDishes = await onLoadMore(currentDishes);
+          if (newDishes.length > 0) {
+            setPages(prev => [...prev, { dishes: newDishes }]);
+            setCurrentPage(p => p + 1);
+            setEnterFrom("right");
+            requestAnimationFrame(() => setEnterFrom(null));
+          }
+        } catch {}
+        setLoadingNext(false);
+      }, 280);
     }
-  }, [currentPage, pages.length, onLoadMore, dismissHint]);
+  }, [currentPage, pages, onLoadMore, dismissHint]);
 
   // Touch handlers
   const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (loadingNext || slideState !== "idle") return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchCurrentX.current = e.touches[0].clientX;
     isHorizontalSwipe.current = null;
     setSwiping(true);
-  }, []);
+  }, [loadingNext, slideState]);
 
   const onTouchMove = useCallback((e: React.TouchEvent) => {
     if (!swiping) return;
@@ -118,7 +153,6 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     const currentY = e.touches[0].clientY;
     touchCurrentX.current = currentX;
 
-    // Determine swipe direction on first significant move
     if (isHorizontalSwipe.current === null) {
       const dx = Math.abs(currentX - touchStartX.current);
       const dy = Math.abs(currentY - touchStartY.current);
@@ -129,16 +163,13 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
 
     if (isHorizontalSwipe.current) {
       const dx = currentX - touchStartX.current;
-      // Resist swipe left if loading, resist swipe right if on first page
       if (dx > 0 && currentPage === 0) {
-        setSwipeOffset(dx * 0.3); // rubber band
-      } else if (dx < 0 && loadingNext) {
         setSwipeOffset(dx * 0.3);
       } else {
         setSwipeOffset(dx);
       }
     }
-  }, [swiping, currentPage, loadingNext]);
+  }, [swiping, currentPage]);
 
   const onTouchEnd = useCallback(() => {
     if (!swiping) return;
@@ -148,26 +179,32 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     const threshold = 60;
 
     if (isHorizontalSwipe.current && Math.abs(dx) > threshold) {
-      if (dx < -threshold && !loadingNext) {
-        goToPage("next");
+      if (dx < -threshold) {
+        setSwipeOffset(0);
+        transitionToPage("next");
       } else if (dx > threshold && currentPage > 0) {
-        goToPage("prev");
+        setSwipeOffset(0);
+        transitionToPage("prev");
+      } else {
+        setSwipeOffset(0);
       }
+    } else {
+      setSwipeOffset(0);
     }
 
-    setSwipeOffset(0);
     isHorizontalSwipe.current = null;
-  }, [swiping, currentPage, loadingNext, goToPage]);
+  }, [swiping, currentPage, transitionToPage]);
 
-  // Mouse drag support for desktop
+  // Mouse drag support
   const mouseDown = useRef(false);
   const onMouseDown = useCallback((e: React.MouseEvent) => {
+    if (loadingNext || slideState !== "idle") return;
     mouseDown.current = true;
     touchStartX.current = e.clientX;
     touchCurrentX.current = e.clientX;
     isHorizontalSwipe.current = true;
     setSwiping(true);
-  }, []);
+  }, [loadingNext, slideState]);
 
   const onMouseMove = useCallback((e: React.MouseEvent) => {
     if (!mouseDown.current) return;
@@ -175,12 +212,10 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     const dx = e.clientX - touchStartX.current;
     if (dx > 0 && currentPage === 0) {
       setSwipeOffset(dx * 0.3);
-    } else if (dx < 0 && loadingNext) {
-      setSwipeOffset(dx * 0.3);
     } else {
       setSwipeOffset(dx);
     }
-  }, [currentPage, loadingNext]);
+  }, [currentPage]);
 
   const onMouseUp = useCallback(() => {
     if (!mouseDown.current) return;
@@ -188,14 +223,22 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     const dx = touchCurrentX.current - touchStartX.current;
     const threshold = 60;
 
-    if (Math.abs(dx) > threshold) {
-      if (dx < -threshold && !loadingNext) goToPage("next");
-      else if (dx > threshold && currentPage > 0) goToPage("prev");
-    }
-
     setSwiping(false);
-    setSwipeOffset(0);
-  }, [currentPage, loadingNext, goToPage]);
+
+    if (Math.abs(dx) > threshold) {
+      if (dx < -threshold) {
+        setSwipeOffset(0);
+        transitionToPage("next");
+      } else if (dx > threshold && currentPage > 0) {
+        setSwipeOffset(0);
+        transitionToPage("prev");
+      } else {
+        setSwipeOffset(0);
+      }
+    } else {
+      setSwipeOffset(0);
+    }
+  }, [currentPage, transitionToPage]);
 
   const currentDishes = pages[currentPage]?.dishes ?? [];
 
@@ -210,8 +253,33 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
     return <p className="font-body" style={{ color: "#999", textAlign: "center", padding: 40 }}>Cargando platos...</p>;
   }
 
+  // Compute grid transform
+  let gridTransform = "translateX(0)";
+  let gridTransition = "transform 0.3s ease, opacity 0.3s ease";
+  let gridOpacity = 1;
+
+  if (swiping && swipeOffset !== 0) {
+    gridTransform = `translateX(${swipeOffset}px)`;
+    gridTransition = "none";
+    gridOpacity = 1 - Math.min(Math.abs(swipeOffset) / 400, 0.3);
+  } else if (slideState === "exit-left") {
+    gridTransform = "translateX(-110%)";
+    gridOpacity = 0;
+  } else if (slideState === "exit-right") {
+    gridTransform = "translateX(110%)";
+    gridOpacity = 0;
+  } else if (enterFrom === "right") {
+    gridTransform = "translateX(110%)";
+    gridTransition = "none";
+    gridOpacity = 0;
+  } else if (enterFrom === "left") {
+    gridTransform = "translateX(-110%)";
+    gridTransition = "none";
+    gridOpacity = 0;
+  }
+
   return (
-    <div style={{ position: "relative", overflow: "hidden", userSelect: "none" }}>
+    <div style={{ position: "relative", userSelect: "none" }}>
       {/* Swipe hint overlay */}
       {showHint && (
         <div
@@ -223,7 +291,7 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
             gap: 8, cursor: "pointer",
           }}
         >
-          <div className="swipe-hint-arrow" style={{ fontSize: 36, color: "#FFF", animation: "swipeHint 1.5s ease-in-out infinite" }}>
+          <div style={{ fontSize: 36, color: "#FFF", animation: "swipeHint 1.5s ease-in-out infinite" }}>
             👆
           </div>
           <p className="font-display" style={{ color: "#FFF", fontSize: "0.85rem", textAlign: "center" }}>
@@ -238,11 +306,10 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
         </div>
       )}
 
-      {/* Loading overlay for next page */}
+      {/* Loading state — shown when next page is being fetched */}
       {loadingNext && (
         <div style={{
-          position: "absolute", inset: 0, zIndex: 10,
-          background: "rgba(255,255,255,0.85)", borderRadius: 14,
+          position: "absolute", inset: 0, zIndex: 5,
           display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 6,
         }}>
           <p style={{ fontSize: 32 }}>🧞</p>
@@ -250,9 +317,9 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
         </div>
       )}
 
-      {/* Swipeable container */}
+      {/* Swipeable grid — overflow visible so modal is not clipped */}
       <div
-        ref={containerRef}
+        style={{ overflow: "hidden" }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -260,18 +327,26 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseUp}
-        style={{
-          transform: swiping ? `translateX(${swipeOffset}px)` : "translateX(0)",
-          transition: swiping ? "none" : "transform 0.3s ease",
-          touchAction: "pan-y",
-        }}
       >
-        <DishGrid dishes={currentDishes} selected={selected} onToggleSelect={onToggleSelect} loading={false} />
+        <div
+          ref={trackRef}
+          style={{
+            transform: gridTransform,
+            transition: gridTransition,
+            opacity: gridOpacity,
+            touchAction: "pan-y",
+            minHeight: loadingNext ? 300 : undefined,
+          }}
+        >
+          {!loadingNext && (
+            <DishGrid dishes={currentDishes} selected={selected} onToggleSelect={onToggleSelect} loading={false} />
+          )}
+        </div>
       </div>
 
-      {/* Page indicator — subtle dots */}
+      {/* Page indicator */}
       {pages.length > 1 && (
-        <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 4, marginBottom: 4 }}>
+        <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 6, marginBottom: 4 }}>
           {pages.map((_, i) => (
             <div key={i} style={{
               width: i === currentPage ? 16 : 5, height: 5, borderRadius: 99,

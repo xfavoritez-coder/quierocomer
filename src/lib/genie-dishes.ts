@@ -153,16 +153,30 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       if (d.hungerLevel === "HEAVY") score += 1;
     }
 
-    // Time-based bonus using mealTimes field
+    // Time-based bonus using mealTimes field + category fallback
     const hour = new Date().getHours();
+    const minutes = new Date().getMinutes();
+    const timeDecimal = hour + minutes / 60;
     const currentMeal =
-      hour >= 6 && hour < 10 ? "DESAYUNO"
-      : hour >= 10 && hour < 12 ? "BRUNCH"
-      : hour >= 12 && hour < 16 ? "ALMUERZO"
-      : hour >= 16 && hour < 19 ? "ONCE"
-      : hour >= 19 && hour < 23 ? "CENA"
+      timeDecimal >= 6 && timeDecimal < 10 ? "DESAYUNO"
+      : timeDecimal >= 10 && timeDecimal < 12.5 ? "BRUNCH"
+      : timeDecimal >= 12.5 && timeDecimal < 17 ? "ALMUERZO"
+      : timeDecimal >= 17 && timeDecimal < 19 ? "ONCE"
+      : timeDecimal >= 19 && timeDecimal < 23 ? "CENA"
       : "SNACK";
     if (d.mealTimes?.includes(currentMeal)) score += 10;
+
+    // Category-based time boost (fallback when mealTimes not set)
+    const TIME_CAT_BOOST: Record<string, string[]> = {
+      DESAYUNO: ["BREAKFAST"],
+      BRUNCH: ["BRUNCH", "BREAKFAST"],
+      ALMUERZO: ["MAIN_COURSE", "PASTA", "SUSHI", "BURGER", "SANDWICH", "SEAFOOD", "WOK", "COMBO"],
+      ONCE: ["DESSERT", "ICE_CREAM", "COFFEE"],
+      CENA: ["MAIN_COURSE", "PASTA", "SUSHI", "PIZZA", "SEAFOOD"],
+      SNACK: ["BURGER", "SANDWICH", "PIZZA"],
+    };
+    const boostedCats = TIME_CAT_BOOST[currentMeal] ?? [];
+    if (boostedCats.includes(d.categoria)) score += 8;
 
     // Random factor: smaller when we have selections (smart mode), larger for first load
     score += Math.random() * (selectedIds.length > 0 ? 2 : 4);
