@@ -20,7 +20,7 @@ export default function CrearGrupo() {
   const [groupType, setGroupType] = useState("");
   const [count, setCount] = useState(3);
   const [joinCode, setJoinCode] = useState("");
-  const [nombre, setNombre] = useState(user?.nombre?.split(" ")[0] ?? "");
+  const savedName = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName") || "") : "";
 
   const create = async (type: string, total: number) => {
     setStep("creating");
@@ -28,7 +28,7 @@ export default function CrearGrupo() {
     const res = await fetch("/api/genie/group", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupType: type, totalMembers: total, userId: user?.id || null, sessionId: sid, nombre: nombre || "Anfitrión" }),
+      body: JSON.stringify({ groupType: type, totalMembers: total, userId: user?.id || null, sessionId: sid, nombre: savedName || "Anfitrión" }),
     });
     if (res.ok) {
       const group = await res.json();
@@ -80,9 +80,6 @@ export default function CrearGrupo() {
         {step === "type" && (
           <div>
             <h2 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 12 }}>Con quién estás?</h2>
-            <div style={{ marginBottom: 16 }}>
-              <input value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "12px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "0.9rem", outline: "none", boxSizing: "border-box" }} />
-            </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {GROUP_TYPES.map(t => (
                 <button key={t.v} onClick={() => {

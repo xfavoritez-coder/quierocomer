@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   try {
     const { code } = await params;
-    const { sessionId, userId, nombre } = await req.json();
+    const body = await req.json();
+    const { sessionId, userId, nombre } = body;
     if (!sessionId) return NextResponse.json({ error: "sessionId requerido" }, { status: 400 });
 
     const group = await prisma.groupSession.findUnique({
@@ -15,9 +16,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
     if (group.expiresAt < new Date()) return NextResponse.json({ error: "Sala expirada" }, { status: 410 });
     if (group.estado === "READY") return NextResponse.json({ error: "Sala ya cerrada" }, { status: 400 });
 
-    // Check if already a member
+    // Check if already a member — update estado if provided
     const existing = group.members.find(m => m.sessionId === sessionId);
-    if (existing) return NextResponse.json(existing);
+    if (existing) {
+      if (body.estado && body.estado !== existing.estado) {
+        await prisma.groupMember.update({ where: { id: existing.id }, data: { estado: body.estado } });
+      }
+      return NextResponse.json({ ...existing, estado: body.estado || existing.estado });
+    }
 
     if (group.members.length >= group.totalMembers) {
       return NextResponse.json({ error: "Sala llena" }, { status: 400 });

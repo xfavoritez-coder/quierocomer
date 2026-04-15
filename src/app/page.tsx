@@ -30,13 +30,25 @@ const FITNESS_OPTIONS = [
   { v: "MAINTAINING", emoji: "😐", l: "Sin preferencia", sub: "" },
 ];
 
-const WEATHER_EMOJI_MAP: Record<number, string> = {
-  0: "☀️",
-  1: "⛅", 2: "⛅", 3: "⛅",
-  51: "🌧", 53: "🌧", 55: "🌧", 61: "🌧", 63: "🌧", 65: "🌧",
-  56: "🌨", 57: "🌨", 66: "🌨", 67: "🌨",
-  71: "❄️", 73: "❄️", 75: "❄️", 77: "❄️",
-};
+function getWeatherIcon(code: number): string {
+  // Rain/snow always win regardless of time
+  if ([51,53,55,61,63,65].includes(code)) return "🌧";
+  if ([56,57,66,67].includes(code)) return "🌨";
+  if ([71,73,75,77].includes(code)) return "❄️";
+  // Clear/cloudy depends on time of day
+  const h = new Date().getHours();
+  const isNight = h >= 20 || h < 6;
+  if (code === 0) return isNight ? "🌙" : (h < 12 ? "🌅" : "☀️");
+  // Cloudy (1,2,3)
+  return isNight ? "☁️" : "⛅";
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 12) return "Buenos días";
+  if (h >= 12 && h < 20) return "Buena tarde";
+  return "Buenas noches";
+}
 
 function getSessionId(): string {
   return localStorage.getItem("genie_session_id") ?? "";
@@ -68,7 +80,7 @@ export default function GeniePage() {
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
 
   // Weather state
-  const [weatherInfo, setWeatherInfo] = useState<{icon: string, temp: number, city: string} | null>(null);
+  const [weatherInfo, setWeatherInfo] = useState<{icon: string, temp: number, greeting: string, city: string} | null>(null);
 
   // Fetch weather
   useEffect(() => {
@@ -80,9 +92,10 @@ export default function GeniePage() {
         if (res.ok) {
           const data = await res.json();
           const code = data.current?.weathercode ?? 0;
-          const icon = WEATHER_EMOJI_MAP[code] ?? "⛅";
+          const icon = getWeatherIcon(code);
           const temp = data.current?.temperature_2m ?? 0;
-          setWeatherInfo({ icon, temp, city: "Santiago" });
+          const greeting = getGreeting();
+          setWeatherInfo({ icon, temp, greeting, city: "Santiago" });
         }
       } catch {}
     };
@@ -314,7 +327,7 @@ export default function GeniePage() {
               {DIET_TYPES.map(d => {
                 const active = dietType === d.v;
                 return (
-                  <button key={d.v} onClick={() => { setDietType(d.v); setTimeout(() => setObStep(1), 200); }} style={{ padding: "16px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
+                  <button key={d.v} onClick={() => { setDietType(d.v); setTimeout(() => setObStep(d.v === "vegano" ? 2 : 1), 200); }} style={{ padding: "16px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
                     <span style={{ fontSize: 22 }}>{d.emoji}</span>
                     <span style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: active ? "#0D0D0D" : "#0D0D0D" }}>{d.l}</span>
                   </button>
@@ -324,12 +337,16 @@ export default function GeniePage() {
           </div>
         )}
 
-        {/* Step 1: Allergies */}
+        {/* Step 1: Allergies (filtered by diet) */}
         {obStep === 1 && (
           <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restriccion?</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restricción?</h2>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {ALLERGIES.map(a => {
+              {ALLERGIES.filter(a => {
+                if (dietType === "vegetariano") return a.v !== "sin cerdo"; // ya no come carne
+                if (dietType === "pescetariano") return a.v !== "sin cerdo"; // ya no come cerdo
+                return true;
+              }).map(a => {
                 const active = allergies.includes(a.v);
                 return (
                   <button key={a.v} onClick={() => {
@@ -367,7 +384,7 @@ export default function GeniePage() {
               })}
             </div>
             <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button onClick={() => setObStep(1)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atras</button>
+              <button onClick={() => setObStep(dietType === "vegano" ? 0 : 1)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
               <button onClick={() => setObStep(3)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Siguiente</button>
             </div>
           </div>
@@ -456,7 +473,7 @@ export default function GeniePage() {
           <p style={{ fontSize: 32, marginBottom: 6 }}>🧞</p>
           <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D", marginBottom: 6 }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, qué te llama la atención?` : "Qué te llama la atención?"; })()}</h1>
           <p className="font-body" style={{ fontSize: 13, color: "#888888" }}>Toca los platos que te llamen</p>
-          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", textAlign: "center", marginTop: 6 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.city}</p>}
+          {weatherInfo && <p className="font-body" style={{ fontSize: 12, color: "#AAAAAA", textAlign: "center", marginTop: 6 }}>{weatherInfo.icon} {Math.round(weatherInfo.temp)}°C · {weatherInfo.greeting}, {weatherInfo.city}</p>}
         </div>
 
         {dishes.length === 0 ? (

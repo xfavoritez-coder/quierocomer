@@ -7,8 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 type Group = any;
 type Dish = any;
 
-const STATUS_EMOJI: Record<string, string> = { WAITING: "⏳", SELECTING: "🔍", READY: "✅", RECALCULATING: "🔄" };
-const STATUS_TEXT: Record<string, string> = { WAITING: "Esperando", SELECTING: "Escogiendo...", READY: "Listo", RECALCULATING: "Cambiando..." };
+const STATUS_EMOJI: Record<string, string> = { WAITING: "🟢", SELECTING: "🔍", READY: "✅", RECALCULATING: "🔄" };
+const STATUS_TEXT: Record<string, string> = { WAITING: "En la sala", SELECTING: "Escogiendo platos...", READY: "Listo", RECALCULATING: "Cambiando..." };
 
 function getSessionId(): string { return localStorage.getItem("genie_session_id") ?? ""; }
 
@@ -158,6 +158,16 @@ export default function GroupRoom() {
     }
   }, [phase, result, code]);
 
+  const startSelecting = async () => {
+    setPhase("selecting");
+    // Update member status in DB so others see it
+    fetch(`/api/genie/group/${code}/join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sessionId: sid, userId: user?.id || null, nombre: localStorage.getItem("genieUserName") || "Invitado", estado: "SELECTING" }),
+    }).catch(() => {});
+  };
+
   const recalculate = async () => {
     setPhase("selecting");
     setSelected(new Set());
@@ -198,14 +208,17 @@ export default function GroupRoom() {
 
     return (
       <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
+        {/* Header with icon */}
+        <div style={{ width: 48, height: 48, borderRadius: "50%", background: "#FFD600", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 8 }}>
+          {group?.groupType === "PAREJA" ? "💛" : group?.groupType === "FAMILIA" ? "🏠" : "⭐"}
+        </div>
         <h2 className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D", marginBottom: 4 }}>{group?.groupType === "PAREJA" ? "Sala en pareja" : group?.groupType === "FAMILIA" ? "Sala familiar" : "Sala con amigos"}</h2>
         <p className="font-display" style={{ fontSize: "2.2rem", color: "#0D0D0D", letterSpacing: "0.3em", marginBottom: 8, fontWeight: 700 }}>{code}</p>
 
-        {/* Sharing instructions */}
+        {/* Sharing instructions — personalized */}
         <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: "14px 18px", marginBottom: 20, maxWidth: 340, width: "100%" }}>
           <p className="font-body" style={{ fontSize: "0.82rem", color: "#666", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
-            Dile a tu grupo que entre a <strong style={{ color: "#0D0D0D" }}>quierocomer.cl/grupo</strong> e ingrese el código <strong style={{ color: "#0D0D0D" }}>{code}</strong>
+            Dile a {group?.groupType === "PAREJA" ? "tu pareja" : group?.groupType === "FAMILIA" ? "tu familia" : "tus amigos"} que entre{group?.groupType === "PAREJA" ? "" : "n"} a <strong style={{ color: "#0D0D0D" }}>quierocomer.cl/grupo</strong> e ingrese{group?.groupType === "PAREJA" ? "" : "n"} el código <strong style={{ color: "#0D0D0D" }}>{code}</strong>
           </p>
         </div>
 
@@ -234,11 +247,11 @@ export default function GroupRoom() {
 
         {/* CTA */}
         {allHere ? (
-          <button onClick={() => setPhase("selecting")} style={{ marginTop: 20, width: "100%", maxWidth: 320, padding: 16, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
+          <button onClick={startSelecting} style={{ marginTop: 20, width: "100%", maxWidth: 320, padding: 16, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: "pointer" }}>
             Comenzar
           </button>
         ) : enoughToStart ? (
-          <button onClick={() => { if (confirm("¿Quieres comenzar sin esperar a los demás?")) setPhase("selecting"); }} style={{ marginTop: 20, padding: "12px 24px", background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>
+          <button onClick={() => { if (confirm("¿Quieres comenzar sin esperar a los demás?")) startSelecting(); }} style={{ marginTop: 20, padding: "12px 24px", background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>
             Comenzar sin esperar
           </button>
         ) : null}
@@ -271,20 +284,39 @@ export default function GroupRoom() {
                 {dishes.map((d: Dish) => {
                   const isSel = selected.has(d.id);
                   return (
-                    <div key={d.id} onClick={() => toggleSelect(d.id)} style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer", background: "#F5F5F5" }}>
+                    <div key={d.id} onClick={() => setPreviewDish(d)} style={{ position: "relative", aspectRatio: "1", borderRadius: 14, overflow: "hidden", border: isSel ? "2px solid #3db89e" : "2px solid transparent", cursor: "pointer", background: "#F5F5F5" }}>
                       {d.imagenUrl ? <img src={d.imagenUrl} alt={d.nombre} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: isSel ? 0.7 : 1 }} /> : <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>}
-                      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, background: "linear-gradient(transparent, rgba(0,0,0,0.8))", padding: "18px 6px 6px" }}>
-                        <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(0.5rem,1.3vw,0.65rem)", color: "#0D0D0D", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.nombre}</p>
-                      </div>
                       <button onClick={(e) => { e.stopPropagation(); toggleSelect(d.id); }} style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: isSel ? "#FFD600" : "transparent", border: isSel ? "2px solid #FFD600" : "2px solid rgba(255,255,255,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: isSel ? "#0D0D0D" : "#fff", fontWeight: isSel ? 800 : 400, cursor: "pointer", padding: 0 }}>{isSel ? "✓" : ""}</button>
                     </div>
                   );
                 })}
               </div>
 
-              <button onClick={markReady} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "rgba(255,214,0,0.15)", color: selected.size > 0 ? "#0D0D0D" : "#666666", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.92rem", fontWeight: 700, cursor: selected.size > 0 ? "pointer" : "default" }}>
-                Estoy listo ✓
+              <button onClick={markReady} disabled={selected.size === 0} style={{ width: "100%", padding: 16, background: selected.size > 0 ? "#FFD600" : "#E0E0E0", color: selected.size > 0 ? "#0D0D0D" : "#999", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.92rem", cursor: selected.size > 0 ? "pointer" : "default", marginBottom: 8 }}>
+                {selected.size > 0 ? `Estoy listo (${selected.size}) ✓` : "Selecciona al menos 1"}
               </button>
+              <button onClick={loadDishes} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFF", border: "none", borderRadius: 99, fontWeight: 500, fontSize: "0.82rem", cursor: "pointer" }}>
+                Ver otros platos
+              </button>
+            </>
+          )}
+          {/* Preview modal */}
+          {previewDish && (
+            <>
+              <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100 }} />
+              <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 16, overflow: "hidden", background: "#FFF", border: "1px solid #E0E0E0" }}>
+                {previewDish.imagenUrl && <img src={previewDish.imagenUrl} alt={previewDish.nombre} style={{ width: "100%", height: 240, objectFit: "cover" }} />}
+                <div style={{ padding: "14px 18px" }}>
+                  <h3 className="font-display" style={{ fontSize: "1rem", color: "#0D0D0D", marginBottom: 4 }}>{previewDish.nombre}</h3>
+                  <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", marginBottom: 12 }}>{previewDish.local?.nombre}</p>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button onClick={() => { toggleSelect(previewDish.id); setPreviewDish(null); }} style={{ flex: 1, padding: 12, background: selected.has(previewDish.id) ? "#F5F5F5" : "#FFD600", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.82rem", color: selected.has(previewDish.id) ? "#ff6b6b" : "#0D0D0D", cursor: "pointer" }}>
+                      {selected.has(previewDish.id) ? "Quitar" : "Me llama la atención"}
+                    </button>
+                    <button onClick={() => setPreviewDish(null)} style={{ padding: "12px 18px", background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.82rem", color: "#999", cursor: "pointer" }}>Cerrar</button>
+                  </div>
+                </div>
+              </div>
             </>
           )}
         </div>
