@@ -39,6 +39,7 @@ export default function GeniePerfil() {
   const guestName = typeof window !== "undefined" ? localStorage.getItem("genieUserName") : null;
   const displayName = user?.nombre || guestName || "Invitado";
   const initials = displayName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2);
+  const [learned, setLearned] = useState<{ categories: {name: string, count: number}[]; ingredients: {name: string, count: number}[]; locals: {name: string, count: number}[]; totalSelections: number } | null>(null);
 
   useEffect(() => {
     if (isLoading) return;
@@ -64,6 +65,19 @@ export default function GeniePerfil() {
       .then(r => r.json())
       .then(prof => { setProfile(prof); setLoading(false); initialized.current = true; });
   }, [user, isLoading]);
+
+  // Fetch learned data from interactions
+  useEffect(() => {
+    const sid = typeof window !== "undefined" ? localStorage.getItem("genie_session_id") : null;
+    if (!sid && !user?.id) return;
+    const params = new URLSearchParams();
+    if (user?.id) params.set("userId", user.id);
+    if (sid) params.set("sessionId", sid);
+    fetch(`/api/genie/learned?${params}`)
+      .then(r => r.json())
+      .then(d => setLearned(d))
+      .catch(() => {});
+  }, [user]);
 
   const save = (data: Record<string, unknown>) => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -215,6 +229,7 @@ export default function GeniePerfil() {
               <div style={{ background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 14, padding: 14 }}>
                 {(() => {
                   const hasProfileData = (profile.favoriteIngredients?.length > 0 || profile.avoidIngredients?.length > 0);
+                  const hasLearned = learned && learned.totalSelections > 0;
                   let onboardingDiet: string | null = null;
                   try {
                     const raw = typeof window !== "undefined" ? localStorage.getItem("genieOnboardingData") : null;
@@ -223,15 +238,48 @@ export default function GeniePerfil() {
                       if (data.dietType && data.dietType !== "como de todo") onboardingDiet = data.dietType;
                     }
                   } catch {}
-                  if (!hasProfileData && !onboardingDiet) {
+                  if (!hasProfileData && !hasLearned && !onboardingDiet) {
                     return <p className="font-body" style={{ fontSize: "0.82rem", color: "#999", textAlign: "center", lineHeight: 1.6 }}>Usa el Genio más veces para que aprenda tus gustos</p>;
                   }
+
+                  const CAT_LABELS: Record<string, string> = { SUSHI: "Sushi", PIZZA: "Pizza", MAIN_COURSE: "Plato de fondo", STARTER: "Entrada", COMBO: "Combo", PASTA: "Pasta", BURGER: "Hamburguesa", SANDWICH: "Sándwich", SALAD: "Ensalada", DESSERT: "Postre", BREAKFAST: "Desayuno", WOK: "Wok", SEAFOOD: "Mariscos", VEGAN: "Vegano", VEGETARIAN: "Vegetariano" };
+
                   return (
                     <>
                       {onboardingDiet && (
                         <div style={{ marginBottom: 10 }}>
                           <p className="font-display" style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: 700 }}>Tu estilo</p>
                           <span style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(255,214,0,0.12)", border: "1px solid rgba(255,214,0,0.3)", fontSize: "0.72rem", color: "#0D0D0D" }}>{onboardingDiet.charAt(0).toUpperCase() + onboardingDiet.slice(1)}</span>
+                        </div>
+                      )}
+                      {hasLearned && learned!.categories.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                          <p className="font-display" style={{ fontSize: 11, color: "#0D0D0D", marginBottom: 6, fontWeight: 700 }}>Te interesa</p>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {learned!.categories.map(c => (
+                              <span key={c.name} style={{ padding: "3px 8px", borderRadius: 99, background: "#F5F5F5", border: "1px solid #E0E0E0", fontSize: "0.72rem", color: "#0D0D0D" }}>{CAT_LABELS[c.name] ?? c.name} ({c.count})</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {hasLearned && learned!.ingredients.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                          <p className="font-display" style={{ fontSize: 11, color: "#3db89e", marginBottom: 6, fontWeight: 700 }}>Ingredientes que eliges</p>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {learned!.ingredients.slice(0, 6).map(i => (
+                              <span key={i.name} style={{ padding: "3px 8px", borderRadius: 99, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.2)", fontSize: "0.72rem", color: "#3db89e" }}>{i.name}</span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {hasLearned && learned!.locals.length > 0 && (
+                        <div style={{ marginBottom: 10 }}>
+                          <p className="font-display" style={{ fontSize: 11, color: "#666", marginBottom: 6, fontWeight: 700 }}>Locales que te atraen</p>
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {learned!.locals.map(l => (
+                              <span key={l.name} style={{ padding: "3px 8px", borderRadius: 99, background: "#F5F5F5", border: "1px solid #E0E0E0", fontSize: "0.72rem", color: "#666" }}>{l.name}</span>
+                            ))}
+                          </div>
                         </div>
                       )}
                       {profile.favoriteIngredients?.length > 0 && (
