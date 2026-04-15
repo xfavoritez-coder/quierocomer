@@ -22,6 +22,7 @@ export default function GenieResult() {
   const [loading, setLoading] = useState(true);
   const [postres, setPostres] = useState<Rec[]>([]);
   const [bebidas, setBebidas] = useState<Rec[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const run = async () => {
@@ -115,7 +116,7 @@ export default function GenieResult() {
       setLoading(false);
     };
     run();
-  }, [router, user]);
+  }, [router, user, refreshKey]);
 
   if (loading) {
     return (
@@ -143,8 +144,12 @@ export default function GenieResult() {
   return (
     <div style={{ minHeight: "100vh", background: "#FFFFFF", padding: "clamp(20px,4vw,40px) clamp(16px,3vw,24px)" }}>
       <div style={{ maxWidth: 500, margin: "0 auto" }}>
+        {/* Header with logo link */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <a href="/" style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 700, color: "#0D0D0D", textDecoration: "none" }}>🧞 QuieroComer</a>
+          <a href="/" style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#999", textDecoration: "none" }}>← Empezar de nuevo</a>
+        </div>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <p style={{ fontSize: 32, marginBottom: 4 }}>🧞</p>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.2rem,3.5vw,1.5rem)", color: "#0D0D0D", marginBottom: 4 }}>El Genio recomienda</h1>
           <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#666666" }}>Basado en tus gustos y el momento</p>
         </div>
@@ -174,14 +179,14 @@ export default function GenieResult() {
             </p>
             <p style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", marginBottom: 14 }}>${Number(main.precio).toLocaleString("es-CL")}</p>
 
-            <div style={{ display: "flex", gap: 8 }}>
-              {main.local.lat && main.local.lng && (
-                <a href={`https://www.google.com/maps/dir/?api=1&destination=${main.local.lat},${main.local.lng}`} target="_blank" rel="noopener" style={{ flex: 1, padding: 12, background: "rgba(61,184,158,0.1)", border: "1px solid rgba(61,184,158,0.3)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#3db89e", textAlign: "center", textDecoration: "none", fontWeight: 700 }}>Como llegar</a>
-              )}
-              {main.local.linkPedido && (
-                <a href={main.local.linkPedido} target="_blank" rel="noopener" style={{ flex: 1, padding: 12, background: "rgba(255,214,0,0.1)", border: "1px solid rgba(255,214,0,0.3)", borderRadius: 12, fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#0D0D0D", textAlign: "center", textDecoration: "none", fontWeight: 700 }}>Pedir aqui</a>
-              )}
-            </div>
+            <button onClick={() => {
+              localStorage.setItem("genieLastResultAt", String(Date.now()));
+              if (main.local.lat && main.local.lng) {
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${main.local.lat},${main.local.lng}`, "_blank");
+              }
+            }} style={{ width: "100%", padding: 14, background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.88rem", fontWeight: 700, cursor: "pointer" }}>
+              Esto quiero →
+            </button>
           </div>
         </div>
 
@@ -202,9 +207,9 @@ export default function GenieResult() {
                   ))}
                 </div>
               )}
-              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#FFD600", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rec.nombre}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#0D0D0D", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rec.nombre}</p>
               <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: "0 0 4px" }}>{rec.local.nombre} · {rec.distanceLabel ?? rec.local.comuna}</p>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#FFD600", margin: 0 }}>${Number(rec.precio).toLocaleString("es-CL")}</p>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", margin: 0 }}>${Number(rec.precio).toLocaleString("es-CL")}</p>
             </div>
           </div>
         ))}
@@ -242,8 +247,8 @@ export default function GenieResult() {
         )}
 
         {/* Actions */}
-        <button onClick={() => { sessionStorage.removeItem("genieSelectedDishes"); sessionStorage.removeItem("genieContext"); router.push("/"); }} style={{ width: "100%", marginTop: 16, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>
-          Ver mas opciones
+        <button onClick={() => { setRecs([]); setLoading(true); setPostres([]); setBebidas([]); setRefreshKey(k => k + 1); }} style={{ width: "100%", marginTop: 16, padding: 14, background: "transparent", border: "1px solid #E0E0E0", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>
+          Mostrar otras sugerencias
         </button>
       </div>
     </div>

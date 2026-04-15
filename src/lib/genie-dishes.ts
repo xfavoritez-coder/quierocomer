@@ -112,7 +112,7 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
 
   scored.sort((a, b) => b._score - a._score);
 
-  // Balance across locals: pick max 3 per local, round-robin
+  // Balance across locals: max 2 per local, round-robin
   const byLocal: Record<string, typeof scored> = {};
   for (const d of scored) {
     const lid = d.local.id;
@@ -120,13 +120,19 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
     byLocal[lid].push(d);
   }
   const balanced: typeof filtered = [];
+  const localCounts: Record<string, number> = {};
   const localQueues = Object.values(byLocal);
   let idx = 0;
   while (balanced.length < 9 && localQueues.some(q => q.length > 0)) {
     for (const queue of localQueues) {
       if (balanced.length >= 9) break;
       if (queue.length > 0) {
+        const dish = queue[0];
+        const lid = dish.local.id;
+        const count = localCounts[lid] ?? 0;
+        if (count >= 2) { queue.shift(); continue; } // Max 2 per local
         balanced.push(queue.shift()!);
+        localCounts[lid] = count + 1;
       }
     }
     idx++;
