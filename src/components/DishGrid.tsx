@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import Image from "next/image";
 import DishPlaceholder from "@/components/DishPlaceholder";
 
@@ -41,6 +42,8 @@ interface Props {
 
 export default function DishGrid({ dishes, selected, onToggleSelect, loading }: Props) {
   const [previewDish, setPreviewDish] = useState<Dish | null>(null);
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
+  useEffect(() => { setPortalRoot(document.body); }, []);
 
   if (loading) {
     return <p className="font-body" style={{ color: "#999", textAlign: "center", padding: 40 }}>Cargando platos...</p>;
@@ -85,12 +88,11 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
         })}
       </div>
 
-      {/* Preview modal */}
-      {previewDish && (
+      {/* Preview modal — rendered via portal to escape transform/overflow ancestors */}
+      {previewDish && portalRoot && createPortal(
         <>
-          <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100 }} />
-          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 101, borderRadius: 20, overflow: "hidden", background: "#FFF", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
-            {/* X close */}
+          <div onClick={() => setPreviewDish(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 1000 }} />
+          <div style={{ position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: "min(90vw, 400px)", zIndex: 1001, borderRadius: 20, overflow: "hidden", background: "#FFF", boxShadow: "0 8px 30px rgba(0,0,0,0.12)" }}>
             <button onClick={() => setPreviewDish(null)} style={{ position: "absolute", top: 12, right: 12, zIndex: 2, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.5)", border: "none", color: "#fff", fontSize: 16, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             {previewDish.imagenUrl ? (
               <div style={{ position: "relative" }}>
@@ -128,7 +130,8 @@ export default function DishGrid({ dishes, selected, onToggleSelect, loading }: 
               </button>
             </div>
           </div>
-        </>
+        </>,
+        portalRoot
       )}
     </>
   );

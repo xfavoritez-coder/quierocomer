@@ -29,18 +29,20 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
   const [enterFrom, setEnterFrom] = useState<"left" | "right" | null>(null);
 
   const trackRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const touchCurrentX = useRef(0);
   const isHorizontalSwipe = useRef<boolean | null>(null);
-  const containerWidth = useRef(0);
+  const [gridMinHeight, setGridMinHeight] = useState<number | undefined>(undefined);
 
-  // Measure container width
+  // Capture grid height before transitions to prevent collapse
   useEffect(() => {
-    if (trackRef.current) {
-      containerWidth.current = trackRef.current.offsetWidth;
+    if (wrapperRef.current && pages.length > 0 && !loadingNext) {
+      const h = wrapperRef.current.offsetHeight;
+      if (h > 50) setGridMinHeight(h);
     }
-  });
+  }, [pages, currentPage, loadingNext]);
 
   // Initialize with first page
   useEffect(() => {
@@ -319,7 +321,8 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
 
       {/* Swipeable grid — overflow visible so modal is not clipped */}
       <div
-        style={{ overflow: "hidden" }}
+        ref={wrapperRef}
+        style={{ overflow: "hidden", minHeight: gridMinHeight }}
         onTouchStart={onTouchStart}
         onTouchMove={onTouchMove}
         onTouchEnd={onTouchEnd}
@@ -335,7 +338,6 @@ export default function SwipeDishGrid({ initialDishes, selected, onToggleSelect,
             transition: gridTransition,
             opacity: gridOpacity,
             touchAction: "pan-y",
-            minHeight: loadingNext ? 300 : undefined,
           }}
         >
           {!loadingNext && (

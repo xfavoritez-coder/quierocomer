@@ -176,7 +176,7 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       SNACK: ["BURGER", "SANDWICH", "PIZZA"],
     };
     const boostedCats = TIME_CAT_BOOST[currentMeal] ?? [];
-    if (boostedCats.includes(d.categoria)) score += 8;
+    if (boostedCats.includes(d.categoria)) score += 15;
 
     // Random factor: smaller when we have selections (smart mode), larger for first load
     score += Math.random() * (selectedIds.length > 0 ? 2 : 4);

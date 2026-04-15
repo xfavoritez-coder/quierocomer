@@ -168,7 +168,7 @@ export default function GeniePerfil() {
               </div>
               {/* Overlay with CTA — low opacity so blur shows through */}
               <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(245,245,245,0.10)", padding: "0 20px" }}>
-                <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500, textAlign: "center" }}>Regístrate para descubrir lo que el Genio aprendió de ti</p>
+                <p className="font-body" style={{ fontSize: "0.85rem", color: "#0D0D0D", marginBottom: 12, fontWeight: 500, textAlign: "center" }}>Regístrate para ver lo que el Genio sabe de ti</p>
                 <Link href="/registro" style={{ display: "block", width: "100%", padding: "14px 28px", background: "#FFD600", color: "#0D0D0D", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: 700, fontSize: "0.88rem", textDecoration: "none", textAlign: "center", boxSizing: "border-box" }}>Crear cuenta gratis</Link>
               </div>
             </div>
