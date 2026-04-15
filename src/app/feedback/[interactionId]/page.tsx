@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -7,9 +7,12 @@ export default function GenieFeedback() {
   const { interactionId } = useParams<{ interactionId: string }>();
   const router = useRouter();
   const { user } = useAuth();
-  const [dish, setDish] = useState<{ nombre: string; imagenUrl: string | null } | null>(null);
+  const [dish, setDish] = useState<{ nombre: string; imagenUrl: string | null; menuItemId?: string } | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [photoUploaded, setPhotoUploaded] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Fetch interaction details to show the dish
@@ -42,7 +45,32 @@ export default function GenieFeedback() {
         <p style={{ fontSize: 48, marginBottom: 16 }}>🧞</p>
         <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1.3rem", color: "#0D0D0D", textAlign: "center", marginBottom: 8 }}>Guardado</h2>
         <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 28 }}>El Genio ya lo sabe 🧞</p>
-        <button onClick={() => router.push("/")} style={{ padding: "14px 32px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer" }}>Volver a descubrir</button>
+        {dish && !dish.imagenUrl && !photoUploaded && (
+          <div style={{ marginTop: 20, textAlign: "center" }}>
+            <p className="font-body" style={{ fontSize: "0.82rem", color: "#666", marginBottom: 10 }}>¿Tienes una foto del plato? Ayuda a otros 🧞</p>
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={async (e) => {
+              const file = e.target.files?.[0];
+              if (!file) return;
+              setUploading(true);
+              const fd = new FormData();
+              fd.append("file", file);
+              fd.append("menuItemId", dish.menuItemId || "");
+              fd.append("sessionId", localStorage.getItem("genie_session_id") ?? "");
+              try {
+                const res = await fetch("/api/dishes/upload-user-photo", { method: "POST", body: fd });
+                if (res.ok) setPhotoUploaded(true);
+              } catch {}
+              setUploading(false);
+            }} style={{ display: "none" }} />
+            <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ padding: "10px 24px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 99, fontSize: "0.82rem", color: "#0D0D0D", cursor: "pointer" }}>
+              {uploading ? "Subiendo..." : "Subir foto"}
+            </button>
+          </div>
+        )}
+        {photoUploaded && (
+          <p className="font-body" style={{ marginTop: 16, fontSize: "0.82rem", color: "#3db89e", textAlign: "center" }}>¡Gracias! Tu foto ya aparece en QuieroComer 🧞</p>
+        )}
+        <button onClick={() => router.push("/")} style={{ padding: "14px 32px", background: "#0D0D0D", color: "#FFD600", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: "pointer", marginTop: 16 }}>Volver a descubrir</button>
       </div>
     );
   }

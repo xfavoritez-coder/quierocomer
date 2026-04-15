@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Image from "next/image";
+import DishPlaceholder from "@/components/DishPlaceholder";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Dish = any;
@@ -502,7 +503,7 @@ export default function GeniePage() {
                     {d.imagenUrl ? (
                       <Image src={d.imagenUrl} alt={d.nombre} fill sizes="(max-width: 500px) 33vw, 160px" style={{ objectFit: "cover", opacity: isSel ? 0.7 : 1, transition: "opacity 0.15s" }} loading="lazy" />
                     ) : (
-                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 28 }}>🍽️</div>
+                      <DishPlaceholder categoria={d.categoria} />
                     )}
                     {/* Vegan badge */}
                     {d.dietType === "VEGAN" && (

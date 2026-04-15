@@ -66,6 +66,7 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
       imagenUrl: { not: null },
       categoria: { notIn: FOOD_ONLY_EXCLUDE },
       dietType: { in: allowedDietTypes },
+      local: { menuItems: { some: { isAvailable: true } } },
       ...(allExcludeIds.length > 0 ? { id: { notIn: allExcludeIds } } : {}),
     },
     include: {

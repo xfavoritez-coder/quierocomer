@@ -122,6 +122,7 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
       id: { notIn: ctx.selectedDishIds },
       categoria: { notIn: FOOD_ONLY_EXCLUDE },
       dietType: { in: allowedDietTypes },
+      local: { menuItems: { some: { isAvailable: true } } },
     },
     include: {
       ingredientTags: { include: { ingredient: true } },

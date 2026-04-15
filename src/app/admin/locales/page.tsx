@@ -394,6 +394,11 @@ export default function AdminLocales() {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", color: "#FFFFFF", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{l.nombre}</p>
+                {l._count?.menuItems === 0 ? (
+                  <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 99, background: "#FEE2E2", color: "#991B1B", fontSize: 11, flexShrink: 0 }}>Sin carta</span>
+                ) : (
+                  <span style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 99, background: "#DCFCE7", color: "#166534", fontSize: 11, flexShrink: 0 }}>{l._count?.menuItems} platos</span>
+                )}
                 {l.origenImportacion === "GOOGLE_PLACES" && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: "4px", background: "rgba(123,154,255,0.12)", border: "1px solid rgba(123,154,255,0.3)", color: "#7b9aff", flexShrink: 0 }}>Google</span>}
               </div>
               <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "rgba(240,234,214,0.4)", margin: "2px 0 0" }}>{isGoogleFilter ? (l.comuna ?? "Sin comuna") + (l.googleRating ? ` · ⭐ ${l.googleRating}` : "") : l.email}</p>

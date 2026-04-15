@@ -7,7 +7,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const interaction = await prisma.interaction.findUnique({
       where: { id },
       select: {
-        menuItem: { select: { nombre: true, imagenUrl: true } },
+        menuItem: { select: { id: true, nombre: true, imagenUrl: true } },
       },
     });
     if (!interaction) return NextResponse.json({ error: "No encontrada" }, { status: 404 });
@@ -15,6 +15,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({
       nombre: interaction.menuItem.nombre,
       imagenUrl: interaction.menuItem.imagenUrl,
+      menuItemId: interaction.menuItem.id,
     });
   } catch {
     return NextResponse.json({ error: "Error" }, { status: 500 });
