@@ -130,7 +130,7 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
         const dish = queue[0];
         const lid = dish.local.id;
         const count = localCounts[lid] ?? 0;
-        if (count >= 2) { queue.shift(); continue; } // Max 2 per local
+        if (count >= 3) { queue.shift(); continue; } // Max 3 per local
         balanced.push(queue.shift()!);
         localCounts[lid] = count + 1;
       }
