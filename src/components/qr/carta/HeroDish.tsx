@@ -15,18 +15,19 @@ interface QRUserData {
 }
 
 interface HeroDishProps {
-  restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl">;
+  restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl"> & { id: string };
   heroDishes: Dish[];
   qrUser?: QRUserData | null;
   onProfileOpen?: () => void;
   onDishSelect?: (dish: Dish) => void;
+  viewSelectorSlot?: React.ReactNode;
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
 
   const logoSrc = isReal(restaurant.logoUrl) ? restaurant.logoUrl! : null;
@@ -153,12 +154,14 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           </span>
         </div>
 
-        {/* Top right: profile icon */}
+        {/* Top right: view selector + profile icon */}
+        <div className="absolute z-10 flex items-center" style={{ top: 16, right: 16, gap: 8 }}>
+          {viewSelectorSlot}
         <button
           onClick={onProfileOpen}
-          className="absolute z-10 flex items-center justify-center"
+          className="flex items-center justify-center"
           style={{
-            top: 16, right: 16, width: 36, height: 36, borderRadius: "50%",
+            width: 36, height: 36, borderRadius: "50%",
             background: qrUser ? "#F4A623" : "rgba(0,0,0,0.4)",
             backdropFilter: qrUser ? "none" : "blur(4px)",
             WebkitBackdropFilter: qrUser ? "none" : "blur(4px)",
@@ -173,6 +176,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
             <User size={16} color="rgba(255,255,255,0.7)" />
           )}
         </button>
+        </div>
 
         {/* Badges */}
         {dish && (

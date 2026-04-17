@@ -57,12 +57,6 @@ export default function CartaRouter(props: Props) {
         </div>
       )}
 
-      {/* Floating ViewSelector — above Genio button */}
-      {isReady && (
-        <div className="fixed z-50" style={{ right: 20, bottom: 114 }}>
-          <ViewSelector restaurantId={props.restaurant.id} />
-        </div>
-      )}
     </>
   );
 }

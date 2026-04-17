@@ -11,6 +11,7 @@ import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
+import ViewSelector from "./ViewSelector";
 
 interface Review {
   id: string;
@@ -149,7 +150,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} viewSelectorSlot={<ViewSelector restaurantId={restaurant.id} variant="dark" />} />
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
@@ -189,10 +190,19 @@ export default function CartaPremium({
           rightSlot={
             <button
               onClick={() => setSearchOpen(true)}
-              style={{ background: "none", border: "none", padding: 4, cursor: "pointer" }}
+              className="flex items-center justify-center"
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: "50%",
+                background: "rgba(14,14,14,0.06)",
+                border: "none",
+                cursor: "pointer",
+                transition: "background 0.15s",
+              }}
               aria-label="Buscar"
             >
-              <Search size={18} color="#999" />
+              <Search size={16} color="#666" />
             </button>
           }
         />
