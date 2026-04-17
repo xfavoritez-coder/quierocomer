@@ -71,7 +71,7 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
         <h3 className="font-[family-name:var(--font-dm)] truncate" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           {dish.name}
         </h3>
-        <div style={{ marginTop: -1 }}>
+        <div style={{ marginTop: -3 }}>
           {dish.discountPrice ? (
             <span className="font-[family-name:var(--font-dm)]">
               <span className="line-through" style={{ color: "#ccc", fontSize: "0.72rem", marginRight: 4 }}>${dish.price.toLocaleString("es-CL")}</span>
