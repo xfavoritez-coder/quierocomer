@@ -34,3 +34,11 @@ export function trackCartaViewSelected(restaurantId: string, view: string, previ
 export function trackCartaDishOpenedInList(restaurantId: string, dishId: string, isGeniePick: boolean) {
   track(restaurantId, "DISH_VIEW", dishId);
 }
+
+export function trackCartaViajeCategoryReached(restaurantId: string, categoryId: string) {
+  track(restaurantId, "CATEGORY_VIEW");
+}
+
+export function trackCartaDishOpenedInViaje(restaurantId: string, dishId: string, isGeniePick: boolean) {
+  track(restaurantId, "DISH_VIEW", dishId);
+}

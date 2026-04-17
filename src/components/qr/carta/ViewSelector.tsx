@@ -9,7 +9,7 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List; disabled?: boolean }[] = [
   { value: "lista", label: "Lista", Icon: List },
   { value: "premium", label: "Premium", Icon: Sparkles },
-  { value: "viaje", label: "Viaje", Icon: Compass, disabled: true },
+  { value: "viaje", label: "Viaje", Icon: Compass },
 ];
 
 interface Props {
