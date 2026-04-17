@@ -11,6 +11,7 @@ import { Sparkles } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
+import ViewSelector from "./ViewSelector";
 
 interface Review {
   id: string;
@@ -152,6 +153,7 @@ export default function CartaPremium({
         categories={categories}
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
+        rightSlot={<ViewSelector restaurantId={restaurant.id} />}
       />
 
       <main style={{ paddingBottom: 80 }}>

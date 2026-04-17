@@ -7,12 +7,14 @@ interface CategoryNavProps {
   categories: Category[];
   activeCategory: string;
   onCategoryChange: (id: string) => void;
+  rightSlot?: React.ReactNode;
 }
 
 export default function CategoryNav({
   categories,
   activeCategory,
   onCategoryChange,
+  rightSlot,
 }: CategoryNavProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const activeRef = useRef<HTMLButtonElement>(null);
@@ -39,15 +41,16 @@ export default function CategoryNav({
   return (
     <nav
       className="sticky top-0 z-40"
-      style={{ position: "sticky", top: 0, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, WebkitBackfaceVisibility: "hidden" }}
+      style={{ position: "sticky", top: 0, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, WebkitBackfaceVisibility: "hidden", display: "flex", alignItems: "center" }}
     >
       <div
         ref={scrollRef}
         className="flex overflow-x-auto"
         style={{
+          flex: 1,
           height: "100%",
           paddingLeft: 16,
-          paddingRight: 16,
+          paddingRight: rightSlot ? 8 : 16,
           gap: 24,
           scrollbarWidth: "none",
           msOverflowStyle: "none",
@@ -82,6 +85,11 @@ export default function CategoryNav({
           );
         })}
       </div>
+      {rightSlot && (
+        <div style={{ flexShrink: 0, paddingRight: 12 }}>
+          {rightSlot}
+        </div>
+      )}
     </nav>
   );
 }

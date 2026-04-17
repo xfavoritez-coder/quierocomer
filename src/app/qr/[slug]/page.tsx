@@ -7,7 +7,7 @@ import {
   applyScheduleRules,
 } from "@/lib/qr/utils/detectConditions";
 import CartaBasic from "@/components/qr/carta/CartaBasic";
-import CartaPremium from "@/components/qr/carta/CartaPremium";
+import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import { prisma } from "@/lib/prisma";
 
@@ -67,19 +67,24 @@ export default async function CartaPage({
     weather
   );
 
-  const Carta = restaurant.cartaTheme === "PREMIUM" ? CartaPremium : CartaBasic;
+  const isPremium = restaurant.cartaTheme === "PREMIUM";
+  const cartaProps = {
+    restaurant,
+    categories,
+    dishes,
+    promotions: restaurant.promotions,
+    ratingMap: restaurant.ratingMap,
+    reviews: restaurant.reviews,
+    tableId,
+  };
 
   return (
     <DesktopWrapper restaurantName={restaurant.name} slug={slug}>
-      <Carta
-        restaurant={restaurant}
-        categories={categories}
-        dishes={dishes}
-        promotions={restaurant.promotions}
-        ratingMap={restaurant.ratingMap}
-        reviews={restaurant.reviews}
-        tableId={tableId}
-      />
+      {isPremium ? (
+        <CartaRouter {...cartaProps} />
+      ) : (
+        <CartaBasic {...cartaProps} />
+      )}
     </DesktopWrapper>
   );
 }
