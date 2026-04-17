@@ -11,53 +11,53 @@ datasource db {
 // ─── Users ──────────────────────────────────────────────────────────────
 
 model Usuario {
-  id                String   @id @default(cuid())
+  id                String    @id @default(cuid())
   nombre            String
-  email             String   @unique
+  email             String    @unique
   password          String
   telefono          String?
-  ciudad            String?  @default("santiago")
-  fotoUrl           String   @default("")
-  tipo              String   @default("usuario")
-  emailVerificado   Boolean  @default(false)
+  ciudad            String?   @default("santiago")
+  fotoUrl           String    @default("")
+  tipo              String    @default("usuario")
+  emailVerificado   Boolean   @default(false)
   emailVerificadoAt DateTime?
   tokenVerificacion String?
   resetToken        String?
   resetTokenExpira  DateTime?
-  estiloAlimentario String   @default("")
-  comidasFavoritas  String[] @default([])
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  estiloAlimentario String    @default("")
+  comidasFavoritas  String[]  @default([])
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 }
 
 // ─── Restaurants ────────────────────────────────────────────────────────
 
 model Local {
-  id            String   @id @default(cuid())
-  slug          String?  @unique
-  nombre        String
-  email         String   @unique
-  password      String
-  telefono      String?
-  ciudad        String   @default("santiago")
-  categorias    String[] @default([])
-  descripcion   String?
-  direccion     String?
-  comuna        String?
-  lat           Float?
-  lng           Float?
-  instagram     String?
-  sitioWeb      String?
-  horarios      Json?
-  logoUrl       String?
-  portadaUrl    String?
-  activo        Boolean  @default(true)
-  vistas        Int      @default(0)
-  linkPedido    String?  @default("")
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String   @id @default(cuid())
+  slug        String?  @unique
+  nombre      String
+  email       String   @unique
+  password    String
+  telefono    String?
+  ciudad      String   @default("santiago")
+  categorias  String[] @default([])
+  descripcion String?
+  direccion   String?
+  comuna      String?
+  lat         Float?
+  lng         Float?
+  instagram   String?
+  sitioWeb    String?
+  horarios    Json?
+  logoUrl     String?
+  portadaUrl  String?
+  activo      Boolean  @default(true)
+  vistas      Int      @default(0)
+  linkPedido  String?  @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  menuItems     MenuItem[]
+  menuItems MenuItem[]
 
   @@index([activo])
   @@index([comuna])
@@ -76,22 +76,22 @@ model MenuItem {
   destacado   Boolean  @default(false)
   createdAt   DateTime @default(now())
 
-  ingredients     String[]
-  ingredientTags  IngredientTag[]
-  dietType        DietType        @default(OMNIVORE)
-  mealTimes       String[]        @default([])
-  hungerLevel     HungerLevel?
-  isAvailable     Boolean         @default(true)
-  availableFrom   String?
-  availableTo     String?
-  totalViews      Int             @default(0)
-  totalSelected   Int             @default(0)
-  totalLoved      Int             @default(0)
-  avgRating       Float?
+  ingredients    String[]
+  ingredientTags IngredientTag[]
+  dietType       DietType        @default(OMNIVORE)
+  mealTimes      String[]        @default([])
+  hungerLevel    HungerLevel?
+  isAvailable    Boolean         @default(true)
+  availableFrom  String?
+  availableTo    String?
+  totalViews     Int             @default(0)
+  totalSelected  Int             @default(0)
+  totalLoved     Int             @default(0)
+  avgRating      Float?
 
-  local           Local           @relation(fields: [localId], references: [id])
-  interactions    Interaction[]
-  ratings         DishRating[]
+  local        Local         @relation(fields: [localId], references: [id])
+  interactions Interaction[]
+  ratings      DishRating[]
 }
 
 enum HungerLevel {
@@ -110,11 +110,11 @@ enum DietType {
 // ─── Ingredients ────────────────────────────────────────────────────────
 
 model Ingredient {
-  id          String             @id @default(cuid())
-  name        String             @unique
-  category    IngredientCategory
-  createdAt   DateTime           @default(now())
-  dishes      IngredientTag[]
+  id        String             @id @default(cuid())
+  name      String             @unique
+  category  IngredientCategory
+  createdAt DateTime           @default(now())
+  dishes    IngredientTag[]
 }
 
 enum IngredientCategory {
@@ -129,12 +129,12 @@ enum IngredientCategory {
 }
 
 model IngredientTag {
-  id           String     @id @default(cuid())
+  id           String @id @default(cuid())
   menuItemId   String
   ingredientId String
 
-  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
-  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  menuItem   MenuItem   @relation(fields: [menuItemId], references: [id])
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
 
   @@unique([menuItemId, ingredientId])
 }
@@ -142,19 +142,19 @@ model IngredientTag {
 // ─── Interactions ───────────────────────────────────────────────────────
 
 model Interaction {
-  id         String   @id @default(cuid())
-  createdAt  DateTime @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
   userId     String?
   sessionId  String
   visitId    String?
   menuItemId String
 
-  action        InteractionAction
-  ctxCompany    CompanyContext?
-  ctxHunger     HungerLevel?
-  ctxBudget     Int?
-  ctxOccasion   OccasionContext?
+  action      InteractionAction
+  ctxCompany  CompanyContext?
+  ctxHunger   HungerLevel?
+  ctxBudget   Int?
+  ctxOccasion OccasionContext?
 
   weatherTemp      Float?
   weatherCondition String?
@@ -165,7 +165,7 @@ model Interaction {
   hour      Int?
   dayOfWeek Int?
 
-  menuItem  MenuItem @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
   @@index([userId])
   @@index([sessionId])
@@ -204,19 +204,19 @@ enum OccasionContext {
 // ─── Ratings ────────────────────────────────────────────────────────────
 
 model DishRating {
-  id         String      @id @default(cuid())
-  createdAt  DateTime    @default(now())
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
 
   userId     String?
   sessionId  String
   menuItemId String
 
-  score      RatingScore
-  stars      Int?
-  comment    String?
-  userName   String?
+  score    RatingScore
+  stars    Int?
+  comment  String?
+  userName String?
 
-  menuItem   MenuItem    @relation(fields: [menuItemId], references: [id])
+  menuItem MenuItem @relation(fields: [menuItemId], references: [id])
 
   @@unique([userId, menuItemId])
   @@index([menuItemId])
@@ -234,18 +234,18 @@ model UserTasteProfile {
   id        String   @id @default(cuid())
   updatedAt DateTime @updatedAt
 
-  userId    String   @unique
+  userId    String  @unique
   sessionId String?
 
   favoriteIngredients String[]
   avoidIngredients    String[]
 
-  typicalHunger    HungerLevel?
-  typicalCompany   CompanyContext?
-  typicalBudget    Int?
+  typicalHunger  HungerLevel?
+  typicalCompany CompanyContext?
+  typicalBudget  Int?
 
-  coldWeatherPrefs  String[]
-  hotWeatherPrefs   String[]
+  coldWeatherPrefs String[]
+  hotWeatherPrefs  String[]
 
   onboardingDone      Boolean     @default(false)
   dietaryRestrictions String[]
@@ -271,36 +271,36 @@ enum RiskProfile {
 // ─── Group Sessions ─────────────────────────────────────────────────────
 
 model GroupSession {
-  id            String   @id @default(cuid())
-  code          String   @unique
-  createdAt     DateTime @default(now())
-  expiresAt     DateTime
-  creatorId     String?
+  id             String        @id @default(cuid())
+  code           String        @unique
+  createdAt      DateTime      @default(now())
+  expiresAt      DateTime
+  creatorId      String?
   creatorSession String?
-  groupType     GroupType
-  totalMembers  Int
-  estado        GroupStatus @default(WAITING)
-  resultLocalId String?
-  members       GroupMember[]
+  groupType      GroupType
+  totalMembers   Int
+  estado         GroupStatus   @default(WAITING)
+  resultLocalId  String?
+  members        GroupMember[]
 
   @@index([code])
 }
 
 model GroupMember {
-  id            String   @id @default(cuid())
-  groupId       String
-  userId        String?
-  sessionId     String
-  nombre        String   @default("Invitado")
-  estado        MemberStatus @default(WAITING)
-  selectedDishes String[]
-  ctxHunger     String?
-  ctxBudget     Int?
+  id                String       @id @default(cuid())
+  groupId           String
+  userId            String?
+  sessionId         String
+  nombre            String       @default("Invitado")
+  estado            MemberStatus @default(WAITING)
+  selectedDishes    String[]
+  ctxHunger         String?
+  ctxBudget         Int?
   recommendedDishId String?
-  joinedAt      DateTime @default(now())
-  readyAt       DateTime?
+  joinedAt          DateTime     @default(now())
+  readyAt           DateTime?
 
-  group         GroupSession @relation(fields: [groupId], references: [id])
+  group GroupSession @relation(fields: [groupId], references: [id])
 
   @@unique([groupId, sessionId])
   @@index([groupId])
@@ -325,4 +325,335 @@ enum MemberStatus {
   SELECTING
   READY
   RECALCULATING
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ─── Carta QR Viva (qr.quierocomer.cl) ────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+model Restaurant {
+  id          String     @id @default(cuid())
+  slug        String     @unique
+  name        String
+  description String?
+  logoUrl     String?
+  bannerUrl   String?
+  phone       String?
+  address     String?
+  cartaTheme  CartaTheme @default(BASIC)
+  isActive    Boolean    @default(true)
+  ownerId     String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  categories  Category[]
+  dishes      Dish[]
+  tables      RestaurantTable[]
+  waiterCalls WaiterCall[]
+  customers   Customer[]
+  reviews     Review[]
+  statEvents  StatEvent[]
+  promotions  RestaurantPromotion[]
+  birthdays   BirthdayCampaign[]
+  schedules             RestaurantScheduleRule[]
+  waiterSubscriptions   WaiterPushSubscription[]
+  qrUserInteractions    QRUserInteraction[]
+}
+
+enum CartaTheme {
+  BASIC
+  PREMIUM
+}
+
+model Category {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  description  String?
+  position     Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  dishes     Dish[]
+
+  @@index([restaurantId])
+}
+
+model Dish {
+  id             String    @id @default(cuid())
+  restaurantId   String
+  categoryId     String
+  name           String
+  description    String?
+  price          Float
+  discountPrice  Float?
+  photos         String[]
+  tags           DishTag[]
+  isHero         Boolean   @default(false)
+  isActive       Boolean   @default(true)
+  stockCountdown Int?
+  ingredients    String?
+  allergens      String?
+  position       Int
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  category   Category   @relation(fields: [categoryId], references: [id])
+  reviews    Review[]
+
+  @@index([restaurantId])
+  @@index([categoryId])
+}
+
+enum DishTag {
+  RECOMMENDED
+  NEW
+  MOST_ORDERED
+  PROMOTION
+}
+
+model RestaurantTable {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String
+  tableNumber  Int
+  qrCode       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  restaurant  Restaurant   @relation(fields: [restaurantId], references: [id])
+  waiterCalls WaiterCall[]
+
+  @@index([restaurantId])
+}
+
+model WaiterCall {
+  id           String    @id @default(cuid())
+  tableId      String?
+  tableName    String?
+  restaurantId String
+  dietType     String?
+  restrictions String?
+  calledAt     DateTime
+  answeredAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  table      RestaurantTable? @relation(fields: [tableId], references: [id])
+  restaurant Restaurant      @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([tableId])
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+  restaurantId String
+  email        String?
+  name         String?
+  birthDate    DateTime?
+  preferences  Json?
+  cookieId     String?
+  isSubscribed Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  reviews    Review[]
+
+  @@index([restaurantId])
+}
+
+model Review {
+  id           String   @id @default(cuid())
+  restaurantId String
+  customerId   String
+  dishId       String
+  rating       Int
+  isVerified   Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  dish       Dish       @relation(fields: [dishId], references: [id])
+
+  @@index([restaurantId])
+  @@index([dishId])
+}
+
+model StatEvent {
+  id           String        @id @default(cuid())
+  restaurantId String
+  dishId       String?
+  categoryId   String?
+  tableId      String?
+  eventType    StatEventType
+  sessionId    String
+  weather      String?
+  timeOfDay    TimeOfDay?
+  createdAt    DateTime      @default(now())
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([sessionId])
+}
+
+enum StatEventType {
+  DISH_VIEW
+  DISH_SELECT
+  CATEGORY_VIEW
+  GENIO_START
+  GENIO_COMPLETE
+  GENIO_GROUP_START
+  WAITER_CALL
+  QR_SCAN
+}
+
+enum TimeOfDay {
+  MORNING
+  LUNCH
+  AFTERNOON
+  DINNER
+  LATE
+}
+
+model RestaurantPromotion {
+  id           String        @id @default(cuid())
+  restaurantId String
+  type         PromotionType
+  message      String?
+  dishId       String?
+  startsAt     DateTime?
+  endsAt       DateTime?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+enum PromotionType {
+  BANNER
+  COUNTDOWN
+  HIGHLIGHT
+}
+
+model BirthdayCampaign {
+  id               String   @id @default(cuid())
+  restaurantId     String
+  promoDescription String
+  emailSubject     String
+  emailBody        String
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model RestaurantScheduleRule {
+  id           String           @id @default(cuid())
+  restaurantId String
+  ruleType     ScheduleRuleType
+  condition    String
+  categoryId   String?
+  dishId       String?
+  isActive     Boolean          @default(true)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+enum ScheduleRuleType {
+  TIME_OF_DAY
+  WEATHER
+}
+
+model WaiterPushSubscription {
+  id           String     @id @default(cuid())
+  restaurantId String
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  endpoint     String     @unique
+  p256dh       String
+  auth         String
+  isActive     Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@index([restaurantId])
+}
+
+// ─── QR User Capture ──────────────────────────────────────────────────
+
+model QRUser {
+  id           String    @id @default(cuid())
+  name         String?
+  email        String    @unique
+  birthDate    DateTime?
+  dietType     String?
+  restrictions String[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  magicTokens  QRMagicToken[]
+  interactions QRUserInteraction[]
+}
+
+model QRMagicToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      QRUser    @relation(fields: [userId], references: [id])
+  token     String    @unique @default(cuid())
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+}
+
+model BannerVariant {
+  id          String   @id @default(cuid())
+  text        String
+  impressions Int      @default(0)
+  conversions Int      @default(0)
+  isWinner    Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model QRUserInteraction {
+  id              String      @id @default(cuid())
+  userId          String?
+  user            QRUser?     @relation(fields: [userId], references: [id])
+  restaurantId    String
+  restaurant      Restaurant  @relation(fields: [restaurantId], references: [id])
+  type            String
+  bannerVariantId String?
+  sessionId       String?
+  createdAt       DateTime    @default(now())
+
+  @@index([restaurantId])
+  @@index([userId])
+}
+
+model Referrer {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  email     String   @unique
+  code      String   @unique @default(cuid())
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
