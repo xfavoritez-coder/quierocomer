@@ -118,12 +118,12 @@ export default function CartaPremium({
     const result: Dish[] = [];
     for (const cat of categories) {
       const catDishes = dishes
-        .filter((d) => d.categoryId === cat.id)
+        .filter((d) => d.categoryId === cat.id && d.isActive)
         .sort((a, b) => {
           const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
           const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
           if (aRec !== bRec) return bRec - aRec;
-          return 0;
+          return a.position - b.position;
         });
       result.push(...catDishes);
     }
@@ -147,7 +147,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} />
       <CategoryNav
         categories={categories}
         activeCategory={activeCategory}
@@ -211,7 +211,7 @@ export default function CartaPremium({
                         minWidth: dish.tags?.includes("RECOMMENDED") ? 185 : 165,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
-                        marginLeft: i === 0 ? 20 : 20,
+                        marginLeft: i === 0 ? 20 : 17,
                         marginRight: i === catDishes.length - 1 ? 20 : 0,
                       }}
                     >

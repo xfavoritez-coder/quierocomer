@@ -19,13 +19,14 @@ interface HeroDishProps {
   heroDishes: Dish[];
   qrUser?: QRUserData | null;
   onProfileOpen?: () => void;
+  onDishSelect?: (dish: Dish) => void;
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
 
   const logoSrc = isReal(restaurant.logoUrl) ? restaurant.logoUrl! : null;
@@ -234,7 +235,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
               {/* CTA button */}
               <button
-                onClick={() => scrollToDish(dish.id)}
+                onClick={() => onDishSelect?.(dish)}
                 className="font-[family-name:var(--font-dm)] active:scale-95 transition-transform"
                 style={{
                   marginTop: 12,
@@ -247,7 +248,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   border: "none",
                 }}
               >
-                Ver plato ↓
+                Ver
               </button>
 
               {/* Carousel dots */}

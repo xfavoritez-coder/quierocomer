@@ -18,7 +18,8 @@
       "Bash(grep -oE \">[^<]{5,50}\\\\.</h\" c:/Proyectos/quierocomer/src/app/qr/page.tsx)",
       "Bash(printf \"re_ajzpTw1K_mwoBrBZkhsf8K9EQp9crTKV9\")",
       "WebFetch(domain:www.ubereats.com)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

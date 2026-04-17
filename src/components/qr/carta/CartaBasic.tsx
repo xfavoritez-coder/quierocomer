@@ -112,6 +112,7 @@ export default function CartaBasic({
         <DishDetail
           dish={selectedDish}
           allDishes={dishes}
+          categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}

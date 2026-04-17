@@ -140,7 +140,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           <p style={{ fontSize: "0.97rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0 }}>
             ¿Cuándo es tu cumple?
           </p>
-          <p style={{ fontSize: "0.92rem", color: "#b45309", lineHeight: 1.4, margin: "3px 0 0", opacity: 0.85 }}>
+          <p style={{ fontSize: "0.94rem", color: "#b45309", lineHeight: 1.4, margin: "3px 0 0", opacity: 0.85 }}>
             Regístrate y recibe una sorpresa
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
             border: "none",
             borderRadius: 50,
             padding: "9px 18px",
-            fontSize: "0.85rem",
+            fontSize: "0.88rem",
             fontWeight: 700,
             fontFamily: "inherit",
             cursor: "pointer",
@@ -257,14 +257,16 @@ export default function BirthdayBanner({ restaurantId }: Props) {
                 type="date"
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
+                placeholder="Tu cumpleaños"
                 style={{
                   background: "#f9f9f7",
                   border: "1px solid #eee",
                   borderRadius: 10,
                   padding: "12px 16px",
-                  color: "#0e0e0e",
+                  color: birthDate ? "#0e0e0e" : "#999",
                   fontSize: "0.92rem",
                   outline: "none",
+                  colorScheme: "light",
                   fontFamily: "inherit",
                   transition: "border 0.2s",
                 }}
@@ -292,7 +294,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
               </button>
             </div>
 
-            <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#ccc", marginTop: 12 }}>
+            <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#888", marginTop: 12 }}>
               🔒 Solo usaremos tu email para avisarte en tu cumpleaños
             </p>
           </div>

@@ -32,10 +32,17 @@ const RESTRICTION_OPTIONS = [
   { icon: Check, label: "Ninguna", value: "ninguna" },
   { icon: Milk, label: "Sin lactosa", value: "lactosa" },
   { icon: Wheat, label: "Sin gluten", value: "gluten" },
-  { icon: Ban, label: "Sin nueces", value: "frutos_secos" },
+  { icon: Ban, label: "Sin nueces", value: "nueces" },
+  { icon: Ban, label: "Sin almendras", value: "almendras" },
+  { icon: Ban, label: "Sin maní", value: "mani" },
   { icon: Fish, label: "Sin mariscos", value: "mariscos" },
   { icon: Ban, label: "Sin cerdo", value: "cerdo" },
   { icon: Ban, label: "Sin alcohol", value: "alcohol" },
+];
+
+const DISLIKE_OPTIONS = [
+  "Palta", "Cebolla", "Tomate", "Cilantro", "Ajo", "Picante",
+  "Pepino", "Aceitunas", "Champiñón", "Soya", "Jengibre", "Queso",
 ];
 
 const HUNGER_OPTIONS = [
@@ -70,11 +77,13 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   // Load saved preferences from localStorage
   const savedDiet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
   const savedRestrictions = typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null;
+  const savedDislikes = typeof window !== "undefined" ? localStorage.getItem("qr_dislikes") : null;
   const hasSaved = !!(savedDiet && savedRestrictions);
 
   // Wizard state — skip to step 3 if we have saved prefs
   const [dietType, setDietType] = useState<DietType | null>(savedDiet as DietType | null);
   const [restrictions, setRestrictions] = useState<string[]>(savedRestrictions ? JSON.parse(savedRestrictions) : []);
+  const [dislikes, setDislikes] = useState<string[]>(savedDislikes ? JSON.parse(savedDislikes) : []);
   const [hunger, setHunger] = useState<HungerLevel | null>(null);
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [photoFilter, setPhotoFilter] = useState<"platos" | "dulce" | "bebida">("platos");
@@ -91,7 +100,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [usedIds, setUsedIds] = useState<Set<string>>(new Set());
   const [showOverlay, setShowOverlay] = useState(false);
 
-  const TOTAL_STEPS = 5;
+  const TOTAL_STEPS = 6;
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name.toLowerCase()])), [categories]);
 
   // Get dish pool filtered by type
@@ -117,9 +126,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     if (likedCats.has(d.categoryId)) score += 10;
     (d.ingredients || "").toLowerCase().split(/[,;]+/).forEach((i) => { if (likedIngr.has(i.trim())) score += 3; });
     if (d.tags?.includes("RECOMMENDED")) score += 5;
+    // Penalize dislikes (but don't filter out)
+    const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
+    dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
     score += Math.random() * 4;
     return score;
-  }, [dishes, liked]);
+  }, [dishes, liked, dislikes]);
 
   // Initialize grid when entering step 4 or changing filter
   const initGrid = useCallback((filter: string) => {
@@ -132,7 +144,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, [getDishPool]);
 
   useEffect(() => {
-    if (step === 4 && gridDishes.length === 0) initGrid(photoFilter);
+    if (step === 5 && gridDishes.length === 0) initGrid(photoFilter);
   }, [step, gridDishes.length, initGrid, photoFilter]);
 
   // Akinator: replace non-selected dishes with similar ones
@@ -222,7 +234,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Reset grid when filter changes
   useEffect(() => {
-    if (step === 4) initGrid(photoFilter);
+    if (step === 5) initGrid(photoFilter);
   }, [photoFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const close = useCallback(() => {
@@ -326,7 +338,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       trackStat(restaurantId, "GENIO_COMPLETE", pick.id);
     }
     setShowOverlay(false);
-    setStep(5); // Go to result (virtual step beyond slides)
+    setStep(6); // Go to result (virtual step beyond slides)
   };
 
   const surpriseMe = () => {
@@ -336,7 +348,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setResult(pick);
       trackStat(restaurantId, "GENIO_COMPLETE", pick.id);
     }
-    setStep(5);
+    setStep(6);
   };
 
   const retryRecommend = () => {
@@ -363,7 +375,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     : liked.size === 3 ? "Ya casi lo tengo... 🤔"
     : null;
 
-  const displayStep = Math.min(step, 4); // Clamp for slide animation
+  const displayStep = Math.min(step, 5); // Clamp for slide animation
   const [skipTransition, setSkipTransition] = useState(false);
 
   return (
@@ -376,7 +388,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     >
       {/* Header */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {step > 0 && step <= 4 ? (
+        {step > 0 && step <= 5 ? (
           <button onClick={() => setStep((s) => s - 1)} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none" }}>
             <ChevronLeft size={18} color="white" />
           </button>
@@ -384,7 +396,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ width: 34 }} />
         )}
         <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", fontWeight: 500 }}>
-          {step === 0 ? "" : step <= 4 ? `Paso ${step} de 4` : "✨ Resultado"}
+          {step === 0 ? "" : step <= 5 ? `Paso ${step} de 5` : "✨ Resultado"}
         </span>
         <button onClick={close} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none" }}>
           <X size={16} color="white" />
@@ -392,9 +404,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       </div>
 
       {/* Progress bar */}
-      {step >= 1 && step <= 4 && (
+      {step >= 1 && step <= 5 && (
         <div style={{ position: "absolute", top: 62, left: 20, right: 20, zIndex: 20, display: "flex", gap: 4 }}>
-          {[1, 2, 3, 4].map((i) => (
+          {[1, 2, 3, 4, 5].map((i) => (
             <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? "#F4A623" : "rgba(255,255,255,0.15)", transition: "background 0.3s" }} />
           ))}
         </div>
@@ -407,30 +419,32 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", gap: 16 }}>
           {hasSaved ? (
             <>
-              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: "2.4rem" }}>🧞</span>
-                <Sparkles size={36} color="#F4A623" />
-              </div>
+              <span style={{ fontSize: "2.8rem", marginBottom: 8 }}>🧞</span>
               <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.8rem", fontWeight: 900, color: "white" }}>
                 Bienvenido de nuevo
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
                   const dietLabels: Record<string, string> = { omnivore: "comes de todo", vegetarian: "eres vegetariano", vegan: "eres vegano", pescetarian: "eres pescetariano" };
+                  const resLabels: Record<string, string> = { lactosa: "lactosa", gluten: "gluten", nueces: "nueces", almendras: "almendras", mani: "maní", frutos_secos: "nueces", mariscos: "mariscos", cerdo: "cerdo", alcohol: "alcohol" };
                   const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];
-                  const filtered = resList.filter((r: string) => r !== "ninguna");
+                  const filtered = resList.filter((r: string) => r !== "ninguna").map((r: string) => resLabels[r] || r);
                   const resText = filtered.length > 0
                     ? filtered.length === 1 ? filtered[0] : filtered.slice(0, -1).join(", ") + " y " + filtered[filtered.length - 1]
                     : "";
-                  if (dietText && resText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span> y que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.</>;
-                  if (dietText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span>.</>;
-                  if (resText) return <>Recuerdo que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.</>;
+                  const dislikeList: string[] = savedDislikes ? JSON.parse(savedDislikes) : [];
+                  const dislikeText = dislikeList.length > 0
+                    ? dislikeList.length === 1 ? dislikeList[0] : dislikeList.slice(0, 3).join(", ") + (dislikeList.length > 3 ? "..." : "")
+                    : "";
+                  if (dietText && resText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span> y que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> Además no te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
+                  if (dietText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
+                  if (resText) return <>Recuerdo que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
                   return "Dime qué se te antoja.";
                 })()}
               </p>
               <div className="flex flex-col items-center" style={{ gap: 12, marginTop: 16 }}>
-                <button onClick={() => { setSkipTransition(true); setStep(3); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
+                <button onClick={() => { setSkipTransition(true); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                   Continuar →
                 </button>
                 <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
@@ -508,7 +522,49 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           )}
         </div>
 
-        {/* STEP 3 — Hunger */}
+        {/* STEP 3 — Dislikes */}
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 120px", position: "relative" }}>
+          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 8 }}>
+            ¿Algo que prefieras evitar?
+          </h2>
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 24 }}>
+            No lo filtraremos, pero el Genio lo tendrá en cuenta
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
+            {DISLIKE_OPTIONS.map((item) => {
+              const sel = dislikes.includes(item.toLowerCase());
+              return (
+                <button key={item} onClick={() => {
+                  setDislikes((prev) => {
+                    const val = item.toLowerCase();
+                    const updated = prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val];
+                    localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                    return updated;
+                  });
+                }}
+                  className="transition-all duration-200"
+                  style={{
+                    padding: "8px 18px", borderRadius: 50,
+                    border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.15)"}`,
+                    background: sel ? "rgba(244,166,35,0.1)" : "transparent",
+                    color: sel ? "#F4A623" : "rgba(255,255,255,0.7)",
+                    fontSize: "0.95rem", fontWeight: 500,
+                  }}>
+                  {sel ? "✕ " : ""}{item}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => { localStorage.setItem("qr_dislikes", JSON.stringify(dislikes)); next(); }}
+            className="active:scale-95 transition-transform"
+            style={{ marginTop: 24, alignSelf: "center", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}
+          >
+            {dislikes.length === 0 ? "Nada, me gusta todo →" : "Continuar →"}
+          </button>
+        </div>
+
+        {/* STEP 4 — Hunger */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 40px" }}>
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28 }}>
             ¿Cuánta hambre tienes?
@@ -532,15 +588,15 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </div>
         </div>
 
-        {/* STEP 4 — Akinator photo grid */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "78px 16px 20px", position: "relative" }}>
+        {/* STEP 5 — Akinator photo grid */}
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "78px 8px 20px", position: "relative" }}>
           {/* Category filter pills */}
-          <div className="flex" style={{ gap: 8, marginBottom: 10, justifyContent: "center" }}>
+          <div className="flex" style={{ gap: 8, marginBottom: 16, justifyContent: "center" }}>
             {(["platos", "bebida", "dulce"] as const).map((f) => {
               const active = photoFilter === f;
               return (
                 <button key={f} onClick={() => setPhotoFilter(f)}
-                  style={{ padding: "6px 16px", borderRadius: 50, fontSize: "0.82rem", fontWeight: 500, border: active ? "none" : "1px solid rgba(255,255,255,0.2)", background: active ? "white" : "transparent", color: active ? "#0e0e0e" : "rgba(255,255,255,0.5)" }}>
+                  style={{ padding: "6px 16px", borderRadius: 50, fontSize: "0.88rem", fontWeight: 500, border: active ? "none" : "1px solid rgba(255,255,255,0.2)", background: active ? "white" : "transparent", color: active ? "#0e0e0e" : "rgba(255,255,255,0.5)" }}>
                   {f === "platos" ? "Platos" : f === "dulce" ? "Postre" : "Bebestible"}
                 </button>
               );
@@ -560,7 +616,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           )}
 
           {/* 3x3 Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
             {gridDishes.map((d) => {
               const sel = liked.has(d.id);
               const photo = d.photos?.[0];
@@ -569,7 +625,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               return (
                 <div key={`slot-${d.id}`}
                   className="relative overflow-hidden"
-                  style={{ aspectRatio: "1", borderRadius: 10, background: "#222" }}>
+                  style={{ aspectRatio: "5/6", borderRadius: 10, background: "#222" }}>
                   {isChanging ? (
                     <div className="absolute" style={{ inset: 0, borderRadius: 10, background: "#1a1a1a", overflow: "hidden" }}>
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)", backgroundSize: "200% 100%", animation: "shimmerSlide 1.2s ease-in-out infinite" }} />
@@ -611,7 +667,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {!showOverlay && (
             <div className="text-center" style={{ marginTop: 8 }}>
               {liked.size === 0 && (
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>Toca los platos que te llaman 👆</p>
+                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem" }}>Toca los platos que te llaman 👆</p>
               )}
               {liked.size === 1 && (
                 <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>Sigue seleccionando...</p>
@@ -628,17 +684,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {/* 4+ overlay */}
           {showOverlay && liked.size >= 4 && (
             <div className="absolute flex flex-col items-center justify-center" style={{ inset: 0, background: "rgba(14,14,14,0.92)", zIndex: 30, padding: 32, gap: 12 }}>
-              <Sparkles size={32} color="#F4A623" style={{ animation: "genioPulse 2s ease-in-out infinite" }} />
+              <span style={{ fontSize: "2.5rem", animation: "genioPulse 2s ease-in-out infinite" }}>🧞</span>
               <h3 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.3rem", color: "white", fontWeight: 800, lineHeight: 1.3 }}>
                 {dominantCategory
                   ? [
-                      `Parece que estás antojado de ${dominantCategory}`,
-                      `Se nota que te gusta el ${dominantCategory}`,
-                      `Estás con ganas de ${dominantCategory}`,
-                      `El ${dominantCategory} te llama la atención`,
-                      `Veo que te tienta el ${dominantCategory}`,
+                      `Creo que tengo el plato perfecto para ti`,
+                      `Listo, ya te conozco`,
+                      `Déjame sorprenderte`,
+                      `Tengo algo para ti`,
+                      `Creo saber qué quieres`,
                     ][phraseIdx]
-                  : "Tienes buen gusto"}
+                  : "Creo que tengo algo para ti"}
               </h3>
               <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
                 {liked.size} platos seleccionados
@@ -658,10 +714,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
 
       {/* RESULT — overlays everything when step === 5 */}
-      {step === 5 && result && (
-        <div className="absolute flex flex-col items-center justify-center" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "60px 20px 40px", gap: 16 }}>
+      {step === 6 && result && (
+        <div className="absolute flex flex-col items-center" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "60px 20px 20px", gap: 10, overflowY: "auto" }}>
           {/* Back + Close buttons */}
-          <button onClick={() => setStep(4)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
+          <button onClick={() => setStep(5)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
             <ChevronLeft size={18} color="white" />
           </button>
           <button onClick={close} className="absolute flex items-center justify-center" style={{ top: 16, right: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
@@ -672,28 +728,26 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <span style={{ color: "#F4A623", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             El Genio recomienda
           </span>
-          <div className="relative overflow-hidden" style={{ width: "calc(100% - 40px)", maxWidth: 320, aspectRatio: "4/3", borderRadius: 16 }}>
+          <div className="relative overflow-hidden" style={{ width: "calc(100% - 20px)", maxWidth: 240, aspectRatio: "4/5", borderRadius: 16, flexShrink: 0 }}>
             {result.photos?.[0] && <Image src={result.photos[0]} alt={result.name} fill className="object-cover" sizes="80vw" />}
           </div>
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", lineHeight: 1.2 }}>
             {result.name}
           </h2>
-          <span style={{ color: "#F4A623", fontSize: "1.3rem", fontWeight: 800 }}>
-            ${(result.discountPrice || result.price).toLocaleString("es-CL")}
-          </span>
           {result.description && (
-            <p className="text-center line-clamp-2" style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", lineHeight: 1.5, maxWidth: 300 }}>
+            <p className="text-center line-clamp-2" style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.95rem", lineHeight: 1.5, maxWidth: 300 }}>
               {result.description}
             </p>
           )}
+          <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 0" }} />
+          <PostGenioCapture restaurantId={restaurantId} />
           <button onClick={() => handleResult(result)} className="active:scale-95 transition-transform"
-            style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 28px", borderRadius: 50, border: "none" }}>
+            style={{ width: 240, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 0", borderRadius: 50, border: "none", textAlign: "center" }}>
             Ver en la carta ↓
           </button>
           <button onClick={retryRecommend} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem" }}>
             Recomendar otro
           </button>
-          <PostGenioCapture restaurantId={restaurantId} />
         </div>
       )}
 
