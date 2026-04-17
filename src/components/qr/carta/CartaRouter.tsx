@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useCartaView } from "./hooks/useCartaView";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
+import ViewSelector from "./ViewSelector";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 
 interface Review {
@@ -39,15 +40,29 @@ export default function CartaRouter(props: Props) {
     }).catch(() => {});
   }, [view, isReady, props.restaurant.id]);
 
-  // Before ready, render Premium to avoid flash
-  if (!isReady) {
-    return <CartaPremium {...props} />;
-  }
+  // Scroll to top when switching views
+  useEffect(() => {
+    if (isReady) window.scrollTo({ top: 0 });
+  }, [view, isReady]);
 
-  if (view === "lista") {
-    return <CartaLista {...props} />;
-  }
+  return (
+    <>
+      {/* Both views always mounted, toggle with display */}
+      <div style={{ display: (!isReady || view === "premium" || view === "viaje") ? "block" : "none" }}>
+        <CartaPremium {...props} />
+      </div>
+      {isReady && (
+        <div style={{ display: view === "lista" ? "block" : "none" }}>
+          <CartaLista {...props} />
+        </div>
+      )}
 
-  // "viaje" falls back to Premium for now
-  return <CartaPremium {...props} />;
+      {/* Floating ViewSelector — above Genio button */}
+      {isReady && (
+        <div className="fixed z-50" style={{ right: 20, bottom: 114 }}>
+          <ViewSelector restaurantId={props.restaurant.id} />
+        </div>
+      )}
+    </>
+  );
 }

@@ -7,11 +7,10 @@ import CategoryNav from "./CategoryNav";
 import DishCard from "./DishCard";
 import DishDetail from "./DishDetail";
 import GenioOnboarding from "../genio/GenioOnboarding";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
-import ViewSelector from "./ViewSelector";
 
 interface Review {
   id: string;
@@ -80,6 +79,8 @@ export default function CartaPremium({
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [captureEmail, setCaptureEmail] = useState("");
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch user
   useEffect(() => {
@@ -149,17 +150,63 @@ export default function CartaPremium({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} />
-      <CategoryNav
-        categories={categories}
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-        rightSlot={<ViewSelector restaurantId={restaurant.id} />}
-      />
+      {/* Search overlay on CategoryNav */}
+      {searchOpen ? (
+        <div
+          className="sticky top-0 z-40"
+          style={{ position: "sticky", top: 0, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+        >
+          <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
+          <input
+            autoFocus
+            type="search"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Buscar en la carta..."
+            className="font-[family-name:var(--font-dm)]"
+            style={{
+              flex: 1,
+              border: "none",
+              outline: "none",
+              fontSize: "0.92rem",
+              color: "#0e0e0e",
+              background: "transparent",
+              fontFamily: "inherit",
+            }}
+          />
+          <button
+            onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+            style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}
+          >
+            <X size={18} color="rgba(14,14,14,0.4)" />
+          </button>
+        </div>
+      ) : (
+        <CategoryNav
+          categories={categories}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          rightSlot={
+            <button
+              onClick={() => setSearchOpen(true)}
+              style={{ background: "none", border: "none", padding: 4, cursor: "pointer" }}
+              aria-label="Buscar"
+            >
+              <Search size={18} color="#999" />
+            </button>
+          }
+        />
+      )}
 
       <main style={{ paddingBottom: 80 }}>
         {categories.map((cat, index) => {
           const catDishes = dishes
             .filter((d) => d.categoryId === cat.id)
+            .filter((d) => {
+              if (!searchQuery) return true;
+              const q = searchQuery.toLowerCase().trim();
+              return d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q);
+            })
             .sort((a, b) => {
               const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
               const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;

@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import Image from "next/image";
 import { Search, X, Sparkles } from "lucide-react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
-import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import DishDetail from "./DishDetail";
@@ -116,7 +115,6 @@ export default function CartaLista({
               {restaurant.address ? `${restaurant.address} · ` : ""}{dishes.length} platos
             </p>
           </div>
-          <ViewSelector restaurantId={restaurant.id} variant="light" />
         </div>
 
         {/* Row 2: search */}
