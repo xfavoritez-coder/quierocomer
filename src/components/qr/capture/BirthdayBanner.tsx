@@ -49,7 +49,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
         }}
       >
         <span style={{ color: "#16a34a", fontSize: "0.88rem", fontWeight: 600 }}>
-          Te avisaremos en tu cumpleaños 🎂
+          ¡Listo! Guardamos tu cumpleaños y tus preferencias 🎂
         </span>
       </div>
     );
@@ -59,15 +59,22 @@ export default function BirthdayBanner({ restaurantId }: Props) {
     if (!email || status !== "idle") return;
     setStatus("loading");
 
-    await fetch("/api/qr/user/register", {
+    // Grab Genio preferences from localStorage
+    const savedDiet = localStorage.getItem("qr_diet") || null;
+    const savedRestrictions = localStorage.getItem("qr_restrictions");
+    const restrictions = savedRestrictions ? JSON.parse(savedRestrictions).filter((r: string) => r !== "ninguna") : [];
+
+    const res = await fetch("/api/qr/user/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email,
         name: name || null,
         birthDate: birthDate || null,
+        dietType: savedDiet,
+        restrictions,
         restaurantId,
-        source: "banner",
+        source: "birthday_banner",
         bannerVariantId: variant.id,
       }),
     });
@@ -77,6 +84,12 @@ export default function BirthdayBanner({ restaurantId }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ variantId: variant.id }),
     });
+
+    // Set cookie so user is "logged in"
+    const data = await res.json();
+    if (data.userId) {
+      document.cookie = `qr_user_id=${data.userId};path=/;max-age=${60 * 60 * 24 * 365}`;
+    }
 
     setStatus("success");
     setModalOpen(false);

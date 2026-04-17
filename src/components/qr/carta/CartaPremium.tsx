@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -112,6 +112,23 @@ export default function CartaPremium({
   }, [restaurant.id]);
 
   const heroDishes = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+
+  // Build sorted dish list matching carta visual order (category by category, recommended first)
+  const sortedDishes = useMemo(() => {
+    const result: Dish[] = [];
+    for (const cat of categories) {
+      const catDishes = dishes
+        .filter((d) => d.categoryId === cat.id)
+        .sort((a, b) => {
+          const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+          const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+          if (aRec !== bRec) return bRec - aRec;
+          return 0;
+        });
+      result.push(...catDishes);
+    }
+    return result;
+  }, [categories, dishes]);
 
   const handleScroll = useCallback(() => {
     for (const cat of [...categories].reverse()) {
@@ -265,7 +282,8 @@ export default function CartaPremium({
       {selectedDish && (
         <DishDetail
           dish={selectedDish}
-          allDishes={dishes}
+          allDishes={sortedDishes}
+          categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
@@ -320,8 +338,8 @@ export default function CartaPremium({
         <div
           className="fixed font-[family-name:var(--font-dm)]"
           style={{
-            right: 80,
-            bottom: 56,
+            right: 16,
+            bottom: 100,
             background: "rgba(20,20,20,0.95)",
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(255,255,255,0.1)",
@@ -335,22 +353,25 @@ export default function CartaPremium({
             boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
           }}
         >
-          {/* Triangle pointing to Genio button */}
+          {/* Triangle pointing down to Genio button */}
           <div
             style={{
               position: "absolute",
-              right: -6,
-              bottom: 18,
+              right: 22,
+              bottom: -6,
               width: 12,
               height: 12,
               background: "rgba(20,20,20,0.95)",
               border: "1px solid rgba(255,255,255,0.1)",
+              borderTop: "none",
               borderLeft: "none",
-              borderBottom: "none",
               transform: "rotate(45deg)",
             }}
           />
-          <span style={{ color: "white", fontSize: "0.84rem", lineHeight: 1.45 }}>¿Guardamos tus gustos? Así el Genio te recomienda mejor cada vez.</span>
+          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <span style={{ fontSize: "1.3rem", flexShrink: 0, marginTop: 1 }}>🧞</span>
+            <span style={{ color: "white", fontSize: "0.84rem", lineHeight: 1.45 }}>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
+          </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "#0e0e0e", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
             <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 50, padding: "8px 12px", color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", cursor: "pointer" }}>No</button>

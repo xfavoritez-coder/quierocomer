@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import type { Dish } from "@prisma/client";
+import type { Dish, Category } from "@prisma/client";
 
 interface DishDetailProps {
   dish: Dish;
   allDishes: Dish[];
+  categories: Category[];
   restaurantId: string;
   reviews: { id: string; dishId: string; rating: number; createdAt: Date }[];
   ratingMap: Record<string, { avg: number; count: number }>;
@@ -27,6 +28,7 @@ function getSessionId() {
 export default function DishDetail({
   dish,
   allDishes,
+  categories,
   restaurantId,
   ratingMap,
   onClose,
@@ -40,6 +42,7 @@ export default function DishDetail({
 
   const photos = dish.photos?.length ? dish.photos : [];
   const isRecommended = dish.tags?.includes("RECOMMENDED");
+  const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const discountPercent =
     dish.discountPrice && dish.price > 0
       ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100)
@@ -247,6 +250,13 @@ export default function DishDetail({
           zIndex: 5,
         }}
       >
+        {/* Category label */}
+        {categoryName && (
+          <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6, display: "block" }}>
+            {categoryName}
+          </span>
+        )}
+
         {/* Badges row */}
         <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
           {isRecommended && (
@@ -317,7 +327,7 @@ export default function DishDetail({
               >
                 ${dish.price.toLocaleString("es-CL")}
               </span>
-              <span style={{ color: "white", fontSize: "1.9rem", fontWeight: 800 }}>
+              <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.9rem", fontWeight: 800 }}>
                 ${dish.discountPrice.toLocaleString("es-CL")}
               </span>
               {discountPercent && (
@@ -336,7 +346,7 @@ export default function DishDetail({
               )}
             </>
           ) : (
-            <span style={{ color: "white", fontSize: "1.9rem", fontWeight: 800 }}>
+            <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.9rem", fontWeight: 800 }}>
               ${dish.price.toLocaleString("es-CL")}
             </span>
           )}

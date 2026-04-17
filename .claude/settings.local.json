@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl:*)",
+      "Bash(ls \"src/app/\\(main\\)/\")",
+      "Bash(ls \"c:/Proyectos/quierocomer/src/app/\\(main\\)/\")",
+      "Bash(find \"c:/Proyectos/quierocomer/src/app/\\(main\\)\" -maxdepth 3 -type d)",
+      "Bash(tasklist)",
+      "Bash(grep -o 'Fondos.\\\\{0,300\\\\}')",
+      "Bash(grep -o 'Fondos</h2>.\\\\{0,500\\\\}')",
+      "Bash(vercel --prod)",
+      "Bash(find c:/Proyectos/quierocomer/src -name *genie* -type f)",
+      "Bash(c:/Proyectos/quierocomer/.env.local:*)",
+      "Bash(printf \"BEQ2Tea0berZuOx8-3HS3ev7Bvdc9yAwLRoHwHsc2z9eofFxTOIUM9rBRi0Pq9CemgpWaRvY6Fn-HzC3GmqX_0I\")",
+      "Bash(printf \"tia-mXelkdXvKXfUeXqlhT9fNSfSoKj15mBFpZY2nkM\")",
+      "Bash(printf \"mailto:hola@quierocomer.cl\")",
+      "Bash(grep -oE \">[^<]{5,50}\\\\.</h\" c:/Proyectos/quierocomer/src/app/qr/page.tsx)",
+      "Bash(printf \"re_ajzpTw1K_mwoBrBZkhsf8K9EQp9crTKV9\")",
+      "WebFetch(domain:www.ubereats.com)",
+      "Bash(git add:*)"
+    ]
+  }
+}

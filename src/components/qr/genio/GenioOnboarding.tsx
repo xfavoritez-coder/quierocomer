@@ -194,11 +194,31 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     return () => { document.body.style.overflow = ""; };
   }, [restaurantId]);
 
-  // Show overlay when reaching 4 selected for the first time
+  // Show overlay when the Genio has enough confidence
   const [overlayDismissed, setOverlayDismissed] = useState(false);
+  const [dismissedAt, setDismissedAt] = useState(0);
   useEffect(() => {
-    if (liked.size >= 4 && !overlayDismissed) setShowOverlay(true);
-  }, [liked.size, overlayDismissed]);
+    if (liked.size >= 4 && !overlayDismissed) {
+      setShowOverlay(true);
+    } else if (overlayDismissed && liked.size > dismissedAt) {
+      // Check category concentration of ALL selections
+      const likedDishes = dishes.filter((d) => liked.has(d.id));
+      const catCounts: Record<string, number> = {};
+      likedDishes.forEach((d) => {
+        catCounts[d.categoryId] = (catCounts[d.categoryId] || 0) + 1;
+      });
+      const topCount = Math.max(...Object.values(catCounts), 0);
+      const concentration = likedDishes.length > 0 ? topCount / likedDishes.length : 0;
+
+      // High confidence (>60% same category) → show after 2 more
+      // Low confidence (scattered) → show after 4 more
+      const threshold = concentration >= 0.6 ? 2 : 4;
+      if (liked.size >= dismissedAt + threshold) {
+        setShowOverlay(true);
+        setOverlayDismissed(false);
+      }
+    }
+  }, [liked.size, overlayDismissed, dismissedAt, dishes, liked]);
 
   // Reset grid when filter changes
   useEffect(() => {
@@ -344,6 +364,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     : null;
 
   const displayStep = Math.min(step, 4); // Clamp for slide animation
+  const [skipTransition, setSkipTransition] = useState(false);
 
   return (
     <div
@@ -380,13 +401,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       )}
 
       {/* Steps container */}
-      <div style={{ position: "absolute", inset: 0, display: "flex", transform: `translateX(${-displayStep * 100}%)`, transition: "transform 0.3s ease-out" }}>
+      <div style={{ position: "absolute", inset: 0, display: "flex", transform: `translateX(${-displayStep * 100}%)`, transition: skipTransition ? "none" : "transform 0.3s ease-out" }}>
 
         {/* STEP 0 — Welcome or Welcome Back */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", gap: 16 }}>
           {hasSaved ? (
             <>
-              <Sparkles size={40} color="#F4A623" style={{ marginBottom: 8 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <span style={{ fontSize: "2.4rem" }}>🧞</span>
+                <Sparkles size={36} color="#F4A623" />
+              </div>
               <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.8rem", fontWeight: 900, color: "white" }}>
                 Bienvenido de nuevo
               </h1>
@@ -406,7 +430,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 })()}
               </p>
               <div className="flex flex-col items-center" style={{ gap: 12, marginTop: 16 }}>
-                <button onClick={() => setStep(3)} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
+                <button onClick={() => { setSkipTransition(true); setStep(3); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                   Continuar →
                 </button>
                 <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
@@ -623,7 +647,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "15px 28px", borderRadius: 50, border: "none" }}>
                 Ver sugerencia del Genio →
               </button>
-              <button onClick={() => { setShowOverlay(false); setOverlayDismissed(true); }}
+              <button onClick={() => { setShowOverlay(false); setOverlayDismissed(true); setDismissedAt(liked.size); }}
                 style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: 4 }}>
                 Quiero seguir viendo platos
               </button>

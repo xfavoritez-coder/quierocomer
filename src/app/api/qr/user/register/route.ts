@@ -78,7 +78,15 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ ok: true, message: "Revisa tu correo" });
+    // Set cookie for immediate login
+    const response = NextResponse.json({ ok: true, userId: user.id, message: "Revisa tu correo" });
+    response.cookies.set("qr_user_id", user.id, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 365,
+      httpOnly: false,
+      sameSite: "lax",
+    });
+    return response;
   } catch (error) {
     console.error("Register error:", error);
     return NextResponse.json({ error: "Error al registrar" }, { status: 500 });
