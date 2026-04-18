@@ -74,9 +74,11 @@ export default function DishDetail({
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
+    const scrollY = window.scrollY;
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
     document.body.style.width = "100%";
+    document.body.style.top = `-${scrollY}px`;
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -89,9 +91,12 @@ export default function DishDetail({
       }),
     }).catch(() => {});
     return () => {
+      const top = document.body.style.top;
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
+      document.body.style.top = "";
+      window.scrollTo(0, parseInt(top || "0") * -1);
     };
   }, [dish.id, restaurantId]);
 
