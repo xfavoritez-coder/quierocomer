@@ -67,12 +67,31 @@ export default async function CartaPage({
     weather
   );
 
+  // Fetch active marketing promos server-side
+  const activePromos = await prisma.promotion.findMany({
+    where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
+    orderBy: { createdAt: "desc" },
+  });
+  const promoDishIds = activePromos.flatMap(p => p.dishIds);
+  const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
+    where: { id: { in: promoDishIds } },
+    select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true },
+  }) : [];
+  const promoDishMap = Object.fromEntries(promoDishes.map(d => [d.id, d]));
+  const marketingPromos = activePromos.map(p => ({
+    id: p.id, name: p.name, description: p.description,
+    discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
+    validUntil: p.validUntil?.toISOString() || null,
+    dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),
+  }));
+
   const isPremium = restaurant.cartaTheme === "PREMIUM";
   const cartaProps = {
     restaurant,
     categories,
     dishes,
     promotions: restaurant.promotions,
+    marketingPromos,
     ratingMap: restaurant.ratingMap,
     reviews: restaurant.reviews,
     tableId,

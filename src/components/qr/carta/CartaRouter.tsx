@@ -28,6 +28,7 @@ interface Props {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  marketingPromos?: any[];
 }
 
 export default function CartaRouter(props: Props) {

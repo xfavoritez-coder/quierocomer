@@ -37,6 +37,7 @@ interface CartaProps {
   onReady?: () => void;
   readyKey?: number;
   showWaiter?: boolean;
+  marketingPromos?: any[];
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -82,6 +83,7 @@ export default function CartaPremium({
   onReady,
   readyKey,
   showWaiter,
+  marketingPromos,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
@@ -186,7 +188,7 @@ export default function CartaPremium({
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
 
       {/* Promos */}
-      <PromoCarousel restaurantId={restaurant.id} onViewDish={(dishId) => {
+      <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
       }} />

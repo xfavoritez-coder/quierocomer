@@ -28,6 +28,7 @@ interface Promo {
 interface Props {
   restaurantId: string;
   onViewDish?: (dishId: string) => void;
+  initialPromos?: Promo[];
 }
 
 function trackPromo(restaurantId: string, eventType: string, dishId?: string) {
@@ -38,8 +39,8 @@ function trackPromo(restaurantId: string, eventType: string, dishId?: string) {
   }).catch(() => {});
 }
 
-export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
-  const [promos, setPromos] = useState<Promo[]>([]);
+export default function PromoCarousel({ restaurantId, onViewDish, initialPromos }: Props) {
+  const [promos, setPromos] = useState<Promo[]>(initialPromos || []);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
@@ -47,18 +48,12 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
   const trackedRef = useRef(new Set<string>());
 
   useEffect(() => {
-    fetch(`/api/qr/promos?restaurantId=${restaurantId}&guestId=${getGuestId()}`)
+    if (initialPromos?.length) return; // Skip fetch if server provided promos
+    fetch(`/api/qr/promos/all?restaurantId=${restaurantId}`)
       .then(r => r.json())
-      .then(d => {
-        // API returns single promo, but we want all active
-        // Fetch all promos directly
-        fetch(`/api/qr/promos/all?restaurantId=${restaurantId}`)
-          .then(r => r.json())
-          .then(d2 => { if (d2.promos?.length) setPromos(d2.promos); })
-          .catch(() => { if (d.promo) setPromos([d.promo]); });
-      })
+      .then(d => { if (d.promos?.length) setPromos(d.promos); })
       .catch(() => {});
-  }, [restaurantId]);
+  }, [restaurantId, initialPromos]);
 
   // Intersection observer for PROMO_VIEWED
   useEffect(() => {

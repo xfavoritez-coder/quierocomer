@@ -35,6 +35,7 @@ interface Props {
   onReady?: () => void;
   readyKey?: number;
   showWaiter?: boolean;
+  marketingPromos?: any[];
 }
 
 
@@ -51,6 +52,7 @@ export default function CartaLista({
   onReady,
   readyKey,
   showWaiter,
+  marketingPromos,
 }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const [query, setQuery] = useState("");
@@ -177,7 +179,7 @@ export default function CartaLista({
       </div>
 
       {/* Promos */}
-      <PromoCarousel restaurantId={restaurant.id} onViewDish={(dishId) => {
+      <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
       }} />
