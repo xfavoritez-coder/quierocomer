@@ -21,7 +21,7 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
 
   const handleSubmit = async () => {
     if (status !== "idle") return;
-    if (!existingUser && !email) return;
+    if (!existingUser && (!email || !name)) return;
     if (!birthDate) return;
     setStatus("loading");
 

@@ -154,6 +154,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           ) : (
             <User size={16} color="rgba(255,255,255,0.7)" />
           )}
+          {qrUser && <span style={{ position: "absolute", bottom: 2, right: 2, width: 8, height: 8, borderRadius: "50%", background: "#4ade80", border: "2px solid rgba(0,0,0,0.4)" }} />}
         </button>
 
         {/* Badges */}

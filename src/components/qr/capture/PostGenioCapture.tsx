@@ -25,7 +25,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
   if (isRegistered) return null;
 
   const handleSubmit = async () => {
-    if (!email || status !== "idle") return;
+    if (!email || !name || status !== "idle") return;
     setStatus("loading");
 
     const dietType = localStorage.getItem("qr_diet");

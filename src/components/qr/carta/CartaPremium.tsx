@@ -554,7 +554,7 @@ export default function CartaPremium({
                   <button
                     className="active:scale-[0.98] transition-transform"
                     onClick={async () => {
-                      if (!captureEmail) return;
+                      if (!captureEmail || !captureName) return;
                       setCaptureStatus("loading");
                       const res = await fetch("/api/qr/user/register", {
                         method: "POST",

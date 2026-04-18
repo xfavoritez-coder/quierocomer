@@ -5,8 +5,8 @@ export async function POST(request: Request) {
   try {
     const { email, name, birthDate, dietType, restrictions, restaurantId, source, bannerVariantId, guestId } = await request.json();
 
-    if (!email || !restaurantId) {
-      return NextResponse.json({ error: "Email y restaurantId son requeridos" }, { status: 400 });
+    if (!email || !name || !restaurantId) {
+      return NextResponse.json({ error: "Nombre, email y restaurantId son requeridos" }, { status: 400 });
     }
 
     // Upsert user
