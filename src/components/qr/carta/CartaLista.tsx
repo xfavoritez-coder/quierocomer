@@ -34,6 +34,7 @@ interface Props {
   onProfileOpen?: () => void;
   onReady?: () => void;
   readyKey?: number;
+  showWaiter?: boolean;
 }
 
 
@@ -49,6 +50,7 @@ export default function CartaLista({
   onProfileOpen,
   onReady,
   readyKey,
+  showWaiter,
 }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const [query, setQuery] = useState("");
@@ -313,7 +315,7 @@ export default function CartaLista({
         >
           <Sparkles size={22} color="white" fill="white" />
         </button>
-        <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />
+        {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />}
         <ViewSelector restaurantId={restaurant.id} />
       </div>
 

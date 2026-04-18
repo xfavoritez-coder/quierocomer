@@ -25,6 +25,7 @@ interface Props {
   onProfileOpen?: () => void;
   onReady?: () => void;
   readyKey?: number;
+  showWaiter?: boolean;
 }
 
 type SlideVariant = "hero" | "split" | "light" | "spotlight";
@@ -58,7 +59,7 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
-export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey }: Props) {
+export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -134,7 +135,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           >
             <Sparkles size={20} color="#F4A623" fill="#F4A623" />
           </button>
-          <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : "Cliente"} size={48} />
+          {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : "Cliente"} size={48} />}
           <ViewSelector restaurantId={restaurant.id} />
         </div>
 

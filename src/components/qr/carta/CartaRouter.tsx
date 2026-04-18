@@ -5,6 +5,7 @@ import { Sparkles, List, BookOpen, Rocket } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
 import { startSession, trackViewSelected } from "@/lib/sessionTracker";
+import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
@@ -54,6 +55,21 @@ export default function CartaRouter(props: Props) {
     fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUser(d.user); }).catch(() => {});
   }, []);
 
+  // Set mesa token if arriving from table QR
+  const [showWaiter, setShowWaiter] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const mesa = params.get("mesa");
+    const isDemo = params.get("demo") === "true";
+    if (mesa) {
+      setMesaToken(props.restaurant.id, mesa, isDemo);
+      setShowWaiter(true);
+    } else {
+      setShowWaiter(hasMesaToken(props.restaurant.id));
+    }
+  }, [props.restaurant.id]);
+
   // Start session tracking
   useEffect(() => {
     startSession(props.restaurant.id, props.tableId);
@@ -84,7 +100,7 @@ export default function CartaRouter(props: Props) {
   }, [view, isReady]);
 
   const readyKey = readyKeyRef.current;
-  const sharedProps = { ...props, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey };
+  const sharedProps = { ...props, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter };
 
   return (
     <>

@@ -36,6 +36,7 @@ interface CartaProps {
   onProfileOpen?: () => void;
   onReady?: () => void;
   readyKey?: number;
+  showWaiter?: boolean;
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -80,6 +81,7 @@ export default function CartaPremium({
   onProfileOpen: onProfileOpenProp,
   onReady,
   readyKey,
+  showWaiter,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
@@ -387,7 +389,7 @@ export default function CartaPremium({
         >
           <Sparkles size={22} color="white" fill="white" />
         </button>
-        <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />
+        {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />}
         <ViewSelector restaurantId={restaurant.id} />
       </div>
 
