@@ -643,7 +643,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                     {sel && <Check size={14} color="#0e0e0e" strokeWidth={3} />}
                   </div>
                   <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)", zIndex: 2 }} />
-                  <span className="absolute" style={{ bottom: 4, left: 5, right: 5, color: "white", fontSize: "0.8rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", zIndex: 3 }}>
+                  <span className="absolute" style={{ bottom: 4, left: 5, right: 5, color: "white", fontSize: "0.9rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", zIndex: 3 }}>
                     {d.name}
                   </span>
                   {sel && (

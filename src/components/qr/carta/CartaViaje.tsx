@@ -4,7 +4,11 @@ import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
+import { Sparkles, Bell, User } from "lucide-react";
 import DishDetail from "./DishDetail";
+import ViewSelector from "./ViewSelector";
+import WaiterButton from "../garzon/WaiterButton";
+import GenioOnboarding from "../genio/GenioOnboarding";
 import { useCartaView } from "./hooks/useCartaView";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
@@ -63,6 +67,7 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId }: Props) {
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
   const [railLight, setRailLight] = useState(false);
   const { setView } = useCartaView();
@@ -79,12 +84,53 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     <>
       <style>{CSS}</style>
       <div className="vj-root">
-        {/* Nav */}
-        <nav className="vj-nav" id="vj-nav">
-          <span className="vj-brand font-[family-name:var(--font-fraunces)]">
-            Quiero<em>Comer</em> · Viaje
-          </span>
-        </nav>
+        {/* Top right: user profile */}
+        <button
+          className="fixed z-50 flex items-center justify-center"
+          style={{
+            top: 16, right: 16, width: 44, height: 44, borderRadius: "50%",
+            background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+          }}
+        >
+          <User size={16} />
+        </button>
+
+        {/* Floating buttons — cinematic style */}
+        <div className="fixed z-50 flex flex-col items-center" style={{ right: 20, bottom: 32, gap: 12 }}>
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
+            style={{
+              width: 48, height: 48,
+              background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(244,166,35,0.3)", boxShadow: "0 0 20px rgba(244,166,35,0.15)",
+            }}
+          >
+            <Sparkles size={20} color="#F4A623" fill="#F4A623" />
+          </button>
+          <button
+            onClick={async () => {
+              try {
+                const res = await fetch("/api/qr/waiter/call", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ restaurantId: restaurant.id, tableId: tableId || "general", tableName: tableId ? `Mesa ${tableId}` : "Cliente" }),
+                });
+                if (res.ok) alert("¡Garzón en camino!");
+              } catch { /* ignore */ }
+            }}
+            className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
+            style={{
+              width: 48, height: 48,
+              background: "rgba(0,0,0,0.4)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(255,255,255,0.08)", boxShadow: "none",
+            }}
+          >
+            <Bell size={20} color="rgba(255,255,255,0.75)" fill="rgba(255,255,255,0.75)" />
+          </button>
+          <ViewSelector restaurantId={restaurant.id} />
+        </div>
 
         {/* Rail */}
         <div className={`vj-rail ${railLight ? "light" : ""}`} id="vj-rail">
@@ -97,7 +143,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         <div className="vj-reel" id="vj-reel">
 
           {/* ===== COVER ===== */}
-          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} dishCount={totalDishes} />
+          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} dishCount={totalDishes} allPhotos={dishes.map(getDishPhoto).filter(Boolean) as string[]} />
 
           {/* ===== CHAPTERS + TRACKS ===== */}
           {grouped.map((group, idx) => {
@@ -105,33 +151,39 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             const poetic = getPoeticName(group.category.name);
             const hasGenie = group.dishes.some(isGeniePick);
             return (
-              <div key={group.category.id}>
-                {/* Chapter opening */}
-                <ChapterOpening
-                  index={idx}
-                  palette={palette}
-                  poetic={poetic}
-                  dishCount={group.dishes.length}
-                  hasGenie={hasGenie}
-                  categoryName={group.category.name}
-                  onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
-                />
-                {/* Track */}
-                <CategoryTrack
-                  group={group}
-                  index={idx}
-                  palette={palette}
-                  poetic={poetic}
-                  onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
-                  onDishTap={setSelectedDish}
-                />
-              </div>
+              <CategoryTrack
+                key={group.category.id}
+                group={group}
+                index={idx}
+                palette={palette}
+                poetic={poetic}
+                totalChapters={grouped.length}
+                dishes={group.dishes}
+                hasGenie={hasGenie}
+                categoryName={group.category.name}
+                onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
+                onDishTap={setSelectedDish}
+              />
             );
           })}
 
           {/* ===== OUTRO ===== */}
           <OutroSlide onSwitchView={() => setView("lista")} />
         </div>
+
+        {/* Genio */}
+        {genioOpen && (
+          <GenioOnboarding
+            restaurantId={restaurant.id}
+            dishes={dishes}
+            categories={categories}
+            onClose={() => setGenioOpen(false)}
+            onResult={(dish) => {
+              setGenioOpen(false);
+              setTimeout(() => setSelectedDish(dish), 250);
+            }}
+          />
+        )}
 
         {/* DishDetail */}
         {selectedDish && (
@@ -152,7 +204,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
 }
 
 /* =============== COVER =============== */
-function CoverSlide({ restaurant, chapterCount, dishCount }: { restaurant: Restaurant; chapterCount: number; dishCount: number }) {
+function CoverSlide({ restaurant, chapterCount, dishCount, allPhotos }: { restaurant: Restaurant & { logoUrl?: string | null }; chapterCount: number; dishCount: number; allPhotos: string[] }) {
   const words = restaurant.name.split(" ");
   const w1 = words[0] || "";
   const w2 = words.slice(1).join(" ") || "";
@@ -161,22 +213,53 @@ function CoverSlide({ restaurant, chapterCount, dishCount }: { restaurant: Resta
     <section className="vj-cover" data-section="cover">
       <div className="vj-cover-bg" />
       <div className="vj-cover-grain" />
+      {/* Floating photo constellation */}
+      {allPhotos.length > 0 && (
+        <div className="vj-cover-photos">
+          {allPhotos.slice(0, 6).map((photo, i) => {
+            // Position photos in the top half only (above the title area)
+            const positions = [
+              { top: "5%", left: "2%" },
+              { top: "3%", left: "55%" },
+              { top: "18%", left: "30%" },
+              { top: "12%", left: "70%" },
+              { top: "25%", left: "5%" },
+              { top: "22%", left: "60%" },
+            ];
+            const pos = positions[i];
+            return (
+            <div
+              key={i}
+              className="vj-cover-photo-float"
+              style={{
+                animationDelay: `${i * -7}s`,
+                animationDuration: `${40 + i * 4}s`,
+                top: pos.top,
+                left: pos.left,
+              }}
+            >
+              <Image src={photo} alt="" width={160} height={110} className="object-cover" style={{ width: "100%", height: "100%", borderRadius: 12 }} />
+            </div>
+            );
+          })}
+        </div>
+      )}
       <div className="vj-cover-bgtype top font-[family-name:var(--font-fraunces)]">{w1}</div>
       {w2 && <div className="vj-cover-bgtype bottom font-[family-name:var(--font-fraunces)]">{w2}</div>}
       <div className="vj-cover-content">
-        <div className="vj-cover-kicker">La Carta · {restaurant.address || "QuieroComer"}</div>
+        {/* Logo */}
+        {restaurant.logoUrl && (
+          <div style={{ marginBottom: 20, opacity: 0, animation: "vj-fade-up 1s var(--vj-ease) 0.3s forwards" }}>
+            <Image src={restaurant.logoUrl} alt={restaurant.name} width={56} height={56} className="rounded-full" style={{ border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }} />
+          </div>
+        )}
         <h1 className="vj-cover-title font-[family-name:var(--font-fraunces)]">
           <span className="vj-line"><span>{w1}</span></span>
           {w2 && <span className="vj-line"><span><em>{w2}</em></span></span>}
         </h1>
         <p className="vj-cover-sub font-[family-name:var(--font-fraunces)]">
-          Un recorrido por {chapterCount} capítulos. Deslizá para comenzar.
+          Un recorrido por {chapterCount} secciones. Desliza para comenzar.
         </p>
-        <div className="vj-cover-meta">
-          <div>Capítulos<strong className="font-[family-name:var(--font-fraunces)]">{String(chapterCount).padStart(2, "0")}</strong></div>
-          <div>Platos<strong className="font-[family-name:var(--font-fraunces)]">{dishCount}</strong></div>
-          <div>Tiempo<strong className="font-[family-name:var(--font-fraunces)]">3&apos;</strong></div>
-        </div>
       </div>
       <div className="vj-cover-cue">Comenzar</div>
     </section>
@@ -185,10 +268,10 @@ function CoverSlide({ restaurant, chapterCount, dishCount }: { restaurant: Resta
 
 /* =============== CHAPTER OPENING =============== */
 function ChapterOpening({
-  index, palette, poetic, dishCount, hasGenie, categoryName, onActive,
+  index, palette, poetic, dishCount, hasGenie, categoryName, dishes, onActive,
 }: {
   index: number; palette: Palette; poetic: { prefix: string; accent: string };
-  dishCount: number; hasGenie: boolean; categoryName: string; onActive: () => void;
+  dishCount: number; hasGenie: boolean; categoryName: string; dishes: Dish[]; onActive: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useInView(ref, (inView) => {
@@ -198,19 +281,45 @@ function ChapterOpening({
     }
   });
 
+  // Check for featured dish (RECOMMENDED)
+  const featuredDish = dishes.find(isGeniePick);
+  const featuredPhoto = featuredDish ? getDishPhoto(featuredDish) : null;
+
+  // Get dish photos for mosaic background
+  const mosaicPhotos = dishes
+    .map((d) => getDishPhoto(d))
+    .filter(Boolean)
+    .slice(0, 6) as string[];
+
   return (
     <section className="vj-chapter" data-palette={palette} data-section="chapter" data-rail={index} ref={ref}>
       <div className="vj-chapter-bg" />
+
+      {/* Featured photo reveal (for categories with RECOMMENDED dish) */}
+      {featuredPhoto && (
+        <div className="vj-chapter-featured">
+          <Image src={featuredPhoto} alt={featuredDish?.name || ""} fill className="object-cover" sizes="100vw" />
+        </div>
+      )}
+
+      {/* Photo mosaic background (when no featured dish) */}
+      {!featuredPhoto && mosaicPhotos.length > 0 && (
+        <div className="vj-chapter-mosaic">
+          {mosaicPhotos.map((photo, i) => (
+            <div key={i} className="vj-mosaic-cell" style={{ animationDelay: `${i * 0.15}s` }}>
+              <Image src={photo} alt="" fill className="object-cover" sizes="50vw" />
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="vj-chapter-content">
         <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]">
-          Capítulo {CHAPTER_WORDS[index] || index + 1}
+          Sección {CHAPTER_WORDS[index] || index + 1}
         </div>
         <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]">
           {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
         </h2>
-        <p className="vj-chapter-desc font-[family-name:var(--font-fraunces)]">
-          {categoryName}
-        </p>
         <div className="vj-chapter-count">
           {dishCount} {dishCount === 1 ? "plato" : "platos"}{hasGenie ? " · ✦ Genio" : ""}
         </div>
@@ -220,20 +329,29 @@ function ChapterOpening({
   );
 }
 
-/* =============== CATEGORY TRACK =============== */
+/* =============== CATEGORY TRACK (chapter title + dishes in horizontal) =============== */
 function CategoryTrack({
-  group, index, palette, poetic, onActive, onDishTap,
+  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, onActive, onDishTap,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
   index: number; palette: Palette;
   poetic: { prefix: string; accent: string };
+  totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string;
   onActive: () => void; onDishTap: (d: Dish) => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const [activeDish, setActiveDish] = useState(0);
+  const [activeSlide, setActiveSlide] = useState(0);
   const isLight = palette === "cream";
   const chapterNum = String(index + 1).padStart(2, "0");
+  const totalSlides = group.dishes.length + 1; // +1 for chapter title slide
+
+  // Get photos for mosaic
+  const featuredDish = dishes.find(isGeniePick);
+  const featuredPhoto = featuredDish ? getDishPhoto(featuredDish) : null;
+  const mosaicPhotos = !featuredPhoto
+    ? (dishes.map((d) => getDishPhoto(d)).filter(Boolean).slice(0, 6) as string[])
+    : [];
 
   useInView(wrapRef, (inView) => { if (inView) onActive(); });
 
@@ -241,13 +359,13 @@ function CategoryTrack({
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    const slides = track.querySelectorAll(".vj-dish");
+    const slides = track.querySelectorAll(".vj-slide-item");
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
           slides.forEach((s) => { if (s !== e.target) s.classList.remove("in-view"); });
           e.target.classList.add("in-view");
-          setActiveDish(parseInt((e.target as HTMLElement).dataset.dishIdx || "0"));
+          setActiveSlide(parseInt((e.target as HTMLElement).dataset.slideIdx || "0"));
         }
       });
     }, { root: track, threshold: [0.6] });
@@ -257,25 +375,71 @@ function CategoryTrack({
   }, []);
 
   return (
-    <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef}>
-      <div className={`vj-category-header ${isLight ? "light" : ""}`}>
-        <div className="vj-category-label">
-          {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#c93010" : "#F4A623" }}>{poetic.prefix} {poetic.accent}</strong>
+    <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef} style={{ background: isLight ? "#f5ecd8" : undefined }}>
+      {/* Header — only show on dish slides (not chapter title) */}
+      {activeSlide > 0 && (
+        <div className={`vj-category-header ${isLight ? "light" : ""}`}>
+          <div className="vj-category-label" style={isLight ? { background: "rgba(0,0,0,0.08)", color: "#3d2817" } : { background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white" }}>
+            {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#8a4a1a" : "white" }}>{poetic.prefix} {poetic.accent}</strong>
+          </div>
+          <div className="vj-bullets" style={isLight ? { background: "rgba(0,0,0,0.08)" } : undefined}>
+            {group.dishes.map((_, i) => (
+              <div key={i} className={`vj-bullet ${i + 1 === activeSlide ? "active" : ""}`} style={isLight ? (i + 1 === activeSlide ? { background: "#c93010" } : { background: "rgba(0,0,0,0.25)" }) : undefined} />
+            ))}
+          </div>
         </div>
-        <div className="vj-bullets">
-          {group.dishes.map((_, i) => (
-            <div key={i} className={`vj-bullet ${i === activeDish ? "active" : ""}`} />
-          ))}
-        </div>
-      </div>
+      )}
       <div className="vj-category-track" ref={trackRef}>
+        {/* First slide: chapter title */}
+        <div className="vj-slide-item vj-dish vj-chapter-slide" data-slide-idx="0" data-palette={palette} style={{
+          flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 32px",
+          background: isLight ? "linear-gradient(180deg, #f5ecd8 0%, #e8d4b0 100%)" : undefined,
+          color: isLight ? "#2a1810" : undefined,
+        }}>
+          {/* Chapter background */}
+          <div className="vj-chapter-bg" />
+
+          {/* Featured photo or mosaic */}
+          {featuredPhoto && (
+            <div className="vj-chapter-featured">
+              <Image src={featuredPhoto} alt={featuredDish?.name || ""} fill className="object-cover" sizes="100vw" />
+            </div>
+          )}
+          {!featuredPhoto && mosaicPhotos.length > 0 && (
+            <div className="vj-chapter-mosaic">
+              {mosaicPhotos.map((photo, i) => (
+                <div key={i} className="vj-mosaic-cell">
+                  <Image src={photo} alt="" fill className="object-cover" sizes="50vw" />
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ position: "relative", zIndex: 2 }}>
+            <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#c93010" : "rgba(255,255,255,0.6)", opacity: 1, transform: "none" }}>
+              Sección {CHAPTER_WORDS[index] || index + 1}
+            </div>
+            <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]" style={{ opacity: 1, transform: "none", color: isLight ? "#2a1810" : undefined }}>
+              {poetic.prefix}{poetic.prefix ? <br /> : ""}<em style={{ color: isLight ? "#c93010" : "#F4A623" }}>{poetic.accent}</em>
+            </h2>
+            <div style={{ fontSize: "16px", letterSpacing: "0.2em", textTransform: "uppercase" as const, opacity: 0.65 }}>
+              {group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}{hasGenie ? " · ✦ Genio" : ""}
+            </div>
+          </div>
+
+          <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", fontSize: "9.5px", letterSpacing: "0.3em", textTransform: "uppercase" as const, opacity: 0.45 }}>
+            Desliza →
+          </div>
+        </div>
+
+        {/* Dish slides */}
         {group.dishes.map((dish, i) => (
           <DishSlide
             key={dish.id}
             dish={dish}
             variant={getVariant(dish, i)}
             palette={palette}
-            index={i}
+            index={i + 1}
             onClick={() => onDishTap(dish)}
           />
         ))}
@@ -294,7 +458,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   const accentColor = palette === "ocean" ? "#7fbfdc" : palette === "cream" ? "#c93010" : "#F4A623";
 
   if (variant === "hero") return (
-    <div className="vj-dish vj-v-hero" data-dish-idx={index} onClick={onClick}>
+    <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
       <div className="vj-hero-overlay" />
       <div className="vj-hero-info">
@@ -311,7 +475,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   );
 
   if (variant === "split") return (
-    <div className="vj-dish vj-v-split" data-dish-idx={index} onClick={onClick}>
+    <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
       <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
       <div className="vj-split-info">
         <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.allergens || ""}</span>
@@ -328,8 +492,8 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 
   if (variant === "light") return (
     <div
-      className="vj-dish vj-v-light"
-      data-dish-idx={index}
+      className="vj-slide-item vj-dish vj-v-light"
+      data-slide-idx={index}
       onClick={onClick}
       style={isLight ? { background: "linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%)", color: "#2a1810" } : undefined}
     >
@@ -340,7 +504,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
         <span className="vj-ln"><span>{dish.name}</span></span>
       </h3>
-      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "22px", color: "#1a0e08" }}>{pitch}</p>}
       <div className="vj-meta" style={isLight ? { color: "#5a3d20" } : undefined}>
         <span className="vj-price font-[family-name:var(--font-fraunces)]" style={isLight ? { borderColor: "#3d2817", color: "#3d2817" } : undefined}>
           ${dish.price?.toLocaleString("es-CL")}
@@ -351,8 +515,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 
   // SPOTLIGHT (Genio)
   return (
-    <div className="vj-dish vj-v-spotlight" data-dish-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
-      <div className="vj-genie-badge">El Genio elige</div>
+    <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
       <div className="vj-spot-wrap">
         <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
       </div>
@@ -377,7 +540,7 @@ function OutroSlide({ onSwitchView }: { onSwitchView: () => void }) {
         <h3 className="font-[family-name:var(--font-fraunces)]">
           Hasta aquí llega el <em>recorrido</em>.<br />¿Qué vas a pedir?
         </h3>
-        <p>Tocá para ver la carta en otro formato.</p>
+        <p>Toca para ver la carta en otro formato.</p>
         <button className="vj-outro-cta" onClick={onSwitchView}>Ver en Lista →</button>
       </div>
     </section>
@@ -403,10 +566,6 @@ const CSS = `
   :root { --vj-ease: cubic-bezier(0.16,1,0.3,1); }
   .vj-root { background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; }
 
-  /* Nav */
-  .vj-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: max(10px, env(safe-area-inset-top)) 16px 10px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%); }
-  .vj-brand { font-weight: 300; font-size: 14px; letter-spacing: 0.01em; opacity: 0.9; }
-  .vj-brand em { font-style: italic; color: #F4A623; font-weight: 400; }
 
   /* Reel */
   .vj-reel { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
@@ -424,10 +583,32 @@ const CSS = `
   .vj-cover-bg { position: absolute; inset: -5%; background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(244,166,35,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 30% 70%, rgba(200,80,40,0.15) 0%, transparent 50%), radial-gradient(ellipse at center, #1a0a04 0%, #000 80%); animation: vj-cover-drift 20s ease-in-out infinite alternate; }
   @keyframes vj-cover-drift { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.1) translate(-2%,-1%); } }
   .vj-cover-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>"); opacity: 0.08; mix-blend-mode: overlay; pointer-events: none; z-index: 2; }
+  /* Floating photo constellation */
+  .vj-cover-photos { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+  .vj-cover-photo-float {
+    position: absolute;
+    width: 140px; height: 95px;
+    border-radius: 12px;
+    overflow: hidden;
+    opacity: 0;
+    filter: blur(1px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    animation: vjPhotoFloat 60s ease-in-out infinite;
+  }
+  @keyframes vjPhotoFloat {
+    0% { opacity: 0; transform: translateX(-60px) translateY(40px) scale(0.8) rotate(-5deg); }
+    10% { opacity: 0.12; }
+    30% { opacity: 0.15; transform: translateX(40px) translateY(-30px) scale(1.05) rotate(3deg); filter: blur(0px); }
+    50% { opacity: 0.1; transform: translateX(80px) translateY(15px) scale(0.92) rotate(-2deg); filter: blur(1px); }
+    70% { opacity: 0.14; transform: translateX(20px) translateY(-40px) scale(1.08) rotate(4deg); filter: blur(0px); }
+    90% { opacity: 0.11; transform: translateX(-40px) translateY(10px) scale(0.95) rotate(-3deg); }
+    100% { opacity: 0; transform: translateX(-60px) translateY(40px) scale(0.8) rotate(-5deg); }
+  }
+
   .vj-cover-bgtype { position: absolute; font-weight: 200; font-style: italic; font-size: 32vw; line-height: 0.85; letter-spacing: -0.05em; color: rgba(244,166,35,0.04); white-space: nowrap; pointer-events: none; z-index: 1; }
   .vj-cover-bgtype.top { top: 10%; left: -10%; }
   .vj-cover-bgtype.bottom { bottom: 15%; right: -10%; }
-  .vj-cover-content { position: relative; z-index: 5; padding: 0 28px calc(40px + env(safe-area-inset-bottom)); }
+  .vj-cover-content { position: relative; z-index: 5; padding: 0 28px calc(180px + env(safe-area-inset-bottom)); }
   .vj-cover-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: #F4A623; margin-bottom: 20px; font-weight: 500; opacity: 0; animation: vj-kicker-in 1s var(--vj-ease) 0.5s forwards; }
   .vj-cover-kicker::before, .vj-cover-kicker::after { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.5; }
   @keyframes vj-kicker-in { from { opacity: 0; letter-spacing: 0.1em; } to { opacity: 1; letter-spacing: 0.4em; } }
@@ -437,7 +618,7 @@ const CSS = `
   .vj-line:nth-child(2) span { animation-delay: 0.2s; }
   .vj-line:nth-child(2) span em { font-style: italic; font-weight: 300; background: linear-gradient(135deg, #F4A623 0%, #e85530 60%, #c93010 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   @keyframes vj-line-up { to { transform: translateY(0); } }
-  .vj-cover-sub { font-style: italic; font-weight: 300; font-size: 17px; line-height: 1.4; opacity: 0; max-width: 26ch; margin-bottom: 28px; animation: vj-fade-up 1.2s var(--vj-ease) 0.9s forwards; }
+  .vj-cover-sub { font-style: italic; font-weight: 300; font-size: 22px; line-height: 1.35; opacity: 0; max-width: 30ch; margin-bottom: 28px; animation: vj-fade-up 1.2s var(--vj-ease) 0.9s forwards; }
   @keyframes vj-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 0.85; transform: translateY(0); } }
   .vj-cover-meta { display: flex; gap: 20px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1.2s var(--vj-ease) 1.2s forwards; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
   .vj-cover-meta strong { display: block; font-weight: 400; font-size: 22px; text-transform: none; letter-spacing: -0.01em; margin-top: 4px; }
@@ -457,30 +638,88 @@ const CSS = `
   .vj-chapter::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 1px; background: currentColor; opacity: 0.3; transform: translate(-50%,-50%); transition: width 1.5s var(--vj-ease); }
   .vj-chapter.in-view::before { width: 60%; max-width: 400px; }
   .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
-  .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: #F4A623; text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
+  .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
-  .vj-chapter-name { font-weight: 200; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 60px 0; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; }
-  .vj-chapter-name em { font-style: italic; font-weight: 300; display: block; color: #F4A623; }
+  .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; }
+  .vj-chapter-name em { font-style: italic; font-weight: 500; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
   .vj-chapter.in-view .vj-chapter-desc { opacity: 0.75; }
-  .vj-chapter-count { display: inline-flex; align-items: center; gap: 10px; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 1.5s; }
+  .vj-chapter-count { display: inline-flex; align-items: center; gap: 10px; font-size: 16px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 1.2s; }
   .vj-chapter.in-view .vj-chapter-count { opacity: 0.65; transform: translateY(0); }
   .vj-chapter-count::before, .vj-chapter-count::after { content: ''; width: 20px; height: 1px; background: currentColor; opacity: 0.5; }
   .vj-chapter-hint { position: absolute; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); font-size: 9.5px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; transition: opacity 1s ease 2s; }
   .vj-chapter.in-view .vj-chapter-hint { opacity: 0.45; animation: vj-cue-float 2.5s ease-in-out 2.5s infinite; }
 
+  /* Featured photo reveal */
+  .vj-chapter-featured {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    filter: blur(20px) brightness(0.4);
+    transform: scale(1.15);
+    opacity: 0;
+    transition: filter 3s cubic-bezier(0.16,1,0.3,1), opacity 1.5s ease, transform 8s cubic-bezier(0.16,1,0.3,1);
+  }
+  .vj-chapter-featured img { object-fit: cover; }
+  .vj-chapter.in-view .vj-chapter-featured {
+    filter: blur(6px) brightness(0.35);
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+
+  /* Photo mosaic */
+  .vj-chapter-mosaic {
+    position: absolute;
+    inset: -20%;
+    z-index: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 3px;
+    opacity: 0;
+    filter: blur(3px);
+    transform: scale(1.8) rotate(2deg);
+    animation: none;
+  }
+  .vj-chapter.in-view .vj-chapter-mosaic {
+    opacity: 0.3;
+    animation: vjMosaicAlive 12s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  @keyframes vjMosaicAlive {
+    0% { transform: scale(1.8) rotate(2deg); filter: blur(3px); }
+    30% { transform: scale(1.2) rotate(0deg); filter: blur(1px); }
+    60% { transform: scale(1.05) rotate(-0.5deg); filter: blur(0px); }
+    100% { transform: scale(1.1) rotate(0.5deg); filter: blur(0.5px); }
+  }
+  /* Dark overlay */
+  .vj-chapter-mosaic::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1;
+  }
+  .vj-mosaic-cell {
+    position: relative;
+    overflow: hidden;
+  }
+  .vj-mosaic-cell img { object-fit: cover; }
+
   /* ===== CATEGORY TRACK ===== */
   .vj-track-wrap { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
   .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   .vj-category-track::-webkit-scrollbar { display: none; }
-  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 50px); left: 16px; right: 16px; z-index: 15; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 50px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
   .vj-category-header.light { color: #2a1810; }
-  .vj-category-label { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.7; font-weight: 500; }
-  .vj-category-label strong { font-style: italic; font-weight: 400; font-size: 13px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
-  .vj-bullets { display: flex; gap: 4px; }
-  .vj-bullet { width: 14px; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; transition: all 0.4s ease; }
-  .vj-bullet.active { background: #F4A623; width: 22px; }
+  .vj-category-header.light .vj-category-label { background: rgba(0,0,0,0.06); color: #3d2817; }
+  .vj-category-header.light .vj-category-label strong { color: #8a4a1a; }
+  .vj-category-header.light .vj-bullets { background: rgba(0,0,0,0.08); }
+  .vj-category-label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 1; font-weight: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 50px; }
+  .vj-category-label strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
+  .vj-bullets { display: flex; gap: 4px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 50px; }
+  .vj-bullet { width: 16px; height: 3px; background: rgba(255,255,255,0.6); border-radius: 3px; transition: all 0.4s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+  .vj-bullet.active { background: #F4A623; width: 28px; box-shadow: 0 1px 6px rgba(244,166,35,0.5); }
   .vj-category-header.light .vj-bullet { background: rgba(0,0,0,0.25); }
   .vj-category-header.light .vj-bullet.active { background: #c93010; }
 
@@ -495,9 +734,10 @@ const CSS = `
   .vj-ln span { display: block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
-  .vj-pitch { font-weight: 300; font-style: italic; font-size: 16px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; }
-  .vj-dish.in-view .vj-pitch { opacity: 0.82; transform: translateY(0); }
-  .vj-v-light .vj-pitch, .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; }
+  .vj-dish.in-view .vj-pitch { opacity: 0.9; transform: translateY(0); }
+  .vj-v-light .vj-pitch { margin-left: auto; margin-right: auto; color: #1a0e08; }
+  .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
   .vj-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
   .vj-v-light .vj-meta, .vj-v-spotlight .vj-meta { justify-content: center; }
   .vj-dish.in-view .vj-meta { opacity: 1; transform: translateY(0); }

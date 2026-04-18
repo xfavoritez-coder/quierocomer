@@ -121,7 +121,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         />
 
         {/* Top left: logo + name */}
-        <div className="absolute z-10 flex items-center gap-2" style={{ top: 16, left: 16 }}>
+        <div className="absolute z-10 flex items-center gap-2" style={{ top: 12, left: 16, height: 44 }}>
           {logoSrc ? (
             <Image src={logoSrc} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ border: "none" }} />
           ) : (
@@ -139,8 +139,8 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           onClick={onProfileOpen}
           className="absolute z-10 flex items-center justify-center"
           style={{
-            top: 16, right: 16,
-            width: 38, height: 38, borderRadius: "50%",
+            top: 12, right: 16,
+            width: 44, height: 44, borderRadius: "50%",
             background: qrUser ? "#F4A623" : "rgba(0,0,0,0.4)",
             backdropFilter: qrUser ? "none" : "blur(4px)",
             WebkitBackdropFilter: qrUser ? "none" : "blur(4px)",

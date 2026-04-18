@@ -152,7 +152,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           width: 52,
           height: 52,
           borderRadius: "50%",
-          background: "rgba(0,0,0,0.45)",
+          background: "rgba(0,0,0,0.55)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           border: "1px solid rgba(255,255,255,0.12)",

@@ -131,8 +131,8 @@ export default function CartaLista({
         {/* Center: view selector */}
         {/* Right: profile */}
         <div className="flex items-center justify-center" style={{ flex: 1, justifyContent: "flex-end" }}>
-          <div className="flex items-center justify-center" style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
-            <User size={17} color="#999" />
+          <div className="flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
+            <User size={20} color="#999" />
           </div>
         </div>
       </div>
