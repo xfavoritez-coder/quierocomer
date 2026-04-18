@@ -16,6 +16,7 @@ interface Promo {
   validFrom: string | null; validUntil: string | null; status: string;
   generatedBy: string; aiJustification: string | null; metrics: any;
   createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
+  restaurant?: { name: string; logoUrl?: string | null } | null;
 }
 
 export default function AdminPromociones() {
@@ -168,9 +169,13 @@ export default function AdminPromociones() {
               <div key={p.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden" }}>
                 {/* Header */}
                 <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 10, background: st.bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 }}>
-                    {p.generatedBy === "ai" ? "🧞" : "🏷️"}
-                  </div>
+                  {p.restaurant?.logoUrl ? (
+                    <img src={p.restaurant.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
+                      {p.restaurant?.name?.charAt(0) || "🏷️"}
+                    </div>
+                  )}
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600 }}>{p.name}</span>

@@ -88,7 +88,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
-          margin: "28px 12px 4px",
+          margin: "28px 20px 4px",
           padding: "20px 16px",
           background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
           backgroundSize: "200% 100%",

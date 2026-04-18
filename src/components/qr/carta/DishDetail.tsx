@@ -75,6 +75,8 @@ export default function DishDetail({
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     document.body.style.overflow = "hidden";
+    document.body.style.position = "fixed";
+    document.body.style.width = "100%";
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -88,6 +90,8 @@ export default function DishDetail({
     }).catch(() => {});
     return () => {
       document.body.style.overflow = "";
+      document.body.style.position = "";
+      document.body.style.width = "";
     };
   }, [dish.id, restaurantId]);
 
@@ -157,7 +161,11 @@ export default function DishDetail({
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0, left: 0, right: 0,
+        height: "100vh",
+        // @ts-ignore — fallbacks for Chrome iOS
+        ...({ height: "100dvh" } as any),
+        ...({ height: "-webkit-fill-available" } as any),
         zIndex: 100,
         background: "#000",
         opacity: visible ? 1 : 0,

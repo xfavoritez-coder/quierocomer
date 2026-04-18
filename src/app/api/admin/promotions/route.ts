@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
   const promotions = await prisma.promotion.findMany({
     where,
-    include: { restaurant: { select: { name: true } } },
+    include: { restaurant: { select: { name: true, logoUrl: true } } },
     orderBy: { createdAt: "desc" },
   });
 

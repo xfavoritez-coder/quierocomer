@@ -121,7 +121,7 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
   return (
     <>
       <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 0 8px" }}>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e", padding: "0 16px", marginBottom: 10 }}>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e", padding: "0 20px", marginBottom: 10 }}>
           Promociones
         </h3>
 
@@ -129,11 +129,11 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
         <div
           ref={scrollRef}
           style={{
-            display: "flex", gap: 10, overflowX: "auto", scrollSnapType: "x mandatory",
-            padding: "0 16px", scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
+            display: "flex", gap: 12, overflowX: "auto", scrollSnapType: "x mandatory",
+            padding: "0 20px", scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
           }}
         >
-          {promos.map((p, i) => {
+          {promos.map((p) => {
             const dish = p.dishes[0];
             const isSingle = promos.length === 1;
             return (
@@ -145,54 +145,62 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
                 style={{
                   flex: isSingle ? "1 1 100%" : "0 0 280px",
                   minWidth: isSingle ? undefined : 280,
-                  height: 100,
+                  height: 110,
                   scrollSnapAlign: "start",
-                  background: "linear-gradient(135deg, rgba(244,166,35,0.05) 0%, rgba(244,166,35,0.02) 100%)",
-                  border: "1px solid rgba(244,166,35,0.2)",
-                  borderRadius: 14,
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "0 14px 0 6px",
+                  background: "linear-gradient(135deg, #1a1a1a 0%, #111 100%)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 16,
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "0 16px 0 12px",
                   cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
                   position: "relative",
                   overflow: "hidden",
                   textAlign: "left",
                 }}
               >
+                {/* Subtle ambient glow */}
+                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "radial-gradient(circle, rgba(244,166,35,0.08), transparent 70%)", pointerEvents: "none" }} />
+
                 {/* Badge */}
                 {p.discountPct && (
                   <div style={{
-                    position: "absolute", top: 6, right: 8,
-                    background: "rgba(74,222,128,0.15)", color: "#16a34a",
-                    fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: 4,
+                    position: "absolute", top: 8, right: 10,
+                    background: "#16a34a", color: "white",
+                    fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: 50,
+                    boxShadow: "0 2px 8px rgba(22,163,74,0.3)",
                   }}>
                     -{p.discountPct}%
                   </div>
                 )}
 
-                {/* Photo */}
+                {/* Photo circle */}
                 {dish?.photos?.[0] ? (
-                  <div style={{ width: 88, height: 88, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative" }}>
-                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="88px" />
+                  <div style={{
+                    width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
+                    position: "relative", border: "2px solid rgba(244,166,35,0.2)",
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
+                  }}>
+                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="78px" />
                   </div>
                 ) : (
-                  <div style={{ width: 88, height: 88, borderRadius: 10, background: "#f0ebe0", flexShrink: 0 }} />
+                  <div style={{ width: 78, height: 78, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0 }} />
                 )}
 
                 {/* Info */}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
+                  <p style={{ fontSize: "13px", fontWeight: 700, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {dish?.name || p.name}
                   </p>
                   {p.name !== dish?.name && (
-                    <p style={{ fontSize: "11px", color: "#888", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                    <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
                   )}
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 6 }}>
-                    <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}>
+                    <span style={{ fontSize: "18px", fontWeight: 700, color: "#F4A623" }}>
                       ${p.promoPrice?.toLocaleString("es-CL") || dish?.price?.toLocaleString("es-CL")}
                     </span>
                     {p.originalPrice && (
-                      <span style={{ fontSize: "12px", color: "#999", textDecoration: "line-through" }}>
+                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "line-through" }}>
                         ${p.originalPrice.toLocaleString("es-CL")}
                       </span>
                     )}
@@ -205,10 +213,10 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
 
         {/* Dots */}
         {promos.length > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 8 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 10 }}>
             {promos.map((_, i) => (
               <div key={i} style={{
-                width: i === activeIdx ? 16 : 6, height: 4, borderRadius: 2,
+                width: i === activeIdx ? 18 : 6, height: 4, borderRadius: 2,
                 background: i === activeIdx ? "#F4A623" : "rgba(14,14,14,0.15)",
                 transition: "all 0.3s ease",
               }} />
@@ -220,8 +228,12 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
       {/* Promo Detail Modal */}
       {selectedPromo && (
         <div
-          className="fixed inset-0 font-[family-name:var(--font-dm)]"
+          className="font-[family-name:var(--font-dm)]"
           style={{
+            position: "fixed", top: 0, left: 0, right: 0,
+            height: "100vh",
+            ...({ height: "100dvh" } as any),
+            ...({ height: "-webkit-fill-available" } as any),
             zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
             display: "flex", alignItems: "flex-end", justifyContent: "center",
             opacity: modalVisible ? 1 : 0, transition: "opacity 0.2s ease",
