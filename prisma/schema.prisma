@@ -696,8 +696,9 @@ model QRUser {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  unsubscribedAt DateTime?
-  lastEmailAt    DateTime?
+  unsubscribedAt   DateTime?
+  lastEmailAt      DateTime?
+  triggerHistory   Json?     // { birthday: "2026-04-18", inactivity: "2026-04-10", ... }
 
   magicTokens  QRMagicToken[]
   interactions QRUserInteraction[]

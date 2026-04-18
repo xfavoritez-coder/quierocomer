@@ -98,3 +98,11 @@ Cuando un fantasma vuelve, la app muestra promos relevantes para su perfil sin e
 - `AutomationRule` — triggers automaticos (cumpleanos, inactividad)
 - `EmailTemplate` — plantillas de email
 - `GenioInsight` — insights generados por IA
+
+## Ideas futuras
+
+1. **Insights de competencia cruzada**: si hay varios locales del mismo tipo (sushi, pizza), Claude compara métricas agregadas entre ellos. "Tu tasa de abandono es 40% vs 25% promedio de locales similares". Requiere que owners autoricen compartir data agregada.
+
+2. **Push notification al owner**: cuando el Genio detecta algo urgente (ej: tasa de abandono sube 50% vs semana pasada), enviar push notification al celular del dueño. Requiere implementar web push para owners (similar al garzon).
+
+3. **A/B testing en automatizaciones**: para triggers como bienvenida o inactividad, crear 2 versiones del email y enviar aleatoriamente. Trackear cuál tiene mejor tasa de apertura/clic. Después de N envíos, elegir ganador automáticamente.

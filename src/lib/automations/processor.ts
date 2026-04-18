@@ -11,6 +11,7 @@
 import { prisma } from "@/lib/prisma";
 
 const FREQUENCY_CAP_DAYS = 7;
+const TRIGGER_COOLDOWN_DAYS = 30;
 
 interface ProcessResult {
   trigger: string;
@@ -38,7 +39,16 @@ export async function processAutomations(): Promise<ProcessResult[]> {
     let skipped = 0;
 
     try {
-      const recipients = await findRecipients(rule, today, cutoff);
+      const rawRecipients = await findRecipients(rule, today, cutoff);
+
+      // Filter by trigger cooldown (30 days per trigger type)
+      const triggerCooloff = new Date(Date.now() - TRIGGER_COOLDOWN_DAYS * 24 * 60 * 60 * 1000);
+      const recipients = rawRecipients.filter(u => {
+        const history = (u as any).triggerHistory as Record<string, string> | null;
+        if (!history || !history[rule.trigger]) return true;
+        return new Date(history[rule.trigger]) < triggerCooloff;
+      });
+      skipped += rawRecipients.length - recipients.length;
 
       for (const user of recipients) {
         try {
@@ -64,7 +74,15 @@ export async function processAutomations(): Promise<ProcessResult[]> {
             }),
           });
 
-          await prisma.qRUser.update({ where: { id: user.id }, data: { lastEmailAt: now } });
+          // Update lastEmailAt + trigger history
+          const existingHistory = ((user as any).triggerHistory as Record<string, string>) || {};
+          await prisma.qRUser.update({
+            where: { id: user.id },
+            data: {
+              lastEmailAt: now,
+              triggerHistory: { ...existingHistory, [rule.trigger]: now.toISOString() },
+            },
+          });
           queued++;
         } catch {
           skipped++;
@@ -102,7 +120,7 @@ async function findRecipients(
           birthDate: { not: null },
           guestProfiles: { some: { sessions: { some: { restaurantId: rule.restaurantId } } } },
         },
-        select: { id: true, email: true, name: true, birthDate: true },
+        select: { id: true, email: true, name: true, birthDate: true, triggerHistory: true },
       });
       return users.filter(u => {
         if (!u.birthDate) return false;
@@ -124,7 +142,7 @@ async function findRecipients(
             },
           },
         },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, triggerHistory: true },
       });
     }
 
@@ -138,7 +156,7 @@ async function findRecipients(
           createdAt: { gte: oneDayAgo, lte: oneHourAgo },
           guestProfiles: { some: { sessions: { some: { restaurantId: rule.restaurantId } } } },
         },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, triggerHistory: true },
       });
     }
 
@@ -156,7 +174,7 @@ async function findRecipients(
       if (!userIds.length) return [];
       return prisma.qRUser.findMany({
         where: { id: { in: userIds }, ...baseWhere },
-        select: { id: true, email: true, name: true },
+        select: { id: true, email: true, name: true, triggerHistory: true },
       });
     }
 

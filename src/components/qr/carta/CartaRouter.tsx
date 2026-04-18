@@ -9,6 +9,7 @@ import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
 import ProfileDrawer from "../auth/ProfileDrawer";
+import PromoBanner from "../capture/PromoBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 
 interface Review {
@@ -107,6 +108,8 @@ export default function CartaRouter(props: Props) {
           </p>
         </div>
       )}
+
+      <PromoBanner restaurantId={props.restaurant.id} />
 
       {profileOpen && (
         <ProfileDrawer
