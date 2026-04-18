@@ -331,6 +331,24 @@ enum MemberStatus {
 // ─── Carta QR Viva (qr.quierocomer.cl) ────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════════
 
+model RestaurantOwner {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String
+  role         OwnerRole @default(OWNER)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurants Restaurant[]
+}
+
+enum OwnerRole {
+  OWNER
+  SUPERADMIN
+}
+
 model Restaurant {
   id          String     @id @default(cuid())
   slug        String     @unique
@@ -342,10 +360,12 @@ model Restaurant {
   address     String?
   cartaTheme  CartaTheme @default(BASIC)
   isActive    Boolean    @default(true)
-  ownerId     String
+  ownerId     String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
+  owner       RestaurantOwner? @relation(fields: [ownerId], references: [id])
+  sessions    Session[]
   categories  Category[]
   dishes      Dish[]
   tables      RestaurantTable[]
@@ -358,6 +378,8 @@ model Restaurant {
   schedules             RestaurantScheduleRule[]
   waiterSubscriptions   WaiterPushSubscription[]
   qrUserInteractions    QRUserInteraction[]
+
+  @@index([ownerId])
 }
 
 enum CartaTheme {
@@ -492,23 +514,36 @@ model StatEvent {
   tableId      String?
   eventType    StatEventType
   sessionId    String
+  guestId      String?
+  qrUserId     String?
   weather      String?
   timeOfDay    TimeOfDay?
   createdAt    DateTime      @default(now())
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
+  guest        GuestProfile? @relation(fields: [guestId], references: [id])
+  qrUser       QRUser?       @relation(fields: [qrUserId], references: [id])
 
   @@index([restaurantId])
+  @@index([guestId])
+  @@index([qrUserId])
   @@index([sessionId])
 }
 
 enum StatEventType {
   DISH_VIEW
   DISH_SELECT
+  DISH_DWELL
   CATEGORY_VIEW
+  CATEGORY_DWELL
+  SESSION_START
+  SESSION_END
   GENIO_START
   GENIO_COMPLETE
+  GENIO_DISH_ACCEPTED
+  GENIO_DISH_REJECTED
   GENIO_GROUP_START
+  CARTA_VIEW_SELECTED
   WAITER_CALL
   QR_SCAN
 }
@@ -594,6 +629,54 @@ model WaiterPushSubscription {
   @@index([restaurantId])
 }
 
+// ─── Guest Profile (anonymous visitors) ──────────────────────────────
+
+model GuestProfile {
+  id              String    @id // = quierocomer_guest_id from localStorage
+  createdAt       DateTime  @default(now())
+  lastSeenAt      DateTime  @default(now())
+  visitCount      Int       @default(1)
+  totalSessions   Int       @default(0)
+  preferences     Json?     // { dietType, restrictions[], dislikes[], favoriteCategories[] }
+  linkedQrUserId  String?
+  linkedQrUser    QRUser?   @relation(fields: [linkedQrUserId], references: [id])
+
+  statEvents      StatEvent[]
+  sessions        Session[]
+
+  @@index([linkedQrUserId])
+}
+
+// ─── Session ─────────────────────────────────────────────────────────
+
+model Session {
+  id             String    @id @default(cuid())
+  guestId        String
+  qrUserId       String?
+  restaurantId   String
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+  durationMs     Int?
+  viewUsed       String?   // 'lista' | 'premium' | 'viaje'
+  deviceType     String?   // 'mobile' | 'tablet' | 'desktop'
+  closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
+  weather        String?
+  timeOfDay      TimeOfDay?
+  dishesViewed   Json?     // [{ dishId, dwellMs }]
+  categoriesViewed Json?   // [{ categoryId, dwellMs }]
+  pickedDishId   String?
+  isAbandoned    Boolean   @default(false)
+
+  guest          GuestProfile @relation(fields: [guestId], references: [id])
+  qrUser         QRUser?      @relation(fields: [qrUserId], references: [id])
+  restaurant     Restaurant   @relation(fields: [restaurantId], references: [id])
+
+  @@index([guestId])
+  @@index([qrUserId])
+  @@index([restaurantId])
+  @@index([startedAt])
+}
+
 // ─── QR User Capture ──────────────────────────────────────────────────
 
 model QRUser {
@@ -603,11 +686,15 @@ model QRUser {
   birthDate    DateTime?
   dietType     String?
   restrictions String[]
+  verifiedAt   DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   magicTokens  QRMagicToken[]
   interactions QRUserInteraction[]
+  guestProfiles GuestProfile[]
+  sessions     Session[]
+  statEvents   StatEvent[]
 }
 
 model QRMagicToken {
@@ -656,4 +743,19 @@ model Referrer {
   code      String   @unique @default(cuid())
   isActive  Boolean  @default(false)
   createdAt DateTime @default(now())
+}
+
+// ─── Cron ─────────────────────────────────────────────────────────────
+
+model CronLog {
+  id          String   @id @default(cuid())
+  jobName     String
+  status      String   // 'success' | 'error'
+  durationMs  Int
+  details     Json?    // { sessionsAbandoned, guestsUpdated, etc }
+  error       String?
+  createdAt   DateTime @default(now())
+
+  @@index([jobName])
+  @@index([createdAt])
 }

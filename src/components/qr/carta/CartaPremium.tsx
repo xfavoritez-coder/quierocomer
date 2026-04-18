@@ -12,6 +12,7 @@ import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
+import { getGuestId } from "@/lib/guestId";
 
 interface Review {
   id: string;
@@ -565,6 +566,7 @@ export default function CartaPremium({
                           restrictions: localStorage.getItem("qr_restrictions") ? JSON.parse(localStorage.getItem("qr_restrictions")!) : [],
                           restaurantId: restaurant.id,
                           source: "second_visit",
+                          guestId: getGuestId(),
                         }),
                       });
                       const data = await res.json();

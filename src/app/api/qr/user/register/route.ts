@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { email, name, birthDate, dietType, restrictions, restaurantId, source, bannerVariantId } = await request.json();
+    const { email, name, birthDate, dietType, restrictions, restaurantId, source, bannerVariantId, guestId } = await request.json();
 
     if (!email || !restaurantId) {
       return NextResponse.json({ error: "Email y restaurantId son requeridos" }, { status: 400 });
@@ -26,6 +26,25 @@ export async function POST(request: Request) {
         restrictions: restrictions || [],
       },
     });
+
+    // Merge guest profile with registered user
+    if (guestId) {
+      // Link GuestProfile to this user
+      await prisma.guestProfile.updateMany({
+        where: { id: guestId, linkedQrUserId: null },
+        data: { linkedQrUserId: user.id },
+      });
+      // Backfill qrUserId on all StatEvents from this guest
+      await prisma.statEvent.updateMany({
+        where: { guestId, qrUserId: null },
+        data: { qrUserId: user.id },
+      });
+      // Backfill qrUserId on all Sessions from this guest
+      await prisma.session.updateMany({
+        where: { guestId, qrUserId: null },
+        data: { qrUserId: user.id },
+      });
+    }
 
     // Generate magic token
     const token = await prisma.qRMagicToken.create({

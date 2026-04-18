@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { getGuestId } from "@/lib/guestId";
 
 interface Props {
   restaurantId: string;
@@ -48,6 +49,7 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
           restrictions,
           restaurantId,
           source: "birthday_banner",
+          guestId: getGuestId(),
           bannerVariantId: bannerVariantId || null,
         }),
       });

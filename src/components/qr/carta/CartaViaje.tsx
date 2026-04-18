@@ -372,7 +372,7 @@ function CategoryTrack({
             </div>
           </div>
 
-          <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", fontSize: "9.5px", letterSpacing: "0.3em", textTransform: "uppercase" as const, opacity: 0.45 }}>
+          <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", fontSize: "11px", letterSpacing: "0.3em", textTransform: "uppercase" as const, opacity: 0.45 }}>
             Desliza →
           </div>
         </div>

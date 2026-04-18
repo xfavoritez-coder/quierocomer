@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Sparkles, List, BookOpen } from "lucide-react";
+import { Sparkles, List, BookOpen, Rocket } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
+import { startSession, trackViewSelected } from "@/lib/sessionTracker";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
@@ -48,6 +49,16 @@ export default function CartaRouter(props: Props) {
     fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUser(d.user); }).catch(() => {});
   }, []);
 
+  // Start session tracking
+  useEffect(() => {
+    startSession(props.restaurant.id, props.tableId);
+  }, [props.restaurant.id, props.tableId]);
+
+  // Track view changes
+  useEffect(() => {
+    if (isReady) trackViewSelected(view);
+  }, [view, isReady]);
+
   // Child calls this when mounted — dismiss overlay
   const onViewReady = useCallback(() => {
     hideViewTransition();
@@ -89,7 +100,7 @@ export default function CartaRouter(props: Props) {
           <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
             {overlay.view === "lista" && <List size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
             {overlay.view === "premium" && <BookOpen size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
-            {overlay.view === "viaje" && <Sparkles size={28} color="#F4A623" fill="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+            {overlay.view === "viaje" && <Rocket size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
           </div>
           <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20 }}>
             Cargando vista {overlay.label}

@@ -1,14 +1,93 @@
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
-    if (email !== process.env.ADMIN_EMAIL || password !== process.env.ADMIN_PASSWORD) {
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });
+    }
+
+    // 1. Check superadmin (env vars) first
+    if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
+      const token = crypto.randomUUID();
+      const response = NextResponse.json({
+        ok: true,
+        role: "SUPERADMIN",
+        name: "Super Admin",
+        restaurantIds: [], // superadmin sees all
+      });
+      response.cookies.set("admin_token", token, {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+      });
+      response.cookies.set("admin_role", "SUPERADMIN", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+      });
+      response.cookies.set("admin_id", "superadmin", {
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7,
+        sameSite: "lax",
+      });
+      return response;
+    }
+
+    // 2. Check RestaurantOwner
+    const owner = await prisma.restaurantOwner.findUnique({
+      where: { email },
+      include: { restaurants: { select: { id: true, name: true, slug: true } } },
+    });
+
+    if (!owner) {
       return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
     }
-    // Return password as token since adminAuth validates against ADMIN_PASSWORD
-    return NextResponse.json({ ok: true, token: password });
-  } catch {
+
+    const valid = await bcrypt.compare(password, owner.passwordHash);
+    if (!valid) {
+      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+    }
+
+    // Update lastLoginAt
+    await prisma.restaurantOwner.update({
+      where: { id: owner.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    const token = crypto.randomUUID();
+    const response = NextResponse.json({
+      ok: true,
+      role: owner.role,
+      name: owner.name,
+      restaurantIds: owner.restaurants.map(r => r.id),
+      restaurants: owner.restaurants,
+    });
+    response.cookies.set("admin_token", token, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+    });
+    response.cookies.set("admin_role", owner.role, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+    });
+    response.cookies.set("admin_id", owner.id, {
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+      sameSite: "lax",
+    });
+    return response;
+  } catch (error) {
+    console.error("Admin login error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
   }
 }

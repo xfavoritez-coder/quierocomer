@@ -15,15 +15,7 @@ interface DishDetailProps {
   onChangeDish: (dish: Dish) => void;
 }
 
-function getSessionId() {
-  if (typeof window === "undefined") return "";
-  let id = sessionStorage.getItem("qr_session_id");
-  if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem("qr_session_id", id);
-  }
-  return id;
-}
+import { getGuestId, getSessionId } from "@/lib/guestId";
 
 export default function DishDetail({
   dish,
@@ -84,6 +76,7 @@ export default function DishDetail({
         eventType: "DISH_VIEW",
         dishId: dish.id,
         restaurantId,
+        guestId: getGuestId(),
         sessionId: getSessionId(),
       }),
     }).catch(() => {});

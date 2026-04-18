@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, X } from "lucide-react";
+import { getGuestId } from "@/lib/guestId";
 
 interface Props {
   restaurantId: string;
@@ -40,6 +41,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
         restrictions: restrictions ? JSON.parse(restrictions) : [],
         restaurantId,
         source: "post_genio",
+        guestId: getGuestId(),
       }),
     });
 

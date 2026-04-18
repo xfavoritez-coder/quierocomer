@@ -1,34 +1,23 @@
 /**
  * Analytics for carta views using the existing StatEvent system.
- * Uses sessionId from sessionStorage (same as Genio tracking).
+ * Uses guestId (persistent) + sessionId (per-tab) from centralized lib.
  */
-
-function getSessionId() {
-  if (typeof window === "undefined") return "";
-  let id = sessionStorage.getItem("qr_session_id");
-  if (!id) {
-    id = crypto.randomUUID();
-    sessionStorage.setItem("qr_session_id", id);
-  }
-  return id;
-}
+import { getGuestId, getSessionId } from "@/lib/guestId";
 
 function track(restaurantId: string, eventType: string, dishId?: string) {
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, dishId, sessionId: getSessionId() }),
+    body: JSON.stringify({ eventType, restaurantId, dishId, guestId: getGuestId(), sessionId: getSessionId() }),
   }).catch(() => {});
 }
 
 export function trackCartaViewLoaded(restaurantId: string, view: string) {
-  // Reuse QR_SCAN as a view-loaded proxy for now (no schema migration needed)
-  track(restaurantId, "QR_SCAN");
+  track(restaurantId, "SESSION_START");
 }
 
 export function trackCartaViewSelected(restaurantId: string, view: string, previousView: string) {
-  // Track as CATEGORY_VIEW with the view name as context
-  track(restaurantId, "CATEGORY_VIEW");
+  track(restaurantId, "CARTA_VIEW_SELECTED");
 }
 
 export function trackCartaDishOpenedInList(restaurantId: string, dishId: string, isGeniePick: boolean) {
