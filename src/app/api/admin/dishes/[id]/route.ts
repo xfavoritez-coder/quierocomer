@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
-import { supabase } from "@/lib/supabase";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -10,43 +9,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   try {
     const { id } = await params;
     const body = await req.json();
-    const { nombre, categoria, descripcion, precio, imagenUrl, destacado, hungerLevel, isAvailable, availableFrom, availableTo, ingredients, ingredientIds, newIngredients } = body;
 
-    // Create new ingredients if any
-    const allIngredientIds: string[] = [...(ingredientIds ?? [])];
-    if (newIngredients?.length) {
-      for (const ni of newIngredients) {
-        const created = await prisma.ingredient.upsert({
-          where: { name: ni.name.toLowerCase().trim() },
-          update: {},
-          create: { name: ni.name.toLowerCase().trim(), category: ni.category },
-        });
-        allIngredientIds.push(created.id);
-      }
-    }
-
-    // Delete existing tags and recreate
-    await prisma.ingredientTag.deleteMany({ where: { menuItemId: id } });
-
-    const dish = await prisma.menuItem.update({
+    const dish = await prisma.dish.update({
       where: { id },
       data: {
-        ...(nombre !== undefined && { nombre }),
-        ...(categoria !== undefined && { categoria }),
-        ...(descripcion !== undefined && { descripcion: descripcion || null }),
-        ...(precio !== undefined && { precio: Number(precio) }),
-        ...(imagenUrl !== undefined && { imagenUrl: imagenUrl || null }),
-        ...(destacado !== undefined && { destacado: !!destacado }),
-        ...(hungerLevel !== undefined && { hungerLevel: hungerLevel || null }),
-        ...(isAvailable !== undefined && { isAvailable }),
-        ...(availableFrom !== undefined && { availableFrom: availableFrom || null }),
-        ...(availableTo !== undefined && { availableTo: availableTo || null }),
-        ...(ingredients !== undefined && { ingredients }),
-        ingredientTags: allIngredientIds.length
-          ? { create: allIngredientIds.map(iid => ({ ingredientId: iid })) }
-          : undefined,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.description !== undefined && { description: body.description || null }),
+        ...(body.price !== undefined && { price: Number(body.price) }),
+        ...(body.discountPrice !== undefined && { discountPrice: body.discountPrice ? Number(body.discountPrice) : null }),
+        ...(body.photos !== undefined && { photos: body.photos }),
+        ...(body.tags !== undefined && { tags: body.tags }),
+        ...(body.isHero !== undefined && { isHero: body.isHero }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(body.ingredients !== undefined && { ingredients: body.ingredients || null }),
+        ...(body.allergens !== undefined && { allergens: body.allergens || null }),
+        ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
+        ...(body.position !== undefined && { position: body.position }),
       },
-      include: { ingredientTags: { include: { ingredient: true } } },
+      include: { category: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json(dish);
@@ -62,21 +42,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
 
   try {
     const { id } = await params;
-    const dish = await prisma.menuItem.findUnique({ where: { id }, select: { imagenUrl: true } });
-    if (!dish) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-
-    // Delete image from storage if exists
-    if (dish.imagenUrl?.includes("supabase")) {
-      const path = dish.imagenUrl.split("/storage/v1/object/public/fotos/")[1];
-      if (path) {
-        await supabase.storage.from("fotos").remove([path]).catch(() => {});
-      }
-    }
-
-    // Delete tags first, then dish
-    await prisma.ingredientTag.deleteMany({ where: { menuItemId: id } });
-    await prisma.menuItem.delete({ where: { id } });
-
+    // Soft delete — just deactivate
+    await prisma.dish.update({ where: { id }, data: { isActive: false } });
     return NextResponse.json({ ok: true });
   } catch (e) {
     console.error("[Admin dishes DELETE]", e);

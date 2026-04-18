@@ -1,24 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
-import bcrypt from "bcryptjs";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
   try {
-    const locales = await prisma.local.findMany({
+    const restaurants = await prisma.restaurant.findMany({
       orderBy: { createdAt: "desc" },
       select: {
-        id: true, slug: true, nombre: true, email: true, telefono: true,
-        ciudad: true, comuna: true, direccion: true, categorias: true,
-        logoUrl: true, portadaUrl: true, lat: true, lng: true,
-        instagram: true, sitioWeb: true, descripcion: true,
-        activo: true, createdAt: true, vistas: true, linkPedido: true,
-        _count: { select: { menuItems: true } },
+        id: true, slug: true, name: true, description: true,
+        logoUrl: true, bannerUrl: true, phone: true, address: true,
+        cartaTheme: true, isActive: true, ownerId: true,
+        createdAt: true, updatedAt: true,
+        owner: { select: { id: true, name: true, email: true } },
+        _count: { select: { dishes: true, categories: true, statEvents: true, sessions: true } },
       },
     });
-    return NextResponse.json(locales);
+    return NextResponse.json(restaurants);
   } catch (error) {
     console.error("[Admin locales]", error);
     return NextResponse.json([], { status: 500 });
@@ -29,26 +28,23 @@ export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
   try {
-    const { nombre, email, password, comuna, direccion, categorias, descripcion, telefono, instagram, sitioWeb, lat, lng } = await req.json();
-    if (!nombre || !email || !password) return NextResponse.json({ error: "nombre, email y password requeridos" }, { status: 400 });
+    const { name, slug, description, phone, address, logoUrl, bannerUrl, cartaTheme, ownerId } = await req.json();
+    if (!name || !slug) return NextResponse.json({ error: "Nombre y slug requeridos" }, { status: 400 });
 
-    const existing = await prisma.local.findUnique({ where: { email } });
-    if (existing) return NextResponse.json({ error: "Email ya registrado" }, { status: 400 });
+    const existing = await prisma.restaurant.findUnique({ where: { slug } });
+    if (existing) return NextResponse.json({ error: "Slug ya existe" }, { status: 400 });
 
-    const hashed = await bcrypt.hash(password, 10);
-    const local = await prisma.local.create({
+    const restaurant = await prisma.restaurant.create({
       data: {
-        nombre, email, password: hashed, comuna: comuna ?? "", direccion: direccion ?? "",
-        categorias: categorias ?? [], descripcion: descripcion ?? null,
-        telefono: telefono ?? null, instagram: instagram ?? null, sitioWeb: sitioWeb ?? null,
-        lat: lat ?? null, lng: lng ?? null,
+        name, slug, description: description || null,
+        phone: phone || null, address: address || null,
+        logoUrl: logoUrl || null, bannerUrl: bannerUrl || null,
+        cartaTheme: cartaTheme || "PREMIUM",
+        ownerId: ownerId || null,
       },
-      select: {
-        id: true, nombre: true, email: true, comuna: true, createdAt: true,
-        _count: { select: { menuItems: true } },
-      },
+      select: { id: true, name: true, slug: true, createdAt: true },
     });
-    return NextResponse.json(local);
+    return NextResponse.json(restaurant);
   } catch (error) {
     console.error("[Admin locales POST]", error);
     return NextResponse.json({ error: "Error al crear" }, { status: 500 });

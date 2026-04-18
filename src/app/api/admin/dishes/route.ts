@@ -6,15 +6,13 @@ export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
-  const localId = req.nextUrl.searchParams.get("localId");
-  if (!localId) return NextResponse.json({ error: "localId requerido" }, { status: 400 });
+  const restaurantId = req.nextUrl.searchParams.get("restaurantId");
+  if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
-  const dishes = await prisma.menuItem.findMany({
-    where: { localId },
-    include: {
-      ingredientTags: { include: { ingredient: true } },
-    },
-    orderBy: { createdAt: "desc" },
+  const dishes = await prisma.dish.findMany({
+    where: { restaurantId },
+    include: { category: { select: { id: true, name: true } } },
+    orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
   return NextResponse.json(dishes);
 }
@@ -25,44 +23,35 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { localId, nombre, categoria, descripcion, precio, imagenUrl, destacado, hungerLevel, isAvailable, availableFrom, availableTo, ingredients, ingredientIds, newIngredients } = body;
+    const { restaurantId, categoryId, name, description, price, discountPrice, photos, tags, isHero, ingredients, allergens } = body;
 
-    if (!localId || !nombre || !categoria || precio == null) {
-      return NextResponse.json({ error: "localId, nombre, categoria y precio son requeridos" }, { status: 400 });
+    if (!restaurantId || !categoryId || !name || price == null) {
+      return NextResponse.json({ error: "restaurantId, categoryId, name y price requeridos" }, { status: 400 });
     }
 
-    // Create new ingredients if any
-    const allIngredientIds: string[] = [...(ingredientIds ?? [])];
-    if (newIngredients?.length) {
-      for (const ni of newIngredients) {
-        const created = await prisma.ingredient.upsert({
-          where: { name: ni.name.toLowerCase().trim() },
-          update: {},
-          create: { name: ni.name.toLowerCase().trim(), category: ni.category },
-        });
-        allIngredientIds.push(created.id);
-      }
-    }
+    // Get max position in category
+    const maxPos = await prisma.dish.findFirst({
+      where: { categoryId },
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
 
-    const dish = await prisma.menuItem.create({
+    const dish = await prisma.dish.create({
       data: {
-        localId,
-        nombre,
-        categoria,
-        descripcion: descripcion || null,
-        precio: Number(precio),
-        imagenUrl: imagenUrl || null,
-        destacado: !!destacado,
-        hungerLevel: hungerLevel || null,
-        isAvailable: isAvailable ?? true,
-        availableFrom: availableFrom || null,
-        availableTo: availableTo || null,
-        ingredients: ingredients ?? [],
-        ingredientTags: allIngredientIds.length
-          ? { create: allIngredientIds.map(id => ({ ingredientId: id })) }
-          : undefined,
+        restaurantId,
+        categoryId,
+        name,
+        description: description || null,
+        price: Number(price),
+        discountPrice: discountPrice ? Number(discountPrice) : null,
+        photos: photos || [],
+        tags: tags || [],
+        isHero: !!isHero,
+        ingredients: ingredients || null,
+        allergens: allergens || null,
+        position: (maxPos?.position ?? -1) + 1,
       },
-      include: { ingredientTags: { include: { ingredient: true } } },
+      include: { category: { select: { id: true, name: true } } },
     });
 
     return NextResponse.json(dish);

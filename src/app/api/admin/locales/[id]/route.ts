@@ -7,13 +7,16 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (authErr) return authErr;
   const { id } = await params;
 
-  const local = await prisma.local.findUnique({
+  const restaurant = await prisma.restaurant.findUnique({
     where: { id },
-    include: { menuItems: { select: { id: true, nombre: true, categoria: true, precio: true, isAvailable: true } } },
+    include: {
+      owner: { select: { id: true, name: true, email: true } },
+      categories: { orderBy: { position: "asc" }, select: { id: true, name: true, position: true, isActive: true } },
+      _count: { select: { dishes: true, statEvents: true, sessions: true, waiterCalls: true } },
+    },
   });
-  if (!local) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
-  const { password: _, ...safe } = local as Record<string, unknown>;
-  return NextResponse.json(safe);
+  if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+  return NextResponse.json(restaurant);
 }
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -23,29 +26,24 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const body = await req.json();
-    const local = await prisma.local.update({
+    const restaurant = await prisma.restaurant.update({
       where: { id },
       data: {
-        ...(body.nombre !== undefined && { nombre: body.nombre }),
-        ...(body.descripcion !== undefined && { descripcion: body.descripcion }),
-        ...(body.direccion !== undefined && { direccion: body.direccion }),
-        ...(body.comuna !== undefined && { comuna: body.comuna }),
-        ...(body.telefono !== undefined && { telefono: body.telefono }),
-        ...(body.instagram !== undefined && { instagram: body.instagram }),
-        ...(body.sitioWeb !== undefined && { sitioWeb: body.sitioWeb }),
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.slug !== undefined && { slug: body.slug }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.phone !== undefined && { phone: body.phone }),
+        ...(body.address !== undefined && { address: body.address }),
         ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
-        ...(body.portadaUrl !== undefined && { portadaUrl: body.portadaUrl }),
-        ...(body.categorias !== undefined && { categorias: body.categorias }),
-        ...(body.activo !== undefined && { activo: body.activo }),
-        ...(body.lat !== undefined && { lat: body.lat }),
-        ...(body.lng !== undefined && { lng: body.lng }),
-        ...(body.linkPedido !== undefined && { linkPedido: body.linkPedido }),
+        ...(body.bannerUrl !== undefined && { bannerUrl: body.bannerUrl }),
+        ...(body.cartaTheme !== undefined && { cartaTheme: body.cartaTheme }),
+        ...(body.isActive !== undefined && { isActive: body.isActive }),
+        ...(body.ownerId !== undefined && { ownerId: body.ownerId || null }),
       },
     });
-    const { password: _, ...safe } = local as Record<string, unknown>;
-    return NextResponse.json(safe);
+    return NextResponse.json(restaurant);
   } catch (e) {
-    console.error("[Admin local PUT]", e);
+    console.error("[Admin restaurant PUT]", e);
     return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
   }
 }
@@ -56,10 +54,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
 
   try {
-    await prisma.local.delete({ where: { id } });
+    await prisma.restaurant.update({ where: { id }, data: { isActive: false } });
     return NextResponse.json({ ok: true });
   } catch (e) {
-    console.error("[Admin local DELETE]", e);
-    return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });
+    console.error("[Admin restaurant DELETE]", e);
+    return NextResponse.json({ error: "Error al desactivar" }, { status: 500 });
   }
 }
