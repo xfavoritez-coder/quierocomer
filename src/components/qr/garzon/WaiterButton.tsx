@@ -7,11 +7,12 @@ interface WaiterButtonProps {
   restaurantId: string;
   tableId?: string;
   tableName?: string;
+  size?: number;
 }
 
 type ButtonState = "loading" | "disabled" | "idle" | "calling" | "success";
 
-export default function WaiterButton({ restaurantId, tableId, tableName }: WaiterButtonProps) {
+export default function WaiterButton({ restaurantId, tableId, tableName, size = 52 }: WaiterButtonProps) {
   const [state, setState] = useState<ButtonState>("loading");
   const [toast, setToast] = useState<string | null>(null);
 
@@ -75,20 +76,26 @@ export default function WaiterButton({ restaurantId, tableId, tableName }: Waite
     <>
       <button
         onClick={handleCall}
-        className="flex items-center justify-center rounded-full transition-transform"
+        className="flex items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
-          width: 52,
-          height: 52,
-          background: state === "success" ? "#16a34a" : "#333",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
-          opacity: state === "success" ? 1 : 0.85,
+          width: size,
+          height: size,
+          background: state === "success" ? "#16a34a" : "rgba(0,0,0,0.4)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: state === "success" ? "none" : "1px solid rgba(255,255,255,0.08)",
+          boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.2)",
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
         }}
       >
         {state === "success" ? (
-          <Check size={20} color="white" />
+          <Check size={size * 0.38} color="white" />
         ) : (
-          <Bell size={20} color="white" fill="white" />
+          <Bell
+            size={size * 0.38}
+            color={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            fill={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
+          />
         )}
       </button>
 

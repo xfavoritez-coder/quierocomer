@@ -128,8 +128,8 @@ export default function DishDetail({
     const dy = touchRef.current.y - e.changedTouches[0].clientY;
     touchRef.current = null;
 
-    // Swipe down to close
-    if (dy < -80 && Math.abs(dx) < 50) {
+    // Swipe up or down to close
+    if (Math.abs(dy) > 50 && Math.abs(dx) < 50) {
       close();
       return;
     }

@@ -5,7 +5,7 @@ import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
-import { Sparkles, Bell, User } from "lucide-react";
+import { Sparkles, User } from "lucide-react";
 import DishDetail from "./DishDetail";
 import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
@@ -134,26 +134,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           >
             <Sparkles size={20} color="#F4A623" fill="#F4A623" />
           </button>
-          <button
-            onClick={async () => {
-              try {
-                const res = await fetch("/api/qr/waiter/call", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ restaurantId: restaurant.id, tableId: tableId || "general", tableName: tableId ? `Mesa ${tableId}` : "Cliente" }),
-                });
-                if (res.ok) alert("¡Garzón en camino!");
-              } catch { /* ignore */ }
-            }}
-            className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-            style={{
-              width: 48, height: 48,
-              background: "rgba(0,0,0,0.4)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(255,255,255,0.08)", boxShadow: "none",
-            }}
-          >
-            <Bell size={20} color="rgba(255,255,255,0.75)" fill="rgba(255,255,255,0.75)" />
-          </button>
+          <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : "Cliente"} size={48} />
           <ViewSelector restaurantId={restaurant.id} />
         </div>
 
