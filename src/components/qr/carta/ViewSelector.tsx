@@ -8,8 +8,8 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List; disabled?: boolean }[] = [
   { value: "lista", label: "Lista", Icon: List },
-  { value: "premium", label: "Premium", Icon: Sparkles },
-  { value: "viaje", label: "Viaje", Icon: Compass },
+  { value: "premium", label: "Estándar", Icon: Sparkles },
+  { value: "viaje", label: "Espacial", Icon: Compass },
 ];
 
 interface Props {
@@ -76,8 +76,8 @@ export default function ViewSelector({ restaurantId, variant = "light" }: Props)
                 gap: 4,
                 padding: "5px 10px",
                 borderRadius: 50,
-                fontSize: "0.68rem",
-                fontWeight: 500,
+                fontSize: "0.78rem",
+                fontWeight: 600,
                 letterSpacing: "0.02em",
                 border: "none",
                 cursor: disabled ? "not-allowed" : "pointer",
@@ -88,7 +88,7 @@ export default function ViewSelector({ restaurantId, variant = "light" }: Props)
                   : "transparent",
                 color: isActive
                   ? isDark ? "#0e0e0e" : "white"
-                  : isDark ? "rgba(255,255,255,0.6)" : "rgba(14,14,14,0.5)",
+                  : isDark ? "rgba(255,255,255,0.85)" : "rgba(14,14,14,0.7)",
                 boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
                 fontFamily: "inherit",
               }}

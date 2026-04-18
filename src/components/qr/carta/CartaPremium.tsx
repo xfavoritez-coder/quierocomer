@@ -203,13 +203,28 @@ export default function CartaPremium({
               }}
               aria-label="Buscar"
             >
-              <Search size={16} color="#666" />
+              <Search size={19} color="#666" />
             </button>
           }
         />
       )}
 
       <main style={{ paddingBottom: 80 }}>
+        {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (d.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.description?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.ingredients?.toLowerCase().includes(searchQuery.toLowerCase().trim())))) && (
+          <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
+            <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
+            <p style={{ color: "rgba(14,14,14,0.45)", fontSize: "0.95rem" }}>
+              No encontramos platos con &ldquo;{searchQuery}&rdquo;
+            </p>
+            <button
+              onClick={() => { setSearchQuery(""); }}
+              className="font-[family-name:var(--font-dm)]"
+              style={{ marginTop: 12, fontSize: "0.88rem", color: "#F4A623", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Limpiar búsqueda
+            </button>
+          </div>
+        )}
         {categories.map((cat, index) => {
           const catDishes = dishes
             .filter((d) => d.categoryId === cat.id)

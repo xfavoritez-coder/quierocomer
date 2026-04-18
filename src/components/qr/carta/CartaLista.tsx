@@ -2,9 +2,10 @@
 
 import { useState, useMemo } from "react";
 import Image from "next/image";
-import { Search, X, Sparkles } from "lucide-react";
+import { Search, X, Sparkles, User } from "lucide-react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
+import { useEffect } from "react";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import DishDetail from "./DishDetail";
@@ -93,85 +94,72 @@ export default function CartaLista({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5", paddingBottom: 100 }}>
-      {/* HEADER STICKY */}
-      <header
+      {/* TOP BAR: logo + name | vistas | perfil */}
+      <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f7f7f5" }}>
+        <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
+          {restaurant.logoUrl ? (
+            <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0 }} />
+          ) : (
+            <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "#F4A623", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e", flexShrink: 0 }}>
+              {restaurant.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 400, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {restaurant.name}
+          </span>
+        </div>
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <ViewSelector restaurantId={restaurant.id} variant="light" />
+          <div className="flex items-center justify-center" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
+            <User size={15} color="#999" />
+          </div>
+        </div>
+      </div>
+
+      {/* STICKY NAV: buscador + filtros */}
+      <nav
         className="sticky top-0 z-20"
         style={{
           background: "rgba(247,247,245,0.95)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           borderBottom: "1px solid rgba(0,0,0,0.06)",
+          padding: "8px 16px",
         }}
       >
-        {/* Row 1: name + selector */}
-        <div style={{ padding: "12px 16px 8px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <h1
-              className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
-            >
-              {restaurant.name}
-            </h1>
-            <p style={{ fontSize: "0.7rem", color: "rgba(14,14,14,0.45)", marginTop: 2 }}>
-              {restaurant.address ? `${restaurant.address} · ` : ""}{dishes.length} platos
-            </p>
-          </div>
-          <ViewSelector restaurantId={restaurant.id} variant="light" />
+        {/* Search */}
+        <div style={{ position: "relative", marginBottom: hasGeniePicks ? 8 : 0 }}>
+          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(14,14,14,0.35)" }} />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar en la carta..."
+            inputMode="search"
+            style={{
+              width: "100%", paddingLeft: 36, paddingRight: 36, paddingTop: 9, paddingBottom: 9,
+              fontSize: "0.88rem", background: "white", borderRadius: 50,
+              border: "1px solid rgba(0,0,0,0.08)", outline: "none", fontFamily: "inherit", color: "#0e0e0e",
+            }}
+          />
+          {query && (
+            <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 4, cursor: "pointer" }} aria-label="Limpiar búsqueda">
+              <X size={15} color="rgba(14,14,14,0.4)" />
+            </button>
+          )}
         </div>
 
-        {/* Row 2: search */}
-        <div style={{ padding: "0 16px 8px" }}>
-          <div style={{ position: "relative" }}>
-            <Search
-              size={15}
-              style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(14,14,14,0.35)" }}
-            />
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar en la carta..."
-              inputMode="search"
-              style={{
-                width: "100%",
-                paddingLeft: 36,
-                paddingRight: 36,
-                paddingTop: 10,
-                paddingBottom: 10,
-                fontSize: "0.88rem",
-                background: "white",
-                borderRadius: 50,
-                border: "1px solid rgba(0,0,0,0.08)",
-                outline: "none",
-                fontFamily: "inherit",
-                color: "#0e0e0e",
-              }}
-            />
-            {query && (
-              <button
-                onClick={() => setQuery("")}
-                style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 4, cursor: "pointer" }}
-                aria-label="Limpiar búsqueda"
-              >
-                <X size={15} color="rgba(14,14,14,0.4)" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Row 3: filters */}
+        {/* Filters */}
         {hasGeniePicks && (
-          <div style={{ padding: "0 16px 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>
-              Todos
-            </FilterChip>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
+            <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Todos</FilterChip>
             <FilterChip active={filter === "genie"} onClick={() => setFilter("genie")}>
               <Sparkles size={11} strokeWidth={2} color={filter === "genie" ? "white" : "#F4A623"} fill={filter === "genie" ? "white" : "#F4A623"} />
               El Genio recomienda
             </FilterChip>
           </div>
         )}
-      </header>
+      </nav>
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (

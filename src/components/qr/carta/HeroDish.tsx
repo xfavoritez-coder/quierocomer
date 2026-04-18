@@ -180,15 +180,15 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           {dish ? (
             <>
               {/* Logo + restaurant name above dish name */}
-              <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
+              <div className="flex items-center gap-2.5" style={{ marginBottom: 16 }}>
                 {logoSrc ? (
-                  <Image src={logoSrc} alt={restaurant.name} width={28} height={28} className="rounded-full" style={{ border: "none" }} />
+                  <Image src={logoSrc} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ border: "none" }} />
                 ) : (
-                  <div className="flex items-center justify-center rounded-full" style={{ width: 28, height: 28, background: "#F4A623", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e" }}>
+                  <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "#F4A623", fontSize: "0.9rem", fontWeight: 700, color: "#0e0e0e" }}>
                     {initial}
                   </div>
                 )}
-                <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.85 }}>
+                <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.4rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
                   {restaurant.name}
                 </span>
               </div>
