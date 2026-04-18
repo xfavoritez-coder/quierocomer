@@ -308,6 +308,22 @@ export default function CartaLista({
         </section>
       ))}
 
+      {/* Genio nudge */}
+      <div
+        onClick={() => setGenioOpen(true)}
+        className="font-[family-name:var(--font-dm)]"
+        style={{
+          margin: "24px 20px 0", padding: "18px", textAlign: "center", cursor: "pointer",
+          background: "linear-gradient(180deg, rgba(244,166,35,0.03) 0%, transparent 100%)",
+          borderTop: "1px solid rgba(0,0,0,0.04)", borderRadius: "14px 14px 0 0",
+        }}
+      >
+        <span style={{ fontSize: "1.3rem", opacity: 0.5 }}>🧞</span>
+        <p style={{ fontSize: "0.8rem", color: "#aaa", margin: "5px 0 0", lineHeight: 1.4 }}>
+          ¿No sabes qué pedir? <span style={{ color: "#F4A623", fontWeight: 600 }}>Pregúntale al Genio</span>
+        </p>
+      </div>
+
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button

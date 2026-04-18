@@ -348,6 +348,22 @@ export default function CartaPremium({
         })}
       </main>
 
+      {/* Genio nudge */}
+      <div
+        onClick={() => setGenioOpen(true)}
+        className="font-[family-name:var(--font-dm)]"
+        style={{
+          margin: "32px 20px 0", padding: "20px", textAlign: "center", cursor: "pointer",
+          background: "linear-gradient(180deg, rgba(244,166,35,0.04) 0%, transparent 100%)",
+          borderTop: "1px solid rgba(244,166,35,0.08)", borderRadius: "16px 16px 0 0",
+        }}
+      >
+        <span style={{ fontSize: "1.4rem", opacity: 0.6 }}>🧞</span>
+        <p style={{ fontSize: "0.82rem", color: "#b0a090", margin: "6px 0 0", lineHeight: 1.4 }}>
+          ¿No sabes qué pedir? <span style={{ color: "#F4A623", fontWeight: 600 }}>Pregúntale al Genio</span>
+        </p>
+      </div>
+
       {/* Powered by footer */}
       <footer
         className="font-[family-name:var(--font-dm)]"
