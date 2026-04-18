@@ -120,47 +120,19 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           }}
         />
 
-        {/* Top left: logo + name */}
-        <div
-          className="absolute z-10 flex items-center gap-1.5"
-          style={{ top: 16, left: 16 }}
-        >
-          {logoSrc ? (
-            <Image
-              src={logoSrc}
-              alt={restaurant.name}
-              width={32}
-              height={32}
-              className="rounded-full"
-              style={{ border: "none" }}
-            />
-          ) : (
-            <div
-              className="flex items-center justify-center rounded-full font-[family-name:var(--font-dm)] font-bold text-white"
-              style={{ width: 32, height: 32, background: "#F4A623", fontSize: "0.8rem", color: "#0e0e0e" }}
-            >
-              {initial}
-            </div>
-          )}
-          <span
-            className="text-white font-[family-name:var(--font-dm)]"
-            style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              textShadow: "0 1px 4px rgba(0,0,0,0.4)",
-            }}
-          >
-            {restaurant.name}
-          </span>
-        </div>
+        {/* Top center: view selector */}
+        {viewSelectorSlot && (
+          <div className="absolute z-10 flex justify-center" style={{ top: 16, left: 0, right: 0 }}>
+            {viewSelectorSlot}
+          </div>
+        )}
 
-        {/* Top right: view selector + profile icon */}
-        <div className="absolute z-10 flex items-center" style={{ top: 16, right: 16, gap: 8 }}>
-          {viewSelectorSlot}
+        {/* Top right: profile icon */}
         <button
           onClick={onProfileOpen}
-          className="flex items-center justify-center"
+          className="absolute z-10 flex items-center justify-center"
           style={{
+            top: 16, right: 16,
             width: 36, height: 36, borderRadius: "50%",
             background: qrUser ? "#F4A623" : "rgba(0,0,0,0.4)",
             backdropFilter: qrUser ? "none" : "blur(4px)",
@@ -176,7 +148,6 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
             <User size={16} color="rgba(255,255,255,0.7)" />
           )}
         </button>
-        </div>
 
         {/* Badges */}
         {dish && (
@@ -208,7 +179,21 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         >
           {dish ? (
             <>
-              {/* Name centered */}
+              {/* Logo + restaurant name above dish name */}
+              <div className="flex items-center gap-2" style={{ marginBottom: 14 }}>
+                {logoSrc ? (
+                  <Image src={logoSrc} alt={restaurant.name} width={28} height={28} className="rounded-full" style={{ border: "none" }} />
+                ) : (
+                  <div className="flex items-center justify-center rounded-full" style={{ width: 28, height: 28, background: "#F4A623", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e" }}>
+                    {initial}
+                  </div>
+                )}
+                <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.85 }}>
+                  {restaurant.name}
+                </span>
+              </div>
+
+              {/* Dish name centered */}
               <h1
                 className="font-[family-name:var(--font-playfair)] text-white text-center"
                 style={{
