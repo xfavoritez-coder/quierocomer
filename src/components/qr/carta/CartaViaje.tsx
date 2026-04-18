@@ -6,9 +6,9 @@ import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/cl
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import DishDetail from "./DishDetail";
 import ViewSelector from "./ViewSelector";
+import { useCartaView } from "./hooks/useCartaView";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
-
 interface Props {
   restaurant: Restaurant;
   categories: Category[];
@@ -19,86 +19,120 @@ interface Props {
   tableId?: string;
 }
 
-type SlideVariant = "hero" | "light" | "split" | "spotlight";
+type SlideVariant = "hero" | "split" | "light" | "spotlight";
+type Palette = "ocean" | "earth" | "fire" | "cream";
 
-function getVariant(dish: Dish, indexInCategory: number): SlideVariant {
+const CHAPTER_WORDS = ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"];
+
+function getVariant(dish: Dish, idx: number): SlideVariant {
   if (isGeniePick(dish)) return "spotlight";
-  const cycle: SlideVariant[] = ["hero", "light", "split"];
-  return cycle[indexInCategory % 3];
+  const rotation: SlideVariant[] = ["hero", "split", "light"];
+  return rotation[idx % 3];
 }
 
-function getCategoryTheme(name: string) {
+function getPalette(name: string): Palette {
   const n = name.toLowerCase();
-  if (n.includes("mar") || n.includes("pescado") || n.includes("mariscos") || n.includes("ceviche") || n.includes("chirashi"))
-    return { bg: "#060a12", accent: "#7fa8c5", particles: "steam", navMode: "dark" as const };
-  if (n.includes("parrilla") || n.includes("fuego") || n.includes("carne") || n.includes("brasa") || n.includes("hot"))
-    return { bg: "#0f0604", accent: "#e8703a", particles: "ember", navMode: "dark" as const };
-  if (n.includes("postre") || n.includes("dulce") || n.includes("helado"))
-    return { bg: "#f8e4cc", accent: "#c9583a", particles: "none", navMode: "light" as const };
-  if (n.includes("roll") || n.includes("sushi") || n.includes("nikkei") || n.includes("california"))
-    return { bg: "#0a0e14", accent: "#90c0d8", particles: "steam", navMode: "dark" as const };
-  return { bg: "#1a1210", accent: "#d4a574", particles: "gold-dust", navMode: "dark" as const };
+  if (/mar|pescad|mariscos|ostra|ceviche|sushi|roll|chirashi/.test(n)) return "ocean";
+  if (/carne|parrilla|brasa|fuego|asado|hot/.test(n)) return "fire";
+  if (/postre|dulce|helado|torta|café|mocktail/.test(n)) return "cream";
+  return "earth";
 }
 
-// Deterministic gradient from dish ID
+function getPoeticName(name: string): { prefix: string; accent: string } {
+  const n = name.toLowerCase();
+  if (/entrada/.test(n)) return { prefix: "Para", accent: "empezar" };
+  if (/mar|pescad|mariscos|ceviche/.test(n)) return { prefix: "Del", accent: "mar" };
+  if (/carne|parrilla|brasa|fuego/.test(n)) return { prefix: "Del", accent: "fuego" };
+  if (/pasta/.test(n)) return { prefix: "De la", accent: "masa" };
+  if (/postre|dulce/.test(n)) return { prefix: "Del", accent: "final dulce" };
+  if (/sushi|roll/.test(n)) return { prefix: "Del", accent: "mar" };
+  return { prefix: "", accent: name };
+}
+
 function placeholderGradient(id: string) {
-  const hash = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  const hue = (hash * 37) % 40 + 20; // warm tones 20-60
-  return `radial-gradient(ellipse at ${30 + (hash % 40)}% ${25 + (hash % 30)}%, hsl(${hue}, 50%, 55%) 0%, transparent 50%), radial-gradient(ellipse at ${50 + (hash % 20)}% ${50 + (hash % 20)}%, hsl(${hue + 15}, 40%, 35%) 0%, hsl(${hue}, 30%, 15%) 100%)`;
+  const h = id.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const hue = (h * 37) % 40 + 20;
+  return `radial-gradient(ellipse at ${30 + (h % 40)}% ${25 + (h % 30)}%, hsl(${hue},50%,55%) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, hsl(${hue},30%,25%) 0%, hsl(${hue},30%,10%) 100%)`;
+}
+
+function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; style?: React.CSSProperties }) {
+  const photo = getDishPhoto(dish);
+  if (photo) return <Image src={photo} alt={dish.name} fill className={`object-cover ${className || ""}`} sizes="100vw" style={style} />;
+  return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId }: Props) {
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const [activeCategory, setActiveCategory] = useState(-1);
-  const [navLight, setNavLight] = useState(false);
-  const journeyRef = useRef<HTMLDivElement>(null);
+  const [activeRail, setActiveRail] = useState(-1);
+  const [railLight, setRailLight] = useState(false);
+  const { setView } = useCartaView();
 
-  // Build sorted dishes for DishDetail navigation
   const sortedDishes = useMemo(() => {
-    const result: Dish[] = [];
-    for (const g of grouped) result.push(...g.dishes);
-    return result;
+    const r: Dish[] = [];
+    for (const g of grouped) r.push(...g.dishes);
+    return r;
   }, [grouped]);
+
+  const totalDishes = grouped.reduce((a, g) => a + g.dishes.length, 0);
 
   return (
     <>
-      <style>{VIAJE_CSS}</style>
-      <div className="viaje-root">
+      <style>{CSS}</style>
+      <div className="vj-root">
         {/* Nav */}
-        <nav className={`viaje-nav ${navLight ? "light" : ""}`}>
-          <span className="viaje-brand font-[family-name:var(--font-fraunces)]">
-            {restaurant.name}
+        <nav className="vj-nav" id="vj-nav">
+          <span className="vj-brand font-[family-name:var(--font-fraunces)]">
+            Quiero<em>Comer</em> · Viaje
           </span>
-          <ViewSelector restaurantId={restaurant.id} variant={navLight ? "light" : "dark"} />
+          <ViewSelector restaurantId={restaurant.id} variant="dark" />
         </nav>
 
-        {/* Vertical rail */}
-        <CategoryRail total={grouped.length} active={activeCategory} light={navLight} />
-
-        {/* Journey */}
-        <div className="viaje-journey" ref={journeyRef}>
-          {/* Intro */}
-          <IntroSlide restaurant={restaurant} groups={grouped} onActive={() => { setActiveCategory(-1); setNavLight(false); }} />
-
-          {/* Categories */}
-          {grouped.map((group, idx) => (
-            <CategorySection
-              key={group.category.id}
-              group={group}
-              index={idx}
-              total={grouped.length}
-              restaurantId={restaurant.id}
-              onActive={() => {
-                setActiveCategory(idx);
-                setNavLight(getCategoryTheme(group.category.name).navMode === "light");
-              }}
-              onDishTap={setSelectedDish}
-            />
+        {/* Rail */}
+        <div className={`vj-rail ${railLight ? "light" : ""}`} id="vj-rail">
+          {grouped.map((_, i) => (
+            <div key={i} className={`vj-rail-dot ${i === activeRail ? "active" : ""}`} />
           ))}
+        </div>
 
-          {/* Outro */}
-          <OutroSlide onActive={() => { setActiveCategory(-1); setNavLight(false); }} />
+        {/* Reel */}
+        <div className="vj-reel" id="vj-reel">
+
+          {/* ===== COVER ===== */}
+          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} dishCount={totalDishes} />
+
+          {/* ===== CHAPTERS + TRACKS ===== */}
+          {grouped.map((group, idx) => {
+            const palette = getPalette(group.category.name);
+            const poetic = getPoeticName(group.category.name);
+            const hasGenie = group.dishes.some(isGeniePick);
+            return (
+              <div key={group.category.id}>
+                {/* Chapter opening */}
+                <ChapterOpening
+                  index={idx}
+                  palette={palette}
+                  poetic={poetic}
+                  dishCount={group.dishes.length}
+                  hasGenie={hasGenie}
+                  categoryName={group.category.name}
+                  onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
+                />
+                {/* Track */}
+                <CategoryTrack
+                  group={group}
+                  index={idx}
+                  palette={palette}
+                  poetic={poetic}
+                  onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
+                  onDishTap={setSelectedDish}
+                />
+              </div>
+            );
+          })}
+
+          {/* ===== OUTRO ===== */}
+          <OutroSlide onSwitchView={() => setView("lista")} />
         </div>
 
         {/* DishDetail */}
@@ -119,83 +153,103 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   );
 }
 
-/* ============ SUBCOMPONENTS ============ */
-
-function CategoryRail({ total, active, light }: { total: number; active: number; light: boolean }) {
-  return (
-    <div className={`viaje-rail ${light ? "light" : ""}`}>
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} className={`viaje-rail-dot ${i === active ? "active" : ""}`} />
-      ))}
-    </div>
-  );
-}
-
-function IntroSlide({ restaurant, groups, onActive }: { restaurant: Restaurant; groups: ReturnType<typeof groupDishesByCategory>; onActive: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useInViewTrigger(ref, onActive);
+/* =============== COVER =============== */
+function CoverSlide({ restaurant, chapterCount, dishCount }: { restaurant: Restaurant; chapterCount: number; dishCount: number }) {
+  const words = restaurant.name.split(" ");
+  const w1 = words[0] || "";
+  const w2 = words.slice(1).join(" ") || "";
 
   return (
-    <section className="viaje-section">
-      <div className="viaje-track">
-        <div className="viaje-slide viaje-intro" ref={ref}>
-          <div className="viaje-intro-bg" />
-          <div className="viaje-intro-inner">
-            <div className="viaje-eyebrow viaje-anim viaje-up">{restaurant.address || "Carta QR Viva"}</div>
-            <h1 className="viaje-intro-title font-[family-name:var(--font-fraunces)]">
-              <span className="viaje-line-mask"><span className="viaje-anim viaje-reveal-line viaje-d1">{restaurant.name}</span></span>
-            </h1>
-            <p className="viaje-anim viaje-up viaje-d3" style={{ fontSize: 15, opacity: 0.65, maxWidth: 280, margin: "0 auto 28px", lineHeight: 1.55, fontWeight: 300 }}>
-              {groups.length} capítulos. {groups.reduce((a, g) => a + g.dishes.length, 0)} platos. Una historia.
-            </p>
-            <div className="viaje-intro-chapters viaje-anim viaje-up viaje-d4">
-              {groups.map((g, i) => (
-                <span key={g.category.id}>
-                  <small>{String(i + 1).padStart(2, "0")}</small> {g.category.name}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="viaje-intro-cue">Desliza ↓</div>
+    <section className="vj-cover" data-section="cover">
+      <div className="vj-cover-bg" />
+      <div className="vj-cover-grain" />
+      <div className="vj-cover-bgtype top font-[family-name:var(--font-fraunces)]">{w1}</div>
+      {w2 && <div className="vj-cover-bgtype bottom font-[family-name:var(--font-fraunces)]">{w2}</div>}
+      <div className="vj-cover-content">
+        <div className="vj-cover-kicker">La Carta · {restaurant.address || "QuieroComer"}</div>
+        <h1 className="vj-cover-title font-[family-name:var(--font-fraunces)]">
+          <span className="vj-line"><span>{w1}</span></span>
+          {w2 && <span className="vj-line"><span><em>{w2}</em></span></span>}
+        </h1>
+        <p className="vj-cover-sub font-[family-name:var(--font-fraunces)]">
+          Un recorrido por {chapterCount} capítulos. Deslizá para comenzar.
+        </p>
+        <div className="vj-cover-meta">
+          <div>Capítulos<strong className="font-[family-name:var(--font-fraunces)]">{String(chapterCount).padStart(2, "0")}</strong></div>
+          <div>Platos<strong className="font-[family-name:var(--font-fraunces)]">{dishCount}</strong></div>
+          <div>Tiempo<strong className="font-[family-name:var(--font-fraunces)]">3&apos;</strong></div>
         </div>
       </div>
+      <div className="vj-cover-cue">Comenzar</div>
     </section>
   );
 }
 
-function CategorySection({
-  group, index, total, restaurantId, onActive, onDishTap,
+/* =============== CHAPTER OPENING =============== */
+function ChapterOpening({
+  index, palette, poetic, dishCount, hasGenie, categoryName, onActive,
+}: {
+  index: number; palette: Palette; poetic: { prefix: string; accent: string };
+  dishCount: number; hasGenie: boolean; categoryName: string; onActive: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useInView(ref, (inView) => {
+    if (inView) {
+      ref.current?.classList.add("in-view");
+      onActive();
+    }
+  });
+
+  return (
+    <section className="vj-chapter" data-palette={palette} data-section="chapter" data-rail={index} ref={ref}>
+      <div className="vj-chapter-bg" />
+      <div className="vj-chapter-content">
+        <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]">
+          Capítulo {CHAPTER_WORDS[index] || index + 1}
+        </div>
+        <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]">
+          {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
+        </h2>
+        <p className="vj-chapter-desc font-[family-name:var(--font-fraunces)]">
+          {categoryName}
+        </p>
+        <div className="vj-chapter-count">
+          {dishCount} {dishCount === 1 ? "plato" : "platos"}{hasGenie ? " · ✦ Genio" : ""}
+        </div>
+      </div>
+      <div className="vj-chapter-hint">Desliza →</div>
+    </section>
+  );
+}
+
+/* =============== CATEGORY TRACK =============== */
+function CategoryTrack({
+  group, index, palette, poetic, onActive, onDishTap,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
-  index: number;
-  total: number;
-  restaurantId: string;
-  onActive: () => void;
-  onDishTap: (dish: Dish) => void;
+  index: number; palette: Palette;
+  poetic: { prefix: string; accent: string };
+  onActive: () => void; onDishTap: (d: Dish) => void;
 }) {
-  const theme = getCategoryTheme(group.category.name);
-  const sectionRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeDish, setActiveDish] = useState(0);
-  const [hintHidden, setHintHidden] = useState(false);
+  const isLight = palette === "cream";
+  const chapterNum = String(index + 1).padStart(2, "0");
 
-  useInViewTrigger(sectionRef, onActive);
+  useInView(wrapRef, (inView) => { if (inView) onActive(); });
 
-  // Observe horizontal slides
+  // Horizontal observer
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
-    const slides = track.querySelectorAll(".viaje-slide");
+    const slides = track.querySelectorAll(".vj-dish");
     const obs = new IntersectionObserver((entries) => {
       entries.forEach((e) => {
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
-          const el = e.target as HTMLElement;
-          // Animate in
-          slides.forEach((s) => { if (s !== el) s.classList.remove("in-view"); });
-          el.classList.add("in-view");
-          const idx = parseInt(el.dataset.dishIdx || "0");
-          setActiveDish(idx);
-          if (idx > 0) setHintHidden(true);
+          slides.forEach((s) => { if (s !== e.target) s.classList.remove("in-view"); });
+          e.target.classList.add("in-view");
+          setActiveDish(parseInt((e.target as HTMLElement).dataset.dishIdx || "0"));
         }
       });
     }, { root: track, threshold: [0.6] });
@@ -204,356 +258,311 @@ function CategorySection({
     return () => obs.disconnect();
   }, []);
 
-  const isLight = theme.navMode === "light";
-  const chapterNum = String(index + 1).padStart(2, "0");
-
   return (
-    <section
-      className="viaje-section"
-      ref={sectionRef}
-      style={{ background: theme.bg }}
-    >
-      {/* Category header */}
-      <div className={`viaje-cat-header ${isLight ? "light" : ""}`}>
-        <div className="viaje-cat-label">
-          Capítulo {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]">{group.category.name}</strong>
+    <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef}>
+      <div className={`vj-category-header ${isLight ? "light" : ""}`}>
+        <div className="vj-category-label">
+          {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#c93010" : "#F4A623" }}>{poetic.prefix} {poetic.accent}</strong>
         </div>
-        <div className="viaje-cat-progress">
+        <div className="vj-bullets">
           {group.dishes.map((_, i) => (
-            <div key={i} className={`viaje-bullet ${i === activeDish ? "active" : ""}`} />
+            <div key={i} className={`vj-bullet ${i === activeDish ? "active" : ""}`} />
           ))}
         </div>
       </div>
-
-      {/* Swipe hint */}
-      {group.dishes.length > 1 && !hintHidden && (
-        <div className="viaje-swipe-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-          Desliza
-        </div>
-      )}
-
-      {/* Horizontal track */}
-      <div className="viaje-track" ref={trackRef}>
+      <div className="vj-category-track" ref={trackRef}>
         {group.dishes.map((dish, i) => (
           <DishSlide
             key={dish.id}
             dish={dish}
             variant={getVariant(dish, i)}
-            theme={theme}
+            palette={palette}
             index={i}
             onClick={() => onDishTap(dish)}
           />
         ))}
       </div>
-    </section>
+    </div>
   );
 }
 
-function DishSlide({
-  dish, variant, theme, index, onClick,
-}: {
-  dish: Dish;
-  variant: SlideVariant;
-  theme: ReturnType<typeof getCategoryTheme>;
-  index: number;
-  onClick: () => void;
+/* =============== DISH SLIDE =============== */
+function DishSlide({ dish, variant, palette, index, onClick }: {
+  dish: Dish; variant: SlideVariant; palette: Palette; index: number; onClick: () => void;
 }) {
-  const photo = getDishPhoto(dish);
-  const ref = useRef<HTMLDivElement>(null);
-  const genie = isGeniePick(dish);
   const pitch = dish.description || "";
-
-  // Particles
-  useEffect(() => {
-    const el = ref.current?.querySelector(".viaje-particles");
-    if (!el) return;
-    const type = genie ? "gold-dust" : theme.particles;
-    if (type === "none") return;
-    const count = type === "ember" ? 10 : type === "gold-dust" ? 14 : 5;
-    for (let i = 0; i < count; i++) {
-      const p = document.createElement("div");
-      p.className = `viaje-particle viaje-${type}`;
-      p.style.left = `${Math.random() * 100}%`;
-      const dur = type === "ember" ? 2.5 + Math.random() * 2.5 : type === "gold-dust" ? 7 + Math.random() * 6 : 5 + Math.random() * 4;
-      p.style.animationDuration = `${dur}s`;
-      p.style.animationDelay = `${-Math.random() * dur}s`;
-      el.appendChild(p);
-    }
-    return () => { el.innerHTML = ""; };
-  }, [genie, theme.particles]);
-
-  const photoEl = photo ? (
-    <Image src={photo} alt={dish.name} fill className="object-cover" sizes="100vw" />
-  ) : (
-    <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id) }} />
-  );
+  const genie = isGeniePick(dish);
+  const isLight = palette === "cream" && variant === "light";
+  const accentColor = palette === "ocean" ? "#7fbfdc" : palette === "cream" ? "#c93010" : "#F4A623";
 
   if (variant === "hero") return (
-    <div className="viaje-slide viaje-slide-hero" data-dish-idx={index} ref={ref} onClick={onClick}>
-      <div className="viaje-hero-bg">{photoEl}</div>
-      <div className="viaje-particles" />
-      <div className="viaje-hero-gradient" />
-      <div className="viaje-hero-content">
-        <div className="viaje-eyebrow viaje-anim viaje-up" style={{ color: theme.accent }}>{dish.ingredients ? dish.ingredients.split(/[,;]/)[0]?.trim() : ""}</div>
-        <h2 className="viaje-dish-title font-[family-name:var(--font-fraunces)] viaje-anim">
-          <span className="viaje-line-mask"><span className="viaje-anim viaje-reveal-line viaje-d1">{dish.name}</span></span>
-        </h2>
-        {pitch && <p className="viaje-pitch font-[family-name:var(--font-fraunces)] viaje-anim viaje-up viaje-d3">{pitch}</p>}
-        <div className="viaje-meta viaje-anim viaje-up viaje-d4">
-          <span className="viaje-price-chip font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
+    <div className="vj-dish vj-v-hero" data-dish-idx={index} onClick={onClick}>
+      <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
+      <div className="vj-hero-overlay" />
+      <div className="vj-hero-info">
+        <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
+        <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
+          <span className="vj-ln"><span>{dish.name}</span></span>
+        </h3>
+        {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+        <div className="vj-meta">
+          <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
         </div>
       </div>
     </div>
   );
-
-  if (variant === "light") {
-    const isLightBg = theme.navMode === "light";
-    return (
-      <div
-        className="viaje-slide viaje-slide-light"
-        data-dish-idx={index}
-        ref={ref}
-        onClick={onClick}
-        style={{
-          background: isLightBg ? theme.bg : "radial-gradient(ellipse at 30% 20%, #fff8ee 0%, transparent 50%), linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%)",
-          color: "#2a1810",
-        }}
-      >
-        <div className="viaje-eyebrow viaje-anim viaje-up" style={{ color: theme.accent }}>{dish.tags?.includes("NEW") ? "Nuevo" : ""}</div>
-        <div className="viaje-circle-wrap viaje-anim viaje-scale viaje-d1">
-          <div className="viaje-photo-circle">{photoEl}</div>
-        </div>
-        <h2 className="viaje-dish-title font-[family-name:var(--font-fraunces)] viaje-anim">
-          <span className="viaje-line-mask"><span className="viaje-anim viaje-reveal-line viaje-d2">{dish.name}</span></span>
-        </h2>
-        {pitch && <p className="viaje-pitch font-[family-name:var(--font-fraunces)] viaje-anim viaje-up viaje-d3">{pitch}</p>}
-        <div className="viaje-meta viaje-anim viaje-up viaje-d4" style={{ color: "#5a3d20" }}>
-          <span className="viaje-price-chip font-[family-name:var(--font-fraunces)]" style={{ borderColor: "#3d2817", color: "#3d2817" }}>
-            ${dish.price?.toLocaleString("es-CL")}
-          </span>
-        </div>
-      </div>
-    );
-  }
 
   if (variant === "split") return (
-    <div className="viaje-slide viaje-slide-split" data-dish-idx={index} ref={ref} onClick={onClick}>
-      <div className="viaje-split-photo">{photoEl}<div className="viaje-particles" /></div>
-      <div className="viaje-split-text" style={{ background: theme.bg }}>
-        <div className="viaje-eyebrow viaje-anim viaje-up" style={{ color: theme.accent }}>{dish.allergens || ""}</div>
-        <h2 className="viaje-dish-title font-[family-name:var(--font-fraunces)] viaje-anim" style={{ color: "white" }}>
-          <span className="viaje-line-mask"><span className="viaje-anim viaje-reveal-line viaje-d1">{dish.name}</span></span>
-        </h2>
-        {pitch && <p className="viaje-pitch font-[family-name:var(--font-fraunces)] viaje-anim viaje-up viaje-d3" style={{ color: "white", opacity: 0.72 }}>{pitch}</p>}
-        <div className="viaje-meta viaje-anim viaje-up viaje-d4" style={{ color: "white" }}>
-          <span className="viaje-price-chip font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
+    <div className="vj-dish vj-v-split" data-dish-idx={index} onClick={onClick}>
+      <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
+      <div className="vj-split-info">
+        <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.allergens || ""}</span>
+        <h3 className="vj-title font-[family-name:var(--font-fraunces)]" style={{ color: "white" }}>
+          <span className="vj-ln"><span>{dish.name}</span></span>
+        </h3>
+        {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ color: "white", opacity: 0.72 }}>{pitch}</p>}
+        <div className="vj-meta" style={{ color: "white" }}>
+          <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
         </div>
       </div>
     </div>
   );
 
-  // spotlight (Genio)
-  return (
-    <div className="viaje-slide viaje-slide-spotlight" data-dish-idx={index} ref={ref} onClick={onClick} style={{ background: `radial-gradient(ellipse at 50% 40%, ${theme.bg} 0%, #050302 80%)` }}>
-      <div className="viaje-particles" />
-      <div className="viaje-genie-badge viaje-anim viaje-down">El Genio elige</div>
-      <div className="viaje-spot-wrap viaje-anim viaje-scale viaje-d1">
-        <div className="viaje-spot-photo">{photoEl}</div>
+  if (variant === "light") return (
+    <div
+      className="vj-dish vj-v-light"
+      data-dish-idx={index}
+      onClick={onClick}
+      style={isLight ? { background: "linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%)", color: "#2a1810" } : undefined}
+    >
+      <span className="vj-eyebrow" style={{ color: isLight ? "#8a5a2c" : accentColor }}>{dish.tags?.includes("NEW") ? "Nuevo" : ""}</span>
+      <div className="vj-photo-wrap">
+        <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
-      <h2 className="viaje-dish-title viaje-dish-title-gradient font-[family-name:var(--font-fraunces)] viaje-anim">
-        <span className="viaje-line-mask"><span className="viaje-anim viaje-reveal-line viaje-d2">{dish.name}</span></span>
-      </h2>
-      {pitch && <p className="viaje-pitch font-[family-name:var(--font-fraunces)] viaje-anim viaje-up viaje-d3">{pitch}</p>}
-      <div className="viaje-meta viaje-anim viaje-up viaje-d4">
-        <span className="viaje-price-chip font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
+      <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
+        <span className="vj-ln"><span>{dish.name}</span></span>
+      </h3>
+      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+      <div className="vj-meta" style={isLight ? { color: "#5a3d20" } : undefined}>
+        <span className="vj-price font-[family-name:var(--font-fraunces)]" style={isLight ? { borderColor: "#3d2817", color: "#3d2817" } : undefined}>
+          ${dish.price?.toLocaleString("es-CL")}
+        </span>
+      </div>
+    </div>
+  );
+
+  // SPOTLIGHT (Genio)
+  return (
+    <div className="vj-dish vj-v-spotlight" data-dish-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
+      <div className="vj-genie-badge">El Genio elige</div>
+      <div className="vj-spot-wrap">
+        <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
+      </div>
+      <span className="vj-eyebrow" style={{ color: "#F4A623" }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
+      <h3 className="vj-title vj-title-gradient font-[family-name:var(--font-fraunces)]">
+        <span className="vj-ln"><span>{dish.name}</span></span>
+      </h3>
+      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+      <div className="vj-meta">
+        <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
       </div>
     </div>
   );
 }
 
-function OutroSlide({ onActive }: { onActive: () => void }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useInViewTrigger(ref, onActive);
-
+/* =============== OUTRO =============== */
+function OutroSlide({ onSwitchView }: { onSwitchView: () => void }) {
   return (
-    <section className="viaje-section">
-      <div className="viaje-track">
-        <div className="viaje-slide viaje-outro" ref={ref}>
-          <div className="viaje-outro-bg" />
-          <div className="viaje-outro-inner">
-            <h3 className="font-[family-name:var(--font-fraunces)] viaje-anim viaje-up">
-              Hasta aquí llega el <em>recorrido</em>.
-            </h3>
-            <p className="viaje-anim viaje-up viaje-d1">Ahora sí: ¿qué vas a pedir?</p>
-          </div>
-        </div>
+    <section className="vj-outro" data-section="outro">
+      <div className="vj-outro-bg" />
+      <div className="vj-outro-inner">
+        <h3 className="font-[family-name:var(--font-fraunces)]">
+          Hasta aquí llega el <em>recorrido</em>.<br />¿Qué vas a pedir?
+        </h3>
+        <p>Tocá para ver la carta en otro formato.</p>
+        <button className="vj-outro-cta" onClick={onSwitchView}>Ver en Lista →</button>
       </div>
     </section>
   );
 }
 
-/* ============ HOOKS ============ */
-
-function useInViewTrigger(ref: React.RefObject<HTMLElement | null>, callback: () => void) {
+/* =============== HOOKS =============== */
+function useInView(ref: React.RefObject<HTMLElement | null>, cb: (inView: boolean) => void) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      (entries) => { if (entries[0]?.isIntersecting) callback(); },
-      { threshold: 0.5 },
+      (entries) => entries.forEach((e) => cb(e.isIntersecting)),
+      { threshold: 0.55 },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [ref, callback]);
+  }, [ref, cb]);
 }
 
-/* ============ CSS ============ */
-
-const VIAJE_CSS = `
-  .viaje-root { position: relative; background: black; color: white; font-family: var(--font-dm), 'Inter Tight', sans-serif; -webkit-font-smoothing: antialiased; overflow: hidden; user-select: none; }
+/* =============== ALL CSS =============== */
+const CSS = `
+  :root { --vj-ease: cubic-bezier(0.16,1,0.3,1); }
+  .vj-root { background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; }
 
   /* Nav */
-  .viaje-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: max(12px, env(safe-area-inset-top)) 20px 12px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.55); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.06); transition: all 0.6s cubic-bezier(0.4,0,0.2,1); }
-  .viaje-nav.light { background: rgba(255,255,255,0.72); border-bottom-color: rgba(0,0,0,0.06); color: #1d1d1f; }
-  .viaje-brand { font-weight: 500; font-size: 16px; letter-spacing: -0.01em; }
+  .vj-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: max(10px, env(safe-area-inset-top)) 16px 10px; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 100%); }
+  .vj-brand { font-weight: 300; font-size: 14px; letter-spacing: 0.01em; opacity: 0.9; }
+  .vj-brand em { font-style: italic; color: #F4A623; font-weight: 400; }
 
-  /* Journey */
-  .viaje-journey { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  .viaje-journey::-webkit-scrollbar { display: none; }
-
-  /* Section = one category (vertical snap) */
-  .viaje-section { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
-
-  /* Track = horizontal slides inside a section */
-  .viaje-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
-  .viaje-track::-webkit-scrollbar { display: none; }
-
-  /* Slide = one dish (horizontal snap) */
-  .viaje-slide { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; cursor: pointer; }
+  /* Reel */
+  .vj-reel { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .vj-reel::-webkit-scrollbar { display: none; }
 
   /* Rail */
-  .viaje-rail { position: fixed; left: 10px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
-  .viaje-rail-dot { width: 3px; height: 14px; background: rgba(255,255,255,0.22); border-radius: 2px; transition: all 0.5s cubic-bezier(0.4,0,0.2,1); }
-  .viaje-rail-dot.active { background: white; height: 28px; }
-  .viaje-rail.light .viaje-rail-dot { background: rgba(0,0,0,0.2); }
-  .viaje-rail.light .viaje-rail-dot.active { background: #1d1d1f; }
+  .vj-rail { position: fixed; right: 8px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
+  .vj-rail-dot { width: 3px; height: 10px; background: rgba(255,255,255,0.22); border-radius: 2px; transition: all 0.5s ease; }
+  .vj-rail-dot.active { background: #F4A623; height: 22px; }
+  .vj-rail.light .vj-rail-dot { background: rgba(0,0,0,0.2); }
+  .vj-rail.light .vj-rail-dot.active { background: #c93010; }
 
-  /* Category header */
-  .viaje-cat-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 56px); left: 20px; right: 20px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
-  .viaje-cat-label { display: flex; align-items: center; gap: 10px; font-size: 10.5px; letter-spacing: 0.3em; text-transform: uppercase; font-weight: 500; opacity: 0.85; }
-  .viaje-cat-label::before { content: ''; width: 14px; height: 1px; background: currentColor; opacity: 0.5; }
-  .viaje-cat-label strong { font-weight: 400; font-style: italic; font-size: 14px; letter-spacing: 0; text-transform: none; opacity: 0.9; }
-  .viaje-cat-header.light { color: #3d2817; }
+  /* ===== COVER ===== */
+  .vj-cover { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+  .vj-cover-bg { position: absolute; inset: -5%; background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(244,166,35,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 30% 70%, rgba(200,80,40,0.15) 0%, transparent 50%), radial-gradient(ellipse at center, #1a0a04 0%, #000 80%); animation: vj-cover-drift 20s ease-in-out infinite alternate; }
+  @keyframes vj-cover-drift { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.1) translate(-2%,-1%); } }
+  .vj-cover-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>"); opacity: 0.08; mix-blend-mode: overlay; pointer-events: none; z-index: 2; }
+  .vj-cover-bgtype { position: absolute; font-weight: 200; font-style: italic; font-size: 32vw; line-height: 0.85; letter-spacing: -0.05em; color: rgba(244,166,35,0.04); white-space: nowrap; pointer-events: none; z-index: 1; }
+  .vj-cover-bgtype.top { top: 10%; left: -10%; }
+  .vj-cover-bgtype.bottom { bottom: 15%; right: -10%; }
+  .vj-cover-content { position: relative; z-index: 5; padding: 0 28px calc(40px + env(safe-area-inset-bottom)); }
+  .vj-cover-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: #F4A623; margin-bottom: 20px; font-weight: 500; opacity: 0; animation: vj-kicker-in 1s var(--vj-ease) 0.5s forwards; }
+  .vj-cover-kicker::before, .vj-cover-kicker::after { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.5; }
+  @keyframes vj-kicker-in { from { opacity: 0; letter-spacing: 0.1em; } to { opacity: 1; letter-spacing: 0.4em; } }
+  .vj-cover-title { font-weight: 200; font-size: clamp(54px, 16vw, 92px); line-height: 0.88; letter-spacing: -0.04em; margin-bottom: 16px; }
+  .vj-line { display: block; overflow: hidden; }
+  .vj-line span { display: block; transform: translateY(110%); animation: vj-line-up 1.2s var(--vj-ease) forwards; }
+  .vj-line:nth-child(2) span { animation-delay: 0.2s; }
+  .vj-line:nth-child(2) span em { font-style: italic; font-weight: 300; background: linear-gradient(135deg, #F4A623 0%, #e85530 60%, #c93010 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  @keyframes vj-line-up { to { transform: translateY(0); } }
+  .vj-cover-sub { font-style: italic; font-weight: 300; font-size: 17px; line-height: 1.4; opacity: 0; max-width: 26ch; margin-bottom: 28px; animation: vj-fade-up 1.2s var(--vj-ease) 0.9s forwards; }
+  @keyframes vj-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 0.85; transform: translateY(0); } }
+  .vj-cover-meta { display: flex; gap: 20px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1.2s var(--vj-ease) 1.2s forwards; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
+  .vj-cover-meta strong { display: block; font-weight: 400; font-size: 22px; text-transform: none; letter-spacing: -0.01em; margin-top: 4px; }
+  .vj-cover-cue { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 6; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1s ease-out 2s forwards, vj-cue-float 2.5s ease-in-out 3s infinite; }
+  .vj-cover-cue::after { content: ''; display: block; width: 1px; height: 24px; background: linear-gradient(180deg, rgba(255,255,255,0.5), transparent); margin: 10px auto 0; }
+  @keyframes vj-cue-float { 0%,100% { transform: translateX(-50%) translateY(0); opacity: 0.4; } 50% { transform: translateX(-50%) translateY(6px); opacity: 0.9; } }
 
-  /* Bullets */
-  .viaje-cat-progress { display: flex; gap: 4px; }
-  .viaje-bullet { width: 16px; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; transition: all 0.4s cubic-bezier(0.4,0,0.2,1); }
-  .viaje-bullet.active { background: white; width: 24px; }
-  .viaje-cat-header.light .viaje-bullet { background: rgba(0,0,0,0.25); }
-  .viaje-cat-header.light .viaje-bullet.active { background: #1d1d1f; }
+  /* ===== CHAPTER OPENING ===== */
+  .vj-chapter { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 0 32px; }
+  .vj-chapter-bg { position: absolute; inset: 0; }
+  .vj-chapter[data-palette="ocean"] .vj-chapter-bg { background: radial-gradient(ellipse at 30% 40%, rgba(100,180,220,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(20,80,120,0.2) 0%, transparent 50%), linear-gradient(180deg, #061020 0%, #020810 100%); }
+  .vj-chapter[data-palette="earth"] .vj-chapter-bg { background: radial-gradient(ellipse at 40% 30%, rgba(200,130,60,0.18) 0%, transparent 55%), radial-gradient(ellipse at 60% 80%, rgba(100,50,20,0.25) 0%, transparent 50%), linear-gradient(180deg, #1a0c04 0%, #0a0502 100%); }
+  .vj-chapter[data-palette="fire"] .vj-chapter-bg { background: radial-gradient(ellipse at 50% 50%, rgba(244,100,40,0.2) 0%, transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(200,50,10,0.25) 0%, transparent 50%), linear-gradient(180deg, #200804 0%, #080200 100%); }
+  .vj-chapter[data-palette="cream"] .vj-chapter-bg { background: radial-gradient(ellipse at 30% 30%, rgba(255,240,220,0.9) 0%, transparent 60%), linear-gradient(180deg, #f5ecd8 0%, #e8d4b0 100%); }
+  .vj-chapter[data-palette="cream"] { color: #2a1810; }
+  .vj-chapter[data-palette="cream"] .vj-chapter-num, .vj-chapter[data-palette="cream"] .vj-chapter-name em { color: #c93010; }
+  .vj-chapter::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 1px; background: currentColor; opacity: 0.3; transform: translate(-50%,-50%); transition: width 1.5s var(--vj-ease); }
+  .vj-chapter.in-view::before { width: 60%; max-width: 400px; }
+  .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
+  .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: #F4A623; text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
+  .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
+  .vj-chapter-name { font-weight: 200; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 60px 0; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; }
+  .vj-chapter-name em { font-style: italic; font-weight: 300; display: block; color: #F4A623; }
+  .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
+  .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
+  .vj-chapter.in-view .vj-chapter-desc { opacity: 0.75; }
+  .vj-chapter-count { display: inline-flex; align-items: center; gap: 10px; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 1.5s; }
+  .vj-chapter.in-view .vj-chapter-count { opacity: 0.65; transform: translateY(0); }
+  .vj-chapter-count::before, .vj-chapter-count::after { content: ''; width: 20px; height: 1px; background: currentColor; opacity: 0.5; }
+  .vj-chapter-hint { position: absolute; bottom: calc(30px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); font-size: 9.5px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; transition: opacity 1s ease 2s; }
+  .vj-chapter.in-view .vj-chapter-hint { opacity: 0.45; animation: vj-cue-float 2.5s ease-in-out 2.5s infinite; }
 
-  /* Swipe hint */
-  .viaje-swipe-hint { position: absolute; top: 50%; right: 20px; transform: translateY(-50%); z-index: 15; font-size: 9.5px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 8px; animation: viaje-swipe-pulse 2.5s ease-in-out infinite; }
-  .viaje-swipe-hint svg { animation: viaje-swipe-x 1.8s ease-in-out infinite; }
-  @keyframes viaje-swipe-pulse { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-  @keyframes viaje-swipe-x { 0%,100% { transform: translateX(0); } 50% { transform: translateX(6px); } }
+  /* ===== CATEGORY TRACK ===== */
+  .vj-track-wrap { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
+  .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .vj-category-track::-webkit-scrollbar { display: none; }
+  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 50px); left: 16px; right: 16px; z-index: 15; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .vj-category-header.light { color: #2a1810; }
+  .vj-category-label { font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 0.7; font-weight: 500; }
+  .vj-category-label strong { font-style: italic; font-weight: 400; font-size: 13px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
+  .vj-bullets { display: flex; gap: 4px; }
+  .vj-bullet { width: 14px; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; transition: all 0.4s ease; }
+  .vj-bullet.active { background: #F4A623; width: 22px; }
+  .vj-category-header.light .vj-bullet { background: rgba(0,0,0,0.25); }
+  .vj-category-header.light .vj-bullet.active { background: #c93010; }
 
-  /* Common elements */
-  .viaje-eyebrow { font-size: 10.5px; letter-spacing: 0.35em; text-transform: uppercase; font-weight: 500; opacity: 0.8; }
-  .viaje-dish-title { font-weight: 200; font-size: clamp(42px, 12vw, 62px); line-height: 0.92; letter-spacing: -0.03em; margin-bottom: 16px; }
-  .viaje-dish-title em { font-style: italic; font-weight: 300; }
-  .viaje-dish-title-gradient em { background: linear-gradient(135deg, #f5d4a0 0%, #e8a06a 50%, #c9785a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .viaje-pitch { font-weight: 300; font-style: italic; font-size: 17px; line-height: 1.42; opacity: 0.82; max-width: 28ch; margin-bottom: 24px; }
-  .viaje-meta { display: flex; align-items: center; gap: 14px; font-size: 12px; opacity: 0.7; }
-  .viaje-price-chip { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; padding: 7px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; letter-spacing: -0.01em; }
-  .viaje-price-chip::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: 0.8; }
-  .viaje-line-mask { display: block; overflow: hidden; line-height: 1; padding-bottom: 0.08em; }
+  /* ===== DISH (shared) ===== */
+  .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; cursor: pointer; }
+  .vj-eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; margin-bottom: 12px; font-weight: 500; display: inline-block; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
+  .vj-dish.in-view .vj-eyebrow { opacity: 0.7; transform: translateY(0); }
+  .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; }
+  .vj-title em { font-style: italic; font-weight: 300; }
+  .vj-title-gradient em { background: linear-gradient(135deg, #f5d4a0 0%, #e8a06a 50%, #c9785a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .vj-ln { display: block; overflow: hidden; }
+  .vj-ln span { display: block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
+  .vj-dish.in-view .vj-ln span { transform: translateY(0); }
+  .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 16px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; }
+  .vj-dish.in-view .vj-pitch { opacity: 0.82; transform: translateY(0); }
+  .vj-v-light .vj-pitch, .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
+  .vj-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
+  .vj-v-light .vj-meta, .vj-v-spotlight .vj-meta { justify-content: center; }
+  .vj-dish.in-view .vj-meta { opacity: 1; transform: translateY(0); }
+  .vj-price { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; padding: 6px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; }
+  .vj-price::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
-  /* Animations */
-  .viaje-slide.in-view .viaje-anim { opacity: 1; transform: translate(0,0) scale(1) rotate(0); filter: blur(0); }
-  .viaje-anim { opacity: 0; transition: opacity 1.1s cubic-bezier(0.16,1,0.3,1), transform 1.2s cubic-bezier(0.16,1,0.3,1), filter 1.1s cubic-bezier(0.16,1,0.3,1); }
-  .viaje-up { transform: translateY(40px); }
-  .viaje-down { transform: translateY(-20px); }
-  .viaje-scale { transform: scale(0.9); filter: blur(4px); }
-  .viaje-reveal-line { transform: translateY(110%); display: inline-block; }
-  .viaje-d1 { transition-delay: 0.12s; }
-  .viaje-d2 { transition-delay: 0.28s; }
-  .viaje-d3 { transition-delay: 0.44s; }
-  .viaje-d4 { transition-delay: 0.6s; }
-  .viaje-d5 { transition-delay: 0.76s; }
+  /* HERO */
+  .vj-v-hero { flex-direction: column; justify-content: flex-end; }
+  .vj-hero-photo { position: absolute; inset: 0; transform: scale(1.12); transition: transform 14s var(--vj-ease); }
+  .vj-hero-photo img { object-fit: cover; }
+  .vj-v-hero.in-view .vj-hero-photo { transform: scale(1); }
+  .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.98) 100%); }
+  .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; }
 
-  /* INTRO */
-  .viaje-intro { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24px; background: radial-gradient(ellipse at center, #1a1210 0%, #000 80%); }
-  .viaje-intro-bg { position: absolute; inset: 0; background: radial-gradient(circle at 30% 20%, rgba(212,165,116,0.2), transparent 40%), radial-gradient(circle at 70% 80%, rgba(232,112,58,0.15), transparent 40%); animation: viaje-breathe 8s ease-in-out infinite; }
-  @keyframes viaje-breathe { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.1); } }
-  .viaje-intro-inner { position: relative; z-index: 2; }
-  .viaje-intro-title { font-weight: 200; font-size: clamp(48px, 14vw, 88px); line-height: 0.88; letter-spacing: -0.04em; margin-bottom: 22px; }
-  .viaje-intro-chapters { display: flex; flex-direction: column; gap: 6px; max-width: 200px; margin: 0 auto; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.45; font-weight: 400; }
-  .viaje-intro-chapters span { display: flex; justify-content: space-between; }
-  .viaje-intro-cue { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); font-size: 9.5px; letter-spacing: 0.35em; opacity: 0.4; text-transform: uppercase; animation: viaje-cue-bounce 2.8s ease-in-out infinite; z-index: 3; }
-  @keyframes viaje-cue-bounce { 0%,100% { opacity: 0.3; } 50% { opacity: 0.9; } }
+  /* SPLIT */
+  .vj-v-split { flex-direction: column; background: #0a0604; }
+  .vj-split-photo { flex: 1; min-height: 52vh; position: relative; overflow: hidden; }
+  .vj-split-photo img { object-fit: cover; }
+  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, #0a0604 100%); }
+  .vj-split-info { padding: 24px 28px calc(60px + env(safe-area-inset-bottom)); position: relative; z-index: 3; }
 
-  /* HERO slide */
-  .viaje-slide-hero { flex-direction: column; justify-content: flex-end; }
-  .viaje-hero-bg { position: absolute; inset: 0; transform: scale(1.12); transition: transform 14s cubic-bezier(0.16,1,0.3,1); }
-  .viaje-hero-bg img { object-fit: cover; }
-  .viaje-slide-hero.in-view .viaje-hero-bg { transform: scale(1); }
-  .viaje-hero-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,10,18,0.2) 0%, transparent 35%, rgba(6,10,18,0.65) 70%, rgba(6,10,18,0.98) 100%); z-index: 1; }
-  .viaje-hero-content { position: relative; z-index: 3; padding: 0 28px 80px; }
+  /* LIGHT */
+  .vj-v-light { background: linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%); color: #2a1810; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 110px 24px 60px; }
+  .vj-photo-wrap { position: relative; width: min(68vw, 300px); aspect-ratio: 1; margin-bottom: 32px; }
+  .vj-photo-wrap::before, .vj-photo-wrap::after { content: ''; position: absolute; inset: -18px; border-radius: 50%; border: 1px solid rgba(138,90,44,0.2); pointer-events: none; }
+  .vj-photo-wrap::after { inset: -34px; border-style: dashed; opacity: 0.5; }
+  .vj-photo-circle { position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; box-shadow: 0 30px 60px -15px rgba(60,30,0,0.25), 0 0 0 8px rgba(255,255,255,0.5); transform: scale(0.9); transition: transform 1.8s var(--vj-ease); }
+  .vj-photo-circle img { object-fit: cover; }
+  .vj-v-light.in-view .vj-photo-circle { transform: scale(1); }
 
-  /* LIGHT slide */
-  .viaje-slide-light { flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px 24px 60px; }
-  .viaje-circle-wrap { position: relative; width: min(66vw, 300px); aspect-ratio: 1; margin-bottom: 32px; z-index: 2; }
-  .viaje-circle-wrap::before { content: ''; position: absolute; inset: -18px; border-radius: 50%; border: 1px solid rgba(138,90,44,0.22); animation: viaje-rotate 40s linear infinite; }
-  .viaje-circle-wrap::after { content: ''; position: absolute; inset: -34px; border-radius: 50%; border: 1px dashed rgba(138,90,44,0.18); animation: viaje-rotate 60s linear infinite reverse; }
-  @keyframes viaje-rotate { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
-  .viaje-photo-circle { position: relative; width: 100%; height: 100%; border-radius: 50%; overflow: hidden; box-shadow: 0 40px 80px -20px rgba(60,30,0,0.25), 0 0 0 8px rgba(255,255,255,0.5); }
-  .viaje-photo-circle img { object-fit: cover; }
-
-  /* SPLIT slide */
-  .viaje-slide-split { flex-direction: column; }
-  .viaje-split-photo { flex: 1; min-height: 50vh; position: relative; overflow: hidden; }
-  .viaje-split-photo img { object-fit: cover; }
-  .viaje-split-text { padding: 24px 28px calc(60px + env(safe-area-inset-bottom)); position: relative; z-index: 3; flex-shrink: 0; color: white; }
-
-  /* SPOTLIGHT (Genio) */
-  .viaje-slide-spotlight { flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 120px 24px 60px; color: white; }
-  .viaje-spot-wrap { position: relative; width: min(72vw, 320px); aspect-ratio: 1; margin-bottom: 32px; z-index: 2; }
-  .viaje-spot-wrap::before { content: ''; position: absolute; inset: -60px; background: radial-gradient(circle, rgba(232,130,60,0.35) 0%, rgba(212,140,60,0.15) 40%, transparent 70%); filter: blur(40px); animation: viaje-halo-pulse 5s ease-in-out infinite; z-index: -1; }
-  @keyframes viaje-halo-pulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }
-  .viaje-spot-wrap::after { content: ''; position: absolute; inset: -12px; border-radius: 50%; border: 1px solid rgba(232,112,58,0.3); animation: viaje-rotate 50s linear infinite; }
-  .viaje-spot-photo { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 40px 80px -20px rgba(0,0,0,0.8); }
-  .viaje-spot-photo img { object-fit: cover; }
-
-  /* Genie badge */
-  .viaje-genie-badge { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px; background: rgba(232,112,58,0.14); border: 1px solid rgba(232,112,58,0.45); border-radius: 100px; font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase; color: #e8a06a; font-weight: 500; backdrop-filter: blur(10px); margin-bottom: 28px; z-index: 2; position: relative; }
-  .viaje-genie-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #ff8040; box-shadow: 0 0 14px #ff6020, 0 0 28px #e8703a; animation: viaje-pulse 2s ease-in-out infinite; }
-  @keyframes viaje-pulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.25); } }
+  /* SPOTLIGHT */
+  .vj-v-spotlight { flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 110px 24px 60px; }
+  .vj-spot-wrap { position: relative; width: min(72vw, 320px); aspect-ratio: 1; margin-bottom: 32px; }
+  .vj-spot-wrap::before { content: ''; position: absolute; inset: -50px; background: radial-gradient(circle, rgba(244,166,35,0.35) 0%, rgba(232,80,40,0.15) 40%, transparent 70%); filter: blur(30px); animation: vj-halo-pulse 4s ease-in-out infinite; z-index: -1; }
+  @keyframes vj-halo-pulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.15); } }
+  .vj-spot-wrap::after { content: ''; position: absolute; inset: -10px; border-radius: 50%; border: 1px solid rgba(244,166,35,0.3); animation: vj-orbit 30s linear infinite; }
+  @keyframes vj-orbit { to { transform: rotate(360deg); } }
+  .vj-spot-photo { width: 100%; height: 100%; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 40px 80px -20px rgba(0,0,0,0.8); transform: scale(0.88); transition: transform 1.8s var(--vj-ease); }
+  .vj-spot-photo img { object-fit: cover; }
+  .vj-v-spotlight.in-view .vj-spot-photo { transform: scale(1); }
+  .vj-genie-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; background: rgba(244,166,35,0.12); border: 1px solid rgba(244,166,35,0.5); border-radius: 100px; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; color: #F4A623; font-weight: 500; margin-bottom: 28px; backdrop-filter: blur(10px); z-index: 2; position: relative; }
+  .vj-genie-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #F4A623; box-shadow: 0 0 12px #F4A623; animation: vj-pulse 2s ease-in-out infinite; }
+  @keyframes vj-pulse { 0%,100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 1; transform: scale(1.3); } }
 
   /* OUTRO */
-  .viaje-outro { flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24px; background: radial-gradient(ellipse at center, #1a1210 0%, #000 80%); }
-  .viaje-outro-bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, rgba(232,112,58,0.12), transparent 50%); animation: viaje-breathe 6s ease-in-out infinite; }
-  .viaje-outro-inner { position: relative; z-index: 2; }
-  .viaje-outro-inner h3 { font-weight: 200; font-style: italic; font-size: clamp(32px, 8vw, 44px); line-height: 1.1; margin-bottom: 18px; letter-spacing: -0.015em; }
-  .viaje-outro-inner h3 em { font-style: normal; font-weight: 300; background: linear-gradient(135deg, #f5d4a0 0%, #e8703a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .viaje-outro-inner p { opacity: 0.55; font-size: 15px; font-weight: 300; }
-
-  /* Particles */
-  .viaje-particles { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
-  .viaje-steam { position: absolute; bottom: -20px; width: 40px; height: 40px; background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%); border-radius: 50%; animation: viaje-rise 5s ease-in infinite; opacity: 0; }
-  @keyframes viaje-rise { 0% { transform: translateY(0) scale(0.5); opacity: 0; } 20% { opacity: 0.55; } 100% { transform: translateY(-80vh) scale(2); opacity: 0; } }
-  .viaje-gold-dust { position: absolute; width: 3px; height: 3px; background: #d4a574; border-radius: 50%; box-shadow: 0 0 6px #d4a574; animation: viaje-drift 9s linear infinite; opacity: 0; }
-  @keyframes viaje-drift { 0% { transform: translate(0, 100%) scale(0); opacity: 0; } 10% { opacity: 0.8; transform: translate(10px, 80%) scale(1); } 90% { opacity: 0.6; } 100% { transform: translate(40px, -20%) scale(0.5); opacity: 0; } }
-  .viaje-ember { position: absolute; width: 4px; height: 4px; background: #ff6a1a; border-radius: 50%; box-shadow: 0 0 10px #ff6a1a, 0 0 20px #e8703a; animation: viaje-ember-rise 3.5s ease-out infinite; opacity: 0; }
-  @keyframes viaje-ember-rise { 0% { transform: translate(0,0) scale(0); opacity: 0; } 15% { opacity: 1; transform: translate(5px, -10vh) scale(1); } 100% { transform: translate(-20px, -100vh) scale(0.3); opacity: 0; } }
+  .vj-outro { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; background: radial-gradient(ellipse at center, #1a0a04 0%, #000 80%); display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 32px; }
+  .vj-outro-bg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, rgba(244,166,35,0.12), transparent 50%); animation: vj-cover-drift 8s ease-in-out infinite alternate; }
+  .vj-outro-inner { position: relative; z-index: 2; }
+  .vj-outro-inner h3 { font-weight: 200; font-style: italic; font-size: clamp(32px, 9vw, 48px); line-height: 1.05; margin-bottom: 20px; letter-spacing: -0.02em; }
+  .vj-outro-inner h3 em { font-style: normal; font-weight: 300; color: #F4A623; }
+  .vj-outro-inner p { opacity: 0.6; font-size: 15px; margin-bottom: 32px; font-weight: 300; }
+  .vj-outro-cta { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; background: linear-gradient(135deg, #F4A623 0%, #e85530 100%); color: #0a0604; border-radius: 100px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; border: none; cursor: pointer; font-family: inherit; box-shadow: 0 10px 30px -8px rgba(244,166,35,0.5); }
 
   /* Reduce motion */
   @media (prefers-reduced-motion: reduce) {
-    .viaje-particle, .viaje-steam, .viaje-ember, .viaje-gold-dust { display: none; }
-    .viaje-anim { transition-duration: 0.1s; }
-    .viaje-intro-bg, .viaje-outro-bg { animation: none; }
+    .vj-cover-bg, .vj-outro-bg { animation: none; }
+    .vj-spot-wrap::before, .vj-spot-wrap::after { animation: none; }
+    .vj-photo-wrap::before, .vj-photo-wrap::after { animation: none; }
+    .vj-genie-badge::before { animation: none; }
+    .vj-cover-kicker, .vj-cover-sub, .vj-cover-meta, .vj-cover-cue { animation: none; opacity: 1; }
+    .vj-line span { animation: none; transform: none; }
+    .vj-chapter-num, .vj-chapter-name, .vj-chapter-desc, .vj-chapter-count { opacity: 1; transform: none; transition: none; }
+    .vj-eyebrow, .vj-pitch, .vj-meta { opacity: 1; transform: none; transition: none; }
+    .vj-ln span { transform: none; transition: none; }
   }
 `;
