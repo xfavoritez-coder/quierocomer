@@ -92,9 +92,25 @@ function getPayload(isFinal: boolean) {
     }
   }
 
+  // Collect localStorage preferences (Genio data)
+  let preferences: any = null;
+  if (typeof window !== "undefined") {
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = localStorage.getItem("qr_restrictions");
+    const dislikes = localStorage.getItem("qr_dislikes");
+    if (diet || restrictions || dislikes) {
+      preferences = {
+        ...(diet && { dietType: diet }),
+        ...(restrictions && { restrictions: JSON.parse(restrictions) }),
+        ...(dislikes && { dislikes: JSON.parse(dislikes) }),
+      };
+    }
+  }
+
   return {
     sessionId: session.dbSessionId,
     durationMs: Date.now() - session.startedAt,
+    preferences,
     viewUsed: session.viewUsed,
     viewHistory: history.map(v => ({ view: v.view, durationMs: v.durationMs })),
     dishesViewed: Array.from(session.dishDwells.values()),

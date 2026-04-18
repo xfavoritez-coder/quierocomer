@@ -11,13 +11,14 @@ export async function PATCH(request: Request) {
       body = JSON.parse(await request.text());
     }
 
-    const { sessionId, durationMs, viewUsed, viewHistory, dishesViewed, categoriesViewed, pickedDishId, isFinal } = body;
+    const { sessionId, durationMs, viewUsed, viewHistory, dishesViewed, categoriesViewed, pickedDishId, preferences, isFinal } = body;
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
     }
 
-    await prisma.session.update({
+    // Update session
+    const session = await prisma.session.update({
       where: { id: sessionId },
       data: {
         durationMs: durationMs || undefined,
@@ -26,11 +27,19 @@ export async function PATCH(request: Request) {
         dishesViewed: dishesViewed || undefined,
         categoriesViewed: categoriesViewed || undefined,
         pickedDishId: pickedDishId || undefined,
-        // Always update endedAt so sessions never stay "open" forever
         endedAt: new Date(),
         ...(isFinal ? { isAbandoned: false, closeReason: body.closeReason || "normal" } : {}),
       },
+      select: { guestId: true },
     });
+
+    // Save preferences to GuestProfile (from localStorage via heartbeat)
+    if (preferences && session.guestId) {
+      await prisma.guestProfile.update({
+        where: { id: session.guestId },
+        data: { preferences },
+      }).catch(() => {});
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
