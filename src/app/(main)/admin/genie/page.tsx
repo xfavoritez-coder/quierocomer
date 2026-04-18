@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
@@ -47,19 +46,20 @@ interface SessionData {
 }
 
 export default function AdminSessions() {
-  const { selectedRestaurantId, loading: sessionLoading } = useAdminSession();
+  const { restaurants, loading: sessionLoading } = useAdminSession();
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [filterRestaurant, setFilterRestaurant] = useState<string>("");
 
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
-    if (selectedRestaurantId) params.set("restaurantId", selectedRestaurantId);
+    if (filterRestaurant) params.set("restaurantId", filterRestaurant);
     fetch(`/api/admin/sessions?${params}`)
       .then(r => r.json())
       .then(d => {
@@ -67,7 +67,7 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [selectedRestaurantId, sessionLoading, page]);
+  }, [filterRestaurant, sessionLoading, page]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
@@ -78,7 +78,14 @@ export default function AdminSessions() {
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Sesiones</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{total} sesiones totales</p>
         </div>
-        <RestaurantPicker />
+        <select
+          value={filterRestaurant}
+          onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}
+          style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+        >
+          <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
+          {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+        </select>
       </div>
 
       {sessions.length === 0 ? (

@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 
 interface DashData {
   visitsThisWeek: number;
@@ -84,7 +83,8 @@ function DistributionBar({ title, data, labels }: { title: string; data: Record<
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
 
 export default function AdminDashboard() {
-  const { selectedRestaurantId, isSuper, loading: sessionLoading } = useAdminSession();
+  const { restaurants, isSuper, loading: sessionLoading } = useAdminSession();
+  const [filterRestaurant, setFilterRestaurant] = useState<string>("");
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
@@ -93,15 +93,15 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
-    const params = selectedRestaurantId ? `?restaurantId=${selectedRestaurantId}` : "";
+    const params = filterRestaurant ? `?restaurantId=${filterRestaurant}` : "";
     Promise.all([
       fetch(`/api/admin/dashboard${params}`).then(r => r.json()),
-      selectedRestaurantId ? fetch(`/api/admin/insights?restaurantId=${selectedRestaurantId}`).then(r => r.json()) : Promise.resolve({ insights: [] }),
+      filterRestaurant ? fetch(`/api/admin/insights?restaurantId=${filterRestaurant}`).then(r => r.json()) : Promise.resolve({ insights: [] }),
     ]).then(([dashData, insightData]) => {
       if (!dashData.error) setData(dashData);
       setInsights(insightData.insights || []);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [selectedRestaurantId, sessionLoading]);
+  }, [filterRestaurant, sessionLoading]);
 
   if (loading || sessionLoading) {
     return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
@@ -120,7 +120,14 @@ export default function AdminDashboard() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Dashboard</h1>
-        <RestaurantPicker />
+        <select
+          value={filterRestaurant}
+          onChange={e => setFilterRestaurant(e.target.value)}
+          style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none" }}
+        >
+          <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
+          {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+        </select>
       </div>
 
       {/* Main metrics */}
@@ -163,7 +170,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Genio Insights */}
-      {selectedRestaurantId && (
+      {filterRestaurant && (
         <div style={{ marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#F4A623", margin: 0 }}>🧞 Insights del Genio</h2>
@@ -173,7 +180,7 @@ export default function AdminDashboard() {
                 try {
                   const res = await fetch("/api/admin/insights", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ restaurantId: selectedRestaurantId, action: "generate" }),
+                    body: JSON.stringify({ restaurantId: filterRestaurant, action: "generate" }),
                   });
                   const d = await res.json();
                   if (d.insights) setInsights(d.insights);

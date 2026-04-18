@@ -69,14 +69,27 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
 
     for (const user of batch) {
       try {
-        // Add unsubscribe link and tracking pixel
-        const unsubUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl"}/api/qr/user/unsubscribe?userId=${user.id}`;
-        const pixelUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl"}/api/campaigns/track/open?cid=${campaignId}&uid=${user.id}`;
+        // Add click tracking, unsubscribe link, and open pixel
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl";
+        const unsubUrl = `${baseUrl}/api/qr/user/unsubscribe?userId=${user.id}`;
+        const pixelUrl = `${baseUrl}/api/campaigns/track/open?cid=${campaignId}&uid=${user.id}`;
 
-        const personalizedHtml = campaign.bodyHtml
+        // Wrap all <a href="..."> links with click tracker
+        let personalizedHtml = campaign.bodyHtml
           .replace(/\{\{name\}\}/g, user.name || "")
-          .replace(/\{\{restaurant\}\}/g, campaign.restaurant.name)
-          + `<img src="${pixelUrl}" width="1" height="1" style="display:none" />`
+          .replace(/\{\{restaurant\}\}/g, campaign.restaurant.name);
+
+        // Replace href links (except unsubscribe and mailto) with click tracker
+        personalizedHtml = personalizedHtml.replace(
+          /href="(https?:\/\/[^"]+)"/g,
+          (match, url) => {
+            if (url.includes("unsubscribe")) return match;
+            const trackUrl = `${baseUrl}/api/campaigns/track/click?cid=${campaignId}&uid=${user.id}&url=${encodeURIComponent(url)}`;
+            return `href="${trackUrl}"`;
+          }
+        );
+
+        personalizedHtml += `<img src="${pixelUrl}" width="1" height="1" style="display:none" />`
           + `<p style="text-align:center;margin-top:32px;font-size:11px;color:#999"><a href="${unsubUrl}" style="color:#999">Desuscribirse</a></p>`;
 
         await fetch("https://api.resend.com/emails", {

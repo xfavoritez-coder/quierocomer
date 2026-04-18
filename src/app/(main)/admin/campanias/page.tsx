@@ -24,7 +24,7 @@ export default function AdminCampanias() {
   const { selectedRestaurantId, loading: sessionLoading } = useAdminSession();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [segments, setSegments] = useState<Segment[]>([]);
-  const [recipientStats, setRecipientStats] = useState<Record<string, { sent: number; opened: number }>>({});
+  const [recipientStats, setRecipientStats] = useState<Record<string, { sent: number; opened: number; clicked: number }>>({});
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Campaign | null>(null);
@@ -191,6 +191,10 @@ export default function AdminCampanias() {
                     <div style={{ textAlign: "center" }}>
                       <p style={{ fontFamily: F, fontSize: "1rem", color: "#7fbfdc", fontWeight: 700, margin: 0 }}>{stats?.opened || 0}</p>
                       <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#666", margin: 0 }}>Abiertos</p>
+                    </div>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontFamily: F, fontSize: "1rem", color: "#F4A623", fontWeight: 700, margin: 0 }}>{stats?.clicked || 0}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.6rem", color: "#666", margin: 0 }}>Clicks</p>
                     </div>
                   </div>
                 )}

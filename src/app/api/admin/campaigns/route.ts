@@ -30,9 +30,16 @@ export async function GET(req: NextRequest) {
     _count: { id: true },
   }) : [];
 
-  const statsMap: Record<string, { sent: number; opened: number }> = {};
-  recipientStats.forEach((r: any) => { statsMap[r.campaignId] = { sent: r._count.id, opened: 0 }; });
+  const clickStats = sentIds.length ? await prisma.campaignRecipient.groupBy({
+    by: ["campaignId"],
+    where: { campaignId: { in: sentIds }, clickedAt: { not: null } },
+    _count: { id: true },
+  }) : [];
+
+  const statsMap: Record<string, { sent: number; opened: number; clicked: number }> = {};
+  recipientStats.forEach((r: any) => { statsMap[r.campaignId] = { sent: r._count.id, opened: 0, clicked: 0 }; });
   openStats.forEach((r: any) => { if (statsMap[r.campaignId]) statsMap[r.campaignId].opened = r._count.id; });
+  clickStats.forEach((r: any) => { if (statsMap[r.campaignId]) statsMap[r.campaignId].clicked = r._count.id; });
 
   return NextResponse.json({ campaigns, recipientStats: statsMap });
 }
