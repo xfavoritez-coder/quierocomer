@@ -601,17 +601,26 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             })}
           </div>
 
-          {/* Selected counter */}
-          {liked.size > 0 && (
-            <div className="flex items-center justify-center" style={{ marginBottom: 8, gap: 6 }}>
-              <div style={{ background: "#F4A623", color: "#0e0e0e", width: 22, height: 22, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 700 }}>
-                {liked.size}
-              </div>
-              <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.78rem" }}>
-                {liked.size === 1 ? "plato seleccionado" : "platos seleccionados"}
-              </span>
-            </div>
-          )}
+          {/* Selected counter + feedback */}
+          <div className="flex items-center justify-center" style={{ marginBottom: 10, gap: 8, minHeight: 28 }}>
+            {liked.size > 0 ? (
+              <>
+                <div style={{ background: "#F4A623", color: "#0e0e0e", width: 24, height: 24, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.82rem", fontWeight: 700 }}>
+                  {liked.size}
+                </div>
+                <span style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.88rem" }}>
+                  {liked.size === 1 ? "plato seleccionado" : "platos seleccionados"}
+                </span>
+                {!showOverlay && liked.size < 4 && (
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", marginLeft: 4 }}>
+                    {liked.size === 1 ? "· sigue seleccionando" : liked.size === 2 ? "· un poco más" : "· ya casi 🤔"}
+                  </span>
+                )}
+              </>
+            ) : (
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem", margin: 0 }}>Toca los platos que te llaman 👆</p>
+            )}
+          </div>
 
           {/* 3x3 Grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
@@ -661,23 +670,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </p>
           )}
 
-          {/* Feedback / action */}
-          {!showOverlay && (
-            <div className="text-center" style={{ marginTop: 8 }}>
-              {liked.size === 0 && (
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem" }}>Toca los platos que te llaman 👆</p>
-              )}
-              {liked.size === 1 && (
-                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>Sigue seleccionando...</p>
-              )}
-              {liked.size === 2 && (
-                <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>Vas bien, un poco más...</p>
-              )}
-              {liked.size === 3 && (
-                <p style={{ color: "white", fontSize: "0.82rem" }}>Ya casi lo tengo... 🤔</p>
-              )}
-            </div>
-          )}
 
           {/* 4+ overlay */}
           {showOverlay && liked.size >= 4 && (
