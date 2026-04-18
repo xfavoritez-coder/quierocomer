@@ -10,7 +10,7 @@
  */
 import { getGuestId, getSessionId } from "./guestId";
 
-const HEARTBEAT_INTERVAL = 15_000; // 15 seconds
+const HEARTBEAT_INTERVAL = 10_000; // 10 seconds
 const INACTIVITY_TIMEOUT = 30_000; // 30 seconds
 const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 
