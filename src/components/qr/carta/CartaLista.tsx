@@ -121,35 +121,44 @@ export default function CartaLista({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5", paddingBottom: 100 }}>
-      {/* TOP BAR: logo + name | vistas | perfil */}
-      {/* TOP BAR: logo+nombre | vistas centradas | perfil */}
-      <div style={{ padding: "12px 16px 12px", display: "flex", alignItems: "center", background: "#f7f7f5" }}>
-        {/* Left: logo + name */}
-        <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
-          {restaurant.logoUrl ? (
-            <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0 }} />
-          ) : (
-            <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "#F4A623", fontSize: "0.7rem", fontWeight: 700, color: "#0e0e0e", flexShrink: 0 }}>
-              {restaurant.name.charAt(0).toUpperCase()}
+      {/* TOP BAR: mini hero oscuro */}
+      <div style={{ position: "relative", background: "#1a1a1a", overflow: "hidden" }}>
+        {/* Background photo blur */}
+        {(() => {
+          const bgPhoto = dishes.find(d => d.photos?.[0])?.photos?.[0];
+          return bgPhoto ? (
+            <div style={{ position: "absolute", inset: -20, zIndex: 0 }}>
+              <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" style={{ filter: "blur(20px) brightness(0.3)", transform: "scale(1.2)" }} />
             </div>
-          )}
-          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {restaurant.name}
-          </span>
-        </div>
-        {/* Center: view selector */}
-        {/* Right: profile */}
-        <div className="flex items-center justify-center" style={{ flex: 1, justifyContent: "flex-end" }}>
-          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
+          ) : null;
+        })()}
+        <div style={{ position: "relative", zIndex: 1, padding: "16px 16px 14px", display: "flex", alignItems: "center" }}>
+          {/* Left: logo + name */}
+          <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
+            {restaurant.logoUrl ? (
+              <Image src={restaurant.logoUrl} alt={restaurant.name} width={33} height={33} className="rounded-full" style={{ flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
+            ) : (
+              <div className="flex items-center justify-center rounded-full" style={{ width: 33, height: 33, background: "rgba(255,255,255,0.12)", fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", flexShrink: 0 }}>
+                {restaurant.name.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {restaurant.name}
+            </span>
+          </div>
+          {/* Right: profile */}
+          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", flexShrink: 0 }}>
             {qrUser ? (
-              <span style={{ color: "#333", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+              <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
                 {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
               </span>
             ) : (
-              <User size={20} color="#999" />
+              <User size={20} color="rgba(255,255,255,0.5)" />
             )}
           </div>
         </div>
+        {/* Bottom accent line */}
+        <div style={{ position: "relative", zIndex: 1, height: 2, background: "linear-gradient(90deg, #F4A623, rgba(244,166,35,0.2), transparent)" }} />
       </div>
 
       {/* STICKY NAV: search overlay or category tabs with search icon */}

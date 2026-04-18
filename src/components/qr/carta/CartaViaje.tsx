@@ -77,12 +77,35 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     <>
       <style>{CSS}</style>
       <div className="vj-root">
+        {/* Top left: logo + restaurant name */}
+        <button
+          onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}
+          className="fixed z-50 flex items-center"
+          style={{
+            top: 16, left: 16, gap: 8,
+            background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
+            padding: "6px 14px 6px 6px", cursor: "pointer",
+          }}
+        >
+          {restaurant.logoUrl ? (
+            <Image src={restaurant.logoUrl} alt={restaurant.name} width={26} height={26} className="rounded-full" style={{ flexShrink: 0 }} />
+          ) : (
+            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
+              {restaurant.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
+            {restaurant.name}
+          </span>
+        </button>
+
         {/* Top right: user profile */}
         <button
           onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 16, right: 16, width: 40, height: 40, borderRadius: "50%",
+            top: 16, right: 12, width: 40, height: 40, borderRadius: "50%",
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
           }}
@@ -162,7 +185,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
-                onDishTap={setSelectedDish}
+                onDishTap={() => {}}
               />
             );
           })}
@@ -185,19 +208,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           />
         )}
 
-        {/* DishDetail */}
-        {selectedDish && (
-          <DishDetail
-            dish={selectedDish}
-            allDishes={sortedDishes}
-            categories={categories}
-            restaurantId={restaurant.id}
-            reviews={reviews}
-            ratingMap={ratingMap}
-            onClose={() => setSelectedDish(null)}
-            onChangeDish={setSelectedDish}
-          />
-        )}
       </div>
     </>
   );
@@ -323,9 +333,13 @@ function CategoryTrack({
       {/* Header — only show on dish slides (not chapter title) */}
       {activeSlide > 0 && (
         <div className="vj-category-header">
-          <div className="vj-category-label" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white" }}>
+          <button
+            onClick={() => trackRef.current?.scrollTo({ left: 0, behavior: "smooth" })}
+            className="vj-category-label"
+            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto" }}
+          >
             {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
-          </div>
+          </button>
           <div className="vj-bullets">
             {group.dishes.map((_, i) => (
               <div key={i} className={`vj-bullet ${i + 1 === activeSlide ? "active" : ""}`} />
@@ -638,7 +652,7 @@ const CSS = `
   .vj-category-header.light .vj-bullet.active { background: #c93010; }
 
   /* ===== DISH (shared) ===== */
-  .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; cursor: pointer; }
+  .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; }
   .vj-eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; margin-bottom: 12px; font-weight: 500; display: inline-block; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-dish.in-view .vj-eyebrow { opacity: 0.7; transform: translateY(0); }
   .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; }
@@ -656,7 +670,6 @@ const CSS = `
   .vj-v-light .vj-meta, .vj-v-spotlight .vj-meta { justify-content: center; }
   .vj-dish.in-view .vj-meta { opacity: 1; transform: translateY(0); }
   .vj-price { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; padding: 6px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; }
-  .vj-price::before { content: ''; width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
   /* HERO */
   .vj-v-hero { flex-direction: column; justify-content: flex-end; }

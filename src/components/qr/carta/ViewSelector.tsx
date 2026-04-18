@@ -56,7 +56,7 @@ export default function ViewSelector({ restaurantId }: Props) {
     if (next === view) return;
     const option = OPTIONS.find((o) => o.value === next);
     // Show overlay IMMEDIATELY before React re-renders
-    showViewTransition(option?.label || "");
+    showViewTransition(option?.label || "", next);
     setView(next);
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);
