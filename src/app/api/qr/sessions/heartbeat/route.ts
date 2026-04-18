@@ -26,7 +26,9 @@ export async function PATCH(request: Request) {
         dishesViewed: dishesViewed || undefined,
         categoriesViewed: categoriesViewed || undefined,
         pickedDishId: pickedDishId || undefined,
-        ...(isFinal ? { endedAt: new Date(), isAbandoned: false, closeReason: body.closeReason || "normal" } : {}),
+        // Always update endedAt so sessions never stay "open" forever
+        endedAt: new Date(),
+        ...(isFinal ? { isAbandoned: false, closeReason: body.closeReason || "normal" } : {}),
       },
     });
 

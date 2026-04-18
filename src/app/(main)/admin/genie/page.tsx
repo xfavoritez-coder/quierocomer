@@ -126,9 +126,11 @@ export default function AdminSessions() {
 
                   {/* Status */}
                   <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                    {s.isAbandoned && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff6b6b" }} />}
-                    {!s.isAbandoned && s.endedAt && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80" }} />}
-                    {!s.endedAt && <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#F4A623", animation: "pulse 2s infinite" }} />}
+                    {s.isAbandoned ? (
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff6b6b" }} title="Abandonada" />
+                    ) : (
+                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80" }} title="Completada" />
+                    )}
                     <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>{isOpen ? "▲" : "▼"}</span>
                   </div>
                 </button>
