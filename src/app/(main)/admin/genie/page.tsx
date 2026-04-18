@@ -142,11 +142,13 @@ export default function AdminSessions() {
                     <div style={{ padding: "12px 0", display: "flex", gap: 20, flexWrap: "wrap", fontSize: "0.8rem", fontFamily: F, color: "#aaa" }}>
                       <div>
                         <span style={{ color: "#666" }}>Usuario: </span>
-                        {s.qrUser ? (
-                          <span style={{ color: "#4ade80" }}>{s.qrUser.name || s.qrUser.email}{s.qrUser.dietType ? ` · ${s.qrUser.dietType}` : ""}</span>
-                        ) : (
-                          <span style={{ color: "#F4A623" }}>Fantasma #{s.guest.id.slice(0, 8)}</span>
-                        )}
+                        <a href={`/admin/usuario/${s.guest.id}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", borderBottom: "1px dashed" }}>
+                          {s.qrUser ? (
+                            <span style={{ color: "#4ade80" }}>{s.qrUser.name || s.qrUser.email}{s.qrUser.dietType ? ` · ${s.qrUser.dietType}` : ""}</span>
+                          ) : (
+                            <span style={{ color: "#F4A623" }}>Fantasma #{s.guest.id.slice(0, 8)}</span>
+                          )}
+                        </a>
                       </div>
                       {s.weather && <div><span style={{ color: "#666" }}>Clima: </span>{s.weather}</div>}
                       {s.timeOfDay && <div><span style={{ color: "#666" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
