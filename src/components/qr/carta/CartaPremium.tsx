@@ -324,7 +324,7 @@ export default function CartaPremium({
                         minWidth: dish.tags?.includes("RECOMMENDED") ? 185 : 165,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
-                        marginLeft: i === 0 ? 20 : 17,
+                        marginLeft: i === 0 ? 20 : 16,
                         marginRight: i === catDishes.length - 1 ? 20 : 0,
                       }}
                     >

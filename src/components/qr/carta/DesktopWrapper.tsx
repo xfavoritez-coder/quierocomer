@@ -9,7 +9,7 @@ interface DesktopWrapperProps {
 }
 
 export default function DesktopWrapper({ restaurantName, slug, children }: DesktopWrapperProps) {
-  const [isDesktop, setIsDesktop] = useState(false);
+  const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 768);
@@ -18,6 +18,8 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  // Don't render anything until we know (prevents flash)
+  if (isDesktop === null) return <div style={{ minHeight: "100vh", background: "#0a0a0a" }} />;
   if (!isDesktop) return <>{children}</>;
 
   // Hide floating buttons on desktop

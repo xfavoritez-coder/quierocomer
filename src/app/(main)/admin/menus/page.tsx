@@ -73,9 +73,43 @@ export default function AdminMenus() {
     </div>
   );
 
+  const [editMode, setEditMode] = useState(false);
+  const [eIngredients, setEIngredients] = useState("");
+  const [eAllergens, setEAllergens] = useState<string[]>([]);
+  const [eTags, setETags] = useState<string[]>([]);
+  const [eIsHero, setEIsHero] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
+  const TAG_OPTIONS = ["RECOMMENDED", "NEW", "MOST_ORDERED", "PROMOTION"];
+
+  const startEditDish = (d: Dish) => {
+    setEditMode(true);
+    setEIngredients(d.ingredients || "");
+    setEAllergens((d.allergens || "").split(",").map(a => a.trim().toLowerCase()).filter(Boolean));
+    setETags([...d.tags]);
+    setEIsHero(d.isHero);
+  };
+
+  const saveDishEdit = async () => {
+    if (!selectedDish) return;
+    setSaving(true);
+    await fetch(`/api/admin/dishes/${selectedDish.id}`, {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredients: eIngredients || null, allergens: eAllergens.join(", ") || null, tags: eTags, isHero: eIsHero }),
+    });
+    setDishes(prev => prev.map(d => d.id === selectedDish.id ? { ...d, ingredients: eIngredients, allergens: eAllergens.join(", "), tags: eTags, isHero: eIsHero } : d));
+    setSelectedDish({ ...selectedDish, ingredients: eIngredients, allergens: eAllergens.join(", "), tags: eTags as any, isHero: eIsHero });
+    setEditMode(false);
+    setSaving(false);
+  };
+
+  const toggleAllergen = (a: string) => setEAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
+  const toggleTag = (t: string) => setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+
   if (selectedDish) return (
     <div style={{ maxWidth: 500 }}>
-      <button onClick={() => setSelectedDish(null)} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver al menu</button>
+      <button onClick={() => { setSelectedDish(null); setEditMode(false); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
       <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
@@ -95,35 +129,79 @@ export default function AdminMenus() {
             </div>
           </div>
 
-          {selectedDish.tags.length > 0 && (
-            <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-              {selectedDish.tags.map(t => (
-                <span key={t} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${TAG_COLORS[t] || "#888"}20`, color: TAG_COLORS[t] || "#888", border: `1px solid ${TAG_COLORS[t] || "#888"}40` }}>{t}</span>
-              ))}
-            </div>
+          {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#aaa", lineHeight: 1.5, margin: "0 0 16px" }}>{selectedDish.description}</p>}
+
+          {!editMode ? (
+            <>
+              {/* Read-only view */}
+              {selectedDish.tags.length > 0 && (
+                <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                  {selectedDish.tags.map(t => (
+                    <span key={t} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${TAG_COLORS[t] || "#888"}20`, color: TAG_COLORS[t] || "#888", border: `1px solid ${TAG_COLORS[t] || "#888"}40` }}>{t}</span>
+                  ))}
+                </div>
+              )}
+              {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", margin: "0 0 8px" }}>🥘 {selectedDish.ingredients}</p>}
+              {selectedDish.allergens && (
+                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
+                  {selectedDish.allergens.split(",").map(a => a.trim()).filter(Boolean).map(a => (
+                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530", border: "1px solid rgba(232,85,48,0.2)" }}>🚫 {a}</span>
+                  ))}
+                </div>
+              )}
+              {!selectedDish.allergens && !selectedDish.ingredients && (
+                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#555", fontStyle: "italic", margin: "0 0 12px" }}>Sin ingredientes ni alérgenos configurados</p>
+              )}
+
+              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
+                <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
+                  {selectedDish.isActive ? "Desactivar" : "Activar"}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Edit mode */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Ingredientes</label>
+                <textarea value={eIngredients} onChange={e => setEIngredients(e.target.value)} rows={2} style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", resize: "vertical", boxSizing: "border-box" }} placeholder="arroz, palta, salmón, soja..." />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Alérgenos</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {ALLERGEN_OPTIONS.map(a => (
+                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eAllergens.includes(a) ? "#e85530" : "#666" }}>
+                      {eAllergens.includes(a) ? "🚫 " : ""}{a}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Tags</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {TAG_OPTIONS.map(t => (
+                    <button key={t} onClick={() => toggleTag(t)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t) ? `${TAG_COLORS[t]}20` : "rgba(255,255,255,0.05)", color: eTags.includes(t) ? TAG_COLORS[t] : "#666" }}>
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <button onClick={() => setEIsHero(!eIsHero)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eIsHero ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.05)", color: eIsHero ? "#F4A623" : "#666" }}>
+                  {eIsHero ? "⭐ Hero activo" : "Hero"}
+                </button>
+              </div>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={saveDishEdit} disabled={saving} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
+                <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+              </div>
+            </>
           )}
-
-          {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#aaa", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
-          {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#666", margin: "0 0 8px" }}>Ingredientes: {selectedDish.ingredients}</p>}
-          {selectedDish.allergens && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#e85530", margin: "0 0 8px" }}>Alergenos: {selectedDish.allergens}</p>}
-
-          {selectedDish.photos.length > 1 && (
-            <div style={{ display: "flex", gap: 6, marginTop: 12, overflowX: "auto" }}>
-              {selectedDish.photos.map((p, i) => (
-                <img key={i} src={p} alt="" style={{ width: 60, height: 60, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
-              ))}
-            </div>
-          )}
-
-          <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{
-              flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
-              background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)",
-              color: selectedDish.isActive ? "#ff6b6b" : "#4ade80",
-            }}>
-              {selectedDish.isActive ? "Desactivar" : "Activar"}
-            </button>
-          </div>
         </div>
       </div>
     </div>
