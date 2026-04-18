@@ -78,6 +78,7 @@ export default function CartaPremium({
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [captureName, setCaptureName] = useState("");
   const [captureEmail, setCaptureEmail] = useState("");
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -440,22 +441,122 @@ export default function CartaPremium({
 
       {/* Email capture modal */}
       {showEmailModal && (
-        <div className="fixed flex items-center justify-center font-[family-name:var(--font-dm)]" style={{ inset: 0, zIndex: 90, background: "rgba(0,0,0,0.6)" }} onClick={() => setShowEmailModal(false)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: "white", borderRadius: 16, padding: "28px 24px", maxWidth: 340, width: "90%" }}>
-            <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0e0e0e", textAlign: "center", marginBottom: 16 }}>Guarda tus preferencias</h3>
+        <div
+          className="fixed flex items-center justify-center font-[family-name:var(--font-dm)]"
+          style={{ inset: 0, zIndex: 90, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowEmailModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "white",
+              borderRadius: 20,
+              padding: "32px 24px 28px",
+              maxWidth: 360,
+              width: "90%",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+              position: "relative",
+            }}
+          >
+            {/* Close */}
+            <button
+              onClick={() => setShowEmailModal(false)}
+              style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
+            >
+              <X size={18} color="#ccc" />
+            </button>
+
             {captureStatus === "success" ? (
-              <p style={{ textAlign: "center", color: "#16a34a", fontSize: "0.95rem", fontWeight: 600 }}>✓ Revisa tu correo 📬</p>
+              <div style={{ textAlign: "center", padding: "20px 0" }}>
+                <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 14 }}>🧞</span>
+                <h3
+                  className="font-[family-name:var(--font-playfair)]"
+                  style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", marginBottom: 8 }}
+                >
+                  ¡Listo{captureName ? `, ${captureName}` : ""}!
+                </h3>
+                <p style={{ color: "#888", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                  Tus gustos quedaron guardados. La próxima vez te recomendaré mejor.
+                </p>
+              </div>
             ) : (
               <>
-                <input type="email" value={captureEmail} onChange={(e) => setCaptureEmail(e.target.value)} placeholder="tu@email.com" style={{ width: "100%", padding: "12px 16px", borderRadius: 10, border: "1px solid #eee", fontSize: "1rem", outline: "none" }} />
-                <button onClick={async () => {
-                  if (!captureEmail) return;
-                  setCaptureStatus("loading");
-                  await fetch("/api/qr/user/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: captureEmail, dietType: localStorage.getItem("qr_diet"), restrictions: localStorage.getItem("qr_restrictions") ? JSON.parse(localStorage.getItem("qr_restrictions")!) : [], restaurantId: restaurant.id, source: "second_visit" }) });
-                  setCaptureStatus("success");
-                }} style={{ width: "100%", marginTop: 10, padding: "12px", borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", opacity: captureStatus === "loading" ? 0.5 : 1 }}>
-                  {captureStatus === "loading" ? "Enviando..." : "Guardar →"}
-                </button>
+                {/* Header */}
+                <div style={{ textAlign: "center", marginBottom: 24 }}>
+                  <span style={{ fontSize: "2.4rem", display: "block", marginBottom: 10 }}>🧞</span>
+                  <h3
+                    className="font-[family-name:var(--font-playfair)]"
+                    style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
+                  >
+                    Guarda tus gustos
+                  </h3>
+                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
+                    Así el Genio te recomienda mejor cada vez
+                  </p>
+                </div>
+
+                {/* Form */}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  <input
+                    type="text"
+                    value={captureName}
+                    onChange={(e) => setCaptureName(e.target.value)}
+                    placeholder="Tu nombre"
+                    style={{
+                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      outline: "none", fontFamily: "inherit",
+                    }}
+                  />
+                  <input
+                    type="email"
+                    value={captureEmail}
+                    onChange={(e) => setCaptureEmail(e.target.value)}
+                    placeholder="tu@email.com"
+                    style={{
+                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      outline: "none", fontFamily: "inherit",
+                    }}
+                  />
+                  <button
+                    className="active:scale-[0.98] transition-transform"
+                    onClick={async () => {
+                      if (!captureEmail) return;
+                      setCaptureStatus("loading");
+                      const res = await fetch("/api/qr/user/register", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          email: captureEmail,
+                          name: captureName || null,
+                          dietType: localStorage.getItem("qr_diet"),
+                          restrictions: localStorage.getItem("qr_restrictions") ? JSON.parse(localStorage.getItem("qr_restrictions")!) : [],
+                          restaurantId: restaurant.id,
+                          source: "second_visit",
+                        }),
+                      });
+                      const data = await res.json();
+                      if (data.userId) {
+                        document.cookie = `qr_user_id=${data.userId};path=/;max-age=${60 * 60 * 24 * 365}`;
+                      }
+                      setCaptureStatus("success");
+                    }}
+                    style={{
+                      width: "100%", marginTop: 4, background: "#F4A623", color: "white",
+                      borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
+                      border: "none", fontFamily: "inherit", cursor: "pointer",
+                      boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
+                      opacity: captureStatus === "loading" ? 0.6 : 1,
+                    }}
+                  >
+                    {captureStatus === "loading" ? "Guardando..." : "Guardar"}
+                  </button>
+                </div>
+
+                <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#bbb", marginTop: 12 }}>
+                  🔒 Solo usaremos tu email para recordar tus gustos
+                </p>
               </>
             )}
           </div>
