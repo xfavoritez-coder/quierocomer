@@ -10,8 +10,7 @@ interface DashData {
   registeredGuests: number;
   conversionRate: number;
   avgSessionDuration: number;
-  sessionsActive: number;
-  sessionsAbandoned: number;
+  genioUsedThisWeek: number;
   viewDistribution: Record<string, number>;
   deviceDistribution: Record<string, number>;
   topDishesViewed: { name: string; count: number }[];
@@ -138,10 +137,9 @@ export default function AdminDashboard() {
         <Stat label="Duración promedio" value={avgText} />
       </div>
 
-      {/* Engagement */}
+      {/* Genio */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="Sesiones activas" value={data.sessionsActive} color="#3db89e" />
-        <Stat label="Abandonadas (30s)" value={data.sessionsAbandoned} color="#e85530" />
+        <Stat label="🧞 Genio usado esta semana" value={data.genioUsedThisWeek} color="#F4A623" />
       </div>
 
       {/* Distributions */}

@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
       totalGuests,
       linkedGuests,
       sessionsThisWeek,
+      genioUsedThisWeek,
       topDishesViewed,
       topDishesGenio,
       dietDistribution,
@@ -97,6 +98,11 @@ export async function GET(req: NextRequest) {
       prisma.session.findMany({
         where: { ...restaurantFilter, startedAt: { gte: weekAgo } },
         select: { durationMs: true, isAbandoned: true, viewUsed: true, deviceType: true },
+      }),
+
+      // Genio used this week
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: weekAgo } },
       }),
 
       // Top 5 most viewed dishes
@@ -195,8 +201,7 @@ export async function GET(req: NextRequest) {
       registeredGuests: linkedGuests,
       conversionRate: totalGuests > 0 ? Math.round((linkedGuests / totalGuests) * 100) : 0,
       avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount / 1000) : 0, // seconds
-      sessionsActive: active,
-      sessionsAbandoned: abandoned,
+      genioUsedThisWeek,
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
       topDishesViewed: topDishesViewed.map(d => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
