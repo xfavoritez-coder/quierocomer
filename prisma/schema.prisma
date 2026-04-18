@@ -865,8 +865,8 @@ model Promotion {
 enum PromotionStatus {
   SUGGESTED
   ACTIVE
-  ARCHIVED
-  REJECTED
+  PAUSED
+  DELETED
 }
 
 model AutomationRule {
@@ -888,18 +888,18 @@ model AutomationRule {
 
 model GenioInsight {
   id            String   @id @default(cuid())
-  restaurantId  String
-  type          String   // menu_gap, segment_opportunity, pricing, engagement
+  restaurantId  String?
+  type          String   // menu_gap, segment_opportunity, pricing, engagement, platform, comparison, opportunity
   title         String
   body          String
   priority      Int      @default(0)
-  data          Json?    // números que respaldan el insight
+  data          Json?
   status        String   @default("active") // active, dismissed
   generatedAt   DateTime @default(now())
   expiresAt     DateTime?
   dismissedAt   DateTime?
 
-  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurant    Restaurant? @relation(fields: [restaurantId], references: [id])
 
   @@index([restaurantId])
   @@index([status])

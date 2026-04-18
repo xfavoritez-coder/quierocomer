@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   if (mode === "global") {
     const insights = await prisma.genioInsight.findMany({
-      where: { restaurantId: "global", status: "active" },
+      where: { restaurantId: null, status: "active" },
       orderBy: { priority: "asc" },
     });
     return NextResponse.json({ insights });
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
 
       // Clear old insights
       await prisma.genioInsight.updateMany({
-        where: { restaurantId: isGlobal ? "global" : restaurantId, status: "active" },
+        where: { restaurantId: isGlobal ? null : restaurantId, status: "active" },
         data: { status: "dismissed" },
       });
 
@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
       for (const i of insights) {
         const insight = await prisma.genioInsight.create({
           data: {
-            restaurantId: isGlobal ? "global" : restaurantId,
+            restaurantId: isGlobal ? null : restaurantId,
             type: i.type,
             title: i.title,
             body: i.body,
