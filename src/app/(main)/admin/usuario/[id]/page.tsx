@@ -89,10 +89,10 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
           {[
-            { label: "Visitas", value: guest.visitCount, color: "#F4A623" },
-            { label: "Sesiones", value: stats.totalSessions, color: "white" },
+            { label: "Sesiones", value: stats.totalSessions, color: "#F4A623" },
             { label: "Locales", value: stats.restaurantsVisited, color: "#7fbfdc" },
             { label: "Duración prom.", value: `${stats.avgDuration}s`, color: "#4ade80" },
+            { label: "Tiempo total", value: `${Math.floor(stats.totalDuration / 60)}m`, color: "white" },
           ].map(s => (
             <div key={s.label} style={{ background: "#111", borderRadius: 10, padding: "10px 12px", textAlign: "center" }}>
               <p style={{ fontFamily: F, fontSize: "1.2rem", color: s.color, fontWeight: 700, margin: 0 }}>{s.value}</p>
