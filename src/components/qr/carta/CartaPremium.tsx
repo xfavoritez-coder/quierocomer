@@ -187,7 +187,7 @@ export default function CartaPremium({
           categories={categories}
           activeCategory={activeCategory}
           onCategoryChange={setActiveCategory}
-          rightSlot={
+          leftSlot={
             <button
               onClick={() => setSearchOpen(true)}
               className="flex items-center justify-center"
