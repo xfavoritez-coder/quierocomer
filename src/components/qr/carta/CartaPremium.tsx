@@ -350,18 +350,32 @@ export default function CartaPremium({
 
       {/* Genio nudge */}
       <div
-        onClick={() => setGenioOpen(true)}
         className="font-[family-name:var(--font-dm)]"
         style={{
-          margin: "32px 20px 0", padding: "20px", textAlign: "center", cursor: "pointer",
-          background: "linear-gradient(180deg, rgba(244,166,35,0.04) 0%, transparent 100%)",
-          borderTop: "1px solid rgba(244,166,35,0.08)", borderRadius: "16px 16px 0 0",
+          margin: "32px 20px 16px", padding: "24px 20px", textAlign: "center",
+          background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
       >
-        <span style={{ fontSize: "1.4rem", opacity: 0.6 }}>🧞</span>
-        <p style={{ fontSize: "0.82rem", color: "#b0a090", margin: "6px 0 0", lineHeight: 1.4 }}>
-          ¿No sabes qué pedir? <span style={{ color: "#F4A623", fontWeight: 600 }}>Pregúntale al Genio</span>
-        </p>
+        <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "white", boxShadow: "0 4px 12px rgba(244,166,35,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+          <Sparkles size={24} color="#F4A623" strokeWidth={1.75} />
+        </div>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
+        <p style={{ fontSize: "12.5px", color: "#8a5a2c", margin: "0 0 18px" }}>El Genio conoce cada plato y puede ayudarte</p>
+        <button
+          onClick={() => setGenioOpen(true)}
+          className="active:scale-[0.97] transition-transform"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "linear-gradient(135deg, #F4A623 0%, #e85530 100%)",
+            color: "white", padding: "12px 24px", borderRadius: 100,
+            fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
+            boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+          }}
+        >
+          Preguntar al Genio
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       {/* Powered by footer */}
@@ -399,7 +413,7 @@ export default function CartaPremium({
       </footer>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"

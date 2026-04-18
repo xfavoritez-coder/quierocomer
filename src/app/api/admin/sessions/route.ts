@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         include: {
           restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } },
-          guest: { select: { id: true, visitCount: true, totalSessions: true, linkedQrUserId: true } },
+          guest: { select: { id: true, visitCount: true, totalSessions: true, linkedQrUserId: true, preferences: true } },
           qrUser: { select: { id: true, name: true, email: true, dietType: true } },
         },
       }),
@@ -57,6 +57,14 @@ export async function GET(req: NextRequest) {
       : [];
     const catMap = Object.fromEntries(catNames.map(c => [c.id, c.name]));
 
+    // Check which sessions used Genio
+    const sessionGuestIds = [...new Set(sessions.map(s => s.guestId))];
+    const genioEvents = sessionGuestIds.length ? await prisma.statEvent.findMany({
+      where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE"] } },
+      select: { guestId: true, eventType: true, createdAt: true },
+    }) : [];
+    const genioGuestIds = new Set(genioEvents.map(e => e.guestId));
+
     // Enrich sessions
     const enriched = sessions.map(s => {
       const viewed = (s.dishesViewed as any[]) || [];
@@ -72,6 +80,7 @@ export async function GET(req: NextRequest) {
           name: catMap[c.categoryId] || c.categoryId,
         })),
         pickedDish: s.pickedDishId ? dishMap[s.pickedDishId] || null : null,
+        usedGenio: genioGuestIds.has(s.guestId),
       };
     });
 

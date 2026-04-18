@@ -39,8 +39,9 @@ interface SessionData {
   pickedDishId: string | null;
   pickedDish: { id: string; name: string; price: number; photos: string[] } | null;
   restaurant: { id: string; name: string; slug: string; logoUrl: string | null };
-  guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null };
+  guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null; preferences: any };
   qrUser: { id: string; name: string | null; email: string; dietType: string | null } | null;
+  usedGenio: boolean;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
 }
@@ -89,7 +90,7 @@ export default function AdminSessions() {
       </div>
 
       {sessions.length === 0 ? (
-        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 60 }}>No hay sesiones registradas todavia</p>
+        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 60 }}>No hay sesiones registradas todavia</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {sessions.map(s => {
@@ -113,26 +114,19 @@ export default function AdminSessions() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600 }}>{s.restaurant.name}</span>
                       {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
-                      {!s.qrUser && s.guest.visitCount > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.guest.visitCount}x)</span>}
+                      {!s.qrUser && s.guest.totalSessions > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.guest.totalSessions}x)</span>}
                     </div>
-                    <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+                    <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span>{timeAgo(s.startedAt)}</span>
                       {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}
                       {s.deviceType && <span>· {s.deviceType}</span>}
                       <span>· {formatDuration(s.durationMs)}</span>
-                      {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos vistos</span>}
+                      {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
+                      {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
                     </div>
                   </div>
 
-                  {/* Status */}
-                  <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
-                    {s.isAbandoned ? (
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#ff6b6b" }} title="Abandonada" />
-                    ) : (
-                      <span style={{ width: 8, height: 8, borderRadius: "50%", background: "#4ade80" }} title="Completada" />
-                    )}
-                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>{isOpen ? "▲" : "▼"}</span>
-                  </div>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                 </button>
 
                 {/* Expanded detail */}
@@ -141,7 +135,7 @@ export default function AdminSessions() {
                     {/* User info */}
                     <div style={{ padding: "12px 0", display: "flex", gap: 20, flexWrap: "wrap", fontSize: "0.8rem", fontFamily: F, color: "#aaa" }}>
                       <div>
-                        <span style={{ color: "#666" }}>Usuario: </span>
+                        <span style={{ color: "#999" }}>Usuario: </span>
                         <a href={`/admin/usuario/${s.guest.id}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", borderBottom: "1px dashed" }}>
                           {s.qrUser ? (
                             <span style={{ color: "#4ade80" }}>{s.qrUser.name || s.qrUser.email}{s.qrUser.dietType ? ` · ${s.qrUser.dietType}` : ""}</span>
@@ -150,15 +144,28 @@ export default function AdminSessions() {
                           )}
                         </a>
                       </div>
-                      {s.weather && <div><span style={{ color: "#666" }}>Clima: </span>{s.weather}</div>}
-                      {s.timeOfDay && <div><span style={{ color: "#666" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
-                      {s.closeReason && <div><span style={{ color: "#666" }}>Cierre: </span>{s.closeReason}</div>}
+                      {s.weather && <div><span style={{ color: "#999" }}>Clima: </span>{s.weather}</div>}
+                      {s.timeOfDay && <div><span style={{ color: "#999" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
                     </div>
+
+                    {/* Genio preferences */}
+                    {s.usedGenio && s.guest.preferences && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                        <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Usó el Genio</span>
+                        {(s.guest.preferences as any)?.dietType && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{(s.guest.preferences as any).dietType}</span>}
+                        {((s.guest.preferences as any)?.restrictions || []).filter((r: string) => r !== "ninguna").map((r: string) => (
+                          <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>🚫 {r}</span>
+                        ))}
+                        {((s.guest.preferences as any)?.dislikes || []).map((d: string) => (
+                          <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
+                        ))}
+                      </div>
+                    )}
 
                     {/* View history */}
                     {s.viewHistory && s.viewHistory.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Vistas usadas</p>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Vistas usadas</p>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {s.viewHistory.sort((a: any, b: any) => b.durationMs - a.durationMs).map((v: any, i: number) => (
                             <span key={i} style={{
@@ -190,7 +197,7 @@ export default function AdminSessions() {
                     {/* Dishes viewed */}
                     {s.dishesViewed.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Platos vistos ({s.dishesViewed.length})</p>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Platos vistos ({s.dishesViewed.length})</p>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                           {s.dishesViewed.map((d, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8 }}>
@@ -210,7 +217,7 @@ export default function AdminSessions() {
                     {/* Categories viewed */}
                     {s.categoriesViewed.length > 0 && (
                       <div>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Categorias exploradas</p>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Categorias exploradas</p>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                           {s.categoriesViewed.map((c, i) => (
                             <span key={i} style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "#aaa" }}>

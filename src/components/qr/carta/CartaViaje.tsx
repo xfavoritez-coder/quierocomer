@@ -123,7 +123,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         </button>
 
         {/* Floating buttons — cinematic style */}
-        <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
+        <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
           <button
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
@@ -387,12 +387,27 @@ function CategoryTrack({
   );
 }
 
+function VjNewBadge() {
+  return (
+    <div style={{
+      position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 50px)", left: 16, zIndex: 10,
+      background: "rgba(232,85,48,0.85)", backdropFilter: "blur(8px)",
+      color: "white", fontSize: "9px", fontWeight: 700, letterSpacing: "0.15em",
+      padding: "5px 12px", borderRadius: 50, textTransform: "uppercase",
+      boxShadow: "0 2px 10px rgba(232,85,48,0.4)",
+    }}>
+      ✨ Nuevo
+    </div>
+  );
+}
+
 /* =============== DISH SLIDE =============== */
 function DishSlide({ dish, variant, palette, index, onClick }: {
   dish: Dish; variant: SlideVariant; palette: Palette; index: number; onClick: () => void;
 }) {
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
+  const isNew = dish.tags?.includes("NEW");
   const accentColor = "#F4A623";
 
   if (variant === "hero") {
@@ -402,6 +417,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
       : undefined;
     return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
+      {isNew && <VjNewBadge />}
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
@@ -419,6 +435,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 
   if (variant === "split") return (
     <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
+      {isNew && <VjNewBadge />}
       <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
       <div className="vj-split-info">
         <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.allergens || ""}</span>
@@ -458,6 +475,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   // SPOTLIGHT (Genio)
   return (
     <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
+      {isNew && <VjNewBadge />}
       <div className="vj-spot-wrap">
         <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
       </div>

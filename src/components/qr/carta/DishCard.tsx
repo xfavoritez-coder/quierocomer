@@ -16,9 +16,24 @@ function DishBadges({ dish }: { dish: Dish }) {
   if (d.dishDiet === "VEGAN") badges.push({ icon: "🌱", title: "Vegano" });
   else if (d.dishDiet === "VEGETARIAN") badges.push({ icon: "🥚", title: "Vegetariano" });
   if (d.isSpicy) badges.push({ icon: "🌶️", title: "Picante" });
-  if (dish.tags?.includes("NEW")) badges.push({ icon: "✨", title: "Nuevo" });
+  if (dish.tags?.includes("RECOMMENDED")) badges.push({ icon: "⭐", title: "Recomendado" });
   if (!badges.length) return null;
   return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "10px", flexShrink: 0 }} title={b.title}>{b.icon}</span>)}</>;
+}
+
+function NewRibbon() {
+  return (
+    <div style={{
+      position: "absolute", top: 10, right: -22, zIndex: 5,
+      background: "#e85530", color: "white",
+      fontSize: "7px", fontWeight: 800, letterSpacing: "0.12em",
+      padding: "3px 24px", textTransform: "uppercase",
+      transform: "rotate(35deg)",
+      boxShadow: "0 2px 6px rgba(232,85,48,0.4)",
+    }}>
+      NUEVO
+    </div>
+  );
 }
 
 /* ── BASIC ── */
@@ -31,6 +46,7 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
       style={{ padding: "16px 0", borderBottom: "1px solid #f0f0f0" }}
     >
       <div className="shrink-0 relative overflow-hidden bg-neutral-900" style={{ width: 80, height: 80, borderRadius: 10 }}>
+        {dish.tags?.includes("NEW") && <NewRibbon />}
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="80px" />
         ) : (
@@ -73,6 +89,7 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
   return (
     <button onClick={onClick} className="flex flex-col text-left w-full" style={{ background: "none" }}>
       <div className="relative w-full bg-neutral-900 overflow-hidden" style={{ aspectRatio: "3/4", borderRadius: 10 }}>
+        {dish.tags?.includes("NEW") && <NewRibbon />}
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="155px" style={{ transform: "scale(1.08)" }} />
         ) : (
@@ -109,6 +126,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
       className="relative text-left overflow-hidden w-full bg-neutral-900"
       style={{ height: "calc(155px * 4 / 3 + 52px)", borderRadius: 10 }}
     >
+      {dish.tags?.includes("NEW") && <NewRibbon />}
       {photo ? (
         <Image src={photo} alt={dish.name} fill className="object-cover" sizes="155px" style={{ transform: "scale(1.08)" }} />
       ) : (

@@ -118,7 +118,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 8px" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 18px" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px", marginBottom: 12 }}>
           <span style={{ color: "#F4A623", fontSize: "12px" }}>✦</span>
@@ -127,6 +127,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         </div>
 
         {/* Carousel */}
+        <div style={{ position: "relative" }}>
         <div
           ref={scrollRef}
           style={{
@@ -162,7 +163,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 }}
               >
                 {/* Photo */}
-                <div style={{ position: "relative", width: 68, height: 68, borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ position: "relative", width: 70, height: 70, borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
                   {dish?.photos?.[0] ? (
                     <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="68px" />
                   ) : (
@@ -173,7 +174,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                     <div style={{
                       position: "absolute", top: 4, left: 4,
                       background: "#10b981", color: "white",
-                      fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: 6,
+                      fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: 6,
                       letterSpacing: "0.02em",
                     }}>
                       -{p.discountPct}%
@@ -183,19 +184,19 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "inline-block", fontSize: "9px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
+                  <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {dish?.name || p.name}
                   </p>
                   {p.name !== dish?.name && (
-                    <p style={{ fontSize: "10.5px", color: "#8a7060", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                    <p style={{ fontSize: "12px", color: "#8a7060", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
                   )}
                   <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
                     <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
                       ${p.promoPrice?.toLocaleString("es-CL") || dish?.price?.toLocaleString("es-CL")}
                     </span>
                     {p.originalPrice && (
-                      <span style={{ fontSize: "11px", color: "#a08060", textDecoration: "line-through" }}>
+                      <span style={{ fontSize: "12px", color: "#a08060", textDecoration: "line-through" }}>
                         ${p.originalPrice.toLocaleString("es-CL")}
                       </span>
                     )}
@@ -204,6 +205,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               </button>
             );
           })}
+        </div>
+        {/* Fade right */}
+        {promos.length > 1 && (
+          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0" }} />
+        )}
         </div>
 
         {/* Dots */}

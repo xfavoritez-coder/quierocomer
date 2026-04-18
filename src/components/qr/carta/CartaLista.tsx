@@ -283,11 +283,11 @@ export default function CartaLista({
       {/* CATEGORIES */}
       {grouped.map(({ category, dishes: catDishes }, index) => (
         <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
-          {index === 4 && <BirthdayBanner restaurantId={restaurant.id} />}
+          {index === 4 && <div style={{ margin: "0 -4px 12px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.3rem", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e" }}
+              style={{ fontSize: "1.3rem", fontWeight: 600, color: "#555" }}
             >
               {category.name}
             </h2>
@@ -310,22 +310,36 @@ export default function CartaLista({
 
       {/* Genio nudge */}
       <div
-        onClick={() => setGenioOpen(true)}
         className="font-[family-name:var(--font-dm)]"
         style={{
-          margin: "24px 20px 0", padding: "18px", textAlign: "center", cursor: "pointer",
-          background: "linear-gradient(180deg, rgba(244,166,35,0.03) 0%, transparent 100%)",
-          borderTop: "1px solid rgba(0,0,0,0.04)", borderRadius: "14px 14px 0 0",
+          margin: "24px 20px 16px", padding: "24px 20px", textAlign: "center",
+          background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
       >
-        <span style={{ fontSize: "1.3rem", opacity: 0.5 }}>🧞</span>
-        <p style={{ fontSize: "0.8rem", color: "#aaa", margin: "5px 0 0", lineHeight: 1.4 }}>
-          ¿No sabes qué pedir? <span style={{ color: "#F4A623", fontWeight: 600 }}>Pregúntale al Genio</span>
-        </p>
+        <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "white", boxShadow: "0 4px 12px rgba(244,166,35,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+          <Sparkles size={22} color="#F4A623" strokeWidth={1.75} />
+        </div>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
+        <p style={{ fontSize: "12px", color: "#8a5a2c", margin: "0 0 16px" }}>El Genio conoce cada plato y puede ayudarte</p>
+        <button
+          onClick={() => setGenioOpen(true)}
+          className="active:scale-[0.97] transition-transform"
+          style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            background: "linear-gradient(135deg, #F4A623 0%, #e85530 100%)",
+            color: "white", padding: "11px 22px", borderRadius: 100,
+            fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer",
+            boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+          }}
+        >
+          Preguntar al Genio
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </button>
       </div>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"

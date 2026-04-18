@@ -126,7 +126,7 @@ export default function AdminMenus() {
       ingredients: eIngredients || null,
       allergens: eAllergens.filter(a => a !== "ninguno").join(", ") || null,
       tags: eTags,
-      isHero: eIsHero,
+      isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
     };
@@ -228,11 +228,8 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Características</label>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eSpicy ? "#e85530" : "#666" }}>
+                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eSpicy ? "#e85530" : "#999" }}>
                     🌶️ {eSpicy ? "Picante" : "No picante"}
-                  </button>
-                  <button onClick={() => setEIsHero(!eIsHero)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eIsHero ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.05)", color: eIsHero ? "#F4A623" : "#666" }}>
-                    ⭐ {eIsHero ? "Hero" : "No hero"}
                   </button>
                 </div>
               </div>

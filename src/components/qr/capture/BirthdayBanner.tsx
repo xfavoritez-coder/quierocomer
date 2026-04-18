@@ -89,44 +89,52 @@ export default function BirthdayBanner({ restaurantId }: Props) {
         className="font-[family-name:var(--font-dm)]"
         style={{
           margin: "28px 20px 4px",
-          padding: "20px 16px",
+          padding: "16px 18px",
           background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
           backgroundSize: "200% 100%",
           animation: "bdaySlideIn 0.5s ease-out, bdayShimmer 8s ease-in-out 1s infinite",
           border: "1px solid rgba(244,166,35,0.18)",
           borderRadius: 14,
+          position: "relative",
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          position: "relative",
+          gap: 12,
         }}
       >
-        <span style={{ fontSize: "1.8rem", flexShrink: 0, animation: "bdayBounce 2s ease-in-out infinite" }}>🎂</span>
-        <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
-          <p style={{ fontSize: "0.97rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0 }}>
+        {/* Dismiss */}
+        <button
+          onClick={() => { setDismissed(true); sessionStorage.setItem("qr_birthday_dismissed", "true"); }}
+          style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", padding: 2, cursor: "pointer" }}
+        >
+          <X size={13} color="#d4a053" />
+        </button>
+
+        {/* Emoji */}
+        <span style={{ fontSize: "1.6rem", flexShrink: 0, animation: "bdayBounce 2s ease-in-out infinite" }}>🎂</span>
+
+        {/* Text — always 2 lines: title + subtitle */}
+        <div style={{ flex: 1, minWidth: 0, paddingRight: 60 }}>
+          <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
           </p>
-          <p style={{ fontSize: "0.94rem", color: "#b45309", lineHeight: 1.4, margin: "3px 0 0", opacity: 0.85, textAlign: "center" }}>
-            {existingUser ? "Guárdalo y recibe una sorpresa" : "Regístrate y recibe una sorpresa"}
+          <p style={{ fontSize: "0.82rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
+            {existingUser ? "Guárdalo y recibe una sorpresa 🎁" : "Regístrate y recibe una sorpresa 🎁"}
           </p>
         </div>
+
+        {/* CTA */}
         <button
           onClick={() => setModalOpen(true)}
           className="active:scale-95 transition-transform"
           style={{
+            position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
             flexShrink: 0, background: "#F4A623", color: "white", border: "none",
-            borderRadius: 50, padding: "9px 18px", fontSize: "0.88rem", fontWeight: 700,
-            fontFamily: "inherit", cursor: "pointer", marginRight: 28,
+            borderRadius: 50, padding: "8px 14px", fontSize: "0.78rem", fontWeight: 700,
+            fontFamily: "inherit", cursor: "pointer",
             animation: "bdayPulse 2.5s ease-in-out infinite",
           }}
         >
-          Me apunto
-        </button>
-        <button
-          onClick={() => { setDismissed(true); sessionStorage.setItem("qr_birthday_dismissed", "true"); }}
-          style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", padding: 2, cursor: "pointer" }}
-        >
-          <X size={13} color="#d4a053" />
+          Ir
         </button>
       </div>
 
