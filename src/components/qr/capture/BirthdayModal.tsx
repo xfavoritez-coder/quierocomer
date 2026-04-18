@@ -138,7 +138,7 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
               />
             </>
           )}
-          <div>
+          <div style={{ position: "relative" }}>
             <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Fecha de cumpleaños</label>
             <input
               type="date"
@@ -146,10 +146,15 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
               onChange={(e) => setBirthDate(e.target.value)}
               style={{
                 width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                padding: "12px 16px", color: birthDate ? "#0e0e0e" : "#999", fontSize: "0.92rem",
+                padding: "12px 16px", color: birthDate ? "#0e0e0e" : "transparent", fontSize: "0.92rem",
                 outline: "none", colorScheme: "light", fontFamily: "inherit", boxSizing: "border-box",
               }}
             />
+            {!birthDate && (
+              <span style={{ position: "absolute", left: 16, top: 34, fontSize: "0.92rem", color: "#999", pointerEvents: "none" }}>
+                Selecciona tu fecha
+              </span>
+            )}
           </div>
           <button
             onClick={handleSubmit}
