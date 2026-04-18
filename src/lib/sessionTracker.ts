@@ -105,6 +105,11 @@ function sendHeartbeat(isFinal = false) {
 export function startSession(restaurantId: string, tableId?: string) {
   if (session && session.restaurantId === restaurantId && !session.closed) return;
 
+  // Close previous session if switching restaurants
+  if (session && !session.closed) {
+    closeSession("new_session");
+  }
+
   deviceType = getDeviceType();
 
   session = {
@@ -119,7 +124,7 @@ export function startSession(restaurantId: string, tableId?: string) {
     closed: false,
   };
 
-  // Create session in DB immediately
+  // Create session in DB immediately, THEN start heartbeat
   fetch("/api/qr/sessions/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -134,6 +139,9 @@ export function startSession(restaurantId: string, tableId?: string) {
     .then(data => {
       if (session && data.sessionId) {
         session.dbSessionId = data.sessionId;
+        // Start heartbeat ONLY after we have the DB session ID
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
       }
     })
     .catch(() => {});
@@ -149,10 +157,6 @@ export function startSession(restaurantId: string, tableId?: string) {
       sessionId: getSessionId(),
     }),
   }).catch(() => {});
-
-  // Start heartbeat every 15s
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-  heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
 
   bindActivityListeners();
   resetInactivityTimer();
@@ -237,5 +241,8 @@ export function closeSession(reason: string = "manual") {
   const durationMs = Date.now() - session.startedAt;
   if (durationMs < 2000) return; // Skip accidental sessions
 
-  sendHeartbeat(true); // Final update with endedAt
+  // If we have a DB session ID, send final heartbeat
+  if (session.dbSessionId) {
+    sendHeartbeat(true);
+  }
 }
