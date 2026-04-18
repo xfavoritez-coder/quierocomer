@@ -64,7 +64,11 @@ export default function AdminPromociones() {
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando promociones...</p>;
 
   if (!selectedRestaurantId) return (
-    <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#888", fontFamily: F }}>Selecciona un local</p><RestaurantPicker /></div>
+    <div style={{ padding: 40, textAlign: "center" }}>
+      <p style={{ fontSize: "2rem", marginBottom: 12 }}>🏷️</p>
+      <p style={{ color: "#888", fontFamily: F, fontSize: "0.92rem" }}>Selecciona un local para ver y generar promociones</p>
+      <div style={{ marginTop: 16 }}><RestaurantPicker /></div>
+    </div>
   );
 
   return (

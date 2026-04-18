@@ -95,7 +95,9 @@ export default function AdminDashboard() {
     const params = filterRestaurant ? `?restaurantId=${filterRestaurant}` : "";
     Promise.all([
       fetch(`/api/admin/dashboard${params}`).then(r => r.json()),
-      filterRestaurant ? fetch(`/api/admin/insights?restaurantId=${filterRestaurant}`).then(r => r.json()) : Promise.resolve({ insights: [] }),
+      filterRestaurant
+        ? fetch(`/api/admin/insights?restaurantId=${filterRestaurant}`).then(r => r.json())
+        : fetch(`/api/admin/insights?mode=global`).then(r => r.json()),
     ]).then(([dashData, insightData]) => {
       if (!dashData.error) setData(dashData);
       setInsights(insightData.insights || []);
@@ -168,7 +170,7 @@ export default function AdminDashboard() {
       )}
 
       {/* Genio Insights */}
-      {filterRestaurant && (
+      {(filterRestaurant || isSuper) && (
         <div style={{ marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#F4A623", margin: 0 }}>🧞 Insights del Genio</h2>
@@ -178,7 +180,7 @@ export default function AdminDashboard() {
                 try {
                   const res = await fetch("/api/admin/insights", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ restaurantId: filterRestaurant, action: "generate" }),
+                    body: JSON.stringify({ restaurantId: filterRestaurant || null, action: "generate", mode: filterRestaurant ? undefined : "global" }),
                   });
                   const d = await res.json();
                   if (d.insights) setInsights(d.insights);
@@ -193,7 +195,7 @@ export default function AdminDashboard() {
           {insights.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {insights.map(i => {
-                const typeIcons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈" };
+                const typeIcons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
                 return (
                   <div key={i.id} style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "14px 16px" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
