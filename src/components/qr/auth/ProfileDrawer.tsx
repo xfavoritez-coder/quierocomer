@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Leaf, AlertCircle, Cake } from "lucide-react";
 import LoginDrawer from "./LoginDrawer";
+import BirthdayModal from "../capture/BirthdayModal";
 
 interface QRUser {
   id: string;
@@ -30,6 +31,7 @@ const DIET_LABELS: Record<string, string> = { omnivore: "Come de todo", vegetari
 export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout }: Props) {
   const [visible, setVisible] = useState(false);
   const [visited, setVisited] = useState<VisitedRestaurant[]>([]);
+  const [bdayModalOpen, setBdayModalOpen] = useState(false);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -79,10 +81,27 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
               <AlertCircle size={16} color="#F4A623" />
               <span style={{ fontSize: "0.92rem", color: "#333" }}>{resText}</span>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#f9f9f9", borderRadius: 10 }}>
-              <Cake size={16} color="#F4A623" />
-              <span style={{ fontSize: "0.92rem", color: "#333" }}>{birthText}</span>
-            </div>
+            {qrUser.birthDate ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#f9f9f9", borderRadius: 10 }}>
+                <Cake size={16} color="#F4A623" />
+                <span style={{ fontSize: "0.92rem", color: "#333" }}>{birthText}</span>
+              </div>
+            ) : (
+              <button
+                onClick={() => setBdayModalOpen(true)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", width: "100%",
+                  background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+                  border: "1px solid rgba(244,166,35,0.18)", borderRadius: 10, cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                <Cake size={16} color="#F4A623" />
+                <span style={{ fontSize: "0.92rem", color: "#92400e", fontWeight: 600, flex: 1, textAlign: "left" }}>
+                  Agregar cumpleaños 🎁
+                </span>
+                <span style={{ fontSize: "0.75rem", color: "#F4A623", fontWeight: 700 }}>+</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -109,6 +128,15 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
           Cerrar sesión
         </button>
       </div>
+
+      {bdayModalOpen && (
+        <BirthdayModal
+          restaurantId={restaurantId}
+          existingUser={{ name: qrUser.name, email: qrUser.email }}
+          onClose={() => setBdayModalOpen(false)}
+          onSuccess={() => { setBdayModalOpen(false); }}
+        />
+      )}
     </div>
   );
 }
