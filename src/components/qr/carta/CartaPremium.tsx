@@ -14,6 +14,7 @@ import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
+import PromoCarousel from "../capture/PromoCarousel";
 
 interface Review {
   id: string;
@@ -181,6 +182,12 @@ export default function CartaPremium({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
+
+      {/* Promos */}
+      <PromoCarousel restaurantId={restaurant.id} onViewDish={(dishId) => {
+        const dish = dishes.find(d => d.id === dishId);
+        if (dish) setSelectedDish(dish);
+      }} />
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div

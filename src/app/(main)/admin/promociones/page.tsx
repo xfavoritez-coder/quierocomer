@@ -31,20 +31,16 @@ export default function AdminPromociones() {
   const [editDesc, setEditDesc] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
-  // Auto-select first restaurant
   useEffect(() => {
-    if (!sessionLoading && restaurants.length > 0 && !selectedLocal) {
-      setSelectedLocal(restaurants[0].id);
-    }
-  }, [sessionLoading, restaurants, selectedLocal]);
-
-  useEffect(() => {
-    if (!selectedLocal) return;
+    if (sessionLoading) return;
     setLoading(true);
-    fetch(`/api/admin/promotions?restaurantId=${selectedLocal}`)
+    const url = selectedLocal
+      ? `/api/admin/promotions?restaurantId=${selectedLocal}`
+      : `/api/admin/promotions?all=true`;
+    fetch(url)
       .then(r => r.json()).then(d => setPromos(d.promotions || []))
       .catch(() => {}).finally(() => setLoading(false));
-  }, [selectedLocal]);
+  }, [selectedLocal, sessionLoading]);
 
   const handleGenerate = async () => {
     if (!selectedLocal) return;
@@ -115,14 +111,15 @@ export default function AdminPromociones() {
             onChange={e => setSelectedLocal(e.target.value)}
             style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
           >
+            <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
             {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
           </select>
-          <button onClick={handleGenerate} disabled={generating} style={{
+          {selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
             padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
             color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
           }}>
             {generating ? "🧞 Analizando..." : "🧞 Generar sugerencias"}
-          </button>
+          </button>}
         </div>
       </div>
 

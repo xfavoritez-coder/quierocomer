@@ -8,10 +8,14 @@ export async function GET(req: NextRequest) {
   if (!cookieStore.get("admin_token")?.value) return NextResponse.json({ error: "Not auth" }, { status: 401 });
 
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
-  if (!restaurantId) return NextResponse.json({ error: "restaurantId required" }, { status: 400 });
+  const showAll = req.nextUrl.searchParams.get("all") === "true";
+
+  const where: any = { status: { not: "DELETED" } };
+  if (restaurantId) where.restaurantId = restaurantId;
 
   const promotions = await prisma.promotion.findMany({
-    where: { restaurantId },
+    where,
+    include: { restaurant: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
   });
 

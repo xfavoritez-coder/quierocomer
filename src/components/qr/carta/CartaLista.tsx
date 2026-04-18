@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
+import PromoCarousel from "../capture/PromoCarousel";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
@@ -172,6 +173,12 @@ export default function CartaLista({
         {/* Bottom accent line */}
         <div style={{ position: "relative", zIndex: 1, height: 2, background: "linear-gradient(90deg, #F4A623, rgba(244,166,35,0.2), transparent)" }} />
       </div>
+
+      {/* Promos */}
+      <PromoCarousel restaurantId={restaurant.id} onViewDish={(dishId) => {
+        const dish = dishes.find(d => d.id === dishId);
+        if (dish) setSelectedDish(dish);
+      }} />
 
       {/* STICKY NAV: search overlay or category tabs with search icon */}
       {searchOpen ? (
