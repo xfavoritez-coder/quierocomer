@@ -7,7 +7,7 @@ const globalForPrisma = globalThis as unknown as {
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === "development" ? ["query"] : ["error"],
+    log: ["error"],
   });
 
 // Always cache the instance to reuse connections across requests (Fluid Compute)
