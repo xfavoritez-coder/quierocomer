@@ -7,7 +7,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 const NAV = [
   { icon: "📊", label: "Dashboard", href: "/admin" },
   { icon: "🏠", label: "Locales", href: "/admin/locales" },
-  { icon: "📋", label: "Menús", href: "/admin/menus" },
+  { icon: "🍽️", label: "Platos", href: "/admin/menus" },
   { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];

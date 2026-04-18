@@ -1,17 +1,22 @@
 /**
- * Session Tracker — collects user behavior during a carta visit.
- * Tracks dish dwell times, category views, and sends a summary on close.
- * Detects inactivity (30s) to auto-close the session.
+ * Session Tracker v2 — Create on enter, heartbeat every 15s, close on exit.
+ *
+ * Flow:
+ * 1. User enters carta → POST /sessions/start → creates Session in DB immediately
+ * 2. Every 15s of activity → PATCH /sessions/heartbeat → updates accumulated data
+ * 3. On exit (tab close, inactivity) → final PATCH with endedAt
+ *
+ * Even if the final PATCH never arrives, we have data from the last heartbeat.
  */
 import { getGuestId, getSessionId } from "./guestId";
 
+const HEARTBEAT_INTERVAL = 15_000; // 15 seconds
 const INACTIVITY_TIMEOUT = 30_000; // 30 seconds
 const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 
 interface DishDwell {
   dishId: string;
   dwellMs: number;
-  startedAt: number;
 }
 
 interface CategoryDwell {
@@ -22,6 +27,7 @@ interface CategoryDwell {
 interface SessionData {
   restaurantId: string;
   tableId?: string;
+  dbSessionId: string | null; // ID from the DB after creation
   startedAt: number;
   viewUsed: string | null;
   dishDwells: Map<string, DishDwell>;
@@ -32,6 +38,7 @@ interface SessionData {
 
 let session: SessionData | null = null;
 let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let currentDishId: string | null = null;
 let currentDishStart: number | null = null;
 let deviceType: string | null = null;
@@ -46,9 +53,7 @@ function getDeviceType(): string {
 
 function resetInactivityTimer() {
   if (inactivityTimer) clearTimeout(inactivityTimer);
-  inactivityTimer = setTimeout(() => {
-    closeSession("inactivity");
-  }, INACTIVITY_TIMEOUT);
+  inactivityTimer = setTimeout(() => closeSession("inactivity"), INACTIVITY_TIMEOUT);
 }
 
 function bindActivityListeners() {
@@ -57,20 +62,55 @@ function bindActivityListeners() {
   window.addEventListener("touchstart", reset, { passive: true });
   window.addEventListener("scroll", reset, { passive: true });
   window.addEventListener("click", reset, { passive: true });
-  // Also close on page hide (tab close, navigate away)
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") closeSession("pagehide");
   });
   window.addEventListener("beforeunload", () => closeSession("beforeunload"));
 }
 
+function getPayload(isFinal: boolean) {
+  if (!session) return null;
+  flushCurrentDish();
+  return {
+    sessionId: session.dbSessionId,
+    durationMs: Date.now() - session.startedAt,
+    viewUsed: session.viewUsed,
+    dishesViewed: Array.from(session.dishDwells.values()),
+    categoriesViewed: Array.from(session.categoryDwells.values()),
+    pickedDishId: session.pickedDishId,
+    isFinal,
+  };
+}
+
+function sendHeartbeat(isFinal = false) {
+  const payload = getPayload(isFinal);
+  if (!payload || !payload.sessionId) return;
+
+  const body = JSON.stringify(payload);
+
+  if (isFinal && typeof navigator !== "undefined" && navigator.sendBeacon) {
+    const blob = new Blob([body], { type: "application/json" });
+    navigator.sendBeacon("/api/qr/sessions/heartbeat", blob);
+  } else {
+    fetch("/api/qr/sessions/heartbeat", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body,
+      keepalive: isFinal,
+    }).catch(() => {});
+  }
+}
+
 /** Start tracking a session for a restaurant */
 export function startSession(restaurantId: string, tableId?: string) {
   if (session && session.restaurantId === restaurantId && !session.closed) return;
 
+  deviceType = getDeviceType();
+
   session = {
     restaurantId,
     tableId,
+    dbSessionId: null,
     startedAt: Date.now(),
     viewUsed: null,
     dishDwells: new Map(),
@@ -78,10 +118,41 @@ export function startSession(restaurantId: string, tableId?: string) {
     pickedDishId: null,
     closed: false,
   };
-  deviceType = getDeviceType();
 
-  // Fire SESSION_START event
-  sendEvent("SESSION_START", restaurantId);
+  // Create session in DB immediately
+  fetch("/api/qr/sessions/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      guestId: getGuestId(),
+      restaurantId,
+      tableId: tableId || null,
+      deviceType,
+    }),
+  })
+    .then(r => r.json())
+    .then(data => {
+      if (session && data.sessionId) {
+        session.dbSessionId = data.sessionId;
+      }
+    })
+    .catch(() => {});
+
+  // Fire SESSION_START stat event
+  fetch("/api/qr/stats", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      eventType: "SESSION_START",
+      restaurantId,
+      guestId: getGuestId(),
+      sessionId: getSessionId(),
+    }),
+  }).catch(() => {});
+
+  // Start heartbeat every 15s
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
 
   bindActivityListeners();
   resetInactivityTimer();
@@ -91,13 +162,11 @@ export function startSession(restaurantId: string, tableId?: string) {
 export function trackViewSelected(view: string) {
   if (!session) return;
   session.viewUsed = view;
-  sendEvent("CARTA_VIEW_SELECTED", session.restaurantId);
 }
 
-/** Call when a dish becomes visible (e.g., scrolled into view) */
+/** Call when a dish becomes visible */
 export function trackDishEnter(dishId: string) {
   if (!session) return;
-  // Flush previous dish
   flushCurrentDish();
   currentDishId = dishId;
   currentDishStart = Date.now();
@@ -117,17 +186,23 @@ function flushCurrentDish() {
   if (existing) {
     existing.dwellMs += elapsed;
   } else {
-    session.dishDwells.set(currentDishId, {
-      dishId: currentDishId,
-      dwellMs: elapsed,
-      startedAt: currentDishStart,
-    });
+    session.dishDwells.set(currentDishId, { dishId: currentDishId, dwellMs: elapsed });
   }
 
-  // If they spent 3+ seconds, fire a DISH_DWELL event (once per dish per session)
+  // Fire DISH_DWELL stat event if 3s+ (once per dish)
   const total = session.dishDwells.get(currentDishId)!;
   if (total.dwellMs >= DWELL_THRESHOLD && elapsed >= DWELL_THRESHOLD) {
-    sendEvent("DISH_DWELL", session.restaurantId, currentDishId);
+    fetch("/api/qr/stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "DISH_DWELL",
+        restaurantId: session.restaurantId,
+        dishId: currentDishId,
+        guestId: getGuestId(),
+        sessionId: getSessionId(),
+      }),
+    }).catch(() => {});
   }
 
   currentDishId = null;
@@ -145,68 +220,22 @@ export function trackCategoryDwell(categoryId: string, dwellMs: number) {
   }
 }
 
-/** Track when user picks a dish (e.g., from Genio) */
+/** Track when user picks a dish */
 export function trackDishPicked(dishId: string) {
   if (!session) return;
   session.pickedDishId = dishId;
 }
 
-/** Close session and send summary to server */
+/** Close session — final heartbeat */
 export function closeSession(reason: string = "manual") {
   if (!session || session.closed) return;
   session.closed = true;
-  flushCurrentDish();
 
   if (inactivityTimer) clearTimeout(inactivityTimer);
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
 
   const durationMs = Date.now() - session.startedAt;
+  if (durationMs < 2000) return; // Skip accidental sessions
 
-  // Don't send sessions shorter than 2 seconds (bot/accidental)
-  if (durationMs < 2000) return;
-
-  const payload = {
-    guestId: getGuestId(),
-    sessionId: getSessionId(),
-    restaurantId: session.restaurantId,
-    tableId: session.tableId || null,
-    durationMs,
-    viewUsed: session.viewUsed,
-    deviceType,
-    dishesViewed: Array.from(session.dishDwells.values()).map(d => ({
-      dishId: d.dishId,
-      dwellMs: d.dwellMs,
-    })),
-    categoriesViewed: Array.from(session.categoryDwells.values()),
-    pickedDishId: session.pickedDishId,
-    closeReason: reason,
-  };
-
-  // Use sendBeacon with Blob for correct content-type
-  const body = JSON.stringify(payload);
-  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-    const blob = new Blob([body], { type: "application/json" });
-    navigator.sendBeacon("/api/qr/sessions/close", blob);
-  } else {
-    fetch("/api/qr/sessions/close", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
-      keepalive: true,
-    }).catch(() => {});
-  }
-}
-
-/** Fire a single stat event (for events that don't need batching) */
-function sendEvent(eventType: string, restaurantId: string, dishId?: string) {
-  fetch("/api/qr/stats", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      eventType,
-      restaurantId,
-      dishId: dishId || null,
-      guestId: getGuestId(),
-      sessionId: getSessionId(),
-    }),
-  }).catch(() => {});
+  sendHeartbeat(true); // Final update with endedAt
 }

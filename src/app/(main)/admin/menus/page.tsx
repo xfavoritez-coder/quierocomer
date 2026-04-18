@@ -22,6 +22,8 @@ export default function AdminMenus() {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
@@ -51,6 +53,12 @@ export default function AdminMenus() {
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     return list;
   }, [dishes, search, catFilter]);
+
+  // Reset page when filters change
+  useEffect(() => { setPage(1); }, [search, catFilter, selectedRestaurantId]);
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const toggleDishActive = async (dish: Dish) => {
     await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !dish.isActive }) });
@@ -125,7 +133,7 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Menu</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Platos</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
         </div>
         <RestaurantPicker />
@@ -152,7 +160,7 @@ export default function AdminMenus() {
         <p style={{ color: "#FFD600", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando platos...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {filtered.map(d => (
+          {paginated.map(d => (
             <button key={d.id} onClick={() => setSelectedDish(d)} style={{
               display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
               background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12,
@@ -187,6 +195,14 @@ export default function AdminMenus() {
               {dishes.length === 0 ? "Este local no tiene platos" : "No hay platos que coincidan"}
             </p>
           )}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page <= 1 ? "transparent" : "rgba(255,255,255,0.04)", color: page <= 1 ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
+          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", padding: "8px 12px" }}>{page} / {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page >= totalPages ? "transparent" : "rgba(255,255,255,0.04)", color: page >= totalPages ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
         </div>
       )}
     </div>
