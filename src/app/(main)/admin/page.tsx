@@ -25,7 +25,7 @@ interface DashData {
 const DIET_LABELS: Record<string, string> = { omnivore: "Omnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
 
-function Stat({ label, value, sub, color = "#FFD600" }: { label: string; value: string | number; sub?: string; color?: string }) {
+function Stat({ label, value, sub, color = "#F4A623" }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
     <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
       <p style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color, margin: "0 0 4px", fontWeight: 700 }}>{value}</p>
@@ -48,7 +48,7 @@ function RankList({ title, items, valueLabel = "" }: { title: string; items: { n
             <span style={{ color: "#888", fontFamily: "var(--font-display)" }}>{item.count}{valueLabel}</span>
           </div>
           <div style={{ height: 4, borderRadius: 2, background: "#2A2A2A" }}>
-            <div style={{ width: `${(item.count / max) * 100}%`, height: "100%", background: i === 0 ? "#FFD600" : "rgba(255,214,0,0.4)", borderRadius: 2 }} />
+            <div style={{ width: `${(item.count / max) * 100}%`, height: "100%", background: i === 0 ? "#F4A623" : "rgba(255,214,0,0.4)", borderRadius: 2 }} />
           </div>
         </div>
       ))}
@@ -59,7 +59,7 @@ function RankList({ title, items, valueLabel = "" }: { title: string; items: { n
 function DistributionBar({ title, data, labels }: { title: string; data: Record<string, number>; labels?: Record<string, string> }) {
   const total = Object.values(data).reduce((a, b) => a + b, 0);
   if (!total) return null;
-  const colors = ["#FFD600", "#3db89e", "#e85530", "#7fbfdc", "#c93010"];
+  const colors = ["#F4A623", "#3db89e", "#e85530", "#7fbfdc", "#c93010"];
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
   return (
     <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
   }, [selectedRestaurantId, sessionLoading]);
 
   if (loading || sessionLoading) {
-    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#FFD600", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
+    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
   }
 
   if (!data) {
@@ -113,13 +113,13 @@ export default function AdminDashboard() {
   return (
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Dashboard</h1>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Dashboard</h1>
         <RestaurantPicker />
       </div>
 
       {/* Main metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="Visitas esta semana" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "#3db89e" : "#FFD600"} />
+        <Stat label="Visitas esta semana" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "#3db89e" : "#F4A623"} />
         <Stat label="Visitantes únicos" value={data.totalGuests} />
         <Stat label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} color="#3db89e" />
         <Stat label="Duración promedio" value={avgText} />

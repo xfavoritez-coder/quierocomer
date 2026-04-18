@@ -68,13 +68,13 @@ export default function AdminSessions() {
       .finally(() => setLoading(false));
   }, [selectedRestaurantId, sessionLoading, page]);
 
-  if (loading) return <p style={{ color: "#FFD600", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
+  if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
   return (
     <div style={{ maxWidth: 900 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Sesiones</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Sesiones</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{total} sesiones totales</p>
         </div>
         <RestaurantPicker />

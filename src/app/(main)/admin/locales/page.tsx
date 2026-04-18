@@ -49,7 +49,7 @@ export default function AdminLocales() {
     setRestaurants(prev => prev.map(x => x.id === r.id ? { ...x, isActive: !x.isActive } : x));
   };
 
-  if (loading) return <p style={{ color: "#FFD600", fontFamily: F, padding: 40 }}>Cargando locales...</p>;
+  if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando locales...</p>;
 
   if (selected) return (
     <div style={{ maxWidth: 600 }}>
@@ -78,7 +78,7 @@ export default function AdminLocales() {
             { label: "Eventos", value: selected._count.statEvents },
           ].map(s => (
             <div key={s.label} style={{ background: "#111", borderRadius: 10, padding: "12px 14px" }}>
-              <p style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0, fontWeight: 700 }}>{s.value}</p>
+              <p style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0, fontWeight: 700 }}>{s.value}</p>
               <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", margin: 0 }}>{s.label}</p>
             </div>
           ))}
@@ -105,7 +105,7 @@ export default function AdminLocales() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", marginBottom: 20 }}>Locales ({filtered.length})</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", marginBottom: 20 }}>Locales ({filtered.length})</h1>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
         <input
@@ -119,7 +119,7 @@ export default function AdminLocales() {
             <button key={f} onClick={() => setFilter(f)} style={{
               padding: "8px 14px", borderRadius: 8, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-              background: filter === f ? "#FFD600" : "rgba(255,255,255,0.05)",
+              background: filter === f ? "#F4A623" : "rgba(255,255,255,0.05)",
               color: filter === f ? "#0a0a0a" : "#888",
             }}>
               {f === "sin_owner" ? "Sin owner" : f.charAt(0).toUpperCase() + f.slice(1)}

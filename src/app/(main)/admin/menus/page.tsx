@@ -65,7 +65,7 @@ export default function AdminMenus() {
     setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: !d.isActive } : d));
   };
 
-  if (sessionLoading) return <p style={{ color: "#FFD600", fontFamily: F, padding: 40 }}>Cargando...</p>;
+  if (sessionLoading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando...</p>;
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}>
@@ -133,7 +133,7 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Platos</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Platos</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
         </div>
         <RestaurantPicker />
@@ -157,7 +157,7 @@ export default function AdminMenus() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#FFD600", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando platos...</p>
+        <p style={{ color: "#F4A623", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando platos...</p>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {paginated.map(d => (

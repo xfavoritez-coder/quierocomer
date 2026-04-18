@@ -18,7 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { name, isSuper, loading, error, logout } = useAdminSession();
 
   if (pathname === "/admin/login") return <>{children}</>;
-  if (loading) return <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#FFD600", fontFamily: "var(--font-display)", fontSize: "0.8rem" }}>🧞 Cargando...</p></div>;
+  if (loading) return <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.8rem" }}>🧞 Cargando...</p></div>;
   if (error) { if (typeof window !== "undefined") window.location.href = "/admin/login"; return null; }
 
   const isActive = (h: string) => h === "/admin" ? pathname === "/admin" : pathname.startsWith(h);
@@ -28,10 +28,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Mobile top bar */}
       <div className="adm-mobilebar">
         <div>
-          <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#FFD600", textDecoration: "none" }}>🧞 Admin</Link>
-          {isSuper && <span style={{ marginLeft: 8, fontSize: "0.6rem", background: "#FFD600", color: "#0D0D0D", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>SUPER</span>}
+          <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
+          {isSuper && <span style={{ marginLeft: 8, fontSize: "0.6rem", background: "#F4A623", color: "#0D0D0D", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>SUPER</span>}
         </div>
-        <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #2A2A2A", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#FFD600", fontSize: "1.2rem", cursor: "pointer" }}>{menuOpen ? "✕" : "☰"}</button>
+        <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #2A2A2A", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#F4A623", fontSize: "1.2rem", cursor: "pointer" }}>{menuOpen ? "✕" : "☰"}</button>
       </div>
 
       {/* Mobile menu */}
@@ -39,7 +39,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 998 }} />
         <div className="adm-mobilemenu">
           {NAV.map(n => (
-            <Link key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: isActive(n.href) ? "#FFD600" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderBottom: "1px solid #2A2A2A" }}>
+            <Link key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderBottom: "1px solid #2A2A2A" }}>
               <span style={{ fontSize: "1.2rem" }}>{n.icon}</span> {n.label}
             </Link>
           ))}
@@ -51,14 +51,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="adm-sidebar">
         <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #2A2A2A" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#FFD600", textDecoration: "none" }}>🧞 Admin</Link>
-            {isSuper && <span style={{ fontSize: "0.55rem", background: "#FFD600", color: "#0D0D0D", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>SUPER</span>}
+            <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
+            {isSuper && <span style={{ fontSize: "0.55rem", background: "#F4A623", color: "#0D0D0D", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>SUPER</span>}
           </div>
           <div style={{ fontSize: "0.7rem", color: "#666", fontFamily: "var(--font-display)" }}>{name}</div>
         </div>
         <nav style={{ flex: 1, padding: "8px 0" }}>
           {NAV.map(n => (
-            <Link key={n.href} href={n.href} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "0.82rem", color: isActive(n.href) ? "#FFD600" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderLeft: isActive(n.href) ? "3px solid #FFD600" : "3px solid transparent" }}>
+            <Link key={n.href} href={n.href} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "0.82rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderLeft: isActive(n.href) ? "3px solid #F4A623" : "3px solid transparent" }}>
               <span>{n.icon}</span>{n.label}
             </Link>
           ))}
