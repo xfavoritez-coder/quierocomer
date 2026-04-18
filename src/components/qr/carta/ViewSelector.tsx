@@ -9,7 +9,7 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
   { value: "lista", label: "Lista", Icon: List },
-  { value: "premium", label: "Carta", Icon: BookOpen },
+  { value: "premium", label: "Clásica", Icon: BookOpen },
   { value: "viaje", label: "Espacial", Icon: Sparkles },
 ];
 

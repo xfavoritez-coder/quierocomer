@@ -349,9 +349,7 @@ function CategoryTrack({
           )}
 
           <div style={{ position: "relative", zIndex: 2 }}>
-            <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]" style={{ color: "rgba(255,255,255,0.6)", opacity: 1, transform: "none" }}>
-              Sección {CHAPTER_WORDS[index] || index + 1}
-            </div>
+            <div style={{ color: "rgba(255,255,255,0.25)", fontSize: "10px", letterSpacing: "0.5em", opacity: 1, marginBottom: 12 }}>✦ ✦ ✦</div>
             <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]" style={{ opacity: 1, transform: "none" }}>
               {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
             </h2>
@@ -389,10 +387,15 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   const genie = isGeniePick(dish);
   const accentColor = "#F4A623";
 
-  if (variant === "hero") return (
+  if (variant === "hero") {
+    const longDesc = pitch.length > 60;
+    const heroGradient = longDesc
+      ? "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.95) 80%, rgba(0,0,0,0.98) 100%)"
+      : undefined;
+    return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
-      <div className="vj-hero-overlay" />
+      <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
         <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
@@ -404,7 +407,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
         </div>
       </div>
     </div>
-  );
+  );}
 
   if (variant === "split") return (
     <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
@@ -545,8 +548,8 @@ const CSS = `
   .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
   .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
-  .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
-  .vj-chapter-name em { font-style: italic; font-weight: 500; display: block; color: #F4A623; }
+  .vj-chapter-name { font-weight: 600; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
+  .vj-chapter-name em { font-style: italic; font-weight: 600; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
   .vj-chapter.in-view .vj-chapter-desc { opacity: 0.75; }
@@ -645,7 +648,7 @@ const CSS = `
   .vj-ln span { display: block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
-  .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
   .vj-dish.in-view .vj-pitch { opacity: 0.9; transform: translateY(0); }
   .vj-v-light .vj-pitch { margin-left: auto; margin-right: auto; color: #1a0e08; }
   .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }

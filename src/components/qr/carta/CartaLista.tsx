@@ -156,7 +156,7 @@ export default function CartaLista({
       {searchOpen ? (
         <div
           className="sticky top-0 z-20"
-          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
         >
           <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
           <input
@@ -175,7 +175,7 @@ export default function CartaLista({
       ) : (
         <nav
           className="sticky top-0 z-20"
-          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center" }}
+          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
         >
           {/* Search icon */}
           <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>

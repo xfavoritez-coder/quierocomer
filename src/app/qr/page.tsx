@@ -29,7 +29,7 @@ export default function QRLanding() {
 </head>
 <body>
 <nav><div class="nav-logo">Quiero<span>Comer</span>.cl</div><div class="nav-right"><a href="#features" class="nav-link">Producto</a><a href="#precio" class="nav-link">Precios</a><a href="#contacto" class="nav-cta">Quiero mi demo</a></div></nav>
-<section class="hero"><div class="hero-bg"></div><div class="hero-grid"></div><div class="hero-content reveal"><div style="display:flex;justify-content:center;margin-bottom:2rem"><div style="width:64px;height:64px;background:rgba(244,166,35,0.08);border:1px solid rgba(244,166,35,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 3l.8 2.2L22 6l-2.2.8L19 9l-.8-2.2L16 6l2.2-.8z"/><path d="M5 17l.6 1.4L7 19l-1.4.6L5 21l-.6-1.4L3 19l1.4-.6z"/></svg></div></div><h1>Tu carta QR,<br>pero <em>inteligente</em></h1><p class="hero-sub">La primera carta QR que aprende los gustos de tus clientes, recomienda platos y te muestra qu&eacute; funciona. </p><div class="hero-actions"><a href="#" onclick="document.getElementById('demo-modal').style.display='flex';return false" class="btn-amber">Quiero mi demo gratuita &rarr;</a></div></div></section>
+<section class="hero"><div class="hero-bg"></div><div class="hero-grid"></div><div class="hero-content reveal"><div style="display:flex;justify-content:center;align-items:center;gap:6px;margin-bottom:2rem"><span style="font-size:3.5rem">&#x1F9DE;</span><svg width="22" height="22" viewBox="0 0 24 24" fill="#F4A623" stroke="#F4A623" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:-18px"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/></svg></div><h1>Tu carta QR,<br>pero <em>inteligente</em></h1><p class="hero-sub">La primera carta QR que aprende los gustos de tus clientes, recomienda platos y te muestra qu&eacute; funciona. </p><div class="hero-actions"><a href="#" onclick="document.getElementById('demo-modal').style.display='flex';return false" class="btn-amber">Quiero mi demo gratuita &rarr;</a></div></div></section>
 <section class="problem section-alt" style="width:100%;max-width:100%"><div class="reveal"><div class="section-label">El problema</div><h2>Las cartas QR de hoy<br>son <em>una lista de texto</em></h2><p>Feas, lentas, sin fotos, imposibles de navegar. Tu restaurante merece algo que realmente ayude a vender &mdash; no solo un PDF digitalizado.</p></div>
 <div style="margin-top:3.5rem;display:flex;gap:0.8rem;justify-content:center;align-items:flex-start;max-width:800px;margin-left:auto;margin-right:auto;padding:0 0.5rem" class="reveal">
 <div style="flex:1;text-align:center">
@@ -76,9 +76,116 @@ export default function QRLanding() {
 <script>
 (function(){var cards=document.querySelectorAll('.cards-scroll > a');if(cards.length>3){var arr=Array.from(cards);for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}arr.slice(3).forEach(function(c){c.style.display='none';});}})();
 </script>
+<section style="padding:7rem 3rem;text-align:center">
+<div class="reveal"><div class="section-label">3 formas de ver tu carta</div><h2 class="section-title">Una carta, tres <em>experiencias</em></h2><p style="color:rgba(255,255,255,0.35);font-size:1.5rem;max-width:500px;margin:0 auto 3.5rem;line-height:1.7">Tu cliente elige c&oacute;mo explorar tu carta. Cada vista est&aacute; dise&ntilde;ada para un momento distinto.</p></div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;max-width:1100px;margin:0 auto" class="views-grid">
+<div class="reveal" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;transition:border-color 0.3s" onmouseover="this.style.borderColor='rgba(244,166,35,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+<div style="height:320px;background:linear-gradient(180deg,#f8f5f0 0%,#fff 100%);display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden">
+<div style="width:100%;max-width:240px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px"><div style="width:24px;height:24px;border-radius:50%;background:#F4A623;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0a0a0a">H</div><span style="font-size:12px;color:#666;font-weight:600">Hand Roll</span></div>
+<div style="display:flex;gap:6px;margin-bottom:12px"><div style="background:#0a0a0a;color:white;font-size:9px;padding:3px 10px;border-radius:20px;font-weight:600">Sushi</div><div style="background:#eee;color:#999;font-size:9px;padding:3px 10px;border-radius:20px">Rolls</div><div style="background:#eee;color:#999;font-size:9px;padding:3px 10px;border-radius:20px">Ceviches</div></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;gap:8px;align-items:center;background:white;border-radius:10px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06)"><div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#ff6b35,#ff8c42);flex-shrink:0"></div><div style="flex:1"><div style="font-size:10px;font-weight:700;color:#111">Chirashi salm&oacute;n</div><div style="font-size:9px;color:#999">$12.900</div></div></div>
+<div style="display:flex;gap:8px;align-items:center;background:white;border-radius:10px;padding:8px;box-shadow:0 1px 4px rgba(0,0,0,0.06)"><div style="width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#e85d4a,#ff7b6b);flex-shrink:0"></div><div style="flex:1"><div style="font-size:10px;font-weight:700;color:#111">Roll primavera</div><div style="font-size:9px;color:#999">$9.500</div></div></div>
+</div></div>
+</div>
+<div style="padding:24px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg><h3 style="font-size:1.3rem;font-weight:700;color:white">Vista Lista</h3></div>
+<p style="font-size:0.92rem;color:rgba(255,255,255,0.45);line-height:1.55">Directa y funcional. Perfecta para el cliente que ya sabe lo que quiere. B&uacute;squeda r&aacute;pida y navegaci&oacute;n por categor&iacute;as.</p>
+</div></div>
+
+<div class="reveal" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;transition:border-color 0.3s" onmouseover="this.style.borderColor='rgba(244,166,35,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+<div style="height:320px;background:linear-gradient(180deg,#1a1a1a 0%,#111 100%);display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden">
+<div style="width:100%;max-width:240px">
+<div style="position:relative;width:100%;aspect-ratio:16/10;border-radius:12px;overflow:hidden;margin-bottom:12px"><div style="position:absolute;inset:0;background:linear-gradient(135deg,#2a1810,#4a2820);"></div><div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.8),transparent);padding:12px"><div style="color:white;font-size:11px;font-weight:700">Chirashi salm&oacute;n</div><div style="color:#F4A623;font-size:10px;font-weight:600">$12.900</div></div><div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);color:white;font-size:7px;font-weight:600;padding:2px 7px;border-radius:6px">&#x2B50; Recomendado</div></div>
+<div style="display:flex;gap:6px"><div style="flex:1;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#3a2010,#5a3020)"></div><div style="flex:1;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#1a2a3a,#2a3a4a)"></div><div style="flex:1;aspect-ratio:1;border-radius:8px;background:linear-gradient(135deg,#2a1a2a,#4a2a3a)"></div></div>
+</div></div>
+<div style="padding:24px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><h3 style="font-size:1.3rem;font-weight:700;color:white">Vista Clásica</h3></div>
+<p style="font-size:0.92rem;color:rgba(255,255,255,0.45);line-height:1.55">Visual y elegante. Scroll horizontal por categor&iacute;a con fotos grandes, hero din&aacute;mico y platos destacados.</p>
+</div></div>
+
+<div class="reveal" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:20px;overflow:hidden;transition:border-color 0.3s" onmouseover="this.style.borderColor='rgba(244,166,35,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)'">
+<div style="height:320px;background:linear-gradient(180deg,#0a0604 0%,#000 100%);display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden">
+<div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(244,166,35,0.06),transparent 70%)"></div>
+<div style="position:relative;text-align:center;z-index:1">
+<div style="font-size:8px;letter-spacing:0.4em;text-transform:uppercase;color:#F4A623;margin-bottom:16px;display:flex;align-items:center;justify-content:center;gap:6px"><span style="width:16px;height:1px;background:#F4A623;opacity:0.5"></span>LA CARTA<span style="width:16px;height:1px;background:#F4A623;opacity:0.5"></span></div>
+<div style="font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:200;line-height:0.88;letter-spacing:-0.04em;color:#f5ede0">Hand<br><em style="font-style:italic;font-weight:300">Roll</em></div>
+<div style="font-style:italic;font-size:10px;color:rgba(245,237,224,0.5);margin-top:14px">Un recorrido por 5 secciones</div>
+</div>
+</div>
+<div style="padding:24px">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 3l.8 2.2L22 6l-2.2.8L19 9l-.8-2.2L16 6l2.2-.8z"/></svg><h3 style="font-size:1.3rem;font-weight:700;color:white">Vista Espacial</h3></div>
+<p style="font-size:0.92rem;color:rgba(255,255,255,0.45);line-height:1.55">Cinematogr&aacute;fica e inmersiva. Cada secci&oacute;n es una experiencia visual con fotos a pantalla completa y transiciones.</p>
+</div></div>
+</div>
+</section>
+<style>.views-grid{grid-template-columns:repeat(3,1fr)}@media(max-width:768px){.views-grid{grid-template-columns:1fr!important;max-width:400px!important}}</style>
 <section class="features" id="features"><div class="features-header reveal"><div class="section-label">Todo incluido</div><h2 class="section-title">Todo lo que necesita<br>un restaurante <em>moderno</em></h2></div><div class="fgrid"><div class="feat reveal"><div class="feat-num">01</div><div class="feat-icon">&#x1F3A8;</div><h3>Dise&ntilde;o premium</h3><p>Scroll horizontal por secci&oacute;n, swipe entre fotos, hero con tu plato estrella.</p></div><div class="feat reveal"><div class="feat-num">02</div><div class="feat-icon">&#x26A1;</div><h3>Carta viva</h3><p>Al mediod&iacute;a sube el almuerzo. Cuando llueve, platos calientes primero.</p></div><div class="feat reveal"><div class="feat-num">03</div><div class="feat-icon">&#x2728;</div><h3 class="feat-amber">El Genio</h3><p>Asistente IA que aprende los gustos del cliente y recomienda el plato perfecto.</p></div><div class="feat reveal"><div class="feat-num">04</div><div class="feat-icon">&#x1F514;</div><h3>Llamada al garz&oacute;n</h3><p>El cliente toca un bot&oacute;n y el garz&oacute;n recibe notificaci&oacute;n instant&aacute;nea.</p></div><div class="feat reveal"><div class="feat-num">05</div><div class="feat-icon">&#x1F4CA;</div><h3>Estad&iacute;sticas reales</h3><p>Qu&eacute; platos ven m&aacute;s vs cu&aacute;les piden. Qu&eacute; funciona los viernes de lluvia.</p></div><div class="feat reveal"><div class="feat-num">06</div><div class="feat-icon">&#x1F451;</div><h3>Platos recomendados</h3><p>Destaca los platos que quieras vender m&aacute;s. El cliente los ve primero y el Genio los prioriza.</p></div><div class="feat reveal"><div class="feat-num">07</div><div class="feat-icon">&#x1F382;</div><h3>Email de cumplea&ntilde;os</h3><p>Detecta cumplea&ntilde;os y env&iacute;a tu promo autom&aacute;ticamente.</p></div><div class="feat reveal"><div class="feat-num">08</div><div class="feat-icon">&#x1F310;</div><h3>Multilenguaje ES/EN/PT</h3><p>Tu carta en espa&ntilde;ol, ingl&eacute;s y portugu&eacute;s.</p></div></div></section>
 <section class="genie"><div class="genie-inner"><div class="rl"><div class="section-label">El diferenciador</div><div style="font-size:3rem;margin-bottom:12px">🧞</div><h2 class="section-title">Tu cliente no sabe qu&eacute; pedir.<br><em>El Genio lo resuelve</em></h2><ul class="gsteps"><li class="gstep"><div class="gstep-num">1</div><div><h4>Aprende su dieta y restricciones</h4><p>Vegetariano, sin gluten, sin lactosa &mdash; el Genio lo registra.</p></div></li><li class="gstep"><div class="gstep-num">2</div><div><h4>Muestra fotos reales de tu carta</h4><p>El cliente marca lo que le llama la atenci&oacute;n.</p></div></li><li class="gstep"><div class="gstep-num">3</div><div><h4>Recomienda el plato perfecto</h4><p>Basado en gustos, restricciones y los platos de tu carta.</p></div></li><li class="gstep"><div class="gstep-num">4</div><div><h4>Modo grupal</h4><p>Toda la mesa participa. El Genio cruza preferencias.</p></div></li></ul></div><div class="gchat rr"><div class="gchat-label">&#x1F9DE; El Genio en acci&oacute;n</div><div class="gmsg bot">Hola, soy el Genio. &iquest;Tienes alguna restricci&oacute;n alimentaria?</div><div class="gmsg usr">Soy vegetariano y tengo bastante hambre</div><div class="gmsg bot">Perfecto. &iquest;Cu&aacute;les de estos platos te llaman m&aacute;s?</div><div class="gphotos"><div class="gphoto sel" style="background-image:url(https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=150&q=80);background-size:cover;background-position:center"><div style="position:absolute;inset:0;background:rgba(244,166,35,0.4);display:flex;align-items:center;justify-content:center;border-radius:7px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="gphoto" style="background-image:url(https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=150&q=80);background-size:cover;background-position:center"></div><div class="gphoto sel" style="background-image:url(https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=150&q=80);background-size:cover;background-position:center"><div style="position:absolute;inset:0;background:rgba(244,166,35,0.4);display:flex;align-items:center;justify-content:center;border-radius:7px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="gphoto" style="background-image:url(https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=150&q=80);background-size:cover;background-position:center"></div><div class="gphoto sel" style="background-image:url(https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=150&q=80);background-size:cover;background-position:center"><div style="position:absolute;inset:0;background:rgba(244,166,35,0.4);display:flex;align-items:center;justify-content:center;border-radius:7px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div></div><div class="gphoto" style="background-image:url(https://images.unsplash.com/photo-1476224203421-9ac39bcb3327?w=150&q=80);background-size:cover;background-position:center"></div></div><div class="gresult">&#x2B50; Te recomiendo la Cazuela de Verduras &mdash; perfecta para ti hoy.</div></div></div></section>
-<section style="background:#181818;padding:7rem 3rem"><div class="reveal" style="text-align:center;margin-bottom:3rem"><div class="section-label">Panel garzones</div><h2 class="section-title">Tus clientes llaman al garz&oacute;n<br>desde <em>su celular</em></h2><p style="color:rgba(255,255,255,0.55);font-size:1.58rem;line-height:1.78;max-width:520px;margin:0 auto">Un bot&oacute;n en la carta QR. El garz&oacute;n recibe una notificaci&oacute;n instant&aacute;nea en su celular con el n&uacute;mero de mesa. Sin maquinitas, sin app, sin instalaciones.</p></div><div style="max-width:500px;margin:0 auto"><div class="wdemo reveal"><div class="wdemo-hdr"><div class="wdemo-title">Panel del garz&oacute;n</div><div class="wlive">En vivo</div></div><div class="wrows"><div class="wrow call"><span class="wtable">Mesa 4 &mdash; Terraza</span><span class="wstatus c">&#x1F514; Llamando ahora</span></div><div class="wrow call"><span class="wtable">Mesa 7 &mdash; Interior</span><span class="wstatus c">&#x1F514; Hace 2 min</span></div><div class="wrow idle"><span class="wtable">Mesa 1 &mdash; Ventana</span><span class="wstatus i">Tranquila</span></div><div class="wrow idle"><span class="wtable">Mesa 2 &mdash; Centro</span><span class="wstatus i">Tranquila</span></div><div class="wrow idle"><span class="wtable">Mesa 9 &mdash; Bar</span><span class="wstatus i">Tranquila</span></div></div></div></div></section>
+<section style="background:#181818;padding:7rem 3rem;overflow:hidden">
+<div class="reveal" style="text-align:center;margin-bottom:4rem">
+<div class="section-label">Sin maquinitas, sin app</div>
+<h2 class="section-title">Adiós al &ldquo;oiga, <em>disculpe</em>&rdquo;</h2>
+<p style="color:rgba(255,255,255,0.45);font-size:1.5rem;line-height:1.7;max-width:480px;margin:0 auto">Tu cliente toca un bot&oacute;n. Tu garz&oacute;n recibe la mesa en su celular. As&iacute; de simple.</p>
+</div>
+<div style="max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 40px 1fr;align-items:center;gap:0" class="waiter-flow">
+<!-- Cliente side -->
+<div class="rl" style="text-align:center">
+<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:28px 20px;max-width:280px;margin:0 auto">
+<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px">Lo que ve el cliente</div>
+<div style="background:rgba(255,255,255,0.06);border-radius:14px;padding:20px;margin-bottom:16px">
+<div style="width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;margin:0 auto 12px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.7"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+</div>
+<div style="font-size:0.95rem;color:white;font-weight:600;margin-bottom:4px">Llamar al garz&oacute;n</div>
+<div style="font-size:0.8rem;color:rgba(255,255,255,0.4)">Mesa 4 &middot; Terraza</div>
+</div>
+<div style="background:#F4A623;color:#0a0a0a;border-radius:50px;padding:12px;font-size:0.88rem;font-weight:700;text-align:center;animation:rp 2.2s infinite">&#x1F514; Garz&oacute;n en camino</div>
+</div>
+</div>
+<!-- Arrow -->
+<div style="text-align:center" class="reveal">
+<div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+<div style="width:1px;height:30px;background:linear-gradient(180deg,transparent,rgba(244,166,35,0.5))"></div>
+<div style="width:28px;height:28px;border-radius:50%;background:rgba(244,166,35,0.1);border:1px solid rgba(244,166,35,0.3);display:flex;align-items:center;justify-content:center">
+<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#F4A623" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+</div>
+<div style="font-size:0.6rem;color:rgba(244,166,35,0.6);letter-spacing:0.1em;text-transform:uppercase;margin-top:2px">instant&aacute;neo</div>
+<div style="width:1px;height:30px;background:linear-gradient(180deg,rgba(244,166,35,0.5),transparent)"></div>
+</div>
+</div>
+<!-- Garzón side -->
+<div class="rr" style="text-align:center">
+<div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:22px;padding:28px 20px;max-width:280px;margin:0 auto">
+<div style="font-size:0.72rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:16px">Lo que ve el garz&oacute;n</div>
+<div style="background:rgba(244,166,35,0.06);border:1px solid rgba(244,166,35,0.15);border-radius:14px;padding:14px;margin-bottom:10px;animation:rp 2.2s infinite">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="text-align:left"><div style="font-size:0.95rem;font-weight:700;color:white">Mesa 4</div><div style="font-size:0.78rem;color:rgba(255,255,255,0.5)">Terraza &middot; ahora</div></div>
+<div style="background:#F4A623;color:#0a0a0a;font-size:0.7rem;font-weight:700;padding:4px 10px;border-radius:20px">NUEVA</div>
+</div>
+</div>
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px;margin-bottom:10px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="text-align:left"><div style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.7)">Mesa 7</div><div style="font-size:0.78rem;color:rgba(255,255,255,0.35)">Interior &middot; hace 3 min</div></div>
+<div style="font-size:0.7rem;color:rgba(255,255,255,0.3);font-weight:500">atendida</div>
+</div>
+</div>
+<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:14px">
+<div style="display:flex;justify-content:space-between;align-items:center">
+<div style="text-align:left"><div style="font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.7)">Mesa 1</div><div style="font-size:0.78rem;color:rgba(255,255,255,0.35)">Ventana &middot; tranquila</div></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="reveal" style="text-align:center;margin-top:3rem;display:flex;justify-content:center;gap:2.5rem;flex-wrap:wrap">
+<div style="display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#4ade80"></div><span style="font-size:0.85rem;color:rgba(255,255,255,0.5)">Sin hardware extra</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#4ade80"></div><span style="font-size:0.85rem;color:rgba(255,255,255,0.5)">Sin instalar apps</span></div>
+<div style="display:flex;align-items:center;gap:8px"><div style="width:6px;height:6px;border-radius:50%;background:#4ade80"></div><span style="font-size:0.85rem;color:rgba(255,255,255,0.5)">Push notification al celular</span></div>
+</div>
+</section>
+<style>.waiter-flow{grid-template-columns:1fr 40px 1fr}@media(max-width:768px){.waiter-flow{grid-template-columns:1fr!important;gap:20px!important}.waiter-flow>div:nth-child(2){transform:rotate(90deg)}}</style>
 <section class="section-alt" style="padding:7rem 1.5rem">
 <div class="reveal" style="text-align:center;margin-bottom:3rem"><div class="section-label">Estad&iacute;sticas</div><h2 class="section-title">Estad&iacute;sticas que ning&uacute;n<br>restaurante <em>tiene</em></h2><p style="color:rgba(255,255,255,0.35);font-size:1.55rem;max-width:480px;margin:0 auto;line-height:1.7">Con Carta QR Viva ves qu&eacute; platos miran, cu&aacute;les piden, y qu&eacute; pasa seg&uacute;n el d&iacute;a y el clima.</p></div>
 <div style="max-width:500px;margin:0 auto">

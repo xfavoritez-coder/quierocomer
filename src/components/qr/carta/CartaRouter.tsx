@@ -89,11 +89,8 @@ export default function CartaRouter(props: Props) {
           <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
             <Sparkles size={28} color="#F4A623" fill="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />
           </div>
-          <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20, marginBottom: 6 }}>
-            {overlay}
-          </p>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>
-            Cargando vista...
+          <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20 }}>
+            Cargando vista {overlay}
           </p>
         </div>
       )}
