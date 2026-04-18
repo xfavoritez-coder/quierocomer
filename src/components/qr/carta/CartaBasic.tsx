@@ -97,7 +97,7 @@ export default function CartaBasic({
       </main>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 20, bottom: 32, gap: 14 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"

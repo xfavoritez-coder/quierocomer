@@ -29,6 +29,10 @@ interface CartaProps {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  qrUser?: any;
+  onProfileOpen?: () => void;
+  onReady?: () => void;
+  readyKey?: number;
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -69,12 +73,22 @@ export default function CartaPremium({
   ratingMap,
   reviews,
   tableId,
+  qrUser: qrUserProp,
+  onProfileOpen: onProfileOpenProp,
+  onReady,
+  readyKey,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
-  const [qrUser, setQrUser] = useState<any>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
+  const [qrUserLocal, setQrUserLocal] = useState<any>(null);
+  const [profileOpenLocal, setProfileOpenLocal] = useState(false);
+  const qrUser = qrUserProp ?? qrUserLocal;
+  const profileOpen = onProfileOpenProp ? false : profileOpenLocal;
+  const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
+
+  useEffect(() => { onReady?.(); }, [readyKey]);
+
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -84,10 +98,11 @@ export default function CartaPremium({
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch user
+  // Fetch user (only if not provided via prop)
   useEffect(() => {
-    fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUser(d.user); }).catch(() => {});
-  }, []);
+    if (qrUserProp !== undefined) return;
+    fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUserLocal(d.user); }).catch(() => {});
+  }, [qrUserProp]);
 
   // Second visit detection + verification toast
   useEffect(() => {
@@ -151,7 +166,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
@@ -343,7 +358,7 @@ export default function CartaPremium({
       </footer>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 20, bottom: 32, gap: 14 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
@@ -397,8 +412,8 @@ export default function CartaPremium({
         <ProfileDrawer
           qrUser={qrUser}
           restaurantId={restaurant.id}
-          onClose={() => setProfileOpen(false)}
-          onLogout={() => { setQrUser(null); setProfileOpen(false); }}
+          onClose={() => setProfileOpenLocal(false)}
+          onLogout={() => { setQrUserLocal(null); setProfileOpenLocal(false); }}
         />
       )}
 

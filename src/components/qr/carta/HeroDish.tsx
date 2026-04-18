@@ -129,7 +129,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
               {initial}
             </div>
           )}
-          <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
+          <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
             {restaurant.name}
           </span>
         </div>
@@ -140,15 +140,15 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           className="absolute z-10 flex items-center justify-center"
           style={{
             top: 12, right: 16,
-            width: 44, height: 44, borderRadius: "50%",
-            background: qrUser ? "#F4A623" : "rgba(0,0,0,0.4)",
-            backdropFilter: qrUser ? "none" : "blur(4px)",
-            WebkitBackdropFilter: qrUser ? "none" : "blur(4px)",
-            border: qrUser ? "none" : "1px solid rgba(255,255,255,0.15)",
+            width: 40, height: 40, borderRadius: "50%",
+            background: "rgba(0,0,0,0.4)",
+            backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)",
+            border: "1px solid rgba(255,255,255,0.15)",
           }}
         >
           {qrUser ? (
-            <span style={{ color: "#0e0e0e", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
               {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
             </span>
           ) : (

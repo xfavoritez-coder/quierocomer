@@ -77,7 +77,7 @@ export default function CategoryNav({
                 display: "flex",
                 alignItems: "center",
                 padding: "0 2px",
-                fontSize: "0.95rem",
+                fontSize: "1rem",
                 fontWeight: isActive ? 700 : 500,
                 color: isActive ? "#0e0e0e" : "#999",
                 background: "none",

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Layers, List, BookOpen, Sparkles, Check } from "lucide-react";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
+import { showViewTransition } from "./hooks/useViewTransition";
 
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 
@@ -20,7 +21,6 @@ export default function ViewSelector({ restaurantId }: Props) {
   const { view, setView } = useCartaView();
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
-  const [transitioning, setTransitioning] = useState<{ label: string; Icon: typeof List } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
   // Close on outside click/touch
@@ -55,21 +55,9 @@ export default function ViewSelector({ restaurantId }: Props) {
     setOpen(false);
     if (next === view) return;
     const option = OPTIONS.find((o) => o.value === next);
-    if (option) {
-      setTransitioning({ label: option.label, Icon: option.Icon });
-      // Show modal minimum 1s, then switch and wait for render
-      setTimeout(() => {
-        setView(next);
-        // Give React time to re-render, then wait for next paint
-        setTimeout(() => {
-          requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              setTransitioning(null);
-            });
-          });
-        }, 500);
-      }, 700);
-    }
+    // Show overlay IMMEDIATELY before React re-renders
+    showViewTransition(option?.label || "");
+    setView(next);
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);
     }).catch(() => {});
@@ -188,50 +176,10 @@ export default function ViewSelector({ restaurantId }: Props) {
         </div>
       )}
 
-      {/* Fullscreen transition modal */}
-      {transitioning && (
-        <div
-          className="fixed inset-0 flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
-          style={{
-            zIndex: 200,
-            background: "#0e0e0e",
-            animation: "vsModalIn 0.3s cubic-bezier(0.16,1,0.3,1)",
-          }}
-        >
-          <div
-            className="flex items-center justify-center"
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 16,
-              background: "rgba(244,166,35,0.1)",
-              marginBottom: 20,
-              animation: "vsIconPulse 1s ease-in-out infinite",
-            }}
-          >
-            <transitioning.Icon size={28} color="#F4A623" strokeWidth={1.5} />
-          </div>
-          <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginBottom: 6 }}>
-            {transitioning.label}
-          </p>
-          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>
-            Cargando vista...
-          </p>
-        </div>
-      )}
-
       <style>{`
         @keyframes vsSlideIn {
           from { opacity: 0; transform: translateX(10px); }
           to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes vsModalIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes vsIconPulse {
-          0%, 100% { transform: scale(1); opacity: 0.8; }
-          50% { transform: scale(1.08); opacity: 1; }
         }
       `}</style>
     </div>

@@ -20,6 +20,10 @@ interface Props {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  qrUser?: any;
+  onProfileOpen?: () => void;
+  onReady?: () => void;
+  readyKey?: number;
 }
 
 type SlideVariant = "hero" | "split" | "light" | "spotlight";
@@ -33,22 +37,11 @@ function getVariant(dish: Dish, idx: number): SlideVariant {
   return rotation[idx % 3];
 }
 
-function getPalette(name: string): Palette {
-  const n = name.toLowerCase();
-  if (/mar|pescad|mariscos|ostra|ceviche|sushi|roll|chirashi/.test(n)) return "ocean";
-  if (/carne|parrilla|brasa|fuego|asado|hot/.test(n)) return "fire";
-  if (/postre|dulce|helado|torta|café|mocktail/.test(n)) return "cream";
+function getPalette(_name: string): Palette {
   return "earth";
 }
 
 function getPoeticName(name: string): { prefix: string; accent: string } {
-  const n = name.toLowerCase();
-  if (/entrada/.test(n)) return { prefix: "Para", accent: "empezar" };
-  if (/mar|pescad|mariscos|ceviche/.test(n)) return { prefix: "Del", accent: "mar" };
-  if (/carne|parrilla|brasa|fuego/.test(n)) return { prefix: "Del", accent: "fuego" };
-  if (/pasta/.test(n)) return { prefix: "De la", accent: "masa" };
-  if (/postre|dulce/.test(n)) return { prefix: "Del", accent: "final dulce" };
-  if (/sushi|roll/.test(n)) return { prefix: "Del", accent: "mar" };
   return { prefix: "", accent: name };
 }
 
@@ -64,7 +57,8 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
-export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId }: Props) {
+export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey }: Props) {
+  useEffect(() => { onReady?.(); }, [readyKey]);
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -78,7 +72,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     return r;
   }, [grouped]);
 
-  const totalDishes = grouped.reduce((a, g) => a + g.dishes.length, 0);
 
   return (
     <>
@@ -86,18 +79,25 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
       <div className="vj-root">
         {/* Top right: user profile */}
         <button
+          onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 16, right: 16, width: 44, height: 44, borderRadius: "50%",
+            top: 16, right: 16, width: 40, height: 40, borderRadius: "50%",
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
           }}
         >
-          <User size={16} />
+          {qrUser ? (
+            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+              {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
+            </span>
+          ) : (
+            <User size={16} />
+          )}
         </button>
 
         {/* Floating buttons — cinematic style */}
-        <div className="fixed z-50 flex flex-col items-center" style={{ right: 20, bottom: 32, gap: 12 }}>
+        <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
           <button
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
@@ -143,7 +143,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         <div className="vj-reel" id="vj-reel">
 
           {/* ===== COVER ===== */}
-          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} dishCount={totalDishes} allPhotos={dishes.map(getDishPhoto).filter(Boolean) as string[]} />
+          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} />
 
           {/* ===== CHAPTERS + TRACKS ===== */}
           {grouped.map((group, idx) => {
@@ -168,7 +168,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           })}
 
           {/* ===== OUTRO ===== */}
-          <OutroSlide onSwitchView={() => setView("lista")} />
+          <OutroSlide onGenio={() => setGenioOpen(true)} onSwitchView={() => setView("lista")} />
         </div>
 
         {/* Genio */}
@@ -204,7 +204,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
 }
 
 /* =============== COVER =============== */
-function CoverSlide({ restaurant, chapterCount, dishCount, allPhotos }: { restaurant: Restaurant & { logoUrl?: string | null }; chapterCount: number; dishCount: number; allPhotos: string[] }) {
+function CoverSlide({ restaurant, chapterCount }: { restaurant: Restaurant; chapterCount: number }) {
   const words = restaurant.name.split(" ");
   const w1 = words[0] || "";
   const w2 = words.slice(1).join(" ") || "";
@@ -213,46 +213,8 @@ function CoverSlide({ restaurant, chapterCount, dishCount, allPhotos }: { restau
     <section className="vj-cover" data-section="cover">
       <div className="vj-cover-bg" />
       <div className="vj-cover-grain" />
-      {/* Floating photo constellation */}
-      {allPhotos.length > 0 && (
-        <div className="vj-cover-photos">
-          {allPhotos.slice(0, 6).map((photo, i) => {
-            // Position photos in the top half only (above the title area)
-            const positions = [
-              { top: "5%", left: "2%" },
-              { top: "3%", left: "55%" },
-              { top: "18%", left: "30%" },
-              { top: "12%", left: "70%" },
-              { top: "25%", left: "5%" },
-              { top: "22%", left: "60%" },
-            ];
-            const pos = positions[i];
-            return (
-            <div
-              key={i}
-              className="vj-cover-photo-float"
-              style={{
-                animationDelay: `${i * -7}s`,
-                animationDuration: `${40 + i * 4}s`,
-                top: pos.top,
-                left: pos.left,
-              }}
-            >
-              <Image src={photo} alt="" width={160} height={110} className="object-cover" style={{ width: "100%", height: "100%", borderRadius: 12 }} />
-            </div>
-            );
-          })}
-        </div>
-      )}
-      <div className="vj-cover-bgtype top font-[family-name:var(--font-fraunces)]">{w1}</div>
-      {w2 && <div className="vj-cover-bgtype bottom font-[family-name:var(--font-fraunces)]">{w2}</div>}
-      <div className="vj-cover-content">
-        {/* Logo */}
-        {restaurant.logoUrl && (
-          <div style={{ marginBottom: 20, opacity: 0, animation: "vj-fade-up 1s var(--vj-ease) 0.3s forwards" }}>
-            <Image src={restaurant.logoUrl} alt={restaurant.name} width={56} height={56} className="rounded-full" style={{ border: "2px solid rgba(255,255,255,0.1)", boxShadow: "0 8px 24px rgba(0,0,0,0.3)" }} />
-          </div>
-        )}
+      <div className="vj-cover-center">
+        <div className="vj-cover-kicker">LA CARTA</div>
         <h1 className="vj-cover-title font-[family-name:var(--font-fraunces)]">
           <span className="vj-line"><span>{w1}</span></span>
           {w2 && <span className="vj-line"><span><em>{w2}</em></span></span>}
@@ -281,35 +243,19 @@ function ChapterOpening({
     }
   });
 
-  // Check for featured dish (RECOMMENDED)
-  const featuredDish = dishes.find(isGeniePick);
-  const featuredPhoto = featuredDish ? getDishPhoto(featuredDish) : null;
-
-  // Get dish photos for mosaic background
-  const mosaicPhotos = dishes
-    .map((d) => getDishPhoto(d))
-    .filter(Boolean)
-    .slice(0, 6) as string[];
+  const recommendedDish = dishes.find(isGeniePick);
+  const bgPhoto = (recommendedDish ? getDishPhoto(recommendedDish) : null)
+    || (dishes.map((d) => getDishPhoto(d)).filter(Boolean) as string[])[0]
+    || null;
 
   return (
     <section className="vj-chapter" data-palette={palette} data-section="chapter" data-rail={index} ref={ref}>
       <div className="vj-chapter-bg" />
 
-      {/* Featured photo reveal (for categories with RECOMMENDED dish) */}
-      {featuredPhoto && (
+      {/* Single background photo */}
+      {bgPhoto && (
         <div className="vj-chapter-featured">
-          <Image src={featuredPhoto} alt={featuredDish?.name || ""} fill className="object-cover" sizes="100vw" />
-        </div>
-      )}
-
-      {/* Photo mosaic background (when no featured dish) */}
-      {!featuredPhoto && mosaicPhotos.length > 0 && (
-        <div className="vj-chapter-mosaic">
-          {mosaicPhotos.map((photo, i) => (
-            <div key={i} className="vj-mosaic-cell" style={{ animationDelay: `${i * 0.15}s` }}>
-              <Image src={photo} alt="" fill className="object-cover" sizes="50vw" />
-            </div>
-          ))}
+          <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" />
         </div>
       )}
 
@@ -321,7 +267,7 @@ function ChapterOpening({
           {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
         </h2>
         <div className="vj-chapter-count">
-          {dishCount} {dishCount === 1 ? "plato" : "platos"}{hasGenie ? " · ✦ Genio" : ""}
+          {dishCount} {dishCount === 1 ? "plato" : "platos"}
         </div>
       </div>
       <div className="vj-chapter-hint">Desliza →</div>
@@ -342,16 +288,14 @@ function CategoryTrack({
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeSlide, setActiveSlide] = useState(0);
-  const isLight = palette === "cream";
   const chapterNum = String(index + 1).padStart(2, "0");
   const totalSlides = group.dishes.length + 1; // +1 for chapter title slide
 
-  // Get photos for mosaic
-  const featuredDish = dishes.find(isGeniePick);
-  const featuredPhoto = featuredDish ? getDishPhoto(featuredDish) : null;
-  const mosaicPhotos = !featuredPhoto
-    ? (dishes.map((d) => getDishPhoto(d)).filter(Boolean).slice(0, 6) as string[])
-    : [];
+  // Background photo: prefer recommended dish, fallback to any dish with photo
+  const recommendedDish = dishes.find(isGeniePick);
+  const bgPhoto = (recommendedDish ? getDishPhoto(recommendedDish) : null)
+    || (dishes.map((d) => getDishPhoto(d)).filter(Boolean) as string[])[0]
+    || null;
 
   useInView(wrapRef, (inView) => { if (inView) onActive(); });
 
@@ -375,16 +319,16 @@ function CategoryTrack({
   }, []);
 
   return (
-    <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef} style={{ background: isLight ? "#f5ecd8" : undefined }}>
+    <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef}>
       {/* Header — only show on dish slides (not chapter title) */}
       {activeSlide > 0 && (
-        <div className={`vj-category-header ${isLight ? "light" : ""}`}>
-          <div className="vj-category-label" style={isLight ? { background: "rgba(0,0,0,0.08)", color: "#3d2817" } : { background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white" }}>
-            {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#8a4a1a" : "white" }}>{poetic.prefix} {poetic.accent}</strong>
+        <div className="vj-category-header">
+          <div className="vj-category-label" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white" }}>
+            {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
           </div>
-          <div className="vj-bullets" style={isLight ? { background: "rgba(0,0,0,0.08)" } : undefined}>
+          <div className="vj-bullets">
             {group.dishes.map((_, i) => (
-              <div key={i} className={`vj-bullet ${i + 1 === activeSlide ? "active" : ""}`} style={isLight ? (i + 1 === activeSlide ? { background: "#c93010" } : { background: "rgba(0,0,0,0.25)" }) : undefined} />
+              <div key={i} className={`vj-bullet ${i + 1 === activeSlide ? "active" : ""}`} />
             ))}
           </div>
         </div>
@@ -393,37 +337,26 @@ function CategoryTrack({
         {/* First slide: chapter title */}
         <div className="vj-slide-item vj-dish vj-chapter-slide" data-slide-idx="0" data-palette={palette} style={{
           flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "0 32px",
-          background: isLight ? "linear-gradient(180deg, #f5ecd8 0%, #e8d4b0 100%)" : undefined,
-          color: isLight ? "#2a1810" : undefined,
         }}>
           {/* Chapter background */}
           <div className="vj-chapter-bg" />
 
-          {/* Featured photo or mosaic */}
-          {featuredPhoto && (
+          {/* Single background photo */}
+          {bgPhoto && (
             <div className="vj-chapter-featured">
-              <Image src={featuredPhoto} alt={featuredDish?.name || ""} fill className="object-cover" sizes="100vw" />
-            </div>
-          )}
-          {!featuredPhoto && mosaicPhotos.length > 0 && (
-            <div className="vj-chapter-mosaic">
-              {mosaicPhotos.map((photo, i) => (
-                <div key={i} className="vj-mosaic-cell">
-                  <Image src={photo} alt="" fill className="object-cover" sizes="50vw" />
-                </div>
-              ))}
+              <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" />
             </div>
           )}
 
           <div style={{ position: "relative", zIndex: 2 }}>
-            <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]" style={{ color: isLight ? "#c93010" : "rgba(255,255,255,0.6)", opacity: 1, transform: "none" }}>
+            <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]" style={{ color: "rgba(255,255,255,0.6)", opacity: 1, transform: "none" }}>
               Sección {CHAPTER_WORDS[index] || index + 1}
             </div>
-            <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]" style={{ opacity: 1, transform: "none", color: isLight ? "#2a1810" : undefined }}>
-              {poetic.prefix}{poetic.prefix ? <br /> : ""}<em style={{ color: isLight ? "#c93010" : "#F4A623" }}>{poetic.accent}</em>
+            <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]" style={{ opacity: 1, transform: "none" }}>
+              {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
             </h2>
             <div style={{ fontSize: "16px", letterSpacing: "0.2em", textTransform: "uppercase" as const, opacity: 0.65 }}>
-              {group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}{hasGenie ? " · ✦ Genio" : ""}
+              {group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}
             </div>
           </div>
 
@@ -454,8 +387,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 }) {
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
-  const isLight = palette === "cream" && variant === "light";
-  const accentColor = palette === "ocean" ? "#7fbfdc" : palette === "cream" ? "#c93010" : "#F4A623";
+  const accentColor = "#F4A623";
 
   if (variant === "hero") return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
@@ -495,18 +427,17 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
       className="vj-slide-item vj-dish vj-v-light"
       data-slide-idx={index}
       onClick={onClick}
-      style={isLight ? { background: "linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%)", color: "#2a1810" } : undefined}
     >
-      <span className="vj-eyebrow" style={{ color: isLight ? "#8a5a2c" : accentColor }}>{dish.tags?.includes("NEW") ? "Nuevo" : ""}</span>
+      <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.tags?.includes("NEW") ? "Nuevo" : ""}</span>
       <div className="vj-photo-wrap">
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
         <span className="vj-ln"><span>{dish.name}</span></span>
       </h3>
-      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "22px", color: "#1a0e08" }}>{pitch}</p>}
-      <div className="vj-meta" style={isLight ? { color: "#5a3d20" } : undefined}>
-        <span className="vj-price font-[family-name:var(--font-fraunces)]" style={isLight ? { borderColor: "#3d2817", color: "#3d2817" } : undefined}>
+      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "22px" }}>{pitch}</p>}
+      <div className="vj-meta">
+        <span className="vj-price font-[family-name:var(--font-fraunces)]">
           ${dish.price?.toLocaleString("es-CL")}
         </span>
       </div>
@@ -532,16 +463,17 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 }
 
 /* =============== OUTRO =============== */
-function OutroSlide({ onSwitchView }: { onSwitchView: () => void }) {
+function OutroSlide({ onGenio, onSwitchView }: { onGenio: () => void; onSwitchView: () => void }) {
   return (
     <section className="vj-outro" data-section="outro">
       <div className="vj-outro-bg" />
       <div className="vj-outro-inner">
+        <div style={{ fontSize: "3rem", marginBottom: 24, animation: "genioOutroFloat 2s ease-in-out infinite" }}>🧞</div>
         <h3 className="font-[family-name:var(--font-fraunces)]">
-          Hasta aquí llega el <em>recorrido</em>.<br />¿Qué vas a pedir?
+          ¿No te decides <em>qué pedir</em>?
         </h3>
-        <p>Toca para ver la carta en otro formato.</p>
-        <button className="vj-outro-cta" onClick={onSwitchView}>Ver en Lista →</button>
+        <p>El Genio te puede ayudar a elegir.</p>
+        <button className="vj-outro-cta" onClick={onGenio}>Preguntar al Genio ✦</button>
       </div>
     </section>
   );
@@ -579,47 +511,22 @@ const CSS = `
   .vj-rail.light .vj-rail-dot.active { background: #c93010; }
 
   /* ===== COVER ===== */
-  .vj-cover { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+  .vj-cover { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
   .vj-cover-bg { position: absolute; inset: -5%; background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(244,166,35,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 30% 70%, rgba(200,80,40,0.15) 0%, transparent 50%), radial-gradient(ellipse at center, #1a0a04 0%, #000 80%); animation: vj-cover-drift 20s ease-in-out infinite alternate; }
   @keyframes vj-cover-drift { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.1) translate(-2%,-1%); } }
   .vj-cover-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>"); opacity: 0.08; mix-blend-mode: overlay; pointer-events: none; z-index: 2; }
-  /* Floating photo constellation */
-  .vj-cover-photos { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
-  .vj-cover-photo-float {
-    position: absolute;
-    width: 140px; height: 95px;
-    border-radius: 12px;
-    overflow: hidden;
-    opacity: 0;
-    filter: blur(1px);
-    box-shadow: 0 12px 40px rgba(0,0,0,0.4);
-    animation: vjPhotoFloat 60s ease-in-out infinite;
-  }
-  @keyframes vjPhotoFloat {
-    0% { opacity: 0; transform: translateX(-60px) translateY(40px) scale(0.8) rotate(-5deg); }
-    10% { opacity: 0.12; }
-    30% { opacity: 0.15; transform: translateX(40px) translateY(-30px) scale(1.05) rotate(3deg); filter: blur(0px); }
-    50% { opacity: 0.1; transform: translateX(80px) translateY(15px) scale(0.92) rotate(-2deg); filter: blur(1px); }
-    70% { opacity: 0.14; transform: translateX(20px) translateY(-40px) scale(1.08) rotate(4deg); filter: blur(0px); }
-    90% { opacity: 0.11; transform: translateX(-40px) translateY(10px) scale(0.95) rotate(-3deg); }
-    100% { opacity: 0; transform: translateX(-60px) translateY(40px) scale(0.8) rotate(-5deg); }
-  }
-
-  .vj-cover-bgtype { position: absolute; font-weight: 200; font-style: italic; font-size: 32vw; line-height: 0.85; letter-spacing: -0.05em; color: rgba(244,166,35,0.04); white-space: nowrap; pointer-events: none; z-index: 1; }
-  .vj-cover-bgtype.top { top: 10%; left: -10%; }
-  .vj-cover-bgtype.bottom { bottom: 15%; right: -10%; }
-  .vj-cover-content { position: relative; z-index: 5; padding: 0 28px calc(180px + env(safe-area-inset-bottom)); }
-  .vj-cover-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: #F4A623; margin-bottom: 20px; font-weight: 500; opacity: 0; animation: vj-kicker-in 1s var(--vj-ease) 0.5s forwards; }
+  .vj-cover-center { position: relative; z-index: 5; text-align: center; padding: 0 24px; }
+  .vj-cover-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: #F4A623; font-weight: 500; margin-bottom: 24px; opacity: 0; animation: vj-kicker-in 1s var(--vj-ease) 0.5s forwards; }
   .vj-cover-kicker::before, .vj-cover-kicker::after { content: ''; width: 24px; height: 1px; background: currentColor; opacity: 0.5; }
   @keyframes vj-kicker-in { from { opacity: 0; letter-spacing: 0.1em; } to { opacity: 1; letter-spacing: 0.4em; } }
-  .vj-cover-title { font-weight: 200; font-size: clamp(54px, 16vw, 92px); line-height: 0.88; letter-spacing: -0.04em; margin-bottom: 16px; }
+  .vj-cover-title { font-weight: 200; font-size: clamp(80px, 22vw, 180px); line-height: 0.88; letter-spacing: -0.04em; margin-bottom: 24px; color: #f5ede0; }
   .vj-line { display: block; overflow: hidden; }
   .vj-line span { display: block; transform: translateY(110%); animation: vj-line-up 1.2s var(--vj-ease) forwards; }
   .vj-line:nth-child(2) span { animation-delay: 0.2s; }
-  .vj-line:nth-child(2) span em { font-style: italic; font-weight: 300; background: linear-gradient(135deg, #F4A623 0%, #e85530 60%, #c93010 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .vj-line:nth-child(2) span em { font-style: italic; font-weight: 300; }
   @keyframes vj-line-up { to { transform: translateY(0); } }
-  .vj-cover-sub { font-style: italic; font-weight: 300; font-size: 22px; line-height: 1.35; opacity: 0; max-width: 30ch; margin-bottom: 28px; animation: vj-fade-up 1.2s var(--vj-ease) 0.9s forwards; }
-  @keyframes vj-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 0.85; transform: translateY(0); } }
+  .vj-cover-sub { font-style: italic; font-weight: 300; font-size: 18px; line-height: 1.35; opacity: 0; max-width: 30ch; margin: 0 auto; animation: vj-fade-up 1.2s var(--vj-ease) 0.9s forwards; color: rgba(245,237,224,0.6); }
+  @keyframes vj-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   .vj-cover-meta { display: flex; gap: 20px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1.2s var(--vj-ease) 1.2s forwards; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
   .vj-cover-meta strong { display: block; font-weight: 400; font-size: 22px; text-transform: none; letter-spacing: -0.01em; margin-top: 4px; }
   .vj-cover-cue { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 6; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1s ease-out 2s forwards, vj-cue-float 2.5s ease-in-out 3s infinite; }
@@ -632,15 +539,13 @@ const CSS = `
   .vj-chapter[data-palette="ocean"] .vj-chapter-bg { background: radial-gradient(ellipse at 30% 40%, rgba(100,180,220,0.15) 0%, transparent 60%), radial-gradient(ellipse at 70% 70%, rgba(20,80,120,0.2) 0%, transparent 50%), linear-gradient(180deg, #061020 0%, #020810 100%); }
   .vj-chapter[data-palette="earth"] .vj-chapter-bg { background: radial-gradient(ellipse at 40% 30%, rgba(200,130,60,0.18) 0%, transparent 55%), radial-gradient(ellipse at 60% 80%, rgba(100,50,20,0.25) 0%, transparent 50%), linear-gradient(180deg, #1a0c04 0%, #0a0502 100%); }
   .vj-chapter[data-palette="fire"] .vj-chapter-bg { background: radial-gradient(ellipse at 50% 50%, rgba(244,100,40,0.2) 0%, transparent 55%), radial-gradient(ellipse at 20% 80%, rgba(200,50,10,0.25) 0%, transparent 50%), linear-gradient(180deg, #200804 0%, #080200 100%); }
-  .vj-chapter[data-palette="cream"] .vj-chapter-bg { background: radial-gradient(ellipse at 30% 30%, rgba(255,240,220,0.9) 0%, transparent 60%), linear-gradient(180deg, #f5ecd8 0%, #e8d4b0 100%); }
-  .vj-chapter[data-palette="cream"] { color: #2a1810; }
-  .vj-chapter[data-palette="cream"] .vj-chapter-num, .vj-chapter[data-palette="cream"] .vj-chapter-name em { color: #c93010; }
+  .vj-chapter[data-palette="cream"] .vj-chapter-bg { background: radial-gradient(ellipse at 40% 30%, rgba(200,130,60,0.18) 0%, transparent 55%), linear-gradient(180deg, #1a0c04 0%, #0a0502 100%); }
   .vj-chapter::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 1px; background: currentColor; opacity: 0.3; transform: translate(-50%,-50%); transition: width 1.5s var(--vj-ease); }
   .vj-chapter.in-view::before { width: 60%; max-width: 400px; }
   .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
   .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
-  .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; }
+  .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
   .vj-chapter-name em { font-style: italic; font-weight: 500; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
@@ -662,10 +567,15 @@ const CSS = `
     transition: filter 3s cubic-bezier(0.16,1,0.3,1), opacity 1.5s ease, transform 8s cubic-bezier(0.16,1,0.3,1);
   }
   .vj-chapter-featured img { object-fit: cover; }
-  .vj-chapter.in-view .vj-chapter-featured {
+  .vj-chapter.in-view .vj-chapter-featured,
+  .vj-chapter-slide.in-view .vj-chapter-featured {
     filter: blur(6px) brightness(0.35);
     opacity: 0.7;
-    transform: scale(1.05);
+    animation: vjBgDrift 12s ease-in-out infinite alternate;
+  }
+  @keyframes vjBgDrift {
+    0% { transform: scale(1.05) translate(0, 0); }
+    100% { transform: scale(1.15) translate(-2%, -1%); }
   }
 
   /* Photo mosaic */
@@ -682,7 +592,8 @@ const CSS = `
     transform: scale(1.8) rotate(2deg);
     animation: none;
   }
-  .vj-chapter.in-view .vj-chapter-mosaic {
+  .vj-chapter.in-view .vj-chapter-mosaic,
+  .vj-chapter-slide.in-view .vj-chapter-mosaic {
     opacity: 0.3;
     animation: vjMosaicAlive 12s cubic-bezier(0.16,1,0.3,1) forwards;
   }
@@ -790,6 +701,7 @@ const CSS = `
   .vj-outro-inner h3 em { font-style: normal; font-weight: 300; color: #F4A623; }
   .vj-outro-inner p { opacity: 0.6; font-size: 15px; margin-bottom: 32px; font-weight: 300; }
   .vj-outro-cta { display: inline-flex; align-items: center; gap: 10px; padding: 14px 32px; background: linear-gradient(135deg, #F4A623 0%, #e85530 100%); color: #0a0604; border-radius: 100px; font-size: 13px; font-weight: 600; letter-spacing: 0.03em; border: none; cursor: pointer; font-family: inherit; box-shadow: 0 10px 30px -8px rgba(244,166,35,0.5); }
+  @keyframes genioOutroFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.8; } 50% { transform: translateY(-6px) scale(1.1); opacity: 1; } }
 
   /* Reduce motion */
   @media (prefers-reduced-motion: reduce) {

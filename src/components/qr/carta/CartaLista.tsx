@@ -28,6 +28,10 @@ interface Props {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  qrUser?: any;
+  onProfileOpen?: () => void;
+  onReady?: () => void;
+  readyKey?: number;
 }
 
 
@@ -39,7 +43,12 @@ export default function CartaLista({
   ratingMap,
   reviews,
   tableId,
+  qrUser,
+  onProfileOpen,
+  onReady,
+  readyKey,
 }: Props) {
+  useEffect(() => { onReady?.(); }, [readyKey]);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
@@ -124,15 +133,21 @@ export default function CartaLista({
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.2rem", fontWeight: 400, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {restaurant.name}
           </span>
         </div>
         {/* Center: view selector */}
         {/* Right: profile */}
         <div className="flex items-center justify-center" style={{ flex: 1, justifyContent: "flex-end" }}>
-          <div className="flex items-center justify-center" style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
-            <User size={20} color="#999" />
+          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
+            {qrUser ? (
+              <span style={{ color: "#333", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+                {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
+              </span>
+            ) : (
+              <User size={20} color="#999" />
+            )}
           </div>
         </div>
       </div>
@@ -199,7 +214,7 @@ export default function CartaLista({
                     display: "flex",
                     alignItems: "center",
                     padding: "0 2px",
-                    fontSize: "0.95rem",
+                    fontSize: "1rem",
                     fontWeight: isActive ? 700 : 500,
                     color: isActive ? "#0e0e0e" : "#999",
                     background: "none",
@@ -240,7 +255,7 @@ export default function CartaLista({
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.1rem", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e" }}
+              style={{ fontSize: "1.3rem", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e" }}
             >
               {category.name}
             </h2>
@@ -262,7 +277,7 @@ export default function CartaLista({
       ))}
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 20, bottom: 32, gap: 14 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
@@ -355,12 +370,6 @@ function DishListCard({
           >
             {dish.name}
           </h3>
-          {geniePick && (
-            <span
-              style={{ flexShrink: 0, width: 7, height: 7, borderRadius: "50%", marginTop: 6, background: "#F4A623" }}
-              aria-label="Recomendado por el Genio"
-            />
-          )}
         </div>
         {dish.description && (
           <p
