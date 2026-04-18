@@ -103,7 +103,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="fixed font-[family-name:var(--font-dm)]"
           style={{
-            bottom: 100, right: 20, background: "#16a34a", color: "white",
+            bottom: 180, left: "50%", transform: "translateX(-50%)", background: "#16a34a", color: "white",
             padding: "8px 16px", borderRadius: 50, fontSize: "0.82rem", fontWeight: 600,
             boxShadow: "0 4px 16px rgba(22,163,74,0.3)", zIndex: 60,
             animation: "fadeInUp 0.2s ease-out",
@@ -117,7 +117,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="fixed font-[family-name:var(--font-dm)]"
           style={{
-            bottom: 100, right: 20, background: "#333", color: "white",
+            bottom: 180, left: "50%", transform: "translateX(-50%)", background: "#333", color: "white",
             padding: "8px 16px", borderRadius: 50, fontSize: "0.82rem", fontWeight: 500,
             zIndex: 60, animation: "fadeInUp 0.2s ease-out",
           }}
