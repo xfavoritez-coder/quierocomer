@@ -9,6 +9,9 @@ const NAV = [
   { icon: "🏠", label: "Locales", href: "/admin/locales" },
   { icon: "🍽️", label: "Platos", href: "/admin/menus" },
   { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
+  { icon: "👥", label: "Segmentos", href: "/admin/segmentos" },
+  { icon: "📧", label: "Campañas", href: "/admin/campanias" },
+  { icon: "🏷️", label: "Promos", href: "/admin/promociones" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 

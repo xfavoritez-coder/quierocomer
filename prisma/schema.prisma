@@ -378,6 +378,11 @@ model Restaurant {
   schedules             RestaurantScheduleRule[]
   waiterSubscriptions   WaiterPushSubscription[]
   qrUserInteractions    QRUserInteraction[]
+  segments              Segment[]
+  campaigns             Campaign[]
+  promotionsMarketing   Promotion[]
+  automationRules       AutomationRule[]
+  genioInsights         GenioInsight[]
 
   @@index([ownerId])
 }
@@ -691,11 +696,15 @@ model QRUser {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
+  unsubscribedAt DateTime?
+  lastEmailAt    DateTime?
+
   magicTokens  QRMagicToken[]
   interactions QRUserInteraction[]
   guestProfiles GuestProfile[]
   sessions     Session[]
   statEvents   StatEvent[]
+  campaignRecipients CampaignRecipient[]
 }
 
 model QRMagicToken {
@@ -759,4 +768,138 @@ model CronLog {
 
   @@index([jobName])
   @@index([createdAt])
+}
+
+// ─── Marketing ────────────────────────────────────────────────────────
+
+model Segment {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  name          String
+  description   String?
+  rules         Json     // [{ field, operator, value }]
+  isAuto        Boolean  @default(false)
+  cachedCount   Int?
+  cachedAt      DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+  campaigns     Campaign[]
+
+  @@index([restaurantId])
+}
+
+model Campaign {
+  id            String         @id @default(cuid())
+  restaurantId  String
+  segmentId     String?
+  name          String
+  status        CampaignStatus @default(DRAFT)
+  subject       String?
+  bodyHtml      String?
+  scheduledFor  DateTime?
+  sentAt        DateTime?
+  stats         Json?          // { sent, opened, clicked, bounced }
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  restaurant    Restaurant          @relation(fields: [restaurantId], references: [id])
+  segment       Segment?            @relation(fields: [segmentId], references: [id])
+  recipients    CampaignRecipient[]
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+model CampaignRecipient {
+  id          String    @id @default(cuid())
+  campaignId  String
+  qrUserId    String
+  status      String    @default("queued") // queued, sent, failed, bounced
+  sentAt      DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  campaign    Campaign @relation(fields: [campaignId], references: [id])
+  qrUser      QRUser   @relation(fields: [qrUserId], references: [id])
+
+  @@index([campaignId])
+  @@index([qrUserId])
+}
+
+model Promotion {
+  id              String          @id @default(cuid())
+  restaurantId    String
+  name            String
+  description     String?
+  dishIds         String[]
+  originalPrice   Float?
+  promoPrice      Float?
+  discountPct     Int?
+  validFrom       DateTime?
+  validUntil      DateTime?
+  status          PromotionStatus @default(SUGGESTED)
+  generatedBy     String          @default("manual") // ai, manual
+  aiJustification String?
+  metrics         Json?           // { views, clicks, redemptions }
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([status])
+}
+
+enum PromotionStatus {
+  SUGGESTED
+  ACTIVE
+  ARCHIVED
+  REJECTED
+}
+
+model AutomationRule {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  name          String
+  trigger       String   // birthday, inactivity, welcome, milestone
+  triggerConfig Json?    // { daysInactive: 30, milestoneVisit: 5, etc }
+  subject       String?
+  bodyHtml      String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+model GenioInsight {
+  id            String   @id @default(cuid())
+  restaurantId  String
+  type          String   // menu_gap, segment_opportunity, pricing, engagement
+  title         String
+  body          String
+  priority      Int      @default(0)
+  data          Json?    // números que respaldan el insight
+  status        String   @default("active") // active, dismissed
+  generatedAt   DateTime @default(now())
+  expiresAt     DateTime?
+  dismissedAt   DateTime?
+
+  restaurant    Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+  @@index([status])
 }
