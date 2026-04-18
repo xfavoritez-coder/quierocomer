@@ -16,6 +16,7 @@ interface DishDetailProps {
 }
 
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { trackDishEnter, trackDishLeave } from "@/lib/sessionTracker";
 
 export default function DishDetail({
   dish,
@@ -64,6 +65,11 @@ export default function DishDetail({
       requestAnimationFrame(() => requestAnimationFrame(() => setSlideIn(false)));
       prevDishRef.current = dish.id;
     }
+  }, [dish.id]);
+
+  useEffect(() => {
+    trackDishEnter(dish.id);
+    return () => { trackDishLeave(); };
   }, [dish.id]);
 
   useEffect(() => {

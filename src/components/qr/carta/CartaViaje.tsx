@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
+import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { Sparkles, Bell, User } from "lucide-react";
 import DishDetail from "./DishDetail";
@@ -185,7 +186,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 dishes={group.dishes}
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
-                onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); }}
+                onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
                 onDishTap={() => {}}
               />
             );
@@ -309,6 +310,16 @@ function CategoryTrack({
     || null;
 
   useInView(wrapRef, (inView) => { if (inView) onActive(); });
+
+  // Track dish dwell when slide changes
+  useEffect(() => {
+    if (activeSlide > 0) {
+      const dish = group.dishes[activeSlide - 1];
+      if (dish) trackDishEnter(dish.id);
+    } else {
+      trackDishLeave();
+    }
+  }, [activeSlide, group.dishes]);
 
   // Horizontal observer
   useEffect(() => {

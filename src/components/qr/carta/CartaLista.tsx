@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
+import { trackCategoryDwell } from "@/lib/sessionTracker";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
@@ -52,6 +53,16 @@ export default function CartaLista({
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
+
+  useEffect(() => {
+    const prev = catStartRef.current;
+    if (prev.id && prev.id !== activeCategory) {
+      const dwellMs = Date.now() - prev.start;
+      if (dwellMs > 1000) trackCategoryDwell(prev.id, dwellMs);
+    }
+    catStartRef.current = { id: activeCategory, start: Date.now() };
+  }, [activeCategory]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);

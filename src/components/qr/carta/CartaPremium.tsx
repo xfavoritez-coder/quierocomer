@@ -13,6 +13,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import { getGuestId } from "@/lib/guestId";
+import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 
 interface Review {
   id: string;
@@ -80,6 +81,18 @@ export default function CartaPremium({
   readyKey,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
+
+  // Track category dwell time when active category changes
+  useEffect(() => {
+    const prev = catStartRef.current;
+    if (prev.id && prev.id !== activeCategory) {
+      const dwellMs = Date.now() - prev.start;
+      if (dwellMs > 1000) trackCategoryDwell(prev.id, dwellMs);
+    }
+    catStartRef.current = { id: activeCategory, start: Date.now() };
+  }, [activeCategory]);
+
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [qrUserLocal, setQrUserLocal] = useState<any>(null);
