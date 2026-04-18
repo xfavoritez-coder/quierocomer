@@ -91,15 +91,18 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
     return () => el.removeEventListener("scroll", handleScroll);
   }, [promos]);
 
+  const modalOpenedAt = useRef(0);
+
   const openPromo = (p: Promo) => {
     setSelectedPromo(p);
     setModalVisible(true);
+    modalOpenedAt.current = Date.now();
     trackPromo(restaurantId, "PROMO_CLICKED", p.dishes[0]?.id);
   };
 
   const closeModal = () => {
     setModalVisible(false);
-    setTimeout(() => setSelectedPromo(null), 200);
+    setTimeout(() => setSelectedPromo(null), 400);
   };
 
   const handleViewDish = (dishId: string) => {
@@ -223,136 +226,145 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
         )}
       </div>
 
-      {/* Promo Detail Modal */}
-      {selectedPromo && (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0,
-            height: "100vh",
-            ...({ height: "100dvh" } as any),
-            ...({ height: "-webkit-fill-available" } as any),
-            zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)",
-            display: "flex", alignItems: "flex-end", justifyContent: "center",
-            opacity: modalVisible ? 1 : 0, transition: "opacity 0.2s ease",
-          }}
-          onClick={closeModal}
-        >
+      {/* Promo Detail Modal — Premium bottom sheet */}
+      {selectedPromo && (() => {
+        const dish = selectedPromo.dishes[0];
+        const savings = selectedPromo.originalPrice && selectedPromo.promoPrice
+          ? selectedPromo.originalPrice - selectedPromo.promoPrice : 0;
+        return (
+        <>
+          {/* Overlay */}
           <div
+            onClick={closeModal}
+            style={{
+              position: "fixed", inset: 0, zIndex: 100,
+              background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
+              opacity: modalVisible ? 1 : 0,
+              transition: "opacity 0.3s ease",
+            }}
+          />
+
+          {/* Bottom sheet */}
+          <div
+            className="font-[family-name:var(--font-dm)]"
             onClick={e => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: "20px 20px 0 0", width: "100%", maxWidth: 480,
-              maxHeight: "85vh", overflowY: "auto",
-              transform: modalVisible ? "translateY(0)" : "translateY(100%)",
-              transition: "transform 0.25s ease-out",
+              position: "fixed", bottom: 0, left: "50%",
+              transform: modalVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(100%)",
+              width: "100%", maxWidth: 420, maxHeight: "92vh",
+              background: "white", borderRadius: "28px 28px 0 0",
+              zIndex: 101, display: "flex", flexDirection: "column",
+              transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
+              boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
             }}
           >
-            {/* Close */}
-            <button onClick={closeModal} style={{ position: "absolute", top: 12, right: 12, zIndex: 10, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-              <X size={16} color="white" />
-            </button>
+            {/* Hero image */}
+            {dish?.photos?.[0] && (
+              <div style={{ position: "relative", width: "100%", height: 280, flexShrink: 0, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
+                <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="100vw" />
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)" }} />
 
-            {/* Hero photo */}
-            {selectedPromo.dishes[0]?.photos?.[0] && (
-              <div style={{ position: "relative", width: "100%", aspectRatio: "16/10", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
-                <Image src={selectedPromo.dishes[0].photos[0]} alt="" fill className="object-cover" sizes="100vw" />
+                {/* Handle bar */}
+                <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(255,255,255,0.6)", borderRadius: 100, zIndex: 10 }} />
+
+                {/* Close button */}
+                <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", zIndex: 10 }}>
+                  <X size={18} color="#0e0e0e" strokeWidth={1.5} />
+                </button>
+
+                {/* Discount badge */}
                 {selectedPromo.discountPct && (
-                  <div style={{
-                    position: "absolute", top: 16, left: 16,
-                    background: "#16a34a", color: "white",
-                    fontSize: "16px", fontWeight: 700, padding: "6px 14px", borderRadius: 50,
-                  }}>
+                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)", zIndex: 10 }}>
                     -{selectedPromo.discountPct}% OFF
                   </div>
                 )}
               </div>
             )}
 
-            {/* Content */}
-            <div style={{ padding: "20px 20px 32px" }}>
-              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", margin: "0 0 4px" }}>
-                {selectedPromo.dishes[0]?.name || selectedPromo.name}
-              </h2>
-              {selectedPromo.name !== selectedPromo.dishes[0]?.name && (
-                <p style={{ fontSize: "0.88rem", color: "#F4A623", fontWeight: 600, margin: "0 0 12px" }}>{selectedPromo.name}</p>
-              )}
-
-              {selectedPromo.description && (
-                <p style={{ fontSize: "0.92rem", color: "#666", lineHeight: 1.5, margin: "0 0 16px" }}>{selectedPromo.description}</p>
-              )}
-
-              {/* Price block */}
-              <div style={{ background: "linear-gradient(135deg, rgba(244,166,35,0.08), rgba(244,166,35,0.03))", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 14, padding: "16px 18px", marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <div>
-                  <p style={{ fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 4px" }}>Precio promo</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                    <span style={{ fontSize: "1.6rem", fontWeight: 700, color: "#F4A623" }}>${selectedPromo.promoPrice?.toLocaleString("es-CL")}</span>
-                    {selectedPromo.originalPrice && (
-                      <span style={{ fontSize: "1rem", color: "#ccc", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>
-                    )}
-                  </div>
-                </div>
-                {selectedPromo.discountPct && (
-                  <div style={{ background: "#16a34a", color: "white", fontSize: "1.1rem", fontWeight: 700, padding: "8px 14px", borderRadius: 10 }}>
-                    -{selectedPromo.discountPct}%
-                  </div>
-                )}
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 40px", scrollbarWidth: "none" }}>
+              {/* Eyebrow */}
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
+                <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>
               </div>
 
-              {/* Ingredients */}
-              {selectedPromo.dishes[0]?.ingredients && (
-                <p style={{ fontSize: "0.82rem", color: "#999", margin: "0 0 12px" }}>
-                  <strong style={{ color: "#666" }}>Ingredientes:</strong> {selectedPromo.dishes[0].ingredients}
+              {/* Title */}
+              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 16px" }}>
+                {selectedPromo.name}
+              </h2>
+
+              {/* Description */}
+              {(selectedPromo.description || dish?.description) && (
+                <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 24px" }}>
+                  {selectedPromo.description || dish?.description}
                 </p>
               )}
 
-              {/* Description of first dish */}
-              {selectedPromo.dishes[0]?.description && (
-                <p style={{ fontSize: "0.85rem", color: "#888", lineHeight: 1.5, margin: "0 0 12px", fontStyle: "italic" }}>{selectedPromo.dishes[0].description}</p>
-              )}
+              {/* Price section */}
+              <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 28 }}>
+                <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                  <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>
+                    ${selectedPromo.promoPrice?.toLocaleString("es-CL")}
+                  </span>
+                  {selectedPromo.originalPrice && (
+                    <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>
+                      ${selectedPromo.originalPrice.toLocaleString("es-CL")}
+                    </span>
+                  )}
+                  {savings > 0 && (
+                    <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>
+                      Ahorras ${savings.toLocaleString("es-CL")}
+                    </span>
+                  )}
+                </div>
+              </div>
 
-              {/* Multiple dishes */}
+              {/* Qué incluye (multiple dishes) */}
               {selectedPromo.dishes.length > 1 && (
-                <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Incluye</p>
-                  {selectedPromo.dishes.map(d => (
-                    <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid #f0f0f0" }}>
-                      {d.photos?.[0] && (
-                        <div style={{ width: 40, height: 40, borderRadius: 8, overflow: "hidden", position: "relative", flexShrink: 0 }}>
-                          <Image src={d.photos[0]} alt="" fill className="object-cover" sizes="40px" />
+                <div style={{ marginBottom: 28 }}>
+                  <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
+                  <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 16px" }}>{selectedPromo.dishes.length} platos combinados en esta promoción</p>
+                  <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
+                    {selectedPromo.dishes.map(d => (
+                      <button
+                        key={d.id}
+                        onClick={() => { trackPromo(restaurantId, "PROMO_CLICKED", d.id); onViewDish?.(d.id); closeModal(); }}
+                        className="active:bg-[#fff7e8]"
+                        style={{ display: "flex", alignItems: "center", gap: 14, padding: 12, borderRadius: 14, background: "white", width: "100%", border: "none", cursor: "pointer", textAlign: "left", marginBottom: 4 }}
+                      >
+                        {d.photos?.[0] && (
+                          <div style={{ width: 52, height: 52, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}>
+                            <Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="52px" />
+                          </div>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontSize: "14px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{d.name}</p>
+                          {d.description && <p style={{ fontSize: "11.5px", color: "#8a8a8a", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
                         </div>
-                      )}
-                      <span style={{ fontSize: "0.88rem", color: "#333", flex: 1 }}>{d.name}</span>
-                      <span style={{ fontSize: "0.82rem", color: "#999" }}>${d.price.toLocaleString("es-CL")}</span>
-                    </div>
-                  ))}
+                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "15px", fontWeight: 500, color: "#0e0e0e", flexShrink: 0 }}>${d.price.toLocaleString("es-CL")}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Validity */}
+              {/* Validez */}
               {selectedPromo.validUntil && (
-                <p style={{ fontSize: "0.78rem", color: "#999", margin: "0 0 16px" }}>
-                  Válido hasta {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}
-                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fef9f0", borderRadius: 14, border: "1px solid #fce8c5" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
+                  <div>
+                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
+                    <p style={{ fontSize: "11.5px", color: "#8a5a2c", margin: "2px 0 0" }}>Sujeto a disponibilidad del local</p>
+                  </div>
+                </div>
               )}
-
-              {/* CTA */}
-              <button
-                onClick={() => handleViewDish(selectedPromo.dishes[0]?.id)}
-                className="active:scale-[0.98] transition-transform"
-                style={{
-                  width: "100%", padding: "14px", background: "#F4A623", color: "#0a0a0a",
-                  border: "none", borderRadius: 50, fontSize: "1rem", fontWeight: 700,
-                  fontFamily: "inherit", cursor: "pointer",
-                  boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
-                }}
-              >
-                Ver plato completo
-              </button>
             </div>
           </div>
-        </div>
-      )}
+        </>
+        );
+      })()}
     </>
   );
 }

@@ -73,33 +73,70 @@ export default function AdminMenus() {
     </div>
   );
 
+  // Edit state (must be at top level, not inside conditional)
   const [editMode, setEditMode] = useState(false);
+  const [eName, setEName] = useState("");
+  const [eDesc, setEDesc] = useState("");
+  const [ePrice, setEPrice] = useState("");
+  const [eDiscountPrice, setEDiscountPrice] = useState("");
   const [eIngredients, setEIngredients] = useState("");
   const [eAllergens, setEAllergens] = useState<string[]>([]);
   const [eTags, setETags] = useState<string[]>([]);
   const [eIsHero, setEIsHero] = useState(false);
+  const [eDiet, setEDiet] = useState("OMNIVORE");
+  const [eSpicy, setESpicy] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
-  const TAG_OPTIONS = ["RECOMMENDED", "NEW", "MOST_ORDERED", "PROMOTION"];
+  const TAG_OPTIONS: { value: string; label: string }[] = [
+    { value: "RECOMMENDED", label: "Recomendado" },
+    { value: "NEW", label: "Nuevo" },
+    { value: "MOST_ORDERED", label: "Más pedido" },
+    { value: "PROMOTION", label: "Promoción" },
+  ];
+  const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
+    { value: "VEGAN", label: "Vegano", icon: "🌱" },
+    { value: "VEGETARIAN", label: "Vegetariano", icon: "🥚" },
+    { value: "PESCETARIAN", label: "Pescetariano", icon: "🐟" },
+    { value: "OMNIVORE", label: "Omnívoro", icon: "🍖" },
+  ];
 
   const startEditDish = (d: Dish) => {
     setEditMode(true);
+    setEName(d.name);
+    setEDesc(d.description || "");
+    setEPrice(String(d.price));
+    setEDiscountPrice(d.discountPrice ? String(d.discountPrice) : "");
     setEIngredients(d.ingredients || "");
     setEAllergens((d.allergens || "").split(",").map(a => a.trim().toLowerCase()).filter(Boolean));
     setETags([...d.tags]);
     setEIsHero(d.isHero);
+    setEDiet((d as any).dishDiet || "OMNIVORE");
+    setESpicy((d as any).isSpicy || false);
   };
 
   const saveDishEdit = async () => {
     if (!selectedDish) return;
     setSaving(true);
+    const updates = {
+      name: eName,
+      description: eDesc || null,
+      price: Number(ePrice),
+      discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
+      ingredients: eIngredients || null,
+      allergens: eAllergens.filter(a => a !== "ninguno").join(", ") || null,
+      tags: eTags,
+      isHero: eIsHero,
+      dishDiet: eDiet,
+      isSpicy: eSpicy,
+    };
     await fetch(`/api/admin/dishes/${selectedDish.id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ingredients: eIngredients || null, allergens: eAllergens.join(", ") || null, tags: eTags, isHero: eIsHero }),
+      body: JSON.stringify(updates),
     });
-    setDishes(prev => prev.map(d => d.id === selectedDish.id ? { ...d, ingredients: eIngredients, allergens: eAllergens.join(", "), tags: eTags, isHero: eIsHero } : d));
-    setSelectedDish({ ...selectedDish, ingredients: eIngredients, allergens: eAllergens.join(", "), tags: eTags as any, isHero: eIsHero });
+    const updated = { ...selectedDish, ...updates, allergens: updates.allergens, tags: eTags as any };
+    setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
+    setSelectedDish(updated);
     setEditMode(false);
     setSaving(false);
   };
@@ -118,39 +155,34 @@ export default function AdminMenus() {
           </div>
         )}
         <div style={{ padding: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-            <div>
-              <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "white", margin: 0 }}>{selectedDish.name}</h2>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{selectedDish.category.name}</p>
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontFamily: F, fontSize: "1.1rem", color: "#F4A623", margin: 0, fontWeight: 700 }}>${selectedDish.price.toLocaleString("es-CL")}</p>
-              {selectedDish.discountPrice && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: 0 }}>${selectedDish.discountPrice.toLocaleString("es-CL")}</p>}
-            </div>
-          </div>
-
-          {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#aaa", lineHeight: 1.5, margin: "0 0 16px" }}>{selectedDish.description}</p>}
-
           {!editMode ? (
             <>
-              {/* Read-only view */}
-              {selectedDish.tags.length > 0 && (
-                <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                  {selectedDish.tags.map(t => (
-                    <span key={t} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${TAG_COLORS[t] || "#888"}20`, color: TAG_COLORS[t] || "#888", border: `1px solid ${TAG_COLORS[t] || "#888"}40` }}>{t}</span>
-                  ))}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+                <div>
+                  <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "white", margin: 0 }}>{selectedDish.name}</h2>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{selectedDish.category.name}</p>
                 </div>
-              )}
+                <div style={{ textAlign: "right" }}>
+                  <p style={{ fontFamily: F, fontSize: "1.1rem", color: "#F4A623", margin: 0, fontWeight: 700 }}>${selectedDish.price.toLocaleString("es-CL")}</p>
+                  {selectedDish.discountPrice && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: 0 }}>${selectedDish.discountPrice.toLocaleString("es-CL")}</p>}
+                </div>
+              </div>
+              {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#aaa", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
+
+              {/* Badges */}
+              <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+                {selectedDish.tags.map(t => <span key={t} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${TAG_COLORS[t] || "#888"}20`, color: TAG_COLORS[t] || "#888" }}>{t}</span>)}
+                {(selectedDish as any).dishDiet && (selectedDish as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.icon} {DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.label}</span>}
+                {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
+              </div>
+
               {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", margin: "0 0 8px" }}>🥘 {selectedDish.ingredients}</p>}
-              {selectedDish.allergens && (
+              {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                  {selectedDish.allergens.split(",").map(a => a.trim()).filter(Boolean).map(a => (
-                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530", border: "1px solid rgba(232,85,48,0.2)" }}>🚫 {a}</span>
+                  {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
+                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🚫 {a}</span>
                   ))}
                 </div>
-              )}
-              {!selectedDish.allergens && !selectedDish.ingredients && (
-                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#555", fontStyle: "italic", margin: "0 0 12px" }}>Sin ingredientes ni alérgenos configurados</p>
               )}
 
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
@@ -162,14 +194,56 @@ export default function AdminMenus() {
             </>
           ) : (
             <>
-              {/* Edit mode */}
+              {/* Full edit mode */}
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Ingredientes</label>
-                <textarea value={eIngredients} onChange={e => setEIngredients(e.target.value)} rows={2} style={{ width: "100%", padding: "10px 12px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", resize: "vertical", boxSizing: "border-box" }} placeholder="arroz, palta, salmón, soja..." />
+                <label style={LBL}>Nombre</label>
+                <input value={eName} onChange={e => setEName(e.target.value)} style={INP} />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Descripción</label>
+                <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={LBL}>Precio</label>
+                  <input type="number" value={ePrice} onChange={e => setEPrice(e.target.value)} style={INP} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={LBL}>Precio descuento</label>
+                  <input type="number" value={eDiscountPrice} onChange={e => setEDiscountPrice(e.target.value)} placeholder="Opcional" style={INP} />
+                </div>
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Alérgenos</label>
+                <label style={LBL}>Tipo de dieta</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {DIET_OPTIONS.map(d => (
+                    <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.05)", color: eDiet === d.value ? "#4ade80" : "#666" }}>
+                      {d.icon} {d.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Características</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eSpicy ? "#e85530" : "#666" }}>
+                    🌶️ {eSpicy ? "Picante" : "No picante"}
+                  </button>
+                  <button onClick={() => setEIsHero(!eIsHero)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eIsHero ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.05)", color: eIsHero ? "#F4A623" : "#666" }}>
+                    ⭐ {eIsHero ? "Hero" : "No hero"}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Ingredientes</label>
+                <textarea value={eIngredients} onChange={e => setEIngredients(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} placeholder="arroz, palta, salmón..." />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Alérgenos</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ALLERGEN_OPTIONS.map(a => (
                     <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eAllergens.includes(a) ? "#e85530" : "#666" }}>
@@ -180,24 +254,18 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Tags</label>
+                <label style={LBL}>Tags</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => (
-                    <button key={t} onClick={() => toggleTag(t)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t) ? `${TAG_COLORS[t]}20` : "rgba(255,255,255,0.05)", color: eTags.includes(t) ? TAG_COLORS[t] : "#666" }}>
-                      {t}
+                    <button key={t.value} onClick={() => toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "rgba(255,255,255,0.05)", color: eTags.includes(t.value) ? TAG_COLORS[t.value] : "#666" }}>
+                      {t.label}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <div style={{ marginBottom: 16 }}>
-                <button onClick={() => setEIsHero(!eIsHero)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eIsHero ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.05)", color: eIsHero ? "#F4A623" : "#666" }}>
-                  {eIsHero ? "⭐ Hero activo" : "Hero"}
-                </button>
-              </div>
-
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveDishEdit} disabled={saving} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
+                <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
                 <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
               </div>
             </>
@@ -286,3 +354,6 @@ export default function AdminMenus() {
     </div>
   );
 }
+
+const LBL: React.CSSProperties = { fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 };
+const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" };

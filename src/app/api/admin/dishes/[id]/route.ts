@@ -23,6 +23,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.ingredients !== undefined && { ingredients: body.ingredients || null }),
         ...(body.allergens !== undefined && { allergens: body.allergens || null }),
+        ...(body.dishDiet !== undefined && { dishDiet: body.dishDiet }),
+        ...(body.isSpicy !== undefined && { isSpicy: body.isSpicy }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
       },

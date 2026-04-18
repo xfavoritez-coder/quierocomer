@@ -110,11 +110,14 @@ enum DietType {
 // ─── Ingredients ────────────────────────────────────────────────────────
 
 model Ingredient {
-  id        String             @id @default(cuid())
-  name      String             @unique
-  category  IngredientCategory
-  createdAt DateTime           @default(now())
-  dishes    IngredientTag[]
+  id              String             @id @default(cuid())
+  name            String             @unique
+  category        IngredientCategory
+  isAllergen      Boolean            @default(false)
+  allergenType    String?            // gluten, lactosa, frutos secos, etc
+  createdAt       DateTime           @default(now())
+  dishes          IngredientTag[]
+  dishIngredients DishIngredient[]
 }
 
 enum IngredientCategory {
@@ -409,7 +412,7 @@ model Category {
 }
 
 model Dish {
-  id             String    @id @default(cuid())
+  id             String       @id @default(cuid())
   restaurantId   String
   categoryId     String
   name           String
@@ -418,21 +421,44 @@ model Dish {
   discountPrice  Float?
   photos         String[]
   tags           DishTag[]
-  isHero         Boolean   @default(false)
-  isActive       Boolean   @default(true)
+  isHero         Boolean      @default(false)
+  isActive       Boolean      @default(true)
   stockCountdown Int?
-  ingredients    String?
-  allergens      String?
+  ingredients    String?      // legacy text field (kept for backwards compat)
+  allergens      String?      // legacy text field
+  dishDiet       DishDietType @default(OMNIVORE)
+  isSpicy        Boolean      @default(false)
   position       Int
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  category   Category   @relation(fields: [categoryId], references: [id])
-  reviews    Review[]
+  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
+  category        Category         @relation(fields: [categoryId], references: [id])
+  reviews         Review[]
+  dishIngredients DishIngredient[]
 
   @@index([restaurantId])
   @@index([categoryId])
+}
+
+enum DishDietType {
+  VEGAN
+  VEGETARIAN
+  PESCETARIAN
+  OMNIVORE
+}
+
+model DishIngredient {
+  id           String @id @default(cuid())
+  dishId       String
+  ingredientId String
+
+  dish       Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  ingredient Ingredient @relation(fields: [ingredientId], references: [id])
+
+  @@unique([dishId, ingredientId])
+  @@index([dishId])
+  @@index([ingredientId])
 }
 
 enum DishTag {

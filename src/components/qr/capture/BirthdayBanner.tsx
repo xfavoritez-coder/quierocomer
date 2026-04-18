@@ -102,11 +102,11 @@ export default function BirthdayBanner({ restaurantId }: Props) {
         }}
       >
         <span style={{ fontSize: "1.8rem", flexShrink: 0, animation: "bdayBounce 2s ease-in-out infinite" }}>🎂</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ flex: 1, minWidth: 0, textAlign: "center" }}>
           <p style={{ fontSize: "0.97rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0 }}>
-            ¿Cuándo es tu cumple?
+            {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
           </p>
-          <p style={{ fontSize: "0.94rem", color: "#b45309", lineHeight: 1.4, margin: "3px 0 0", opacity: 0.85 }}>
+          <p style={{ fontSize: "0.94rem", color: "#b45309", lineHeight: 1.4, margin: "3px 0 0", opacity: 0.85, textAlign: "center" }}>
             {existingUser ? "Guárdalo y recibe una sorpresa" : "Regístrate y recibe una sorpresa"}
           </p>
         </div>

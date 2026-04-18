@@ -10,14 +10,15 @@ interface DishCardProps {
   averageRating?: { avg: number; count: number };
 }
 
-function isVeganDish(dish: Dish): boolean {
-  const allergens = (dish.allergens || "").toLowerCase();
-  return !allergens.includes("lactosa") && !allergens.includes("huevo");
-}
-
-function DietBadge({ dish }: { dish: Dish }) {
-  if (!isVeganDish(dish)) return null;
-  return <span style={{ fontSize: "10px", flexShrink: 0 }} title="Vegano">🌱</span>;
+function DishBadges({ dish }: { dish: Dish }) {
+  const d = dish as any;
+  const badges: { icon: string; title: string }[] = [];
+  if (d.dishDiet === "VEGAN") badges.push({ icon: "🌱", title: "Vegano" });
+  else if (d.dishDiet === "VEGETARIAN") badges.push({ icon: "🥚", title: "Vegetariano" });
+  if (d.isSpicy) badges.push({ icon: "🌶️", title: "Picante" });
+  if (dish.tags?.includes("NEW")) badges.push({ icon: "✨", title: "Nuevo" });
+  if (!badges.length) return null;
+  return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "10px", flexShrink: 0 }} title={b.title}>{b.icon}</span>)}</>;
 }
 
 /* ── BASIC ── */
@@ -39,7 +40,7 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
-          <DietBadge dish={dish} />
+          <DishBadges dish={dish} />
         </h3>
         {dish.description && (
           <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.9rem", color: "#999", lineHeight: 1.4 }}>
@@ -81,7 +82,7 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
       <div style={{ padding: "8px 2px 0" }}>
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
-          <DietBadge dish={dish} />
+          <DishBadges dish={dish} />
         </h3>
         <div style={{ marginTop: -3 }}>
           {dish.discountPrice ? (
@@ -121,7 +122,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
         ⭐ Recomendado
       </span>
       <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2" style={{ bottom: 28, left: 10, right: 10, fontSize: "1rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
-        {dish.name} {isVeganDish(dish) && <span style={{ fontSize: "10px" }}>🌱</span>}
+        {dish.name} <DishBadges dish={dish} />
       </h3>
       <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 10, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
