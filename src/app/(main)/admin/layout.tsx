@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -8,53 +8,20 @@ const NAV = [
   { icon: "📊", label: "Dashboard", href: "/admin" },
   { icon: "🏠", label: "Locales", href: "/admin/locales" },
   { icon: "📋", label: "Menús", href: "/admin/menus" },
-  { icon: "🧞", label: "Behavior", href: "/admin/genie" },
+  { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
-  const { role, name, restaurants, selectedRestaurantId, isSuper, loading, error, setSelectedRestaurant, logout } = useAdminSession();
-
-  useEffect(() => {
-    if (pathname === "/admin/login") return;
-    if (!loading && error) router.replace("/admin/login");
-  }, [loading, error, pathname, router]);
+  const { name, isSuper, loading, error, logout } = useAdminSession();
 
   if (pathname === "/admin/login") return <>{children}</>;
   if (loading) return <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#FFD600", fontFamily: "var(--font-display)", fontSize: "0.8rem" }}>🧞 Cargando...</p></div>;
-  if (error) return null;
+  if (error) { if (typeof window !== "undefined") window.location.href = "/admin/login"; return null; }
 
   const isActive = (h: string) => h === "/admin" ? pathname === "/admin" : pathname.startsWith(h);
-
-  const selectedName = restaurants.find(r => r.id === selectedRestaurantId)?.name || "Seleccionar local";
-
-  // Restaurant selector component
-  const RestaurantSelector = () => (
-    restaurants.length > 1 ? (
-      <select
-        value={selectedRestaurantId || ""}
-        onChange={(e) => setSelectedRestaurant(e.target.value)}
-        style={{
-          background: "rgba(255,214,0,0.08)", border: "1px solid rgba(255,214,0,0.2)",
-          borderRadius: 8, padding: "6px 10px", color: "#FFD600",
-          fontFamily: "var(--font-display)", fontSize: "0.75rem",
-          cursor: "pointer", outline: "none", width: "100%",
-        }}
-      >
-        {isSuper && <option value="">Todos los locales</option>}
-        {restaurants.map(r => (
-          <option key={r.id} value={r.id} style={{ background: "#1A1A1A", color: "white" }}>{r.name}</option>
-        ))}
-      </select>
-    ) : (
-      <div style={{ padding: "6px 10px", fontSize: "0.75rem", color: "rgba(255,214,0,0.7)", fontFamily: "var(--font-display)" }}>
-        {selectedName}
-      </div>
-    )
-  );
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#111111" }}>
@@ -71,10 +38,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {menuOpen && (<>
         <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 998 }} />
         <div className="adm-mobilemenu">
-          <div style={{ padding: "14px 24px", borderBottom: "1px solid #2A2A2A" }}>
-            <div style={{ fontSize: "0.68rem", color: "#888", marginBottom: 6, fontFamily: "var(--font-display)" }}>{name}</div>
-            <RestaurantSelector />
-          </div>
           {NAV.map(n => (
             <Link key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: isActive(n.href) ? "#FFD600" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderBottom: "1px solid #2A2A2A" }}>
               <span style={{ fontSize: "1.2rem" }}>{n.icon}</span> {n.label}
@@ -87,12 +50,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Desktop sidebar */}
       <aside className="adm-sidebar">
         <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #2A2A2A" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#FFD600", textDecoration: "none" }}>🧞 Admin</Link>
             {isSuper && <span style={{ fontSize: "0.55rem", background: "#FFD600", color: "#0D0D0D", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>SUPER</span>}
           </div>
-          <div style={{ fontSize: "0.7rem", color: "#666", marginBottom: 6, fontFamily: "var(--font-display)" }}>{name}</div>
-          <RestaurantSelector />
+          <div style={{ fontSize: "0.7rem", color: "#666", fontFamily: "var(--font-display)" }}>{name}</div>
         </div>
         <nav style={{ flex: 1, padding: "8px 0" }}>
           {NAV.map(n => (

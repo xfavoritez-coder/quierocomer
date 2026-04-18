@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 
 interface DashData {
   visitsThisWeek: number;
@@ -111,7 +112,10 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#FFD600", marginBottom: 24 }}>Dashboard</h1>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Dashboard</h1>
+        <RestaurantPicker />
+      </div>
 
       {/* Main metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>

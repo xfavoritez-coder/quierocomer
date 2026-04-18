@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -127,6 +128,7 @@ export default function AdminMenus() {
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#FFD600", margin: 0 }}>Menu</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
         </div>
+        <RestaurantPicker />
       </div>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
