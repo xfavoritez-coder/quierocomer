@@ -152,12 +152,16 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
             <div key={s.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 12, overflow: "hidden" }}>
               <button onClick={() => setExpandedSession(isOpen ? null : s.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                 {s.restaurant?.logoUrl ? (
-                  <img src={s.restaurant.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  <a href={`/qr/${s.restaurant.slug}`} target="_blank" onClick={e => e.stopPropagation()}>
+                    <img src={s.restaurant.logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  </a>
                 ) : (
                   <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>{s.restaurant?.name?.charAt(0)}</div>
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.85rem", color: "white", fontWeight: 600 }}>{s.restaurant?.name}</span>
+                  <a href={`/qr/${s.restaurant?.slug}`} target="_blank" onClick={e => e.stopPropagation()} style={{ textDecoration: "none" }}>
+                    <span style={{ fontFamily: F, fontSize: "0.85rem", color: "white", fontWeight: 600, borderBottom: "1px dashed rgba(255,255,255,0.2)" }}>{s.restaurant?.name}</span>
+                  </a>
                   <div style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", display: "flex", gap: 8, marginTop: 2 }}>
                     <span>{timeAgo(s.startedAt)}</span>
                     {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}

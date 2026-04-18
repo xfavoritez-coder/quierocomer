@@ -32,7 +32,12 @@ interface Props {
 export default function CartaRouter(props: Props) {
   const { view, isReady } = useCartaView();
   const trackedRef = useRef<string | null>(null);
-  const [qrUser, setQrUser] = useState<any>(null);
+  // Check cookie instantly to avoid flash of "not logged in"
+  const [qrUser, setQrUser] = useState<any>(() => {
+    if (typeof document === "undefined") return null;
+    const match = document.cookie.match(/qr_user_id=([^;]*)/);
+    return match ? { _pending: true } : null;
+  });
   const [profileOpen, setProfileOpen] = useState(false);
   const { overlay, fadeOut } = useViewTransition();
   const readyKeyRef = useRef(0);

@@ -120,17 +120,21 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 0 8px" }}>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 700, fontStyle: "italic", color: "#0e0e0e", padding: "0 20px", marginBottom: 10 }}>
-          Promociones
-        </h3>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 8px" }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px", marginBottom: 12 }}>
+          <span style={{ color: "#F4A623", fontSize: "12px" }}>✦</span>
+          <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 500, fontStyle: "italic", color: "#8a5a2c" }}>Promociones</span>
+          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(244,166,35,0.3), transparent)" }} />
+        </div>
 
         {/* Carousel */}
         <div
           ref={scrollRef}
           style={{
-            display: "flex", gap: 12, overflowX: "auto", scrollSnapType: "x mandatory",
-            padding: "0 20px", scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
+            display: "flex", gap: 10, overflowX: "auto", scrollSnapType: "x mandatory",
+            padding: 4, margin: "0 -4px",
+            scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
           }}
         >
           {promos.map((p) => {
@@ -141,66 +145,59 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
                 key={p.id}
                 data-promo-id={p.id}
                 onClick={() => openPromo(p)}
-                className="active:scale-[0.98] transition-transform"
+                className="active:scale-[0.98] transition-all"
                 style={{
-                  flex: isSingle ? "1 1 100%" : "0 0 280px",
-                  minWidth: isSingle ? undefined : 280,
-                  height: 110,
+                  flex: isSingle ? "1 1 100%" : "0 0 290px",
+                  minWidth: isSingle ? undefined : 290,
                   scrollSnapAlign: "start",
-                  background: "linear-gradient(135deg, #1a1a1a 0%, #111 100%)",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+                  border: "1px solid rgba(244,166,35,0.25)",
                   borderRadius: 16,
-                  display: "flex", alignItems: "center", gap: 14,
-                  padding: "0 16px 0 12px",
+                  display: "flex", alignItems: "center", gap: 12,
+                  padding: 10,
                   cursor: "pointer",
-                  boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
+                  boxShadow: "0 2px 12px rgba(244,166,35,0.08)",
                   position: "relative",
                   overflow: "hidden",
                   textAlign: "left",
+                  transition: "box-shadow 0.2s ease",
                 }}
               >
-                {/* Subtle ambient glow */}
-                <div style={{ position: "absolute", top: -20, right: -20, width: 80, height: 80, background: "radial-gradient(circle, rgba(244,166,35,0.08), transparent 70%)", pointerEvents: "none" }} />
+                {/* Photo */}
+                <div style={{ position: "relative", width: 68, height: 68, borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
+                  {dish?.photos?.[0] ? (
+                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="68px" />
+                  ) : (
+                    <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
+                  )}
+                  {/* Discount badge */}
+                  {p.discountPct && (
+                    <div style={{
+                      position: "absolute", top: 4, left: 4,
+                      background: "#10b981", color: "white",
+                      fontSize: "9px", fontWeight: 700, padding: "2px 6px", borderRadius: 6,
+                      letterSpacing: "0.02em",
+                    }}>
+                      -{p.discountPct}%
+                    </div>
+                  )}
+                </div>
 
-                {/* Badge */}
-                {p.discountPct && (
-                  <div style={{
-                    position: "absolute", top: 8, right: 10,
-                    background: "#16a34a", color: "white",
-                    fontSize: "10px", fontWeight: 700, padding: "2px 8px", borderRadius: 50,
-                    boxShadow: "0 2px 8px rgba(22,163,74,0.3)",
-                  }}>
-                    -{p.discountPct}%
-                  </div>
-                )}
-
-                {/* Photo circle */}
-                {dish?.photos?.[0] ? (
-                  <div style={{
-                    width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0,
-                    position: "relative", border: "2px solid rgba(244,166,35,0.2)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
-                  }}>
-                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="78px" />
-                  </div>
-                ) : (
-                  <div style={{ width: 78, height: 78, borderRadius: "50%", background: "#2a2a2a", flexShrink: 0 }} />
-                )}
-
-                {/* Info */}
-                <div style={{ flex: 1, minWidth: 0, position: "relative", zIndex: 1 }}>
-                  <p style={{ fontSize: "13px", fontWeight: 700, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {/* Content */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ display: "inline-block", fontSize: "9px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {dish?.name || p.name}
                   </p>
                   {p.name !== dish?.name && (
-                    <p style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                    <p style={{ fontSize: "10.5px", color: "#8a7060", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
                   )}
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 8 }}>
-                    <span style={{ fontSize: "18px", fontWeight: 700, color: "#F4A623" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
+                    <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
                       ${p.promoPrice?.toLocaleString("es-CL") || dish?.price?.toLocaleString("es-CL")}
                     </span>
                     {p.originalPrice && (
-                      <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", textDecoration: "line-through" }}>
+                      <span style={{ fontSize: "11px", color: "#a08060", textDecoration: "line-through" }}>
                         ${p.originalPrice.toLocaleString("es-CL")}
                       </span>
                     )}
@@ -213,11 +210,12 @@ export default function PromoCarousel({ restaurantId, onViewDish }: Props) {
 
         {/* Dots */}
         {promos.length > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 4, marginTop: 10 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 12 }}>
             {promos.map((_, i) => (
               <div key={i} style={{
-                width: i === activeIdx ? 18 : 6, height: 4, borderRadius: 2,
-                background: i === activeIdx ? "#F4A623" : "rgba(14,14,14,0.15)",
+                width: i === activeIdx ? 16 : 5, height: 5,
+                borderRadius: i === activeIdx ? 3 : "50%",
+                background: i === activeIdx ? "#F4A623" : "#e8d4b8",
                 transition: "all 0.3s ease",
               }} />
             ))}
