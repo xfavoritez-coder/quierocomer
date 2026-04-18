@@ -33,7 +33,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="adm-mobilebar">
         <div>
           <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
-          {isSuper && <span style={{ marginLeft: 8, fontSize: "0.6rem", background: "#F4A623", color: "#0D0D0D", padding: "2px 6px", borderRadius: 4, fontWeight: 700 }}>SUPER</span>}
         </div>
         <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #2A2A2A", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#F4A623", fontSize: "1.2rem", cursor: "pointer" }}>{menuOpen ? "✕" : "☰"}</button>
       </div>
@@ -56,7 +55,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #2A2A2A" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
-            {isSuper && <span style={{ fontSize: "0.55rem", background: "#F4A623", color: "#0D0D0D", padding: "1px 5px", borderRadius: 3, fontWeight: 700 }}>SUPER</span>}
           </div>
           <div style={{ fontSize: "0.7rem", color: "#666", fontFamily: "var(--font-display)" }}>{name}</div>
         </div>
