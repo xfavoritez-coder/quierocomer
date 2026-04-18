@@ -181,14 +181,16 @@ export function closeSession(reason: string = "manual") {
     closeReason: reason,
   };
 
-  // Use sendBeacon for reliability on page close
+  // Use sendBeacon with Blob for correct content-type
+  const body = JSON.stringify(payload);
   if (typeof navigator !== "undefined" && navigator.sendBeacon) {
-    navigator.sendBeacon("/api/qr/sessions/close", JSON.stringify(payload));
+    const blob = new Blob([body], { type: "application/json" });
+    navigator.sendBeacon("/api/qr/sessions/close", blob);
   } else {
     fetch("/api/qr/sessions/close", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body,
       keepalive: true,
     }).catch(() => {});
   }

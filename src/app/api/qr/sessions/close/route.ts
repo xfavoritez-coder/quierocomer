@@ -19,7 +19,15 @@ function getTimeOfDay(): TimeOfDay {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    // Support both application/json and text/plain (sendBeacon fallback)
+    let body;
+    const ct = request.headers.get("content-type") || "";
+    if (ct.includes("json")) {
+      body = await request.json();
+    } else {
+      const text = await request.text();
+      body = JSON.parse(text);
+    }
     const {
       guestId, sessionId, restaurantId, tableId,
       durationMs, viewUsed, deviceType,
