@@ -120,12 +120,19 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           }}
         />
 
-        {/* Top center: view selector */}
-        {viewSelectorSlot && (
-          <div className="absolute z-10 flex justify-center" style={{ top: 16, left: 0, right: 0 }}>
-            {viewSelectorSlot}
-          </div>
-        )}
+        {/* Top left: logo + name */}
+        <div className="absolute z-10 flex items-center gap-2" style={{ top: 16, left: 16 }}>
+          {logoSrc ? (
+            <Image src={logoSrc} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ border: "none" }} />
+          ) : (
+            <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "#F4A623", fontSize: "0.8rem", fontWeight: 700, color: "#0e0e0e" }}>
+              {initial}
+            </div>
+          )}
+          <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
+            {restaurant.name}
+          </span>
+        </div>
 
         {/* Top right: profile icon */}
         <button
@@ -133,7 +140,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           className="absolute z-10 flex items-center justify-center"
           style={{
             top: 16, right: 16,
-            width: 36, height: 36, borderRadius: "50%",
+            width: 38, height: 38, borderRadius: "50%",
             background: qrUser ? "#F4A623" : "rgba(0,0,0,0.4)",
             backdropFilter: qrUser ? "none" : "blur(4px)",
             WebkitBackdropFilter: qrUser ? "none" : "blur(4px)",
@@ -179,20 +186,6 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         >
           {dish ? (
             <>
-              {/* Logo + restaurant name above dish name */}
-              <div className="flex items-center gap-2.5" style={{ marginBottom: 16 }}>
-                {logoSrc ? (
-                  <Image src={logoSrc} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ border: "none" }} />
-                ) : (
-                  <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "#F4A623", fontSize: "0.9rem", fontWeight: 700, color: "#0e0e0e" }}>
-                    {initial}
-                  </div>
-                )}
-                <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.4rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
-                  {restaurant.name}
-                </span>
-              </div>
-
               {/* Dish name centered */}
               <h1
                 className="font-[family-name:var(--font-playfair)] text-white text-center"
@@ -212,7 +205,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   className="font-[family-name:var(--font-dm)] text-center line-clamp-2"
                   style={{
                     color: "rgba(255,255,255,0.75)",
-                    fontSize: "1.05rem",
+                    fontSize: "1.2rem",
                     lineHeight: 1.45,
                     marginTop: 8,
                     maxWidth: 300,
@@ -228,16 +221,16 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                 className="font-[family-name:var(--font-dm)] active:scale-95 transition-transform"
                 style={{
                   marginTop: 12,
-                  background: "white",
-                  color: "#0e0e0e",
-                  fontSize: "0.88rem",
+                  background: "transparent",
+                  color: "white",
+                  fontSize: "0.95rem",
                   fontWeight: 700,
-                  padding: "8px 22px",
+                  padding: "5px 22px",
                   borderRadius: 50,
-                  border: "none",
+                  border: "2px solid rgba(255,255,255,0.5)",
                 }}
               >
-                Ver
+                Ver plato
               </button>
 
               {/* Carousel dots */}

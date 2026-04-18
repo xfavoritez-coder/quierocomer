@@ -5,7 +5,6 @@ import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import DishDetail from "./DishDetail";
-import ViewSelector from "./ViewSelector";
 import { useCartaView } from "./hooks/useCartaView";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
@@ -85,7 +84,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           <span className="vj-brand font-[family-name:var(--font-fraunces)]">
             Quiero<em>Comer</em> · Viaje
           </span>
-          <ViewSelector restaurantId={restaurant.id} variant="dark" />
         </nav>
 
         {/* Rail */}

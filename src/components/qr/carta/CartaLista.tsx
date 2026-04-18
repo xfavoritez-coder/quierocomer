@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
-import { Search, X, Sparkles, User } from "lucide-react";
+import { Search, X, User, Sparkles } from "lucide-react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
-import { useEffect } from "react";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import DishDetail from "./DishDetail";
+import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
 
@@ -30,7 +30,6 @@ interface Props {
   tableId?: string;
 }
 
-type Filter = "all" | "genie";
 
 export default function CartaLista({
   restaurant,
@@ -42,14 +41,38 @@ export default function CartaLista({
   tableId,
 }: Props) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<Filter>("all");
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
+  const catScrollRef = useRef<HTMLDivElement>(null);
+  const activeCatRef = useRef<HTMLButtonElement>(null);
 
-  const hasGeniePicks = useMemo(
-    () => dishes.some((d) => isGeniePick(d)),
-    [dishes],
-  );
+  // Auto-scroll category nav to active
+  useEffect(() => {
+    if (activeCatRef.current && catScrollRef.current) {
+      const container = catScrollRef.current;
+      const el = activeCatRef.current;
+      const offset = el.offsetLeft - container.offsetWidth / 2 + el.offsetWidth / 2;
+      container.scrollTo({ left: offset, behavior: "smooth" });
+    }
+  }, [activeCategory]);
+
+  // Detect active category on scroll
+  const handleScroll = useCallback(() => {
+    for (const cat of [...categories].reverse()) {
+      const el = document.getElementById(`lista-cat-${cat.id}`);
+      if (el && el.getBoundingClientRect().top <= 120) {
+        setActiveCategory(cat.id);
+        break;
+      }
+    }
+  }, [categories]);
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
 
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
@@ -69,18 +92,13 @@ export default function CartaLista({
 
   const filtered = useMemo(() => {
     return dishes.filter((d) => {
-      if (filter === "genie" && !isGeniePick(d)) return false;
       if (query) {
         const q = query.toLowerCase().trim();
-        const matches =
-          d.name?.toLowerCase().includes(q) ||
-          d.description?.toLowerCase().includes(q) ||
-          d.ingredients?.toLowerCase().includes(q);
-        if (!matches) return false;
+        return d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [dishes, query, filter]);
+  }, [dishes, query]);
 
   const grouped = useMemo(
     () => groupDishesByCategory(filtered, categories),
@@ -95,7 +113,9 @@ export default function CartaLista({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5", paddingBottom: 100 }}>
       {/* TOP BAR: logo + name | vistas | perfil */}
-      <div style={{ padding: "14px 16px 10px", display: "flex", alignItems: "center", justifyContent: "space-between", background: "#f7f7f5" }}>
+      {/* TOP BAR: logo+nombre | vistas centradas | perfil */}
+      <div style={{ padding: "12px 16px 12px", display: "flex", alignItems: "center", background: "#f7f7f5" }}>
+        {/* Left: logo + name */}
         <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
           {restaurant.logoUrl ? (
             <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0 }} />
@@ -104,62 +124,99 @@ export default function CartaLista({
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 400, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.2rem", fontWeight: 400, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {restaurant.name}
           </span>
         </div>
-        <div className="flex items-center" style={{ gap: 8 }}>
-          <ViewSelector restaurantId={restaurant.id} variant="light" />
-          <div className="flex items-center justify-center" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
-            <User size={15} color="#999" />
+        {/* Center: view selector */}
+        {/* Right: profile */}
+        <div className="flex items-center justify-center" style={{ flex: 1, justifyContent: "flex-end" }}>
+          <div className="flex items-center justify-center" style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(14,14,14,0.06)" }}>
+            <User size={17} color="#999" />
           </div>
         </div>
       </div>
 
-      {/* STICKY NAV: buscador + filtros */}
-      <nav
-        className="sticky top-0 z-20"
-        style={{
-          background: "rgba(247,247,245,0.95)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-          padding: "8px 16px",
-        }}
-      >
-        {/* Search */}
-        <div style={{ position: "relative", marginBottom: hasGeniePicks ? 8 : 0 }}>
-          <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "rgba(14,14,14,0.35)" }} />
+      {/* STICKY NAV: search overlay or category tabs with search icon */}
+      {searchOpen ? (
+        <div
+          className="sticky top-0 z-20"
+          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+        >
+          <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
           <input
+            autoFocus
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar en la carta..."
-            inputMode="search"
-            style={{
-              width: "100%", paddingLeft: 36, paddingRight: 36, paddingTop: 9, paddingBottom: 9,
-              fontSize: "0.88rem", background: "white", borderRadius: 50,
-              border: "1px solid rgba(0,0,0,0.08)", outline: "none", fontFamily: "inherit", color: "#0e0e0e",
-            }}
+            className="font-[family-name:var(--font-dm)]"
+            style={{ flex: 1, border: "none", outline: "none", fontSize: "0.92rem", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
           />
-          {query && (
-            <button onClick={() => setQuery("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", padding: 4, cursor: "pointer" }} aria-label="Limpiar búsqueda">
-              <X size={15} color="rgba(14,14,14,0.4)" />
-            </button>
-          )}
+          <button onClick={() => { setSearchOpen(false); setQuery(""); }} style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
+            <X size={18} color="rgba(14,14,14,0.4)" />
+          </button>
         </div>
-
-        {/* Filters */}
-        {hasGeniePicks && (
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none" }}>
-            <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Todos</FilterChip>
-            <FilterChip active={filter === "genie"} onClick={() => setFilter("genie")}>
-              <Sparkles size={11} strokeWidth={2} color={filter === "genie" ? "white" : "#F4A623"} fill={filter === "genie" ? "white" : "#F4A623"} />
-              El Genio recomienda
-            </FilterChip>
+      ) : (
+        <nav
+          className="sticky top-0 z-20"
+          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center" }}
+        >
+          {/* Search icon */}
+          <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center justify-center"
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
+              aria-label="Buscar"
+            >
+              <Search size={19} color="#666" />
+            </button>
           </div>
-        )}
-      </nav>
+          {/* Category tabs */}
+          <div
+            ref={catScrollRef}
+            className="flex overflow-x-auto"
+            style={{ flex: 1, height: "100%", paddingLeft: 8, paddingRight: 16, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+          >
+            {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
+              const isActive = cat.id === activeCategory;
+              return (
+                <button
+                  key={cat.id}
+                  ref={isActive ? activeCatRef : null}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    const el = document.getElementById(`lista-cat-${cat.id}`);
+                    if (el) {
+                      const top = el.getBoundingClientRect().top + window.scrollY - 52;
+                      window.scrollTo({ top, behavior: "smooth" });
+                    }
+                  }}
+                  className="shrink-0 font-[family-name:var(--font-dm)]"
+                  style={{
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    padding: "0 2px",
+                    fontSize: "0.95rem",
+                    fontWeight: isActive ? 700 : 500,
+                    color: isActive ? "#0e0e0e" : "#999",
+                    background: "none",
+                    border: "none",
+                    borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    transition: "color 0.15s, border-color 0.15s",
+                  }}
+                >
+                  {cat.name}
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+      )}
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
@@ -168,7 +225,7 @@ export default function CartaLista({
             No encontramos platos que coincidan.
           </p>
           <button
-            onClick={() => { setQuery(""); setFilter("all"); }}
+            onClick={() => { setQuery(""); }}
             style={{ marginTop: 12, fontSize: "0.88rem", color: "#F4A623", fontWeight: 600, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}
           >
             Limpiar filtros
@@ -177,8 +234,9 @@ export default function CartaLista({
       )}
 
       {/* CATEGORIES */}
-      {grouped.map(({ category, dishes: catDishes }) => (
-        <section key={category.id} style={{ padding: "20px 12px 0" }}>
+      {grouped.map(({ category, dishes: catDishes }, index) => (
+        <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
+          {index === 4 && <BirthdayBanner restaurantId={restaurant.id} />}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
@@ -213,6 +271,7 @@ export default function CartaLista({
           <Sparkles size={22} color="white" fill="white" />
         </button>
         <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />
+        <ViewSelector restaurantId={restaurant.id} />
       </div>
 
       {/* Genio */}
@@ -246,41 +305,7 @@ export default function CartaLista({
   );
 }
 
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        flexShrink: 0,
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        padding: "6px 14px",
-        borderRadius: 50,
-        fontSize: "0.75rem",
-        fontWeight: 500,
-        letterSpacing: "0.01em",
-        whiteSpace: "nowrap",
-        border: `1px solid ${active ? "#0e0e0e" : "rgba(0,0,0,0.08)"}`,
-        background: active ? "#0e0e0e" : "white",
-        color: active ? "white" : "rgba(14,14,14,0.65)",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        transition: "all 0.15s",
-      }}
-    >
-      {children}
-    </button>
-  );
-}
+
 
 function DishListCard({
   dish,
@@ -314,11 +339,11 @@ function DishListCard({
       }}
     >
       {photo ? (
-        <div style={{ width: 76, height: 76, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: "#f0f0f0" }}>
+        <div style={{ width: 120, height: 120, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: "#f0f0f0" }}>
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="76px" />
         </div>
       ) : (
-        <div style={{ width: 76, height: 76, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg, #f7f7f5, #e8e4d8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>
+        <div style={{ width: 120, height: 120, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg, #f7f7f5, #e8e4d8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>
           🍽
         </div>
       )}
@@ -326,7 +351,7 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 2 }}>
           <h3
             className="font-[family-name:var(--font-playfair)]"
-            style={{ fontSize: "0.95rem", fontWeight: 600, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+            style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
           >
             {dish.name}
           </h3>
@@ -340,7 +365,7 @@ function DishListCard({
         {dish.description && (
           <p
             style={{
-              fontSize: "0.78rem",
+              fontSize: "1rem",
               color: "rgba(14,14,14,0.5)",
               lineHeight: 1.4,
               marginBottom: 6,
@@ -356,7 +381,7 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span
             className="font-[family-name:var(--font-playfair)]"
-            style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}
+            style={{ fontSize: "1.1rem", fontWeight: 400, color: "#0e0e0e" }}
           >
             ${dish.price?.toLocaleString("es-CL") ?? "—"}
           </span>

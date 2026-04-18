@@ -69,9 +69,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName }: Waite
     }
   }, [state, restaurantId, tableId, tableName]);
 
-  if (state === "loading") return null;
-
-  const isDisabled = state === "disabled";
+  const isDisabled = state === "disabled" || state === "loading";
 
   return (
     <>
@@ -81,18 +79,16 @@ export default function WaiterButton({ restaurantId, tableId, tableName }: Waite
         style={{
           width: 52,
           height: 52,
-          background: state === "success" ? "#16a34a" : isDisabled ? "#555" : "#0e0e0e",
-          boxShadow: isDisabled ? "none" : "0 4px 18px rgba(0,0,0,0.2)",
-          opacity: isDisabled ? 0.5 : 1,
+          background: state === "success" ? "#16a34a" : "#333",
+          boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
+          opacity: state === "success" ? 1 : 0.85,
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
         }}
       >
         {state === "success" ? (
           <Check size={20} color="white" />
-        ) : isDisabled ? (
-          <Bell size={20} color="rgba(255,255,255,0.4)" />
         ) : (
-          <Bell size={20} color="white" />
+          <Bell size={20} color="white" fill="white" />
         )}
       </button>
 

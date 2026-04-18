@@ -60,9 +60,11 @@ export default function CartaRouter(props: Props) {
 
   if (view === "viaje") {
     return (
-      <Suspense fallback={<ViajeLoader />}>
-        <CartaViaje {...props} />
-      </Suspense>
+      <>
+        <Suspense fallback={<ViajeLoader />}>
+          <CartaViaje {...props} />
+        </Suspense>
+      </>
     );
   }
 

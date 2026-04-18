@@ -151,7 +151,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} viewSelectorSlot={<ViewSelector restaurantId={restaurant.id} variant="dark" />} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={() => setProfileOpen(true)} onDishSelect={setSelectedDish} />
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
@@ -352,6 +352,7 @@ export default function CartaPremium({
           <Sparkles size={22} color="white" fill="white" />
         </button>
         <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />
+        <ViewSelector restaurantId={restaurant.id} />
       </div>
 
       {selectedDish && (

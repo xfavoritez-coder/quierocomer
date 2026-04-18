@@ -1,26 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { List, Sparkles, Compass } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Layers, List, BookOpen, Sparkles, Check } from "lucide-react";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 
-const OPTIONS: { value: CartaView; label: string; Icon: typeof List; disabled?: boolean }[] = [
+const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
   { value: "lista", label: "Lista", Icon: List },
-  { value: "premium", label: "Estándar", Icon: Sparkles },
-  { value: "viaje", label: "Espacial", Icon: Compass },
+  { value: "premium", label: "Carta", Icon: BookOpen },
+  { value: "viaje", label: "Espacial", Icon: Sparkles },
 ];
 
 interface Props {
   restaurantId: string;
-  variant?: "light" | "dark";
 }
 
-export default function ViewSelector({ restaurantId, variant = "light" }: Props) {
+export default function ViewSelector({ restaurantId }: Props) {
   const { view, setView } = useCartaView();
+  const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [transitioning, setTransitioning] = useState<{ label: string; Icon: typeof List } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
+  // Close on outside click/touch
+  useEffect(() => {
+    if (!open) return;
+    const handle = (e: MouseEvent | TouchEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handle);
+    document.addEventListener("touchstart", handle);
+    return () => {
+      document.removeEventListener("mousedown", handle);
+      document.removeEventListener("touchstart", handle);
+    };
+  }, [open]);
+
+  // First-time tooltip
   useEffect(() => {
     if (!localStorage.getItem(TOOLTIP_KEY)) {
       const timer = setTimeout(() => {
@@ -35,78 +52,126 @@ export default function ViewSelector({ restaurantId, variant = "light" }: Props)
   }, []);
 
   const handleSelect = (next: CartaView) => {
+    setOpen(false);
     if (next === view) return;
-    setView(next);
+    const option = OPTIONS.find((o) => o.value === next);
+    if (option) {
+      setTransitioning({ label: option.label, Icon: option.Icon });
+      // Show modal minimum 1s, then switch and wait for render
+      setTimeout(() => {
+        setView(next);
+        // Give React time to re-render, then wait for next paint
+        setTimeout(() => {
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              setTransitioning(null);
+            });
+          });
+        }, 500);
+      }, 700);
+    }
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);
     }).catch(() => {});
   };
 
-  const isDark = variant === "dark";
-
   return (
-    <div style={{ position: "relative", display: "inline-flex" }}>
-      <div
-        role="tablist"
-        aria-label="Elige cómo ver la carta"
+    <div ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+      {/* Options panel — slides left */}
+      {open && (
+        <div
+          role="menu"
+          style={{
+            position: "absolute",
+            right: 62,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            background: "rgba(0,0,0,0.75)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderRadius: 50,
+            padding: "6px 8px",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            animation: "vsSlideIn 0.25s cubic-bezier(0.16,1,0.3,1)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {OPTIONS.map(({ value, label, Icon }) => {
+            const isActive = view === value;
+            return (
+              <button
+                key={value}
+                role="menuitem"
+                onClick={() => handleSelect(value)}
+                className="flex items-center active:scale-95 transition-transform"
+                style={{
+                  gap: 5,
+                  padding: "8px 14px",
+                  borderRadius: 50,
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  transition: "all 0.15s",
+                  background: isActive ? "white" : "transparent",
+                  color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.75)",
+                }}
+              >
+                <Icon size={14} strokeWidth={1.75} />
+                {label}
+              </button>
+            );
+          })}
+
+          {/* Arrow pointing right to the trigger button */}
+          <div style={{
+            position: "absolute",
+            right: -5,
+            top: "50%",
+            transform: "translateY(-50%) rotate(45deg)",
+            width: 10,
+            height: 10,
+            background: "rgba(0,0,0,0.75)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderLeft: "none",
+            borderBottom: "none",
+          }} />
+        </div>
+      )}
+
+      {/* Trigger button */}
+      <button
+        onClick={() => { setOpen(!open); setShowTooltip(false); }}
+        aria-label="Cambiar vista"
+        aria-expanded={open}
+        className="flex items-center justify-center active:scale-95 transition-transform"
         style={{
-          display: "inline-flex",
-          borderRadius: 50,
-          padding: 2,
-          gap: 2,
-          background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.04)",
-          backdropFilter: isDark ? "blur(12px)" : "none",
-          WebkitBackdropFilter: isDark ? "blur(12px)" : "none",
-          border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)"}`,
+          width: 52,
+          height: 52,
+          borderRadius: "50%",
+          background: "rgba(0,0,0,0.45)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          border: "1px solid rgba(255,255,255,0.12)",
+          color: "white",
+          cursor: "pointer",
+          transition: "background 0.2s",
+          boxShadow: "0 4px 18px rgba(0,0,0,0.25)",
         }}
       >
-        {OPTIONS.map(({ value, label, Icon, disabled }) => {
-          const isActive = view === value;
-          return (
-            <button
-              key={value}
-              role="tab"
-              aria-selected={isActive}
-              disabled={disabled}
-              onClick={() => !disabled && handleSelect(value)}
-              title={disabled ? "Próximamente" : label}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 4,
-                padding: "5px 10px",
-                borderRadius: 50,
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                letterSpacing: "0.02em",
-                border: "none",
-                cursor: disabled ? "not-allowed" : "pointer",
-                opacity: disabled ? 0.35 : 1,
-                transition: "all 0.2s",
-                background: isActive
-                  ? isDark ? "white" : "#0e0e0e"
-                  : "transparent",
-                color: isActive
-                  ? isDark ? "#0e0e0e" : "white"
-                  : isDark ? "rgba(255,255,255,0.85)" : "rgba(14,14,14,0.7)",
-                boxShadow: isActive ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                fontFamily: "inherit",
-              }}
-            >
-              <Icon size={12} strokeWidth={1.75} />
-              <span>{label}</span>
-            </button>
-          );
-        })}
-      </div>
-      {showTooltip && (
+        <Layers size={22} strokeWidth={1.75} />
+      </button>
+
+      {/* First-time tooltip */}
+      {showTooltip && !open && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
             position: "absolute",
-            top: "100%",
-            marginTop: 8,
-            right: 0,
+            right: 62,
             background: "#0e0e0e",
             color: "white",
             fontSize: "0.72rem",
@@ -114,26 +179,59 @@ export default function ViewSelector({ restaurantId, variant = "light" }: Props)
             borderRadius: 10,
             boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
             whiteSpace: "nowrap",
-            zIndex: 50,
-            animation: "fadeInDown 0.25s ease-out",
+            zIndex: 40,
+            animation: "vsSlideIn 0.25s ease-out",
           }}
         >
-          Elige cómo ver la carta
-          <div style={{
-            position: "absolute",
-            top: -4,
-            right: 16,
-            width: 8,
-            height: 8,
-            background: "#0e0e0e",
-            transform: "rotate(45deg)",
-          }} />
+          Cambia la vista
+          <div style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#0e0e0e" }} />
         </div>
       )}
+
+      {/* Fullscreen transition modal */}
+      {transitioning && (
+        <div
+          className="fixed inset-0 flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
+          style={{
+            zIndex: 200,
+            background: "#0e0e0e",
+            animation: "vsModalIn 0.3s cubic-bezier(0.16,1,0.3,1)",
+          }}
+        >
+          <div
+            className="flex items-center justify-center"
+            style={{
+              width: 64,
+              height: 64,
+              borderRadius: 16,
+              background: "rgba(244,166,35,0.1)",
+              marginBottom: 20,
+              animation: "vsIconPulse 1s ease-in-out infinite",
+            }}
+          >
+            <transitioning.Icon size={28} color="#F4A623" strokeWidth={1.5} />
+          </div>
+          <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginBottom: 6 }}>
+            {transitioning.label}
+          </p>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem" }}>
+            Cargando vista...
+          </p>
+        </div>
+      )}
+
       <style>{`
-        @keyframes fadeInDown {
-          from { opacity: 0; transform: translateY(-4px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes vsSlideIn {
+          from { opacity: 0; transform: translateX(10px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes vsModalIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes vsIconPulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.08); opacity: 1; }
         }
       `}</style>
     </div>
