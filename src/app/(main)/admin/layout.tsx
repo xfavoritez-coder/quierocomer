@@ -12,6 +12,7 @@ const NAV = [
   { icon: "👥", label: "Segmentos", href: "/admin/segmentos" },
   { icon: "📧", label: "Campañas", href: "/admin/campanias" },
   { icon: "🏷️", label: "Promos", href: "/admin/promociones" },
+  { icon: "⚡", label: "Automático", href: "/admin/automatizaciones" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { processAutomations } from "@/lib/automations/processor";
 
 /**
  * Daily cron job — runs at 8 AM Chile time (configured in vercel.json)
@@ -68,7 +69,15 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // 4. Compute daily stats snapshot for monitoring
+    // 4. Process automation triggers (birthday, inactivity, welcome, milestone)
+    let automationResults: any[] = [];
+    try {
+      automationResults = await processAutomations();
+    } catch (e) {
+      console.error("Automation processing error:", e);
+    }
+
+    // 5. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const [totalSessions, totalGuests, totalRegistered] = await Promise.all([
@@ -89,6 +98,7 @@ export async function GET(req: NextRequest) {
           sessionsAbandoned: abandonedSessions.count,
           guestsUpdated,
           expiredTokensCleaned: expiredTokens.count,
+          automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,
             totalGuests,

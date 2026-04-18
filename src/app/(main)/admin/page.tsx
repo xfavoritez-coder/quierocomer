@@ -81,20 +81,26 @@ function DistributionBar({ title, data, labels }: { title: string; data: Record<
   );
 }
 
+interface Insight { id: string; type: string; title: string; body: string; priority: number; }
+
 export default function AdminDashboard() {
   const { selectedRestaurantId, isSuper, loading: sessionLoading } = useAdminSession();
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<Insight[]>([]);
+  const [generatingInsights, setGeneratingInsights] = useState(false);
 
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
     const params = selectedRestaurantId ? `?restaurantId=${selectedRestaurantId}` : "";
-    fetch(`/api/admin/dashboard${params}`)
-      .then(r => r.json())
-      .then(d => { if (!d.error) setData(d); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch(`/api/admin/dashboard${params}`).then(r => r.json()),
+      selectedRestaurantId ? fetch(`/api/admin/insights?restaurantId=${selectedRestaurantId}`).then(r => r.json()) : Promise.resolve({ insights: [] }),
+    ]).then(([dashData, insightData]) => {
+      if (!dashData.error) setData(dashData);
+      setInsights(insightData.insights || []);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [selectedRestaurantId, sessionLoading]);
 
   if (loading || sessionLoading) {
@@ -153,6 +159,54 @@ export default function AdminDashboard() {
           <div style={{ marginTop: 12 }}>
             <Stat label="Locales activos (últimos 30 días)" value={data.activeRestaurantsCount} color="#7fbfdc" />
           </div>
+        </div>
+      )}
+
+      {/* Genio Insights */}
+      {selectedRestaurantId && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#F4A623", margin: 0 }}>🧞 Insights del Genio</h2>
+            <button
+              onClick={async () => {
+                setGeneratingInsights(true);
+                try {
+                  const res = await fetch("/api/admin/insights", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ restaurantId: selectedRestaurantId, action: "generate" }),
+                  });
+                  const d = await res.json();
+                  if (d.insights) setInsights(d.insights);
+                } catch {} finally { setGeneratingInsights(false); }
+              }}
+              disabled={generatingInsights}
+              style={{ padding: "6px 14px", background: generatingInsights ? "rgba(244,166,35,0.2)" : "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.72rem", fontWeight: 600, cursor: generatingInsights ? "wait" : "pointer" }}
+            >
+              {generatingInsights ? "Analizando..." : "Generar insights"}
+            </button>
+          </div>
+          {insights.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {insights.map(i => {
+                const typeIcons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈" };
+                return (
+                  <div key={i.id} style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "14px 16px" }}>
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                      <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 2 }}>{typeIcons[i.type] || "💡"}</span>
+                      <div>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "white", fontWeight: 600, margin: "0 0 4px" }}>{i.title}</p>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "#aaa", lineHeight: 1.5, margin: 0 }}>{i.body}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, padding: "24px 16px", textAlign: "center" }}>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#666" }}>Toca "Generar insights" para que el Genio analice tu data</p>
+            </div>
+          )}
         </div>
       )}
     </div>
