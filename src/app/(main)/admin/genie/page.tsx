@@ -35,6 +35,7 @@ interface SessionData {
   closeReason: string | null;
   weather: string | null;
   timeOfDay: string | null;
+  viewHistory: { view: string; durationMs: number }[] | null;
   isAbandoned: boolean;
   pickedDishId: string | null;
   pickedDish: { id: string; name: string; price: number; photos: string[] } | null;
@@ -142,6 +143,27 @@ export default function AdminSessions() {
                       {s.timeOfDay && <div><span style={{ color: "#666" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
                       {s.closeReason && <div><span style={{ color: "#666" }}>Cierre: </span>{s.closeReason}</div>}
                     </div>
+
+                    {/* View history */}
+                    {s.viewHistory && s.viewHistory.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Vistas usadas</p>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {s.viewHistory.sort((a: any, b: any) => b.durationMs - a.durationMs).map((v: any, i: number) => (
+                            <span key={i} style={{
+                              fontFamily: F, fontSize: "0.75rem", padding: "5px 12px",
+                              background: i === 0 ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.04)",
+                              border: `1px solid ${i === 0 ? "rgba(244,166,35,0.25)" : "#2A2A2A"}`,
+                              borderRadius: 8, color: i === 0 ? "#F4A623" : "#aaa",
+                              fontWeight: i === 0 ? 600 : 400,
+                            }}>
+                              {VIEW_LABELS[v.view] || v.view} · {formatDuration(v.durationMs)}
+                              {i === 0 && " ★"}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Picked dish */}
                     {s.pickedDish && (

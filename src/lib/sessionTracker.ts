@@ -24,12 +24,20 @@ interface CategoryDwell {
   dwellMs: number;
 }
 
+interface ViewEntry {
+  view: string;
+  startedAt: number;
+  durationMs: number;
+}
+
 interface SessionData {
   restaurantId: string;
   tableId?: string;
-  dbSessionId: string | null; // ID from the DB after creation
+  dbSessionId: string | null;
   startedAt: number;
   viewUsed: string | null;
+  viewHistory: ViewEntry[];
+  currentViewStart: number;
   dishDwells: Map<string, DishDwell>;
   categoryDwells: Map<string, CategoryDwell>;
   pickedDishId: string | null;
@@ -71,10 +79,24 @@ function bindActivityListeners() {
 function getPayload(isFinal: boolean) {
   if (!session) return null;
   flushCurrentDish();
+
+  // Flush current view time into history
+  const history = [...session.viewHistory];
+  if (session.viewUsed) {
+    const elapsed = Date.now() - session.currentViewStart;
+    const existing = history.find(v => v.view === session!.viewUsed);
+    if (existing) {
+      existing.durationMs += elapsed;
+    } else {
+      history.push({ view: session.viewUsed, startedAt: session.currentViewStart, durationMs: elapsed });
+    }
+  }
+
   return {
     sessionId: session.dbSessionId,
     durationMs: Date.now() - session.startedAt,
     viewUsed: session.viewUsed,
+    viewHistory: history.map(v => ({ view: v.view, durationMs: v.durationMs })),
     dishesViewed: Array.from(session.dishDwells.values()),
     categoriesViewed: Array.from(session.categoryDwells.values()),
     pickedDishId: session.pickedDishId,
@@ -82,9 +104,10 @@ function getPayload(isFinal: boolean) {
   };
 }
 
-function sendHeartbeat(isFinal = false) {
+function sendHeartbeat(isFinal = false, closeReason?: string) {
   const payload = getPayload(isFinal);
   if (!payload || !payload.sessionId) return;
+  if (closeReason) (payload as any).closeReason = closeReason;
 
   const body = JSON.stringify(payload);
 
@@ -118,6 +141,8 @@ export function startSession(restaurantId: string, tableId?: string) {
     dbSessionId: null,
     startedAt: Date.now(),
     viewUsed: null,
+    viewHistory: [],
+    currentViewStart: Date.now(),
     dishDwells: new Map(),
     categoryDwells: new Map(),
     pickedDishId: null,
@@ -165,7 +190,18 @@ export function startSession(restaurantId: string, tableId?: string) {
 /** Track which view the user selected */
 export function trackViewSelected(view: string) {
   if (!session) return;
+  // Close previous view's time
+  if (session.viewUsed && session.viewUsed !== view) {
+    const elapsed = Date.now() - session.currentViewStart;
+    const existing = session.viewHistory.find(v => v.view === session!.viewUsed);
+    if (existing) {
+      existing.durationMs += elapsed;
+    } else {
+      session.viewHistory.push({ view: session.viewUsed, startedAt: session.currentViewStart, durationMs: elapsed });
+    }
+  }
   session.viewUsed = view;
+  session.currentViewStart = Date.now();
 }
 
 /** Call when a dish becomes visible */
@@ -241,8 +277,7 @@ export function closeSession(reason: string = "manual") {
   const durationMs = Date.now() - session.startedAt;
   if (durationMs < 2000) return; // Skip accidental sessions
 
-  // If we have a DB session ID, send final heartbeat
   if (session.dbSessionId) {
-    sendHeartbeat(true);
+    sendHeartbeat(true, reason);
   }
 }

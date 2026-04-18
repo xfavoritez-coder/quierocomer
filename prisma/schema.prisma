@@ -657,7 +657,8 @@ model Session {
   startedAt      DateTime  @default(now())
   endedAt        DateTime?
   durationMs     Int?
-  viewUsed       String?   // 'lista' | 'premium' | 'viaje'
+  viewUsed       String?   // última vista activa
+  viewHistory    Json?     // [{ view: 'premium', durationMs: 12000 }, ...]
   deviceType     String?   // 'mobile' | 'tablet' | 'desktop'
   closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
   weather        String?

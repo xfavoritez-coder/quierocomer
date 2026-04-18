@@ -11,7 +11,7 @@ export async function PATCH(request: Request) {
       body = JSON.parse(await request.text());
     }
 
-    const { sessionId, durationMs, viewUsed, dishesViewed, categoriesViewed, pickedDishId, isFinal } = body;
+    const { sessionId, durationMs, viewUsed, viewHistory, dishesViewed, categoriesViewed, pickedDishId, isFinal } = body;
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
@@ -22,10 +22,11 @@ export async function PATCH(request: Request) {
       data: {
         durationMs: durationMs || undefined,
         viewUsed: viewUsed || undefined,
+        viewHistory: viewHistory || undefined,
         dishesViewed: dishesViewed || undefined,
         categoriesViewed: categoriesViewed || undefined,
         pickedDishId: pickedDishId || undefined,
-        ...(isFinal ? { endedAt: new Date(), isAbandoned: false } : {}),
+        ...(isFinal ? { endedAt: new Date(), isAbandoned: false, closeReason: body.closeReason || "normal" } : {}),
       },
     });
 
