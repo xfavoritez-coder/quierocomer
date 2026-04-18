@@ -95,8 +95,8 @@ export default function AdminMenus() {
     { value: "PROMOTION", label: "Promoción" },
   ];
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
-    { value: "VEGAN", label: "Vegano", icon: "🌱" },
-    { value: "VEGETARIAN", label: "Vegetariano", icon: "🥚" },
+    { value: "VEGAN", label: "Vegano", icon: "🌿" },
+    { value: "VEGETARIAN", label: "Vegetariano", icon: "🌱" },
     { value: "PESCETARIAN", label: "Pescetariano", icon: "🐟" },
     { value: "OMNIVORE", label: "Omnívoro", icon: "🍖" },
   ];

@@ -387,18 +387,20 @@ function CategoryTrack({
   );
 }
 
-function VjNewBadge() {
-  return (
-    <div style={{
-      position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 50px)", left: 16, zIndex: 10,
-      background: "rgba(232,85,48,0.85)", backdropFilter: "blur(8px)",
-      color: "white", fontSize: "9px", fontWeight: 700, letterSpacing: "0.15em",
-      padding: "5px 12px", borderRadius: 50, textTransform: "uppercase",
-      boxShadow: "0 2px 10px rgba(232,85,48,0.4)",
-    }}>
-      ✨ Nuevo
-    </div>
-  );
+function VjNewBadge({ inline }: { inline?: boolean }) {
+  if (inline) {
+    return (
+      <span style={{
+        display: "inline-flex", marginLeft: 8, verticalAlign: "middle",
+        background: "#e85530", color: "white",
+        fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em",
+        padding: "3px 8px", borderRadius: 50, textTransform: "uppercase",
+      }}>
+        NUEVO
+      </span>
+    );
+  }
+  return null;
 }
 
 /* =============== DISH SLIDE =============== */
@@ -408,6 +410,15 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
+  const d = dish as any;
+  const vjBadges = (
+    <>
+      {isNew && <VjNewBadge inline />}
+      {d.dishDiet === "VEGAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌿</span>}
+      {d.dishDiet === "VEGETARIAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌱</span>}
+      {d.isSpicy && <span style={{ display: "inline-flex", marginLeft: 4, fontSize: "12px", verticalAlign: "middle" }}>🌶️</span>}
+    </>
+  );
   const accentColor = "#F4A623";
 
   if (variant === "hero") {
@@ -417,13 +428,12 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
       : undefined;
     return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
-      {isNew && <VjNewBadge />}
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
         <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-          <span className="vj-ln"><span>{dish.name}</span></span>
+          <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
         </h3>
         {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
         <div className="vj-meta">
@@ -435,12 +445,11 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 
   if (variant === "split") return (
     <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
-      {isNew && <VjNewBadge />}
       <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
       <div className="vj-split-info">
         <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.allergens || ""}</span>
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]" style={{ color: "white" }}>
-          <span className="vj-ln"><span>{dish.name}</span></span>
+          <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
         </h3>
         {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ color: "white", opacity: 0.72 }}>{pitch}</p>}
         <div className="vj-meta" style={{ color: "white" }}>
@@ -461,7 +470,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span>{dish.name}</span></span>
+        <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
       </h3>
       {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "22px" }}>{pitch}</p>}
       <div className="vj-meta">
@@ -475,13 +484,12 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   // SPOTLIGHT (Genio)
   return (
     <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
-      {isNew && <VjNewBadge />}
       <div className="vj-spot-wrap">
         <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
       </div>
       <span className="vj-eyebrow" style={{ color: "#F4A623" }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
       <h3 className="vj-title vj-title-gradient font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span>{dish.name}</span></span>
+        <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
       </h3>
       {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
       <div className="vj-meta">

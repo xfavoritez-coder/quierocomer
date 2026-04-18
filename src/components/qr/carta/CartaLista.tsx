@@ -287,7 +287,7 @@ export default function CartaLista({
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.3rem", fontWeight: 600, color: "#555" }}
+              style={{ fontSize: "1.1rem", fontWeight: 600, color: "#999" }}
             >
               {category.name}
             </h2>
