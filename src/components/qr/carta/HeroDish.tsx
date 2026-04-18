@@ -147,9 +147,9 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
             border: "1px solid rgba(255,255,255,0.15)",
           }}
         >
-          {qrUser ? (
+          {qrUser?.name ? (
             <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
-              {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
+              {qrUser.name.charAt(0).toUpperCase()}
             </span>
           ) : (
             <User size={16} color="rgba(255,255,255,0.7)" />

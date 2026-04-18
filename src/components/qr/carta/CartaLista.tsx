@@ -148,9 +148,9 @@ export default function CartaLista({
           </div>
           {/* Right: profile */}
           <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", flexShrink: 0 }}>
-            {qrUser ? (
+            {qrUser?.name ? (
               <span style={{ color: "rgba(255,255,255,0.85)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
-                {(qrUser.name || qrUser.email).charAt(0).toUpperCase()}
+                {qrUser.name.charAt(0).toUpperCase()}
               </span>
             ) : (
               <User size={20} color="rgba(255,255,255,0.5)" />
