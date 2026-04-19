@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       .slice(0, 40);
     const ts = Date.now();
     const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
-    const fileName = `promos/${ts}-${slug}.${ext}`;
+    const fileName = `general/promo-${ts}-${slug}.${ext}`;
 
     const { error } = await supabase.storage
       .from("fotos")
