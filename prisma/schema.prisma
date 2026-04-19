@@ -877,7 +877,8 @@ model Promotion {
   name            String
   description     String?
   promoType       String          @default("product") // "product" | "graphic"
-  imageUrl        String?         // for graphic type: custom design image
+  imageUrl        String?         // for graphic type: custom design image (optimized)
+  thumbUrl        String?         // thumbnail 300px for carousel card
   dishIds         String[]
   originalPrice   Float?
   promoPrice      Float?

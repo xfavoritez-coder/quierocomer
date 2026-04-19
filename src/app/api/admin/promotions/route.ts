@@ -69,18 +69,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Create manual promotion
-    const { restaurantId, name, description, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil } = body;
+    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil } = body;
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId and name required" }, { status: 400 });
 
-    const promo = await prisma.promotion.create({
-      data: {
-        restaurantId, name, description: description || null,
-        dishIds: dishIds || [], originalPrice, promoPrice, discountPct,
-        validFrom: validFrom ? new Date(validFrom) : null,
-        validUntil: validUntil ? new Date(validUntil) : null,
-        status: "ACTIVE", generatedBy: "manual",
-      },
-    });
+    const promoData: any = {
+      restaurantId, name, description: description || null,
+      promoType: promoType || "product",
+      imageUrl: imageUrl || null,
+      thumbUrl: thumbUrl || null,
+      dishIds: dishIds || [], originalPrice, promoPrice, discountPct,
+      validFrom: validFrom ? new Date(validFrom) : null,
+      validUntil: validUntil ? new Date(validUntil) : null,
+      status: "ACTIVE", generatedBy: "manual",
+    };
+    const promo = await prisma.promotion.create({ data: promoData });
     return NextResponse.json({ promotion: promo });
   } catch (error: any) {
     console.error("Promotion error:", error);

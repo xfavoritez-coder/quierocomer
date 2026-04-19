@@ -38,6 +38,8 @@ export default function AdminPromociones() {
   const [cName, setCName] = useState("");
   const [cDesc, setCDesc] = useState("");
   const [cImageUrl, setCImageUrl] = useState("");
+  const [cThumbUrl, setCThumbUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [cPromoPrice, setCPromoPrice] = useState("");
   const [cDiscountPct, setCDiscountPct] = useState("");
   const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
@@ -61,6 +63,22 @@ export default function AdminPromociones() {
     return sum + (d?.price || 0);
   }, 0);
 
+  const handlePromoUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("promoName", cName || "promo");
+      const res = await fetch("/api/admin/upload-promo-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) {
+        setCImageUrl(data.url);
+        if (data.thumbUrl) setCThumbUrl(data.thumbUrl);
+      }
+    } catch {}
+    setUploading(false);
+  };
+
   const handleCreatePromo = async () => {
     if (!selectedLocal || !cName) return;
     setSavingNew(true);
@@ -72,6 +90,7 @@ export default function AdminPromociones() {
     };
     if (createType === "graphic") {
       body.imageUrl = cImageUrl || null;
+      body.thumbUrl = cThumbUrl || null;
     } else {
       body.dishIds = cSelectedDishes;
       body.originalPrice = selectedDishesTotal;
@@ -211,10 +230,36 @@ export default function AdminPromociones() {
           <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>🖼️ Promoción con gráfica</h3>
           <input placeholder="Nombre de la promoción" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
           <textarea placeholder="Descripción (opcional)" value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
-          <input placeholder="URL de la imagen (pega el link)" value={cImageUrl} onChange={e => setCImageUrl(e.target.value)} style={INP} />
-          {cImageUrl && <div style={{ marginBottom: 12, borderRadius: 10, overflow: "hidden", height: 150 }}><img src={cImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} /></div>}
+
+          {/* File upload */}
+          {!cImageUrl ? (
+            <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8, padding: "24px 16px", background: "rgba(255,255,255,0.03)", border: "2px dashed #2A2A2A", borderRadius: 12, cursor: uploading ? "wait" : "pointer", marginBottom: 12, transition: "border-color 0.2s" }}
+              onDragOver={e => { e.preventDefault(); e.currentTarget.style.borderColor = "#F4A623"; }}
+              onDragLeave={e => { e.currentTarget.style.borderColor = "#2A2A2A"; }}
+              onDrop={async e => {
+                e.preventDefault();
+                e.currentTarget.style.borderColor = "#2A2A2A";
+                const file = e.dataTransfer.files[0];
+                if (file) await handlePromoUpload(file);
+              }}
+            >
+              <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => {
+                const file = e.target.files?.[0];
+                if (file) await handlePromoUpload(file);
+              }} />
+              <span style={{ fontSize: "2rem" }}>{uploading ? "⏳" : "📷"}</span>
+              <span style={{ fontFamily: F, fontSize: "0.85rem", color: uploading ? "#F4A623" : "#888" }}>{uploading ? "Subiendo y optimizando..." : "Toca para subir imagen o arrastra aquí"}</span>
+              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>JPG, PNG o WebP · Máximo 10MB</span>
+            </label>
+          ) : (
+            <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 180 }}>
+              <img src={cImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <button onClick={() => { setCImageUrl(""); setCThumbUrl(""); }} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>
