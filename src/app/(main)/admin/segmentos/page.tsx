@@ -86,7 +86,7 @@ function RuleBuilder({ rules, onChange, restaurantId }: { rules: Rule[]; onChang
       <button onClick={addRule} style={{ background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, padding: "6px 14px", color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>+ Agregar regla</button>
 
       {preview && (
-        <div style={{ marginTop: 14, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16 }}>
+        <div style={{ marginTop: 14, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, padding: "12px 14px", display: "flex", gap: 16, flexWrap: "wrap" }}>
           <div><span style={{ fontFamily: F, fontSize: "1.3rem", color: "#F4A623", fontWeight: 700 }}>{evaluating ? "..." : preview.count}</span><p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: 0 }}>Total</p></div>
           <div><span style={{ fontFamily: F, fontSize: "1.3rem", color: "#4ade80", fontWeight: 700 }}>{preview.registeredCount}</span><p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: 0 }}>Registrados</p></div>
           <div><span style={{ fontFamily: F, fontSize: "1.3rem", color: "#888", fontWeight: 700 }}>{preview.ghostCount}</span><p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: 0 }}>Fantasmas</p></div>
@@ -143,9 +143,9 @@ export default function AdminSegmentos() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Segmentos</h1>
-        <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <div className="adm-flex-wrap" style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <RestaurantPicker />
           {!creating && (
             <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Crear segmento</button>

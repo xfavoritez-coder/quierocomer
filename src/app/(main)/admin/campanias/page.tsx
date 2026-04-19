@@ -117,7 +117,7 @@ export default function AdminCampanias() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Campañas</h1>
         <div style={{ display: "flex", gap: 10 }}>
           <RestaurantPicker />
@@ -168,7 +168,7 @@ export default function AdminCampanias() {
           const stats = recipientStats[c.id];
           return (
             <div key={c.id} style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, padding: "16px 18px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div className="adm-flex-wrap" style={{ display: "flex", alignItems: "center", gap: 12 }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                     <span style={{ fontFamily: F, fontSize: "0.95rem", color: "white", fontWeight: 600 }}>{c.name}</span>

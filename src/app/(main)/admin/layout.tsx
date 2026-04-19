@@ -97,6 +97,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             justify-content: space-between; align-items: center;
           }
           .adm-main { margin-left: 0; padding: 80px 16px 32px; }
+          .adm-grid-2 { grid-template-columns: 1fr !important; }
+          .adm-grid-4 { grid-template-columns: 1fr 1fr !important; }
+          .adm-flex-wrap { flex-wrap: wrap !important; }
+          .adm-flex-col { flex-direction: column !important; }
+          .adm-w-full { width: 100% !important; }
+          .adm-btn-row { flex-direction: column !important; }
+          .adm-btn-row > * { width: 100% !important; flex: none !important; }
         }
       `}</style>
     </div>

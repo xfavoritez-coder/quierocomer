@@ -75,7 +75,7 @@ export default function AdminAutomatizaciones() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Automatizaciones</h1>
         <div style={{ display: "flex", gap: 10 }}>
           <RestaurantPicker />
@@ -91,7 +91,7 @@ export default function AdminAutomatizaciones() {
 
           {/* Trigger selector */}
           <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Trigger</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
+          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 16 }}>
             {TRIGGERS.map(t => (
               <button key={t.value} onClick={() => { setFTrigger(t.value); setFConfig({}); }} style={{
                 padding: "12px 14px", background: fTrigger === t.value ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.03)",
@@ -111,13 +111,13 @@ export default function AdminAutomatizaciones() {
           {fTrigger === "inactivity" && (
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontFamily: F, fontSize: "0.75rem", color: "#888" }}>Días de inactividad:</label>
-              <input type="number" value={fConfig.daysInactive || 14} onChange={e => setFConfig({ ...fConfig, daysInactive: parseInt(e.target.value) })} style={{ ...I, width: 100, marginLeft: 10, marginBottom: 0 }} />
+              <input type="number" value={fConfig.daysInactive || 14} onChange={e => setFConfig({ ...fConfig, daysInactive: parseInt(e.target.value) })} style={{ ...I, width: "auto", maxWidth: 100, marginLeft: 10, marginBottom: 0 }} />
             </div>
           )}
           {fTrigger === "milestone" && (
             <div style={{ marginBottom: 14 }}>
               <label style={{ fontFamily: F, fontSize: "0.75rem", color: "#888" }}>Número de visita:</label>
-              <input type="number" value={fConfig.milestoneVisit || 5} onChange={e => setFConfig({ ...fConfig, milestoneVisit: parseInt(e.target.value) })} style={{ ...I, width: 100, marginLeft: 10, marginBottom: 0 }} />
+              <input type="number" value={fConfig.milestoneVisit || 5} onChange={e => setFConfig({ ...fConfig, milestoneVisit: parseInt(e.target.value) })} style={{ ...I, width: "auto", maxWidth: 100, marginLeft: 10, marginBottom: 0 }} />
             </div>
           )}
 

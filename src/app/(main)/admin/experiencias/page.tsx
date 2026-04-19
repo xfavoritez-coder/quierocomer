@@ -59,7 +59,7 @@ export default function AdminExperiencias() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Experiencias</h1>
         {!assigning && <button onClick={() => setAssigning(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Asignar a local</button>}
       </div>
@@ -104,7 +104,7 @@ export default function AdminExperiencias() {
 
       {/* Templates library */}
       <h2 style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Plantillas disponibles ({templates.length})</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {templates.map(t => (
           <div key={t.id} style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>{t.iconEmoji}</span>

@@ -107,7 +107,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
         </div>
 
         {/* Stats */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+        <div className="adm-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
           {[
             { label: "Sesiones", value: stats.totalSessions, color: "#F4A623" },
             { label: "Locales", value: stats.restaurantsVisited, color: "#7fbfdc" },
@@ -163,7 +163,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
       })()}
 
       {/* Top dishes + View preferences side by side */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         {stats.topDishes.length > 0 && (
           <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 16, padding: "18px 20px" }}>
             <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Platos más vistos</h3>

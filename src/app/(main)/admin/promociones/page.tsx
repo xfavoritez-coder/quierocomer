@@ -225,7 +225,7 @@ export default function AdminPromociones() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Promociones</h1>
         <div style={{ display: "flex", gap: 10 }}>
           <select
@@ -250,7 +250,7 @@ export default function AdminPromociones() {
       {creating && !createType && (
         <div style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
           <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>¿Qué tipo de promoción?</h3>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <button onClick={() => setCreateType("graphic")} style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #2A2A2A", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🖼️</span>
               <span style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, display: "block" }}>Gráfica propia</span>

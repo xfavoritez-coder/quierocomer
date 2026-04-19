@@ -119,7 +119,7 @@ export default function AdminDashboard() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Dashboard</h1>
         <select
           value={filterRestaurant}
@@ -145,13 +145,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Distributions */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <DistributionBar title="Vista preferida" data={data.viewDistribution} labels={VIEW_LABELS} />
         <DistributionBar title="Dispositivo" data={data.deviceDistribution} />
       </div>
 
       {/* Rankings */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <RankList title="🔥 Platos más vistos" items={data.topDishesViewed} />
         <RankList title="🧞 Más recomendados por Genio" items={data.topDishesGenio} />
       </div>
