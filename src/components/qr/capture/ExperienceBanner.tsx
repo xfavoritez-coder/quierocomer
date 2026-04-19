@@ -262,11 +262,11 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               <div style={{ textAlign: "center" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>{exp.iconEmoji}</span>
                 <p style={{ fontSize: "12px", color: accent, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 8px" }}>{userName}, eres</p>
-                <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "32px", fontWeight: 600, color: accent, margin: "0 0 16px" }}>{teaser.resultName}</h2>
+                <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "33px", fontWeight: 600, color: accent, margin: "0 0 16px" }}>{teaser.resultName}</h2>
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.6)", lineHeight: 1.5, margin: "0 0 12px" }}>{teaser.resultDescription}</p>
                 <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 24 }}>
                   {teaser.resultTraits.map(t => (
-                    <span key={t} style={{ fontSize: "11px", padding: "4px 10px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
+                    <span key={t} style={{ fontSize: "13px", padding: "4px 10px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
                   ))}
                 </div>
                 <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "0 0 24px" }}>En los próximos minutos recibirás tu resultado completo por email</p>
