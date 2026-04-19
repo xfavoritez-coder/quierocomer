@@ -43,8 +43,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
       .then(d => {
         if (d.experience) {
           setExp(d.experience);
-          // Show after 5 seconds (production: 30000)
-          timerRef.current = setTimeout(() => setVisible(true), 5000);
+          setVisible(true);
         }
       })
       .catch(() => {});
@@ -59,9 +58,20 @@ export default function ExperienceBanner({ restaurantId }: Props) {
   };
 
   const openModal = () => {
+    // Check if user is logged in
+    const userCookie = document.cookie.match(/qr_user_id=([^;]*)/);
+    if (userCookie) {
+      // Try to get name from existing user
+      fetch("/api/qr/user/me").then(r => r.json()).then(d => {
+        if (d.user?.name) {
+          setUserName(d.user.name);
+          if (d.user.email) setEmail(d.user.email);
+          if (d.user.birthDate) setBirthDate(d.user.birthDate.split("T")[0]);
+        }
+      }).catch(() => {});
+    }
     setModalOpen(true);
     setStep(0);
-    setVisible(false);
   };
 
   const handleSubmit = async () => {
@@ -91,28 +101,23 @@ export default function ExperienceBanner({ restaurantId }: Props) {
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            margin: "16px 20px", padding: "18px",
-            background: `linear-gradient(135deg, #1a1a1a 0%, #111 100%)`,
-            border: `1px solid ${accent}40`,
-            borderRadius: 16,
-            display: "flex", alignItems: "center", gap: 14,
+            margin: "16px 20px", padding: "16px",
+            background: `linear-gradient(135deg, ${accent}12, ${accent}06)`,
+            border: `1px solid ${accent}25`,
+            borderRadius: 14,
+            display: "flex", alignItems: "center", gap: 12,
             position: "relative",
-            boxShadow: `0 4px 20px ${accent}15`,
-            opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)",
-            transition: "all 0.4s ease",
           }}
         >
-          <button onClick={dismiss} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", padding: 2, cursor: "pointer" }}>
-            <X size={13} color="rgba(255,255,255,0.4)" />
+          <button onClick={dismiss} style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", padding: 2, cursor: "pointer" }}>
+            <X size={13} color="#999" />
           </button>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: `${accent}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", flexShrink: 0 }}>
-            {exp.iconEmoji}
+          <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: 70 }}>
+            <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exp.name}</p>
+            <p style={{ fontSize: "0.78rem", color: "#8a7060", margin: "2px 0 0" }}>{exp.description}</p>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "white", margin: 0 }}>{exp.name}</p>
-            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", margin: "3px 0 0" }}>{exp.description}</p>
-          </div>
-          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "10px 18px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", flexShrink: 0, boxShadow: `0 4px 14px ${accent}40` }}>
+          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: accent, color: "white", border: "none", borderRadius: 50, padding: "8px 16px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: `0 2px 10px ${accent}30` }}>
             Descubrir
           </button>
         </div>
@@ -140,7 +145,11 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>{exp.iconEmoji}</span>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, color: "white", margin: "0 0 12px", lineHeight: 1.1 }}>{exp.name}</h2>
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 28px" }}>{exp.description}</p>
-                <button onClick={() => setStep(1)} style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: `0 4px 16px ${accent}40` }}>
+                <button onClick={() => {
+                  if (userName && birthDate && email) { handleSubmit(); }
+                  else if (userName) { setStep(birthDate ? 3 : 2); }
+                  else { setStep(1); }
+                }} style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: `0 4px 16px ${accent}40` }}>
                   Empezar
                 </button>
               </div>
