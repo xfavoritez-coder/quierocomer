@@ -57,29 +57,32 @@ export async function GET(req: NextRequest) {
       : [];
     const catMap = Object.fromEntries(catNames.map(c => [c.id, c.name]));
 
-    // Check which sessions used Genio + what it recommended
+    // Check which sessions used Genio + what it recommended (per session, not per guest)
+    const sessionIds = sessions.map(s => s.id);
     const sessionGuestIds = [...new Set(sessions.map(s => s.guestId))];
-    const genioEvents = sessionGuestIds.length ? await prisma.statEvent.findMany({
-      where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE"] } },
-      select: { guestId: true, eventType: true, dishId: true, createdAt: true },
+    const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
+      where: { sessionId: { in: sessionIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE"] } },
+      select: { sessionId: true, eventType: true, dishId: true, createdAt: true },
     }) : [];
-    const genioGuestIds = new Set(genioEvents.map(e => e.guestId));
 
     // Get Genio recommended dish names
-    const genioDishIds = genioEvents.filter(e => e.eventType === "GENIO_COMPLETE" && e.dishId).map(e => e.dishId!);
+    const genioDishIds = [...new Set(genioEvents.filter(e => e.eventType === "GENIO_COMPLETE" && e.dishId).map(e => e.dishId!))];
     const genioDishes = genioDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: genioDishIds } }, select: { id: true, name: true },
     }) : [];
     const genioDishMap = Object.fromEntries(genioDishes.map(d => [d.id, d.name]));
 
-    // Build Genio data per guest
-    const genioDataByGuest: Record<string, { timesUsed: number; recommendedDish: string | null }> = {};
+    // Build Genio data per session with all recommendations
+    const genioDataBySession: Record<string, { timesUsed: number; recommendations: string[] }> = {};
     for (const e of genioEvents) {
-      if (!e.guestId) continue;
-      if (!genioDataByGuest[e.guestId]) genioDataByGuest[e.guestId] = { timesUsed: 0, recommendedDish: null };
-      if (e.eventType === "GENIO_START") genioDataByGuest[e.guestId].timesUsed++;
-      if (e.eventType === "GENIO_COMPLETE" && e.dishId) genioDataByGuest[e.guestId].recommendedDish = genioDishMap[e.dishId] || null;
+      if (!genioDataBySession[e.sessionId]) genioDataBySession[e.sessionId] = { timesUsed: 0, recommendations: [] };
+      if (e.eventType === "GENIO_START") genioDataBySession[e.sessionId].timesUsed++;
+      if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
+        const name = genioDishMap[e.dishId];
+        if (name) genioDataBySession[e.sessionId].recommendations.push(name);
+      }
     }
+    const sessionIdsWithGenio = new Set(genioEvents.map(e => e.sessionId));
 
     // Fetch experience submissions for these guests
     const expSubmissions = sessionGuestIds.length ? await prisma.experienceSubmission.findMany({
@@ -125,8 +128,8 @@ export async function GET(req: NextRequest) {
           name: catMap[c.categoryId] || c.categoryId,
         })),
         pickedDish: s.pickedDishId ? dishMap[s.pickedDishId] || null : null,
-        usedGenio: genioGuestIds.has(s.guestId),
-        genioData: genioDataByGuest[s.guestId] || null,
+        usedGenio: sessionIdsWithGenio.has(s.id),
+        genioData: genioDataBySession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
         experienceSubmissions: (expByGuest[s.guestId] || []).map(sub => ({
           id: sub.id,
