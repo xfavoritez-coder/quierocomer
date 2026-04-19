@@ -91,13 +91,13 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           }}
         >
           {restaurant.logoUrl ? (
-            <Image src={restaurant.logoUrl} alt={restaurant.name} width={26} height={26} className="rounded-full" style={{ flexShrink: 0 }} />
+            <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0 }} />
           ) : (
-            <div style={{ width: 26, height: 26, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
+            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span style={{ fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "1.2rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
             {restaurant.name}
           </span>
         </button>
@@ -107,7 +107,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 16, right: 12, width: 40, height: 40, borderRadius: "50%",
+            top: 16, right: 12, width: 37, height: 37, borderRadius: "50%",
             ...(qrUser?.name
               ? { background: "#F4A623", border: "none" }
               : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
@@ -685,14 +685,14 @@ const CSS = `
   .vj-track-wrap { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
   .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   .vj-category-track::-webkit-scrollbar { display: none; }
-  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 50px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 54px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
   .vj-category-header.light { color: #2a1810; }
   .vj-category-header.light .vj-category-label { background: rgba(0,0,0,0.06); color: #3d2817; }
   .vj-category-header.light .vj-category-label strong { color: #8a4a1a; }
   .vj-category-header.light .vj-bullets { background: rgba(0,0,0,0.08); }
   .vj-category-label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 1; font-weight: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 50px; }
   .vj-category-label strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
-  .vj-category-label-plain { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600; padding: 6px 0; }
+  .vj-category-label-plain { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600; padding: 6px 0; text-align: left; }
   .vj-category-label-plain strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
   .vj-bullets { display: flex; gap: 4px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 50px; }
   .vj-bullets-plain { display: flex; gap: 4px; padding: 6px 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }

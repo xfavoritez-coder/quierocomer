@@ -153,18 +153,18 @@ export default function CartaLista({
           {/* Left: logo + name — click reloads page */}
           <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             {restaurant.logoUrl ? (
-              <Image src={restaurant.logoUrl} alt={restaurant.name} width={33} height={33} className="rounded-full" style={{ flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
+              <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
             ) : (
-              <div className="flex items-center justify-center rounded-full" style={{ width: 33, height: 33, background: "rgba(255,255,255,0.12)", fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", flexShrink: 0 }}>
+              <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "rgba(255,255,255,0.12)", fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", flexShrink: 0 }}>
                 {restaurant.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.2rem", fontWeight: 400, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
               {restaurant.name}
             </span>
           </button>
           {/* Right: profile */}
-          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: qrUser?.name ? "#F4A623" : "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
+          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 37, height: 37, borderRadius: "50%", background: qrUser?.name ? "#F4A623" : "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
             {qrUser?.name ? (
               <span style={{ color: "white", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
                 {qrUser.name.charAt(0).toUpperCase()}
