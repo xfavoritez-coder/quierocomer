@@ -702,7 +702,7 @@ const CSS = `
   .vj-v-split { flex-direction: column; background: #0a0604; }
   .vj-split-photo { flex: 1; min-height: 52vh; position: relative; overflow: hidden; }
   .vj-split-photo img { object-fit: cover; }
-  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 50%, #0a0604 100%); }
+  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(10,6,4,0.4) 60%, rgba(10,6,4,0.75) 100%); }
   .vj-split-info { padding: 24px 28px calc(60px + env(safe-area-inset-bottom)); position: relative; z-index: 3; }
 
   /* LIGHT */

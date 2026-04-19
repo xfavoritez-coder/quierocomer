@@ -253,7 +253,7 @@ export default function DishDetail({
           className="absolute"
           style={{
             bottom: 0, left: 0, right: 0,
-            background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 70%, transparent 100%)",
+            background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 70%, transparent 100%)",
             padding: "80px 20px 40px", zIndex: 5,
           }}
         >

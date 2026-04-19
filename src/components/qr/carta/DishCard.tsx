@@ -118,7 +118,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
       ) : (
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
       )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 50%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
       <div className="absolute" style={{ top: 8, left: 8, display: "flex", flexDirection: "column", gap: 4, zIndex: 2 }}>
         <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.62rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>⭐ Recomendado</span>
         {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em", alignSelf: "flex-start" }}>NUEVO</span>}
