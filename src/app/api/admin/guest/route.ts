@@ -117,6 +117,7 @@ export async function GET(req: NextRequest) {
       createdAt: guest.createdAt,
       lastSeenAt: guest.lastSeenAt,
       preferences: guest.preferences,
+      favoriteIngredients: guest.favoriteIngredients,
     },
     user: guest.linkedQrUser,
     stats: {

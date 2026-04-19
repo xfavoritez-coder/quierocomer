@@ -44,7 +44,7 @@ interface ExperienceEntry {
 }
 
 interface GuestData {
-  guest: { id: string; visitCount: number; totalSessions: number; createdAt: string; lastSeenAt: string; preferences: any };
+  guest: { id: string; visitCount: number; totalSessions: number; createdAt: string; lastSeenAt: string; preferences: any; favoriteIngredients: Record<string, number> | null };
   user: { id: string; name: string | null; email: string; dietType: string | null; restrictions: string[]; birthDate: string | null; createdAt: string } | null;
   stats: { restaurantsVisited: number; totalSessions: number; avgDuration: number; totalDuration: number; topDishes: { name: string; count: number; totalMs: number }[]; viewPreferences: Record<string, number> };
   sessions: any[];
@@ -136,6 +136,31 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
           </div>
         </div>
       )}
+
+      {/* Favorite ingredients + Dislikes */}
+      {(() => {
+        const favIngs = guest.favoriteIngredients || {};
+        const topFavs = Object.entries(favIngs).sort((a, b) => b[1] - a[1]).slice(0, 12);
+        const dislikesList = (prefs?.dislikes || []) as string[];
+        if (topFavs.length === 0 && dislikesList.length === 0) return null;
+        return (
+          <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 16, padding: "18px 20px", marginBottom: 20 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 12 }}>Gustos de ingredientes</h3>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              {topFavs.map(([name, score]) => (
+                <span key={name} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 6, color: "#4ade80" }}>
+                  {name} <span style={{ opacity: 0.5, fontSize: "0.65rem" }}>({score})</span>
+                </span>
+              ))}
+              {dislikesList.map((d: string) => (
+                <span key={d} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", background: "rgba(255,100,100,0.08)", border: "1px solid rgba(255,100,100,0.15)", borderRadius: 6, color: "#ff6b6b" }}>
+                  🚫 {d}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Top dishes + View preferences side by side */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>

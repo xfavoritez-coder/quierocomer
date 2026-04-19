@@ -59,6 +59,14 @@ function trackStat(restaurantId: string, eventType: string, dishId?: string) {
   }).catch(() => {});
 }
 
+function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_result") {
+  fetch("/api/qr/ingredients", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ guestId: getGuestId(), dishIds, source }),
+  }).catch(() => {});
+}
+
 export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult }: GenioProps) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -68,6 +76,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const savedRestrictions = typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null;
   const savedDislikes = typeof window !== "undefined" ? localStorage.getItem("qr_dislikes") : null;
   const hasSaved = !!(savedDiet && savedRestrictions);
+
+  // Persisted favorite ingredients from previous sessions
+  const [favIngredients, setFavIngredients] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetch(`/api/qr/ingredients?guestId=${getGuestId()}`).then(r => r.json()).then(d => {
+      if (d.favorites) setFavIngredients(d.favorites);
+    }).catch(() => {});
+  }, []);
 
   // Wizard state — skip to step 3 if we have saved prefs
   const [dietType, setDietType] = useState<DietType | null>(savedDiet as DietType | null);
@@ -289,6 +305,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       dishIngr.forEach((i) => { if (likedIngredients.has(i)) score += 5; });
       if (d.tags?.includes("RECOMMENDED")) score += 10;
       if (d.photos?.length > 0) score += 2;
+      // Boost from persisted favorite ingredients (from previous sessions)
+      dishIngr.forEach((i) => { if (favIngredients[i]) score += Math.min(favIngredients[i], 10); });
       // Penalize dislikes
       const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
       dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
@@ -325,6 +343,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setResults(picks);
       setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
       picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
+      // Save ingredient preferences: liked dishes (high weight) + results (highest)
+      const likedIds = [...liked];
+      if (likedIds.length > 0) saveIngredients(likedIds, "genio_liked");
+      saveIngredients(picks.map((p) => p.id), "genio_result");
     }
     setShowOverlay(false);
     setStep(5); // Result step

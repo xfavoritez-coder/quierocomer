@@ -673,8 +673,9 @@ model GuestProfile {
   lastSeenAt      DateTime  @default(now())
   visitCount      Int       @default(1)
   totalSessions   Int       @default(0)
-  preferences     Json?     // { dietType, restrictions[], dislikes[], favoriteCategories[] }
-  linkedQrUserId  String?
+  preferences          Json?     // { dietType, restrictions[], dislikes[], favoriteCategories[] }
+  favoriteIngredients  Json?     // { "salmón": 12, "palta": 8, ... } — acumulativo por score
+  linkedQrUserId       String?
   linkedQrUser    QRUser?   @relation(fields: [linkedQrUserId], references: [id])
 
   statEvents      StatEvent[]

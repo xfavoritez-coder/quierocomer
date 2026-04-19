@@ -175,7 +175,7 @@ export default function AdminSessions() {
                             <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>⚠️ {r}</span>
                           ))}
                           {dislikes.map((d: string) => (
-                            <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
+                            <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,100,100,0.08)", color: "#ff6b6b" }}>🚫 {d}</span>
                           ))}
                         </div>
                       ) : null;

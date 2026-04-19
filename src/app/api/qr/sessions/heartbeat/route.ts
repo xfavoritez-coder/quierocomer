@@ -45,6 +45,41 @@ async function handleHeartbeat(request: Request) {
       }).catch(() => {});
     }
 
+    // On final heartbeat, accumulate favorite ingredients from viewed dishes (dwell > 3s)
+    if (isFinal && session.guestId && Array.isArray(dishesViewed) && dishesViewed.length > 0) {
+      const significantDishIds = dishesViewed
+        .filter((d: any) => d.dishId && (d.dwellMs || 0) > 3000)
+        .map((d: any) => d.dishId);
+
+      if (significantDishIds.length > 0) {
+        const dishIngredients = await prisma.dishIngredient.findMany({
+          where: { dishId: { in: significantDishIds } },
+          select: { ingredient: { select: { name: true } } },
+        });
+
+        if (dishIngredients.length > 0) {
+          const counts: Record<string, number> = {};
+          for (const di of dishIngredients) {
+            const name = di.ingredient.name.toLowerCase();
+            counts[name] = (counts[name] || 0) + 1;
+          }
+
+          const guest = await prisma.guestProfile.findUnique({
+            where: { id: session.guestId },
+            select: { favoriteIngredients: true },
+          });
+          const existing = (guest?.favoriteIngredients as Record<string, number>) || {};
+          for (const [name, score] of Object.entries(counts)) {
+            existing[name] = (existing[name] || 0) + score;
+          }
+          await prisma.guestProfile.update({
+            where: { id: session.guestId },
+            data: { favoriteIngredients: existing },
+          }).catch(() => {});
+        }
+      }
+    }
+
     return NextResponse.json({ ok: true });
   } catch (error) {
     // Session might not exist (race condition) — ignore silently
