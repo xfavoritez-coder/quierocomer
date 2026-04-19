@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function PATCH(request: Request) {
+// POST needed for sendBeacon (can't send PATCH)
+export async function POST(request: Request) { return handleHeartbeat(request); }
+export async function PATCH(request: Request) { return handleHeartbeat(request); }
+
+async function handleHeartbeat(request: Request) {
   try {
     let body;
     const ct = request.headers.get("content-type") || "";

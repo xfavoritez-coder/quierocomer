@@ -43,7 +43,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
       .then(d => {
         if (d.experience) {
           setExp(d.experience);
-          setVisible(true);
+          requestAnimationFrame(() => setVisible(true));
         }
       })
       .catch(() => {});
@@ -117,7 +117,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exp.name}</p>
             <p style={{ fontSize: "0.78rem", color: "#8a7060", margin: "2px 0 0" }}>{exp.description}</p>
           </div>
-          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: accent, color: "white", border: "none", borderRadius: 50, padding: "8px 16px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: `0 2px 10px ${accent}30` }}>
+          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "#F4A623", color: "white", border: "none", borderRadius: 50, padding: "8px 16px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: "0 2px 10px rgba(244,166,35,0.3)" }}>
             Descubrir
           </button>
         </div>
@@ -130,14 +130,13 @@ export default function ExperienceBanner({ restaurantId }: Props) {
           <div
             className="font-[family-name:var(--font-dm)]"
             style={{
-              position: "fixed", bottom: 0, left: "50%", transform: "translateX(-50%)",
-              width: "100%", maxWidth: 420, maxHeight: "88vh",
-              background: "#0a0a0a", borderRadius: "28px 28px 0 0",
-              zIndex: 101, padding: "32px 24px 40px", overflowY: "auto",
-              boxShadow: "0 -8px 40px rgba(0,0,0,0.3)",
+              position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)",
+              width: "90%", maxWidth: 380,
+              background: "#0a0a0a", borderRadius: 24,
+              zIndex: 101, padding: "36px 28px 32px", overflowY: "auto",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
           >
-            <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 100 }} />
 
             {/* Step 0: Intro */}
             {step === 0 && (
@@ -149,7 +148,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                   if (userName && birthDate && email) { handleSubmit(); }
                   else if (userName) { setStep(birthDate ? 3 : 2); }
                   else { setStep(1); }
-                }} style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: `0 4px 16px ${accent}40` }}>
+                }} style={{ background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: "0 4px 16px rgba(244,166,35,0.3)" }}>
                   Empezar
                 </button>
               </div>
@@ -161,7 +160,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Paso 1 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 24px" }}>¿Cómo te llamas?</h2>
                 <input autoFocus value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }} />
-                <button onClick={() => { if (userName) setStep(2); }} disabled={!userName} style={{ marginTop: 20, background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: userName ? 1 : 0.4 }}>
+                <button onClick={() => { if (userName) setStep(2); }} disabled={!userName} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: userName ? 1 : 0.4 }}>
                   Siguiente
                 </button>
               </div>
@@ -174,7 +173,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 8px" }}>¿Cuándo naciste?</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", margin: "0 0 24px" }}>Los astros necesitan esta información</p>
                 <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: birthDate ? "white" : "rgba(255,255,255,0.3)", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", colorScheme: "dark", boxSizing: "border-box" }} />
-                <button onClick={() => { if (birthDate) setStep(3); }} disabled={!birthDate} style={{ marginTop: 20, background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: birthDate ? 1 : 0.4 }}>
+                <button onClick={() => { if (birthDate) setStep(3); }} disabled={!birthDate} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: birthDate ? 1 : 0.4 }}>
                   Siguiente
                 </button>
               </div>
@@ -187,7 +186,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 8px" }}>¿Dónde enviamos tu resultado?</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", margin: "0 0 24px" }}>Recibirás tu resultado en unos minutos</p>
                 <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }} />
-                <button onClick={handleSubmit} disabled={!email || submitting} style={{ marginTop: 20, background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: !email || submitting ? 0.4 : 1 }}>
+                <button onClick={handleSubmit} disabled={!email || submitting} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: !email || submitting ? 0.4 : 1 }}>
                   {submitting ? "Consultando..." : "Descubrir mi resultado"}
                 </button>
               </div>
