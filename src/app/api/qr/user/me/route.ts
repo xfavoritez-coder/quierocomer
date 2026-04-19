@@ -45,5 +45,30 @@ export async function GET() {
     ? Object.entries(favoriteIngredients).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name]) => name)
     : [];
 
-  return NextResponse.json({ user, visitedRestaurants, topIngredients });
+  // Experience results
+  const experienceResults = await prisma.experienceSubmission.findMany({
+    where: { qrUserId: userId },
+    orderBy: { submittedAt: "desc" },
+    select: {
+      userName: true,
+      submittedAt: true,
+      assignedResult: { select: { name: true, traits: true, description: true } },
+      experience: { include: { template: { select: { name: true, iconEmoji: true, accentColor: true } } } },
+    },
+  });
+
+  // Deduplicate by experience (keep latest per experience)
+  const seenExp = new Set<string>();
+  const experiences = experienceResults
+    .filter((e) => { if (seenExp.has(e.experience.id)) return false; seenExp.add(e.experience.id); return true; })
+    .map((e) => ({
+      experienceName: e.experience.template.name,
+      iconEmoji: e.experience.template.iconEmoji,
+      accentColor: e.experience.template.accentColor,
+      resultName: e.assignedResult?.name || "",
+      resultTraits: e.assignedResult?.traits || [],
+      date: e.submittedAt,
+    }));
+
+  return NextResponse.json({ user, visitedRestaurants, topIngredients, experiences });
 }

@@ -55,6 +55,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
   const [editDiet, setEditDiet] = useState<string | null>(null);
   const [editRestrictions, setEditRestrictions] = useState<string[]>([]);
   const [editDislikes, setEditDislikes] = useState<string[]>([]);
+  const [experiences, setExperiences] = useState<{ experienceName: string; iconEmoji: string; accentColor: string; resultName: string; resultTraits: string[]; date: string }[]>([]);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -65,6 +66,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
         .then((d) => {
           if (d.visitedRestaurants) setVisited(d.visitedRestaurants);
           if (d.topIngredients) setTopIngredients(d.topIngredients);
+          if (d.experiences) setExperiences(d.experiences);
         })
         .catch(() => {});
     }
@@ -236,6 +238,35 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {topIngredients.map((ing) => (
               <span key={ing} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Experiences */}
+      {experiences.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", marginBottom: 10 }}>Mis experiencias</h4>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {experiences.map((e, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#fafafa", borderRadius: 12 }}>
+                <span style={{ fontSize: "1.4rem", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{e.iconEmoji}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "0.7rem", color: e.accentColor, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", lineHeight: 1.2 }}>
+                    {e.experienceName}
+                  </div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.2 }}>
+                    {e.resultName}
+                  </div>
+                  {e.resultTraits.length > 0 && (
+                    <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
+                      {e.resultTraits.slice(0, 3).map((t) => (
+                        <span key={t} style={{ fontSize: "0.68rem", padding: "1px 6px", borderRadius: 50, background: `${e.accentColor}12`, color: e.accentColor, border: `1px solid ${e.accentColor}20` }}>{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         </div>

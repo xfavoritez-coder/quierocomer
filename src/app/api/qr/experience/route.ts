@@ -18,17 +18,26 @@ export async function GET(req: NextRequest) {
 
   if (!exp || !exp.isActive) return NextResponse.json({ experience: null });
 
-  // Check if this guest already completed the experience
+  // Check if this guest/user already completed the experience
+  const cookieStore = await cookies();
+  const userId = cookieStore.get("qr_user_id")?.value;
+
   let previousResult: { resultName: string; resultTraits: string[]; userName: string } | null = null;
-  if (guestId) {
-    const lastSub = await prisma.experienceSubmission.findFirst({
-      where: { experienceId: exp.id, guestId },
-      orderBy: { submittedAt: "desc" },
-      select: { userName: true, assignedResult: { select: { name: true, traits: true } } },
-    });
-    if (lastSub?.assignedResult) {
-      previousResult = { resultName: lastSub.assignedResult.name, resultTraits: lastSub.assignedResult.traits, userName: lastSub.userName };
-    }
+
+  // Try by qrUserId first (works cross-device), then fall back to guestId
+  const lastSub = await prisma.experienceSubmission.findFirst({
+    where: {
+      experienceId: exp.id,
+      OR: [
+        ...(userId ? [{ qrUserId: userId }] : []),
+        ...(guestId ? [{ guestId }] : []),
+      ],
+    },
+    orderBy: { submittedAt: "desc" },
+    select: { userName: true, assignedResult: { select: { name: true, traits: true } } },
+  });
+  if (lastSub?.assignedResult) {
+    previousResult = { resultName: lastSub.assignedResult.name, resultTraits: lastSub.assignedResult.traits, userName: lastSub.userName };
   }
 
   return NextResponse.json({

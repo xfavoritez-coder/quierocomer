@@ -134,10 +134,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{exp.iconEmoji}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: "0.75rem", color: bannerAccent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", lineHeight: 1.2 }}>
+                <p style={{ fontSize: "0.70rem", color: bannerAccent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", lineHeight: 1.2 }}>
                   {prevResult.userName}, eres
                 </p>
-                <p style={{ fontSize: "1.06rem", fontWeight: 700, color: "#0e0e0e", margin: "1px 0 0", lineHeight: 1.2 }}>
+                <p style={{ fontSize: "1.19rem", fontWeight: 700, color: "#0e0e0e", margin: "1px 0 0", lineHeight: 1.2 }}>
                   {prevResult.resultName}
                 </p>
               </div>

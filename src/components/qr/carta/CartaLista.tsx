@@ -460,9 +460,9 @@ function DishListCard({
             {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "10px", flexShrink: 0 }}>⭐</span>}
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
             {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
-            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌿</span>}
-            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌱</span>}
-            {(dish as any).isSpicy && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌶️</span>}
+            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌿</span>}
+            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌱</span>}
+            {(dish as any).isSpicy && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌶️</span>}
           </h3>
         </div>
         {dish.description && (
