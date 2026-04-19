@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
     }
 
     const dishNames = allDishIds.size > 0
-      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true } })
+      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true, ingredients: true } })
       : [];
     const dishMap = Object.fromEntries(dishNames.map(d => [d.id, d]));
 
@@ -57,6 +57,12 @@ export async function GET(req: NextRequest) {
     for (const di of dishIngredients) {
       if (!ingredientsByDish[di.dishId]) ingredientsByDish[di.dishId] = [];
       ingredientsByDish[di.dishId].push(di.ingredient);
+    }
+    // Fallback: text ingredients for dishes without DishIngredient links
+    for (const d of dishNames) {
+      if (!ingredientsByDish[d.id] && d.ingredients) {
+        ingredientsByDish[d.id] = d.ingredients.split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({ name: name.toLowerCase(), isAllergen: false, allergenType: null }));
+      }
     }
 
     // Resolve category names
@@ -88,7 +94,7 @@ export async function GET(req: NextRequest) {
     const genioDishMap = Object.fromEntries(genioDishes.map(d => [d.id, d.name]));
 
     // Match Genio events to sessions by guestId + time overlap
-    const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: string[] }> = {};
+    const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[] }> = {};
     const dbSessionsWithGenio = new Set<string>();
     for (const s of sessions) {
       const start = new Date(s.startedAt).getTime();
@@ -101,12 +107,16 @@ export async function GET(req: NextRequest) {
       );
       if (matching.length > 0) {
         dbSessionsWithGenio.add(s.id);
-        const data = { timesUsed: 0, recommendations: [] as string[] };
-        for (const e of matching) {
-          if (e.eventType === "GENIO_START") data.timesUsed++;
+        const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[] };
+        let completesAfterLastStart = 0;
+        for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
+          if (e.eventType === "GENIO_START") { data.timesUsed++; completesAfterLastStart = 0; }
           if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
             const name = genioDishMap[e.dishId];
-            if (name) data.recommendations.push(name);
+            if (name) {
+              data.recommendations.push({ name, isBestMatch: completesAfterLastStart === 0 });
+              completesAfterLastStart++;
+            }
           }
         }
         genioDataByDbSession[s.id] = data;

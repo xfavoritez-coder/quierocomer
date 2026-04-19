@@ -47,7 +47,7 @@ interface SessionData {
   guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null; preferences: any };
   qrUser: { id: string; name: string | null; email: string; dietType: string | null } | null;
   usedGenio: boolean;
-  genioData: { timesUsed: number; recommendations: string[] } | null;
+  genioData: { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[] } | null;
   visitDays: number;
   ipAddress: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
@@ -185,8 +185,10 @@ export default function AdminSessions() {
                     {s.usedGenio && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
                         <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Genio{s.genioData?.timesUsed ? ` (${s.genioData.timesUsed}x)` : ""}</span>
-                        {s.genioData?.recommendations?.map((dish, i) => (
-                          <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Recomendó: {dish}</span>
+                        {s.genioData?.recommendations?.map((rec, i) => (
+                          <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: rec.isBestMatch ? "rgba(244,166,35,0.1)" : "rgba(74,222,128,0.1)", color: rec.isBestMatch ? "#F4A623" : "#4ade80", fontWeight: rec.isBestMatch ? 600 : 400 }}>
+                            {rec.isBestMatch ? "⭐ " : ""}Recomendó: {rec.name}
+                          </span>
                         ))}
                       </div>
                     )}

@@ -25,13 +25,27 @@ export async function POST(request: Request) {
 
     const weight = source === "picked" ? 10 : source === "genio_result" ? 5 : source === "genio_liked" ? 3 : source === "rejected" ? -2 : 1;
 
-    // Get ingredients for these dishes
+    // Get ingredients from DishIngredient table
     const dishIngredients = await prisma.dishIngredient.findMany({
       where: { dishId: { in: dishIds } },
-      select: { ingredient: { select: { name: true } } },
+      select: { dishId: true, ingredient: { select: { name: true } } },
     });
 
-    if (dishIngredients.length === 0) {
+    // Also get text ingredients as fallback for dishes without DishIngredient links
+    const dishIdsWithLinks = new Set(dishIngredients.map(di => di.dishId));
+    const dishesWithoutLinks = dishIds.filter((id: string) => !dishIdsWithLinks.has(id));
+    let textIngredients: { dishId: string; name: string }[] = [];
+    if (dishesWithoutLinks.length > 0) {
+      const dishes = await prisma.dish.findMany({
+        where: { id: { in: dishesWithoutLinks } },
+        select: { id: true, ingredients: true },
+      });
+      textIngredients = dishes.flatMap(d =>
+        (d.ingredients || "").split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean).map(name => ({ dishId: d.id, name }))
+      );
+    }
+
+    if (dishIngredients.length === 0 && textIngredients.length === 0) {
       return NextResponse.json({ ok: true });
     }
 
@@ -40,6 +54,9 @@ export async function POST(request: Request) {
     for (const di of dishIngredients) {
       const name = di.ingredient.name.toLowerCase();
       counts[name] = (counts[name] || 0) + weight;
+    }
+    for (const ti of textIngredients) {
+      counts[ti.name] = (counts[ti.name] || 0) + weight;
     }
 
     // Merge with existing favorites

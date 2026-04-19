@@ -54,13 +54,25 @@ async function handleHeartbeat(request: Request) {
       if (significantDishIds.length > 0) {
         const dishIngredients = await prisma.dishIngredient.findMany({
           where: { dishId: { in: significantDishIds } },
-          select: { ingredient: { select: { name: true } } },
+          select: { dishId: true, ingredient: { select: { name: true } } },
         });
 
-        if (dishIngredients.length > 0) {
+        // Fallback: text ingredients for dishes without DishIngredient links
+        const idsWithLinks = new Set(dishIngredients.map(di => di.dishId));
+        const idsWithout = significantDishIds.filter((id: string) => !idsWithLinks.has(id));
+        let textIngr: string[] = [];
+        if (idsWithout.length > 0) {
+          const fallback = await prisma.dish.findMany({ where: { id: { in: idsWithout } }, select: { ingredients: true } });
+          textIngr = fallback.flatMap(d => (d.ingredients || "").split(/[,;]+/).map(s => s.trim().toLowerCase()).filter(Boolean));
+        }
+
+        if (dishIngredients.length > 0 || textIngr.length > 0) {
           const counts: Record<string, number> = {};
           for (const di of dishIngredients) {
             const name = di.ingredient.name.toLowerCase();
+            counts[name] = (counts[name] || 0) + 1;
+          }
+          for (const name of textIngr) {
             counts[name] = (counts[name] || 0) + 1;
           }
 
