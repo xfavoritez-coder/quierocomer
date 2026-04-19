@@ -236,7 +236,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               <div style={{ textAlign: "center" }}>
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Paso 3 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 8px" }}>¿Dónde enviamos tu resultado?</h2>
-                <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", margin: "0 0 24px" }}>Recibirás tu resultado en unos minutos</p>
+                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.35)", margin: "0 0 24px" }}>Recibirás tu resultado completo por email en 2 minutos</p>
                 <input
                   type="email"
                   value={email}
@@ -247,8 +247,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 />
                 {!isRepeat && (
                   <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 16, cursor: "pointer", textAlign: "left" }}>
-                    <input type="checkbox" checked={registerMe} onChange={e => setRegisterMe(e.target.checked)} style={{ width: 16, height: 16, accentColor: "rgba(255,255,255,0.4)", cursor: "pointer", marginTop: 2, flexShrink: 0 }} />
-                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>Guardar mis datos para recomendaciones personalizadas</span>
+                    <div style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${registerMe ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.2)"}`, background: registerMe ? "rgba(255,255,255,0.15)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }} onClick={() => setRegisterMe(!registerMe)}>
+                      {registerMe && <span style={{ color: "white", fontSize: "12px", lineHeight: 1 }}>✓</span>}
+                    </div>
+                    <span style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", lineHeight: 1.4 }}>Guardar mis datos para recomendaciones personalizadas</span>
                   </label>
                 )}
                 <button onClick={handleSubmit} disabled={!email || submitting} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: !email || submitting ? 0.4 : 1 }}>
@@ -269,7 +271,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                     <span key={t} style={{ fontSize: "13px", padding: "4px 10px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
                   ))}
                 </div>
-                <p style={{ fontSize: "13px", color: "rgba(255,255,255,0.4)", margin: "0 0 24px" }}>En los próximos minutos recibirás tu resultado completo por email</p>
+                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 24px", lineHeight: 1.5 }}>En 2 minutos recibirás el detalle completo de tu resultado por email</p>
                 <button onClick={() => setModalOpen(false)} style={{ background: "rgba(255,255,255,0.08)", color: "white", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 50, padding: "12px 28px", fontSize: "14px", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
                   Volver a la carta
                 </button>
