@@ -255,23 +255,29 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
             }}
           >
-            {/* Hero image — fixed, doesn't scroll */}
+            {/* Handle bar + close button (sticky) */}
+            <div style={{ position: "sticky", top: 0, zIndex: 10 }}>
+              <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(0,0,0,0.15)", borderRadius: 100 }} />
+              <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
+                <X size={16} color="white" strokeWidth={2} />
+              </button>
+            </div>
+
+            {/* All content scrolls together */}
+            <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
+            {/* Hero image */}
             {heroImg && (
-              <div style={{ position: "relative", width: "100%", height: isGraphic ? 320 : 260, flexShrink: 0, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
+              <div style={{ position: "relative", width: "100%", height: isGraphic ? 320 : 260, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
                 <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
                 {!isGraphic && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)" }} />}
-                <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: isGraphic ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 100, zIndex: 10 }} />
-                <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", zIndex: 10 }}>
-                  <X size={18} color="#0e0e0e" strokeWidth={1.5} />
-                </button>
                 {selectedPromo.discountPct && !isGraphic && (
-                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)", zIndex: 10 }}>-{selectedPromo.discountPct}% OFF</div>
+                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
                 )}
               </div>
             )}
 
-            {/* Scrollable content */}
-            <div style={{ flex: 1, overflowY: "auto", padding: isGraphic ? "20px 24px 32px" : "28px 24px 40px", scrollbarWidth: "none" }}>
+            {/* Text content */}
+            <div style={{ padding: isGraphic ? "20px 24px 32px" : "28px 24px 40px" }}>
               {/* Eyebrow */}
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
                 <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
@@ -327,6 +333,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   </div>
                 </div>
               )}
+            </div>
             </div>
           </div>
         </>
