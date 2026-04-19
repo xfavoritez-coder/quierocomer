@@ -68,9 +68,8 @@ export default function AdminPromociones() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("localId", selectedLocal || "promo");
-      fd.append("dishName", cName || "promo");
-      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+      fd.append("folder", "general");
+      const res = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await res.json();
       if (data.url) {
         setCImageUrl(data.url);
