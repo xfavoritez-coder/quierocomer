@@ -134,7 +134,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
             animation: "bdayPulse 2.5s ease-in-out infinite",
           }}
         >
-          Ir
+          Me apunto
         </button>
       </div>
 

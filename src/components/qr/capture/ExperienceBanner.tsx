@@ -43,8 +43,8 @@ export default function ExperienceBanner({ restaurantId }: Props) {
       .then(d => {
         if (d.experience) {
           setExp(d.experience);
-          // Show after 30 seconds
-          timerRef.current = setTimeout(() => setVisible(true), 30000);
+          // Show after 5 seconds (production: 30000)
+          timerRef.current = setTimeout(() => setVisible(true), 5000);
         }
       })
       .catch(() => {});
@@ -91,25 +91,28 @@ export default function ExperienceBanner({ restaurantId }: Props) {
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            margin: "16px 20px", padding: "16px 18px",
-            background: `linear-gradient(135deg, ${accent}15, ${accent}08)`,
-            border: `1px solid ${accent}30`,
-            borderRadius: 14,
-            display: "flex", alignItems: "center", gap: 12,
+            margin: "16px 20px", padding: "18px",
+            background: `linear-gradient(135deg, #1a1a1a 0%, #111 100%)`,
+            border: `1px solid ${accent}40`,
+            borderRadius: 16,
+            display: "flex", alignItems: "center", gap: 14,
             position: "relative",
+            boxShadow: `0 4px 20px ${accent}15`,
             opacity: visible ? 1 : 0, transform: visible ? "translateY(0)" : "translateY(10px)",
             transition: "all 0.4s ease",
           }}
         >
           <button onClick={dismiss} style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", padding: 2, cursor: "pointer" }}>
-            <X size={13} color={accent} />
+            <X size={13} color="rgba(255,255,255,0.4)" />
           </button>
-          <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
-          <div style={{ flex: 1, minWidth: 0, paddingRight: 50 }}>
-            <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0e0e0e", margin: 0 }}>{exp.name}</p>
-            <p style={{ fontSize: "0.78rem", color: "#8a7060", margin: "2px 0 0" }}>{exp.description}</p>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: `${accent}20`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", flexShrink: 0 }}>
+            {exp.iconEmoji}
           </div>
-          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: accent, color: "white", border: "none", borderRadius: 50, padding: "8px 14px", fontSize: "0.78rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "white", margin: 0 }}>{exp.name}</p>
+            <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", margin: "3px 0 0" }}>{exp.description}</p>
+          </div>
+          <button onClick={openModal} className="active:scale-95 transition-transform" style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "10px 18px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", flexShrink: 0, boxShadow: `0 4px 14px ${accent}40` }}>
             Descubrir
           </button>
         </div>

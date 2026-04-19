@@ -106,6 +106,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           priority
           sizes="100vw"
           key={bgSrc}
+          style={{ animation: "heroKenBurns 12s ease-in-out infinite alternate" }}
         />
 
         {/* Overlay 1: subtle darkening */}
@@ -116,7 +117,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 0%, transparent 25%, rgba(0,0,0,0.85) 100%)",
+              "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.7) 100%)",
           }}
         />
 
@@ -154,7 +155,6 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           ) : (
             <User size={16} color="rgba(255,255,255,0.7)" />
           )}
-          {qrUser && <span style={{ position: "absolute", bottom: 2, right: 2, width: 8, height: 8, borderRadius: "50%", background: "#4ade80", border: "2px solid rgba(0,0,0,0.4)" }} />}
         </button>
 
         {/* Badges */}
@@ -271,6 +271,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         </div>
 
       </section>
+      <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }`}</style>
     </>
   );
 }

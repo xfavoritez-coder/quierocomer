@@ -172,7 +172,6 @@ export default function CartaLista({
             ) : (
               <User size={20} color="rgba(255,255,255,0.5)" />
             )}
-            {qrUser && <span style={{ position: "absolute", bottom: 1, right: 1, width: 8, height: 8, borderRadius: "50%", background: "#4ade80", border: "2px solid #1a1a1a" }} />}
           </div>
         </div>
         {/* Bottom accent line */}

@@ -119,7 +119,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           ) : (
             <User size={16} />
           )}
-          {qrUser && <span style={{ position: "absolute", bottom: 2, right: 2, width: 8, height: 8, borderRadius: "50%", background: "#4ade80", border: "2px solid rgba(0,0,0,0.35)" }} />}
         </button>
 
         {/* Floating buttons — cinematic style */}
