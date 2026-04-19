@@ -272,9 +272,9 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             );
           })}
         </div>
-        {/* Fade right */}
-        {promos.length > 1 && (
-          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0" }} />
+        {/* Fade right — hide when at last card */}
+        {promos.length > 1 && activeIdx < promos.length - 1 && (
+          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
         )}
         </div>
 
