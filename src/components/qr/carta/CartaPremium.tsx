@@ -250,7 +250,7 @@ export default function CartaPremium({
         />
       )}
 
-      <main style={{ paddingBottom: 80 }}>
+      <main style={{ paddingBottom: 55 }}>
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (d.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.description?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.ingredients?.toLowerCase().includes(searchQuery.toLowerCase().trim())))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>

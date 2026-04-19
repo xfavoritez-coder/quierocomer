@@ -137,7 +137,7 @@ export default function CartaLista({
   };
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5", paddingBottom: 100 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       {/* TOP BAR: mini hero oscuro */}
       <div style={{ position: "relative", background: "#1a1a1a", overflow: "hidden" }}>
         {/* Background photo blur */}
@@ -313,7 +313,7 @@ export default function CartaLista({
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
-          margin: "24px 20px 16px", padding: "24px 20px", textAlign: "center",
+          margin: "55px 20px 0", padding: "24px 20px", textAlign: "center",
           background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
           border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
@@ -338,6 +338,32 @@ export default function CartaLista({
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
         </button>
       </div>
+
+      {/* Powered by footer */}
+      <footer
+        className="font-[family-name:var(--font-dm)]"
+        style={{
+          paddingBottom: 100,
+          paddingTop: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 4,
+        }}
+      >
+        <a
+          href="https://quierocomer.cl/qr"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+        >
+          <span style={{ color: "#bbb", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
+          <span className="font-[family-name:var(--font-playfair)]" style={{ color: "#999", fontSize: "0.82rem", fontWeight: 700 }}>
+            QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
+          </span>
+        </a>
+        <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
+      </footer>
 
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
