@@ -158,7 +158,7 @@ export default function CartaLista({
                 {restaurant.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
               {restaurant.name}
             </span>
           </div>
@@ -287,7 +287,7 @@ export default function CartaLista({
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.1rem", fontWeight: 600, color: "#999" }}
+              style={{ fontSize: "1.1rem", fontWeight: 600, color: "#777" }}
             >
               {category.name}
             </h2>

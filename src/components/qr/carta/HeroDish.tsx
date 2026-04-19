@@ -129,7 +129,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
               {initial}
             </div>
           )}
-          <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.1rem", fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
+          <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
             {restaurant.name}
           </span>
         </div>

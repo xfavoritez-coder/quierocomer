@@ -606,7 +606,7 @@ const CSS = `
   .vj-chapter-featured img { object-fit: cover; }
   .vj-chapter.in-view .vj-chapter-featured,
   .vj-chapter-slide.in-view .vj-chapter-featured {
-    filter: blur(6px) brightness(0.35);
+    filter: blur(3px) brightness(0.4);
     opacity: 0.7;
     animation: vjBgDrift 12s ease-in-out infinite alternate;
   }

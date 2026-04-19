@@ -29,6 +29,8 @@ export async function GET(req: NextRequest) {
       id: p.id,
       name: p.name,
       description: p.description,
+      promoType: p.promoType,
+      imageUrl: p.imageUrl,
       discountPct: p.discountPct,
       promoPrice: p.promoPrice,
       originalPrice: p.originalPrice,

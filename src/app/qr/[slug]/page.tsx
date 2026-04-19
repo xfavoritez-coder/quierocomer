@@ -80,6 +80,7 @@ export default async function CartaPage({
   const promoDishMap = Object.fromEntries(promoDishes.map(d => [d.id, d]));
   const marketingPromos = activePromos.map(p => ({
     id: p.id, name: p.name, description: p.description,
+    promoType: p.promoType, imageUrl: p.imageUrl,
     discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
     validUntil: p.validUntil?.toISOString() || null,
     dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),

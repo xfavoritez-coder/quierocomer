@@ -695,6 +695,7 @@ model Session {
   viewUsed       String?   // última vista activa
   viewHistory    Json?     // [{ view: 'premium', durationMs: 12000 }, ...]
   deviceType     String?   // 'mobile' | 'tablet' | 'desktop'
+  ipAddress      String?
   closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
   weather        String?
   timeOfDay      TimeOfDay?
@@ -873,6 +874,8 @@ model Promotion {
   restaurantId    String
   name            String
   description     String?
+  promoType       String          @default("product") // "product" | "graphic"
+  imageUrl        String?         // for graphic type: custom design image
   dishIds         String[]
   originalPrice   Float?
   promoPrice      Float?

@@ -38,6 +38,10 @@ export async function POST(request: Request) {
       update: { lastSeenAt: new Date(), visitCount: { increment: 1 }, linkedQrUserId: qrUserId || undefined },
     });
 
+    // Get IP address
+    const forwarded = request.headers.get("x-forwarded-for");
+    const ipAddress = forwarded ? forwarded.split(",")[0].trim() : request.headers.get("x-real-ip") || null;
+
     // Create session immediately
     const session = await prisma.session.create({
       data: {
@@ -45,6 +49,7 @@ export async function POST(request: Request) {
         qrUserId,
         restaurantId,
         deviceType: deviceType || null,
+        ipAddress,
         weather: weatherStr,
         timeOfDay,
       },

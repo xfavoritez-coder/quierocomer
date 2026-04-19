@@ -18,6 +18,8 @@ interface Promo {
   id: string;
   name: string;
   description: string | null;
+  promoType?: string; // "product" | "graphic"
+  imageUrl?: string | null;
   discountPct: number | null;
   promoPrice: number | null;
   originalPrice: number | null;
@@ -164,8 +166,10 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               >
                 {/* Photo */}
                 <div style={{ position: "relative", width: 70, height: 70, borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
-                  {dish?.photos?.[0] ? (
-                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="68px" />
+                  {(p.promoType === "graphic" && p.imageUrl) ? (
+                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="70px" />
+                  ) : dish?.photos?.[0] ? (
+                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="70px" />
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
                   )}
@@ -227,25 +231,17 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         )}
       </div>
 
-      {/* Promo Detail Modal — Premium bottom sheet */}
+      {/* Promo Detail Modal */}
       {selectedPromo && (() => {
         const dish = selectedPromo.dishes[0];
+        const isGraphic = selectedPromo.promoType === "graphic" && selectedPromo.imageUrl;
+        const heroImg = isGraphic ? selectedPromo.imageUrl! : dish?.photos?.[0];
         const savings = selectedPromo.originalPrice && selectedPromo.promoPrice
           ? selectedPromo.originalPrice - selectedPromo.promoPrice : 0;
+        const multiDish = selectedPromo.dishes.length > 1;
         return (
         <>
-          {/* Overlay */}
-          <div
-            onClick={closeModal}
-            style={{
-              position: "fixed", inset: 0, zIndex: 100,
-              background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)",
-              opacity: modalVisible ? 1 : 0,
-              transition: "opacity 0.3s ease",
-            }}
-          />
-
-          {/* Bottom sheet */}
+          <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", opacity: modalVisible ? 1 : 0, transition: "opacity 0.3s ease" }} />
           <div
             className="font-[family-name:var(--font-dm)]"
             onClick={e => e.stopPropagation()}
@@ -259,93 +255,63 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
             }}
           >
-            {/* Hero image */}
-            {dish?.photos?.[0] && (
-              <div style={{ position: "relative", width: "100%", height: 280, flexShrink: 0, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
-                <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="100vw" />
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)" }} />
-
-                {/* Handle bar */}
-                <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(255,255,255,0.6)", borderRadius: 100, zIndex: 10 }} />
-
-                {/* Close button */}
+            {/* Hero image — fixed, doesn't scroll */}
+            {heroImg && (
+              <div style={{ position: "relative", width: "100%", height: isGraphic ? 320 : 260, flexShrink: 0, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
+                <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
+                {!isGraphic && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)" }} />}
+                <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: isGraphic ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.6)", borderRadius: 100, zIndex: 10 }} />
                 <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.1)", zIndex: 10 }}>
                   <X size={18} color="#0e0e0e" strokeWidth={1.5} />
                 </button>
-
-                {/* Discount badge */}
-                {selectedPromo.discountPct && (
-                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)", zIndex: 10 }}>
-                    -{selectedPromo.discountPct}% OFF
-                  </div>
+                {selectedPromo.discountPct && !isGraphic && (
+                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)", zIndex: 10 }}>-{selectedPromo.discountPct}% OFF</div>
                 )}
               </div>
             )}
 
             {/* Scrollable content */}
-            <div style={{ flex: 1, overflowY: "auto", padding: "28px 24px 40px", scrollbarWidth: "none" }}>
+            <div style={{ flex: 1, overflowY: "auto", padding: isGraphic ? "20px 24px 32px" : "28px 24px 40px", scrollbarWidth: "none" }}>
               {/* Eyebrow */}
               <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
                 <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
                 <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>
               </div>
 
-              {/* Title */}
-              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 16px" }}>
+              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
                 {selectedPromo.name}
               </h2>
 
-              {/* Description */}
-              {(selectedPromo.description || dish?.description) && (
-                <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 24px" }}>
-                  {selectedPromo.description || dish?.description}
-                </p>
+              {selectedPromo.description && (
+                <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 20px" }}>{selectedPromo.description}</p>
               )}
 
-              {/* Price section */}
-              <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 28 }}>
-                <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                  <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>
-                    ${selectedPromo.promoPrice?.toLocaleString("es-CL")}
-                  </span>
-                  {selectedPromo.originalPrice && (
-                    <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>
-                      ${selectedPromo.originalPrice.toLocaleString("es-CL")}
-                    </span>
-                  )}
-                  {savings > 0 && (
-                    <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>
-                      Ahorras ${savings.toLocaleString("es-CL")}
-                    </span>
-                  )}
+              {/* Price — only for product type */}
+              {!isGraphic && selectedPromo.promoPrice && (
+                <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 24 }}>
+                  <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                    <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
+                    {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                    {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Qué incluye (multiple dishes) */}
-              {selectedPromo.dishes.length > 1 && (
-                <div style={{ marginBottom: 28 }}>
+              {/* Multi-dish list */}
+              {multiDish && (
+                <div style={{ marginBottom: 24 }}>
                   <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
-                  <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 16px" }}>{selectedPromo.dishes.length} platos combinados en esta promoción</p>
+                  <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta promoción</p>
                   <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
                     {selectedPromo.dishes.map(d => (
-                      <button
-                        key={d.id}
-                        onClick={() => { trackPromo(restaurantId, "PROMO_CLICKED", d.id); onViewDish?.(d.id); closeModal(); }}
-                        className="active:bg-[#fff7e8]"
-                        style={{ display: "flex", alignItems: "center", gap: 14, padding: 12, borderRadius: 14, background: "white", width: "100%", border: "none", cursor: "pointer", textAlign: "left", marginBottom: 4 }}
-                      >
-                        {d.photos?.[0] && (
-                          <div style={{ width: 52, height: 52, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}>
-                            <Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="52px" />
-                          </div>
-                        )}
+                      <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "white", marginBottom: 4 }}>
+                        {d.photos?.[0] && <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}><Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="48px" /></div>}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <p style={{ fontSize: "14px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{d.name}</p>
-                          {d.description && <p style={{ fontSize: "11.5px", color: "#8a8a8a", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
+                          <p style={{ fontSize: "11px", color: "#8a8a8a", margin: "2px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                         </div>
-                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "15px", fontWeight: 500, color: "#0e0e0e", flexShrink: 0 }}>${d.price.toLocaleString("es-CL")}</span>
-                      </button>
+                      </div>
                     ))}
                   </div>
                 </div>
