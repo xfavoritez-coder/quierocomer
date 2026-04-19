@@ -66,25 +66,15 @@ export default function AdminPromociones() {
   const handlePromoUpload = async (file: File) => {
     setUploading(true);
     try {
-      // Try optimized endpoint first
       const fd = new FormData();
       fd.append("file", file);
-      fd.append("promoName", cName || "promo");
-      let res = await fetch("/api/admin/upload-promo-image", { method: "POST", body: fd });
-      let data = await res.json();
-
-      // Fallback to generic upload if optimized fails
-      if (!data.url) {
-        const fd2 = new FormData();
-        fd2.append("file", file);
-        fd2.append("folder", "promos");
-        res = await fetch("/api/upload", { method: "POST", body: fd2 });
-        data = await res.json();
-      }
-
+      fd.append("localId", selectedLocal || "promo");
+      fd.append("dishName", cName || "promo");
+      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+      const data = await res.json();
       if (data.url) {
         setCImageUrl(data.url);
-        if (data.thumbUrl) setCThumbUrl(data.thumbUrl);
+        setCThumbUrl(data.url);
       } else {
         alert(data.error || "Error al subir imagen");
       }
