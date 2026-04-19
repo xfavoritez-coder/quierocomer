@@ -184,7 +184,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               <div style={{ textAlign: "center" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>{exp.iconEmoji}</span>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, color: "white", margin: "0 0 12px", lineHeight: 1.1 }}>{exp.name}</h2>
-                <p style={{ fontSize: "16px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 28px" }}>{exp.description}. Descúbrelo a través de tu nombre, gustos y fecha de nacimiento</p>
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 28px" }}>{exp.description}. Descúbrelo a través de tu nombre, gustos y fecha de nacimiento</p>
                 <button onClick={() => {
                   if (!isRepeat && userName && birthDate && email) { handleSubmit(); }
                   else if (!isRepeat && userName) { setStep(birthDate ? 3 : 2); }
@@ -274,7 +274,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                     <span key={t} style={{ fontSize: "13px", padding: "4px 10px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
                   ))}
                 </div>
-                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 24px", lineHeight: 1.5 }}>En 2 minutos recibirás el detalle completo de tu resultado por email</p>
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.4)", margin: "0 0 24px", lineHeight: 1.5 }}>En 2 minutos recibirás el detalle completo de tu resultado por email</p>
                 <button onClick={() => setModalOpen(false)} style={{ background: "rgba(255,255,255,0.08)", color: "white", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 50, padding: "12px 28px", fontSize: "14px", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
                   Volver a la carta
                 </button>
