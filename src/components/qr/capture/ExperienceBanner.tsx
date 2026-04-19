@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { X } from "lucide-react";
 import { getGuestId } from "@/lib/guestId";
 
 interface ExperienceData {
@@ -27,7 +28,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
   const [exp, setExp] = useState<ExperienceData | null>(null);
   const [prevResult, setPrevResult] = useState<PreviousResult | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
-  const [step, setStep] = useState(0); // 0=intro, 1=name, 2=birth, 3=email, 4=result
+  const [step, setStep] = useState(0);
   const [userName, setUserName] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [email, setEmail] = useState("");
@@ -35,6 +36,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [teaser, setTeaser] = useState<{ resultName: string; resultDescription: string; resultTraits: string[] } | null>(null);
   const [isRepeat, setIsRepeat] = useState(false);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const guestId = getGuestId();
@@ -52,14 +54,12 @@ export default function ExperienceBanner({ restaurantId }: Props) {
   const openModal = (repeat: boolean) => {
     setIsRepeat(repeat);
     if (repeat) {
-      // Clean slate for repeat (could be another person)
       setUserName("");
       setBirthDate("");
       setEmail("");
       setRegisterMe(false);
       setTeaser(null);
     } else {
-      // First time — check if user is logged in
       const userCookie = document.cookie.match(/qr_user_id=([^;]*)/);
       if (userCookie) {
         fetch("/api/qr/user/me").then(r => r.json()).then(d => {
@@ -85,15 +85,14 @@ export default function ExperienceBanner({ restaurantId }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           experienceId: exp.id,
-          guestId: isRepeat ? null : getGuestId(), // Don't link guestId on repeat (different person)
+          guestId: isRepeat ? null : getGuestId(),
           userName, birthDate, email,
-          registerMe: registerMe && !isRepeat, // Only register if first time + opted in
+          registerMe: registerMe && !isRepeat,
         }),
       });
       const data = await res.json();
       if (data.teaser) {
         setTeaser(data.teaser);
-        // Update prevResult for banner
         if (!isRepeat) {
           setPrevResult({ resultName: data.teaser.resultName, resultTraits: data.teaser.resultTraits, userName });
         }
@@ -110,52 +109,42 @@ export default function ExperienceBanner({ restaurantId }: Props) {
 
   return (
     <>
-      {/* Banner — always visible, no X button */}
+      {/* Banner */}
       {!modalOpen && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            margin: "16px 20px", padding: hasPrevious ? "12px 16px" : "16px",
+            margin: "16px 20px", padding: "14px 16px",
             background: hasPrevious
               ? `linear-gradient(135deg, ${accent}18, ${accent}08)`
               : `linear-gradient(135deg, ${accent}12, ${accent}06)`,
             border: `1px solid ${accent}25`,
             borderRadius: 14,
-            position: "relative",
           }}
         >
           {hasPrevious ? (
-            /* Already completed — show result */
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: 80 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: "0.72rem", color: accent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   {prevResult.userName}, eres
                 </p>
                 <p style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", margin: "2px 0 0" }}>
                   {prevResult.resultName}
                 </p>
-                {prevResult.resultTraits.length > 0 && (
-                  <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
-                    {prevResult.resultTraits.slice(0, 3).map(t => (
-                      <span key={t} style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
-                    ))}
-                  </div>
-                )}
               </div>
-              <button onClick={() => openModal(true)} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "rgba(0,0,0,0.06)", color: "#555", border: "none", borderRadius: 50, padding: "7px 14px", fontSize: "0.75rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
+              <button onClick={() => openModal(true)} className="active:scale-95 transition-transform" style={{ background: "rgba(0,0,0,0.06)", color: "#555", border: "none", borderRadius: 50, padding: "7px 14px", fontSize: "0.75rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
                 Repetir
               </button>
             </div>
           ) : (
-            /* Not yet completed — discovery CTA */
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
-              <div style={{ flex: 1, minWidth: 0, paddingRight: 70 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exp.name}</p>
                 <p style={{ fontSize: "0.78rem", color: "#8a7060", margin: "2px 0 0" }}>{exp.description}</p>
               </div>
-              <button onClick={() => openModal(false)} className="active:scale-95 transition-transform" style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", background: "#F4A623", color: "white", border: "none", borderRadius: 50, padding: "8px 16px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: "0 2px 10px rgba(244,166,35,0.3)" }}>
+              <button onClick={() => openModal(false)} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "white", border: "none", borderRadius: 50, padding: "8px 16px", fontSize: "0.82rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", boxShadow: "0 2px 10px rgba(244,166,35,0.3)", flexShrink: 0 }}>
                 Descubrir
               </button>
             </div>
@@ -166,7 +155,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
       {/* Modal */}
       {modalOpen && (
         <>
-          <div onClick={() => setModalOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
+          <div onClick={() => setModalOpen(false)} style={{ position: "fixed", top: "-50px", left: 0, right: 0, bottom: "-50px", zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }} />
           <div
             className="font-[family-name:var(--font-dm)]"
             style={{
@@ -177,6 +166,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
             }}
           >
+            {/* X close button */}
+            <button onClick={() => setModalOpen(false)} style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.08)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>
+              <X size={14} color="rgba(255,255,255,0.5)" />
+            </button>
 
             {/* Step 0: Intro */}
             {step === 0 && (
@@ -199,12 +192,19 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               </div>
             )}
 
-            {/* Step 1: Name */}
+            {/* Step 1: Name — no autoFocus to prevent mobile keyboard jump */}
             {step === 1 && (
               <div style={{ textAlign: "center" }}>
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Paso 1 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 24px" }}>¿Cómo te llamas?</h2>
-                <input autoFocus value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }} />
+                <input
+                  ref={nameRef}
+                  value={userName}
+                  onChange={e => setUserName(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && userName) setStep(2); }}
+                  placeholder="Tu nombre"
+                  style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }}
+                />
                 <button onClick={() => { if (userName) setStep(2); }} disabled={!userName} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: userName ? 1 : 0.4 }}>
                   Siguiente
                 </button>
@@ -217,7 +217,14 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Paso 2 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 8px" }}>¿Cuándo naciste?</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", margin: "0 0 24px" }}>Los astros necesitan esta información</p>
-                <input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: birthDate ? "white" : "rgba(255,255,255,0.3)", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", colorScheme: "dark", boxSizing: "border-box" }} />
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={e => setBirthDate(e.target.value)}
+                  max={new Date().toISOString().split("T")[0]}
+                  min="1940-01-01"
+                  style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: birthDate ? "white" : "rgba(255,255,255,0.3)", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", colorScheme: "dark", boxSizing: "border-box", WebkitAppearance: "none", appearance: "none" as any }}
+                />
                 <button onClick={() => { if (birthDate) setStep(3); }} disabled={!birthDate} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: birthDate ? 1 : 0.4 }}>
                   Siguiente
                 </button>
@@ -230,11 +237,18 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", margin: "0 0 8px" }}>Paso 3 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "white", margin: "0 0 8px" }}>¿Dónde enviamos tu resultado?</h2>
                 <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.3)", margin: "0 0 24px" }}>Recibirás tu resultado en unos minutos</p>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="tu@email.com" style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && email) handleSubmit(); }}
+                  placeholder="tu@email.com"
+                  style={{ width: "100%", padding: "14px 18px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, color: "white", fontSize: "16px", outline: "none", textAlign: "center", fontFamily: "inherit", boxSizing: "border-box" }}
+                />
                 {!isRepeat && (
-                  <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16, cursor: "pointer" }}>
-                    <input type="checkbox" checked={registerMe} onChange={e => setRegisterMe(e.target.checked)} style={{ width: 18, height: 18, accentColor: "#F4A623", cursor: "pointer" }} />
-                    <span style={{ fontSize: "12px", color: "rgba(255,255,255,0.45)", lineHeight: 1.4 }}>Guardar mis datos para recibir recomendaciones personalizadas</span>
+                  <label style={{ display: "flex", alignItems: "flex-start", gap: 10, marginTop: 16, cursor: "pointer", textAlign: "left" }}>
+                    <input type="checkbox" checked={registerMe} onChange={e => setRegisterMe(e.target.checked)} style={{ width: 16, height: 16, accentColor: "rgba(255,255,255,0.4)", cursor: "pointer", marginTop: 2, flexShrink: 0 }} />
+                    <span style={{ fontSize: "11px", color: "rgba(255,255,255,0.35)", lineHeight: 1.4 }}>Guardar mis datos para recomendaciones personalizadas</span>
                   </label>
                 )}
                 <button onClick={handleSubmit} disabled={!email || submitting} style={{ marginTop: 20, background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: !email || submitting ? 0.4 : 1 }}>

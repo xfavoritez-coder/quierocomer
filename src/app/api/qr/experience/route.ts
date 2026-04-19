@@ -106,6 +106,28 @@ export async function POST(req: NextRequest) {
         where: { id: guestId, linkedQrUserId: null },
         data: { linkedQrUserId: user.id },
       });
+
+      // Transfer guest preferences to QRUser (diet, restrictions)
+      if (preferences) {
+        const updateData: any = {};
+        if (preferences.dietType) updateData.dietType = preferences.dietType;
+        if (preferences.restrictions?.length > 0) updateData.restrictions = preferences.restrictions;
+        if (Object.keys(updateData).length > 0) {
+          await prisma.qRUser.update({ where: { id: user.id }, data: updateData }).catch(() => {});
+        }
+      }
+
+      // Backfill sessions with qrUserId
+      await prisma.session.updateMany({
+        where: { guestId, qrUserId: null },
+        data: { qrUserId: user.id },
+      }).catch(() => {});
+
+      // Backfill stat events
+      await prisma.statEvent.updateMany({
+        where: { guestId, qrUserId: null },
+        data: { qrUserId: user.id },
+      }).catch(() => {});
     }
 
     const response = NextResponse.json({
