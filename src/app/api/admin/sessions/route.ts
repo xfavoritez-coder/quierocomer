@@ -80,7 +80,8 @@ export async function GET(req: NextRequest) {
     }) : [];
 
     // Get Genio recommended dish names
-    const genioDishIds = [...new Set(genioEvents.filter(e => e.eventType === "GENIO_COMPLETE" && e.dishId).map(e => e.dishId!))];
+    const genioCompletes = genioEvents.filter(e => e.eventType === "GENIO_COMPLETE");
+    const genioDishIds = [...new Set(genioCompletes.filter(e => e.dishId).map(e => e.dishId!))];
     const genioDishes = genioDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: genioDishIds } }, select: { id: true, name: true },
     }) : [];
@@ -187,7 +188,19 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit) });
+    // Debug info for Genio matching
+    const genioDebug = {
+      totalGenioEvents: genioEvents.length,
+      starts: genioEvents.filter(e => e.eventType === "GENIO_START").length,
+      completes: genioCompletes.length,
+      completesWithDishId: genioCompletes.filter(e => e.dishId).length,
+      dishIdsInCompletes: genioCompletes.map(e => e.dishId),
+      dishNamesResolved: genioDishMap,
+      guestIdsInEvents: [...new Set(genioEvents.map(e => e.guestId))],
+      sessionGuestIds,
+    };
+
+    return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit), _genioDebug: genioDebug });
   } catch (error) {
     console.error("Sessions error:", error);
     return NextResponse.json({ error: "Error" }, { status: 500 });
