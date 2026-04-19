@@ -190,21 +190,23 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {dish?.name || p.name}
+                    {p.name}
                   </p>
-                  {p.name !== dish?.name && (
-                    <p style={{ fontSize: "12px", color: "#8a7060", margin: "1px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</p>
+                  {p.description && (
+                    <p style={{ fontSize: "11.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
                   )}
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
-                    <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
-                      ${p.promoPrice?.toLocaleString("es-CL") || dish?.price?.toLocaleString("es-CL")}
-                    </span>
-                    {p.originalPrice && (
-                      <span style={{ fontSize: "12px", color: "#a08060", textDecoration: "line-through" }}>
-                        ${p.originalPrice.toLocaleString("es-CL")}
+                  {(p.promoPrice || (!p.promoType || p.promoType === "product")) && dish?.price && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
+                      <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
+                        ${(p.promoPrice || dish.price)?.toLocaleString("es-CL")}
                       </span>
-                    )}
-                  </div>
+                      {p.originalPrice && (
+                        <span style={{ fontSize: "12px", color: "#a08060", textDecoration: "line-through" }}>
+                          ${p.originalPrice.toLocaleString("es-CL")}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </button>
             );
@@ -263,78 +265,96 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               </button>
             </div>
 
-            {/* All content scrolls together */}
-            <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
-            {/* Hero image */}
-            {heroImg && (
-              <div style={{ position: "relative", width: "100%", height: isGraphic ? 320 : 260, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
-                <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
-                {!isGraphic && <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)" }} />}
-                {selectedPromo.discountPct && !isGraphic && (
-                  <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
+            {isGraphic ? (
+              /* GRAPHIC PROMO — fullscreen photo with overlay title */
+              <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
+                {heroImg && (
+                  <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
+                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" style={{ borderRadius: "28px 28px 0 0" }} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,0.85) 100%)", borderRadius: "28px 28px 0 0" }} />
+                    {/* Title over image */}
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 28px" }}>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase" }}>✦ PROMOCIÓN</span>
+                      </div>
+                      <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "28px", fontWeight: 600, lineHeight: 1.1, color: "white", margin: "0 0 8px", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                        {selectedPromo.name}
+                      </h2>
+                      {selectedPromo.description && (
+                        <p style={{ fontSize: "14px", lineHeight: 1.5, color: "rgba(255,255,255,0.75)", margin: 0, maxWidth: 320 }}>{selectedPromo.description}</p>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-            )}
-
-            {/* Text content */}
-            <div style={{ padding: isGraphic ? "20px 24px 32px" : "28px 24px 40px" }}>
-              {/* Eyebrow */}
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
-                <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>
-              </div>
-
-              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
-                {selectedPromo.name}
-              </h2>
-
-              {selectedPromo.description && (
-                <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 20px" }}>{selectedPromo.description}</p>
-              )}
-
-              {/* Price — only for product type */}
-              {!isGraphic && selectedPromo.promoPrice && (
-                <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 24 }}>
-                  <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                    <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
-                    {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
-                    {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
+            ) : (
+              /* PRODUCT PROMO — scrollable content */
+              <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
+                {heroImg && (
+                  <div style={{ position: "relative", width: "100%", height: 260, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
+                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)" }} />
+                    {selectedPromo.discountPct && (
+                      <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Multi-dish list */}
-              {multiDish && (
-                <div style={{ marginBottom: 24 }}>
-                  <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
-                  <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta promoción</p>
-                  <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
-                    {selectedPromo.dishes.map(d => (
-                      <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "white", marginBottom: 4 }}>
-                        {d.photos?.[0] && <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}><Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="48px" /></div>}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: "14px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{d.name}</p>
-                          <p style={{ fontSize: "11px", color: "#8a8a8a", margin: "2px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
-                        </div>
+                <div style={{ padding: "28px 24px 40px" }}>
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                    <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
+                    <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>
+                  </div>
+
+                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
+                    {selectedPromo.name}
+                  </h2>
+
+                  {selectedPromo.description && (
+                    <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 20px" }}>{selectedPromo.description}</p>
+                  )}
+
+                  {selectedPromo.promoPrice && (
+                    <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 24 }}>
+                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
+                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                        {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+                    </div>
+                  )}
 
-              {/* Validez */}
-              {selectedPromo.validUntil && (
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fef9f0", borderRadius: 14, border: "1px solid #fce8c5" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
-                  <div>
-                    <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
-                    <p style={{ fontSize: "11.5px", color: "#8a5a2c", margin: "2px 0 0" }}>Sujeto a disponibilidad del local</p>
-                  </div>
+                  {multiDish && (
+                    <div style={{ marginBottom: 24 }}>
+                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
+                      <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta promoción</p>
+                      <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
+                        {selectedPromo.dishes.map(d => (
+                          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "white", marginBottom: 4 }}>
+                            {d.photos?.[0] && <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}><Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="48px" /></div>}
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: "14px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{d.name}</p>
+                              <p style={{ fontSize: "11px", color: "#8a8a8a", margin: "2px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedPromo.validUntil && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fef9f0", borderRadius: 14, border: "1px solid #fce8c5" }}>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
+                      <div>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
+                        <p style={{ fontSize: "11.5px", color: "#8a5a2c", margin: "2px 0 0" }}>Sujeto a disponibilidad del local</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            </div>
+              </div>
+            )}
           </div>
         </>
         );
