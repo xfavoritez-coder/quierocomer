@@ -105,6 +105,14 @@ export default function ExperienceBanner({ restaurantId }: Props) {
   if (!exp) return null;
 
   const accent = exp.accentColor;
+  // For light accent colors, darken for use on light banner backgrounds
+  const isLightAccent = (() => {
+    const hex = accent.replace("#", "");
+    if (hex.length < 6) return false;
+    const r = parseInt(hex.slice(0, 2), 16), g = parseInt(hex.slice(2, 4), 16), b = parseInt(hex.slice(4, 6), 16);
+    return (r * 0.299 + g * 0.587 + b * 0.114) > 160;
+  })();
+  const bannerAccent = isLightAccent ? "#5a4a3a" : accent;
   const hasPrevious = !!prevResult;
 
   return (
@@ -126,7 +134,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{exp.iconEmoji}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: "0.72rem", color: accent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: "0.72rem", color: bannerAccent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   {prevResult.userName}, eres
                 </p>
                 <p style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", margin: "2px 0 0" }}>
