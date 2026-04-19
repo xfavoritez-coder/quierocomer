@@ -117,7 +117,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           className="absolute inset-0"
           style={{
             background:
-              "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.7) 100%)",
+              "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.4) 100%)",
           }}
         />
 
