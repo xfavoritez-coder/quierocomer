@@ -179,7 +179,6 @@ export default function CartaLista({
       </div>
 
       {/* Promos */}
-      <ExperienceBanner restaurantId={restaurant.id} />
       <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
@@ -284,7 +283,8 @@ export default function CartaLista({
       {/* CATEGORIES */}
       {grouped.map(({ category, dishes: catDishes }, index) => (
         <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
-          {index === 4 && <div style={{ margin: "0 -4px 12px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
+          {index === Math.min(3, grouped.length - 2) && <div style={{ margin: "0 -4px 12px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
+          {index === Math.min(5, grouped.length - 1) && <div style={{ margin: "0 -4px 12px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"

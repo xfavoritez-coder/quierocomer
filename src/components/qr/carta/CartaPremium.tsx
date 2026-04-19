@@ -189,7 +189,6 @@ export default function CartaPremium({
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
 
       {/* Promos */}
-      <ExperienceBanner restaurantId={restaurant.id} />
       <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
@@ -285,7 +284,8 @@ export default function CartaPremium({
 
           return (
             <div key={cat.id}>
-            {index === 4 && <BirthdayBanner restaurantId={restaurant.id} />}
+            {index === Math.min(3, categories.length - 2) && <ExperienceBanner restaurantId={restaurant.id} />}
+            {index === Math.min(5, categories.length - 1) && <BirthdayBanner restaurantId={restaurant.id} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 12 }}>
