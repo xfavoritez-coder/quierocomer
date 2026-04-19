@@ -456,21 +456,29 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
     </div>
   );}
 
-  if (variant === "split") return (
-    <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
-      <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
-      <div className="vj-split-info">
-        <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.allergens || ""}</span>
-        <h3 className="vj-title font-[family-name:var(--font-fraunces)]" style={{ color: "white" }}>
-          <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
-        </h3>
-        {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ color: "white", opacity: 0.72 }}>{pitch}</p>}
-        <div className="vj-meta" style={{ color: "white" }}>
-          <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
+  if (variant === "split") {
+    // Split name: first word normal, rest italic gold
+    const words = dish.name.split(" ");
+    const firstWord = words[0];
+    const restWords = words.slice(1).join(" ");
+    const eyebrowText = dish.ingredients?.split(/[,;]/)[0]?.trim() || "";
+    return (
+      <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
+        <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
+        <div className="vj-split-info">
+          <div className="vj-split-divider" />
+          {eyebrowText && <span className="vj-split-eyebrow">{eyebrowText}</span>}
+          <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
+            <span className="vj-ln"><span>{firstWord}{restWords ? <><br /><em>{restWords}</em></> : null}{vjBadges}</span></span>
+          </h3>
+          {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+          <div className="vj-split-price font-[family-name:var(--font-fraunces)]">
+            <span className="vj-split-price-dot" />${dish.price?.toLocaleString("es-CL")}
+          </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   if (variant === "light") return (
     <div
@@ -713,11 +721,18 @@ const CSS = `
   .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; }
 
   /* SPLIT */
-  .vj-v-split { flex-direction: column; background: #0a0604; }
-  .vj-split-photo { flex: 1; min-height: 52vh; position: relative; overflow: hidden; }
+  .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }
+  .vj-split-photo { height: 55%; position: relative; overflow: hidden; flex-shrink: 0; }
   .vj-split-photo img { object-fit: cover; }
-  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(10,6,4,0.4) 60%, rgba(10,6,4,0.75) 100%); }
-  .vj-split-info { padding: 24px 28px calc(60px + env(safe-area-inset-bottom)); position: relative; z-index: 3; }
+  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10,6,4,0.5) 70%, rgba(10,6,4,0.9) 100%); }
+  .vj-split-info { flex: 1; padding: 0 28px calc(50px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3; }
+  .vj-split-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #F4A623, transparent); margin-bottom: 16px; }
+  .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
+  .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
+  .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
+  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
+  .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
+  .vj-split-price-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
   /* LIGHT */
   .vj-v-light { background: linear-gradient(180deg, #f8f0e0 0%, #ebddc4 100%); color: #2a1810; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 110px 24px 60px; }
