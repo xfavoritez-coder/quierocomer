@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const waiterCall = await prisma.waiterCall.create({
       data: {
         restaurantId,
-        tableId: tableId && tableId !== "general" && tableId !== "test" ? tableId : null,
+        tableId: tableId && tableId !== "general" && tableId !== "test" && tableId !== "demo" ? tableId : null,
         tableName: tableName || "Cliente",
         dietType: dietType || null,
         restrictions: restrictions || null,

@@ -304,11 +304,6 @@ export default function AdminLogin() {
         </form>
       </div>
 
-      {/* Footer */}
-      <p style={{ position: "relative", zIndex: 2, textAlign: "center", marginTop: 20, fontFamily: "var(--font-display)", fontSize: 10, color: "#8a7550", opacity: 0.85 }}>
-        Carta QR Viva — Santiago, Chile
-      </p>
-
       <style>{`
         @keyframes floatGenie {
           0%, 100% { transform: translateY(0px); }

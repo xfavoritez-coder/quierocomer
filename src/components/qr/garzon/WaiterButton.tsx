@@ -57,16 +57,19 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         }),
       });
 
+      const data = await res.json().catch(() => null);
       if (res.ok) {
         setState("success");
         setTimeout(() => setState("idle"), 2500);
       } else {
+        console.error("Waiter call failed:", res.status, data);
         setState("idle");
-        showToast("Intenta de nuevo");
+        showToast(data?.error || "Intenta de nuevo");
       }
-    } catch {
+    } catch (err) {
+      console.error("Waiter call error:", err);
       setState("idle");
-      showToast("Intenta de nuevo");
+      showToast("Error de conexión");
     }
   }, [state, restaurantId, tableId, tableName]);
 
