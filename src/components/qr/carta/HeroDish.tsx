@@ -121,8 +121,8 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           }}
         />
 
-        {/* Top left: logo + name */}
-        <div className="absolute z-10 flex items-center gap-2" style={{ top: 12, left: 16, height: 44 }}>
+        {/* Top left: logo + name — click reloads page */}
+        <button onClick={() => window.location.reload()} className="absolute z-10 flex items-center gap-2" style={{ top: 12, left: 16, height: 44, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
           {logoSrc ? (
             <Image src={logoSrc} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ border: "none" }} />
           ) : (
@@ -133,7 +133,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           <span className="text-white font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, textShadow: "0 1px 4px rgba(0,0,0,0.4)", opacity: 0.9 }}>
             {restaurant.name}
           </span>
-        </div>
+        </button>
 
         {/* Top right: profile icon */}
         <button

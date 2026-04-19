@@ -150,8 +150,8 @@ export default function CartaLista({
           ) : null;
         })()}
         <div style={{ position: "relative", zIndex: 1, padding: "16px 16px 14px", display: "flex", alignItems: "center" }}>
-          {/* Left: logo + name */}
-          <div className="flex items-center gap-2" style={{ flex: 1, minWidth: 0 }}>
+          {/* Left: logo + name — click reloads page */}
+          <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
             {restaurant.logoUrl ? (
               <Image src={restaurant.logoUrl} alt={restaurant.name} width={33} height={33} className="rounded-full" style={{ flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
             ) : (
@@ -159,10 +159,10 @@ export default function CartaLista({
                 {restaurant.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.3rem", fontWeight: 600, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
               {restaurant.name}
             </span>
-          </div>
+          </button>
           {/* Right: profile */}
           <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
             {qrUser?.name ? (

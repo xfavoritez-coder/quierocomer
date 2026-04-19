@@ -251,13 +251,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
               position: "fixed", bottom: 0, left: "50%",
               transform: modalVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(100%)",
               width: "100%", maxWidth: 420,
-              height: isGraphic ? "100vh" : undefined,
-              maxHeight: isGraphic ? "100vh" : "92vh",
+              height: "100vh",
               background: isGraphic ? "#000" : "white",
-              borderRadius: isGraphic ? 0 : "28px 28px 0 0",
+              borderRadius: 0,
               zIndex: 101, display: "flex", flexDirection: "column",
               transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-              boxShadow: isGraphic ? "none" : "0 -8px 40px rgba(0,0,0,0.15)",
               overflow: "hidden",
             }}
           >
@@ -300,15 +298,32 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             ) : (
               /* PRODUCT PROMO — scrollable content */
               <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
-                {heroImg && (
-                  <div style={{ position: "relative", width: "100%", height: 260, overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
-                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)" }} />
-                    {selectedPromo.discountPct && (
-                      <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
-                    )}
-                  </div>
-                )}
+                {(() => {
+                  const allPhotos = selectedPromo.dishes.flatMap(d => (d.photos || []).map(url => ({ url, name: d.name }))).filter(p => p.url);
+                  if (allPhotos.length === 0) return null;
+                  return (
+                    <div style={{ position: "relative", width: "100%", height: 260, overflow: "hidden" }}>
+                      <div style={{ display: "flex", width: "100%", height: "100%", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
+                        {allPhotos.map((p, i) => (
+                          <div key={i} style={{ minWidth: "100%", height: "100%", position: "relative", scrollSnapAlign: "start" }}>
+                            <Image src={p.url} alt={p.name} fill className="object-cover" sizes="100vw" />
+                          </div>
+                        ))}
+                      </div>
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)", pointerEvents: "none" }} />
+                      {selectedPromo.discountPct && (
+                        <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
+                      )}
+                      {allPhotos.length > 1 && (
+                        <div style={{ position: "absolute", bottom: 12, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 4 }}>
+                          {allPhotos.map((_, i) => (
+                            <div key={i} style={{ width: 6, height: 6, borderRadius: "50%", background: i === 0 ? "white" : "rgba(255,255,255,0.4)" }} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div style={{ padding: "28px 24px 40px" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
