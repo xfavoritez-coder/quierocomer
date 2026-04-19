@@ -32,6 +32,67 @@ export default function AdminPromociones() {
   const [editDesc, setEditDesc] = useState("");
   const [editPrice, setEditPrice] = useState("");
 
+  // Create new promo
+  const [creating, setCreating] = useState(false);
+  const [createType, setCreateType] = useState<"graphic" | "product" | null>(null);
+  const [cName, setCName] = useState("");
+  const [cDesc, setCDesc] = useState("");
+  const [cImageUrl, setCImageUrl] = useState("");
+  const [cPromoPrice, setCPromoPrice] = useState("");
+  const [cDiscountPct, setCDiscountPct] = useState("");
+  const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
+  const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
+  const [savingNew, setSavingNew] = useState(false);
+
+  // Load dishes when local changes
+  useEffect(() => {
+    if (!selectedLocal) { setLocalDishes([]); return; }
+    fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
+      .then(r => r.json()).then(d => { if (Array.isArray(d)) setLocalDishes(d); })
+      .catch(() => {});
+  }, [selectedLocal]);
+
+  const toggleDishSelection = (id: string) => {
+    setCSelectedDishes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const selectedDishesTotal = cSelectedDishes.reduce((sum, id) => {
+    const d = localDishes.find(x => x.id === id);
+    return sum + (d?.price || 0);
+  }, 0);
+
+  const handleCreatePromo = async () => {
+    if (!selectedLocal || !cName) return;
+    setSavingNew(true);
+    const body: any = {
+      restaurantId: selectedLocal,
+      name: cName,
+      description: cDesc || null,
+      promoType: createType,
+    };
+    if (createType === "graphic") {
+      body.imageUrl = cImageUrl || null;
+    } else {
+      body.dishIds = cSelectedDishes;
+      body.originalPrice = selectedDishesTotal;
+      body.promoPrice = cPromoPrice ? Number(cPromoPrice) : null;
+      body.discountPct = cDiscountPct ? Number(cDiscountPct) : null;
+    }
+    const res = await fetch("/api/admin/promotions", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.promotion) setPromos(prev => [data.promotion, ...prev]);
+    resetCreate();
+    setSavingNew(false);
+  };
+
+  const resetCreate = () => {
+    setCreating(false); setCreateType(null);
+    setCName(""); setCDesc(""); setCImageUrl(""); setCPromoPrice(""); setCDiscountPct(""); setCSelectedDishes([]);
+  };
+
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
@@ -115,6 +176,7 @@ export default function AdminPromociones() {
             <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
             {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
           </select>
+          {selectedLocal && !creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid #2A2A2A", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", cursor: "pointer" }}>+ Crear promo</button>}
           {selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
             padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
             color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
@@ -123,6 +185,88 @@ export default function AdminPromociones() {
           </button>}
         </div>
       </div>
+
+      {/* Create new promo */}
+      {creating && !createType && (
+        <div style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>¿Qué tipo de promoción?</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <button onClick={() => setCreateType("graphic")} style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #2A2A2A", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
+              <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🖼️</span>
+              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, display: "block" }}>Gráfica propia</span>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", display: "block", marginTop: 4 }}>Sube tu diseño o flyer</span>
+            </button>
+            <button onClick={() => setCreateType("product")} style={{ padding: "20px 16px", background: "rgba(255,255,255,0.03)", border: "1px solid #2A2A2A", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
+              <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🍽️</span>
+              <span style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, display: "block" }}>Productos de la carta</span>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", display: "block", marginTop: 4 }}>Selecciona 1 o más platos</span>
+            </button>
+          </div>
+          <button onClick={resetCreate} style={{ marginTop: 14, background: "none", border: "none", color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+        </div>
+      )}
+
+      {creating && createType === "graphic" && (
+        <div style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>🖼️ Promoción con gráfica</h3>
+          <input placeholder="Nombre de la promoción" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
+          <textarea placeholder="Descripción (opcional)" value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+          <input placeholder="URL de la imagen (pega el link)" value={cImageUrl} onChange={e => setCImageUrl(e.target.value)} style={INP} />
+          {cImageUrl && <div style={{ marginBottom: 12, borderRadius: 10, overflow: "hidden", height: 150 }}><img src={cImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} onError={e => (e.currentTarget.style.display = "none")} /></div>}
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
+            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {creating && createType === "product" && (
+        <div style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>🍽️ Promoción de productos</h3>
+          <input placeholder="Nombre de la promoción" value={cName} onChange={e => setCName(e.target.value)} style={INP} />
+          <textarea placeholder="Descripción (opcional)" value={cDesc} onChange={e => setCDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+
+          {/* Dish selector */}
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Selecciona platos ({cSelectedDishes.length} seleccionados)</p>
+          <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 14, borderRadius: 10, border: "1px solid #2A2A2A", scrollbarWidth: "none" }}>
+            {localDishes.map(d => {
+              const sel = cSelectedDishes.includes(d.id);
+              return (
+                <button key={d.id} onClick={() => toggleDishSelection(d.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: sel ? "rgba(244,166,35,0.08)" : "transparent", border: "none", borderBottom: "1px solid #2A2A2A", cursor: "pointer", textAlign: "left" }}>
+                  {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", color: sel ? "#F4A623" : "white", flex: 1, fontWeight: sel ? 600 : 400 }}>{d.name}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#888" }}>${d.price?.toLocaleString("es-CL")}</span>
+                  {sel && <span style={{ color: "#F4A623", fontSize: "14px" }}>✓</span>}
+                </button>
+              );
+            })}
+          </div>
+
+          {cSelectedDishes.length > 0 && (
+            <div style={{ background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#999" }}>Precio original (suma)</span>
+                <span style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600 }}>${selectedDishesTotal.toLocaleString("es-CL")}</span>
+              </div>
+              <div style={{ display: "flex", gap: 10 }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", display: "block", marginBottom: 4 }}>Precio promo</label>
+                  <input type="number" placeholder="$" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", display: "block", marginBottom: 4 }}>% descuento</label>
+                  <input type="number" placeholder="%" value={cDiscountPct} onChange={e => setCDiscountPct(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
+            <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
+          </div>
+        </div>
+      )}
 
       {/* Filters */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
@@ -269,6 +413,7 @@ export default function AdminPromociones() {
 }
 
 const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: "var(--font-display)", fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
+const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
 function btnStyle(color: string): React.CSSProperties {
   return { padding: "8px 16px", background: `${color}15`, border: `1px solid ${color}40`, borderRadius: 8, color, fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" };
 }

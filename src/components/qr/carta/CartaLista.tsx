@@ -427,10 +427,15 @@ function DishListCard({
       <div style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 2 }}>
           <h3
-            className="font-[family-name:var(--font-playfair)]"
-            style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}
+            className="font-[family-name:var(--font-playfair)] flex items-center gap-1"
+            style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
           >
-            {dish.name}
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
+            {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "10px", flexShrink: 0 }}>⭐</span>}
+            {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
+            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌿</span>}
+            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌱</span>}
+            {(dish as any).isSpicy && <span style={{ fontSize: "10px", flexShrink: 0 }}>🌶️</span>}
           </h3>
         </div>
         {dish.description && (
