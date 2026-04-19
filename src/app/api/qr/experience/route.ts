@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
-/** GET: get active experience for a restaurant */
+/** GET: get active experience for a restaurant + check if guest already did it */
 export async function GET(req: NextRequest) {
   const restaurantId = req.nextUrl.searchParams.get("restaurantId");
+  const guestId = req.nextUrl.searchParams.get("guestId");
   if (!restaurantId) return NextResponse.json({ experience: null });
 
   const exp = await prisma.experience.findUnique({
@@ -16,6 +17,19 @@ export async function GET(req: NextRequest) {
 
   if (!exp || !exp.isActive) return NextResponse.json({ experience: null });
 
+  // Check if this guest already completed the experience
+  let previousResult: { resultName: string; resultTraits: string[]; userName: string } | null = null;
+  if (guestId) {
+    const lastSub = await prisma.experienceSubmission.findFirst({
+      where: { experienceId: exp.id, guestId },
+      orderBy: { submittedAt: "desc" },
+      select: { userName: true, assignedResult: { select: { name: true, traits: true } } },
+    });
+    if (lastSub?.assignedResult) {
+      previousResult = { resultName: lastSub.assignedResult.name, resultTraits: lastSub.assignedResult.traits, userName: lastSub.userName };
+    }
+  }
+
   return NextResponse.json({
     experience: {
       id: exp.id,
@@ -26,13 +40,14 @@ export async function GET(req: NextRequest) {
       iconEmoji: exp.template.iconEmoji,
       theme: exp.template.theme,
     },
+    previousResult,
   });
 }
 
 /** POST: submit experience form */
 export async function POST(req: NextRequest) {
   try {
-    const { experienceId, guestId, userName, birthDate, email } = await req.json();
+    const { experienceId, guestId, userName, birthDate, email, registerMe } = await req.json();
     if (!experienceId || !userName || !birthDate || !email) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
@@ -78,27 +93,29 @@ export async function POST(req: NextRequest) {
       if (score > bestScore) { bestScore = score; bestResult = result; }
     }
 
-    // Create or update QRUser (register the ghost)
+    // Create or update QRUser for the email
     const user = await prisma.qRUser.upsert({
       where: { email },
       update: { name: userName, birthDate: bd },
       create: { email, name: userName, birthDate: bd },
     });
 
-    // Link guest
-    if (guestId) {
+    // Only link guest + set cookie if user opted in to register (first time, own email)
+    if (registerMe && guestId) {
       await prisma.guestProfile.updateMany({
         where: { id: guestId, linkedQrUserId: null },
         data: { linkedQrUserId: user.id },
       });
     }
 
-    // Set cookie
     const response = NextResponse.json({
       ok: true,
       teaser: { resultName: bestResult.name, resultDescription: bestResult.description, resultTraits: bestResult.traits },
     });
-    response.cookies.set("qr_user_id", user.id, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+
+    if (registerMe) {
+      response.cookies.set("qr_user_id", user.id, { path: "/", maxAge: 60 * 60 * 24 * 365, sameSite: "lax" });
+    }
 
     // Create submission
     const sendAfter = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
