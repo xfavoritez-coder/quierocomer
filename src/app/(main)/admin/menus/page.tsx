@@ -229,7 +229,7 @@ export default function AdminMenus() {
                 <label style={LBL}>Características</label>
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eSpicy ? "#e85530" : "#999" }}>
-                    🌶️ {eSpicy ? "Picante" : "No picante"}
+                    🌶️ Picante
                   </button>
                 </div>
               </div>
@@ -253,11 +253,14 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Tags</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {TAG_OPTIONS.map(t => (
-                    <button key={t.value} onClick={() => toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "rgba(255,255,255,0.05)", color: eTags.includes(t.value) ? TAG_COLORS[t.value] : "#666" }}>
-                      {t.label}
-                    </button>
-                  ))}
+                  {TAG_OPTIONS.map(t => {
+                    const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
+                    return (
+                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "rgba(255,255,255,0.05)", color: disabled ? "#444" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "#666", opacity: disabled ? 0.5 : 1 }}>
+                        {t.label}{disabled ? " (pronto)" : ""}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
