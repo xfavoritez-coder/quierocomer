@@ -195,10 +195,10 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   {p.description && (
                     <p style={{ fontSize: "11.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
                   )}
-                  {(p.promoPrice || (!p.promoType || p.promoType === "product")) && dish?.price && (
+                  {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
                       <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
-                        ${(p.promoPrice || dish.price)?.toLocaleString("es-CL")}
+                        ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
                       {p.originalPrice && (
                         <span style={{ fontSize: "12px", color: "#a08060", textDecoration: "line-through" }}>
@@ -266,14 +266,14 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             </div>
 
             {isGraphic ? (
-              /* GRAPHIC PROMO — fullscreen photo with overlay title */
-              <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
+              /* GRAPHIC PROMO — fullscreen photo with overlay title + optional price */
+              <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
                 {heroImg && (
-                  <div style={{ position: "relative", flex: 1, minHeight: 0 }}>
-                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" style={{ borderRadius: "28px 28px 0 0" }} />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.6) 80%, rgba(0,0,0,0.85) 100%)", borderRadius: "28px 28px 0 0" }} />
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
+                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.85) 100%)" }} />
                     {/* Title over image */}
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 28px" }}>
+                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 24px" }}>
                       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
                         <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase" }}>✦ PROMOCIÓN</span>
                       </div>
@@ -283,6 +283,19 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                       {selectedPromo.description && (
                         <p style={{ fontSize: "14px", lineHeight: 1.5, color: "rgba(255,255,255,0.75)", margin: 0, maxWidth: 320 }}>{selectedPromo.description}</p>
                       )}
+                    </div>
+                  </div>
+                )}
+                {/* Price section for graphic promos */}
+                {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
+                  <div style={{ padding: "20px 24px 28px", background: "white" }}>
+                    <div style={{ padding: "16px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO</p>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
+                        {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
+                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: selectedPromo.promoPrice ? "line-through" : "none" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                        {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
+                      </div>
                     </div>
                   </div>
                 )}

@@ -472,11 +472,6 @@ function DishListCard({
               Promo
             </span>
           )}
-          {isNew && (
-            <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 6px", background: "rgba(16,185,129,0.12)", color: "#059669", borderRadius: 4 }}>
-              Nuevo
-            </span>
-          )}
           {rating && rating.count > 0 && (
             <span style={{ fontSize: "0.72rem", color: "rgba(14,14,14,0.45)" }}>
               ★ {rating.avg.toFixed(1)}

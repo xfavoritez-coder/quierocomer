@@ -81,7 +81,7 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
         )}
         {dish.tags?.includes("NEW") && (
-          <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 8, left: 8, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
+          <span className="absolute font-[family-name:var(--font-dm)]" style={{ top: 8, left: 8, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
         )}
       </div>
       <div style={{ padding: "8px 2px 0" }}>

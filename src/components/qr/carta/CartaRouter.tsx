@@ -111,8 +111,9 @@ export default function CartaRouter(props: Props) {
 
       {overlay && (
         <div
-          className="fixed inset-0 flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
+          className="fixed flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
           style={{
+            top: "-50px", left: 0, right: 0, bottom: "-50px",
             zIndex: 200,
             background: "#0e0e0e",
             opacity: fadeOut ? 0 : 1,

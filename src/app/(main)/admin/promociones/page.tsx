@@ -42,6 +42,7 @@ export default function AdminPromociones() {
   const [cThumbUrl, setCThumbUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [cPromoPrice, setCPromoPrice] = useState("");
+  const [cOriginalPrice, setCOriginalPrice] = useState("");
   const [cDiscountPct, setCDiscountPct] = useState("");
   const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
@@ -96,6 +97,8 @@ export default function AdminPromociones() {
     if (createType === "graphic") {
       body.imageUrl = cImageUrl || null;
       body.thumbUrl = cThumbUrl || null;
+      body.originalPrice = cOriginalPrice ? Number(cOriginalPrice) : null;
+      body.promoPrice = cPromoPrice ? Number(cPromoPrice) : null;
     } else {
       body.dishIds = cSelectedDishes;
       body.originalPrice = selectedDishesTotal;
@@ -114,7 +117,7 @@ export default function AdminPromociones() {
 
   const resetCreate = () => {
     setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCPromoPrice(""); setCDiscountPct(""); setCSelectedDishes([]);
+    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]);
   };
 
   useEffect(() => {
@@ -262,6 +265,12 @@ export default function AdminPromociones() {
               <button onClick={() => { setCImageUrl(""); setCThumbUrl(""); }} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             </div>
           )}
+
+          {/* Prices (optional) */}
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <input type="number" placeholder="Precio normal (opcional)" value={cOriginalPrice} onChange={e => setCOriginalPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+            <input type="number" placeholder="Precio promo (opcional)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
+          </div>
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
