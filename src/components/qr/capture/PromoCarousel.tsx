@@ -124,7 +124,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px", marginBottom: 12 }}>
           <span style={{ color: "#F4A623", fontSize: "12px" }}>✦</span>
-          <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 500, fontStyle: "italic", color: "#8a5a2c" }}>Promociones</span>
+          <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 500, fontStyle: "italic", color: "#8a5a2c", position: "relative", top: -2 }}>Promociones</span>
           <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(244,166,35,0.3), transparent)" }} />
         </div>
 
@@ -250,8 +250,8 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             style={{
               position: "fixed", bottom: 0, left: "50%",
               transform: modalVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(100%)",
-              width: "100%", maxWidth: 420,
-              height: "100vh",
+              width: "100%", maxWidth: "100%",
+              height: "100dvh",
               background: isGraphic ? "#000" : "white",
               borderRadius: 0,
               zIndex: 101, display: "flex", flexDirection: "column",
@@ -302,7 +302,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   const allPhotos = selectedPromo.dishes.flatMap(d => (d.photos || []).map(url => ({ url, name: d.name }))).filter(p => p.url);
                   if (allPhotos.length === 0) return null;
                   return (
-                    <div style={{ position: "relative", width: "100%", height: 260, overflow: "hidden" }}>
+                    <div style={{ position: "relative", width: "100%", height: 340, overflow: "hidden" }}>
                       <div style={{ display: "flex", width: "100%", height: "100%", overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>
                         {allPhotos.map((p, i) => (
                           <div key={i} style={{ minWidth: "100%", height: "100%", position: "relative", scrollSnapAlign: "start" }}>
@@ -325,7 +325,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   );
                 })()}
 
-                <div style={{ padding: "28px 24px 40px" }}>
+                <div style={{ padding: "16px 24px 40px" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
                     <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
                     <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>

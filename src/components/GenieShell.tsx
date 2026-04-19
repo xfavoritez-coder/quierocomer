@@ -34,7 +34,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   }, [isAdmin, isAuth]);
 
   if (!ready) return (
-    <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p className="font-display" style={{ fontSize: "1.2rem", color: "#0D0D0D" }}>🧞</p>
     </div>
   );
@@ -45,7 +45,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   const hideNav = false; // Nav always visible
 
   return (
-    <div style={{ minHeight: "100vh", background: "#FFFFFF", paddingBottom: hideNav ? 0 : 72, position: "relative" }}>
+    <div style={{ minHeight: "100dvh", background: "#FFFFFF", paddingBottom: hideNav ? 0 : 72, position: "relative" }}>
       <div style={{ position: "relative", zIndex: 1 }}>
         {children}
       </div>

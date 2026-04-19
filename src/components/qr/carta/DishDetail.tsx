@@ -167,10 +167,7 @@ export default function DishDetail({
       style={{
         position: "fixed",
         top: 0, left: 0, right: 0,
-        height: "100vh",
-        // @ts-ignore — fallbacks for Chrome iOS
-        ...({ height: "100dvh" } as any),
-        ...({ height: "-webkit-fill-available" } as any),
+        height: "100dvh",
         zIndex: 100,
         background: "#000",
         opacity: visible ? 1 : 0,

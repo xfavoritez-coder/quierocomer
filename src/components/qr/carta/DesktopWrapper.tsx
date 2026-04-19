@@ -19,7 +19,7 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
   }, []);
 
   // Don't render anything until we know (prevents flash)
-  if (isDesktop === null) return <div style={{ minHeight: "100vh", background: "#0a0a0a" }} />;
+  if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#0a0a0a" }} />;
   if (!isDesktop) return <>{children}</>;
 
   // Hide floating buttons on desktop
@@ -33,7 +33,7 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         background: "#0a0a0a",
         display: "flex",
         alignItems: "center",

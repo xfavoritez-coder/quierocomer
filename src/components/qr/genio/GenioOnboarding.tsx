@@ -475,7 +475,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", inset: 0, zIndex: 110, background: "#0e0e0e",
+        position: "fixed", top: 0, left: 0, right: 0, height: "100dvh", zIndex: 110, background: "#0e0e0e",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out", overflow: "hidden",
       }}
     >
