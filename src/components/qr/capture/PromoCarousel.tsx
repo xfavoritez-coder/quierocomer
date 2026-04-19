@@ -188,13 +188,6 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
   return (
     <>
       <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 18px" }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "0 4px", marginBottom: 12 }}>
-          <span style={{ color: "#F4A623", fontSize: "12px" }}>✦</span>
-          <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "14px", fontWeight: 500, fontStyle: "italic", color: "#8a5a2c", position: "relative", top: -2 }}>Promociones</span>
-          <div style={{ flex: 1, height: 1, background: "linear-gradient(90deg, rgba(244,166,35,0.3), transparent)" }} />
-        </div>
-
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -255,7 +248,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
+                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
@@ -263,7 +256,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                     <p style={{ fontSize: "11.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
                   )}
                   {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 4 }}>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 5 }}>
                       <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
                         ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
