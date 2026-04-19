@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
+import { X, ChevronLeft, RefreshCw } from "lucide-react";
 import { getGuestId } from "@/lib/guestId";
 
 interface ExperienceData {
@@ -122,7 +122,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            margin: "16px 20px", padding: "14px 16px",
+            margin: "24px 20px 12px", padding: "14px 16px",
             background: hasPrevious
               ? `linear-gradient(135deg, ${accent}18, ${accent}08)`
               : `linear-gradient(135deg, ${accent}12, ${accent}06)`,
@@ -134,14 +134,15 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{exp.iconEmoji}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: "0.75rem", color: bannerAccent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                <p style={{ fontSize: "0.75rem", color: bannerAccent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", lineHeight: 1.2 }}>
                   {prevResult.userName}, eres
                 </p>
-                <p style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", margin: "2px 0 0" }}>
+                <p style={{ fontSize: "1.06rem", fontWeight: 700, color: "#0e0e0e", margin: "1px 0 0", lineHeight: 1.2 }}>
                   {prevResult.resultName}
                 </p>
               </div>
-              <button onClick={() => openModal(true)} className="active:scale-95 transition-transform" style={{ background: "rgba(0,0,0,0.06)", color: "#555", border: "none", borderRadius: 50, padding: "7px 14px", fontSize: "0.82rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
+              <button onClick={() => openModal(true)} className="active:scale-95 transition-transform flex items-center" style={{ gap: 4, background: "rgba(0,0,0,0.06)", color: "#555", border: "none", borderRadius: 50, padding: "7px 14px", fontSize: "0.82rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
+                <RefreshCw size={13} strokeWidth={2.5} />
                 Repetir
               </button>
             </div>
@@ -177,7 +178,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
           >
             {/* X close button */}
             <button onClick={() => setModalOpen(false)} style={{ position: "absolute", top: 14, right: 14, width: 30, height: 30, borderRadius: "50%", background: "rgba(0,0,0,0.05)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>
-              <X size={14} color="#bbb" />
+              <X size={14} color="#999" />
             </button>
 
             {/* Step 0: Intro */}
@@ -185,7 +186,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               <div style={{ textAlign: "center" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>{exp.iconEmoji}</span>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 12px", lineHeight: 1.1 }}>{exp.name}</h2>
-                <p style={{ fontSize: "15px", color: "#999", lineHeight: 1.5, margin: "0 0 28px" }}>Descúbrelo a través de tu nombre, gustos y fecha de nacimiento</p>
+                <p style={{ fontSize: "16px", color: "#666", lineHeight: 1.5, margin: "0 0 28px" }}>Descúbrelo a través de tu nombre, gustos y fecha de nacimiento</p>
                 <button onClick={() => {
                   if (!isRepeat && userName && birthDate && email) { handleSubmit(); }
                   else if (!isRepeat && userName) { setStep(birthDate ? 3 : 2); }
@@ -199,7 +200,8 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             {/* Step 1: Name */}
             {step === 1 && (
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "14px", color: "#bbb", margin: "0 0 8px" }}>Paso 1 de 3</p>
+                <button onClick={() => setStep(0)} style={{ position: "absolute", top: 16, left: 14, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2, color: "#999", fontSize: "13px", fontFamily: "inherit" }}><ChevronLeft size={16} /> Volver</button>
+                <p style={{ fontSize: "14px", color: "#999", margin: "0 0 8px" }}>Paso 1 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 24px" }}>¿Cómo te llamas?</h2>
                 <input
                   ref={nameRef}
@@ -218,9 +220,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             {/* Step 2: Birth date */}
             {step === 2 && (
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "14px", color: "#bbb", margin: "0 0 8px" }}>Paso 2 de 3</p>
+                <button onClick={() => setStep(1)} style={{ position: "absolute", top: 16, left: 14, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2, color: "#999", fontSize: "13px", fontFamily: "inherit" }}><ChevronLeft size={16} /> Volver</button>
+                <p style={{ fontSize: "14px", color: "#999", margin: "0 0 8px" }}>Paso 2 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 8px" }}>¿Cuándo naciste?</h2>
-                <p style={{ fontSize: "12px", color: "#bbb", margin: "0 0 24px" }}>Los astros necesitan esta información</p>
+                <p style={{ fontSize: "14px", color: "#888", margin: "0 0 24px" }}>Tu fecha nos ayuda a determinar con certeza tus características</p>
                 <input
                   type="date"
                   value={birthDate}
@@ -238,9 +241,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             {/* Step 3: Email + register checkbox */}
             {step === 3 && (
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: "14px", color: "#bbb", margin: "0 0 8px" }}>Paso 3 de 3</p>
+                <button onClick={() => setStep(2)} style={{ position: "absolute", top: 16, left: 14, background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 2, color: "#999", fontSize: "13px", fontFamily: "inherit" }}><ChevronLeft size={16} /> Volver</button>
+                <p style={{ fontSize: "14px", color: "#999", margin: "0 0 8px" }}>Paso 3 de 3</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 8px" }}>¿Dónde enviamos tu resultado?</h2>
-                <p style={{ fontSize: "14px", color: "#aaa", margin: "0 0 24px" }}>Recibirás tu resultado completo por email en 2 minutos</p>
+                <p style={{ fontSize: "15px", color: "#777", margin: "0 0 24px" }}>Recibirás tu resultado completo en <strong>{email || "tu email"}</strong> en 2 minutos</p>
                 <input
                   type="email"
                   value={email}
@@ -254,7 +258,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                     <div style={{ width: 18, height: 18, borderRadius: 4, border: `1.5px solid ${registerMe ? "#F4A623" : "#ddd"}`, background: registerMe ? "rgba(244,166,35,0.1)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 1, transition: "all 0.15s" }} onClick={() => setRegisterMe(!registerMe)}>
                       {registerMe && <span style={{ color: "#F4A623", fontSize: "12px", lineHeight: 1 }}>✓</span>}
                     </div>
-                    <span style={{ fontSize: "13px", color: "#999", lineHeight: 1.4 }}>Guardar mis datos para recomendaciones personalizadas</span>
+                    <span style={{ fontSize: "13px", color: "#777", lineHeight: 1.4 }}>Guardar mis datos para recomendaciones personalizadas</span>
                   </label>
                 )}
                 <button onClick={handleSubmit} disabled={!email || submitting} style={{ marginTop: 20, background: "#F4A623", color: "white", border: "none", borderRadius: 50, padding: "14px 32px", fontSize: "15px", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: !email || submitting ? 0.4 : 1 }}>
@@ -267,15 +271,15 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             {step === 4 && teaser && (
               <div style={{ textAlign: "center" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>{exp.iconEmoji}</span>
-                <p style={{ fontSize: "12px", color: accent, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 8px" }}>{userName}, eres</p>
+                <p style={{ fontSize: "13px", color: accent, letterSpacing: "0.15em", textTransform: "uppercase", margin: "0 0 8px" }}>{userName}, eres</p>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "33px", fontWeight: 600, color: accent, margin: "0 0 16px" }}>{teaser.resultName}</h2>
-                <p style={{ fontSize: "14px", color: "#888", lineHeight: 1.5, margin: "0 0 12px" }}>{teaser.resultDescription}</p>
+                <p style={{ fontSize: "16px", color: "#666", lineHeight: 1.5, margin: "0 0 12px" }}>{teaser.resultDescription}</p>
                 <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 24 }}>
                   {teaser.resultTraits.map(t => (
-                    <span key={t} style={{ fontSize: "13px", padding: "4px 10px", borderRadius: 50, background: `${accent}12`, color: accent, border: `1px solid ${accent}25` }}>{t}</span>
+                    <span key={t} style={{ fontSize: "15px", padding: "4px 12px", borderRadius: 50, background: `${accent}18`, color: accent, border: `1px solid ${accent}35`, fontWeight: 500 }}>{t}</span>
                   ))}
                 </div>
-                <p style={{ fontSize: "15px", color: "#aaa", margin: "0 0 24px", lineHeight: 1.5 }}>En 2 minutos recibirás el detalle completo de tu resultado por email</p>
+                <p style={{ fontSize: "15px", color: "#777", margin: "0 0 24px", lineHeight: 1.5 }}>En 2 minutos recibirás el detalle completo en <strong>{email}</strong></p>
                 <button onClick={() => setModalOpen(false)} style={{ background: "rgba(0,0,0,0.05)", color: "#555", border: "1px solid #e8e0d6", borderRadius: 50, padding: "12px 28px", fontSize: "14px", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>
                   Volver a la carta
                 </button>

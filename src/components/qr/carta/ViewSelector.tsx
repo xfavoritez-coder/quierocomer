@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Layers, List, BookOpen, Sparkles, Check } from "lucide-react";
+import { Layers, List, BookOpen, Rocket, Check } from "lucide-react";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
 import GenioTip from "../genio/GenioTip";
@@ -11,7 +11,7 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
   { value: "lista", label: "Lista", Icon: List },
   { value: "premium", label: "Clásica", Icon: BookOpen },
-  { value: "viaje", label: "Espacial", Icon: Sparkles },
+  { value: "viaje", label: "Espacial", Icon: Rocket },
 ];
 
 interface Props {
