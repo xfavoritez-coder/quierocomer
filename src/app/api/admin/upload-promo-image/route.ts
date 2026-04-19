@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
-  const authErr = checkAdminAuth(req);
-  if (authErr) return authErr;
+  const cookieStore = await cookies();
+  if (!cookieStore.get("admin_token")?.value) {
+    return NextResponse.json({ error: "Not auth" }, { status: 401 });
+  }
 
   try {
     const formData = await req.formData();
