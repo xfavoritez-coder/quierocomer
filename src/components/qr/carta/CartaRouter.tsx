@@ -113,7 +113,7 @@ export default function CartaRouter(props: Props) {
         <div
           className="fixed flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
           style={{
-            top: 0, left: 0, right: 0, height: "100dvh",
+            top: 0, left: 0, right: 0, bottom: 0, minHeight: "100dvh",
             zIndex: 200,
             background: "#0e0e0e",
             opacity: fadeOut ? 0 : 1,
