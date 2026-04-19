@@ -357,8 +357,8 @@ export default function CartaPremium({
           border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
       >
-        <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "white", boxShadow: "0 4px 12px rgba(244,166,35,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
-          <Sparkles size={24} color="#F4A623" strokeWidth={1.75} />
+        <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
+          🧞
         </div>
         <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
         <p style={{ fontSize: "12.5px", color: "#8a5a2c", margin: "0 0 18px" }}>El Genio conoce cada plato y puede ayudarte</p>
@@ -367,7 +367,7 @@ export default function CartaPremium({
           className="active:scale-[0.97] transition-transform"
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(135deg, #F4A623 0%, #e85530 100%)",
+            background: "#F4A623",
             color: "white", padding: "12px 24px", borderRadius: 100,
             fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
             boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",

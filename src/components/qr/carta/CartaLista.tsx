@@ -317,8 +317,8 @@ export default function CartaLista({
           border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
       >
-        <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "white", boxShadow: "0 4px 12px rgba(244,166,35,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
-          <Sparkles size={22} color="#F4A623" strokeWidth={1.75} />
+        <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
+          🧞
         </div>
         <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
         <p style={{ fontSize: "12px", color: "#8a5a2c", margin: "0 0 16px" }}>El Genio conoce cada plato y puede ayudarte</p>
@@ -327,7 +327,7 @@ export default function CartaLista({
           className="active:scale-[0.97] transition-transform"
           style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(135deg, #F4A623 0%, #e85530 100%)",
+            background: "#F4A623",
             color: "white", padding: "11px 22px", borderRadius: 100,
             fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer",
             boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
