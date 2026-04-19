@@ -124,7 +124,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
         >
           {hasPrevious ? (
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
+              <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{exp.iconEmoji}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: "0.72rem", color: accent, margin: 0, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                   {prevResult.userName}, eres
@@ -139,7 +139,7 @@ export default function ExperienceBanner({ restaurantId }: Props) {
             </div>
           ) : (
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: "1.6rem", flexShrink: 0 }}>{exp.iconEmoji}</span>
+              <span style={{ fontSize: "1.6rem", flexShrink: 0, width: 40, height: 40, display: "flex", alignItems: "center", justifyContent: "center" }}>{exp.iconEmoji}</span>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{exp.name}</p>
                 <p style={{ fontSize: "0.78rem", color: "#8a7060", margin: "2px 0 0" }}>{exp.description}</p>
