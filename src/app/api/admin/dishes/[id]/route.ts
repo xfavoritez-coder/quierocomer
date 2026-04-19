@@ -28,8 +28,22 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
       },
-      include: { category: { select: { id: true, name: true } } },
+      include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });
+
+    // Sync DishIngredient links if ingredientIds provided
+    if (body.ingredientIds !== undefined) {
+      await prisma.dishIngredient.deleteMany({ where: { dishId: id } });
+      if (body.ingredientIds.length > 0) {
+        await prisma.dishIngredient.createMany({
+          data: body.ingredientIds.map((ingId: string) => ({ dishId: id, ingredientId: ingId })),
+          skipDuplicates: true,
+        });
+      }
+      // Also update the text field for backwards compat
+      const ings = await prisma.ingredient.findMany({ where: { id: { in: body.ingredientIds } }, select: { name: true } });
+      await prisma.dish.update({ where: { id }, data: { ingredients: ings.map(i => i.name).join(", ") || null } });
+    }
 
     return NextResponse.json(dish);
   } catch (e) {
