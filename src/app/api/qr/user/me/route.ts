@@ -40,9 +40,9 @@ export async function GET() {
   });
 
   const favoriteIngredients = guest?.favoriteIngredients as Record<string, number> | null;
-  // Top 10 ingredients sorted by score
+  // Top 10 ingredients sorted by score — include score for frontend ordering
   const topIngredients = favoriteIngredients
-    ? Object.entries(favoriteIngredients).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name]) => name)
+    ? Object.entries(favoriteIngredients).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, score]) => ({ name, score }))
     : [];
 
   // Experience results

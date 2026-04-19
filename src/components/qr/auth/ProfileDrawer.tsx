@@ -45,7 +45,10 @@ type Page = "main" | "edit-diet" | "edit-restrictions" | "edit-dislikes" | "edit
 export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout }: Props) {
   const [visible, setVisible] = useState(false);
   const [visited, setVisited] = useState<VisitedRestaurant[]>([]);
-  const [topIngredients, setTopIngredients] = useState<string[]>([]);
+  const [topIngredients, setTopIngredients] = useState<{ name: string; score: number }[]>([]);
+  const [editingIngredients, setEditingIngredients] = useState(false);
+  const [confirmedIngs, setConfirmedIngs] = useState<Set<string>>(new Set());
+  const [rejectedIngs, setRejectedIngs] = useState<Set<string>>(new Set());
   const [page, setPage] = useState<Page>("main");
   const [saving, setSaving] = useState(false);
 
@@ -234,12 +237,81 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
       {/* Top ingredients */}
       {topIngredients.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", marginBottom: 10 }}>Lo que más pides</h4>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {topIngredients.map((ing) => (
-              <span key={ing} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing}</span>
-            ))}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+            <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Lo que más pides</h4>
+            {!editingIngredients && (
+              <button onClick={() => { setEditingIngredients(true); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: "0.72rem", color: "#F4A623", fontWeight: 600 }}>
+                Corregir
+              </button>
+            )}
           </div>
+          {!editingIngredients ? (
+            <>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {topIngredients.map((ing) => (
+                  <span key={ing.name} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
+                ))}
+              </div>
+              <p style={{ fontSize: "0.7rem", color: "#ccc", marginTop: 8 }}>Toca "Corregir" si algo no te gusta</p>
+            </>
+          ) : (
+            <>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {topIngredients.filter((i) => !rejectedIngs.has(i.name)).map((ing) => {
+                  const confirmed = confirmedIngs.has(ing.name);
+                  return (
+                    <div key={ing.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: confirmed ? "#f0fdf4" : "#fafafa", borderRadius: 10, border: confirmed ? "1px solid rgba(22,163,74,0.2)" : "1px solid #eee" }}>
+                      <span style={{ flex: 1, fontSize: "0.88rem", color: "#0e0e0e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
+                      <button onClick={() => { setConfirmedIngs((p) => { const n = new Set(p); if (n.has(ing.name)) n.delete(ing.name); else n.add(ing.name); return n; }); }} style={{ width: 32, height: 32, borderRadius: "50%", background: confirmed ? "#16a34a" : "#f0f0f0", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
+                        {confirmed ? <span style={{ color: "white" }}>✓</span> : <span style={{ color: "#999" }}>👍</span>}
+                      </button>
+                      <button onClick={() => setRejectedIngs((p) => new Set(p).add(ing.name))} style={{ width: 32, height: 32, borderRadius: "50%", background: "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>
+                        <span style={{ color: "#dc2626" }}>👎</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              {rejectedIngs.size > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <p style={{ fontSize: "0.7rem", color: "#dc2626", marginBottom: 6 }}>Se moverán a "No me gusta":</p>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                    {[...rejectedIngs].map((ing) => (
+                      <span key={ing} style={{ padding: "4px 10px", borderRadius: 50, background: "#fef2f2", border: "1px solid rgba(220,38,38,0.15)", fontSize: "0.78rem", color: "#dc2626", textTransform: "capitalize" }}>
+                        {ing}
+                        <button onClick={() => setRejectedIngs((p) => { const n = new Set(p); n.delete(ing); return n; })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", marginLeft: 4, fontSize: "0.7rem" }}>✕</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button
+                  onClick={async () => {
+                    setSaving(true);
+                    await fetch("/api/qr/user/update", {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        confirmedIngredients: [...confirmedIngs],
+                        rejectedIngredients: [...rejectedIngs],
+                      }),
+                    });
+                    setSaving(false);
+                    setEditingIngredients(false);
+                    window.location.reload();
+                  }}
+                  disabled={saving || (confirmedIngs.size === 0 && rejectedIngs.size === 0)}
+                  style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontSize: "0.88rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: saving || (confirmedIngs.size === 0 && rejectedIngs.size === 0) ? 0.5 : 1 }}
+                >
+                  {saving ? "Guardando..." : "Guardar"}
+                </button>
+                <button onClick={() => { setEditingIngredients(false); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); }} style={{ padding: "10px 16px", background: "none", border: "1px solid #eee", borderRadius: 50, color: "#999", fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer" }}>
+                  Cancelar
+                </button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
