@@ -171,7 +171,7 @@ export default function ViewSelector({ restaurantId }: Props) {
             animation: "vsSlideIn 0.25s ease-out",
           }}
         >
-          Prueba las otras vistas ✨
+          Prueba las otras vistas <span style={{ display: "inline-block", animation: "vsPointSwipe 1s ease-in-out infinite" }}>👆</span>
           <div style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#0e0e0e" }} />
         </div>
       )}
@@ -180,6 +180,10 @@ export default function ViewSelector({ restaurantId }: Props) {
         @keyframes vsSlideIn {
           from { opacity: 0; transform: translateX(10px); }
           to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes vsPointSwipe {
+          0%, 100% { transform: translateX(-2px); }
+          50% { transform: translateX(4px); }
         }
       `}</style>
     </div>
