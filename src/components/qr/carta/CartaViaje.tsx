@@ -168,7 +168,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
-                onDishTap={() => {}}
+                onDishTap={(dish) => setSelectedDish(dish)}
               />
             );
           })}
@@ -188,6 +188,20 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               setGenioOpen(false);
               setTimeout(() => setSelectedDish(dish), 250);
             }}
+          />
+        )}
+
+        {/* Dish detail */}
+        {selectedDish && (
+          <DishDetail
+            dish={selectedDish}
+            allDishes={dishes}
+            categories={categories}
+            restaurantId={restaurant.id}
+            reviews={reviews}
+            ratingMap={ratingMap}
+            onClose={() => setSelectedDish(null)}
+            onChangeDish={setSelectedDish}
           />
         )}
 
