@@ -6,7 +6,7 @@ import type { Dish, Category } from "@prisma/client";
 import PostGenioCapture from "../capture/PostGenioCapture";
 import {
   X, UtensilsCrossed, Leaf, Sprout, Fish,
-  Check, Ban, Wheat, Milk, Soup, Flame,
+  Check, Ban, Wheat, Milk,
   Sparkles, ChevronLeft,
 } from "lucide-react";
 
@@ -19,7 +19,7 @@ interface GenioProps {
 }
 
 type DietType = "omnivore" | "vegetarian" | "vegan" | "pescetarian";
-type HungerLevel = "light" | "normal" | "heavy";
+// HungerLevel removed — Genio deduces from photo selections
 
 const DIET_OPTIONS = [
   { icon: UtensilsCrossed, label: "Como de todo", value: "omnivore" as DietType },
@@ -43,12 +43,6 @@ const RESTRICTION_OPTIONS = [
 const DISLIKE_OPTIONS = [
   "Palta", "Cebolla", "Tomate", "Cilantro", "Ajo", "Picante",
   "Pepino", "Aceitunas", "Champiñón", "Soya", "Jengibre", "Queso",
-];
-
-const HUNGER_OPTIONS = [
-  { icon: Soup, label: "Poca", sub: "algo liviano", value: "light" as HungerLevel },
-  { icon: UtensilsCrossed, label: "Normal", sub: "un plato está bien", value: "normal" as HungerLevel },
-  { icon: Flame, label: "Mucha", sub: "entrada + plato o más", value: "heavy" as HungerLevel },
 ];
 
 const FOOD_KEYWORDS = ["fondo", "principal", "pizza", "hamburguesa", "plato", "sushi", "roll", "gohan", "chirashi", "para compartir", "compartir", "street", "entrada", "aperitivo", "caliente", "clasica", "premium", "tabla"];
@@ -79,7 +73,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [dietType, setDietType] = useState<DietType | null>(savedDiet as DietType | null);
   const [restrictions, setRestrictions] = useState<string[]>(savedRestrictions ? JSON.parse(savedRestrictions) : []);
   const [dislikes, setDislikes] = useState<string[]>(savedDislikes ? JSON.parse(savedDislikes) : []);
-  const [hunger, setHunger] = useState<HungerLevel | null>(null);
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [photoFilter, setPhotoFilter] = useState<"platos" | "dulce" | "bebida">("platos");
 
@@ -90,12 +83,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [animating, setAnimating] = useState(false);
   const [changingSlots, setChangingSlots] = useState<Set<string>>(new Set());
 
-  // Result
-  const [result, setResult] = useState<Dish | null>(null);
+  // Result — top 3 recommendations
+  const [results, setResults] = useState<Dish[]>([]);
   const [usedIds, setUsedIds] = useState<Set<string>>(new Set());
   const [showOverlay, setShowOverlay] = useState(false);
 
-  const TOTAL_STEPS = 6;
+  const TOTAL_STEPS = 5;
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name.toLowerCase()])), [categories]);
 
   // Get dish pool filtered by type
@@ -139,7 +132,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, [getDishPool]);
 
   useEffect(() => {
-    if (step === 5 && gridDishes.length === 0) initGrid(photoFilter);
+    if (step === 4 && gridDishes.length === 0) initGrid(photoFilter);
   }, [step, gridDishes.length, initGrid, photoFilter]);
 
   // Akinator: replace non-selected dishes with similar ones
@@ -229,7 +222,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Reset grid when filter changes
   useEffect(() => {
-    if (step === 5) initGrid(photoFilter);
+    if (step === 4) initGrid(photoFilter);
   }, [photoFilter]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const close = useCallback(() => {
@@ -265,9 +258,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }
   };
 
-  // Scoring algorithm (inspired by genie-recommendations.ts)
+  // Scoring algorithm — returns top 3 from different categories
   const recommend = () => {
-    // 1. Build ingredient/category profile from liked dishes
     const likedDishes = dishes.filter((d) => liked.has(d.id));
     const likedCats = new Set(likedDishes.map((d) => d.categoryId));
     const likedIngredients = new Set<string>();
@@ -275,7 +267,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       (d.ingredients || "").toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean).forEach((i) => likedIngredients.add(i));
     });
 
-    // 2. Score all candidates
     let candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
 
     // Filter by restrictions
@@ -291,69 +282,81 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       });
     }
 
-    // Score each candidate
     const scored = candidates.map((d) => {
       let score = 0;
-      const cn = catMap.get(d.categoryId) || "";
-
-      // Category match (+20 if same category as any liked dish)
       if (likedCats.has(d.categoryId)) score += 20;
-
-      // Ingredient overlap (+5 per shared ingredient)
       const dishIngr = (d.ingredients || "").toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
       dishIngr.forEach((i) => { if (likedIngredients.has(i)) score += 5; });
-
-      // RECOMMENDED boost (+10)
       if (d.tags?.includes("RECOMMENDED")) score += 10;
-
-      // Hunger alignment
-      if (hunger === "light") {
-        if (cn.includes("entrada") || cn.includes("aperitivo")) score += 8;
-      } else if (hunger === "heavy") {
-        score += Math.min(d.price / 5000, 5); // Higher price = more substantial
-      } else {
-        if (cn.includes("fondo") || cn.includes("pizza") || cn.includes("hamburguesa") || cn.includes("sushi")) score += 8;
-      }
-
-      // Has photo bonus
       if (d.photos?.length > 0) score += 2;
-
-      // Small random factor
+      // Penalize dislikes
+      const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
+      dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
       score += Math.random() * 3;
-
       return { dish: d, score };
     });
 
     scored.sort((a, b) => b.score - a.score);
-    const pick = scored[0]?.dish;
 
-    if (pick) {
-      setResult(pick);
-      setUsedIds((prev) => new Set([...prev, pick.id]));
-      trackStat(restaurantId, "GENIO_COMPLETE", pick.id);
+    // Pick top 3 from different categories when possible
+    const picks: Dish[] = [];
+    const usedCats = new Set<string>();
+    for (const { dish } of scored) {
+      if (picks.length >= 3) break;
+      if (picks.length === 0) {
+        // First pick: always the highest scored
+        picks.push(dish);
+        usedCats.add(dish.categoryId);
+      } else if (!usedCats.has(dish.categoryId)) {
+        // Different category
+        picks.push(dish);
+        usedCats.add(dish.categoryId);
+      }
+    }
+    // If not enough from different categories, fill with top remaining
+    if (picks.length < 3) {
+      for (const { dish } of scored) {
+        if (picks.length >= 3) break;
+        if (!picks.some((p) => p.id === dish.id)) picks.push(dish);
+      }
+    }
+
+    if (picks.length > 0) {
+      setResults(picks);
+      setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
+      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
     }
     setShowOverlay(false);
-    setStep(6); // Go to result (virtual step beyond slides)
+    setStep(5); // Result step
   };
 
   const surpriseMe = () => {
     const withPhotos = dishes.filter((d) => d.photos?.length > 0);
-    const pick = withPhotos[Math.floor(Math.random() * withPhotos.length)] || dishes[0];
-    if (pick) {
-      setResult(pick);
-      trackStat(restaurantId, "GENIO_COMPLETE", pick.id);
+    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
+    const picks = shuffled.slice(0, 3);
+    if (picks.length > 0) {
+      setResults(picks);
+      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
     }
-    setStep(6);
+    setStep(5);
   };
 
   const retryRecommend = () => {
-    // Track rejection of current recommendation
-    if (result) trackStat(restaurantId, "GENIO_DISH_REJECTED", result.id);
+    results.forEach((r) => trackStat(restaurantId, "GENIO_DISH_REJECTED", r.id));
     const candidates = dishes.filter((d) => !usedIds.has(d.id) && d.photos?.length > 0);
-    const pick = candidates[Math.floor(Math.random() * candidates.length)] || dishes[0];
-    if (pick) {
-      setResult(pick);
-      setUsedIds((prev) => new Set([...prev, pick.id]));
+    const shuffled = [...candidates].sort(() => Math.random() - 0.5);
+    const picks: Dish[] = [];
+    const usedCats = new Set<string>();
+    for (const d of shuffled) {
+      if (picks.length >= 3) break;
+      if (!usedCats.has(d.categoryId) || picks.length >= 2) {
+        picks.push(d);
+        usedCats.add(d.categoryId);
+      }
+    }
+    if (picks.length > 0) {
+      setResults(picks);
+      setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
     }
   };
 
@@ -362,6 +365,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     setVisible(false);
     setTimeout(() => onResult(dish), 200);
   };
+
+  const mainResult = results[0] || null;
+  const altResults = results.slice(1);
 
   // Random phrase index (stable per session)
   const [phraseIdx] = useState(() => Math.floor(Math.random() * 5));
@@ -373,7 +379,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     : liked.size === 3 ? "Ya casi lo tengo... 🤔"
     : null;
 
-  const displayStep = Math.min(step, 5); // Clamp for slide animation
+  const displayStep = Math.min(step, 4); // Clamp for slide animation
   const [skipTransition, setSkipTransition] = useState(false);
 
   return (
@@ -394,7 +400,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ width: 34 }} />
         )}
         <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", fontWeight: 500 }}>
-          {step === 0 ? "" : step <= 5 ? `Paso ${step} de 5` : "✨ Resultado"}
+          {step === 0 ? "" : step <= 4 ? `Paso ${step} de 4` : "✨ Resultado"}
         </span>
         <button onClick={close} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none" }}>
           <X size={16} color="white" />
@@ -402,9 +408,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       </div>
 
       {/* Progress bar */}
-      {step >= 1 && step <= 5 && (
+      {step >= 1 && step <= 4 && (
         <div style={{ position: "absolute", top: 62, left: 20, right: 20, zIndex: 20, display: "flex", gap: 4 }}>
-          {[1, 2, 3, 4, 5].map((i) => (
+          {[1, 2, 3, 4].map((i) => (
             <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? "#F4A623" : "rgba(255,255,255,0.15)", transition: "background 0.3s" }} />
           ))}
         </div>
@@ -442,7 +448,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 })()}
               </p>
               <div className="flex flex-col items-center" style={{ gap: 12, marginTop: 16 }}>
-                <button onClick={() => { setSkipTransition(true); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
+                <button onClick={() => { setSkipTransition(true); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); initGrid(photoFilter); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                   Continuar →
                 </button>
                 <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
@@ -562,31 +568,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </button>
         </div>
 
-        {/* STEP 4 — Hunger */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 40px" }}>
-          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28 }}>
-            ¿Cuánta hambre tienes?
-          </h2>
-          <div className="flex flex-col" style={{ gap: 12 }}>
-            {HUNGER_OPTIONS.map((h) => {
-              const sel = hunger === h.value;
-              const Icon = h.icon;
-              return (
-                <button key={h.value} onClick={() => { setHunger(h.value); setTimeout(next, 400); }}
-                  className="flex items-center gap-4 transition-all duration-200"
-                  style={{ padding: "18px 20px", borderRadius: 14, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.12)"}`, background: sel ? "rgba(244,166,35,0.08)" : "rgba(255,255,255,0.05)" }}>
-                  <Icon size={22} color="#F4A623" style={{ flexShrink: 0 }} />
-                  <div style={{ textAlign: "left" }}>
-                    <span style={{ color: "white", fontSize: "1.15rem", fontWeight: 700, display: "block", lineHeight: 1.3 }}>{h.label}</span>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.95rem", display: "block", marginTop: 2 }}>{h.sub}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* STEP 5 — Akinator photo grid */}
+        {/* STEP 4 — Akinator photo grid */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "78px 8px 20px", position: "relative" }}>
           {/* Category filter pills */}
           <div className="flex" style={{ gap: 8, marginBottom: 16, justifyContent: "center" }}>
@@ -691,7 +673,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </span>
               <button onClick={recommend} className="active:scale-95 transition-transform"
                 style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "15px 28px", borderRadius: 50, border: "none" }}>
-                Ver sugerencia del Genio →
+                Ver sugerencias del Genio →
               </button>
               <button onClick={() => { setShowOverlay(false); setOverlayDismissed(true); setDismissedAt(liked.size); }}
                 style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: 4 }}>
@@ -704,39 +686,71 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
 
       {/* RESULT — overlays everything when step === 5 */}
-      {step === 6 && result && (
-        <div className="absolute flex flex-col items-center" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "60px 20px 20px", gap: 10, overflowY: "auto" }}>
+      {step === 5 && mainResult && (
+        <div className="absolute flex flex-col items-center" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "56px 20px 20px", gap: 8, overflowY: "auto" }}>
           {/* Back + Close buttons */}
-          <button onClick={() => setStep(5)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
+          <button onClick={() => setStep(4)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
             <ChevronLeft size={18} color="white" />
           </button>
           <button onClick={close} className="absolute flex items-center justify-center" style={{ top: 16, right: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
             <X size={16} color="white" />
           </button>
-          {/* Genio icon */}
-          <span style={{ fontSize: "3rem", marginBottom: 4 }}>🧞</span>
-          <span style={{ color: "#F4A623", fontSize: "0.8rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
+
+          {/* Genio header */}
+          <span style={{ fontSize: "2.4rem", marginBottom: 2 }}>🧞</span>
+          <span style={{ color: "#F4A623", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             El Genio recomienda
           </span>
-          <div className="relative overflow-hidden" style={{ width: "calc(100% - 20px)", maxWidth: 240, aspectRatio: "4/5", borderRadius: 16, flexShrink: 0 }}>
-            {result.photos?.[0] && <Image src={result.photos[0]} alt={result.name} fill className="object-cover" sizes="80vw" />}
-          </div>
-          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", lineHeight: 1.2 }}>
-            {result.name}
-          </h2>
-          {result.description && (
-            <p className="text-center line-clamp-2" style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.95rem", lineHeight: 1.5, maxWidth: 300 }}>
-              {result.description}
-            </p>
-          )}
-          <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 0" }} />
-          <PostGenioCapture restaurantId={restaurantId} />
-          <button onClick={() => handleResult(result)} className="active:scale-95 transition-transform"
-            style={{ width: 240, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 0", borderRadius: 50, border: "none", textAlign: "center" }}>
-            Ver en la carta ↓
+
+          {/* Main recommendation */}
+          <button onClick={() => handleResult(mainResult)} className="relative overflow-hidden active:scale-[0.98] transition-transform" style={{ width: "100%", maxWidth: 320, aspectRatio: "4/5", borderRadius: 18, flexShrink: 0, border: "none", padding: 0, cursor: "pointer" }}>
+            {mainResult.photos?.[0] && <Image src={mainResult.photos[0]} alt={mainResult.name} fill className="object-cover" sizes="85vw" />}
+            <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}>
+              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", lineHeight: 1.15, margin: "0 0 4px" }}>
+                {mainResult.name}
+              </h2>
+              {mainResult.description && (
+                <p className="line-clamp-2" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", lineHeight: 1.4, margin: 0 }}>
+                  {mainResult.description}
+                </p>
+              )}
+              <span style={{ color: "#F4A623", fontSize: "0.9rem", fontWeight: 700, marginTop: 6, display: "block" }}>
+                ${mainResult.price?.toLocaleString("es-CL")}
+              </span>
+            </div>
+            <div className="absolute" style={{ top: 12, left: 12, background: "#F4A623", color: "#0e0e0e", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>
+              ⭐ MEJOR MATCH
+            </div>
           </button>
-          <button onClick={retryRecommend} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem" }}>
-            Recomendar otro
+
+          {/* 2 alternatives */}
+          {altResults.length > 0 && (
+            <>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", margin: "8px 0 4px" }}>
+                También te podría gustar
+              </p>
+              <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 320 }}>
+                {altResults.map((alt) => (
+                  <button key={alt.id} onClick={() => handleResult(alt)} className="relative overflow-hidden active:scale-[0.97] transition-transform" style={{ flex: 1, aspectRatio: "3/4", borderRadius: 14, border: "none", padding: 0, cursor: "pointer" }}>
+                    {alt.photos?.[0] && <Image src={alt.photos[0]} alt={alt.name} fill className="object-cover" sizes="40vw" />}
+                    <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "40px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
+                      <p className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", lineHeight: 1.15, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                        {alt.name}
+                      </p>
+                      <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 600 }}>
+                        ${alt.price?.toLocaleString("es-CL")}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.1)", margin: "6px 0" }} />
+          <PostGenioCapture restaurantId={restaurantId} />
+          <button onClick={retryRecommend} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: 12 }}>
+            🔄 Recomendar otros
           </button>
         </div>
       )}
