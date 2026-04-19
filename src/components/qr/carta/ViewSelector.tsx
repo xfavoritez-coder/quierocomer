@@ -45,7 +45,7 @@ export default function ViewSelector({ restaurantId }: Props) {
         setTimeout(() => {
           setShowTooltip(false);
           localStorage.setItem(TOOLTIP_KEY, "1");
-        }, 4000);
+        }, 6000);
       }, 800);
       return () => clearTimeout(timer);
     }
@@ -171,7 +171,7 @@ export default function ViewSelector({ restaurantId }: Props) {
             animation: "vsSlideIn 0.25s ease-out",
           }}
         >
-          Cambia la vista
+          Prueba las otras vistas ✨
           <div style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#0e0e0e" }} />
         </div>
       )}
