@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Layers, List, BookOpen, Sparkles, Check } from "lucide-react";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
+import GenioTip from "../genio/GenioTip";
 
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 
@@ -46,18 +47,18 @@ export default function ViewSelector({ restaurantId }: Props) {
     }
   }, []);
 
-  // Pulse after 8s of no interaction
+  // Recurring bounce every 10s while tooltip is visible
   useEffect(() => {
     if (!showTooltip) return;
-    pulseTimer.current = setTimeout(() => {
+    const interval = setInterval(() => {
       const el = document.getElementById("genio-tip-container");
       if (el) {
         el.style.animation = "none";
         void el.offsetHeight;
-        el.style.animation = "vsTipBounce 0.4s ease-in-out";
+        el.style.animation = "genioTipBounce 0.4s ease-in-out";
       }
-    }, 8000);
-    return () => { if (pulseTimer.current) clearTimeout(pulseTimer.current); };
+    }, 10000);
+    return () => clearInterval(interval);
   }, [showTooltip]);
 
   const dismissTooltip = () => {
@@ -149,19 +150,18 @@ export default function ViewSelector({ restaurantId }: Props) {
         onClick={() => { setOpen(!open); dismissTooltip(); }}
         aria-label="Cambiar vista"
         aria-expanded={open}
-        className="flex items-center justify-center active:scale-95 transition-transform"
+        className="flex items-center justify-center active:scale-90 transition-all duration-200"
         style={{
           width: 52,
           height: 52,
           borderRadius: "50%",
-          background: "rgba(0,0,0,0.55)",
+          background: open ? "rgba(244,166,35,0.2)" : "rgba(0,0,0,0.55)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          border: "1px solid rgba(255,255,255,0.12)",
+          border: open ? "1px solid rgba(244,166,35,0.4)" : "1px solid rgba(255,255,255,0.12)",
           color: "white",
           cursor: "pointer",
-          transition: "background 0.2s",
-          boxShadow: "0 4px 18px rgba(0,0,0,0.25)",
+          boxShadow: open ? "0 0 16px rgba(244,166,35,0.2)" : "0 4px 18px rgba(0,0,0,0.25)",
         }}
       >
         <Layers size={22} strokeWidth={1.75} />
@@ -169,75 +169,20 @@ export default function ViewSelector({ restaurantId }: Props) {
 
       {/* First-time tip del Genio */}
       {showTooltip && !open && (
-        <div
+        <GenioTip
           id="genio-tip-container"
-          role="status"
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            position: "absolute",
-            right: 0,
-            bottom: 64,
-            width: 260,
-            background: "#FFF4E6",
-            borderRadius: 16,
-            padding: "16px 16px 14px",
-            boxShadow: "0 8px 30px rgba(180,130,50,0.18)",
-            zIndex: 40,
-            animation: "vsTipIn 0.3s cubic-bezier(0.16,1,0.3,1)",
-          }}
+          onClose={dismissTooltip}
+          arrow="bottom-right"
+          style={{ position: "absolute", right: 0, bottom: 64, width: 260, zIndex: 40 }}
         >
-          {/* Close button */}
-          <button
-            onClick={dismissTooltip}
-            aria-label="Cerrar consejo"
-            style={{
-              position: "absolute", top: 8, right: 10,
-              background: "none", border: "none", cursor: "pointer",
-              color: "#c4a882", fontSize: "14px", lineHeight: 1, padding: 2,
-            }}
-          >
-            ✕
-          </button>
-
-          {/* Badge */}
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            background: "#F4A623", borderRadius: 50,
-            padding: "4px 10px 4px 8px", marginBottom: 10,
-          }}>
-            <Sparkles size={13} color="white" fill="white" />
-            <span style={{ color: "white", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Tip del Genio</span>
-          </div>
-
-          {/* Text */}
-          <p style={{ color: "#5c3d1e", fontSize: "14px", lineHeight: 1.5, margin: 0, fontWeight: 400 }}>
-            Hay más de una forma de explorar. Toca aquí para cambiar la vista.
-          </p>
-
-          {/* Arrow pointing down to the trigger button */}
-          <div style={{
-            position: "absolute", bottom: -6, right: 20,
-            width: 12, height: 12,
-            background: "#FFF4E6",
-            transform: "rotate(45deg)",
-            boxShadow: "3px 3px 6px rgba(180,130,50,0.1)",
-          }} />
-        </div>
+          Hay más de una forma de explorar. Toca aquí para cambiar la vista.
+        </GenioTip>
       )}
 
       <style>{`
         @keyframes vsSlideIn {
           from { opacity: 0; transform: translateX(10px); }
           to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes vsTipIn {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes vsTipBounce {
-          0%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-6px); }
-          60% { transform: translateY(-3px); }
         }
       `}</style>
     </div>

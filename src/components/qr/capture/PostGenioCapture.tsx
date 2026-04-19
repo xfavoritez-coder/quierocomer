@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Sparkles, X } from "lucide-react";
+import { X } from "lucide-react";
 import { getGuestId } from "@/lib/guestId";
+import GenioTip, { TIP_BG, TIP_TEXT_COLOR } from "../genio/GenioTip";
 
 interface Props {
   restaurantId: string;
@@ -55,55 +56,52 @@ export default function PostGenioCapture({ restaurantId }: Props) {
     setStatus("success");
   };
 
+  const inputStyle = {
+    background: "#f5f0ea", border: "1px solid #e8e0d6", borderRadius: 10,
+    padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+    outline: "none", fontFamily: "inherit", width: "100%", boxSizing: "border-box" as const,
+  };
+
   return (
     <>
-      <style>{`
-        @keyframes captureGlow {
-          0%, 100% { border-color: rgba(255,255,255,0.15); box-shadow: 0 0 0 0 rgba(244,166,35,0); transform: scale(1); }
-          50% { border-color: rgba(244,166,35,0.5); box-shadow: 0 0 12px rgba(244,166,35,0.2); transform: scale(1.03); }
-        }
-      `}</style>
-      {/* Trigger button */}
-      <button
-        onClick={() => setModalOpen(true)}
-        className="font-[family-name:var(--font-dm)] active:scale-95 transition-transform"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: 6,
-          width: 240,
-          background: "none",
-          border: "1px solid rgba(255,255,255,0.15)",
-          color: "rgba(255,255,255,0.5)",
-          borderRadius: 50,
-          padding: "14px 0",
-          fontSize: "1rem",
-          fontWeight: 500,
-          fontFamily: "inherit",
-          cursor: "pointer",
-          animation: "captureGlow 2.5s ease-in-out infinite",
-        }}
+      {/* Trigger — uses GenioTip style */}
+      <GenioTip
+        arrow={null as any}
+        onClose={undefined}
+        badgeLabel="Tip del Genio"
+        style={{ width: 280, cursor: "pointer" }}
       >
-        <Sparkles size={14} color="#F4A623" fill="#F4A623" />
-        Recordar mis gustos
-      </button>
+        <button
+          onClick={() => setModalOpen(true)}
+          className="active:scale-95 transition-transform"
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            fontFamily: "inherit", padding: 0, color: TIP_TEXT_COLOR,
+            fontSize: "14px", lineHeight: 1.5, fontWeight: 400, textAlign: "left",
+          }}
+        >
+          Guarda tus gustos para que te recomiende mejor la próxima vez.
+          <span style={{ display: "block", color: "#F4A623", fontWeight: 600, marginTop: 6, fontSize: "13px" }}>
+            Guardar mis gustos →
+          </span>
+        </button>
+      </GenioTip>
 
       {/* Modal */}
       {modalOpen && (
         <div
           className="fixed inset-0 flex items-center justify-center font-[family-name:var(--font-dm)]"
-          style={{ zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
+          style={{ zIndex: 100, background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
           onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
         >
           <div
             style={{
-              background: "white",
+              background: TIP_BG,
               borderRadius: 20,
               padding: "32px 24px 28px",
               maxWidth: 340,
               width: "90%",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.3)",
+              boxShadow: "0 25px 60px rgba(180,130,50,0.15)",
               position: "relative",
             }}
           >
@@ -112,14 +110,14 @@ export default function PostGenioCapture({ restaurantId }: Props) {
               onClick={() => setModalOpen(false)}
               style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
             >
-              <X size={18} color="#ccc" />
+              <X size={18} color="#c4a882" />
             </button>
 
             {status === "success" ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 <span style={{ fontSize: "2.4rem", display: "block", marginBottom: 12 }}>🧞</span>
                 <p style={{ color: "#16a34a", fontSize: "1rem", fontWeight: 700 }}>¡Listo! Tus gustos quedaron guardados</p>
-                <p style={{ color: "#888", fontSize: "0.85rem", marginTop: 6 }}>La próxima vez te recomendaré mejor</p>
+                <p style={{ color: "#999", fontSize: "0.85rem", marginTop: 6 }}>La próxima vez te recomendaré mejor</p>
               </div>
             ) : (
               <>
@@ -132,7 +130,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
                   >
                     Guarda tus gustos
                   </h3>
-                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: "0.85rem", color: "#999", marginTop: 6, lineHeight: 1.5 }}>
                     Así el Genio te recomienda mejor cada vez
                   </p>
                 </div>
@@ -144,11 +142,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Tu nombre"
-                    style={{
-                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
-                      outline: "none", fontFamily: "inherit",
-                    }}
+                    style={inputStyle}
                   />
                   <input
                     type="email"
@@ -156,11 +150,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="tu@email.com"
                     onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-                    style={{
-                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
-                      outline: "none", fontFamily: "inherit",
-                    }}
+                    style={inputStyle}
                   />
                   <button
                     onClick={handleSubmit}
