@@ -354,7 +354,7 @@ export default function CartaPremium({
       <div
         className="font-[family-name:var(--font-dm)]"
         style={{
-          margin: "32px 20px 16px", padding: "24px 20px", textAlign: "center",
+          margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
           background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
           border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
         }}
