@@ -53,7 +53,7 @@ export async function GET() {
       userName: true,
       submittedAt: true,
       assignedResult: { select: { name: true, traits: true, description: true } },
-      experience: { include: { template: { select: { name: true, iconEmoji: true, accentColor: true } } } },
+      experience: { include: { template: { select: { name: true, iconEmoji: true, accentColor: true } }, restaurant: { select: { name: true } } } },
     },
   });
 
@@ -67,6 +67,7 @@ export async function GET() {
       accentColor: e.experience.template.accentColor,
       resultName: e.assignedResult?.name || "",
       resultTraits: e.assignedResult?.traits || [],
+      restaurantName: e.experience.restaurant.name,
       date: e.submittedAt,
     }));
 

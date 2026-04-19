@@ -16,12 +16,10 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const [state, setState] = useState<ButtonState>("loading");
   const [toast, setToast] = useState<string | null>(null);
 
-  // Check if waiter service is active (has subscriptions)
   useEffect(() => {
     fetch(`/api/qr/waiter/active-calls?restaurantId=${restaurantId}`)
       .then((r) => r.json())
       .then(() => {
-        // Check for active subscriptions
         fetch(`/api/qr/waiter/subscribe?restaurantId=${restaurantId}`)
           .then((r) => r.json())
           .then((data) => setState(data.active ? "idle" : "disabled"))
@@ -37,7 +35,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
 
   const handleCall = useCallback(async () => {
     if (state === "disabled") {
-      showToast("Llamar garzón no disponible de momento");
+      showToast("No disponible de momento");
       return;
     }
     if (state !== "idle") return;
@@ -51,7 +49,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         body: JSON.stringify({
           restaurantId,
           tableId: tableId || "general",
-          tableName: tableName || "Cliente",
+          tableName: tableName || "Mesa 11",
           dietType: typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null,
           restrictions: typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null,
         }),
@@ -76,7 +74,39 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const isDisabled = state === "disabled" || state === "loading";
 
   return (
-    <>
+    <div style={{ position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
+      {/* Success / error bubble — positioned above button */}
+      {state === "success" && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            position: "absolute", bottom: size + 8, left: "50%", transform: "translateX(-50%)",
+            background: "#16a34a", color: "white",
+            padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 600,
+            boxShadow: "0 4px 12px rgba(22,163,74,0.3)", zIndex: 60,
+            whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
+          }}
+        >
+          ¡Garzón avisado!
+          <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
+        </div>
+      )}
+
+      {toast && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            position: "absolute", bottom: size + 8, left: "50%", transform: "translateX(-50%)",
+            background: "#333", color: "white",
+            padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 500,
+            zIndex: 60, whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
+          }}
+        >
+          {toast}
+          <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 8, height: 8, background: "#333" }} />
+        </div>
+      )}
+
       <button
         onClick={handleCall}
         className="flex items-center justify-center rounded-full transition-transform active:scale-95"
@@ -98,47 +128,28 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
             size={size * 0.38}
             color={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
             fill={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            style={{ animation: state === "calling" ? "waiterShake 0.3s ease-in-out infinite" : undefined }}
           />
         )}
       </button>
-
-      {state === "success" && (
-        <div
-          className="fixed font-[family-name:var(--font-dm)]"
-          style={{
-            bottom: 180, left: "50%", transform: "translateX(-50%)", background: "#16a34a", color: "white",
-            padding: "8px 16px", borderRadius: 50, fontSize: "0.82rem", fontWeight: 600,
-            boxShadow: "0 4px 16px rgba(22,163,74,0.3)", zIndex: 60,
-            animation: "fadeInUp 0.2s ease-out",
-          }}
-        >
-          ¡Garzón en camino!
-        </div>
-      )}
-
-      {toast && (
-        <div
-          className="fixed font-[family-name:var(--font-dm)]"
-          style={{
-            bottom: 180, left: "50%", transform: "translateX(-50%)", background: "#333", color: "white",
-            padding: "8px 16px", borderRadius: 50, fontSize: "0.82rem", fontWeight: 500,
-            zIndex: 60, animation: "fadeInUp 0.2s ease-out",
-          }}
-        >
-          {toast}
-        </div>
-      )}
 
       <style>{`
         @keyframes waiterPulse {
           0%, 100% { box-shadow: 0 0 0 0 rgba(14,14,14,0.4); }
           50% { box-shadow: 0 0 0 12px rgba(14,14,14,0); }
         }
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(8px); }
-          to { opacity: 1; transform: translateY(0); }
+        @keyframes waiterShake {
+          0%, 100% { transform: rotate(0deg); }
+          20% { transform: rotate(14deg); }
+          40% { transform: rotate(-14deg); }
+          60% { transform: rotate(10deg); }
+          80% { transform: rotate(-6deg); }
+        }
+        @keyframes waiterBubbleIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
       `}</style>
-    </>
+    </div>
   );
 }

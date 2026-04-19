@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronRight, LogOut, ChevronLeft } from "lucide-react";
+import { ChevronRight, LogOut, ChevronLeft, Pencil } from "lucide-react";
 import LoginDrawer from "./LoginDrawer";
 
 interface QRUser {
@@ -49,6 +49,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
   const [editingIngredients, setEditingIngredients] = useState(false);
   const [confirmedIngs, setConfirmedIngs] = useState<Set<string>>(new Set());
   const [rejectedIngs, setRejectedIngs] = useState<Set<string>>(new Set());
+  const [rejectConfirm, setRejectConfirm] = useState<string | null>(null);
   const [page, setPage] = useState<Page>("main");
   const [saving, setSaving] = useState(false);
 
@@ -58,7 +59,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
   const [editDiet, setEditDiet] = useState<string | null>(null);
   const [editRestrictions, setEditRestrictions] = useState<string[]>([]);
   const [editDislikes, setEditDislikes] = useState<string[]>([]);
-  const [experiences, setExperiences] = useState<{ experienceName: string; iconEmoji: string; accentColor: string; resultName: string; resultTraits: string[]; date: string }[]>([]);
+  const [experiences, setExperiences] = useState<{ experienceName: string; iconEmoji: string; accentColor: string; resultName: string; resultTraits: string[]; restaurantName: string; date: string }[]>([]);
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -237,80 +238,60 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
       {/* Top ingredients */}
       {topIngredients.length > 0 && (
         <div style={{ marginBottom: 24 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
             <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Lo que más pides</h4>
             {!editingIngredients && (
-              <button onClick={() => { setEditingIngredients(true); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: "0.72rem", color: "#F4A623", fontWeight: 600 }}>
-                Corregir
+              <button onClick={() => { setEditingIngredients(true); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); setRejectConfirm(null); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
+                <Pencil size={12} color="#F4A623" />
               </button>
             )}
           </div>
           {!editingIngredients ? (
-            <>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {topIngredients.map((ing) => (
-                  <span key={ing.name} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
-                ))}
-              </div>
-              <p style={{ fontSize: "0.7rem", color: "#ccc", marginTop: 8 }}>Toca "Corregir" si algo no te gusta</p>
-            </>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {topIngredients.map((ing) => (
+                <span key={ing.name} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
+              ))}
+            </div>
           ) : (
-            <>
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {topIngredients.filter((i) => !rejectedIngs.has(i.name)).map((ing) => {
-                  const confirmed = confirmedIngs.has(ing.name);
-                  return (
-                    <div key={ing.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: confirmed ? "#f0fdf4" : "#fafafa", borderRadius: 10, border: confirmed ? "1px solid rgba(22,163,74,0.2)" : "1px solid #eee" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {topIngredients.filter((i) => !rejectedIngs.has(i.name)).map((ing) => {
+                const confirmed = confirmedIngs.has(ing.name);
+                const isPendingReject = rejectConfirm === ing.name;
+                return (
+                  <div key={ing.name}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: confirmed ? "#f0fdf4" : "#fafafa", borderRadius: isPendingReject ? "10px 10px 0 0" : 10, border: confirmed ? "1px solid rgba(22,163,74,0.2)" : "1px solid #eee", transition: "all 0.2s" }}>
                       <span style={{ flex: 1, fontSize: "0.88rem", color: "#0e0e0e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
-                      <button onClick={() => { setConfirmedIngs((p) => { const n = new Set(p); if (n.has(ing.name)) n.delete(ing.name); else n.add(ing.name); return n; }); }} style={{ width: 32, height: 32, borderRadius: "50%", background: confirmed ? "#16a34a" : "#f0f0f0", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
+                      <button onClick={async () => {
+                        if (confirmed) return;
+                        setConfirmedIngs((p) => new Set(p).add(ing.name));
+                        await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmedIngredients: [ing.name] }) }).catch(() => {});
+                      }} style={{ width: 32, height: 32, borderRadius: "50%", background: confirmed ? "#16a34a" : "#f0f0f0", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
                         {confirmed ? <span style={{ color: "white" }}>✓</span> : <span style={{ color: "#999" }}>👍</span>}
                       </button>
-                      <button onClick={() => setRejectedIngs((p) => new Set(p).add(ing.name))} style={{ width: 32, height: 32, borderRadius: "50%", background: "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>
-                        <span style={{ color: "#dc2626" }}>👎</span>
+                      <button onClick={() => setRejectConfirm(isPendingReject ? null : ing.name)} style={{ width: 32, height: 32, borderRadius: "50%", background: isPendingReject ? "#dc2626" : "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
+                        <span style={{ color: isPendingReject ? "white" : "#dc2626" }}>👎</span>
                       </button>
                     </div>
-                  );
-                })}
-              </div>
-              {rejectedIngs.size > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <p style={{ fontSize: "0.7rem", color: "#dc2626", marginBottom: 6 }}>Se moverán a "No me gusta":</p>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                    {[...rejectedIngs].map((ing) => (
-                      <span key={ing} style={{ padding: "4px 10px", borderRadius: 50, background: "#fef2f2", border: "1px solid rgba(220,38,38,0.15)", fontSize: "0.78rem", color: "#dc2626", textTransform: "capitalize" }}>
-                        {ing}
-                        <button onClick={() => setRejectedIngs((p) => { const n = new Set(p); n.delete(ing); return n; })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", marginLeft: 4, fontSize: "0.7rem" }}>✕</button>
-                      </span>
-                    ))}
+                    {isPendingReject && (
+                      <div style={{ background: "#fef2f2", borderRadius: "0 0 10px 10px", border: "1px solid rgba(220,38,38,0.15)", borderTop: "none", padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
+                        <p style={{ flex: 1, fontSize: "0.78rem", color: "#991b1b", margin: 0, lineHeight: 1.4 }}>Verás menos platos con <strong>{ing.name}</strong>. ¿Seguro?</p>
+                        <button onClick={async () => {
+                          setRejectedIngs((p) => new Set(p).add(ing.name));
+                          setRejectConfirm(null);
+                          setTopIngredients((prev) => prev.filter((i) => i.name !== ing.name));
+                          await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rejectedIngredients: [ing.name] }) }).catch(() => {});
+                        }} style={{ padding: "5px 12px", background: "#dc2626", color: "white", border: "none", borderRadius: 50, fontSize: "0.75rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
+                          Sí, quitarlo
+                        </button>
+                        <button onClick={() => setRejectConfirm(null)} style={{ padding: "5px 10px", background: "none", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 50, fontSize: "0.75rem", color: "#dc2626", fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
+                          No
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
-              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-                <button
-                  onClick={async () => {
-                    setSaving(true);
-                    await fetch("/api/qr/user/update", {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                        confirmedIngredients: [...confirmedIngs],
-                        rejectedIngredients: [...rejectedIngs],
-                      }),
-                    });
-                    setSaving(false);
-                    setEditingIngredients(false);
-                    window.location.reload();
-                  }}
-                  disabled={saving || (confirmedIngs.size === 0 && rejectedIngs.size === 0)}
-                  style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontSize: "0.88rem", fontWeight: 700, fontFamily: "inherit", cursor: "pointer", opacity: saving || (confirmedIngs.size === 0 && rejectedIngs.size === 0) ? 0.5 : 1 }}
-                >
-                  {saving ? "Guardando..." : "Guardar"}
-                </button>
-                <button onClick={() => { setEditingIngredients(false); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); }} style={{ padding: "10px 16px", background: "none", border: "1px solid #eee", borderRadius: 50, color: "#999", fontSize: "0.85rem", fontFamily: "inherit", cursor: "pointer" }}>
-                  Cancelar
-                </button>
-              </div>
-            </>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
@@ -330,10 +311,11 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
                   <div style={{ fontSize: "0.95rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.2 }}>
                     {e.resultName}
                   </div>
+                  <div style={{ fontSize: "0.68rem", color: "#999", marginTop: 2 }}>en {e.restaurantName}</div>
                   {e.resultTraits.length > 0 && (
                     <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
                       {e.resultTraits.slice(0, 3).map((t) => (
-                        <span key={t} style={{ fontSize: "0.68rem", padding: "1px 6px", borderRadius: 50, background: `${e.accentColor}12`, color: e.accentColor, border: `1px solid ${e.accentColor}20` }}>{t}</span>
+                        <span key={t} style={{ fontSize: "0.68rem", padding: "1px 6px", borderRadius: 50, background: `${e.accentColor}25`, color: e.accentColor, border: `1px solid ${e.accentColor}35`, fontWeight: 600 }}>{t}</span>
                       ))}
                     </div>
                   )}
@@ -351,15 +333,20 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {visited.map((v) => (
               <a key={v.restaurant.id} href={`/qr/${v.restaurant.slug}`} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#fafafa", borderRadius: 12, textDecoration: "none" }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#eee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#999", flexShrink: 0 }}>
-                  {v.restaurant.name.charAt(0)}
-                </div>
+                {v.restaurant.logoUrl ? (
+                  <img src={v.restaurant.logoUrl} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#eee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", fontWeight: 700, color: "#999", flexShrink: 0 }}>
+                    {v.restaurant.name.charAt(0)}
+                  </div>
+                )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: "0.9rem", fontWeight: 600, color: "#0e0e0e" }}>{v.restaurant.name}</div>
                   <div style={{ fontSize: "0.75rem", color: "#999" }}>
                     {v.visitCount} {v.visitCount === 1 ? "visita" : "visitas"}
                   </div>
                 </div>
+                <span style={{ fontSize: "0.72rem", color: "#ccc", fontWeight: 500 }}>Ver carta</span>
                 <ChevronRight size={14} color="#ddd" />
               </a>
             ))}
@@ -378,7 +365,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
     <div className="fixed inset-0 z-[110] flex items-end font-[family-name:var(--font-dm)]" style={{ minHeight: "100dvh" }}>
       <div onClick={(e) => { if (e.target === e.currentTarget) close(); }} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
       <div style={{ position: "relative", zIndex: 1, background: "white", width: "100%", borderRadius: "20px 20px 0 0", padding: "28px 24px 40px", maxHeight: "90vh", overflowY: "auto", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 0.25s ease-out", scrollbarWidth: "none" }}>
-        <button onClick={close} className="absolute flex items-center justify-center" style={{ top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "#f5f5f5", border: "none", color: "#999", fontSize: "0.9rem", cursor: "pointer" }}>✕</button>
+        <button onClick={close} className="flex items-center justify-center" style={{ position: "sticky", top: 0, float: "right", zIndex: 10, width: 32, height: 32, borderRadius: "50%", background: "#f5f5f5", border: "none", color: "#999", fontSize: "0.9rem", cursor: "pointer", marginTop: -8, marginRight: -4 }}>✕</button>
 
         {page === "main" && mainPage}
         {page === "edit-diet" && renderEditDiet()}

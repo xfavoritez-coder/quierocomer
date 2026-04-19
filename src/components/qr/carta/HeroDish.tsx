@@ -141,14 +141,14 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
           className="absolute z-10 flex items-center justify-center"
           style={{
             top: 12, right: 16,
-            width: 37, height: 37, borderRadius: "50%",
+            width: 36, height: 36, borderRadius: "50%",
             ...(qrUser?.name
               ? { background: "#F4A623", border: "none" }
               : { background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", border: "1px solid rgba(255,255,255,0.15)" }),
           }}
         >
           {qrUser?.name ? (
-            <span style={{ color: "white", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+            <span style={{ color: "white", fontSize: "15px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
               {qrUser.name.charAt(0).toUpperCase()}
             </span>
           ) : (

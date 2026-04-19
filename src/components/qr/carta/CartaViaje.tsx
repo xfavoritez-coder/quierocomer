@@ -107,7 +107,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 16, right: 12, width: 37, height: 37, borderRadius: "50%",
+            top: 16, right: 12, width: 36, height: 36, borderRadius: "50%",
             ...(qrUser?.name
               ? { background: "#F4A623", border: "none" }
               : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
@@ -115,7 +115,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           }}
         >
           {qrUser?.name ? (
-            <span style={{ color: "white", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+            <span style={{ color: "white", fontSize: "15px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
               {qrUser.name.charAt(0).toUpperCase()}
             </span>
           ) : (
