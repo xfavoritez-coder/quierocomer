@@ -17,13 +17,13 @@ export async function GET(req: NextRequest) {
 export async function POST(request: Request) {
   try {
     const { guestId, dishIds, source } = await request.json();
-    // source: "genio_liked" (weight 3) | "genio_result" (weight 5) | "viewed" (weight 1)
+    // source: "picked" (weight 10) | "genio_result" (weight 5) | "genio_liked" (weight 3) | "viewed" (weight 1) | "rejected" (weight -2)
 
     if (!guestId || !dishIds?.length) {
       return NextResponse.json({ ok: true }); // silently skip
     }
 
-    const weight = source === "genio_result" ? 5 : source === "genio_liked" ? 3 : 1;
+    const weight = source === "picked" ? 10 : source === "genio_result" ? 5 : source === "genio_liked" ? 3 : source === "rejected" ? -2 : 1;
 
     // Get ingredients for these dishes
     const dishIngredients = await prisma.dishIngredient.findMany({

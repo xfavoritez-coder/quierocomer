@@ -101,6 +101,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Result — top 3 recommendations
   const [results, setResults] = useState<Dish[]>([]);
+  const [resultReasons, setResultReasons] = useState<Record<string, string[]>>({});
+  const [lovedIds, setLovedIds] = useState<Set<string>>(new Set());
   const [usedIds, setUsedIds] = useState<Set<string>>(new Set());
   const [showOverlay, setShowOverlay] = useState(false);
 
@@ -274,16 +276,37 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }
   };
 
-  // Scoring algorithm — returns top 3 from different categories
+  // Helper: get ingredient list for a dish
+  const getDishIngr = useCallback((d: Dish) =>
+    (d.ingredients || "").toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean)
+  , []);
+
+  // Helper: check if dish is food (not drink/sweet) based on category
+  const isFoodCategory = useCallback((d: Dish) => {
+    const cn = catMap.get(d.categoryId) || "";
+    const isDrink = DRINK_KEYWORDS.some((kw) => cn.includes(kw));
+    const isSweet = SWEET_KEYWORDS.some((kw) => cn.includes(kw));
+    return !isDrink && !isSweet;
+  }, [catMap]);
+
+  // Scoring algorithm — returns top 3, same food type as photoFilter, different categories
   const recommend = () => {
     const likedDishes = dishes.filter((d) => liked.has(d.id));
     const likedCats = new Set(likedDishes.map((d) => d.categoryId));
     const likedIngredients = new Set<string>();
-    likedDishes.forEach((d) => {
-      (d.ingredients || "").toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean).forEach((i) => likedIngredients.add(i));
-    });
+    likedDishes.forEach((d) => getDishIngr(d).forEach((i) => likedIngredients.add(i)));
 
-    let candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
+    // Filter candidates: same food type as what user was browsing
+    const filterKws = photoFilter === "dulce" ? SWEET_KEYWORDS : photoFilter === "bebida" ? DRINK_KEYWORDS : FOOD_KEYWORDS;
+    let candidates = dishes.filter((d) => {
+      if (liked.has(d.id) || usedIds.has(d.id)) return false;
+      const cn = catMap.get(d.categoryId) || "";
+      return filterKws.some((kw) => cn.includes(kw));
+    });
+    // Fallback: if too few candidates, use all food dishes
+    if (candidates.length < 6) {
+      candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
+    }
 
     // Filter by restrictions
     if (!restrictions.includes("ninguna") && restrictions.length > 0) {
@@ -298,19 +321,29 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       });
     }
 
+    // Score + track matching reasons
+    const reasons: Record<string, string[]> = {};
     const scored = candidates.map((d) => {
       let score = 0;
-      if (likedCats.has(d.categoryId)) score += 20;
-      const dishIngr = (d.ingredients || "").toLowerCase().split(/[,;]+/).map((s) => s.trim()).filter(Boolean);
-      dishIngr.forEach((i) => { if (likedIngredients.has(i)) score += 5; });
-      if (d.tags?.includes("RECOMMENDED")) score += 10;
+      const why: string[] = [];
+      const dishIngr = getDishIngr(d);
+
+      if (likedCats.has(d.categoryId)) { score += 20; why.push("categoría similar"); }
+      const matchedIngr: string[] = [];
+      dishIngr.forEach((i) => { if (likedIngredients.has(i)) { score += 5; matchedIngr.push(i); } });
+      if (matchedIngr.length > 0) why.push(matchedIngr.slice(0, 3).join(", "));
+      if (d.tags?.includes("RECOMMENDED")) { score += 10; why.push("recomendado del chef"); }
       if (d.photos?.length > 0) score += 2;
-      // Boost from persisted favorite ingredients (from previous sessions)
-      dishIngr.forEach((i) => { if (favIngredients[i]) score += Math.min(favIngredients[i], 10); });
+      // Boost from persisted favorites
+      const favMatched: string[] = [];
+      dishIngr.forEach((i) => { if (favIngredients[i]) { score += Math.min(favIngredients[i], 10); favMatched.push(i); } });
+      if (favMatched.length > 0 && matchedIngr.length === 0) why.push("te gusta " + favMatched.slice(0, 2).join(" y "));
       // Penalize dislikes
       const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
       dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
       score += Math.random() * 3;
+
+      reasons[d.id] = why;
       return { dish: d, score };
     });
 
@@ -318,20 +351,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
     // Pick top 3 from different categories when possible
     const picks: Dish[] = [];
-    const usedCats = new Set<string>();
+    const pickCats = new Set<string>();
     for (const { dish } of scored) {
       if (picks.length >= 3) break;
-      if (picks.length === 0) {
-        // First pick: always the highest scored
+      if (picks.length === 0 || !pickCats.has(dish.categoryId)) {
         picks.push(dish);
-        usedCats.add(dish.categoryId);
-      } else if (!usedCats.has(dish.categoryId)) {
-        // Different category
-        picks.push(dish);
-        usedCats.add(dish.categoryId);
+        pickCats.add(dish.categoryId);
       }
     }
-    // If not enough from different categories, fill with top remaining
     if (picks.length < 3) {
       for (const { dish } of scored) {
         if (picks.length >= 3) break;
@@ -341,49 +368,89 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
     if (picks.length > 0) {
       setResults(picks);
+      setResultReasons(reasons);
+      setLovedIds(new Set());
       setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
       picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
-      // Save ingredient preferences: liked dishes (high weight) + results (highest)
       const likedIds = [...liked];
       if (likedIds.length > 0) saveIngredients(likedIds, "genio_liked");
       saveIngredients(picks.map((p) => p.id), "genio_result");
     }
     setShowOverlay(false);
-    setStep(5); // Result step
+    setStep(5);
   };
 
   const surpriseMe = () => {
-    const withPhotos = dishes.filter((d) => d.photos?.length > 0);
-    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
+    const foodDishes = dishes.filter((d) => d.photos?.length > 0 && isFoodCategory(d));
+    const pool = foodDishes.length >= 3 ? foodDishes : dishes.filter((d) => d.photos?.length > 0);
+    const shuffled = [...pool].sort(() => Math.random() - 0.5);
     const picks = shuffled.slice(0, 3);
     if (picks.length > 0) {
       setResults(picks);
+      setResultReasons({});
+      setLovedIds(new Set());
       picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
     }
     setStep(5);
   };
 
   const retryRecommend = () => {
-    results.forEach((r) => trackStat(restaurantId, "GENIO_DISH_REJECTED", r.id));
+    // Penalize rejected dish ingredients
+    results.forEach((r) => {
+      trackStat(restaurantId, "GENIO_DISH_REJECTED", r.id);
+    });
+    // Save rejected ingredients with negative weight
+    fetch("/api/qr/ingredients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guestId: getGuestId(), dishIds: results.map((r) => r.id), source: "rejected" }),
+    }).catch(() => {});
+
     const candidates = dishes.filter((d) => !usedIds.has(d.id) && d.photos?.length > 0);
     const shuffled = [...candidates].sort(() => Math.random() - 0.5);
     const picks: Dish[] = [];
-    const usedCats = new Set<string>();
+    const pickCats = new Set<string>();
     for (const d of shuffled) {
       if (picks.length >= 3) break;
-      if (!usedCats.has(d.categoryId) || picks.length >= 2) {
+      if (!pickCats.has(d.categoryId) || picks.length >= 2) {
         picks.push(d);
-        usedCats.add(d.categoryId);
+        pickCats.add(d.categoryId);
       }
     }
     if (picks.length > 0) {
       setResults(picks);
+      setResultReasons({});
+      setLovedIds(new Set());
       setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
     }
   };
 
+  // Swap alternative to main position
+  const promoteResult = (dish: Dish) => {
+    setResults((prev) => {
+      const without = prev.filter((p) => p.id !== dish.id);
+      return [dish, ...without];
+    });
+  };
+
+  // Heart/love a dish — saves ingredients with high weight
+  const loveDish = (dish: Dish) => {
+    setLovedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(dish.id)) { n.delete(dish.id); } else { n.add(dish.id); saveIngredients([dish.id], "genio_result"); }
+      return n;
+    });
+  };
+
+  // Final pick: user chose this dish to view in carta
   const handleResult = (dish: Dish) => {
     trackStat(restaurantId, "GENIO_DISH_ACCEPTED", dish.id);
+    // Save with highest weight — this is what they actually want to eat
+    fetch("/api/qr/ingredients", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ guestId: getGuestId(), dishIds: [dish.id], source: "picked" }),
+    }).catch(() => {});
     setVisible(false);
     setTimeout(() => onResult(dish), 200);
   };
@@ -725,27 +792,40 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </span>
 
           {/* Main recommendation */}
-          <button onClick={() => handleResult(mainResult)} className="relative overflow-hidden active:scale-[0.98] transition-transform" style={{ width: "100%", maxWidth: 320, aspectRatio: "4/5", borderRadius: 18, flexShrink: 0, border: "none", padding: 0, cursor: "pointer" }}>
-            {mainResult.photos?.[0] && <Image src={mainResult.photos[0]} alt={mainResult.name} fill className="object-cover" sizes="85vw" />}
-            <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}>
-              <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", lineHeight: 1.15, margin: "0 0 4px" }}>
-                {mainResult.name}
-              </h2>
-              {mainResult.description && (
-                <p className="line-clamp-2" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", lineHeight: 1.4, margin: 0 }}>
-                  {mainResult.description}
-                </p>
-              )}
-              <span style={{ color: "#F4A623", fontSize: "0.9rem", fontWeight: 700, marginTop: 6, display: "block" }}>
-                ${mainResult.price?.toLocaleString("es-CL")}
-              </span>
-            </div>
+          <div className="relative overflow-hidden" style={{ width: "100%", maxWidth: 320, aspectRatio: "4/5", borderRadius: 18, flexShrink: 0 }}>
+            <button onClick={() => handleResult(mainResult)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
+              {mainResult.photos?.[0] && <Image src={mainResult.photos[0]} alt={mainResult.name} fill className="object-cover" sizes="85vw" />}
+              <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}>
+                <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", lineHeight: 1.15, margin: "0 0 4px", textAlign: "left" }}>
+                  {mainResult.name}
+                </h2>
+                {mainResult.description && (
+                  <p className="line-clamp-2" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", lineHeight: 1.4, margin: 0, textAlign: "left" }}>
+                    {mainResult.description}
+                  </p>
+                )}
+                <span style={{ color: "#F4A623", fontSize: "0.9rem", fontWeight: 700, marginTop: 6, display: "block", textAlign: "left" }}>
+                  ${mainResult.price?.toLocaleString("es-CL")}
+                </span>
+              </div>
+            </button>
             <div className="absolute" style={{ top: 12, left: 12, background: "#F4A623", color: "#0e0e0e", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>
               ⭐ MEJOR MATCH
             </div>
-          </button>
+            {/* Heart button */}
+            <button onClick={(e) => { e.stopPropagation(); loveDish(mainResult); }} className="absolute active:scale-90 transition-transform" style={{ top: 12, right: 12, width: 36, height: 36, borderRadius: "50%", background: lovedIds.has(mainResult.id) ? "#F4A623" : "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", transition: "background 0.2s" }}>
+              {lovedIds.has(mainResult.id) ? "❤️" : "🤍"}
+            </button>
+          </div>
 
-          {/* 2 alternatives */}
+          {/* Why this recommendation */}
+          {resultReasons[mainResult.id]?.length > 0 && (
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", fontStyle: "italic", margin: "2px 0 0", maxWidth: 320, textAlign: "center" }}>
+              Porque te gusta {resultReasons[mainResult.id].slice(0, 2).join(" y ")}
+            </p>
+          )}
+
+          {/* 2 alternatives — click swaps to main */}
           {altResults.length > 0 && (
             <>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", margin: "8px 0 4px" }}>
@@ -753,23 +833,36 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </p>
               <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 320 }}>
                 {altResults.map((alt) => (
-                  <button key={alt.id} onClick={() => handleResult(alt)} className="relative overflow-hidden active:scale-[0.97] transition-transform" style={{ flex: 1, aspectRatio: "3/4", borderRadius: 14, border: "none", padding: 0, cursor: "pointer" }}>
-                    {alt.photos?.[0] && <Image src={alt.photos[0]} alt={alt.name} fill className="object-cover" sizes="40vw" />}
-                    <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "40px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
-                      <p className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", lineHeight: 1.15, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                        {alt.name}
-                      </p>
-                      <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 600 }}>
-                        ${alt.price?.toLocaleString("es-CL")}
-                      </span>
-                    </div>
-                  </button>
+                  <div key={alt.id} className="relative overflow-hidden" style={{ flex: 1, aspectRatio: "3/4", borderRadius: 14 }}>
+                    <button onClick={() => promoteResult(alt)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
+                      {alt.photos?.[0] && <Image src={alt.photos[0]} alt={alt.name} fill className="object-cover" sizes="40vw" />}
+                      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "40px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
+                        <p className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", lineHeight: 1.15, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          {alt.name}
+                        </p>
+                        <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 600 }}>
+                          ${alt.price?.toLocaleString("es-CL")}
+                        </span>
+                      </div>
+                    </button>
+                    {/* Mini heart */}
+                    <button onClick={(e) => { e.stopPropagation(); loveDish(alt); }} className="absolute active:scale-90 transition-transform" style={{ top: 6, right: 6, width: 28, height: 28, borderRadius: "50%", background: lovedIds.has(alt.id) ? "#F4A623" : "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", transition: "background 0.2s" }}>
+                      {lovedIds.has(alt.id) ? "❤️" : "🤍"}
+                    </button>
+                  </div>
                 ))}
               </div>
             </>
           )}
 
           <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.1)", margin: "6px 0" }} />
+
+          {/* Action: go to carta with main dish */}
+          <button onClick={() => handleResult(mainResult)} className="active:scale-95 transition-transform"
+            style={{ width: 280, background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "13px 0", borderRadius: 50, border: "none", textAlign: "center" }}>
+            Ver {mainResult.name} en la carta
+          </button>
+
           <PostGenioCapture restaurantId={restaurantId} />
           <button onClick={retryRecommend} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: 12 }}>
             🔄 Recomendar otros
