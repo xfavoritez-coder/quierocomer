@@ -386,6 +386,7 @@ model Restaurant {
   promotionsMarketing   Promotion[]
   automationRules       AutomationRule[]
   genioInsights         GenioInsight[]
+  experience            Experience?
 
   @@index([ownerId])
 }
@@ -936,4 +937,79 @@ model GenioInsight {
 
   @@index([restaurantId])
   @@index([status])
+}
+
+// ─── Experiences (Gamification) ───────────────────────────────────────
+
+model ExperienceTemplate {
+  id          String   @id @default(cuid())
+  name        String   // "¿Qué dios egipcio eres?"
+  slug        String   @unique // egyptian-gods
+  theme       String   // egyptian-gods, samurai, italian-regions, pizza-personality, coffee-soul, cocktail-spirit
+  category    String   // sushi, cafeteria, bar, vegan, pizza, general
+  description String   // tagline
+  accentColor String   @default("#F4A623")
+  iconEmoji   String   @default("✨")
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  results     ExperienceResult[]
+  instances   Experience[]
+}
+
+model ExperienceResult {
+  id           String   @id @default(cuid())
+  templateId   String
+  name         String   // "Ra", "Isis", etc
+  description  String   // base description
+  imageUrl     String?
+  traits       String[] // ["líder", "intenso", "fuerte"]
+  matchCriteria Json?   // { dietTypes: [], ingredients: [], birthMonths: [], hungerLevel: "" }
+  position     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  template    ExperienceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  submissions ExperienceSubmission[]
+
+  @@index([templateId])
+}
+
+model Experience {
+  id           String   @id @default(cuid())
+  restaurantId String
+  templateId   String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  restaurant   Restaurant          @relation(fields: [restaurantId], references: [id])
+  template     ExperienceTemplate  @relation(fields: [templateId], references: [id])
+  submissions  ExperienceSubmission[]
+
+  @@unique([restaurantId]) // 1 experience per restaurant
+  @@index([templateId])
+}
+
+model ExperienceSubmission {
+  id              String    @id @default(cuid())
+  experienceId    String
+  guestId         String?
+  qrUserId        String?
+  userName        String
+  birthDate       DateTime
+  email           String
+  assignedResultId String?
+  personalizedMsg String?   // Claude-generated text
+  teaserMsg       String?   // short teaser shown immediately
+  status          String    @default("pending") // pending, processing, sent, failed
+  sendAfter       DateTime  // when to send email (now + 10 min)
+  submittedAt     DateTime  @default(now())
+  resultSentAt    DateTime?
+
+  experience      Experience        @relation(fields: [experienceId], references: [id])
+  assignedResult  ExperienceResult? @relation(fields: [assignedResultId], references: [id])
+
+  @@index([experienceId])
+  @@index([status])
+  @@index([sendAfter])
 }

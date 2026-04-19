@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import PromoCarousel from "../capture/PromoCarousel";
+import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
@@ -179,6 +180,7 @@ export default function CartaLista({
       </div>
 
       {/* Promos */}
+      <ExperienceBanner restaurantId={restaurant.id} />
       <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);

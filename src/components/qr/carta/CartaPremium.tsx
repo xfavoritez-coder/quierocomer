@@ -15,6 +15,7 @@ import ViewSelector from "./ViewSelector";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import PromoCarousel from "../capture/PromoCarousel";
+import ExperienceBanner from "../capture/ExperienceBanner";
 
 interface Review {
   id: string;
@@ -188,6 +189,7 @@ export default function CartaPremium({
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
 
       {/* Promos */}
+      <ExperienceBanner restaurantId={restaurant.id} />
       <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
