@@ -176,9 +176,10 @@ export default function ExperienceBanner({ restaurantId }: Props) {
               <div style={{ textAlign: "center" }}>
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>{exp.iconEmoji}</span>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, color: "white", margin: "0 0 12px", lineHeight: 1.1 }}>{exp.name}</h2>
-                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 28px" }}>{exp.description}</p>
+                <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 8px" }}>{exp.description}</p>
+                <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.4)", lineHeight: 1.5, margin: "0 0 28px" }}>A través de tus gustos, fecha de nacimiento y nombre</p>
                 {isRepeat && (
-                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.35)", margin: "0 0 20px", fontStyle: "italic" }}>
+                  <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.45)", margin: "0 0 20px", fontStyle: "italic" }}>
                     Puedes hacerlo para ti o para alguien de tu mesa
                   </p>
                 )}
