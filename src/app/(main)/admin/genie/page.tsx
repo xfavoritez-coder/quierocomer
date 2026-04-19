@@ -52,8 +52,7 @@ interface SessionData {
   ipAddress: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
-  topIngredients: { name: string; count: number }[];
-  detectedAllergens: string[];
+  topFavorites: { name: string; score: number }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
 }
 
@@ -214,19 +213,14 @@ export default function AdminSessions() {
                       </div>
                     )}
 
-                    {/* Top ingredients + allergens */}
-                    {(s.topIngredients.length > 0 || s.detectedAllergens.length > 0) && (
+                    {/* Guest favorite ingredients (accumulated) */}
+                    {s.topFavorites.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Ingredientes en platos vistos</p>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Le gusta</p>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {s.topIngredients.map((ing, i) => (
-                            <span key={ing.name} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: i === 0 ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.04)", color: i === 0 ? "#F4A623" : "#aaa", fontWeight: i === 0 ? 600 : 400, border: `1px solid ${i === 0 ? "rgba(244,166,35,0.2)" : "#2A2A2A"}` }}>
-                              {ing.name} ({ing.count}x)
-                            </span>
-                          ))}
-                          {s.detectedAllergens.map(a => (
-                            <span key={a} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b", border: "1px solid rgba(232,85,48,0.15)" }}>
-                              ⚠️ {a}
+                          {s.topFavorites.map((fav, i) => (
+                            <span key={fav.name} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: i === 0 ? "rgba(74,222,128,0.12)" : "rgba(74,222,128,0.06)", color: "#4ade80", fontWeight: i === 0 ? 600 : 400, border: `1px solid ${i === 0 ? "rgba(74,222,128,0.25)" : "rgba(74,222,128,0.12)"}` }}>
+                              {fav.name} ({fav.score})
                             </span>
                           ))}
                         </div>

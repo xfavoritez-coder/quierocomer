@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
         take: limit,
         include: {
           restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } },
-          guest: { select: { id: true, visitCount: true, totalSessions: true, linkedQrUserId: true, preferences: true } },
+          guest: { select: { id: true, visitCount: true, totalSessions: true, linkedQrUserId: true, preferences: true, favoriteIngredients: true } },
           qrUser: { select: { id: true, name: true, email: true, dietType: true } },
         },
       }),
@@ -157,18 +157,9 @@ export async function GET(req: NextRequest) {
       const viewed = (s.dishesViewed as any[]) || [];
       const cats = (s.categoriesViewed as any[]) || [];
 
-      // Compute top ingredients + allergens for this session's viewed dishes
-      const ingredientCount: Record<string, { name: string; count: number }> = {};
-      const sessionAllergens = new Set<string>();
-      for (const d of viewed) {
-        const ings = ingredientsByDish[d.dishId] || [];
-        for (const ing of ings) {
-          if (!ingredientCount[ing.name]) ingredientCount[ing.name] = { name: ing.name, count: 0 };
-          ingredientCount[ing.name].count++;
-          if (ing.isAllergen) sessionAllergens.add(ing.allergenType || ing.name);
-        }
-      }
-      const topIngredients = Object.values(ingredientCount).sort((a, b) => b.count - a.count).slice(0, 5);
+      // Guest-level favorite ingredients (accumulated across all sessions)
+      const favIngs = (s.guest.favoriteIngredients as Record<string, number>) || {};
+      const topFavorites = Object.entries(favIngs).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, score]) => ({ name, score }));
 
       return {
         ...s,
@@ -184,8 +175,7 @@ export async function GET(req: NextRequest) {
         usedGenio: dbSessionsWithGenio.has(s.id),
         genioData: genioDataByDbSession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
-        topIngredients,
-        detectedAllergens: [...sessionAllergens],
+        topFavorites,
         experienceSubmissions: (expByGuest[s.guestId] || []).map(sub => ({
           id: sub.id,
           templateName: sub.experience.template.name,
