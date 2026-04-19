@@ -42,9 +42,22 @@ export async function GET(req: NextRequest) {
     }
 
     const dishNames = allDishIds.size > 0
-      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true } })
+      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true } })
       : [];
     const dishMap = Object.fromEntries(dishNames.map(d => [d.id, d]));
+
+    // Get ingredients for all viewed dishes
+    const dishIngredients = allDishIds.size > 0
+      ? await prisma.dishIngredient.findMany({
+          where: { dishId: { in: Array.from(allDishIds) } },
+          select: { dishId: true, ingredient: { select: { id: true, name: true, isAllergen: true, allergenType: true } } },
+        })
+      : [];
+    const ingredientsByDish: Record<string, { name: string; isAllergen: boolean; allergenType: string | null }[]> = {};
+    for (const di of dishIngredients) {
+      if (!ingredientsByDish[di.dishId]) ingredientsByDish[di.dishId] = [];
+      ingredientsByDish[di.dishId].push(di.ingredient);
+    }
 
     // Resolve category names
     const allCatIds = new Set<string>();
@@ -117,6 +130,20 @@ export async function GET(req: NextRequest) {
     const enriched = sessions.map(s => {
       const viewed = (s.dishesViewed as any[]) || [];
       const cats = (s.categoriesViewed as any[]) || [];
+
+      // Compute top ingredients + allergens for this session's viewed dishes
+      const ingredientCount: Record<string, { name: string; count: number }> = {};
+      const sessionAllergens = new Set<string>();
+      for (const d of viewed) {
+        const ings = ingredientsByDish[d.dishId] || [];
+        for (const ing of ings) {
+          if (!ingredientCount[ing.name]) ingredientCount[ing.name] = { name: ing.name, count: 0 };
+          ingredientCount[ing.name].count++;
+          if (ing.isAllergen) sessionAllergens.add(ing.allergenType || ing.name);
+        }
+      }
+      const topIngredients = Object.values(ingredientCount).sort((a, b) => b.count - a.count).slice(0, 5);
+
       return {
         ...s,
         dishesViewed: viewed.map((d: any) => ({
@@ -131,6 +158,8 @@ export async function GET(req: NextRequest) {
         usedGenio: sessionIdsWithGenio.has(s.id),
         genioData: genioDataBySession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
+        topIngredients,
+        detectedAllergens: [...sessionAllergens],
         experienceSubmissions: (expByGuest[s.guestId] || []).map(sub => ({
           id: sub.id,
           templateName: sub.experience.template.name,

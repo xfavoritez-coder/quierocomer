@@ -4,7 +4,12 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
-const TIME_LABELS: Record<string, string> = { MORNING: "Mañana", LUNCH: "Almuerzo", AFTERNOON: "Tarde", DINNER: "Cena", LATE: "Noche" };
+const DIET_LABELS: Record<string, string> = { omnivore: "Omnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano", OMNIVORE: "Omnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano", PESCETARIAN: "Pescetariano" };
+
+function formatDate(date: string) {
+  const d = new Date(date);
+  return d.toLocaleDateString("es-CL", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+}
 
 function formatDuration(ms: number | null) {
   if (!ms) return "—";
@@ -47,6 +52,8 @@ interface SessionData {
   ipAddress: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
+  topIngredients: { name: string; count: number }[];
+  detectedAllergens: string[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
 }
 
@@ -121,7 +128,7 @@ export default function AdminSessions() {
                       {!s.qrUser && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
                     </div>
                     <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
-                      <span>{timeAgo(s.startedAt)}</span>
+                      <span>{formatDate(s.startedAt)}</span>
                       {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}
                       {s.deviceType && <span>· {s.deviceType}</span>}
                       <span>· {formatDuration(s.durationMs)}</span>
@@ -143,16 +150,36 @@ export default function AdminSessions() {
                         <span style={{ color: "#999" }}>Usuario: </span>
                         <a href={`/admin/usuario/${s.guest.id}`} onClick={e => e.stopPropagation()} style={{ textDecoration: "none", borderBottom: "1px dashed" }}>
                           {s.qrUser ? (
-                            <span style={{ color: "#4ade80" }}>{s.qrUser.name || s.qrUser.email}{s.qrUser.dietType ? ` · ${s.qrUser.dietType}` : ""}</span>
+                            <span style={{ color: "#4ade80" }}>{s.qrUser.name || s.qrUser.email}</span>
                           ) : (
                             <span style={{ color: "#F4A623" }}>Fantasma #{s.guest.id.slice(0, 8)}</span>
                           )}
                         </a>
                       </div>
+                      <div><span style={{ color: "#999" }}>Fecha: </span>{formatDate(s.startedAt)}</div>
                       {s.weather && <div><span style={{ color: "#999" }}>Clima: </span>{s.weather}</div>}
-                      {s.timeOfDay && <div><span style={{ color: "#999" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
                       {s.ipAddress && <div><span style={{ color: "#999" }}>IP: </span>{s.ipAddress}</div>}
                     </div>
+
+                    {/* User preferences (always shown if present) */}
+                    {(() => {
+                      const prefs = s.guest.preferences as any;
+                      const dietType = s.qrUser?.dietType || prefs?.dietType;
+                      const restrictions = ((prefs?.restrictions || []) as string[]).filter((r: string) => r !== "ninguna");
+                      const dislikes = (prefs?.dislikes || []) as string[];
+                      const hasPrefData = dietType || restrictions.length > 0 || dislikes.length > 0;
+                      return hasPrefData ? (
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                          {dietType && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>{DIET_LABELS[dietType] || dietType}</span>}
+                          {restrictions.map((r: string) => (
+                            <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>⚠️ {r}</span>
+                          ))}
+                          {dislikes.map((d: string) => (
+                            <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
+                          ))}
+                        </div>
+                      ) : null;
+                    })()}
 
                     {/* Genio data */}
                     {s.usedGenio && (
@@ -160,13 +187,6 @@ export default function AdminSessions() {
                         <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Genio{s.genioData?.timesUsed ? ` (${s.genioData.timesUsed}x)` : ""}</span>
                         {s.genioData?.recommendations?.map((dish, i) => (
                           <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Recomendó: {dish}</span>
-                        ))}
-                        {(s.guest.preferences as any)?.dietType && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{(s.guest.preferences as any).dietType}</span>}
-                        {((s.guest.preferences as any)?.restrictions || []).filter((r: string) => r !== "ninguna").map((r: string) => (
-                          <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>⚠️ {r}</span>
-                        ))}
-                        {((s.guest.preferences as any)?.dislikes || []).map((d: string) => (
-                          <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
                         ))}
                       </div>
                     )}
@@ -187,11 +207,27 @@ export default function AdminSessions() {
                                 </div>
                               )}
                             </div>
-                            <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#888", flexShrink: 0 }}>
-                              {exp.status === "sent" ? "✅" : exp.status === "processing" ? "⏳" : exp.status === "pending" ? "🕐" : "❌"}
-                            </span>
                           </div>
                         ))}
+                      </div>
+                    )}
+
+                    {/* Top ingredients + allergens */}
+                    {(s.topIngredients.length > 0 || s.detectedAllergens.length > 0) && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Ingredientes en platos vistos</p>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                          {s.topIngredients.map((ing, i) => (
+                            <span key={ing.name} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: i === 0 ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.04)", color: i === 0 ? "#F4A623" : "#aaa", fontWeight: i === 0 ? 600 : 400, border: `1px solid ${i === 0 ? "rgba(244,166,35,0.2)" : "#2A2A2A"}` }}>
+                              {ing.name} ({ing.count}x)
+                            </span>
+                          ))}
+                          {s.detectedAllergens.map(a => (
+                            <span key={a} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b", border: "1px solid rgba(232,85,48,0.15)" }}>
+                              ⚠️ {a}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     )}
 
