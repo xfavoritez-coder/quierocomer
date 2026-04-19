@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { detectGender } from "@/lib/detectGender";
 
 /** GET: get active experience for a restaurant + check if guest already did it */
 export async function GET(req: NextRequest) {
@@ -69,11 +70,12 @@ export async function POST(req: NextRequest) {
       preferences = guest?.preferences;
     }
 
-    // Quick match — score each result
+    // Quick match — score each result with gender detection
     const bd = new Date(birthDate);
     const birthMonth = bd.getMonth() + 1;
     const diet = preferences?.dietType || null;
     const restrictions = preferences?.restrictions || [];
+    const userGender = detectGender(userName);
 
     let bestResult = exp.template.results[0];
     let bestScore = -1;
@@ -88,6 +90,12 @@ export async function POST(req: NextRequest) {
         if (criteria.hungerLevel) score += 3;
         if (criteria.ingredients) score += Math.random() * 5;
         if (criteria.isSpicy && restrictions.length === 0) score += 3;
+      }
+      // Gender matching: strong boost if gender matches, penalty if opposite
+      const resultGender = (result as any).gender || "neutral";
+      if (resultGender !== "neutral" && userGender !== "neutral") {
+        if (resultGender === userGender) score += 15;
+        else score -= 10;
       }
       score += Math.random() * 4; // variety
       if (score > bestScore) { bestScore = score; bestResult = result; }

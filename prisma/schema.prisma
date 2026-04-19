@@ -967,6 +967,7 @@ model ExperienceResult {
   description  String   // base description
   imageUrl     String?
   traits       String[] // ["líder", "intenso", "fuerte"]
+  gender       String   @default("neutral") // "male", "female", "neutral"
   matchCriteria Json?   // { dietTypes: [], ingredients: [], birthMonths: [], hungerLevel: "" }
   position     Int      @default(0)
   createdAt    DateTime @default(now())
