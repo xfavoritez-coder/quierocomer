@@ -188,19 +188,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Debug info for Genio matching
-    const genioDebug = {
-      totalGenioEvents: genioEvents.length,
-      starts: genioEvents.filter(e => e.eventType === "GENIO_START").length,
-      completes: genioCompletes.length,
-      completesWithDishId: genioCompletes.filter(e => e.dishId).length,
-      dishIdsInCompletes: genioCompletes.map(e => e.dishId),
-      dishNamesResolved: genioDishMap,
-      guestIdsInEvents: [...new Set(genioEvents.map(e => e.guestId))],
-      sessionGuestIds,
-    };
-
-    return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit), _genioDebug: genioDebug });
+    return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit) });
   } catch (error) {
     console.error("Sessions error:", error);
     return NextResponse.json({ error: "Error" }, { status: 500 });
