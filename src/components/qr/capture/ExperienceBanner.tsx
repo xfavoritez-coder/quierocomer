@@ -185,11 +185,6 @@ export default function ExperienceBanner({ restaurantId }: Props) {
                 <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>{exp.iconEmoji}</span>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, color: "white", margin: "0 0 12px", lineHeight: 1.1 }}>{exp.name}</h2>
                 <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 28px" }}>{exp.description}. Descúbrelo a través de tu nombre, gustos y fecha de nacimiento</p>
-                {isRepeat && (
-                  <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.45)", margin: "0 0 20px", fontStyle: "italic" }}>
-                    Puedes hacerlo para ti o para alguien de tu mesa
-                  </p>
-                )}
                 <button onClick={() => {
                   if (!isRepeat && userName && birthDate && email) { handleSubmit(); }
                   else if (!isRepeat && userName) { setStep(birthDate ? 3 : 2); }
