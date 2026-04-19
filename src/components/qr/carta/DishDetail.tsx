@@ -114,7 +114,7 @@ export default function DishDetail({
     setTimeout(() => {
       setSlideOut(null);
       onChangeDish(allDishes[currentIndex + 1]);
-    }, 150);
+    }, 200);
   }, [hasNext, currentIndex, allDishes, onChangeDish]);
 
   const goPrev = useCallback(() => {
@@ -124,7 +124,7 @@ export default function DishDetail({
     setTimeout(() => {
       setSlideOut(null);
       onChangeDish(allDishes[currentIndex - 1]);
-    }, 150);
+    }, 200);
   }, [hasPrev, currentIndex, allDishes, onChangeDish]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -183,46 +183,80 @@ export default function DishDetail({
         style={{
           position: "absolute",
           inset: 0,
-          display: "flex", flexDirection: "column",
           transform: getTransform(),
-          transition: slideIn ? "none" : "transform 0.15s ease-out",
+          transition: slideIn ? "none" : "transform 0.2s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Fixed photo header */}
-        <div style={{ position: "relative", width: "100%", height: "45%", flexShrink: 0, overflow: "hidden" }}>
-          {photos.length > 0 && (
-            <Image
-              src={photos[photoIndex]}
-              alt={dish.name}
-              fill
-              className="object-cover object-center"
-              sizes="100vw"
-              priority
-              key={photos[photoIndex]}
-            />
-          )}
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.4) 100%)" }} />
+        {/* Fullscreen photo */}
+        {photos.length > 0 && (
+          <Image
+            src={photos[photoIndex]}
+            alt={dish.name}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority
+            key={photos[photoIndex]}
+          />
+        )}
 
-          {/* Photo dots */}
-          {photos.length > 1 && (
-            <div className="absolute flex" style={{ top: 16, left: "50%", transform: "translateX(-50%)", gap: 5, zIndex: 10 }}>
-              {photos.map((_, i) => (
-                <button key={i} onClick={() => setPhotoIndex(i)} style={{ width: 6, height: 6, borderRadius: "50%", background: i === photoIndex ? "white" : "rgba(255,255,255,0.4)", border: "none", padding: 0, transition: "background 0.2s" }} />
-              ))}
-            </div>
-          )}
+        {/* Photo dots — top center */}
+        {photos.length > 1 && (
+          <div
+            className="absolute flex"
+            style={{ top: 16, left: "50%", transform: "translateX(-50%)", gap: 5, zIndex: 10 }}
+          >
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setPhotoIndex(i)}
+                style={{
+                  width: 6, height: 6, borderRadius: "50%",
+                  background: i === photoIndex ? "white" : "rgba(255,255,255,0.4)",
+                  border: "none", padding: 0, transition: "background 0.2s",
+                }}
+              />
+            ))}
+          </div>
+        )}
 
-          {/* Close button */}
-          <button onClick={close} className="absolute flex items-center justify-center" style={{ top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "1.1rem", border: "none", zIndex: 10 }}>✕</button>
+        {/* Close button — top right */}
+        <button
+          onClick={close}
+          className="absolute flex items-center justify-center"
+          style={{
+            top: 16, right: 16, width: 36, height: 36, borderRadius: "50%",
+            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+            color: "white", fontSize: "1.1rem", border: "none", zIndex: 10,
+          }}
+        >
+          ✕
+        </button>
 
-          {/* Position counter */}
-          <div className="absolute" style={{ top: 18, left: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", borderRadius: 50, padding: "4px 12px", color: "rgba(255,255,255,0.6)", fontSize: "1rem", fontWeight: 500, zIndex: 10 }}>{posText}</div>
+        {/* Position counter — top left */}
+        <div
+          className="absolute"
+          style={{
+            top: 18, left: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
+            WebkitBackdropFilter: "blur(4px)", borderRadius: 50, padding: "4px 12px",
+            color: "rgba(255,255,255,0.6)", fontSize: "1rem", fontWeight: 500, zIndex: 10,
+          }}
+        >
+          {posText}
         </div>
 
-        {/* Scrollable info */}
-        <div style={{ flex: 1, overflowY: "auto", background: "#000", padding: "20px 20px 40px", scrollbarWidth: "none" }}>
+
+        {/* Info overlay — bottom */}
+        <div
+          className="absolute"
+          style={{
+            bottom: 0, left: 0, right: 0,
+            background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.5) 70%, transparent 100%)",
+            padding: "80px 20px 40px", zIndex: 5,
+          }}
+        >
           {/* Category label */}
           {categoryName && (
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, display: "block" }}>
