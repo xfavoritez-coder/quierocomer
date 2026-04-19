@@ -192,7 +192,7 @@ export default function AdminMenus() {
               {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                   {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
-                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🚫 {a}</span>
+                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>⚠️ {a}</span>
                   ))}
                 </div>
               )}
@@ -254,8 +254,8 @@ export default function AdminMenus() {
                     {eIngredientIds.map(id => {
                       const ing = allIngredients.find(i => i.id === id);
                       return ing ? (
-                        <span key={id} onClick={() => setEIngredientIds(prev => prev.filter(x => x !== id))} style={{ fontSize: "0.72rem", padding: "3px 8px", borderRadius: 50, background: ing.isAllergen ? "rgba(232,85,48,0.12)" : "rgba(244,166,35,0.12)", color: ing.isAllergen ? "#e85530" : "#F4A623", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                          {ing.name} <span style={{ fontSize: "10px", opacity: 0.6 }}>×</span>
+                        <span key={id} onClick={() => setEIngredientIds(prev => prev.filter(x => x !== id))} style={{ fontSize: "0.72rem", padding: "3px 8px", borderRadius: 50, background: "rgba(244,166,35,0.12)", color: "#F4A623", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                          {ing.isAllergen ? "⚠️ " : ""}{ing.name} <span style={{ fontSize: "10px", opacity: 0.6 }}>×</span>
                         </span>
                       ) : null;
                     })}
@@ -302,7 +302,7 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ALLERGEN_OPTIONS.map(a => (
                     <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eAllergens.includes(a) ? "#e85530" : "#666" }}>
-                      {eAllergens.includes(a) ? "🚫 " : ""}{a}
+                      {eAllergens.includes(a) ? "⚠️ " : ""}{a}
                     </button>
                   ))}
                 </div>

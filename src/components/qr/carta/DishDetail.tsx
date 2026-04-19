@@ -386,7 +386,7 @@ export default function DishDetail({
               <h4 style={{ color: "#F4A623", fontSize: "0.85rem", fontWeight: 700, marginBottom: 8 }}>⚠️ Alérgenos</h4>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {dish.allergens.split(",").map(a => a.trim()).filter(Boolean).filter(a => a !== "ninguno").map(a => (
-                  <span key={a} style={{ fontSize: "0.82rem", padding: "4px 10px", borderRadius: 6, background: "rgba(232,85,48,0.15)", color: "#ff8a6b", border: "1px solid rgba(232,85,48,0.25)" }}>🚫 {a}</span>
+                  <span key={a} style={{ fontSize: "0.82rem", padding: "4px 10px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#c9883a", border: "1px solid rgba(244,166,35,0.2)" }}>⚠️ {a}</span>
                 ))}
               </div>
             </div>

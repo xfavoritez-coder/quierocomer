@@ -154,7 +154,7 @@ export default function AdminSessions() {
                         <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Usó el Genio</span>
                         {(s.guest.preferences as any)?.dietType && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{(s.guest.preferences as any).dietType}</span>}
                         {((s.guest.preferences as any)?.restrictions || []).filter((r: string) => r !== "ninguna").map((r: string) => (
-                          <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>🚫 {r}</span>
+                          <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>⚠️ {r}</span>
                         ))}
                         {((s.guest.preferences as any)?.dislikes || []).map((d: string) => (
                           <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
