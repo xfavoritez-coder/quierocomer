@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
@@ -90,7 +90,74 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   const modalOpenedAt = useRef(0);
 
+  // Swipe between promos
+  const [slideOut, setSlideOut] = useState<"left" | "right" | null>(null);
+  const [slideIn, setSlideIn] = useState(false);
+  const slideRef = useRef<"left" | "right">("left");
+  const touchRef2 = useRef<{ x: number; y: number } | null>(null);
+  const prevPromoRef = useRef<string | null>(null);
+
+  const currentPromoIdx = selectedPromo ? promos.findIndex(p => p.id === selectedPromo.id) : -1;
+  const hasNextPromo = currentPromoIdx < promos.length - 1;
+  const hasPrevPromo = currentPromoIdx > 0;
+
+  // When selected promo changes, trigger slide-in animation
+  useEffect(() => {
+    if (selectedPromo && prevPromoRef.current && prevPromoRef.current !== selectedPromo.id) {
+      setSlideIn(true);
+      requestAnimationFrame(() => requestAnimationFrame(() => setSlideIn(false)));
+    }
+    if (selectedPromo) prevPromoRef.current = selectedPromo.id;
+  }, [selectedPromo]);
+
+  const goNextPromo = useCallback(() => {
+    if (!hasNextPromo) return;
+    slideRef.current = "left";
+    setSlideOut("left");
+    setTimeout(() => {
+      setSlideOut(null);
+      const next = promos[currentPromoIdx + 1];
+      setSelectedPromo(next);
+      trackPromo(restaurantId, "PROMO_CLICKED", next.dishes[0]?.id);
+    }, 200);
+  }, [hasNextPromo, currentPromoIdx, promos, restaurantId]);
+
+  const goPrevPromo = useCallback(() => {
+    if (!hasPrevPromo) return;
+    slideRef.current = "right";
+    setSlideOut("right");
+    setTimeout(() => {
+      setSlideOut(null);
+      const prev = promos[currentPromoIdx - 1];
+      setSelectedPromo(prev);
+      trackPromo(restaurantId, "PROMO_CLICKED", prev.dishes[0]?.id);
+    }, 200);
+  }, [hasPrevPromo, currentPromoIdx, promos, restaurantId]);
+
+  const handleModalTouchStart = (e: React.TouchEvent) => {
+    touchRef2.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleModalTouchEnd = (e: React.TouchEvent) => {
+    if (!touchRef2.current) return;
+    const dx = touchRef2.current.x - e.changedTouches[0].clientX;
+    const dy = touchRef2.current.y - e.changedTouches[0].clientY;
+    touchRef2.current = null;
+    if (Math.abs(dx) > 60 && Math.abs(dy) < 80) {
+      if (dx > 0) goNextPromo();
+      else goPrevPromo();
+    }
+  };
+
+  const getPromoTransform = () => {
+    if (slideOut === "left") return "translateX(-100%)";
+    if (slideOut === "right") return "translateX(100%)";
+    if (slideIn) return slideRef.current === "left" ? "translateX(100%)" : "translateX(-100%)";
+    return "translateX(0)";
+  };
+
   const openPromo = (p: Promo) => {
+    prevPromoRef.current = null; // Don't animate on first open
     setSelectedPromo(p);
     setModalVisible(true);
     modalOpenedAt.current = Date.now();
@@ -266,6 +333,24 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             {/* Handle bar — only for product type */}
             {!isGraphic && <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(0,0,0,0.15)", borderRadius: 100, zIndex: 10 }} />}
 
+            {/* Promo counter */}
+            {promos.length > 1 && (
+              <div style={{ position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", fontSize: "11px", fontWeight: 600, color: isGraphic ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)", zIndex: 10, letterSpacing: "0.05em" }}>
+                {currentPromoIdx + 1} / {promos.length}
+              </div>
+            )}
+
+            {/* Slide wrapper for swipe transitions */}
+            <div
+              style={{
+                position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                transform: getPromoTransform(),
+                transition: slideIn ? "none" : "transform 0.2s ease-out",
+              }}
+              onTouchStart={handleModalTouchStart}
+              onTouchEnd={handleModalTouchEnd}
+            >
+
             {isGraphic ? (
               /* GRAPHIC PROMO — fullscreen photo, title + price over overlay */
               <div style={{ position: "relative", flex: 1 }}>
@@ -277,17 +362,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                     {selectedPromo.name}
                   </h2>
                   {selectedPromo.description && (
-                    <p style={{ fontSize: "16px", lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: 0, maxWidth: 320 }}>
+                    <p style={{ fontSize: "16px", lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: "0 0 12px", maxWidth: 320 }}>
                       {selectedPromo.description}
-                      {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
-                        <span style={{ display: "inline", marginLeft: 8 }}>
-                          {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "20px", fontWeight: 600, color: "#F4A623" }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
-                          {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", textDecoration: "line-through", marginLeft: 6 }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
-                        </span>
-                      )}
                     </p>
                   )}
-                  {!selectedPromo.description && (selectedPromo.promoPrice || selectedPromo.originalPrice) && (
+                  {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
                       {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "20px", fontWeight: 600, color: "#F4A623" }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
                       {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
@@ -380,6 +459,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 </div>
               </div>
             )}
+            </div>{/* end slide wrapper */}
           </div>
         </>
         );
