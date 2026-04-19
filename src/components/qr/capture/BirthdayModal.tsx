@@ -76,11 +76,10 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
   return (
     <div
       className="fixed inset-0 flex items-center justify-center font-[family-name:var(--font-dm)]"
-      style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
+      style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        onClick={(e) => e.stopPropagation()}
         style={{
           background: "white",
           borderRadius: 20,

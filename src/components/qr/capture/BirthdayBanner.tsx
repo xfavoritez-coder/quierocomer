@@ -109,7 +109,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
           </p>
-          <p style={{ fontSize: "0.82rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
+          <p style={{ fontSize: "0.85rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
             {existingUser ? "Guárdalo y recibe una sorpresa 🎁" : "Regístrate y recibe una sorpresa 🎁"}
           </p>
         </div>
@@ -121,7 +121,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           style={{
             position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
             flexShrink: 0, background: "#F4A623", color: "white", border: "none",
-            borderRadius: 50, padding: "8px 14px", fontSize: "0.78rem", fontWeight: 700,
+            borderRadius: 50, padding: "8px 14px", fontSize: "0.82rem", fontWeight: 700,
             fontFamily: "inherit", cursor: "pointer",
             animation: "bdayPulse 2.5s ease-in-out infinite",
           }}

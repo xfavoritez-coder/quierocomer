@@ -199,6 +199,9 @@ export default function DishDetail({
           />
         )}
 
+        {/* Top gradient for legibility */}
+        <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 100, zIndex: 8, background: "linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)" }} />
+
         {/* Photo dots — top center */}
         {photos.length > 1 && (
           <div
@@ -225,8 +228,9 @@ export default function DishDetail({
           className="absolute flex items-center justify-center"
           style={{
             top: 16, right: 16, width: 36, height: 36, borderRadius: "50%",
-            background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+            background: "rgba(0,0,0,0.2)",
             color: "white", fontSize: "1.1rem", border: "none", zIndex: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,0.5)",
           }}
         >
           ✕
@@ -236,9 +240,9 @@ export default function DishDetail({
         <div
           className="absolute"
           style={{
-            top: 18, left: 16, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)",
-            WebkitBackdropFilter: "blur(4px)", borderRadius: 50, padding: "4px 12px",
-            color: "rgba(255,255,255,0.6)", fontSize: "1rem", fontWeight: 500, zIndex: 10,
+            top: 20, left: 16,
+            color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, zIndex: 10,
+            textShadow: "0 1px 3px rgba(0,0,0,0.5)",
           }}
         >
           {posText}
@@ -254,15 +258,8 @@ export default function DishDetail({
             padding: "80px 20px 40px", zIndex: 5,
           }}
         >
-          {/* Category label */}
-          {categoryName && (
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8, display: "block" }}>
-              {categoryName}
-            </span>
-          )}
-
           {/* Badges row */}
-          <div className="flex items-center" style={{ gap: 6, marginBottom: 8 }}>
+          <div className="flex items-center" style={{ gap: 6, marginBottom: 6 }}>
             {isRecommended && (
               <span style={{
                 background: "rgba(0,0,0,0.6)", color: "white",
@@ -290,6 +287,13 @@ export default function DishDetail({
               </span>
             )}
           </div>
+
+          {/* Category label */}
+          {categoryName && (
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3, display: "block" }}>
+              {categoryName}
+            </span>
+          )}
 
           {/* Name */}
           <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", lineHeight: 1.2, margin: 0 }}>
@@ -374,18 +378,15 @@ export default function DishDetail({
           </button>
           {dish.ingredients && (
             <div style={{ marginBottom: dish.allergens ? 16 : 0 }}>
-              <h4 style={{ color: "white", fontSize: "0.85rem", fontWeight: 700, marginBottom: 6 }}>Ingredientes</h4>
-              <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "1rem", lineHeight: 1.5 }}>{dish.ingredients}</p>
+              <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 6 }}>Ingredientes</h4>
+              <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "1.06rem", lineHeight: 1.5 }}>{dish.ingredients}</p>
             </div>
           )}
           {dish.allergens && dish.allergens !== "ninguno" && (
-            <div>
-              <h4 style={{ color: "#F4A623", fontSize: "0.85rem", fontWeight: 700, marginBottom: 8 }}>⚠️ Alérgenos</h4>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {dish.allergens.split(",").map(a => a.trim()).filter(Boolean).filter(a => a !== "ninguno").map(a => (
-                  <span key={a} style={{ fontSize: "0.82rem", padding: "4px 10px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#c9883a", border: "1px solid rgba(244,166,35,0.2)" }}>⚠️ {a}</span>
-                ))}
-              </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {dish.allergens.split(",").map(a => a.trim()).filter(Boolean).filter(a => a !== "ninguno").map(a => (
+                <span key={a} style={{ fontSize: "0.94rem", padding: "4px 10px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#c9883a", border: "1px solid rgba(244,166,35,0.2)" }}>⚠️ {a}</span>
+              ))}
             </div>
           )}
         </div>

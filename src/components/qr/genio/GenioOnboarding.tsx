@@ -574,7 +574,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               const sel = dietType === opt.value;
               const Icon = opt.icon;
               return (
-                <button key={opt.value} onClick={() => { setDietType(opt.value); localStorage.setItem("qr_diet", opt.value); setTimeout(next, 400); }}
+                <button key={opt.value} onClick={() => {
+                  setDietType(opt.value); localStorage.setItem("qr_diet", opt.value);
+                  if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: opt.value }) }).catch(() => {}); }
+                  setTimeout(next, 400);
+                }}
                   className="flex items-center gap-4 transition-all duration-200"
                   style={{ padding: "16px 20px", borderRadius: 14, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.12)"}`, background: sel ? "rgba(244,166,35,0.08)" : "rgba(255,255,255,0.05)" }}>
                   <Icon size={20} color="#F4A623" />
@@ -606,7 +610,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </div>
           {restrictions.length > 0 && !restrictions.includes("ninguna") && (
             <button
-              onClick={() => { localStorage.setItem("qr_restrictions", JSON.stringify(restrictions)); next(); }}
+              onClick={() => {
+                localStorage.setItem("qr_restrictions", JSON.stringify(restrictions));
+                if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restrictions: restrictions.filter((r: string) => r !== "ninguna") }) }).catch(() => {}); }
+                next();
+              }}
               className="active:scale-95 transition-transform"
               style={{ marginTop: 24, alignSelf: "center", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}
             >
@@ -649,7 +657,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             })}
           </div>
           <button
-            onClick={() => { localStorage.setItem("qr_dislikes", JSON.stringify(dislikes)); next(); }}
+            onClick={() => {
+              localStorage.setItem("qr_dislikes", JSON.stringify(dislikes));
+              // Sync dislikes to DB if logged in
+              if (document.cookie.includes("qr_user_id")) {
+                fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes }) }).catch(() => {});
+              }
+              next();
+            }}
             className="active:scale-95 transition-transform"
             style={{ marginTop: 24, alignSelf: "center", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}
           >

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { email, name, birthDate, dietType, restrictions, restaurantId, source, bannerVariantId, guestId } = await request.json();
+    const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId } = await request.json();
 
     if (!email || !name || !restaurantId) {
       return NextResponse.json({ error: "Nombre, email y restaurantId son requeridos" }, { status: 400 });
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
         ...(birthDate && { birthDate: new Date(birthDate) }),
         ...(dietType && { dietType }),
         ...(restrictions && { restrictions }),
+        ...(dislikes && { dislikes }),
       },
       create: {
         email,
@@ -24,6 +25,7 @@ export async function POST(request: Request) {
         birthDate: birthDate ? new Date(birthDate) : null,
         dietType: dietType || null,
         restrictions: restrictions || [],
+        dislikes: dislikes || [],
       },
     });
 

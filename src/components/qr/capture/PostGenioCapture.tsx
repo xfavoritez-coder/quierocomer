@@ -30,6 +30,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
 
     const dietType = localStorage.getItem("qr_diet");
     const restrictions = localStorage.getItem("qr_restrictions");
+    const dislikesRaw = localStorage.getItem("qr_dislikes");
 
     const res = await fetch("/api/qr/user/register", {
       method: "POST",
@@ -39,6 +40,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
         name: name || null,
         dietType,
         restrictions: restrictions ? JSON.parse(restrictions) : [],
+        dislikes: dislikesRaw ? JSON.parse(dislikesRaw) : [],
         restaurantId,
         source: "post_genio",
         guestId: getGuestId(),
@@ -91,11 +93,10 @@ export default function PostGenioCapture({ restaurantId }: Props) {
       {modalOpen && (
         <div
           className="fixed inset-0 flex items-center justify-center font-[family-name:var(--font-dm)]"
-          style={{ zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)" }}
-          onClick={() => setModalOpen(false)}
+          style={{ zIndex: 100, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setModalOpen(false); }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
             style={{
               background: "white",
               borderRadius: 20,

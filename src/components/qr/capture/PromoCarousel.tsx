@@ -303,7 +303,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         const multiDish = selectedPromo.dishes.length > 1;
         return (
         <>
-          <div onClick={closeModal} style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", opacity: modalVisible ? 1 : 0, transition: "opacity 0.3s ease" }} />
+          <div onClick={(e) => { if (e.target === e.currentTarget) closeModal(); }} style={{ position: "fixed", inset: 0, minHeight: "100dvh", zIndex: 100, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", opacity: modalVisible ? 1 : 0, transition: "opacity 0.3s ease" }} />
           <div
             className="font-[family-name:var(--font-dm)]"
             onClick={e => e.stopPropagation()}

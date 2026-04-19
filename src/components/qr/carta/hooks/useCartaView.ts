@@ -6,21 +6,22 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 export type CartaView = "premium" | "lista" | "viaje";
 
 const STORAGE_KEY = "quierocomer_carta_view";
-const DEFAULT_VIEW: CartaView = "premium";
+const FALLBACK_VIEW: CartaView = "premium";
 const VALID_VIEWS: CartaView[] = ["premium", "lista", "viaje"];
 
 function isValidView(v: string | null): v is CartaView {
   return v !== null && VALID_VIEWS.includes(v as CartaView);
 }
 
-export function useCartaView() {
+export function useCartaView(restaurantDefaultView?: string | null) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [view, setViewState] = useState<CartaView>(DEFAULT_VIEW);
+  const [view, setViewState] = useState<CartaView>(FALLBACK_VIEW);
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // Priority: URL param > localStorage > restaurant default > fallback
     const urlView = searchParams.get("vista");
     if (isValidView(urlView)) {
       setViewState(urlView);
@@ -30,9 +31,14 @@ export function useCartaView() {
     const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
     if (isValidView(stored)) {
       setViewState(stored);
+      setIsReady(true);
+      return;
+    }
+    if (isValidView(restaurantDefaultView ?? null)) {
+      setViewState(restaurantDefaultView as CartaView);
     }
     setIsReady(true);
-  }, [searchParams]);
+  }, [searchParams, restaurantDefaultView]);
 
   const setView = useCallback(
     (next: CartaView) => {

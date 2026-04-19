@@ -15,6 +15,7 @@ export async function PATCH(request: Request) {
       ...(body.birthDate !== undefined && { birthDate: body.birthDate ? new Date(body.birthDate) : null }),
       ...(body.dietType !== undefined && { dietType: body.dietType }),
       ...(body.restrictions !== undefined && { restrictions: body.restrictions }),
+      ...(body.dislikes !== undefined && { dislikes: body.dislikes }),
     },
   });
 

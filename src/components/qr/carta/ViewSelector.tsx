@@ -37,19 +37,33 @@ export default function ViewSelector({ restaurantId }: Props) {
     };
   }, [open]);
 
-  // First-time tooltip
+  // First-time tooltip with attention pulse
+  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!localStorage.getItem(TOOLTIP_KEY)) {
-      const timer = setTimeout(() => {
-        setShowTooltip(true);
-        setTimeout(() => {
-          setShowTooltip(false);
-          localStorage.setItem(TOOLTIP_KEY, "1");
-        }, 6000);
-      }, 800);
+      const timer = setTimeout(() => setShowTooltip(true), 1800);
       return () => clearTimeout(timer);
     }
   }, []);
+
+  // Pulse after 8s of no interaction
+  useEffect(() => {
+    if (!showTooltip) return;
+    pulseTimer.current = setTimeout(() => {
+      const el = document.getElementById("genio-tip-container");
+      if (el) {
+        el.style.animation = "none";
+        void el.offsetHeight;
+        el.style.animation = "vsTipBounce 0.4s ease-in-out";
+      }
+    }, 8000);
+    return () => { if (pulseTimer.current) clearTimeout(pulseTimer.current); };
+  }, [showTooltip]);
+
+  const dismissTooltip = () => {
+    setShowTooltip(false);
+    localStorage.setItem(TOOLTIP_KEY, "1");
+  };
 
   const handleSelect = (next: CartaView) => {
     setOpen(false);
@@ -132,7 +146,7 @@ export default function ViewSelector({ restaurantId }: Props) {
 
       {/* Trigger button */}
       <button
-        onClick={() => { setOpen(!open); setShowTooltip(false); }}
+        onClick={() => { setOpen(!open); dismissTooltip(); }}
         aria-label="Cambiar vista"
         aria-expanded={open}
         className="flex items-center justify-center active:scale-95 transition-transform"
@@ -153,26 +167,61 @@ export default function ViewSelector({ restaurantId }: Props) {
         <Layers size={22} strokeWidth={1.75} />
       </button>
 
-      {/* First-time tooltip */}
+      {/* First-time tip del Genio */}
       {showTooltip && !open && (
         <div
+          id="genio-tip-container"
+          role="status"
           className="font-[family-name:var(--font-dm)]"
           style={{
             position: "absolute",
-            right: 62,
-            background: "#0e0e0e",
-            color: "white",
-            fontSize: "0.72rem",
-            padding: "8px 12px",
-            borderRadius: 10,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.2)",
-            whiteSpace: "nowrap",
+            right: 0,
+            bottom: 64,
+            width: 260,
+            background: "#FFF4E6",
+            borderRadius: 16,
+            padding: "16px 16px 14px",
+            boxShadow: "0 8px 30px rgba(180,130,50,0.18)",
             zIndex: 40,
-            animation: "vsSlideIn 0.25s ease-out",
+            animation: "vsTipIn 0.3s cubic-bezier(0.16,1,0.3,1)",
           }}
         >
-          Prueba las otras vistas <span style={{ display: "inline-block", animation: "vsPointSwipe 1s ease-in-out infinite" }}>👆</span>
-          <div style={{ position: "absolute", right: -4, top: "50%", transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#0e0e0e" }} />
+          {/* Close button */}
+          <button
+            onClick={dismissTooltip}
+            aria-label="Cerrar consejo"
+            style={{
+              position: "absolute", top: 8, right: 10,
+              background: "none", border: "none", cursor: "pointer",
+              color: "#c4a882", fontSize: "14px", lineHeight: 1, padding: 2,
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Badge */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            background: "#F4A623", borderRadius: 50,
+            padding: "4px 10px 4px 8px", marginBottom: 10,
+          }}>
+            <Sparkles size={13} color="white" fill="white" />
+            <span style={{ color: "white", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>Tip del Genio</span>
+          </div>
+
+          {/* Text */}
+          <p style={{ color: "#5c3d1e", fontSize: "14px", lineHeight: 1.5, margin: 0, fontWeight: 400 }}>
+            Hay más de una forma de explorar. Toca aquí para cambiar la vista.
+          </p>
+
+          {/* Arrow pointing down to the trigger button */}
+          <div style={{
+            position: "absolute", bottom: -6, right: 20,
+            width: 12, height: 12,
+            background: "#FFF4E6",
+            transform: "rotate(45deg)",
+            boxShadow: "3px 3px 6px rgba(180,130,50,0.1)",
+          }} />
         </div>
       )}
 
@@ -181,9 +230,14 @@ export default function ViewSelector({ restaurantId }: Props) {
           from { opacity: 0; transform: translateX(10px); }
           to { opacity: 1; transform: translateX(0); }
         }
-        @keyframes vsPointSwipe {
-          0%, 100% { transform: translateX(-2px); }
-          50% { transform: translateX(4px); }
+        @keyframes vsTipIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes vsTipBounce {
+          0%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-6px); }
+          60% { transform: translateY(-3px); }
         }
       `}</style>
     </div>

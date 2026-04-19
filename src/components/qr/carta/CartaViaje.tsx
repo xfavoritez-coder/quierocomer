@@ -87,7 +87,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             top: 16, left: 16, gap: 8,
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
-            padding: "6px 14px 6px 6px", cursor: "pointer",
+            padding: "5px 10px 5px 5px", cursor: "pointer",
           }}
         >
           {restaurant.logoUrl ? (
@@ -108,12 +108,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           className="fixed z-50 flex items-center justify-center"
           style={{
             top: 16, right: 12, width: 40, height: 40, borderRadius: "50%",
-            background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.6)",
+            ...(qrUser?.name
+              ? { background: "#F4A623", border: "none" }
+              : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
+            color: "rgba(255,255,255,0.6)",
           }}
         >
           {qrUser?.name ? (
-            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
+            <span style={{ color: "white", fontSize: "14px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
               {qrUser.name.charAt(0).toUpperCase()}
             </span>
           ) : (
@@ -337,17 +339,21 @@ function CategoryTrack({
 
   return (
     <div className="vj-track-wrap" data-section="track" data-rail={index} ref={wrapRef}>
+      {/* Top gradient for legibility */}
+      {activeSlide > 0 && (
+        <div className="pointer-events-none absolute top-0 left-0 right-0 z-10 bg-gradient-to-b from-black/60 via-black/20 to-transparent" style={{ height: 160 }} />
+      )}
       {/* Header — only show on dish slides (not chapter title) */}
       {activeSlide > 0 && (
         <div className="vj-category-header">
           <button
             onClick={() => trackRef.current?.scrollTo({ left: 0, behavior: "smooth" })}
-            className="vj-category-label"
-            style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", color: "white", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto" }}
+            className="vj-category-label-plain"
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto", color: "white", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
           >
             {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
           </button>
-          <div className="vj-bullets">
+          <div className="vj-bullets-plain">
             {group.dishes.map((_, i) => (
               <div key={i} className={`vj-bullet ${i + 1 === activeSlide ? "active" : ""}`} />
             ))}
@@ -686,7 +692,10 @@ const CSS = `
   .vj-category-header.light .vj-bullets { background: rgba(0,0,0,0.08); }
   .vj-category-label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 1; font-weight: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 50px; }
   .vj-category-label strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
+  .vj-category-label-plain { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600; padding: 6px 0; }
+  .vj-category-label-plain strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
   .vj-bullets { display: flex; gap: 4px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 50px; }
+  .vj-bullets-plain { display: flex; gap: 4px; padding: 6px 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
   .vj-bullet { width: 16px; height: 3px; background: rgba(255,255,255,0.6); border-radius: 3px; transition: all 0.4s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
   .vj-bullet.active { background: #F4A623; width: 28px; box-shadow: 0 1px 6px rgba(244,166,35,0.5); }
   .vj-category-header.light .vj-bullet { background: rgba(0,0,0,0.25); }

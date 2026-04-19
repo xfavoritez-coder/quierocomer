@@ -32,7 +32,7 @@ interface Props {
 }
 
 export default function CartaRouter(props: Props) {
-  const { view, isReady } = useCartaView();
+  const { view, isReady } = useCartaView((props.restaurant as any).defaultView);
   const trackedRef = useRef<string | null>(null);
   // Check cookie instantly to avoid flash of "not logged in"
   const [qrUser, setQrUser] = useState<any>(() => {

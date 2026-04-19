@@ -85,8 +85,9 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
         )}
       </div>
       <div style={{ padding: "8px 2px 0" }}>
-        <h3 className="font-[family-name:var(--font-dm)] truncate" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
-          {dish.name}
+        <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
+          <span className="truncate">{dish.name}</span>
+          <DishBadges dish={dish} />
         </h3>
         <div style={{ marginTop: -3 }}>
           {dish.discountPrice ? (
@@ -123,8 +124,9 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
         <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.62rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>⭐ Recomendado</span>
         {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em", alignSelf: "flex-start" }}>NUEVO</span>}
       </div>
-      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2" style={{ bottom: 28, left: 10, right: 10, fontSize: "1rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
-        {dish.name}
+      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 28, left: 10, right: 10, fontSize: "1rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
+        <span>{dish.name}</span>
+        <DishBadges dish={dish} />
       </h3>
       <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 10, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}

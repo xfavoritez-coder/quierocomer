@@ -37,6 +37,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.logoUrl !== undefined && { logoUrl: body.logoUrl }),
         ...(body.bannerUrl !== undefined && { bannerUrl: body.bannerUrl }),
         ...(body.cartaTheme !== undefined && { cartaTheme: body.cartaTheme }),
+        ...(body.defaultView !== undefined && { defaultView: body.defaultView || null }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.ownerId !== undefined && { ownerId: body.ownerId || null }),
       },

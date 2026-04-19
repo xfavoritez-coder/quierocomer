@@ -11,6 +11,7 @@ interface Restaurant {
   phone: string | null;
   address: string | null;
   cartaTheme: string;
+  defaultView: string | null;
   isActive: boolean;
   ownerId: string | null;
   createdAt: string;
@@ -89,6 +90,34 @@ export default function AdminLocales() {
           {selected.phone && <p style={{ margin: 0 }}>Tel: {selected.phone}</p>}
           {selected.address && <p style={{ margin: 0 }}>Dir: {selected.address}</p>}
           <p style={{ margin: 0 }}>Tema: {selected.cartaTheme}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+            <span>Vista por defecto:</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[
+                { value: "premium", label: "Clásica" },
+                { value: "lista", label: "Lista" },
+                { value: "viaje", label: "Espacial" },
+              ].map((v) => (
+                <button
+                  key={v.value}
+                  onClick={async () => {
+                    await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ defaultView: v.value }) });
+                    const updated = { ...selected, defaultView: v.value };
+                    setSelected(updated);
+                    setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                  }}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                    background: (selected.defaultView || "premium") === v.value ? "#F4A623" : "rgba(255,255,255,0.06)",
+                    color: (selected.defaultView || "premium") === v.value ? "#0a0a0a" : "#888",
+                  }}
+                >
+                  {v.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <p style={{ margin: 0 }}>Owner: {selected.owner ? `${selected.owner.name} (${selected.owner.email})` : <span style={{ color: "#666" }}>Sin asignar</span>}</p>
           <p style={{ margin: 0 }}>Creado: {new Date(selected.createdAt).toLocaleDateString("es-CL")}</p>
         </div>

@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
 
+export const config = { api: { bodyParser: false } };
+
+// Increase body size limit for file uploads
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
   if (!cookieStore.get("admin_token")?.value) {

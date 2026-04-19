@@ -32,8 +32,8 @@ export default function LoginDrawer({ onClose }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end font-[family-name:var(--font-dm)]">
-      <div onClick={close} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
+    <div className="fixed inset-0 z-[110] flex items-end font-[family-name:var(--font-dm)]" style={{ minHeight: "100dvh" }}>
+      <div onClick={(e) => { if (e.target === e.currentTarget) close(); }} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
       <div style={{ position: "relative", zIndex: 1, background: "white", width: "100%", borderRadius: "20px 20px 0 0", padding: "28px 24px 48px", transform: visible ? "translateY(0)" : "translateY(100%)", transition: "transform 0.25s ease-out" }}>
         <button onClick={close} className="absolute flex items-center justify-center" style={{ top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "#eee", border: "none", color: "#666", fontSize: "0.9rem" }}>✕</button>
 
