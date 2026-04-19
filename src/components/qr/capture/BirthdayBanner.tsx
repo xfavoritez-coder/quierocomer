@@ -101,14 +101,6 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           gap: 12,
         }}
       >
-        {/* Dismiss */}
-        <button
-          onClick={() => { setDismissed(true); sessionStorage.setItem("qr_birthday_dismissed", "true"); }}
-          style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", padding: 2, cursor: "pointer" }}
-        >
-          <X size={13} color="#d4a053" />
-        </button>
-
         {/* Emoji */}
         <span style={{ fontSize: "1.6rem", flexShrink: 0, animation: "bdayBounce 2s ease-in-out infinite" }}>🎂</span>
 
