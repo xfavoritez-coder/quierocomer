@@ -42,8 +42,12 @@ interface SessionData {
   guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null; preferences: any };
   qrUser: { id: string; name: string | null; email: string; dietType: string | null } | null;
   usedGenio: boolean;
+  genioData: { timesUsed: number; recommendedDish: string | null } | null;
+  visitDays: number;
+  ipAddress: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
+  experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
 }
 
 export default function AdminSessions() {
@@ -114,7 +118,7 @@ export default function AdminSessions() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600 }}>{s.restaurant.name}</span>
                       {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
-                      {!s.qrUser && s.guest.totalSessions > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.guest.totalSessions}x)</span>}
+                      {!s.qrUser && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
                     </div>
                     <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span>{timeAgo(s.startedAt)}</span>
@@ -123,6 +127,7 @@ export default function AdminSessions() {
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
+                      {s.experienceSubmissions.length > 0 && <span style={{ color: "#c084fc" }}>· {s.experienceSubmissions[0].templateEmoji} Experiencia</span>}
                     </div>
                   </div>
 
@@ -146,18 +151,44 @@ export default function AdminSessions() {
                       </div>
                       {s.weather && <div><span style={{ color: "#999" }}>Clima: </span>{s.weather}</div>}
                       {s.timeOfDay && <div><span style={{ color: "#999" }}>Hora: </span>{TIME_LABELS[s.timeOfDay] || s.timeOfDay}</div>}
+                      {s.ipAddress && <div><span style={{ color: "#999" }}>IP: </span>{s.ipAddress}</div>}
                     </div>
 
-                    {/* Genio preferences */}
-                    {s.usedGenio && s.guest.preferences && (
+                    {/* Genio data */}
+                    {s.usedGenio && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                        <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Usó el Genio</span>
+                        <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Genio{s.genioData?.timesUsed ? ` (${s.genioData.timesUsed}x)` : ""}</span>
+                        {s.genioData?.recommendedDish && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Recomendó: {s.genioData.recommendedDish}</span>}
                         {(s.guest.preferences as any)?.dietType && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{(s.guest.preferences as any).dietType}</span>}
                         {((s.guest.preferences as any)?.restrictions || []).filter((r: string) => r !== "ninguna").map((r: string) => (
                           <span key={r} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#ff8a6b" }}>⚠️ {r}</span>
                         ))}
                         {((s.guest.preferences as any)?.dislikes || []).map((d: string) => (
                           <span key={d} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.05)", color: "#aaa" }}>👎 {d}</span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Experience submissions */}
+                    {s.experienceSubmissions.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Experiencias ({s.experienceSubmissions.length})</p>
+                        {s.experienceSubmissions.map(exp => (
+                          <div key={exp.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: "rgba(192,132,252,0.06)", border: "1px solid rgba(192,132,252,0.15)", borderRadius: 10, marginBottom: 4 }}>
+                            <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>{exp.templateEmoji}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#c084fc", fontWeight: 600, margin: 0 }}>{exp.templateName}</p>
+                              {exp.resultName && <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#e9d5ff", margin: "2px 0 0" }}>Resultado: {exp.resultName}</p>}
+                              {exp.resultTraits.length > 0 && (
+                                <div style={{ display: "flex", gap: 4, marginTop: 4, flexWrap: "wrap" }}>
+                                  {exp.resultTraits.map(t => <span key={t} style={{ fontSize: "0.62rem", padding: "1px 6px", borderRadius: 50, background: "rgba(192,132,252,0.1)", color: "#c084fc", border: "1px solid rgba(192,132,252,0.2)" }}>{t}</span>)}
+                                </div>
+                              )}
+                            </div>
+                            <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#888", flexShrink: 0 }}>
+                              {exp.status === "sent" ? "✅" : exp.status === "processing" ? "⏳" : exp.status === "pending" ? "🕐" : "❌"}
+                            </span>
+                          </div>
                         ))}
                       </div>
                     )}

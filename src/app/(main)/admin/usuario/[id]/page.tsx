@@ -25,11 +25,30 @@ function timeAgo(date: string) {
   return new Date(date).toLocaleDateString("es-CL");
 }
 
+interface ExperienceEntry {
+  id: string;
+  templateName: string;
+  templateSlug: string;
+  templateEmoji: string;
+  templateDescription: string;
+  accentColor: string;
+  experienceId: string;
+  resultName: string | null;
+  resultDescription: string | null;
+  resultTraits: string[];
+  resultImageUrl: string | null;
+  personalizedMsg: string | null;
+  teaserMsg: string | null;
+  status: string;
+  submittedAt: string;
+}
+
 interface GuestData {
   guest: { id: string; visitCount: number; totalSessions: number; createdAt: string; lastSeenAt: string; preferences: any };
   user: { id: string; name: string | null; email: string; dietType: string | null; restrictions: string[]; birthDate: string | null; createdAt: string } | null;
   stats: { restaurantsVisited: number; totalSessions: number; avgDuration: number; totalDuration: number; topDishes: { name: string; count: number; totalMs: number }[]; viewPreferences: Record<string, number> };
   sessions: any[];
+  experiences: ExperienceEntry[];
 }
 
 export default function GuestProfile({ params }: { params: Promise<{ id: string }> }) {
@@ -38,6 +57,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
   const [data, setData] = useState<GuestData | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [expandedExp, setExpandedExp] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/admin/guest?guestId=${id}`)
@@ -50,7 +70,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando perfil...</p>;
   if (!data) return <p style={{ color: "#ff6b6b", fontFamily: F, padding: 40 }}>Usuario no encontrado</p>;
 
-  const { guest, user, stats, sessions } = data;
+  const { guest, user, stats, sessions, experiences } = data;
   const isRegistered = !!user;
   const prefs = guest.preferences as any;
 
@@ -142,6 +162,89 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
           </div>
         )}
       </div>
+
+      {/* Experiences */}
+      {experiences && experiences.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#c084fc", marginBottom: 12 }}>Experiencias ({experiences.length})</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {experiences.map((exp: ExperienceEntry) => {
+              const isExpOpen = expandedExp === exp.id;
+              const accent = exp.accentColor || "#c084fc";
+              return (
+                <div key={exp.id} style={{ background: "#1A1A1A", border: `1px solid ${isExpOpen ? `${accent}50` : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s" }}>
+                  {/* Experience card header */}
+                  <button
+                    onClick={() => setExpandedExp(isExpOpen ? null : exp.id)}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <span style={{ fontSize: "1.8rem", flexShrink: 0 }}>{exp.templateEmoji}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600 }}>{exp.templateName}</span>
+                        <span style={{ fontSize: "0.6rem", padding: "1px 6px", borderRadius: 4, fontWeight: 600, background: exp.status === "sent" ? "rgba(74,222,128,0.1)" : exp.status === "processing" ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.06)", color: exp.status === "sent" ? "#4ade80" : exp.status === "processing" ? "#F4A623" : "#888" }}>
+                          {exp.status === "sent" ? "Enviado" : exp.status === "processing" ? "Procesando" : exp.status === "pending" ? "Pendiente" : exp.status}
+                        </span>
+                      </div>
+                      <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", marginTop: 2 }}>
+                        {exp.resultName ? (
+                          <span style={{ color: accent, fontWeight: 600 }}>Resultado: {exp.resultName}</span>
+                        ) : (
+                          <span>Sin resultado aún</span>
+                        )}
+                        <span> · {timeAgo(exp.submittedAt)}</span>
+                      </div>
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{isExpOpen ? "▲" : "▼"}</span>
+                  </button>
+
+                  {/* Expanded result */}
+                  {isExpOpen && (
+                    <div style={{ padding: "0 16px 20px", borderTop: "1px solid #2A2A2A" }}>
+                      {exp.resultName ? (
+                        <div style={{ textAlign: "center", padding: "20px 0" }}>
+                          {exp.resultImageUrl && (
+                            <img src={exp.resultImageUrl} alt="" style={{ width: 80, height: 80, borderRadius: 16, objectFit: "cover", margin: "0 auto 16px" }} />
+                          )}
+                          <p style={{ fontFamily: F, fontSize: "0.7rem", color: accent, letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 6px" }}>Resultado</p>
+                          <h3 style={{ fontFamily: "var(--font-playfair), serif", fontSize: "1.6rem", fontWeight: 600, color: accent, margin: "0 0 12px" }}>{exp.resultName}</h3>
+                          {exp.resultTraits.length > 0 && (
+                            <div style={{ display: "flex", gap: 6, justifyContent: "center", flexWrap: "wrap", marginBottom: 16 }}>
+                              {exp.resultTraits.map(t => (
+                                <span key={t} style={{ fontSize: "0.7rem", padding: "3px 10px", borderRadius: 50, background: `${accent}15`, color: accent, border: `1px solid ${accent}30` }}>{t}</span>
+                              ))}
+                            </div>
+                          )}
+                          {exp.resultDescription && (
+                            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.6, margin: "0 0 16px", maxWidth: 500, marginLeft: "auto", marginRight: "auto" }}>{exp.resultDescription}</p>
+                          )}
+                          {exp.personalizedMsg && (
+                            <div style={{ background: `${accent}08`, border: `1px solid ${accent}20`, borderRadius: 12, padding: "14px 18px", textAlign: "left", marginBottom: 16 }}>
+                              <p style={{ fontFamily: F, fontSize: "0.68rem", color: accent, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Mensaje personalizado</p>
+                              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "rgba(255,255,255,0.7)", lineHeight: 1.6, margin: 0, whiteSpace: "pre-wrap" }}>{exp.personalizedMsg}</p>
+                            </div>
+                          )}
+                          {exp.teaserMsg && (
+                            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", fontStyle: "italic", margin: "0 0 16px" }}>Teaser: &ldquo;{exp.teaserMsg}&rdquo;</p>
+                          )}
+                          <button
+                            onClick={() => window.open(`/qr/experience/${exp.templateSlug}`, "_blank")}
+                            style={{ background: accent, color: "#0a0a0a", border: "none", borderRadius: 50, padding: "10px 24px", fontSize: "0.82rem", fontWeight: 700, fontFamily: F, cursor: "pointer" }}
+                          >
+                            Repetir
+                          </button>
+                        </div>
+                      ) : (
+                        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#888", padding: "16px 0", textAlign: "center" }}>Resultado pendiente de procesamiento</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Sessions timeline */}
       <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#F4A623", marginBottom: 12 }}>Historial de sesiones ({sessions.length})</h2>

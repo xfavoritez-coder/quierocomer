@@ -81,6 +81,22 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Fetch experience submissions for this guest
+  const experienceSubmissions = await prisma.experienceSubmission.findMany({
+    where: { OR: [{ guestId }, ...(guest.linkedQrUserId ? [{ qrUserId: guest.linkedQrUserId }] : [])] },
+    orderBy: { submittedAt: "desc" },
+    include: {
+      assignedResult: { select: { id: true, name: true, description: true, traits: true, imageUrl: true } },
+      experience: {
+        select: {
+          id: true,
+          restaurantId: true,
+          template: { select: { id: true, name: true, slug: true, iconEmoji: true, accentColor: true, description: true } },
+        },
+      },
+    },
+  });
+
   // Enrich sessions
   const enrichedSessions = sessions.map(s => ({
     ...s,
@@ -112,5 +128,22 @@ export async function GET(req: NextRequest) {
       viewPreferences: viewCounts,
     },
     sessions: enrichedSessions,
+    experiences: experienceSubmissions.map(sub => ({
+      id: sub.id,
+      templateName: sub.experience.template.name,
+      templateSlug: sub.experience.template.slug,
+      templateEmoji: sub.experience.template.iconEmoji,
+      templateDescription: sub.experience.template.description,
+      accentColor: sub.experience.template.accentColor,
+      experienceId: sub.experience.id,
+      resultName: sub.assignedResult?.name || null,
+      resultDescription: sub.assignedResult?.description || null,
+      resultTraits: sub.assignedResult?.traits || [],
+      resultImageUrl: sub.assignedResult?.imageUrl || null,
+      personalizedMsg: sub.personalizedMsg,
+      teaserMsg: sub.teaserMsg,
+      status: sub.status,
+      submittedAt: sub.submittedAt,
+    })),
   });
 }
