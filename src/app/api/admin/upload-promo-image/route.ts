@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
-import sharp from "sharp";
 
 export async function POST(req: NextRequest) {
   const cookieStore = await cookies();
@@ -24,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Máximo 10MB" }, { status: 400 });
     }
 
-    const originalBuffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     const slug = promoName
       .toLowerCase()
@@ -33,40 +32,23 @@ export async function POST(req: NextRequest) {
       .replace(/^-|-$/g, "")
       .slice(0, 40);
     const ts = Date.now();
+    const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+    const fileName = `promos/${ts}-${slug}.${ext}`;
 
-    // Full image: max 1200px wide, webp quality 85
-    const fullBuffer = await sharp(originalBuffer)
-      .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 85 })
-      .toBuffer();
+    const { error } = await supabase.storage
+      .from("fotos")
+      .upload(fileName, buffer, { contentType: file.type, upsert: true });
 
-    const fullName = `promos/${ts}-${slug}.webp`;
-
-    // Thumbnail: 300px wide, quality 75
-    const thumbBuffer = await sharp(originalBuffer)
-      .resize(300, 300, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 75 })
-      .toBuffer();
-
-    const thumbName = `promos/${ts}-${slug}-thumb.webp`;
-
-    // Upload both
-    const [fullResult, thumbResult] = await Promise.all([
-      supabase.storage.from("fotos").upload(fullName, fullBuffer, { contentType: "image/webp", upsert: true }),
-      supabase.storage.from("fotos").upload(thumbName, thumbBuffer, { contentType: "image/webp", upsert: true }),
-    ]);
-
-    if (fullResult.error || thumbResult.error) {
-      console.error("[Upload promo]", fullResult.error, thumbResult.error);
-      return NextResponse.json({ error: "Error al subir imagen" }, { status: 500 });
+    if (error) {
+      console.error("[Upload promo]", error);
+      return NextResponse.json({ error: "Error al subir: " + error.message }, { status: 500 });
     }
 
-    const fullUrl = supabase.storage.from("fotos").getPublicUrl(fullName).data.publicUrl;
-    const thumbUrl = supabase.storage.from("fotos").getPublicUrl(thumbName).data.publicUrl;
+    const url = supabase.storage.from("fotos").getPublicUrl(fileName).data.publicUrl;
 
-    return NextResponse.json({ url: fullUrl, thumbUrl });
-  } catch (e) {
+    return NextResponse.json({ url, thumbUrl: url });
+  } catch (e: any) {
     console.error("[Upload promo]", e);
-    return NextResponse.json({ error: "Error al procesar imagen" }, { status: 500 });
+    return NextResponse.json({ error: "Error: " + (e.message || "desconocido") }, { status: 500 });
   }
 }
