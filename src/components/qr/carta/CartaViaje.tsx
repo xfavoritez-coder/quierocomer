@@ -423,7 +423,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   if (variant === "hero") {
     const longDesc = pitch.length > 60;
     const heroGradient = longDesc
-      ? "linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.15) 20%, rgba(0,0,0,0.6) 50%, rgba(0,0,0,0.95) 80%, rgba(0,0,0,0.98) 100%)"
+      ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 25%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,0.8) 100%)"
       : undefined;
     return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
@@ -695,7 +695,7 @@ const CSS = `
   .vj-hero-photo { position: absolute; inset: 0; transform: scale(1.12); transition: transform 14s var(--vj-ease); }
   .vj-hero-photo img { object-fit: cover; }
   .vj-v-hero.in-view .vj-hero-photo { transform: scale(1); }
-  .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, transparent 30%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.98) 100%); }
+  .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.75) 100%); }
   .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; }
 
   /* SPLIT */
