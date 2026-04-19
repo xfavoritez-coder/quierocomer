@@ -250,55 +250,52 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
             style={{
               position: "fixed", bottom: 0, left: "50%",
               transform: modalVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(100%)",
-              width: "100%", maxWidth: 420, maxHeight: "92vh",
-              background: "white", borderRadius: "28px 28px 0 0",
+              width: "100%", maxWidth: 420,
+              height: isGraphic ? "100vh" : undefined,
+              maxHeight: isGraphic ? "100vh" : "92vh",
+              background: isGraphic ? "#000" : "white",
+              borderRadius: isGraphic ? 0 : "28px 28px 0 0",
               zIndex: 101, display: "flex", flexDirection: "column",
               transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
-              boxShadow: "0 -8px 40px rgba(0,0,0,0.15)",
+              boxShadow: isGraphic ? "none" : "0 -8px 40px rgba(0,0,0,0.15)",
+              overflow: "hidden",
             }}
           >
-            {/* Handle bar + close button (sticky) */}
-            <div style={{ position: "sticky", top: 0, zIndex: 10 }}>
-              <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(0,0,0,0.15)", borderRadius: 100 }} />
-              <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" }}>
-                <X size={16} color="white" strokeWidth={2} />
-              </button>
-            </div>
+            {/* Close button */}
+            <button onClick={closeModal} style={{ position: "absolute", top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(10px)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", boxShadow: "0 2px 8px rgba(0,0,0,0.2)", zIndex: 10 }}>
+              <X size={16} color="white" strokeWidth={2} />
+            </button>
+            {/* Handle bar — only for product type */}
+            {!isGraphic && <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(0,0,0,0.15)", borderRadius: 100, zIndex: 10 }} />}
 
             {isGraphic ? (
-              /* GRAPHIC PROMO — fullscreen photo with overlay title + optional price */
-              <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
-                {heroImg && (
-                  <div style={{ position: "relative", width: "100%", aspectRatio: "3/4", overflow: "hidden", borderRadius: "28px 28px 0 0" }}>
-                    <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, transparent 50%, rgba(0,0,0,0.55) 75%, rgba(0,0,0,0.85) 100%)" }} />
-                    {/* Title over image */}
-                    <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 24px" }}>
-                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase" }}>✦ PROMOCIÓN</span>
-                      </div>
-                      <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "28px", fontWeight: 600, lineHeight: 1.1, color: "white", margin: "0 0 8px", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
-                        {selectedPromo.name}
-                      </h2>
-                      {selectedPromo.description && (
-                        <p style={{ fontSize: "14px", lineHeight: 1.5, color: "rgba(255,255,255,0.75)", margin: 0, maxWidth: 320 }}>{selectedPromo.description}</p>
+              /* GRAPHIC PROMO — fullscreen photo, title + price over overlay */
+              <div style={{ position: "relative", flex: 1 }}>
+                {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 25%, transparent 45%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.88) 100%)" }} />
+                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 32px" }}>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>✦ PROMOCIÓN</span>
+                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "28px", fontWeight: 600, lineHeight: 1.1, color: "white", margin: "0 0 8px", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+                    {selectedPromo.name}
+                  </h2>
+                  {selectedPromo.description && (
+                    <p style={{ fontSize: "16px", lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: 0, maxWidth: 320 }}>
+                      {selectedPromo.description}
+                      {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
+                        <span style={{ display: "inline", marginLeft: 8 }}>
+                          {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "20px", fontWeight: 600, color: "#F4A623" }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
+                          {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", textDecoration: "line-through", marginLeft: 6 }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                        </span>
                       )}
+                    </p>
+                  )}
+                  {!selectedPromo.description && (selectedPromo.promoPrice || selectedPromo.originalPrice) && (
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                      {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "20px", fontWeight: 600, color: "#F4A623" }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
+                      {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                     </div>
-                  </div>
-                )}
-                {/* Price section for graphic promos */}
-                {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
-                  <div style={{ padding: "20px 24px 28px", background: "white" }}>
-                    <div style={{ padding: "16px 0", borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO</p>
-                      <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                        {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
-                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: selectedPromo.promoPrice ? "line-through" : "none" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
-                        {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
               /* PRODUCT PROMO — scrollable content */

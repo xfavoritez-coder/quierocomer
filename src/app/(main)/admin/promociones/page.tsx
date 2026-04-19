@@ -32,6 +32,9 @@ export default function AdminPromociones() {
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editPrice, setEditPrice] = useState("");
+  const [editOriginalPrice, setEditOriginalPrice] = useState("");
+  const [editImageUrl, setEditImageUrl] = useState("");
+  const [editUploading, setEditUploading] = useState(false);
 
   // Create new promo
   const [creating, setCreating] = useState(false);
@@ -167,17 +170,47 @@ export default function AdminPromociones() {
     setEditName(p.name);
     setEditDesc(p.description || "");
     setEditPrice(p.promoPrice?.toString() || "");
+    setEditOriginalPrice(p.originalPrice?.toString() || "");
+    setEditImageUrl(p.imageUrl || "");
+  };
+
+  const handleEditUpload = async (file: File) => {
+    setEditUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("localId", editing?.restaurant?.name || "promo");
+      fd.append("dishName", editName || "promo");
+      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+      const data = await res.json();
+      if (data.url) setEditImageUrl(data.url);
+      else {
+        const fd2 = new FormData();
+        fd2.append("file", file);
+        fd2.append("folder", "general");
+        const res2 = await fetch("/api/upload", { method: "POST", body: fd2 });
+        const data2 = await res2.json();
+        if (data2.url) setEditImageUrl(data2.url);
+      }
+    } catch {}
+    setEditUploading(false);
   };
 
   const saveEdit = async () => {
     if (!editing) return;
+    const body: any = {
+      id: editing.id, name: editName, description: editDesc,
+      promoPrice: editPrice ? Number(editPrice) : null,
+      originalPrice: editOriginalPrice ? Number(editOriginalPrice) : null,
+      imageUrl: editImageUrl || null,
+    };
     const res = await fetch("/api/admin/promotions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editing.id, name: editName, description: editDesc, promoPrice: editPrice ? Number(editPrice) : null }),
+      body: JSON.stringify(body),
     });
     const data = await res.json();
     if (data.promotion) {
-      setPromos(prev => prev.map(p => p.id === editing.id ? { ...p, name: editName, description: editDesc, promoPrice: editPrice ? Number(editPrice) : null } : p));
+      setPromos(prev => prev.map(p => p.id === editing.id ? { ...p, ...body } : p));
     }
     setEditing(null);
   };
@@ -352,7 +385,26 @@ export default function AdminPromociones() {
           <h3 style={{ fontFamily: F, fontSize: "1rem", color: "white", marginBottom: 16 }}>Editar promoción</h3>
           <input placeholder="Nombre" value={editName} onChange={e => setEditName(e.target.value)} style={I} />
           <textarea placeholder="Descripción" value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
-          <input placeholder="Precio promo" type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={I} />
+          <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+            <input placeholder="Precio normal" type="number" value={editOriginalPrice} onChange={e => setEditOriginalPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
+            <input placeholder="Precio promo" type="number" value={editPrice} onChange={e => setEditPrice(e.target.value)} style={{ ...I, flex: 1, marginBottom: 0 }} />
+          </div>
+          {/* Image */}
+          {editing.promoType === "graphic" && (
+            <>
+              {editImageUrl ? (
+                <div style={{ position: "relative", marginBottom: 12, borderRadius: 12, overflow: "hidden", height: 150 }}>
+                  <img src={editImageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <button onClick={() => setEditImageUrl("")} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.6)", border: "none", color: "white", fontSize: "14px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                </div>
+              ) : (
+                <label style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "16px", background: "rgba(255,255,255,0.03)", border: "2px dashed #2A2A2A", borderRadius: 12, cursor: editUploading ? "wait" : "pointer", marginBottom: 12 }}>
+                  <input type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={async e => { const f = e.target.files?.[0]; if (f) await handleEditUpload(f); }} />
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", color: editUploading ? "#F4A623" : "#888" }}>{editUploading ? "Subiendo..." : "📷 Cambiar imagen"}</span>
+                </label>
+              )}
+            </>
+          )}
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
             <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>

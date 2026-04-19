@@ -105,6 +105,8 @@ export async function PUT(req: NextRequest) {
         ...(data.name && { name: data.name }),
         ...(data.description !== undefined && { description: data.description }),
         ...(data.promoPrice !== undefined && { promoPrice: data.promoPrice }),
+        ...(data.originalPrice !== undefined && { originalPrice: data.originalPrice }),
+        ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
         ...(data.validFrom && { validFrom: new Date(data.validFrom) }),
         ...(data.validUntil && { validUntil: new Date(data.validUntil) }),
       },
