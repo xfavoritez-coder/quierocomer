@@ -715,7 +715,7 @@ const CSS = `
   .vj-ln span { display: inline-block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
-  .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 19px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
   .vj-dish.in-view .vj-pitch { opacity: 0.9; transform: translateY(0); }
   .vj-v-light .vj-pitch { margin-left: auto; margin-right: auto; color: #1a0e08; }
   .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
@@ -742,7 +742,7 @@ const CSS = `
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
   .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
   .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
-  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 15px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
+  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
   .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
   .vj-split-price-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
