@@ -164,7 +164,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           badgeLabel="Vistas"
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
-          Prueba otra vista.
+          Cambia de vista y descubre tu favorita.
         </GenioTip>
       )}
 

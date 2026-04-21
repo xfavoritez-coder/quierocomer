@@ -373,6 +373,10 @@ model Restaurant {
   bannerUrl   String?
   phone       String?
   address     String?
+  instagram   String?
+  website     String?
+  whatsapp    String?     // formato +56 9 1234 5678
+  scheduleJson Json?      // { "lun": "12:00-23:00", ..., "dom": "closed" }
   cartaTheme  CartaTheme @default(BASIC)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   waiterPanelActive  Boolean    @default(false)

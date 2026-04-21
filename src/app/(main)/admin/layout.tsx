@@ -1,113 +1,48 @@
 "use client";
-import { useState } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import AdminLayoutSuper from "@/components/admin/layouts/AdminLayoutSuper";
+import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
 
-const NAV = [
-  { icon: "📊", label: "Dashboard", href: "/admin" },
-  { icon: "🏠", label: "Locales", href: "/admin/locales", superOnly: true },
-  { icon: "👤", label: "Owners", href: "/admin/owners", superOnly: true },
-  { icon: "🍽️", label: "Platos", href: "/admin/menus" },
-  { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
-  { icon: "👥", label: "Segmentos", href: "/admin/segmentos" },
-  { icon: "📧", label: "Campañas", href: "/admin/campanias" },
-  { icon: "🏷️", label: "Promos", href: "/admin/promociones" },
-  { icon: "⚡", label: "Automático", href: "/admin/automatizaciones" },
-  { icon: "🎭", label: "Experiencias", href: "/admin/experiencias" },
-  { icon: "📈", label: "Analytics", href: "/admin/analytics" },
-  { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
-] as const;
+const PUBLIC_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const { name, isSuper, loading, error, logout } = useAdminSession();
+  const { name, isSuper, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant } = useAdminSession();
 
-  if (pathname === "/admin/login" || pathname === "/admin/forgot-password" || pathname === "/admin/reset-password") return <>{children}</>;
-  if (loading) return <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.8rem" }}>🧞 Cargando...</p></div>;
-  if (error) { if (typeof window !== "undefined") window.location.href = "/admin/login"; return null; }
+  // Public pages bypass layout
+  if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
 
-  const isActive = (h: string) => h === "/admin" ? pathname === "/admin" : pathname.startsWith(h);
-
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#111111" }}>
-      {/* Mobile top bar */}
-      <div className="adm-mobilebar">
-        <div>
-          <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
-        </div>
-        <button onClick={() => setMenuOpen(o => !o)} style={{ background: "none", border: "1px solid #2A2A2A", borderRadius: "10px", width: "44px", height: "44px", display: "flex", alignItems: "center", justifyContent: "center", color: "#F4A623", fontSize: "1.2rem", cursor: "pointer" }}>{menuOpen ? "✕" : "☰"}</button>
+  // Loading
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFF9ED", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando...</p>
       </div>
+    );
+  }
 
-      {/* Mobile menu */}
-      {menuOpen && (<>
-        <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 998 }} />
-        <div className="adm-mobilemenu">
-          {NAV.filter(n => !("superOnly" in n && n.superOnly) || isSuper).map(n => (
-            <Link key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderBottom: "1px solid #2A2A2A" }}>
-              <span style={{ fontSize: "1.2rem" }}>{n.icon}</span> {n.label}
-            </Link>
-          ))}
-          <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", width: "100%", textAlign: "left", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: "#ff8080", background: "none", border: "none", cursor: "pointer" }}>🚪 Cerrar sesión</button>
-        </div>
-      </>)}
+  // Auth error → redirect
+  if (error) {
+    if (typeof window !== "undefined") window.location.href = "/admin/login";
+    return null;
+  }
 
-      {/* Desktop sidebar */}
-      <aside className="adm-sidebar">
-        <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid #2A2A2A" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-            <Link href="/admin" style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#F4A623", textDecoration: "none" }}>🧞 Admin</Link>
-          </div>
-          <div style={{ fontSize: "0.7rem", color: "#666", fontFamily: "var(--font-display)" }}>{name}</div>
-        </div>
-        <nav style={{ flex: 1, padding: "8px 0" }}>
-          {NAV.filter(n => !("superOnly" in n && n.superOnly) || isSuper).map(n => (
-            <Link key={n.href} href={n.href} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "0.82rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderLeft: isActive(n.href) ? "3px solid #F4A623" : "3px solid transparent" }}>
-              <span>{n.icon}</span>{n.label}
-            </Link>
-          ))}
-        </nav>
-        <button onClick={logout} style={{ padding: "14px 16px", background: "none", border: "none", borderTop: "1px solid #2A2A2A", color: "#ff6b6b", fontFamily: "var(--font-display)", fontSize: "0.78rem", cursor: "pointer", textAlign: "left" }}>🚪 Cerrar sesión</button>
-      </aside>
+  // Superadmin → dark layout
+  if (isSuper) {
+    return <AdminLayoutSuper name={name} logout={logout}>{children}</AdminLayoutSuper>;
+  }
 
-      <main className="adm-main">{children}</main>
-
-      <style>{`
-        .adm-sidebar {
-          width: 200px; flex-shrink: 0;
-          background: #1A1A1A;
-          border-right: 1px solid #2A2A2A;
-          display: flex; flex-direction: column;
-          position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
-        }
-        .adm-main {
-          flex: 1; margin-left: 200px; padding: 24px 32px; min-height: 100vh;
-        }
-        .adm-mobilebar { display: none; }
-        .adm-mobilemenu {
-          position: fixed; top: 64px; right: 0; width: min(300px, 85vw); bottom: 0;
-          background: #1A1A1A; border-left: 1px solid #2A2A2A;
-          z-index: 999; overflow-y: auto;
-        }
-        @media (max-width: 767px) {
-          .adm-sidebar { display: none; }
-          .adm-mobilebar {
-            display: flex; position: fixed; top: 0; left: 0; right: 0; z-index: 999;
-            padding: 14px 18px; background: #111111;
-            border-bottom: 1px solid #2A2A2A;
-            justify-content: space-between; align-items: center;
-          }
-          .adm-main { margin-left: 0; padding: 80px 16px 32px; }
-          .adm-grid-2 { grid-template-columns: 1fr !important; }
-          .adm-grid-4 { grid-template-columns: 1fr 1fr !important; }
-          .adm-flex-wrap { flex-wrap: wrap !important; }
-          .adm-flex-col { flex-direction: column !important; }
-          .adm-w-full { width: 100% !important; }
-          .adm-btn-row { flex-direction: column !important; }
-          .adm-btn-row > * { width: 100% !important; flex: none !important; }
-        }
-      `}</style>
-    </div>
+  // Owner → warm mobile-first layout
+  return (
+    <AdminLayoutOwner
+      name={name}
+      restaurants={restaurants}
+      selectedRestaurantId={selectedRestaurantId}
+      setSelectedRestaurant={setSelectedRestaurant}
+      logout={logout}
+    >
+      {children}
+    </AdminLayoutOwner>
   );
 }

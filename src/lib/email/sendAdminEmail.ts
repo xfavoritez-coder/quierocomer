@@ -50,7 +50,7 @@ ${content}
 /** Password reset email */
 export function resetPasswordEmailHtml(name: string, resetLink: string): string {
   return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px">Recuperar contraseña</h2>
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">Recuperar contraseña</h2>
 <p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px">
   Hola ${name}, recibiste este email porque solicitaste recuperar tu contraseña del panel de QuieroComer.
   Si no fuiste tú, ignora este mensaje.
@@ -68,7 +68,7 @@ export function resetPasswordEmailHtml(name: string, resetLink: string): string 
 /** Welcome email for new owners */
 export function welcomeOwnerEmailHtml(name: string, resetLink: string): string {
   return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px">¡Bienvenido a QuieroComer!</h2>
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">¡Bienvenido a QuieroComer!</h2>
 <p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px">
   Hola ${name}, te crearon una cuenta en el panel de administración de QuieroComer.
   Usa el siguiente link para configurar tu contraseña y acceder a tu panel.

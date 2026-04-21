@@ -23,12 +23,12 @@ interface DashData {
 const DIET_LABELS: Record<string, string> = { omnivore: "Omnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
 
-function Stat({ label, value, sub, color = "#F4A623" }: { label: string; value: string | number; sub?: string; color?: string }) {
+function Stat({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
-    <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color, margin: "0 0 4px", fontWeight: 700 }}>{value}</p>
-      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#888", margin: 0 }}>{label}</p>
-      {sub && <p style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#555", margin: "4px 0 0" }}>{sub}</p>}
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color: color || "var(--adm-stat)", margin: "0 0 4px", fontWeight: 600 }}>{value}</p>
+      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>{label}</p>
+      {sub && <p style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{sub}</p>}
     </div>
   );
 }
@@ -37,16 +37,16 @@ function RankList({ title, items, valueLabel = "" }: { title: string; items: { n
   if (!items.length) return null;
   const max = items[0]?.count || 1;
   return (
-    <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
-      <h3 style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#888", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{title}</h3>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+      <h3 style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{title}</h3>
       {items.map((item, i) => (
         <div key={i} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 }}>
-            <span style={{ color: "white", fontFamily: "var(--font-display)" }}>{item.name}</span>
-            <span style={{ color: "#888", fontFamily: "var(--font-display)" }}>{item.count}{valueLabel}</span>
+            <span style={{ color: "var(--adm-text)", fontFamily: "var(--font-display)" }}>{item.name}</span>
+            <span style={{ color: "var(--adm-text2)", fontFamily: "var(--font-display)" }}>{item.count}{valueLabel}</span>
           </div>
-          <div style={{ height: 4, borderRadius: 2, background: "#2A2A2A" }}>
-            <div style={{ width: `${(item.count / max) * 100}%`, height: "100%", background: i === 0 ? "#F4A623" : "rgba(255,214,0,0.4)", borderRadius: 2 }} />
+          <div style={{ height: 4, borderRadius: 2, background: "var(--adm-card-border)" }}>
+            <div style={{ width: `${(item.count / max) * 100}%`, height: "100%", background: i === 0 ? "var(--adm-accent)" : "rgba(244,166,35,0.4)", borderRadius: 2 }} />
           </div>
         </div>
       ))}
@@ -60,8 +60,8 @@ function DistributionBar({ title, data, labels }: { title: string; data: Record<
   const colors = ["#F4A623", "#3db89e", "#e85530", "#7fbfdc", "#c93010"];
   const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
   return (
-    <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14, padding: "18px 20px" }}>
-      <h3 style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#888", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{title}</h3>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+      <h3 style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{title}</h3>
       <div style={{ display: "flex", borderRadius: 4, overflow: "hidden", height: 8, marginBottom: 12 }}>
         {entries.map(([key, val], i) => (
           <div key={key} style={{ width: `${(val / total) * 100}%`, background: colors[i % colors.length], height: "100%" }} />
@@ -69,7 +69,7 @@ function DistributionBar({ title, data, labels }: { title: string; data: Record<
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px" }}>
         {entries.map(([key, val], i) => (
-          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: "#aaa", fontFamily: "var(--font-display)" }}>
+          <div key={key} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: "0.75rem", color: "var(--adm-text2)", fontFamily: "var(--font-display)" }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: colors[i % colors.length] }} />
             {labels?.[key] || key} ({Math.round((val / total) * 100)}%)
           </div>
@@ -82,7 +82,7 @@ function DistributionBar({ title, data, labels }: { title: string; data: Record<
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
 
 export default function AdminDashboard() {
-  const { restaurants, isSuper, loading: sessionLoading } = useAdminSession();
+  const { restaurants, isSuper, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
   const [filterRestaurant, setFilterRestaurant] = useState<string>("");
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -90,31 +90,34 @@ export default function AdminDashboard() {
   const [generatingInsights, setGeneratingInsights] = useState(false);
   const [emailHealth, setEmailHealth] = useState<{ failuresLast24h: number; configured: boolean } | null>(null);
 
+  // For owners, auto-set filter to their selected restaurant
+  const effectiveFilter = isSuper ? filterRestaurant : (selectedRestaurantId || "");
+
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
-    const params = filterRestaurant ? `?restaurantId=${filterRestaurant}` : "";
+    const rid = isSuper ? filterRestaurant : selectedRestaurantId;
+    const params = rid ? `?restaurantId=${rid}` : "";
     Promise.all([
       fetch(`/api/admin/dashboard${params}`).then(r => r.json()),
-      filterRestaurant
-        ? fetch(`/api/admin/insights?restaurantId=${filterRestaurant}`).then(r => r.json())
+      rid
+        ? fetch(`/api/admin/insights?restaurantId=${rid}`).then(r => r.json())
         : fetch(`/api/admin/insights?mode=global`).then(r => r.json()),
     ]).then(([dashData, insightData]) => {
       if (!dashData.error) setData(dashData);
       setInsights(insightData.insights || []);
     }).catch(() => {}).finally(() => setLoading(false));
-    // Email health (superadmin only, non-blocking)
     if (isSuper) {
       fetch("/api/admin/email-health").then(r => r.ok ? r.json() : null).then(d => { if (d) setEmailHealth(d); }).catch(() => {});
     }
-  }, [filterRestaurant, sessionLoading]);
+  }, [filterRestaurant, sessionLoading, selectedRestaurantId, isSuper]);
 
   if (loading || sessionLoading) {
-    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
+    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-accent)", fontFamily: "var(--font-display)", fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
   }
 
   if (!data) {
-    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#888", fontFamily: "var(--font-display)" }}>Sin datos disponibles</p></div>;
+    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: "var(--font-display)" }}>Sin datos disponibles</p></div>;
   }
 
   const deltaText = data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs semana pasada` : "Sin datos previos";
@@ -125,15 +128,17 @@ export default function AdminDashboard() {
   return (
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Dashboard</h1>
-        <select
-          value={filterRestaurant}
-          onChange={e => setFilterRestaurant(e.target.value)}
-          style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none" }}
-        >
-          <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
-          {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
-        </select>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", color: "var(--adm-accent)", margin: 0 }}>Dashboard</h1>
+        {isSuper && (
+          <select
+            value={filterRestaurant}
+            onChange={e => setFilterRestaurant(e.target.value)}
+            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none" }}
+          >
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+            {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
+          </select>
+        )}
       </div>
 
       {/* Email health warning */}
@@ -150,15 +155,15 @@ export default function AdminDashboard() {
 
       {/* Main metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="Visitas esta semana" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "#3db89e" : "#F4A623"} />
+        <Stat label="Visitas esta semana" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "var(--adm-positive)" : undefined} />
         <Stat label="Visitantes únicos" value={data.totalGuests} />
-        <Stat label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} color="#3db89e" />
+        <Stat label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} color="var(--adm-positive)" />
         <Stat label="Duración promedio" value={avgText} />
       </div>
 
       {/* Genio */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="🧞 Genio usado esta semana" value={data.genioUsedThisWeek} color="#F4A623" />
+        <Stat label="🧞 Genio usado esta semana" value={data.genioUsedThisWeek} color="var(--adm-accent)" />
       </div>
 
       {/* Distributions */}
@@ -187,24 +192,25 @@ export default function AdminDashboard() {
       )}
 
       {/* Genio Insights */}
-      {(filterRestaurant || isSuper) && (
+      {(effectiveFilter || isSuper) && (
         <div style={{ marginTop: 24 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#F4A623", margin: 0 }}>🧞 Insights del Genio</h2>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "var(--adm-accent)", margin: 0 }}>🧞 Insights del Genio</h2>
             <button
               onClick={async () => {
                 setGeneratingInsights(true);
                 try {
+                  const rid = isSuper ? filterRestaurant : selectedRestaurantId;
                   const res = await fetch("/api/admin/insights", {
                     method: "POST", headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ restaurantId: filterRestaurant || null, action: "generate", mode: filterRestaurant ? undefined : "global" }),
+                    body: JSON.stringify({ restaurantId: rid || null, action: "generate", mode: rid ? undefined : "global" }),
                   });
                   const d = await res.json();
                   if (d.insights) setInsights(d.insights);
                 } catch {} finally { setGeneratingInsights(false); }
               }}
               disabled={generatingInsights}
-              style={{ padding: "6px 14px", background: generatingInsights ? "rgba(244,166,35,0.2)" : "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.72rem", fontWeight: 600, cursor: generatingInsights ? "wait" : "pointer" }}
+              style={{ padding: "6px 14px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: "var(--adm-accent)", fontFamily: "var(--font-display)", fontSize: "0.72rem", fontWeight: 600, cursor: generatingInsights ? "wait" : "pointer" }}
             >
               {generatingInsights ? "Analizando..." : "Generar insights"}
             </button>
@@ -214,12 +220,12 @@ export default function AdminDashboard() {
               {insights.map(i => {
                 const typeIcons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
                 return (
-                  <div key={i.id} style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "14px 16px" }}>
+                  <div key={i.id} style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
                     <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
                       <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 2 }}>{typeIcons[i.type] || "💡"}</span>
                       <div>
-                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "white", fontWeight: 600, margin: "0 0 4px" }}>{i.title}</p>
-                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "#aaa", lineHeight: 1.5, margin: 0 }}>{i.body}</p>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: "0 0 4px" }}>{i.title}</p>
+                        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.8rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{i.body}</p>
                       </div>
                     </div>
                   </div>
@@ -227,8 +233,8 @@ export default function AdminDashboard() {
               })}
             </div>
           ) : (
-            <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, padding: "24px 16px", textAlign: "center" }}>
-              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#666" }}>Toca "Generar insights" para que el Genio analice tu data</p>
+            <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "24px 16px", textAlign: "center" }}>
+              <p style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "var(--adm-text3)" }}>Toca "Generar insights" para que el Genio analice tu data</p>
             </div>
           )}
         </div>

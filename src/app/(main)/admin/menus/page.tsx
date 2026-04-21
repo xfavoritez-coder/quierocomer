@@ -69,7 +69,7 @@ export default function AdminMenus() {
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}>
-      <p style={{ color: "#888", fontFamily: F, fontSize: "0.92rem" }}>Selecciona un local en el sidebar para ver su menu</p>
+      <p style={{ color: "var(--adm-text2)", fontFamily: F, fontSize: "0.92rem" }}>Selecciona un local en el sidebar para ver su menu</p>
     </div>
   );
 
@@ -159,7 +159,7 @@ export default function AdminMenus() {
   if (selectedDish) return (
     <div style={{ maxWidth: 500 }}>
       <button onClick={() => { setSelectedDish(null); setEditMode(false); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
-      <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 16, overflow: "hidden" }}>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
             <img src={selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -171,15 +171,15 @@ export default function AdminMenus() {
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <div>
-                  <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "white", margin: 0 }}>{selectedDish.name}</h2>
-                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{selectedDish.category.name}</p>
+                  <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: 0 }}>{selectedDish.name}</h2>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{selectedDish.category.name}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <p style={{ fontFamily: F, fontSize: "1.1rem", color: "#F4A623", margin: 0, fontWeight: 700 }}>${selectedDish.price.toLocaleString("es-CL")}</p>
                   {selectedDish.discountPrice && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: 0 }}>${selectedDish.discountPrice.toLocaleString("es-CL")}</p>}
                 </div>
               </div>
-              {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#aaa", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
+              {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
 
               {/* Badges */}
               <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
@@ -188,7 +188,7 @@ export default function AdminMenus() {
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
 
-              {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", margin: "0 0 8px" }}>🥘 {selectedDish.ingredients}</p>}
+              {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 8px" }}>🥘 {selectedDish.ingredients}</p>}
               {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                   {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
@@ -230,7 +230,7 @@ export default function AdminMenus() {
                 <label style={LBL}>Tipo de dieta</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {DIET_OPTIONS.map(d => (
-                    <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.15)" : "rgba(255,255,255,0.05)", color: eDiet === d.value ? "#4ade80" : "#666" }}>
+                    <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.15)" : "var(--adm-hover)", color: eDiet === d.value ? "#4ade80" : "var(--adm-text2)" }}>
                       {d.icon} {d.label}
                     </button>
                   ))}
@@ -240,7 +240,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Características</label>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eSpicy ? "#e85530" : "#999" }}>
+                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "var(--adm-hover)", color: eSpicy ? "#e85530" : "var(--adm-text2)" }}>
                     🌶️ Picante
                   </button>
                 </div>
@@ -269,14 +269,14 @@ export default function AdminMenus() {
                 />
                 {/* Dropdown list */}
                 {ingSearch && (
-                  <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid #2A2A2A", borderRadius: 8, scrollbarWidth: "none" }}>
+                  <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
                     {allIngredients
                       .filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id))
                       .slice(0, 15)
                       .map(i => (
-                        <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid #222", cursor: "pointer", textAlign: "left" }}>
-                          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "white" }}>{i.name}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#555" }}>{i.category}</span>
+                        <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
+                          <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
                           {i.isAllergen && <span style={{ fontSize: "0.6rem", color: "#e85530" }}>⚠️</span>}
                         </button>
                       ))}
@@ -301,7 +301,7 @@ export default function AdminMenus() {
                 <label style={LBL}>Alérgenos</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ALLERGEN_OPTIONS.map(a => (
-                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "rgba(255,255,255,0.05)", color: eAllergens.includes(a) ? "#e85530" : "#666" }}>
+                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "var(--adm-hover)", color: eAllergens.includes(a) ? "#e85530" : "var(--adm-text2)" }}>
                       {eAllergens.includes(a) ? "⚠️ " : ""}{a}
                     </button>
                   ))}
@@ -314,7 +314,7 @@ export default function AdminMenus() {
                   {TAG_OPTIONS.map(t => {
                     const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
                     return (
-                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "rgba(255,255,255,0.05)", color: disabled ? "#444" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "#666", opacity: disabled ? 0.5 : 1 }}>
+                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled ? 0.5 : 1 }}>
                         {t.label}{disabled ? " (pronto)" : ""}
                       </button>
                     );
@@ -324,7 +324,7 @@ export default function AdminMenus() {
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
-                <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+                <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
               </div>
             </>
           )}
@@ -338,7 +338,7 @@ export default function AdminMenus() {
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Platos</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
         </div>
         <RestaurantPicker />
       </div>
@@ -348,12 +348,12 @@ export default function AdminMenus() {
           placeholder="Buscar plato..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.85rem", outline: "none" }}
+          style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }}
         />
         <select
           value={catFilter}
           onChange={e => setCatFilter(e.target.value)}
-          style={{ padding: "10px 14px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+          style={{ padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
         >
           <option value="all">Todas las categorias</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -367,26 +367,26 @@ export default function AdminMenus() {
           {paginated.map(d => (
             <button key={d.id} onClick={() => setSelectedDish(d)} style={{
               display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
-              background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12,
+              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12,
               cursor: "pointer", width: "100%", textAlign: "left", opacity: d.isActive ? 1 : 0.5,
               transition: "border-color 0.2s",
             }}
               onMouseOver={e => (e.currentTarget.style.borderColor = "rgba(244,166,35,0.3)")}
-              onMouseOut={e => (e.currentTarget.style.borderColor = "#2A2A2A")}
+              onMouseOut={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
             >
               {d.photos?.[0] ? (
                 <img src={d.photos[0]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
               ) : (
-                <div style={{ width: 44, height: 44, borderRadius: 8, background: "#2A2A2A", flexShrink: 0 }} />
+                <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--adm-card-border)", flexShrink: 0 }} />
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                   {d.tags.map(t => (
                     <span key={t} style={{ width: 6, height: 6, borderRadius: "50%", background: TAG_COLORS[t] || "#888", flexShrink: 0 }} />
                   ))}
                 </div>
-                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", margin: 0 }}>{d.category.name}</p>
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
               </div>
               <div style={{ flexShrink: 0, textAlign: "right" }}>
                 <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
@@ -395,7 +395,7 @@ export default function AdminMenus() {
             </button>
           ))}
           {filtered.length === 0 && (
-            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 40 }}>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", textAlign: "center", padding: 40 }}>
               {dishes.length === 0 ? "Este local no tiene platos" : "No hay platos que coincidan"}
             </p>
           )}
@@ -404,14 +404,14 @@ export default function AdminMenus() {
 
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page <= 1 ? "transparent" : "rgba(255,255,255,0.04)", color: page <= 1 ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
-          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", padding: "8px 12px" }}>{page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page >= totalPages ? "transparent" : "rgba(255,255,255,0.04)", color: page >= totalPages ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page <= 1 ? "transparent" : "var(--adm-hover)", color: page <= 1 ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
+          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {totalPages}</span>
+          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page >= totalPages ? "transparent" : "var(--adm-hover)", color: page >= totalPages ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
         </div>
       )}
     </div>
   );
 }
 
-const LBL: React.CSSProperties = { fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 };
-const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" };
+const LBL: React.CSSProperties = { fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 };
+const INP: React.CSSProperties = { width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: "var(--font-display)", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" };

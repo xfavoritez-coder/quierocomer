@@ -3,6 +3,7 @@ import { Space_Grotesk, Inter } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import GenieShell from "@/components/GenieShell";
+import { Toaster } from "sonner";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -40,6 +41,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           <GenieShell>
             {children}
           </GenieShell>
+          <Toaster
+            position="bottom-center"
+            toastOptions={{
+              duration: 3000,
+              style: { fontFamily: "var(--font-display), system-ui, sans-serif", fontSize: "0.85rem" },
+            }}
+          />
         </AuthProvider>
       </ErrorBoundary>
     </div>

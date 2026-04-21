@@ -11,12 +11,14 @@ const NAV = [
 ];
 
 export default function GenieShell({ children }: { children: React.ReactNode }) {
-  const [ready, setReady] = useState(false);
   const pathname = usePathname();
 
   // Don't render shell for admin or auth pages
   const isAdmin = pathname.startsWith("/admin");
   const isAuth = pathname.startsWith("/login") || pathname.startsWith("/registro");
+
+  // Admin/auth pages skip GenieShell entirely — start ready immediately
+  const [ready, setReady] = useState(isAdmin || isAuth);
 
   useEffect(() => {
     if (isAdmin || isAuth) { setReady(true); return; }

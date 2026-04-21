@@ -17,6 +17,40 @@
   --qc-border: #E0E0E0;
 }
 
+/* ── Admin theme tokens ── */
+.theme-dark {
+  --adm-bg: #111111;
+  --adm-card: #1A1A1A;
+  --adm-card-border: #2A2A2A;
+  --adm-input: #111111;
+  --adm-input-border: #2A2A2A;
+  --adm-text: #FFFFFF;
+  --adm-text2: #888888;
+  --adm-text3: #555555;
+  --adm-accent: #F4A623;
+  --adm-stat: #F4A623;
+  --adm-positive: #3db89e;
+  --adm-hover: rgba(255,214,0,0.1);
+  --adm-card-shadow: none;
+  --adm-select-bg: #1A1A1A;
+}
+.theme-light {
+  --adm-bg: #FFFFFF;
+  --adm-card: #FFFBF3;
+  --adm-card-border: #F0DFC0;
+  --adm-card-shadow: 0 1px 4px rgba(180,140,60,0.08);
+  --adm-input: #FFF9ED;
+  --adm-input-border: #E8D0A0;
+  --adm-text: #1a1a1a;
+  --adm-text2: #8a7550;
+  --adm-text3: #b8a888;
+  --adm-accent: #F4A623;
+  --adm-stat: #1a1a1a;
+  --adm-positive: #10b981;
+  --adm-hover: #FFF9ED;
+  --adm-select-bg: #FFFFFF;
+}
+
 html, body {
   background: var(--qc-bg);
   color: var(--qc-text);
