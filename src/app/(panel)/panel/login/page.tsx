@@ -9,11 +9,26 @@ function OasisBackground() {
       <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A8DEEF" /><stop offset="55%" stopColor="#C8E8D8" /><stop offset="100%" stopColor="#F2C571" /></linearGradient></defs>
       <rect width="360" height="720" fill="url(#sky)" />
       <circle cx="290" cy="85" r="34" fill="#FFD86B" />
+      <g opacity="0.9"><ellipse cx="55" cy="145" rx="28" ry="10" fill="white" /><ellipse cx="75" cy="140" rx="22" ry="12" fill="white" /><ellipse cx="90" cy="147" rx="18" ry="8" fill="white" /></g>
+      <g opacity="0.8"><ellipse cx="230" cy="68" rx="22" ry="8" fill="white" /><ellipse cx="250" cy="63" rx="18" ry="10" fill="white" /><ellipse cx="265" cy="69" rx="14" ry="7" fill="white" /></g>
       <path d="M0 340 Q90 280 180 310 Q270 280 360 330 L360 420 L0 420Z" fill="#F2C571" />
       <path d="M0 390 Q120 320 200 370 Q280 340 360 380 L360 500 L0 500Z" fill="#E8A942" />
       <path d="M0 450 Q100 400 180 430 Q260 400 360 440 L360 580 L0 580Z" fill="#C78A2E" />
+      <rect x="23" y="415" width="4" height="60" rx="2" fill="#5A3718" />
+      <g transform="translate(25, 415)"><path d="M0 0 Q-20 -15 -30 -5" stroke="#2E5010" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q-18 -22 -25 -15" stroke="#3D6B1C" strokeWidth="2.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q15 -20 28 -8" stroke="#2E5010" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q12 -25 22 -18" stroke="#4A7C1C" strokeWidth="2.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q-5 -28 -2 -30" stroke="#3D6B1C" strokeWidth="2" fill="none" strokeLinecap="round" /></g>
+      <rect x="48" y="425" width="5" height="70" rx="2" fill="#6B4423" />
+      <g transform="translate(50, 425)"><path d="M0 0 Q-25 -18 -38 -6" stroke="#3D6B1C" strokeWidth="4" fill="none" strokeLinecap="round" /><path d="M0 0 Q-22 -28 -32 -18" stroke="#4A7C1C" strokeWidth="3.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q20 -25 35 -10" stroke="#3D6B1C" strokeWidth="4" fill="none" strokeLinecap="round" /><path d="M0 0 Q15 -30 28 -20" stroke="#5A8E2A" strokeWidth="3.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q-6 -34 -3 -38" stroke="#4A7C1C" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q4 -32 6 -36" stroke="#5A8E2A" strokeWidth="2.5" fill="none" strokeLinecap="round" /></g>
+      <rect x="308" y="450" width="5" height="65" rx="2" fill="#6B4423" />
+      <g transform="translate(310, 450)"><path d="M0 0 Q-22 -20 -32 -8" stroke="#3D6B1C" strokeWidth="3.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q-18 -26 -28 -16" stroke="#5A8E2A" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q18 -22 30 -8" stroke="#4A7C1C" strokeWidth="3.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q14 -28 24 -18" stroke="#3D6B1C" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q-3 -30 0 -34" stroke="#5A8E2A" strokeWidth="2.5" fill="none" strokeLinecap="round" /></g>
+      <rect x="336" y="435" width="4" height="55" rx="2" fill="#5A3718" />
+      <g transform="translate(338, 435)"><path d="M0 0 Q-18 -14 -26 -4" stroke="#2E5010" strokeWidth="2.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q-14 -22 -20 -14" stroke="#3D6B1C" strokeWidth="2" fill="none" strokeLinecap="round" /><path d="M0 0 Q12 -18 22 -6" stroke="#4A7C1C" strokeWidth="2.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q-3 -24 0 -26" stroke="#2E5010" strokeWidth="2" fill="none" strokeLinecap="round" /></g>
       <ellipse cx="180" cy="545" rx="155" ry="30" fill="#3A9AB0" />
       <ellipse cx="180" cy="543" rx="150" ry="28" fill="#5BB5C8" />
+      <ellipse cx="180" cy="541" rx="148" ry="26" fill="none" stroke="#A8E0E8" strokeWidth="1" opacity="0.5" />
+      <path d="M110 538 Q130 535 150 538" stroke="white" strokeWidth="1" fill="none" opacity="0.4" />
+      <path d="M160 545 Q185 542 210 545" stroke="white" strokeWidth="1.2" fill="none" opacity="0.35" />
+      <path d="M130 550 Q155 547 180 550" stroke="white" strokeWidth="0.8" fill="none" opacity="0.3" />
+      <path d="M200 535 Q220 532 240 535" stroke="white" strokeWidth="1" fill="none" opacity="0.25" />
       <rect x="0" y="570" width="360" height="150" fill="#A06818" />
       <path d="M0 570 Q90 560 180 568 Q270 560 360 572 L360 580 L0 580Z" fill="#B87A20" />
     </svg>
