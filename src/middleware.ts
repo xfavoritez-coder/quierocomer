@@ -22,12 +22,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/qr", request.url));
   }
 
-  // --- /panel/* → rewrite to /admin/* (friendly URL alias) ---
+  // --- /panel/* → redirect to /admin/* (friendly entry point) ---
   if (pathname.startsWith("/panel")) {
-    const newPath = pathname.replace(/^\/panel/, "/admin");
-    const url = request.nextUrl.clone();
-    url.pathname = newPath;
-    return NextResponse.rewrite(url);
+    const newPath = pathname.replace(/^\/panel/, "/admin") || "/admin";
+    return NextResponse.redirect(new URL(newPath, request.url));
   }
 
   // --- Admin page routes ---
