@@ -162,7 +162,8 @@ export default function AdminLogin() {
         localStorage.removeItem("qc_admin_remember");
         sessionStorage.setItem("qc_admin_session", "1");
       }
-      router.push("/admin");
+      // Full page navigation ensures cookies are available for middleware
+      window.location.href = "/admin";
     } catch { setError("Error de conexion"); }
     setLoading(false);
   };
