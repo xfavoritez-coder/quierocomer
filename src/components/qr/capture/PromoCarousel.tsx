@@ -187,7 +187,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 12px", margin: 0, background: "#FFF3D4" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 12px", margin: 0, background: "#FDF6E3" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -261,7 +261,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                         ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
                       {p.originalPrice && (
-                        <span style={{ fontSize: "12px", color: "#a08060", textDecoration: "line-through" }}>
+                        <span style={{ fontSize: "13px", color: "#999999", textDecoration: "line-through" }}>
                           ${p.originalPrice.toLocaleString("es-CL")}
                         </span>
                       )}
@@ -274,7 +274,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         </div>
         {/* Fade right — hide when at last card */}
         {promos.length > 1 && activeIdx < promos.length - 1 && (
-          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #FFF3D4)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
+          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #FDF6E3)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
         )}
         </div>
 

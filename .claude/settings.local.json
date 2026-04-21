@@ -37,7 +37,8 @@
       "Bash(ls:*)",
       "Bash(find /c/Proyectos/quierocomer -name tailwind.config.* -type f)",
       "Bash(find /c/Proyectos/quierocomer -name *.css -not -path ./node_modules/* -not -path ./.next/*)",
-      "Bash(find /c/Proyectos/quierocomer -name .env* -o -name *.env*)"
+      "Bash(find /c/Proyectos/quierocomer -name .env* -o -name *.env*)",
+      "Bash(grep -ri RESEND c:/Proyectos/quierocomer/.env*)"
     ]
   }
 }
