@@ -181,10 +181,12 @@ export default function QRPageClient({ restaurant }: Props) {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", margin: "0 auto 12px", display: "block", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" }} />}
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.6rem", fontWeight: 800, color: "#0e0e0e", margin: "0 0 4px" }}>
-            {restaurant.name}
-          </h1>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 4 }}>
+            {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
+            <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", margin: 0 }}>
+              {restaurant.name}
+            </h1>
+          </div>
           <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "#999" }}>Genera tu código QR para imprimir</p>
         </div>
 
