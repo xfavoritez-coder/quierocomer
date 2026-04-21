@@ -68,9 +68,8 @@ export default function PanelLogin() {
       else { localStorage.removeItem("qc_panel_remember"); sessionStorage.setItem("panel_session", "1"); }
       // Store name for welcome toast
       sessionStorage.setItem("panel_welcome", data.name || "");
-      // Reset cached session so the panel layout fetches fresh data
-      resetPanelSession();
-      router.push("/panel");
+      // Full page navigation ensures cookies are available for middleware
+      window.location.href = "/panel";
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
       setLoading(false);
