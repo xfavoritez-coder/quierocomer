@@ -14,6 +14,7 @@ const NAV = [
   { icon: "🏷️", label: "Promos", href: "/admin/promociones" },
   { icon: "⚡", label: "Automático", href: "/admin/automatizaciones" },
   { icon: "🎭", label: "Experiencias", href: "/admin/experiencias" },
+  { icon: "📈", label: "Analytics", href: "/admin/analytics" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 
