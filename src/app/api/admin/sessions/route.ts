@@ -1,22 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  checkAdminAuth,
+  requireRestaurantForOwner,
+  getOwnedRestaurantIds,
+  isSuperAdmin,
+  authErrorResponse,
+} from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
-  try {
-    const cookieStore = await cookies();
-    if (!cookieStore.get("admin_token")?.value) {
-      return NextResponse.json({ error: "Not auth" }, { status: 401 });
-    }
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
 
+  try {
     const url = new URL(req.url);
     const restaurantId = url.searchParams.get("restaurantId");
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = 30;
     const skip = (page - 1) * limit;
 
+    // Build where filter with ownership enforcement
     const where: any = {};
-    if (restaurantId) where.restaurantId = restaurantId;
+    if (restaurantId) {
+      await requireRestaurantForOwner(req, restaurantId);
+      where.restaurantId = restaurantId;
+    } else if (!isSuperAdmin(req)) {
+      // Owner without specific filter: show all their restaurants
+      const ownedIds = await getOwnedRestaurantIds(req);
+      if (!ownedIds || ownedIds.length === 0) {
+        return NextResponse.json({ sessions: [], total: 0, page: 1, totalPages: 0 });
+      }
+      where.restaurantId = { in: ownedIds };
+    }
 
     const [sessions, total] = await Promise.all([
       prisma.session.findMany({
@@ -44,7 +59,7 @@ export async function GET(req: NextRequest) {
     const dishNames = allDishIds.size > 0
       ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true, ingredients: true } })
       : [];
-    const dishMap = Object.fromEntries(dishNames.map(d => [d.id, d]));
+    const dishMap = Object.fromEntries(dishNames.map((d) => [d.id, d]));
 
     // Get ingredients for all viewed dishes
     const dishIngredients = allDishIds.size > 0
@@ -58,7 +73,6 @@ export async function GET(req: NextRequest) {
       if (!ingredientsByDish[di.dishId]) ingredientsByDish[di.dishId] = [];
       ingredientsByDish[di.dishId].push(di.ingredient);
     }
-    // Fallback: text ingredients for dishes without DishIngredient links
     for (const d of dishNames) {
       if (!ingredientsByDish[d.id] && d.ingredients) {
         ingredientsByDish[d.id] = d.ingredients.split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({ name: name.toLowerCase(), isAllergen: false, allergenType: null }));
@@ -74,36 +88,32 @@ export async function GET(req: NextRequest) {
     const catNames = allCatIds.size > 0
       ? await prisma.category.findMany({ where: { id: { in: Array.from(allCatIds) } }, select: { id: true, name: true } })
       : [];
-    const catMap = Object.fromEntries(catNames.map(c => [c.id, c.name]));
+    const catMap = Object.fromEntries(catNames.map((c) => [c.id, c.name]));
 
-    // Check which sessions used Genio + what it recommended
-    // Note: StatEvent.sessionId is a client-side UUID (qr_session_id), NOT the DB Session.id
-    // So we match by guestId + time range of each session
-    const sessionGuestIds = [...new Set(sessions.map(s => s.guestId))];
+    // Genio events
+    const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
     const genioEvents = sessionGuestIds.length ? await prisma.statEvent.findMany({
       where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE"] } },
       select: { guestId: true, eventType: true, dishId: true, createdAt: true },
     }) : [];
 
-    // Get Genio recommended dish names
-    const genioCompletes = genioEvents.filter(e => e.eventType === "GENIO_COMPLETE");
-    const genioDishIds = [...new Set(genioCompletes.filter(e => e.dishId).map(e => e.dishId!))];
+    const genioCompletes = genioEvents.filter((e) => e.eventType === "GENIO_COMPLETE");
+    const genioDishIds = [...new Set(genioCompletes.filter((e) => e.dishId).map((e) => e.dishId!))];
     const genioDishes = genioDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: genioDishIds } }, select: { id: true, name: true },
     }) : [];
-    const genioDishMap = Object.fromEntries(genioDishes.map(d => [d.id, d.name]));
+    const genioDishMap = Object.fromEntries(genioDishes.map((d) => [d.id, d.name]));
 
-    // Match Genio events to sessions by guestId + time overlap
     const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[] }> = {};
     const dbSessionsWithGenio = new Set<string>();
     for (const s of sessions) {
       const start = new Date(s.startedAt).getTime();
       const end = s.endedAt ? new Date(s.endedAt).getTime() : Date.now();
-      const margin = 60000; // 1 min margin
-      const matching = genioEvents.filter(e =>
+      const margin = 60000;
+      const matching = genioEvents.filter((e) =>
         e.guestId === s.guestId &&
         e.createdAt.getTime() >= start - margin &&
-        e.createdAt.getTime() <= end + margin
+        e.createdAt.getTime() <= end + margin,
       );
       if (matching.length > 0) {
         dbSessionsWithGenio.add(s.id);
@@ -123,7 +133,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Fetch experience submissions for these guests
+    // Experience submissions
     const expSubmissions = sessionGuestIds.length ? await prisma.experienceSubmission.findMany({
       where: { guestId: { in: sessionGuestIds } },
       select: {
@@ -139,7 +149,7 @@ export async function GET(req: NextRequest) {
       expByGuest[key].push(sub);
     }
 
-    // Count distinct visit days per guest
+    // Visit days
     const allGuestSessions = sessionGuestIds.length ? await prisma.session.findMany({
       where: { guestId: { in: sessionGuestIds } },
       select: { guestId: true, startedAt: true },
@@ -147,17 +157,15 @@ export async function GET(req: NextRequest) {
     const visitDaysByGuest: Record<string, number> = {};
     for (const s of allGuestSessions) {
       if (!visitDaysByGuest[s.guestId]) {
-        const days = new Set(allGuestSessions.filter(x => x.guestId === s.guestId).map(x => x.startedAt.toISOString().split("T")[0]));
+        const days = new Set(allGuestSessions.filter((x) => x.guestId === s.guestId).map((x) => x.startedAt.toISOString().split("T")[0]));
         visitDaysByGuest[s.guestId] = days.size;
       }
     }
 
-    // Enrich sessions
-    const enriched = sessions.map(s => {
+    // Enrich
+    const enriched = sessions.map((s) => {
       const viewed = (s.dishesViewed as any[]) || [];
       const cats = (s.categoriesViewed as any[]) || [];
-
-      // Guest-level favorite ingredients (accumulated across all sessions)
       const favIngs = (s.guest.favoriteIngredients as Record<string, number>) || {};
       const topFavorites = Object.entries(favIngs).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, score]) => ({ name, score }));
 
@@ -176,7 +184,7 @@ export async function GET(req: NextRequest) {
         genioData: genioDataByDbSession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
         topFavorites,
-        experienceSubmissions: (expByGuest[s.guestId] || []).map(sub => ({
+        experienceSubmissions: (expByGuest[s.guestId] || []).map((sub) => ({
           id: sub.id,
           templateName: sub.experience.template.name,
           templateEmoji: sub.experience.template.iconEmoji,
@@ -189,8 +197,9 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit) });
-  } catch (error) {
-    console.error("Sessions error:", error);
+  } catch (e: any) {
+    if (e.status === 400 || e.status === 403) return authErrorResponse(e);
+    console.error("Sessions error:", e);
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }

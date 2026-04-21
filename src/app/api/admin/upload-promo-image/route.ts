@@ -1,22 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { supabase } from "@/lib/supabase";
+import {
+  checkAdminAuth,
+  assertOwnsRestaurant,
+  authErrorResponse,
+} from "@/lib/adminAuth";
 
 export const config = { api: { bodyParser: false } };
-
-// Increase body size limit for file uploads
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  if (!cookieStore.get("admin_token")?.value) {
-    return NextResponse.json({ error: "Not auth" }, { status: 401 });
-  }
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
 
   try {
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const promoName = (formData.get("promoName") as string) || "promo";
+    const restaurantId = formData.get("restaurantId") as string | null;
+
+    // Ownership check if restaurantId provided
+    if (restaurantId) {
+      await assertOwnsRestaurant(req, restaurantId);
+    }
 
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
@@ -53,6 +59,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url, thumbUrl: url });
   } catch (e: any) {
+    if (e.status === 403) return authErrorResponse(e);
     console.error("[Upload promo]", e);
     return NextResponse.json({ error: "Error: " + (e.message || "desconocido") }, { status: 500 });
   }

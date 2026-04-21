@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import {
+  checkAdminAuth,
+  isSuperAdmin,
+  getOwnedRestaurantIds,
+  requireRestaurantForOwner,
+  authErrorResponse,
+} from "@/lib/adminAuth";
 
 function daysAgo(n: number) {
   const d = new Date();
@@ -9,50 +15,38 @@ function daysAgo(n: number) {
   return d;
 }
 
-async function getOwnerRestaurantIds(): Promise<string[] | null> {
-  const cookieStore = await cookies();
-  const role = cookieStore.get("admin_role")?.value;
-  const adminId = cookieStore.get("admin_id")?.value;
-  if (!adminId) return null;
-  if (role === "SUPERADMIN") return null; // null = all
-  const owner = await prisma.restaurantOwner.findUnique({
-    where: { id: adminId },
-    include: { restaurants: { select: { id: true } } },
-  });
-  return owner?.restaurants.map((r) => r.id) || [];
-}
-
 export async function GET(req: NextRequest) {
-  try {
-    const cookieStore = await cookies();
-    if (!cookieStore.get("admin_token")?.value) {
-      return NextResponse.json({ error: "Not auth" }, { status: 401 });
-    }
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
 
+  try {
     const url = new URL(req.url);
     const filterRestaurantId = url.searchParams.get("restaurantId");
-    const ownerIds = await getOwnerRestaurantIds();
 
-    // Build restaurant filter
+    // For owners without a specific filter, use all their restaurants
+    // For superadmin, allow global view
     let restaurantFilter: any = {};
+    const isSuper = isSuperAdmin(req);
+
     if (filterRestaurantId) {
-      // Specific restaurant selected
-      if (ownerIds && !ownerIds.includes(filterRestaurantId)) {
-        return NextResponse.json({ error: "No access" }, { status: 403 });
-      }
+      // Validate ownership if not superadmin
+      await requireRestaurantForOwner(req, filterRestaurantId);
       restaurantFilter = { restaurantId: filterRestaurantId };
-    } else if (ownerIds) {
+    } else if (!isSuper) {
       // Owner without specific selection — all their restaurants
+      const ownerIds = await getOwnedRestaurantIds(req);
+      if (!ownerIds || ownerIds.length === 0) {
+        return NextResponse.json({ error: "No tienes restaurantes asignados" }, { status: 403 });
+      }
       restaurantFilter = { restaurantId: { in: ownerIds } };
     }
-    // If ownerIds is null (superadmin) and no filter, no restriction
+    // If superadmin and no filter, no restriction
 
     const now = new Date();
     const weekAgo = daysAgo(7);
     const twoWeeksAgo = daysAgo(14);
     const monthAgo = daysAgo(30);
 
-    // Run all queries in parallel
     const [
       visitsThisWeek,
       visitsLastWeek,
@@ -67,45 +61,32 @@ export async function GET(req: NextRequest) {
       activeRestaurants,
       topRestaurants,
     ] = await Promise.all([
-      // Visits this week (SESSION_START events)
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } },
       }),
-
-      // Visits last week
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: twoWeeksAgo, lt: weekAgo } },
       }),
-
-      // Total unique guests
       prisma.guestProfile.count({
         where: restaurantFilter.restaurantId
-          ? { statEvents: { some: { restaurantId: restaurantFilter.restaurantId } } }
+          ? { statEvents: { some: { restaurantId: typeof restaurantFilter.restaurantId === "string" ? restaurantFilter.restaurantId : undefined, ...(restaurantFilter.restaurantId?.in ? { restaurantId: { in: restaurantFilter.restaurantId.in } } : {}) } } }
           : undefined,
       }),
-
-      // Guests linked to QRUser (registered)
       prisma.guestProfile.count({
         where: {
           linkedQrUserId: { not: null },
           ...(restaurantFilter.restaurantId
-            ? { statEvents: { some: { restaurantId: restaurantFilter.restaurantId } } }
+            ? { statEvents: { some: { restaurantId: typeof restaurantFilter.restaurantId === "string" ? restaurantFilter.restaurantId : undefined } } }
             : {}),
         },
       }),
-
-      // Sessions this week with details
       prisma.session.findMany({
         where: { ...restaurantFilter, startedAt: { gte: weekAgo } },
         select: { durationMs: true, isAbandoned: true, viewUsed: true, deviceType: true },
       }),
-
-      // Genio used this week
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: weekAgo } },
       }),
-
-      // Top 5 most viewed dishes
       prisma.statEvent.groupBy({
         by: ["dishId"],
         where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: monthAgo } },
@@ -113,8 +94,6 @@ export async function GET(req: NextRequest) {
         orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
-
-      // Top 5 dishes recommended by Genio
       prisma.statEvent.groupBy({
         by: ["dishId"],
         where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", dishId: { not: null }, createdAt: { gte: monthAgo } },
@@ -122,33 +101,27 @@ export async function GET(req: NextRequest) {
         orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
-
-      // Diet type distribution from QRUsers
       prisma.qRUser.groupBy({
         by: ["dietType"],
         where: { dietType: { not: null } },
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
       }),
-
-      // Session engagement: active vs abandoned this week
       prisma.session.groupBy({
         by: ["isAbandoned"],
         where: { ...restaurantFilter, startedAt: { gte: weekAgo } },
         _count: { id: true },
       }),
-
-      // Active restaurants (with activity last 30 days) — superadmin only
-      !filterRestaurantId && !ownerIds
+      // Active restaurants — superadmin only
+      isSuper && !filterRestaurantId
         ? prisma.statEvent.groupBy({
             by: ["restaurantId"],
             where: { createdAt: { gte: monthAgo } },
             _count: { id: true },
           })
         : Promise.resolve([]),
-
-      // Top 5 restaurants by visits — superadmin only
-      !filterRestaurantId && !ownerIds
+      // Top 5 restaurants — superadmin only
+      isSuper && !filterRestaurantId
         ? prisma.statEvent.groupBy({
             by: ["restaurantId"],
             where: { eventType: "SESSION_START", createdAt: { gte: weekAgo } },
@@ -161,13 +134,13 @@ export async function GET(req: NextRequest) {
 
     // Resolve dish names
     const dishIds = [...new Set([
-      ...topDishesViewed.filter(d => d.dishId).map(d => d.dishId!),
-      ...topDishesGenio.filter(d => d.dishId).map(d => d.dishId!),
+      ...topDishesViewed.filter((d) => d.dishId).map((d) => d.dishId!),
+      ...topDishesGenio.filter((d) => d.dishId).map((d) => d.dishId!),
     ])];
     const dishNames = dishIds.length
       ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true } })
       : [];
-    const dishMap = Object.fromEntries(dishNames.map(d => [d.id, d.name]));
+    const dishMap = Object.fromEntries(dishNames.map((d) => [d.id, d.name]));
 
     // Resolve restaurant names for superadmin
     const restIds = [...new Set([
@@ -177,9 +150,9 @@ export async function GET(req: NextRequest) {
     const restNames = restIds.length
       ? await prisma.restaurant.findMany({ where: { id: { in: restIds } }, select: { id: true, name: true } })
       : [];
-    const restMap = Object.fromEntries(restNames.map(r => [r.id, r.name]));
+    const restMap = Object.fromEntries(restNames.map((r) => [r.id, r.name]));
 
-    // Calculate view distribution
+    // Calculate distributions
     const viewDist: Record<string, number> = {};
     const deviceDist: Record<string, number> = {};
     let totalDuration = 0;
@@ -200,19 +173,19 @@ export async function GET(req: NextRequest) {
       totalGuests,
       registeredGuests: linkedGuests,
       conversionRate: totalGuests > 0 ? Math.round((linkedGuests / totalGuests) * 100) : 0,
-      avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount / 1000) : 0, // seconds
+      avgSessionDuration: durationCount > 0 ? Math.round(totalDuration / durationCount / 1000) : 0,
       genioUsedThisWeek,
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
-      topDishesViewed: topDishesViewed.map(d => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
-      topDishesGenio: topDishesGenio.map(d => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
-      dietDistribution: dietDistribution.map(d => ({ type: d.dietType || "Sin definir", count: d._count.id })),
-      // Superadmin only
+      topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
+      topDishesGenio: topDishesGenio.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
+      dietDistribution: dietDistribution.map((d) => ({ type: d.dietType || "Sin definir", count: d._count.id })),
       activeRestaurantsCount: (activeRestaurants as any[]).length,
       topRestaurants: (topRestaurants as any[]).map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, visits: r._count.id })),
     });
-  } catch (error) {
-    console.error("Dashboard error:", error);
+  } catch (e: any) {
+    if (e.status === 400 || e.status === 403) return authErrorResponse(e);
+    console.error("Dashboard error:", e);
     return NextResponse.json({ error: "Error" }, { status: 500 });
   }
 }

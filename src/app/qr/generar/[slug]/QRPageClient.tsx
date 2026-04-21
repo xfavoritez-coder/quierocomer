@@ -24,6 +24,7 @@ export default function QRPageClient({ restaurant }: Props) {
   const [design, setDesign] = useState<Design>("marca");
   const [size, setSize] = useState<Size>("medium");
   const [quantity, setQuantity] = useState(4);
+  const [quantityInput, setQuantityInput] = useState("4");
   const [generating, setGenerating] = useState(false);
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
@@ -250,7 +251,7 @@ export default function QRPageClient({ restaurant }: Props) {
             </div>
 
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "0.82rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>¿Cuántos?</h2>
-            <input type="number" min={1} max={50} value={quantity} onChange={(e) => setQuantity(Math.max(1, Math.min(50, parseInt(e.target.value) || 1)))}
+            <input type="number" min={1} max={50} value={quantityInput} onChange={(e) => setQuantityInput(e.target.value)} onBlur={() => { const n = Math.max(1, Math.min(50, parseInt(quantityInput) || 1)); setQuantity(n); setQuantityInput(String(n)); }}
               style={{ width: "100%", padding: "14px 16px", background: "white", border: "1px solid #eee", borderRadius: 12, fontSize: "1.1rem", color: "#0e0e0e", textAlign: "center", outline: "none", fontFamily: "var(--font-display)", boxSizing: "border-box" }}
             />
             <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#bbb", textAlign: "center", marginTop: 6 }}>

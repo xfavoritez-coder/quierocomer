@@ -1,17 +1,14 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { checkAdminAuth, getAdminId, getAdminRole } from "@/lib/adminAuth";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
   try {
-    const cookieStore = await cookies();
-    const adminId = cookieStore.get("admin_id")?.value;
-    const adminRole = cookieStore.get("admin_role")?.value;
-    const adminToken = cookieStore.get("admin_token")?.value;
-
-    if (!adminId || !adminToken) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const adminId = getAdminId(req);
+    const adminRole = getAdminRole(req);
 
     // Superadmin
     if (adminId === "superadmin" && adminRole === "SUPERADMIN") {
@@ -24,18 +21,23 @@ export async function GET() {
         role: "SUPERADMIN",
         name: "Super Admin",
         restaurants,
-        selectedRestaurantId: null, // superadmin selects manually
+        selectedRestaurantId: null,
       });
     }
 
     // Owner
     const owner = await prisma.restaurantOwner.findUnique({
-      where: { id: adminId },
+      where: { id: adminId! },
       include: { restaurants: { select: { id: true, name: true, slug: true } } },
     });
 
     if (!owner) {
       return NextResponse.json({ error: "Owner not found" }, { status: 401 });
+    }
+
+    // Block suspended/pending owners from accessing the panel
+    if (owner.status !== "ACTIVE") {
+      return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
     }
 
     return NextResponse.json({

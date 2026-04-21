@@ -3,6 +3,21 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
+const IS_PROD = process.env.NODE_ENV === "production";
+
+function setCookies(
+  response: NextResponse,
+  token: string,
+  role: string,
+  id: string,
+) {
+  const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
+  response.cookies.set("admin_token", token, { ...base, httpOnly: true });
+  response.cookies.set("admin_role", role, { ...base, httpOnly: true });
+  response.cookies.set("admin_id", id, { ...base, httpOnly: true });
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { email, password } = await req.json();
@@ -17,25 +32,9 @@ export async function POST(req: NextRequest) {
         ok: true,
         role: "SUPERADMIN",
         name: "Super Admin",
-        restaurantIds: [], // superadmin sees all
+        restaurantIds: [],
       });
-      response.cookies.set("admin_token", token, {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-      });
-      response.cookies.set("admin_role", "SUPERADMIN", {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-        sameSite: "lax",
-      });
-      response.cookies.set("admin_id", "superadmin", {
-        path: "/",
-        maxAge: 60 * 60 * 24 * 7,
-        sameSite: "lax",
-      });
+      setCookies(response, token, "SUPERADMIN", "superadmin");
       return response;
     }
 
@@ -54,6 +53,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
     }
 
+    // 3. Check account status
+    if (owner.status === "SUSPENDED") {
+      return NextResponse.json(
+        { error: "Cuenta suspendida. Contacta al administrador." },
+        { status: 403 },
+      );
+    }
+    if (owner.status === "PENDING") {
+      return NextResponse.json(
+        { error: "Cuenta pendiente de aprobación." },
+        { status: 403 },
+      );
+    }
+
     // Update lastLoginAt
     await prisma.restaurantOwner.update({
       where: { id: owner.id },
@@ -65,26 +78,10 @@ export async function POST(req: NextRequest) {
       ok: true,
       role: owner.role,
       name: owner.name,
-      restaurantIds: owner.restaurants.map(r => r.id),
+      restaurantIds: owner.restaurants.map((r) => r.id),
       restaurants: owner.restaurants,
     });
-    response.cookies.set("admin_token", token, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-    });
-    response.cookies.set("admin_role", owner.role, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-    });
-    response.cookies.set("admin_id", owner.id, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7,
-      sameSite: "lax",
-    });
+    setCookies(response, token, owner.role, owner.id);
     return response;
   } catch (error) {
     console.error("Admin login error:", error);

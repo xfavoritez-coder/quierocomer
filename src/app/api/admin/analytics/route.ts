@@ -1,20 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import {
+  checkAdminAuth,
+  requireRestaurantForOwner,
+  authErrorResponse,
+} from "@/lib/adminAuth";
 import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
-  const type = req.nextUrl.searchParams.get("type") || "metrics";
-  const restaurantId = req.nextUrl.searchParams.get("restaurantId") || null;
-  const fromStr = req.nextUrl.searchParams.get("from");
-  const toStr = req.nextUrl.searchParams.get("to");
-
-  const to = toStr ? new Date(toStr) : new Date();
-  const from = fromStr ? new Date(fromStr) : new Date(to.getTime() - 28 * 24 * 60 * 60 * 1000); // 4 weeks default
-
   try {
+    const type = req.nextUrl.searchParams.get("type") || "metrics";
+    const restaurantIdParam = req.nextUrl.searchParams.get("restaurantId") || null;
+    const fromStr = req.nextUrl.searchParams.get("from");
+    const toStr = req.nextUrl.searchParams.get("to");
+
+    // OWNER must provide restaurantId; SUPERADMIN can pass null for global
+    const restaurantId = await requireRestaurantForOwner(req, restaurantIdParam);
+
+    const to = toStr ? new Date(toStr) : new Date();
+    const from = fromStr ? new Date(fromStr) : new Date(to.getTime() - 28 * 24 * 60 * 60 * 1000);
+
     if (type === "metrics") {
       const data = await getVisitorMetrics(restaurantId, from, to);
       return NextResponse.json(data);
@@ -37,8 +44,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(data);
     }
     return NextResponse.json({ error: "Invalid type" }, { status: 400 });
-  } catch (error) {
-    console.error("[Analytics]", error);
+  } catch (e: any) {
+    if (e.status === 400 || e.status === 403) return authErrorResponse(e);
+    console.error("[Analytics]", e);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
   }
 }

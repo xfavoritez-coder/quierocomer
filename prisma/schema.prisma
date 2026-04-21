@@ -335,22 +335,33 @@ enum MemberStatus {
 // ═══════════════════════════════════════════════════════════════════════════
 
 model RestaurantOwner {
-  id           String    @id @default(cuid())
-  email        String    @unique
+  id           String      @id @default(cuid())
+  email        String      @unique
   passwordHash String
   name         String
-  role         OwnerRole @default(OWNER)
+  role         OwnerRole   @default(OWNER)
+  status       OwnerStatus @default(ACTIVE)
   lastLoginAt  DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   restaurants Restaurant[]
   uploadedTickets RestaurantTicket[]
+
+  @@index([resetToken])
 }
 
 enum OwnerRole {
   OWNER
   SUPERADMIN
+}
+
+enum OwnerStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING
 }
 
 model Restaurant {
