@@ -4,7 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Stat, RankList } from "@/components/admin/DashboardWidgets";
 import { toast } from "sonner";
 import Link from "next/link";
-import { UtensilsCrossed, QrCode, Bell, Tag } from "lucide-react";
+import { Eye, QrCode, Bell, Tag } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -82,18 +82,27 @@ export default function PanelDashboard() {
       </div>
 
       {/* Quick actions */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
-        {[
-          { icon: UtensilsCrossed, label: "Editar carta", href: "/panel/menus" },
-          { icon: QrCode, label: "Mi QR", href: "/panel/qr" },
-          { icon: Bell, label: "Garzón", href: "/panel/garzon" },
-        ].map(a => (
-          <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
-            <a.icon size={20} color={GOLD} />
-            <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textAlign: "center" }}>{a.label}</span>
-          </Link>
-        ))}
-      </div>
+      {(() => {
+        const rest = restaurants.find(r => r.id === selectedRestaurantId);
+        const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}` : "#";
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
+            <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
+              <Eye size={20} color={GOLD} />
+              <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textAlign: "center" }}>Ver mi carta</span>
+            </a>
+            {[
+              { icon: QrCode, label: "Mi QR", href: "/panel/qr" },
+              { icon: Bell, label: "Garzón", href: "/panel/garzon" },
+            ].map(a => (
+              <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
+                <a.icon size={20} color={GOLD} />
+                <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textAlign: "center" }}>{a.label}</span>
+              </Link>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Today */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Hoy</h2>
