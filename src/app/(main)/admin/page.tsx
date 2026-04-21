@@ -88,6 +88,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [generatingInsights, setGeneratingInsights] = useState(false);
+  const [emailHealth, setEmailHealth] = useState<{ failuresLast24h: number; configured: boolean } | null>(null);
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -102,6 +103,10 @@ export default function AdminDashboard() {
       if (!dashData.error) setData(dashData);
       setInsights(insightData.insights || []);
     }).catch(() => {}).finally(() => setLoading(false));
+    // Email health (superadmin only, non-blocking)
+    if (isSuper) {
+      fetch("/api/admin/email-health").then(r => r.ok ? r.json() : null).then(d => { if (d) setEmailHealth(d); }).catch(() => {});
+    }
   }, [filterRestaurant, sessionLoading]);
 
   if (loading || sessionLoading) {
@@ -130,6 +135,18 @@ export default function AdminDashboard() {
           {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
         </select>
       </div>
+
+      {/* Email health warning */}
+      {isSuper && emailHealth && (emailHealth.failuresLast24h > 0 || !emailHealth.configured) && (
+        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: "1.1rem" }}>⚠️</span>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#ef4444", margin: 0 }}>
+            {!emailHealth.configured
+              ? "Resend API key no configurada. Los emails no se están enviando."
+              : `${emailHealth.failuresLast24h} email${emailHealth.failuresLast24h > 1 ? "s" : ""} fallido${emailHealth.failuresLast24h > 1 ? "s" : ""} en las últimas 24h.`}
+          </p>
+        </div>
+      )}
 
       {/* Main metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>

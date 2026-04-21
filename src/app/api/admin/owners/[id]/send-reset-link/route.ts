@@ -38,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       to: owner.email,
       subject: "Recuperar contraseña · QuieroComer",
       html: resetPasswordEmailHtml(firstName, resetLink),
+      purpose: "password_reset",
     });
 
     return NextResponse.json({ success: true });

@@ -845,6 +845,21 @@ model CronLog {
   @@index([createdAt])
 }
 
+// ─── Email Log ───────────────────────────────────────────────────────
+
+model EmailLog {
+  id        String   @id @default(uuid())
+  to        String
+  subject   String
+  purpose   String   // password_reset, welcome, campaign, automation, experience
+  status    String   // sent, failed
+  errorMsg  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status, createdAt])
+}
+
 // ─── Marketing ────────────────────────────────────────────────────────
 
 model Segment {

@@ -65,9 +65,15 @@ export async function POST(req: NextRequest) {
         to: owner.email,
         subject: "Recuperar contraseña · QuieroComer",
         html: resetPasswordEmailHtml(firstName, resetLink),
+        purpose: "password_reset",
       });
     } catch (emailErr) {
-      console.error("Failed to send reset email:", emailErr);
+      console.error("[forgot-password] Failed to send email", {
+        email: owner.email,
+        ownerId: owner.id,
+        error: emailErr instanceof Error ? emailErr.message : String(emailErr),
+        timestamp: new Date().toISOString(),
+      });
       // Still return generic success — don't reveal email delivery status
     }
 

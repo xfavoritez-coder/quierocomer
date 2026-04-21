@@ -38,6 +38,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       to: owner.email,
       subject: "¡Bienvenido a QuieroComer!",
       html: welcomeOwnerEmailHtml(firstName, resetLink),
+      purpose: "welcome",
     });
 
     return NextResponse.json({ success: true });
