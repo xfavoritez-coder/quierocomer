@@ -144,6 +144,8 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [eCategoryId, setECategoryId] = useState("");
+  const [ingListOpen, setIngListOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
@@ -172,7 +174,9 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setECategoryId(d.categoryId);
     setIngSearch("");
+    setIngListOpen(false);
     // Load ingredients master list + linked
     fetch(`/api/admin/ingredients?dishId=${d.id}`)
       .then(r => r.json())
@@ -185,7 +189,7 @@ export default function AdminMenus() {
   const saveDishEdit = async () => {
     if (!selectedDish) return;
     setSaving(true);
-    const updates = {
+    const updates: Record<string, any> = {
       name: eName,
       description: eDesc || null,
       price: Number(ePrice),
@@ -198,11 +202,16 @@ export default function AdminMenus() {
       isSpicy: eSpicy,
       ingredientIds: eIngredientIds,
     };
-    await fetch(`/api/admin/dishes/${selectedDish.id}`, {
+    if (eCategoryId !== selectedDish.categoryId) {
+      updates.categoryId = eCategoryId;
+    }
+    const res = await fetch(`/api/admin/dishes/${selectedDish.id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    const updated = { ...selectedDish, ...updates, allergens: updates.allergens, tags: eTags as any };
+    const saved = await res.json();
+    const newCat = categories.find(c => c.id === eCategoryId) || selectedDish.category;
+    const updated = { ...selectedDish, ...updates, allergens: updates.allergens, tags: eTags as any, categoryId: eCategoryId, category: { id: newCat.id, name: newCat.name } };
     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
     setSelectedDish(updated);
     setEditMode(false);
@@ -268,6 +277,12 @@ export default function AdminMenus() {
                 <input value={eName} onChange={e => setEName(e.target.value)} style={INP} />
               </div>
               <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Categoría</label>
+                <select value={eCategoryId} onChange={e => setECategoryId(e.target.value)} style={{ ...INP, cursor: "pointer" }}>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Descripción</label>
                 <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
               </div>
@@ -317,39 +332,52 @@ export default function AdminMenus() {
                     })}
                   </div>
                 )}
-                {/* Search */}
+                {/* Filter input */}
                 <input
-                  value={ingSearch} onChange={e => setIngSearch(e.target.value)}
-                  placeholder="Buscar ingrediente..."
+                  value={ingSearch}
+                  onChange={e => { setIngSearch(e.target.value); setIngListOpen(true); }}
+                  onFocus={() => setIngListOpen(true)}
+                  placeholder="Filtrar ingredientes..."
                   style={{ ...INP, marginBottom: 4 }}
                 />
-                {/* Dropdown list */}
-                {ingSearch && (
-                  <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
-                    {allIngredients
-                      .filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id))
-                      .slice(0, 15)
-                      .map(i => (
-                        <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
-                          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
-                          {i.isAllergen && <span style={{ fontSize: "0.6rem", color: "#e85530" }}>⚠️</span>}
-                        </button>
-                      ))}
-                    {allIngredients.filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id)).length === 0 && (
-                      <button onClick={async () => {
-                        const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
-                        const data = await res.json();
-                        if (data.ingredient) {
-                          setAllIngredients(prev => [...prev, data.ingredient]);
-                          setEIngredientIds(prev => [...prev, data.ingredient.id]);
-                          setIngSearch("");
-                        }
-                      }} style={{ padding: "8px 10px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                        <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623" }}>+ Crear "{ingSearch}"</span>
-                      </button>
-                    )}
+                {/* Filterable ingredient list — always visible when open */}
+                {ingListOpen && (
+                  <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "thin" }}>
+                    {(() => {
+                      const filteredIngs = allIngredients
+                        .filter(i => (!ingSearch || i.name.toLowerCase().includes(ingSearch.toLowerCase())) && !eIngredientIds.includes(i.id));
+                      return (
+                        <>
+                          {filteredIngs.slice(0, 30).map(i => (
+                            <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
+                              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
+                              {i.isAllergen && <span style={{ fontSize: "0.6rem", color: "#e85530" }}>⚠️</span>}
+                            </button>
+                          ))}
+                          {filteredIngs.length === 0 && ingSearch && (
+                            <button onClick={async () => {
+                              const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
+                              const data = await res.json();
+                              if (data.ingredient) {
+                                setAllIngredients(prev => [...prev, data.ingredient]);
+                                setEIngredientIds(prev => [...prev, data.ingredient.id]);
+                                setIngSearch("");
+                              }
+                            }} style={{ padding: "8px 10px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623" }}>+ Crear "{ingSearch}"</span>
+                            </button>
+                          )}
+                          {filteredIngs.length === 0 && !ingSearch && (
+                            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", textAlign: "center", padding: 12, margin: 0 }}>Todos los ingredientes ya están seleccionados</p>
+                          )}
+                        </>
+                      );
+                    })()}
                   </div>
+                )}
+                {ingListOpen && (
+                  <button onClick={() => { setIngListOpen(false); setIngSearch(""); }} style={{ marginTop: 4, padding: "4px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cerrar lista</button>
                 )}
               </div>
 
