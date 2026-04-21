@@ -16,32 +16,35 @@ interface Props {
   selectedRestaurantId: string | null;
   setSelectedRestaurant: (id: string) => void;
   logout: () => void;
+  basePath?: string; // "/admin" or "/panel"
   children: React.ReactNode;
 }
 
-const SIDEBAR_NAV = [
-  { icon: Home, label: "Inicio", href: "/admin" },
-  { icon: UtensilsCrossed, label: "Mi Carta", href: "/admin/menus" },
-  { icon: Tag, label: "Ofertas", href: "/admin/promociones" },
-  { icon: Store, label: "Mi Restaurante", href: "/admin/mi-restaurante" },
-  { icon: BarChart3, label: "Analytics", href: "/admin/analytics" },
-  { icon: Bell, label: "Garzón", href: "/admin/mi-restaurante#garzon" },
-  { icon: Mail, label: "Campañas", href: "/admin/campanias" },
-  { icon: Zap, label: "Automatizaciones", href: "/admin/automatizaciones" },
-  { icon: Users, label: "Segmentos", href: "/admin/segmentos" },
-];
+function buildNav(base: string) {
+  const SIDEBAR_NAV = [
+    { icon: Home, label: "Inicio", href: base },
+    { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
+    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
+    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
+    { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
+    { icon: Bell, label: "Garzón", href: `${base}/mi-restaurante#garzon` },
+    { icon: Mail, label: "Campañas", href: `${base}/campanias` },
+    { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
+    { icon: Users, label: "Segmentos", href: `${base}/segmentos` },
+  ];
+  const BOTTOM_TABS = [
+    { icon: Home, label: "Inicio", href: base },
+    { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
+    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
+    { icon: Grid3X3, label: "Más", href: "__more__" },
+  ] as const;
+  const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS.some(t => t.href === n.href));
+  return { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS };
+}
 
-const BOTTOM_TABS = [
-  { icon: Home, label: "Inicio", href: "/admin" },
-  { icon: UtensilsCrossed, label: "Mi Carta", href: "/admin/menus" },
-  { icon: Tag, label: "Ofertas", href: "/admin/promociones" },
-  { icon: Grid3X3, label: "Más", href: "__more__" },
-] as const;
-
-const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS.some(t => t.href === n.href));
-
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", children }: Props) {
   const pathname = usePathname();
+  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath);
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);
@@ -56,7 +59,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState(false);
 
-  const isActive = (href: string) => href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
+  const isActive = (href: string) => href === basePath ? pathname === basePath : pathname.startsWith(href);
   const initial = name?.charAt(0)?.toUpperCase() || "?";
 
   // Drawer helpers
@@ -98,7 +101,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <aside className="owl-sidebar">
         {/* Logo */}
         <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid #E8D0A0" }}>
-          <Link href="/admin" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: "1.2rem" }}>🧞</span>
             <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a" }}>
               Quiero<span style={{ color: GOLD }}>Comer</span>
@@ -143,7 +146,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
       {/* ── Mobile Header (<768px) ── */}
       <header className="owl-mobile-header">
-        <Link href="/admin" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: "1.2rem" }}>🧞</span>
           <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a" }}>
             Quiero<span style={{ color: GOLD }}>Comer</span>
