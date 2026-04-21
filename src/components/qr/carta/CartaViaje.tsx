@@ -84,10 +84,10 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}
           className="fixed z-50 flex items-center"
           style={{
-            top: 19, left: 16, gap: 8,
+            top: 17, left: 16, gap: 8,
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
-            padding: "5px 10px 5px 5px", cursor: "pointer",
+            padding: "3px 10px 3px 8px", cursor: "pointer",
           }}
         >
           {restaurant.logoUrl ? (
@@ -97,7 +97,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span style={{ fontSize: "1.14rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "1rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
             {restaurant.name}
           </span>
         </button>
@@ -695,8 +695,8 @@ const CSS = `
   .vj-category-header.light .vj-bullets { background: rgba(0,0,0,0.08); }
   .vj-category-label { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; opacity: 1; font-weight: 600; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 12px; border-radius: 50px; }
   .vj-category-label strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
-  .vj-category-label-plain { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 600; padding: 6px 0; text-align: left; }
-  .vj-category-label-plain strong { font-style: italic; font-weight: 600; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
+  .vj-category-label-plain { font-size: 11px; letter-spacing: 0.28em; text-transform: uppercase; font-weight: 400; padding: 6px 0; text-align: left; }
+  .vj-category-label-plain strong { font-style: italic; font-weight: 400; font-size: 14px; letter-spacing: 0.02em; text-transform: none; margin-left: 6px; }
   .vj-bullets { display: flex; gap: 4px; background: rgba(0,0,0,0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 6px 10px; border-radius: 50px; }
   .vj-bullets-plain { display: flex; gap: 4px; padding: 6px 0; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
   .vj-bullet { width: 16px; height: 3px; background: rgba(255,255,255,0.6); border-radius: 3px; transition: all 0.4s ease; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
