@@ -43,7 +43,7 @@ export default function CategoryNav({
   return (
     <nav
       className="sticky top-0 z-40"
-      style={{ position: "sticky", top: 0, background: "#f7f7f5", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)", marginBottom: 6 }}
+      style={{ position: "sticky", top: 0, background: "#f7f7f5", borderBottom: "1px solid #f0f0f0", height: 44, paddingTop: 10, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)", marginBottom: 6 }}
     >
       {leftSlot && (
         <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>
