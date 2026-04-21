@@ -71,7 +71,8 @@ export default function CartaLista({
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [query, dishes, restaurant.id]);
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const hasPromos = marketingPromos && marketingPromos.length > 0;
+  const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
@@ -114,10 +115,16 @@ export default function CartaLista({
       const el = document.getElementById(`lista-cat-${cat.id}`);
       if (el && el.getBoundingClientRect().top <= 120) {
         setActiveCategory(cat.id);
-        break;
+        return;
       }
     }
-  }, [categories]);
+    if (hasPromos) {
+      const promoEl = document.getElementById("lista-cat-promos");
+      if (promoEl && promoEl.getBoundingClientRect().top <= 120) {
+        setActiveCategory("promos");
+      }
+    }
+  }, [categories, hasPromos]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -203,11 +210,6 @@ export default function CartaLista({
       </div>
 
       {/* Promos */}
-      <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
-        const dish = dishes.find(d => d.id === dishId);
-        if (dish) setSelectedDish(dish);
-      }} />
-
       {/* STICKY NAV: search overlay or category tabs with search icon */}
       {searchOpen ? (
         <div
@@ -250,6 +252,18 @@ export default function CartaLista({
             className="flex overflow-x-auto"
             style={{ flex: 1, height: "100%", paddingLeft: 8, paddingRight: 16, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
           >
+            {hasPromos && (() => {
+              const isActive = "promos" === activeCategory;
+              return (
+                <button
+                  key="promos"
+                  ref={isActive ? activeCatRef : null}
+                  onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
+                  className="shrink-0 font-[family-name:var(--font-dm)]"
+                  style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
+                >Ofertas</button>
+              );
+            })()}
             {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
               const isActive = cat.id === activeCategory;
               return (
@@ -302,6 +316,19 @@ export default function CartaLista({
             Limpiar filtros
           </button>
         </div>
+      )}
+
+      {/* OFERTAS section */}
+      {hasPromos && (
+        <section id="lista-cat-promos" style={{ padding: "20px 12px 0" }}>
+          <div style={{ padding: "0 8px", marginBottom: 8 }}>
+            <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0e0e0e", margin: 0 }}>Ofertas</h2>
+          </div>
+          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+            const dish = dishes.find(d => d.id === dishId);
+            if (dish) setSelectedDish(dish);
+          }} />
+        </section>
       )}
 
       {/* CATEGORIES */}

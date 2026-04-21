@@ -188,7 +188,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 12px", margin: 0, background: "#FDF6E3" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "0 20px 12px" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -275,7 +275,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         </div>
         {/* Fade right — hide when at last card */}
         {promos.length > 1 && activeIdx < promos.length - 1 && (
-          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #FDF6E3)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
+          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
         )}
         </div>
 

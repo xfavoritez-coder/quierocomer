@@ -88,7 +88,8 @@ export default function CartaPremium({
   showWaiter,
   marketingPromos,
 }: CartaProps) {
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const hasPromos = marketingPromos && marketingPromos.length > 0;
+  const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
@@ -198,14 +199,22 @@ export default function CartaPremium({
   }, [categories, dishes]);
 
   const handleScroll = useCallback(() => {
+    // Check real categories first (reverse order = bottom to top)
     for (const cat of [...categories].reverse()) {
       const el = document.getElementById(`cat-${cat.id}`);
       if (el && el.getBoundingClientRect().top <= 52) {
         setActiveCategory(cat.id);
-        break;
+        return;
       }
     }
-  }, [categories]);
+    // If no category matched, check promos section
+    if (hasPromos) {
+      const promoEl = document.getElementById("cat-promos");
+      if (promoEl && promoEl.getBoundingClientRect().top <= 52) {
+        setActiveCategory("promos");
+      }
+    }
+  }, [categories, hasPromos]);
 
   useEffect(() => {
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -216,11 +225,6 @@ export default function CartaPremium({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
 
-      {/* Promos */}
-      <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
-        const dish = dishes.find(d => d.id === dishId);
-        if (dish) setSelectedDish(dish);
-      }} />
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
@@ -254,9 +258,9 @@ export default function CartaPremium({
         </div>
       ) : (
         <CategoryNav
-          categories={categories}
+          categories={hasPromos ? [{ id: "promos", name: "Ofertas", position: -1, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any, ...categories] : categories}
           activeCategory={activeCategory}
-          onCategoryChange={setActiveCategory}
+          onCategoryChange={(id) => { setActiveCategory(id); if (id === "promos") { const el = document.getElementById("cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 54, behavior: "smooth" }); } }}
           leftSlot={
             <button
               onClick={() => setSearchOpen(true)}
@@ -279,6 +283,17 @@ export default function CartaPremium({
       )}
 
       <main style={{ paddingBottom: 55 }}>
+        {/* Ofertas section — inside main as first "category" */}
+        {hasPromos && (
+          <div id="cat-promos" style={{ paddingTop: 16 }}>
+            <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0e0e0e", margin: "0 0 12px", padding: "0 20px" }}>Ofertas</h2>
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
+        )}
+
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (d.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.description?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.ingredients?.toLowerCase().includes(searchQuery.toLowerCase().trim())))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
