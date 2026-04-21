@@ -63,7 +63,36 @@ export default function PanelDashboard() {
     }).catch(() => {}).finally(() => setLoading(false));
   }, [sessionLoading, selectedRestaurantId]);
 
-  if (loading || sessionLoading) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: GOLD, fontFamily: F }}>🧞 Cargando...</p></div>;
+  if (loading || sessionLoading) return (
+    <div style={{ maxWidth: 640 }}>
+      {/* Hero skeleton */}
+      <div className="skel-pulse" style={{ height: 90, borderRadius: 16, marginBottom: 20 }} />
+      {/* Quick actions skeleton */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
+        <div className="skel-pulse" style={{ height: 72, borderRadius: 12 }} />
+        <div className="skel-pulse" style={{ height: 72, borderRadius: 12 }} />
+        <div className="skel-pulse" style={{ height: 72, borderRadius: 12 }} />
+      </div>
+      {/* Section label */}
+      <div className="skel-pulse" style={{ height: 14, width: 60, borderRadius: 4, marginBottom: 10 }} />
+      {/* Stat cards skeleton */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+      </div>
+      <div className="skel-pulse" style={{ height: 14, width: 100, borderRadius: 4, marginBottom: 10 }} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+        <div className="skel-pulse" style={{ height: 80, borderRadius: 14 }} />
+      </div>
+      <style>{`
+        @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.12; } }
+        .skel-pulse { background: #F4A623; animation: skelPulse 1.4s ease-in-out infinite; }
+      `}</style>
+    </div>
+  );
   if (!data) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Sin datos disponibles</p></div>;
 
   const deltaText = data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs semana pasada` : "Sin datos previos";
