@@ -187,7 +187,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 18px" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 18px", background: "#FFF3D4" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -214,8 +214,8 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
                   border: "1px solid rgba(244,166,35,0.25)",
                   borderRadius: 16,
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: 10,
+                  display: "flex", alignItems: "stretch", gap: 0,
+                  padding: 0,
                   cursor: "pointer",
                   boxShadow: "0 2px 12px rgba(244,166,35,0.08)",
                   position: "relative",
@@ -225,11 +225,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 }}
               >
                 {/* Photo */}
-                <div style={{ position: "relative", width: 70, height: 70, borderRadius: 12, overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ position: "relative", width: 95, minHeight: 80, borderRadius: "16px 0 0 16px", overflow: "hidden", flexShrink: 0 }}>
                   {(p.promoType === "graphic" && p.imageUrl) ? (
-                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="70px" />
+                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="95px" />
                   ) : dish?.photos?.[0] ? (
-                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="70px" />
+                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="95px" />
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
                   )}
@@ -247,7 +247,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 </div>
 
                 {/* Content */}
-                <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
                   <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
@@ -274,7 +274,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         </div>
         {/* Fade right — hide when at last card */}
         {promos.length > 1 && activeIdx < promos.length - 1 && (
-          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
+          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #FFF3D4)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
         )}
         </div>
 
