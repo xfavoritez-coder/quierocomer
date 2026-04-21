@@ -35,7 +35,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
   };
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-end font-[family-name:var(--font-dm)]" style={{ minHeight: "100dvh" }}>
+    <div className="fixed z-[110] flex items-end font-[family-name:var(--font-dm)]" style={{ top: 0, left: 0, right: 0, bottom: 0 }}>
       <div onClick={(e) => { if (e.target === e.currentTarget) close(); }} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
       <div style={{
         position: "relative", zIndex: 1, background: "#0e0e0e", width: "100%",
@@ -43,6 +43,9 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.25s ease-out",
       }}>
+        {/* Close X */}
+        <button onClick={close} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: "rgba(255,255,255,0.3)", fontSize: "1rem", cursor: "pointer" }}>✕</button>
+
         {/* Icon */}
         <div style={{ textAlign: "center", marginBottom: 16 }}>
           <Bell size={32} color="#F4A623" style={{ margin: "0 auto" }} />

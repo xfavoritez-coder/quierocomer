@@ -412,7 +412,7 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
       <span style={{
         display: "inline-flex", marginLeft: 8, verticalAlign: "middle",
         background: "#e85530", color: "white",
-        fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em",
+        fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em",
         padding: "3px 8px", borderRadius: 50, textTransform: "uppercase",
       }}>
         NUEVO
@@ -468,9 +468,12 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
     const firstWord = words[0];
     const restWords = words.slice(1).join(" ");
     const eyebrowText = dish.ingredients?.split(/[,;]/)[0]?.trim() || "";
+    // Dynamic photo height: shorter when description is long
+    const descLen = pitch.length;
+    const photoHeight = descLen > 80 ? "52%" : descLen > 40 ? "57%" : "62%";
     return (
       <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
-        <div className="vj-split-photo"><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
+        <div className="vj-split-photo" style={{ height: photoHeight }}><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
         <div className="vj-split-info">
           <div className="vj-split-divider" />
           {eyebrowText && <span className="vj-split-eyebrow">{eyebrowText}</span>}
@@ -731,10 +734,10 @@ const CSS = `
 
   /* SPLIT */
   .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }
-  .vj-split-photo { height: 62%; position: relative; overflow: hidden; flex-shrink: 0; }
+  .vj-split-photo { height: 58%; position: relative; overflow: hidden; flex-shrink: 0; }
   .vj-split-photo img { object-fit: cover; }
   .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10,6,4,0.5) 70%, rgba(10,6,4,0.9) 100%); }
-  .vj-split-info { flex: 1; padding: 0 28px calc(50px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3; }
+  .vj-split-info { flex: 1; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 3; }
   .vj-split-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #F4A623, transparent); margin-bottom: 16px; }
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
   .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
