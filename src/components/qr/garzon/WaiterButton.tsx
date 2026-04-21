@@ -56,6 +56,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         }),
       });
       const data = await res.json().catch(() => null);
+      console.log("[WaiterButton] API response:", res.status, data);
       if (res.ok) {
         setState("success");
         setTimeout(() => setState("idle"), 2500);
@@ -72,21 +73,25 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   }, [restaurantId, tableId, tableName, savedTable]);
 
   const handleClick = () => {
+    console.log("[WaiterButton] click", { state, tableId, panelActive, savedTable, waiterPanelActive });
     if (state !== "idle") return;
 
     // Has explicit tableId from QR scan — call directly
     if (tableId && tableId !== "general") {
+      console.log("[WaiterButton] calling with explicit tableId");
       doCall();
       return;
     }
 
     // Panel active + saved table — call directly
     if (panelActive && savedTable) {
+      console.log("[WaiterButton] calling with saved table:", savedTable);
       doCall();
       return;
     }
 
-    // No saved table — open modal
+    // No saved table — open modal to ask for table number
+    console.log("[WaiterButton] opening modal");
     setModalOpen(true);
   };
 
