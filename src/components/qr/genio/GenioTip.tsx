@@ -12,7 +12,7 @@ import { Sparkles } from "lucide-react";
 /* ── Design tokens ── */
 export const TIP_BG = "#FFF4E6";
 export const TIP_SHADOW = "0 8px 30px rgba(180,130,50,0.18)";
-export const TIP_BADGE_BG = "#F4A623";
+export const TIP_BADGE_BG = "#D4A574";
 export const TIP_TEXT_COLOR = "#5c3d1e";
 export const TIP_CLOSE_COLOR = "#c4a882";
 export const TIP_RADIUS = 16;

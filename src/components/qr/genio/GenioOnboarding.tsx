@@ -17,6 +17,7 @@ interface GenioProps {
   categories: Category[];
   onClose: () => void;
   onResult: (dish: Dish) => void;
+  qrUser?: { name: string | null; email: string } | null;
 }
 
 type DietType = "omnivore" | "vegetarian" | "vegan" | "pescetarian";
@@ -68,7 +69,7 @@ function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_resul
   }).catch(() => {});
 }
 
-export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult }: GenioProps) {
+export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp }: GenioProps) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const genioSessionId = useRef(crypto.randomUUID()).current;
@@ -81,17 +82,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Persisted favorite ingredients from previous sessions
   const [favIngredients, setFavIngredients] = useState<Record<string, number>>({});
-  const [userName, setUserName] = useState<string | null>(null);
+  const userName = qrUserProp?.name || null;
   useEffect(() => {
     fetch(`/api/qr/ingredients?guestId=${getGuestId()}`).then(r => r.json()).then(d => {
       if (d.favorites) setFavIngredients(d.favorites);
     }).catch(() => {});
-    // Fetch user name if logged in
-    if (typeof document !== "undefined" && document.cookie.includes("qr_user_id")) {
-      fetch("/api/qr/user/me").then(r => r.json()).then(d => {
-        if (d.user?.name) setUserName(d.user.name);
-      }).catch(() => {});
-    }
   }, []);
 
   // Wizard state — skip to step 3 if we have saved prefs

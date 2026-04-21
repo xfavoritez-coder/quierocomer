@@ -47,19 +47,7 @@ export default function ViewSelector({ restaurantId }: Props) {
     }
   }, []);
 
-  // Recurring bounce every 10s while tooltip is visible
-  useEffect(() => {
-    if (!showTooltip) return;
-    const interval = setInterval(() => {
-      const el = document.getElementById("genio-tip-container");
-      if (el) {
-        el.style.animation = "none";
-        void el.offsetHeight;
-        el.style.animation = "genioTipBounce 0.4s ease-in-out";
-      }
-    }, 10000);
-    return () => clearInterval(interval);
-  }, [showTooltip]);
+  // No bounce — just static tooltip
 
   const dismissTooltip = () => {
     setShowTooltip(false);
@@ -173,6 +161,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           id="genio-tip-container"
           onClose={dismissTooltip}
           arrow="right"
+          badgeLabel="Vistas"
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
           Prueba otra vista.

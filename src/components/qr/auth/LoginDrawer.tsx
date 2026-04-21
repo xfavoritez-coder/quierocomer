@@ -50,14 +50,15 @@ export default function LoginDrawer({ onClose }: Props) {
           <>
             <div style={{ textAlign: "center", marginBottom: 24 }}>
               <Sparkles size={32} color="#F4A623" style={{ marginBottom: 16 }} />
-              <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e" }}>Inicia sesión</h3>
+              <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e" }}>Ingresa o regístrate</h3>
               <p style={{ color: "#888", fontSize: "0.88rem", marginTop: 4 }}>Te enviamos un link a tu correo. Sin contraseña.</p>
             </div>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #eee", background: "#f8f8f8", fontSize: "1rem", color: "#0e0e0e", outline: "none", fontFamily: "inherit" }} />
+            <p style={{ color: "#bbb", fontSize: "0.75rem", marginTop: 6, textAlign: "center" }}>Si no tienes cuenta, te crearemos una automáticamente</p>
             <button onClick={handleSubmit}
-              style={{ width: "100%", marginTop: 12, padding: 14, borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", fontFamily: "inherit", opacity: status === "loading" ? 0.6 : 1 }}>
-              {status === "loading" ? "Enviando..." : "Enviar link →"}
+              style={{ width: "100%", marginTop: 8, padding: 14, borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", fontFamily: "inherit", opacity: status === "loading" ? 0.6 : 1 }}>
+              {status === "loading" ? "Enviando..." : "Continuar →"}
             </button>
           </>
         )}

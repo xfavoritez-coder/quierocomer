@@ -12,6 +12,7 @@ import CartaViaje from "./CartaViaje";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import FavoritesToasts from "./FavoritesToasts";
+import NameModal from "../auth/NameModal";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 
 interface Review {
@@ -43,6 +44,7 @@ export default function CartaRouter(props: Props) {
     return match ? { _pending: true } : null;
   });
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showNameModal, setShowNameModal] = useState(false);
   const { overlay, fadeOut } = useViewTransition();
   const readyKeyRef = useRef(0);
   const prevViewRef = useRef(view);
@@ -53,9 +55,17 @@ export default function CartaRouter(props: Props) {
     prevViewRef.current = view;
   }
 
-  // Fetch user once
+  // Fetch user once — show name modal if logged in but no name
   useEffect(() => {
-    fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUser(d.user); }).catch(() => {});
+    fetch("/api/qr/user/me").then((r) => r.json()).then((d) => {
+      if (d.user) {
+        setQrUser(d.user);
+        if (d.user.id && !d.user.name && !sessionStorage.getItem("qc_name_modal_shown")) {
+          sessionStorage.setItem("qc_name_modal_shown", "1");
+          setTimeout(() => setShowNameModal(true), 1500);
+        }
+      }
+    }).catch(() => {});
   }, []);
 
   // Set mesa token if arriving from table QR
@@ -143,6 +153,10 @@ export default function CartaRouter(props: Props) {
       )}
 
       <FavoritesToasts />
+
+      {showNameModal && (
+        <NameModal onSave={(name) => { setShowNameModal(false); setQrUser((prev: any) => prev ? { ...prev, name } : prev); }} />
+      )}
 
       <style>{`
         @keyframes genioFloat {

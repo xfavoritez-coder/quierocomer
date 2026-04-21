@@ -185,6 +185,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             restaurantId={restaurant.id}
             dishes={dishes}
             categories={categories}
+            qrUser={qrUser}
             onClose={() => setGenioOpen(false)}
             onResult={(dish) => {
               setGenioOpen(false);

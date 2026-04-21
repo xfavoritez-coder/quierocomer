@@ -165,7 +165,9 @@ export default function CartaPremium({
     // Second visit logic
     const visited = localStorage.getItem(cookieKey);
     const dismissed = localStorage.getItem(dismissKey);
-    if (visited && !dismissed && !sessionStorage.getItem("qr_capture_shown")) {
+    const hasPrefs = localStorage.getItem("qr_diet") || localStorage.getItem("qr_restrictions");
+    const viewTipNotSeen = !localStorage.getItem("quierocomer_carta_view_tooltip_shown");
+    if (visited && !dismissed && hasPrefs && !viewTipNotSeen && !sessionStorage.getItem("qr_capture_shown")) {
       fetch("/api/qr/user/me").then((r) => r.json()).then((d) => {
         if (!d.user) {
           setTimeout(() => setShowSecondVisitToast(true), 3000);
@@ -474,6 +476,7 @@ export default function CartaPremium({
           restaurantId={restaurant.id}
           dishes={dishes}
           categories={categories}
+          qrUser={qrUser}
           onClose={() => setGenioOpen(false)}
           onResult={(dish) => {
             setGenioOpen(false);
@@ -512,11 +515,11 @@ export default function CartaPremium({
 
       {/* Second visit toast — GenioTip above Genio button */}
       {showSecondVisitToast && (
-        <div className="fixed" style={{ right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", zIndex: 80, width: 240 }}>
+        <div className="fixed" style={{ right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", zIndex: 80, width: 240 }}>
           <GenioTip
             arrow="bottom-right"
             onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
-            badgeLabel="Tip del Genio"
+            badgeLabel="Tus gustos"
           >
             <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
