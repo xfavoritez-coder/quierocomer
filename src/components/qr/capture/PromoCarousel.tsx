@@ -187,7 +187,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 18px", background: "#FFF3D4" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "16px 20px 12px", margin: 0, background: "#FFF3D4" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -225,7 +225,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 }}
               >
                 {/* Photo */}
-                <div style={{ position: "relative", width: 95, minHeight: 80, borderRadius: "16px 0 0 16px", overflow: "hidden", flexShrink: 0 }}>
+                <div style={{ position: "relative", width: 95, minHeight: 80, overflow: "hidden", flexShrink: 0 }}>
                   {(p.promoType === "graphic" && p.imageUrl) ? (
                     <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="95px" />
                   ) : dish?.photos?.[0] ? (
