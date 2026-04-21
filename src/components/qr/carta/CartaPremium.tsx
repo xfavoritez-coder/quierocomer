@@ -221,6 +221,8 @@ export default function CartaPremium({
         const dish = dishes.find(d => d.id === dishId);
         if (dish) setSelectedDish(dish);
       }} />
+      {/* Spacer when no promos */}
+      {(!marketingPromos || marketingPromos.length === 0) && <div style={{ height: 10 }} />}
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
