@@ -12,6 +12,7 @@ import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
+import GenioTip from "../genio/GenioTip";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
@@ -448,7 +449,7 @@ export default function CartaPremium({
           style={{ height: 52, width: genioExpanded ? "auto" : 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
         >
           <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
+          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
         </button>
         <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} waiterPanelActive={showWaiter} />
         <ViewSelector restaurantId={restaurant.id} />
@@ -509,49 +510,20 @@ export default function CartaPremium({
         </div>
       )}
 
-      {/* Second visit toast — bubble from Genio button */}
+      {/* Second visit toast — GenioTip above Genio button */}
       {showSecondVisitToast && (
-        <div
-          className="fixed font-[family-name:var(--font-dm)]"
-          style={{
-            right: 16,
-            bottom: 100,
-            background: "rgba(20,20,20,0.95)",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderRadius: 14,
-            padding: "14px 16px",
-            display: "flex",
-            flexDirection: "column",
-            gap: 10,
-            zIndex: 80,
-            width: 220,
-            boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-          }}
-        >
-          {/* Triangle pointing down to Genio button */}
-          <div
-            style={{
-              position: "absolute",
-              right: 22,
-              bottom: -6,
-              width: 12,
-              height: 12,
-              background: "rgba(20,20,20,0.95)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderTop: "none",
-              borderLeft: "none",
-              transform: "rotate(45deg)",
-            }}
-          />
-          <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
-            <span style={{ fontSize: "1.3rem", flexShrink: 0, marginTop: 1 }}>🧞</span>
-            <span style={{ color: "white", fontSize: "0.84rem", lineHeight: 1.45 }}>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "#0e0e0e", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
-            <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 50, padding: "8px 12px", color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", cursor: "pointer" }}>No</button>
-          </div>
+        <div className="fixed" style={{ right: 12, bottom: "calc(90px + env(safe-area-inset-bottom))", zIndex: 80, width: 240 }}>
+          <GenioTip
+            arrow="bottom-right"
+            onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
+            badgeLabel="Tip del Genio"
+          >
+            <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
+            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+              <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "white", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
+              <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid #e8e0d6", borderRadius: 50, padding: "8px 12px", color: "#999", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit" }}>No</button>
+            </div>
+          </GenioTip>
         </div>
       )}
 

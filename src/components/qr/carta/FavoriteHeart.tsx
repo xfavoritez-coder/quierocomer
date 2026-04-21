@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Heart } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
@@ -13,9 +13,11 @@ interface Props {
 }
 
 export default function FavoriteHeart({ dishId, restaurantId, size = 20, className, style }: Props) {
-  const { isFavorite, toggleFavorite, isFirstFavorite } = useFavorites();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const [animating, setAnimating] = useState(false);
   const [showLocalTip, setShowLocalTip] = useState(false);
+  const [tipPos, setTipPos] = useState<{ top: number; right: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const active = isFavorite(dishId);
 
   const handleClick = async (e: React.MouseEvent) => {
@@ -25,15 +27,19 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
     const wasFirst = !active && !sessionStorage.getItem("qc_favorites_tip_seen");
     await toggleFavorite(dishId, restaurantId);
     setTimeout(() => setAnimating(false), 400);
-    if (wasFirst) {
+    if (wasFirst && btnRef.current) {
+      sessionStorage.setItem("qc_favorites_tip_seen", "1");
+      const rect = btnRef.current.getBoundingClientRect();
+      setTipPos({ top: rect.top - 8, right: window.innerWidth - rect.right });
       setShowLocalTip(true);
       setTimeout(() => setShowLocalTip(false), 5000);
     }
   };
 
   return (
-    <div style={{ position: "relative", display: "inline-flex", ...style }}>
+    <>
       <button
+        ref={btnRef}
         onClick={handleClick}
         className={className}
         aria-label={active ? "Quitar de favoritos" : "Agregar a favoritos"}
@@ -49,6 +55,7 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
           cursor: "pointer",
           transition: "transform 0.1s",
           animation: animating ? "heartBounce 0.4s ease-out" : undefined,
+          ...style,
         }}
       >
         <Heart
@@ -59,12 +66,12 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
         />
       </button>
 
-      {/* First-favorite tip bubble — appears above the heart that was clicked */}
-      {showLocalTip && (
+      {/* First-favorite tip — fixed position so it's never clipped by overflow:hidden */}
+      {showLocalTip && tipPos && (
         <div className="font-[family-name:var(--font-dm)]" style={{
-          position: "absolute", bottom: "100%", right: 0, marginBottom: 8,
+          position: "fixed", right: tipPos.right, bottom: window.innerHeight - tipPos.top + 4,
           background: "#FFF4E6", borderRadius: 12, padding: "8px 12px",
-          boxShadow: "0 4px 16px rgba(180,130,50,0.2)", zIndex: 50,
+          boxShadow: "0 4px 16px rgba(180,130,50,0.2)", zIndex: 200,
           width: 200, animation: "heartTipIn 0.3s ease-out",
         }}>
           <p style={{ fontSize: "12px", color: "#5c3d1e", margin: 0, lineHeight: 1.4 }}>
@@ -87,6 +94,6 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
-    </div>
+    </>
   );
 }

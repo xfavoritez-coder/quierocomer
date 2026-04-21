@@ -172,8 +172,8 @@ export default function ViewSelector({ restaurantId }: Props) {
         <GenioTip
           id="genio-tip-container"
           onClose={dismissTooltip}
-          arrow="bottom-right"
-          style={{ position: "absolute", right: 0, bottom: 64, width: 260, zIndex: 40 }}
+          arrow="right"
+          style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
           Prueba otra vista.
         </GenioTip>

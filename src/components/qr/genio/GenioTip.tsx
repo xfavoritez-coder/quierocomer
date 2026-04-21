@@ -31,10 +31,11 @@ export const TIP_CSS = `
 `;
 
 /* ── Arrow component ── */
-export function TipArrow({ position = "bottom-right" }: { position?: "bottom-right" | "bottom-center" | "top-center" }) {
+export function TipArrow({ position = "bottom-right" }: { position?: "bottom-right" | "bottom-center" | "top-center" | "right" }) {
   const base = { width: 12, height: 12, background: TIP_BG, position: "absolute" as const, transform: "rotate(45deg)" };
   if (position === "bottom-right") return <div style={{ ...base, bottom: -6, right: 20, boxShadow: "3px 3px 6px rgba(180,130,50,0.1)" }} />;
   if (position === "bottom-center") return <div style={{ ...base, bottom: -6, left: "50%", marginLeft: -6, boxShadow: "3px 3px 6px rgba(180,130,50,0.1)" }} />;
+  if (position === "right") return <div style={{ ...base, right: -6, top: "50%", marginTop: -6, boxShadow: "3px -2px 6px rgba(180,130,50,0.08)" }} />;
   // top-center
   return <div style={{ ...base, top: -6, left: "50%", marginLeft: -6, boxShadow: "-2px -2px 6px rgba(180,130,50,0.08)" }} />;
 }
@@ -75,7 +76,7 @@ interface GenioTipProps {
   children: React.ReactNode;
   id?: string;
   style?: React.CSSProperties;
-  arrow?: "bottom-right" | "bottom-center" | "top-center" | null;
+  arrow?: "bottom-right" | "bottom-center" | "top-center" | "right" | null;
   onClose?: () => void;
   badgeLabel?: string;
 }

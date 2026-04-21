@@ -397,7 +397,7 @@ export default function CartaLista({
           style={{ height: 52, width: genioExpanded ? "auto" : 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
         >
           <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
+          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
         </button>
         <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} waiterPanelActive={showWaiter} />
         <ViewSelector restaurantId={restaurant.id} />
