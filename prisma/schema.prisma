@@ -915,6 +915,7 @@ model Promotion {
   discountPct     Int?
   validFrom       DateTime?
   validUntil      DateTime?
+  daysOfWeek      Int[]           @default([]) // 0=dom,1=lun,...6=sab. Vacío=todos los días
   status          PromotionStatus @default(SUGGESTED)
   generatedBy     String          @default("manual") // ai, manual
   aiJustification String?
