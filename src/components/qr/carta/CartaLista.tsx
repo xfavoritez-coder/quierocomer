@@ -16,6 +16,7 @@ import DishDetail from "./DishDetail";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
+import DishModifierDrawer from "./DishModifierDrawer";
 
 interface Review {
   id: string;
@@ -95,6 +96,7 @@ export default function CartaLista({
     catStartRef.current = { id: activeCategory, start: Date.now() };
   }, [activeCategory]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [modifierDish, setModifierDish] = useState<any>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
   const activeCatRef = useRef<HTMLButtonElement>(null);
@@ -163,6 +165,10 @@ export default function CartaLista({
   );
 
   const handleDishClick = (dish: Dish) => {
+    if ((dish as any).modifierGroups?.length > 0) {
+      setModifierDish(dish);
+      return;
+    }
     setSelectedDish(dish);
     trackCartaDishOpenedInList(restaurant.id, dish.id, isGeniePick(dish));
   };
@@ -441,6 +447,10 @@ export default function CartaLista({
             setTimeout(() => setSelectedDish(dish), 250);
           }}
         />
+      )}
+
+      {modifierDish && (
+        <DishModifierDrawer dish={modifierDish} onClose={() => setModifierDish(null)} />
       )}
 
       {/* DishDetail modal */}

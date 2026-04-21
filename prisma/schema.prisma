@@ -455,14 +455,45 @@ model Dish {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  restaurant      Restaurant       @relation(fields: [restaurantId], references: [id])
-  category        Category         @relation(fields: [categoryId], references: [id])
-  reviews         Review[]
-  dishIngredients DishIngredient[]
-  dishFavorites   DishFavorite[]
+  restaurant       Restaurant            @relation(fields: [restaurantId], references: [id])
+  category         Category              @relation(fields: [categoryId], references: [id])
+  reviews          Review[]
+  dishIngredients  DishIngredient[]
+  dishFavorites    DishFavorite[]
+  modifierGroups   DishModifierGroup[]
 
   @@index([restaurantId])
   @@index([categoryId])
+}
+
+model DishModifierGroup {
+  id         String   @id @default(cuid())
+  dishId     String
+  name       String                         // "Elige tu Roll", "Envoltura", "Tamaño"
+  required   Boolean  @default(false)        // ¿Es obligatorio elegir?
+  minSelect  Int      @default(0)            // mínimo de opciones a elegir
+  maxSelect  Int      @default(1)            // máximo de opciones (1 = radio, >1 = multi)
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  dish    Dish                  @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  options DishModifierOption[]
+
+  @@index([dishId])
+}
+
+model DishModifierOption {
+  id              String  @id @default(cuid())
+  groupId         String
+  name            String                      // "Salmón Roll", "Papel soya"
+  priceAdjustment Float   @default(0)          // +0, +500, -200
+  isDefault       Boolean @default(false)      // preseleccionado
+  position        Int     @default(0)
+
+  group DishModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@index([groupId])
 }
 
 enum DishDietType {

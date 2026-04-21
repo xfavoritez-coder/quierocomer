@@ -7,6 +7,7 @@ import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessio
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { Sparkles, User } from "lucide-react";
 import DishDetail from "./DishDetail";
+import DishModifierDrawer from "./DishModifierDrawer";
 import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -63,10 +64,19 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   useEffect(() => { onReady?.(); }, [readyKey]);
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [modifierDish, setModifierDish] = useState<any>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
   const [railLight, setRailLight] = useState(false);
   const { setView } = useCartaView();
+
+  const handleDishTap = useCallback((dish: Dish) => {
+    if ((dish as any).modifierGroups?.length > 0) {
+      setModifierDish(dish);
+    } else {
+      setSelectedDish(dish);
+    }
+  }, []);
 
   const sortedDishes = useMemo(() => {
     const r: Dish[] = [];
@@ -170,7 +180,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
-                onDishTap={(dish) => setSelectedDish(dish)}
+                onDishTap={handleDishTap}
               />
             );
           })}
@@ -189,9 +199,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             onClose={() => setGenioOpen(false)}
             onResult={(dish) => {
               setGenioOpen(false);
-              setTimeout(() => setSelectedDish(dish), 250);
+              setTimeout(() => handleDishTap(dish), 250);
             }}
           />
+        )}
+
+        {/* Modifier drawer */}
+        {modifierDish && (
+          <DishModifierDrawer dish={modifierDish} onClose={() => setModifierDish(null)} />
         )}
 
         {/* Dish detail */}

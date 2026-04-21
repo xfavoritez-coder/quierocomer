@@ -43,6 +43,7 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
           <span className="truncate">{dish.name}</span>
           {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "12px", flexShrink: 0 }}>⭐</span>}
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
+          {(dish as any).modifierGroups?.length > 0 && <span style={{ fontSize: "7px", fontWeight: 700, color: "#F4A623", background: "rgba(244,166,35,0.1)", padding: "2px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.03em" }}>PERSONALIZABLE</span>}
           <DishBadges dish={dish} />
         </h3>
         {dish.description && (
@@ -83,6 +84,9 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
         )}
         {dish.tags?.includes("NEW") && (
           <span className="absolute font-[family-name:var(--font-dm)]" style={{ top: 7, left: 7, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
+        )}
+        {(dish as any).modifierGroups?.length > 0 && (
+          <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 7, left: 7, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(8px)", color: "#F4A623", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.03em" }}>PERSONALIZABLE</span>
         )}
         <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={16} style={{ position: "absolute", top: 6, right: 6 }} />
       </div>

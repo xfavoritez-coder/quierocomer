@@ -44,7 +44,15 @@
       "WebFetch(domain:handroll.cl)",
       "WebFetch(domain:www.handroll.cl)",
       "WebFetch(domain:cdn.mer-cat.com)",
-      "WebFetch(domain:api.mer-cat.com)"
+      "WebFetch(domain:api.mer-cat.com)",
+      "Bash(grep -r process.env /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx -h)",
+      "Bash(find /c/Proyectos/quierocomer -maxdepth 2 -type f \\\\\\(-name .* -o -name *.config.* -o -name *.json \\\\\\))",
+      "Bash(grep -ri \"bot\\\\|webhook\\\\|notification\\\\|alert\" /c/Proyectos/quierocomer --include=*.md)",
+      "Bash(grep -r \"telegram\\\\|tg_\\\\|bot_\\\\|chat_id\\\\|TG_\\\\|BOT_\\\\|CHAT_\" /c/Proyectos/quierocomer/src /c/Proyectos/quierocomer/*.json /c/Proyectos/quierocomer/.env*)",
+      "Bash(grep -r \"twilio\\\\|TWILIO\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx --include=*.json)",
+      "Bash(find:*)",
+      "Bash(grep -r \"createCategory\\\\|addCategory\\\\|editCategory\\\\|updateCategory\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx)",
+      "Bash(grep:*)"
     ]
   }
 }
