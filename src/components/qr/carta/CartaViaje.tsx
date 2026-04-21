@@ -87,7 +87,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             top: 17, left: 16, gap: 8,
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
-            padding: "3px 10px 3px 8px", cursor: "pointer",
+            padding: "3px 11px 3px 8px", cursor: "pointer",
           }}
         >
           {restaurant.logoUrl ? (
@@ -107,7 +107,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 18, right: 12, width: 35, height: 35, borderRadius: "50%",
+            top: 18, right: 18, width: 35, height: 35, borderRadius: "50%",
             ...(qrUser?.name
               ? { background: "#F4A623", border: "none" }
               : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
@@ -613,7 +613,7 @@ const CSS = `
   .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
   .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
-  .vj-chapter-name em { font-style: italic; font-weight: 600; display: block; color: #F4A623; }
+  .vj-chapter-name em { font-style: italic; font-weight: 400; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
   .vj-chapter.in-view .vj-chapter-desc { opacity: 0.75; }
