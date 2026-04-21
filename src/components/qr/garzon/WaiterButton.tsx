@@ -2,30 +2,37 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Bell, Check } from "lucide-react";
+import ModalMesa from "./ModalMesa";
 
 interface WaiterButtonProps {
   restaurantId: string;
   tableId?: string;
   tableName?: string;
   size?: number;
+  waiterPanelActive?: boolean;
 }
 
-type ButtonState = "loading" | "disabled" | "idle" | "calling" | "success";
+type ButtonState = "idle" | "calling" | "success";
 
-export default function WaiterButton({ restaurantId, tableId, tableName, size = 52 }: WaiterButtonProps) {
-  const [state, setState] = useState<ButtonState>("loading");
+const TABLE_KEY_PREFIX = "qr_table_";
+
+export default function WaiterButton({ restaurantId, tableId, tableName, size = 52, waiterPanelActive = false }: WaiterButtonProps) {
+  const [state, setState] = useState<ButtonState>("idle");
   const [toast, setToast] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [savedTable, setSavedTable] = useState<string | null>(null);
+  const [panelActive, setPanelActive] = useState(waiterPanelActive);
 
+  // Read saved table + check subscription on mount
   useEffect(() => {
-    fetch(`/api/qr/waiter/active-calls?restaurantId=${restaurantId}`)
+    const stored = localStorage.getItem(`${TABLE_KEY_PREFIX}${restaurantId}`);
+    if (stored) setSavedTable(stored);
+
+    // Check if waiter panel has active subscriptions (overrides prop if true)
+    fetch(`/api/qr/waiter/subscribe?restaurantId=${restaurantId}`)
       .then((r) => r.json())
-      .then(() => {
-        fetch(`/api/qr/waiter/subscribe?restaurantId=${restaurantId}`)
-          .then((r) => r.json())
-          .then((data) => setState(data.active ? "idle" : "disabled"))
-          .catch(() => setState("disabled"));
-      })
-      .catch(() => setState("disabled"));
+      .then((data) => { if (data.active) setPanelActive(true); })
+      .catch(() => {});
   }, [restaurantId]);
 
   const showToast = (msg: string) => {
@@ -33,28 +40,21 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleCall = useCallback(async () => {
-    if (state === "disabled") {
-      showToast("No disponible de momento");
-      return;
-    }
-    if (state !== "idle") return;
-
+  const doCall = useCallback(async (tableNum?: string) => {
     setState("calling");
-
     try {
+      const effectiveTableName = tableNum ? `Mesa ${tableNum}` : tableName || (savedTable ? `Mesa ${savedTable}` : "Mesa 11");
       const res = await fetch("/api/qr/waiter/call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           restaurantId,
           tableId: tableId || "general",
-          tableName: tableName || "Mesa 11",
+          tableName: effectiveTableName,
           dietType: typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null,
           restrictions: typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null,
         }),
       });
-
       const data = await res.json().catch(() => null);
       if (res.ok) {
         setState("success");
@@ -69,13 +69,42 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
       setState("idle");
       showToast("Error de conexión");
     }
-  }, [state, restaurantId, tableId, tableName]);
+  }, [restaurantId, tableId, tableName, savedTable]);
 
-  const isDisabled = state === "disabled" || state === "loading";
+  const handleClick = () => {
+    if (state !== "idle") return;
+
+    // Has explicit tableId from QR scan — call directly
+    if (tableId && tableId !== "general") {
+      doCall();
+      return;
+    }
+
+    // Panel active + saved table — call directly
+    if (panelActive && savedTable) {
+      doCall();
+      return;
+    }
+
+    // No saved table — open modal
+    setModalOpen(true);
+  };
+
+  const handleSaveTable = (num: string) => {
+    localStorage.setItem(`${TABLE_KEY_PREFIX}${restaurantId}`, num);
+    setSavedTable(num);
+  };
+
+  const handleSaveAndCall = (num: string) => {
+    handleSaveTable(num);
+    doCall(num);
+  };
+
+  const isInactive = !panelActive && !savedTable;
 
   return (
     <div style={{ position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Success / error bubble — positioned above button */}
+      {/* Success bubble */}
       {state === "success" && (
         <div
           className="font-[family-name:var(--font-dm)]"
@@ -92,6 +121,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         </div>
       )}
 
+      {/* Error toast */}
       {toast && (
         <div
           className="font-[family-name:var(--font-dm)]"
@@ -107,18 +137,20 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         </div>
       )}
 
+      {/* Bell button — always visible */}
       <button
-        onClick={handleCall}
+        onClick={handleClick}
         className="flex items-center justify-center rounded-full transition-transform active:scale-95"
         style={{
           width: size,
           height: size,
-          background: state === "success" ? "#16a34a" : "rgba(0,0,0,0.55)",
+          background: state === "success" ? "#16a34a" : isInactive ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.55)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           border: state === "success" ? "none" : "1px solid rgba(255,255,255,0.08)",
           boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.2)",
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
+          opacity: isInactive ? 0.6 : 1,
         }}
       >
         {state === "success" ? (
@@ -126,12 +158,22 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         ) : (
           <Bell
             size={size * 0.38}
-            color={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
-            fill={isDisabled ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            color={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            fill={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
             style={{ animation: state === "calling" ? "waiterShake 0.3s ease-in-out infinite" : undefined }}
           />
         )}
       </button>
+
+      {/* Mesa modal */}
+      {modalOpen && (
+        <ModalMesa
+          panelActive={panelActive}
+          onSave={handleSaveTable}
+          onSaveAndCall={handleSaveAndCall}
+          onClose={() => setModalOpen(false)}
+        />
+      )}
 
       <style>{`
         @keyframes waiterPulse {

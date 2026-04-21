@@ -435,7 +435,7 @@ export default function CartaPremium({
           <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>🧞</span>
           {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
         </button>
-        {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />}
+        <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} waiterPanelActive={showWaiter} />
         <ViewSelector restaurantId={restaurant.id} />
       </div>
 

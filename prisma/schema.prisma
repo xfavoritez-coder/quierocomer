@@ -362,8 +362,9 @@ model Restaurant {
   phone       String?
   address     String?
   cartaTheme  CartaTheme @default(BASIC)
-  defaultView String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
-  isActive    Boolean    @default(true)
+  defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
+  waiterPanelActive  Boolean    @default(false)
+  isActive           Boolean    @default(true)
   ownerId     String?
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
