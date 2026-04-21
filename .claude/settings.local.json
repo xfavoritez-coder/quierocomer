@@ -19,7 +19,25 @@
       "Bash(printf \"re_ajzpTw1K_mwoBrBZkhsf8K9EQp9crTKV9\")",
       "WebFetch(domain:www.ubereats.com)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(xargs grep:*)",
+      "Bash(taskkill //PID 7396 //F)",
+      "Bash(taskkill //F //IM node.exe)",
+      "Bash(wc:*)",
+      "Bash(find c:/Proyectos/quierocomer/src -type f -name *perfil* -o -name *profile*)",
+      "Bash(grep -r \"NEXT_PUBLIC_SUPABASE\" .env*)",
+      "Bash(grep -E \"\\\\.\\(tsx?|ts|js|prisma\\)$\")",
+      "Bash(nslookup:*)",
+      "Bash(find c:/Proyectos/quierocomer/src -name *modal* -o -name *Modal*)",
+      "Bash(find c:/Proyectos/quierocomer/src -type f -name *promo* -o -name *promotion*)",
+      "Bash(grep -r \"promoType\\\\|PromoModal\\\\|promo-modal\" c:/Proyectos/quierocomer/src --include=*.ts --include=*.tsx --include=*.js)",
+      "Bash(find c:/Proyectos/quierocomer/src -path *qr* -name *.tsx -o -path *qr* -name *.ts)",
+      "Bash(grep -r \"GenioConversation\\\\|genio_history\\\\|genio_conversation\\\\|recommendation_history\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx)",
+      "Bash(find /c/Proyectos/quierocomer/src/app/api -path */admin/locales* -o -path */admin/restaurants*)",
+      "Bash(ls:*)",
+      "Bash(find /c/Proyectos/quierocomer -name tailwind.config.* -type f)",
+      "Bash(find /c/Proyectos/quierocomer -name *.css -not -path ./node_modules/* -not -path ./.next/*)",
+      "Bash(find /c/Proyectos/quierocomer -name .env* -o -name *.env*)"
     ]
   }
 }

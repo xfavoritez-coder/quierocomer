@@ -114,7 +114,7 @@ export default function DishDetail({
     setTimeout(() => {
       setSlideOut(null);
       onChangeDish(allDishes[currentIndex + 1]);
-    }, 200);
+    }, 250);
   }, [hasNext, currentIndex, allDishes, onChangeDish]);
 
   const goPrev = useCallback(() => {
@@ -124,7 +124,7 @@ export default function DishDetail({
     setTimeout(() => {
       setSlideOut(null);
       onChangeDish(allDishes[currentIndex - 1]);
-    }, 200);
+    }, 250);
   }, [hasPrev, currentIndex, allDishes, onChangeDish]);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -153,13 +153,14 @@ export default function DishDetail({
   // Position counter
   const posText = `${currentIndex + 1} / ${allDishes.length}`;
 
-  // Compute transform: slideOut = current leaving, slideIn = new arriving
+  // Compute transform + opacity for smooth native-feeling transitions
   const getTransform = () => {
-    if (slideOut === "left") return "translateX(-100%)";
-    if (slideOut === "right") return "translateX(100%)";
-    if (slideIn) return slideRef.current === "left" ? "translateX(100%)" : "translateX(-100%)";
-    return "translateX(0)";
+    if (slideOut === "left") return "translateX(-40%) scale(0.95)";
+    if (slideOut === "right") return "translateX(40%) scale(0.95)";
+    if (slideIn) return slideRef.current === "left" ? "translateX(40%) scale(0.95)" : "translateX(-40%) scale(0.95)";
+    return "translateX(0) scale(1)";
   };
+  const getOpacity = () => (slideOut || slideIn) ? 0 : 1;
 
   return (
     <div
@@ -181,7 +182,8 @@ export default function DishDetail({
           position: "absolute",
           inset: 0,
           transform: getTransform(),
-          transition: slideIn ? "none" : "transform 0.2s ease-out",
+          opacity: getOpacity(),
+          transition: slideIn ? "none" : "transform 0.25s ease-out, opacity 0.2s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -354,6 +356,8 @@ export default function DishDetail({
 
       {/* Ingredients/allergens panel */}
       {showInfo && (
+        <>
+        <div onClick={() => setShowInfo(false)} className="absolute" style={{ inset: 0, zIndex: 19 }} />
         <div
           className="absolute"
           style={{
@@ -390,6 +394,7 @@ export default function DishDetail({
             </div>
           )}
         </div>
+        </>
       )}
     </div>
   );

@@ -213,7 +213,7 @@ export default function AdminLogin() {
 
       {/* Form card */}
       <div style={{
-        position: "relative", zIndex: 2, width: 280, padding: "28px 20px",
+        position: "relative", zIndex: 2, width: 320, maxWidth: "90%", padding: "32px 24px",
         background: "rgba(255,255,255,0.95)", borderRadius: 12,
         border: "0.5px solid rgba(244,166,35,0.5)",
         boxShadow: "0 12px 40px rgba(100,60,10,0.12)",

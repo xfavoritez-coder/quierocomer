@@ -150,7 +150,7 @@ export default function ViewSelector({ restaurantId }: Props) {
         onClick={() => { setOpen(!open); dismissTooltip(); }}
         aria-label="Cambiar vista"
         aria-expanded={open}
-        className="flex items-center justify-center active:scale-90 transition-all duration-200"
+        className="flex items-center justify-center active:scale-90"
         style={{
           width: 52,
           height: 52,
@@ -175,7 +175,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           arrow="bottom-right"
           style={{ position: "absolute", right: 0, bottom: 64, width: 260, zIndex: 40 }}
         >
-          Hay más de una forma de explorar. Toca aquí para cambiar la vista.
+          Prueba otra vista.
         </GenioTip>
       )}
 

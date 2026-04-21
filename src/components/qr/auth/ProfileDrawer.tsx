@@ -27,11 +27,11 @@ interface Props {
   onLogout: () => void;
 }
 
-const DIET_LABELS: Record<string, string> = { omnivore: "Come de todo", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
+const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
 const DIET_EMOJI: Record<string, string> = { omnivore: "🍽", vegetarian: "🥬", vegan: "🌿", pescetarian: "🐟" };
 
 const ALL_DIETS = [
-  { value: "omnivore", label: "Come de todo", emoji: "🍽" },
+  { value: "omnivore", label: "Carnívoro", emoji: "🍽" },
   { value: "vegetarian", label: "Vegetariano", emoji: "🥬" },
   { value: "vegan", label: "Vegano", emoji: "🌿" },
   { value: "pescetarian", label: "Pescetariano", emoji: "🐟" },
@@ -218,7 +218,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: 28 }}>
         <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto", fontSize: "24px", fontWeight: 700, color: "white" }}>{initial}</div>
-        <button onClick={() => { setEditName(qrUser.name || ""); setEditBirthDate(qrUser.birthDate ? qrUser.birthDate.split("T")[0] : ""); setPage("edit-profile"); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
+        <button onClick={() => { setEditName(qrUser.name || ""); setEditBirthDate(qrUser.birthDate ? qrUser.birthDate.split("T")[0] : ""); setPage("edit-profile"); }} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", padding: 0, display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
           <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0e0e0e", marginTop: 12 }}>{qrUser.name || "Usuario"}</h3>
           <p style={{ fontSize: "0.82rem", color: "#999" }}>{qrUser.email}</p>
         </button>
@@ -240,59 +240,45 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
             <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Lo que más pides</h4>
-            {!editingIngredients && (
-              <button onClick={() => { setEditingIngredients(true); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); setRejectConfirm(null); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
-                <Pencil size={12} color="#F4A623" />
-              </button>
-            )}
+            <button onClick={() => { setEditingIngredients(!editingIngredients); setConfirmedIngs(new Set()); setRejectedIngs(new Set()); setRejectConfirm(null); }} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, display: "flex", alignItems: "center" }}>
+              <Pencil size={12} color={editingIngredients ? "#999" : "#F4A623"} />
+            </button>
           </div>
-          {!editingIngredients ? (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {topIngredients.map((ing) => (
-                <span key={ing.name} style={{ padding: "6px 14px", borderRadius: 50, background: "#FFF8EE", border: "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: "#92400e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
-              ))}
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {topIngredients.filter((i) => !rejectedIngs.has(i.name)).map((ing) => {
-                const confirmed = confirmedIngs.has(ing.name);
-                const isPendingReject = rejectConfirm === ing.name;
-                return (
-                  <div key={ing.name}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: confirmed ? "#f0fdf4" : "#fafafa", borderRadius: isPendingReject ? "10px 10px 0 0" : 10, border: confirmed ? "1px solid rgba(22,163,74,0.2)" : "1px solid #eee", transition: "all 0.2s" }}>
-                      <span style={{ flex: 1, fontSize: "0.88rem", color: "#0e0e0e", fontWeight: 500, textTransform: "capitalize" }}>{ing.name}</span>
-                      <button onClick={async () => {
-                        if (confirmed) return;
-                        setConfirmedIngs((p) => new Set(p).add(ing.name));
-                        await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmedIngredients: [ing.name] }) }).catch(() => {});
-                      }} style={{ width: 32, height: 32, borderRadius: "50%", background: confirmed ? "#16a34a" : "#f0f0f0", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
-                        {confirmed ? <span style={{ color: "white" }}>✓</span> : <span style={{ color: "#999" }}>👍</span>}
-                      </button>
-                      <button onClick={() => setRejectConfirm(isPendingReject ? null : ing.name)} style={{ width: 32, height: 32, borderRadius: "50%", background: isPendingReject ? "#dc2626" : "#fef2f2", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", transition: "all 0.15s" }}>
-                        <span style={{ color: isPendingReject ? "white" : "#dc2626" }}>👎</span>
-                      </button>
-                    </div>
-                    {isPendingReject && (
-                      <div style={{ background: "#fef2f2", borderRadius: "0 0 10px 10px", border: "1px solid rgba(220,38,38,0.15)", borderTop: "none", padding: "10px 12px", display: "flex", alignItems: "center", gap: 8 }}>
-                        <p style={{ flex: 1, fontSize: "0.78rem", color: "#991b1b", margin: 0, lineHeight: 1.4 }}>Verás menos platos con <strong>{ing.name}</strong>. ¿Seguro?</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {topIngredients.map((ing) => {
+              const confirmed = confirmedIngs.has(ing.name);
+              const isPendingReject = rejectConfirm === ing.name;
+              return (
+                <div key={ing.name} style={{ position: "relative" }}>
+                  <span style={{ padding: "6px 14px", borderRadius: 50, background: confirmed ? "#f0fdf4" : "#FFF8EE", border: confirmed ? "1px solid rgba(22,163,74,0.25)" : "1px solid rgba(244,166,35,0.15)", fontSize: "0.82rem", color: confirmed ? "#16a34a" : "#92400e", fontWeight: 500, textTransform: "capitalize", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    {confirmed && <span style={{ fontSize: "10px" }}>✓</span>}
+                    {ing.name}
+                    {editingIngredients && !confirmed && (
+                      <>
                         <button onClick={async () => {
-                          setRejectedIngs((p) => new Set(p).add(ing.name));
-                          setRejectConfirm(null);
-                          setTopIngredients((prev) => prev.filter((i) => i.name !== ing.name));
-                          await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rejectedIngredients: [ing.name] }) }).catch(() => {});
-                        }} style={{ padding: "5px 12px", background: "#dc2626", color: "white", border: "none", borderRadius: 50, fontSize: "0.75rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
-                          Sí, quitarlo
-                        </button>
-                        <button onClick={() => setRejectConfirm(null)} style={{ padding: "5px 10px", background: "none", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 50, fontSize: "0.75rem", color: "#dc2626", fontFamily: "inherit", cursor: "pointer", flexShrink: 0 }}>
-                          No
-                        </button>
-                      </div>
+                          setConfirmedIngs((p) => new Set(p).add(ing.name));
+                          await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmedIngredients: [ing.name] }) }).catch(() => {});
+                        }} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "12px", marginLeft: 2 }}>👍</button>
+                        <button onClick={() => setRejectConfirm(isPendingReject ? null : ing.name)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "12px" }}>👎</button>
+                      </>
                     )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  </span>
+                  {isPendingReject && (
+                    <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "#fef2f2", borderRadius: 10, border: "1px solid rgba(220,38,38,0.15)", padding: "8px 10px", display: "flex", alignItems: "center", gap: 6, zIndex: 5, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}>
+                      <p style={{ fontSize: "0.72rem", color: "#991b1b", margin: 0 }}>¿Quitar?</p>
+                      <button onClick={async () => {
+                        setRejectedIngs((p) => new Set(p).add(ing.name));
+                        setRejectConfirm(null);
+                        setTopIngredients((prev) => prev.filter((i) => i.name !== ing.name));
+                        await fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ rejectedIngredients: [ing.name] }) }).catch(() => {});
+                      }} style={{ padding: "3px 8px", background: "#dc2626", color: "white", border: "none", borderRadius: 50, fontSize: "0.68rem", fontWeight: 600, fontFamily: "inherit", cursor: "pointer" }}>Sí</button>
+                      <button onClick={() => setRejectConfirm(null)} style={{ padding: "3px 8px", background: "none", border: "1px solid rgba(220,38,38,0.2)", borderRadius: 50, fontSize: "0.68rem", color: "#dc2626", fontFamily: "inherit", cursor: "pointer" }}>No</button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 

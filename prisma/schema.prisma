@@ -545,6 +545,7 @@ model StatEvent {
   dishId       String?
   categoryId   String?
   tableId      String?
+  promoId      String?
   eventType    StatEventType
   sessionId    String
   guestId      String?

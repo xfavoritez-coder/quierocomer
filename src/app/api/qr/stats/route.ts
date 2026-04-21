@@ -37,7 +37,7 @@ function getTimeOfDay(): TimeOfDay {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { eventType, dishId, restaurantId, sessionId, categoryId, tableId, guestId } = body;
+    const { eventType, dishId, restaurantId, sessionId, categoryId, tableId, guestId, promoId } = body;
 
     if (!eventType || !restaurantId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
         dishId: dishId || null,
         categoryId: categoryId || null,
         tableId: tableId || null,
+        promoId: promoId || null,
         restaurantId,
         sessionId: sessionId || effectiveGuestId || "",
         guestId: effectiveGuestId,

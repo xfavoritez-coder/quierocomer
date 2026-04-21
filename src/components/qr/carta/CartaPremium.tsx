@@ -87,6 +87,17 @@ export default function CartaPremium({
   marketingPromos,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const [genioExpanded, setGenioExpanded] = useState(true);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setGenioExpanded(y < lastScrollY.current || y < 100);
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   // Track category dwell time when active category changes
@@ -418,10 +429,11 @@ export default function CartaPremium({
       <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
-          className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          className="flex items-center justify-center rounded-full active:scale-95"
+          style={{ height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0 15px", borderRadius: 50, gap: 6, transition: "all 0.3s ease", overflow: "hidden" }}
         >
-          <Sparkles size={22} color="white" fill="white" />
+          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>🧞</span>
+          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />}
         <ViewSelector restaurantId={restaurant.id} />

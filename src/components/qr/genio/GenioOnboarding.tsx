@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import PostGenioCapture from "../capture/PostGenioCapture";
+import DishDetail from "../carta/DishDetail";
 import {
   X, UtensilsCrossed, Leaf, Sprout, Fish,
   Check, Ban, Wheat, Milk,
@@ -22,7 +23,7 @@ type DietType = "omnivore" | "vegetarian" | "vegan" | "pescetarian";
 // HungerLevel removed — Genio deduces from photo selections
 
 const DIET_OPTIONS = [
-  { icon: UtensilsCrossed, label: "Como de todo", value: "omnivore" as DietType },
+  { icon: UtensilsCrossed, label: "Carnívoro", value: "omnivore" as DietType },
   { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
   { icon: Sprout, label: "Vegano", value: "vegan" as DietType },
   { icon: Fish, label: "Pescetariano", value: "pescetarian" as DietType },
@@ -79,10 +80,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Persisted favorite ingredients from previous sessions
   const [favIngredients, setFavIngredients] = useState<Record<string, number>>({});
+  const [userName, setUserName] = useState<string | null>(null);
   useEffect(() => {
     fetch(`/api/qr/ingredients?guestId=${getGuestId()}`).then(r => r.json()).then(d => {
       if (d.favorites) setFavIngredients(d.favorites);
     }).catch(() => {});
+    // Fetch user name if logged in
+    if (typeof document !== "undefined" && document.cookie.includes("qr_user_id")) {
+      fetch("/api/qr/user/me").then(r => r.json()).then(d => {
+        if (d.user?.name) setUserName(d.user.name);
+      }).catch(() => {});
+    }
   }, []);
 
   // Wizard state — skip to step 3 if we have saved prefs
@@ -98,6 +106,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [round, setRound] = useState(0);
   const [animating, setAnimating] = useState(false);
   const [changingSlots, setChangingSlots] = useState<Set<string>>(new Set());
+
+  // Dish preview inside Genio (without closing)
+  const [previewDish, setPreviewDish] = useState<Dish | null>(null);
 
   // Result — top 3 recommendations
   const [results, setResults] = useState<Dish[]>([]);
@@ -143,7 +154,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const initGrid = useCallback((filter: string) => {
     const pool = getDishPool(filter);
     const shuffled = [...pool].sort(() => Math.random() - 0.5);
-    const initial = shuffled.slice(0, 9);
+    const initial = shuffled.slice(0, 4);
     setGridDishes(initial);
     setSeenIds(new Set(initial.map((d) => d.id)));
     setRound(0);
@@ -514,11 +525,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <>
               <span style={{ fontSize: "2.8rem", marginBottom: 8 }}>🧞</span>
               <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.8rem", fontWeight: 900, color: "white" }}>
-                Bienvenido de nuevo
+                {userName ? `Hola ${userName}` : "Bienvenido de nuevo"}
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
-                  const dietLabels: Record<string, string> = { omnivore: "comes de todo", vegetarian: "eres vegetariano", vegan: "eres vegano", pescetarian: "eres pescetariano" };
+                  const dietLabels: Record<string, string> = { omnivore: "eres carnívoro", vegetarian: "eres vegetariano", vegan: "eres vegano", pescetarian: "eres pescetariano" };
                   const resLabels: Record<string, string> = { lactosa: "lactosa", gluten: "gluten", nueces: "nueces", almendras: "almendras", mani: "maní", frutos_secos: "nueces", mariscos: "mariscos", cerdo: "cerdo", alcohol: "alcohol" };
                   const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];
@@ -709,7 +720,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </div>
 
           {/* 3x3 Grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {gridDishes.map((d) => {
               const sel = liked.has(d.id);
               const photo = d.photos?.[0];
@@ -808,7 +819,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
           {/* Main recommendation */}
           <div className="relative overflow-hidden" style={{ width: "100%", maxWidth: 320, aspectRatio: "4/5", borderRadius: 18, flexShrink: 0 }}>
-            <button onClick={() => handleResult(mainResult)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
+            <button onClick={() => setPreviewDish(mainResult)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
               {mainResult.photos?.[0] && <Image src={mainResult.photos[0]} alt={mainResult.name} fill className="object-cover" sizes="85vw" />}
               <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", lineHeight: 1.15, margin: "0 0 4px", textAlign: "left" }}>
@@ -903,6 +914,20 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           to { opacity: 1; transform: scale(1); }
         }
       `}</style>
+
+      {/* Dish preview overlay — opens on top of Genio without closing it */}
+      {previewDish && (
+        <DishDetail
+          dish={previewDish}
+          allDishes={results}
+          categories={categories}
+          restaurantId={restaurantId}
+          reviews={[]}
+          ratingMap={{}}
+          onClose={() => setPreviewDish(null)}
+          onChangeDish={(d) => setPreviewDish(d)}
+        />
+      )}
     </div>
   );
 }

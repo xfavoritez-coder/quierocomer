@@ -84,10 +84,10 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}
           className="fixed z-50 flex items-center"
           style={{
-            top: 16, left: 16, gap: 8,
+            top: 18, left: 16, gap: 8,
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
-            padding: "5px 10px 5px 5px", cursor: "pointer",
+            padding: "7px 12px 7px 7px", cursor: "pointer",
           }}
         >
           {restaurant.logoUrl ? (
@@ -97,7 +97,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span style={{ fontSize: "1.2rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "1.14rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
             {restaurant.name}
           </span>
         </button>
@@ -107,7 +107,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={onProfileOpen}
           className="fixed z-50 flex items-center justify-center"
           style={{
-            top: 16, right: 12, width: 36, height: 36, borderRadius: "50%",
+            top: 18, right: 12, width: 35, height: 35, borderRadius: "50%",
             ...(qrUser?.name
               ? { background: "#F4A623", border: "none" }
               : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
@@ -134,7 +134,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               border: "1px solid rgba(244,166,35,0.3)", boxShadow: "0 0 20px rgba(244,166,35,0.15)",
             }}
           >
-            <Sparkles size={20} color="#F4A623" fill="#F4A623" />
+            <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
           </button>
           {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : "Cliente"} size={48} />}
           <ViewSelector restaurantId={restaurant.id} />
@@ -593,7 +593,7 @@ const CSS = `
   @keyframes vj-fade-up { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   .vj-cover-meta { display: flex; gap: 20px; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1.2s var(--vj-ease) 1.2s forwards; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.12); }
   .vj-cover-meta strong { display: block; font-weight: 400; font-size: 22px; text-transform: none; letter-spacing: -0.01em; margin-top: 4px; }
-  .vj-cover-cue { position: absolute; bottom: calc(20px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 6; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1s ease-out 2s forwards, vj-cue-float 2.5s ease-in-out 3s infinite; }
+  .vj-cover-cue { position: absolute; bottom: calc(60px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); z-index: 6; font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; animation: vj-fade-up 1s ease-out 2s forwards, vj-cue-float 2.5s ease-in-out 3s infinite; }
   .vj-cover-cue::after { content: ''; display: block; width: 1px; height: 24px; background: linear-gradient(180deg, rgba(255,255,255,0.5), transparent); margin: 10px auto 0; }
   @keyframes vj-cue-float { 0%,100% { transform: translateX(-50%) translateY(0); opacity: 0.4; } 50% { transform: translateX(-50%) translateY(6px); opacity: 0.9; } }
 
@@ -609,7 +609,7 @@ const CSS = `
   .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
   .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
-  .vj-chapter-name { font-weight: 600; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
+  .vj-chapter-name { font-weight: 500; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
   .vj-chapter-name em { font-style: italic; font-weight: 600; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
@@ -685,7 +685,7 @@ const CSS = `
   .vj-track-wrap { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
   .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
   .vj-category-track::-webkit-scrollbar { display: none; }
-  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 54px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+  .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 58px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
   .vj-category-header.light { color: #2a1810; }
   .vj-category-header.light .vj-category-label { background: rgba(0,0,0,0.06); color: #3d2817; }
   .vj-category-header.light .vj-category-label strong { color: #8a4a1a; }
@@ -731,7 +731,7 @@ const CSS = `
 
   /* SPLIT */
   .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }
-  .vj-split-photo { height: 55%; position: relative; overflow: hidden; flex-shrink: 0; }
+  .vj-split-photo { height: 62%; position: relative; overflow: hidden; flex-shrink: 0; }
   .vj-split-photo img { object-fit: cover; }
   .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10,6,4,0.5) 70%, rgba(10,6,4,0.9) 100%); }
   .vj-split-info { flex: 1; padding: 0 28px calc(50px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 3; }
@@ -739,7 +739,7 @@ const CSS = `
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
   .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
   .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
-  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 13px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
+  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 15px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
   .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
   .vj-split-price-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 

@@ -59,6 +59,17 @@ export default function CartaLista({
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const [genioExpanded, setGenioExpanded] = useState(true);
+  const lastScrollY = useRef(0);
+  useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setGenioExpanded(y < lastScrollY.current || y < 100);
+      lastScrollY.current = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   useEffect(() => {
@@ -159,12 +170,12 @@ export default function CartaLista({
                 {restaurant.name.charAt(0).toUpperCase()}
               </div>
             )}
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.2rem", fontWeight: 400, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.14rem", fontWeight: 400, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
               {restaurant.name}
             </span>
           </button>
           {/* Right: profile */}
-          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 36, height: 36, borderRadius: "50%", background: qrUser?.name ? "#F4A623" : "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
+          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 35, height: 35, borderRadius: "50%", background: qrUser?.name ? "#F4A623" : "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
             {qrUser?.name ? (
               <span style={{ color: "white", fontSize: "15px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
                 {qrUser.name.charAt(0).toUpperCase()}
@@ -369,10 +380,11 @@ export default function CartaLista({
       <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
-          className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          className="flex items-center justify-center rounded-full active:scale-95"
+          style={{ height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0 15px", borderRadius: 50, gap: 6, transition: "all 0.3s ease", overflow: "hidden" }}
         >
-          <Sparkles size={22} color="white" fill="white" />
+          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>🧞</span>
+          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />}
         <ViewSelector restaurantId={restaurant.id} />
@@ -457,12 +469,12 @@ function DishListCard({
             className="font-[family-name:var(--font-playfair)] flex items-center gap-1"
             style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
           >
-            {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "10px", flexShrink: 0 }}>⭐</span>}
+            {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "11px", flexShrink: 0 }}>⭐</span>}
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
             {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
-            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌿</span>}
-            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌱</span>}
-            {(dish as any).isSpicy && <span style={{ fontSize: "13px", flexShrink: 0 }}>🌶️</span>}
+            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
+            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
+            {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
           </h3>
         </div>
         {dish.description && (

@@ -33,11 +33,11 @@ interface Props {
   initialPromos?: Promo[];
 }
 
-function trackPromo(restaurantId: string, eventType: string, dishId?: string) {
+function trackPromo(restaurantId: string, eventType: string, dishId?: string, promoId?: string) {
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, dishId: dishId || null, guestId: getGuestId(), sessionId: getSessionId() }),
+    body: JSON.stringify({ eventType, restaurantId, dishId: dishId || null, promoId: promoId || null, guestId: getGuestId(), sessionId: getSessionId() }),
   }).catch(() => {});
 }
 
@@ -67,7 +67,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
           const id = (e.target as HTMLElement).dataset.promoId;
           if (id && !trackedRef.current.has(id)) {
             trackedRef.current.add(id);
-            trackPromo(restaurantId, "PROMO_VIEWED");
+            trackPromo(restaurantId, "PROMO_VIEWED", undefined, id);
           }
         }
       });
