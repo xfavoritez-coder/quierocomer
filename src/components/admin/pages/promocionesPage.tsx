@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
@@ -22,7 +23,9 @@ interface Promo {
 }
 
 export default function AdminPromociones() {
-  const { restaurants, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
+  const pathname = usePathname();
+  const isPanel = pathname.startsWith("/panel");
+  const { restaurants, loading: sessionLoading, selectedRestaurantId, isSuper } = useAdminSession();
   const [selectedLocal, setSelectedLocal] = useState<string>("");
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -228,6 +231,7 @@ export default function AdminPromociones() {
 
   const filtered = promos.filter(p => {
     if (p.status === "DELETED") return false;
+    if (isPanel && p.status === "SUGGESTED") return false; // Hide suggestions in panel
     if (filter === "all") return true;
     return p.status === filter;
   });
@@ -236,19 +240,25 @@ export default function AdminPromociones() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Promociones</h1>
-        <div style={{ display: "flex", gap: 10 }}>
-          <select
-            value={selectedLocal}
-            onChange={e => setSelectedLocal(e.target.value)}
-            style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-          >
-            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
-            {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
-          </select>
-          {selectedLocal && !creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", cursor: "pointer" }}>+ Crear promo</button>}
-          {selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
+        <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "#F4A623", margin: 0 }}>{isPanel ? "Ofertas" : "Promociones"}</h1>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {!isPanel && (
+            <select
+              value={selectedLocal}
+              onChange={e => setSelectedLocal(e.target.value)}
+              style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+            >
+              <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+              {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
+            </select>
+          )}
+          {selectedLocal && !creating && (
+            <button onClick={() => setCreating(true)} style={{ padding: "8px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+              + Crear oferta
+            </button>
+          )}
+          {!isPanel && selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
             padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
             color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
           }}>
@@ -395,7 +405,7 @@ export default function AdminPromociones() {
       <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
         {[
           { key: "all", label: "Todas" },
-          { key: "SUGGESTED", label: "Sugeridas" },
+          ...(!isPanel ? [{ key: "SUGGESTED", label: "Sugeridas" }] : []),
           { key: "ACTIVE", label: "Activas" },
           { key: "PAUSED", label: "Pausadas" },
         ].map(f => (
