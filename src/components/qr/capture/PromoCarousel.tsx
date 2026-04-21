@@ -248,7 +248,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>PROMO</span>
+                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>OFERTA</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
@@ -350,7 +350,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 25%, transparent 45%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.88) 100%)" }} />
                 <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 32px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>✦ PROMOCIÓN</span>
+                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>✦ OFERTA</span>
                   <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "28px", fontWeight: 600, lineHeight: 1.1, color: "white", margin: "0 0 8px", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
                     {selectedPromo.name}
                   </h2>
@@ -400,7 +400,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                 <div style={{ padding: "16px 24px 40px" }}>
                   <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
                     <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
-                    <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>PROMOCIÓN</span>
+                    <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>OFERTA</span>
                   </div>
 
                   <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
@@ -413,7 +413,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                   {selectedPromo.promoPrice && (
                     <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 24 }}>
-                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO PROMO</p>
+                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO OFERTA</p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                         <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
                         {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
@@ -425,7 +425,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
                   {multiDish && (
                     <div style={{ marginBottom: 24 }}>
                       <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
-                      <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta promoción</p>
+                      <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta oferta</p>
                       <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
                         {selectedPromo.dishes.map(d => (
                           <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "white", marginBottom: 4 }}>
