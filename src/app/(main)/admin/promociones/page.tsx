@@ -18,6 +18,7 @@ interface Promo {
   promoType?: string; imageUrl?: string | null; thumbUrl?: string | null;
   createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
   restaurant?: { name: string; logoUrl?: string | null } | null;
+  daysOfWeek?: number[];
 }
 
 export default function AdminPromociones() {
@@ -48,6 +49,8 @@ export default function AdminPromociones() {
   const [cOriginalPrice, setCOriginalPrice] = useState("");
   const [cDiscountPct, setCDiscountPct] = useState("");
   const [cSelectedDishes, setCSelectedDishes] = useState<string[]>([]);
+  const [cDaysOfWeek, setCDaysOfWeek] = useState<number[]>([]);
+  const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
   const [savingNew, setSavingNew] = useState(false);
 
@@ -96,6 +99,7 @@ export default function AdminPromociones() {
       name: cName,
       description: cDesc || null,
       promoType: createType,
+      daysOfWeek: cDaysOfWeek.length > 0 ? cDaysOfWeek : [],
     };
     if (createType === "graphic") {
       body.imageUrl = cImageUrl || null;
@@ -172,6 +176,7 @@ export default function AdminPromociones() {
     setEditPrice(p.promoPrice?.toString() || "");
     setEditOriginalPrice(p.originalPrice?.toString() || "");
     setEditImageUrl(p.imageUrl || "");
+    setEditDaysOfWeek(p.daysOfWeek || []);
   };
 
   const handleEditUpload = async (file: File) => {
@@ -203,6 +208,7 @@ export default function AdminPromociones() {
       promoPrice: editPrice ? Number(editPrice) : null,
       originalPrice: editOriginalPrice ? Number(editOriginalPrice) : null,
       imageUrl: editImageUrl || null,
+      daysOfWeek: editDaysOfWeek.length > 0 ? editDaysOfWeek : [],
     };
     const res = await fetch("/api/admin/promotions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
@@ -305,6 +311,16 @@ export default function AdminPromociones() {
             <input type="number" placeholder="Precio promo (opcional)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
           </div>
 
+          {/* Days of week */}
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
+                <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "rgba(255,255,255,0.06)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "#888" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
@@ -352,6 +368,16 @@ export default function AdminPromociones() {
               </div>
             </div>
           )}
+
+          {/* Days of week */}
+          <div style={{ marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
+                <button key={i} onClick={() => setCDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: cDaysOfWeek.includes(i) ? "#F4A623" : "rgba(255,255,255,0.06)", color: cDaysOfWeek.includes(i) ? "#0a0a0a" : "#888" }}>{d}</button>
+              ))}
+            </div>
+          </div>
 
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
@@ -405,6 +431,16 @@ export default function AdminPromociones() {
               )}
             </>
           )}
+          {/* Days of week edit */}
+          <div style={{ marginTop: 10 }}>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
+            <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+              {["D", "L", "M", "Mi", "J", "V", "S"].map((d, i) => (
+                <button key={i} onClick={() => setEditDaysOfWeek(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 34, height: 34, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: editDaysOfWeek.includes(i) ? "#F4A623" : "rgba(255,255,255,0.06)", color: editDaysOfWeek.includes(i) ? "#0a0a0a" : "#888" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
             <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>

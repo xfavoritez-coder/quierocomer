@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create manual promotion
-    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil } = body;
+    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek } = body;
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId and name required" }, { status: 400 });
 
     const promoData: any = {
@@ -80,6 +80,7 @@ export async function POST(req: NextRequest) {
       dishIds: dishIds || [], originalPrice, promoPrice, discountPct,
       validFrom: validFrom ? new Date(validFrom) : null,
       validUntil: validUntil ? new Date(validUntil) : null,
+      daysOfWeek: Array.isArray(daysOfWeek) ? daysOfWeek : [],
       status: "ACTIVE", generatedBy: "manual",
     };
     const promo = await prisma.promotion.create({ data: promoData });
@@ -109,6 +110,7 @@ export async function PUT(req: NextRequest) {
         ...(data.imageUrl !== undefined && { imageUrl: data.imageUrl }),
         ...(data.validFrom && { validFrom: new Date(data.validFrom) }),
         ...(data.validUntil && { validUntil: new Date(data.validUntil) }),
+        ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
       },
     });
     return NextResponse.json({ promotion: promo });
