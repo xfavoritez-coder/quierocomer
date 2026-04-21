@@ -345,6 +345,7 @@ model RestaurantOwner {
   updatedAt    DateTime  @updatedAt
 
   restaurants Restaurant[]
+  uploadedTickets RestaurantTicket[]
 }
 
 enum OwnerRole {
@@ -364,6 +365,7 @@ model Restaurant {
   cartaTheme  CartaTheme @default(BASIC)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   waiterPanelActive  Boolean    @default(false)
+  qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
   isActive           Boolean    @default(true)
   ownerId     String?
   createdAt   DateTime   @default(now())
@@ -389,6 +391,8 @@ model Restaurant {
   automationRules       AutomationRule[]
   genioInsights         GenioInsight[]
   experience            Experience?
+  tickets               RestaurantTicket[]
+  dishFavorites         DishFavorite[]
 
   @@index([ownerId])
 }
@@ -439,6 +443,7 @@ model Dish {
   category        Category         @relation(fields: [categoryId], references: [id])
   reviews         Review[]
   dishIngredients DishIngredient[]
+  dishFavorites   DishFavorite[]
 
   @@index([restaurantId])
   @@index([categoryId])
@@ -551,9 +556,14 @@ model StatEvent {
   sessionId    String
   guestId      String?
   qrUserId     String?
-  weather      String?
-  timeOfDay    TimeOfDay?
-  createdAt    DateTime      @default(now())
+  weather         String?
+  timeOfDay       TimeOfDay?
+  query           String?        // para SEARCH_PERFORMED
+  resultsCount    Int?           // para SEARCH_PERFORMED y FILTER_APPLIED
+  clickedResultId String?        // para SEARCH_PERFORMED
+  genioSessionId  String?        // UUID compartido entre eventos de una misma interacción del Genio
+  metadata        Json?          // genérico: filterType, filterValue, triggered_by, etc.
+  createdAt       DateTime       @default(now())
 
   restaurant   Restaurant    @relation(fields: [restaurantId], references: [id])
   guest        GuestProfile? @relation(fields: [guestId], references: [id])
@@ -563,6 +573,8 @@ model StatEvent {
   @@index([guestId])
   @@index([qrUserId])
   @@index([sessionId])
+  @@index([genioSessionId])
+  @@index([eventType, createdAt])
 }
 
 enum StatEventType {
@@ -585,6 +597,11 @@ enum StatEventType {
   PROMO_DISH_VIEWED
   WAITER_CALL
   QR_SCAN
+  SEARCH_PERFORMED
+  FILTER_APPLIED
+  USER_REGISTERED
+  DISH_FAVORITED
+  DISH_UNFAVORITED
 }
 
 enum TimeOfDay {
@@ -680,9 +697,12 @@ model GuestProfile {
   favoriteIngredients  Json?     // { "salmón": 12, "palta": 8, ... } — acumulativo por score
   linkedQrUserId       String?
   linkedQrUser    QRUser?   @relation(fields: [linkedQrUserId], references: [id])
+  convertedToUserAt    DateTime?
+  deviceType           String?
 
   statEvents      StatEvent[]
   sessions        Session[]
+  dishFavorites   DishFavorite[]
 
   @@index([linkedQrUserId])
 }
@@ -708,10 +728,15 @@ model Session {
   categoriesViewed Json?   // [{ categoryId, dwellMs }]
   pickedDishId   String?
   isAbandoned    Boolean   @default(false)
+  searchesCount       Int     @default(0)
+  converted           Boolean @default(false)
+  isReturningVisitor  Boolean @default(false)
 
   guest          GuestProfile @relation(fields: [guestId], references: [id])
   qrUser         QRUser?      @relation(fields: [qrUserId], references: [id])
   restaurant     Restaurant   @relation(fields: [restaurantId], references: [id])
+  tickets        RestaurantTicket[]
+  dishImpressions DishImpression[]
 
   @@index([guestId])
   @@index([qrUserId])
@@ -743,6 +768,7 @@ model QRUser {
   sessions     Session[]
   statEvents   StatEvent[]
   campaignRecipients CampaignRecipient[]
+  dishFavorites DishFavorite[]
 }
 
 model QRMagicToken {
@@ -1019,4 +1045,65 @@ model ExperienceSubmission {
   @@index([experienceId])
   @@index([status])
   @@index([sendAfter])
+}
+
+// ─── Analytics: Tickets (POS matching) ────────────────────────────────
+
+model RestaurantTicket {
+  id                String           @id @default(uuid())
+  restaurantId      String
+  restaurant        Restaurant       @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  mesaId            String?
+  ticketTotal       Decimal
+  ticketCountItems  Int?
+  paidAt            DateTime
+  matchedSessionId  String?
+  matchedSession    Session?         @relation(fields: [matchedSessionId], references: [id])
+  matchConfidence   String?          // 'exact' | 'probable' | 'approximate' | 'none'
+  uploadedById      String?
+  uploadedBy        RestaurantOwner? @relation(fields: [uploadedById], references: [id])
+  notes             String?
+  createdAt         DateTime         @default(now())
+
+  @@index([restaurantId, paidAt])
+  @@index([matchedSessionId])
+}
+
+// ─── Analytics: Dish Impressions (batch, lightweight) ─────────────────
+
+model DishImpression {
+  id           String   @id @default(uuid())
+  sessionId    String
+  session      Session  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  dishId       String
+  restaurantId String
+  position     Int?
+  visibleMs    Int
+  createdAt    DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([dishId, createdAt])
+  @@index([restaurantId, createdAt])
+}
+
+// ─── Dish Favorites ──────────────────────────────────────────────────
+
+model DishFavorite {
+  id           String        @id @default(uuid())
+  guestId      String?
+  guest        GuestProfile? @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  qrUserId     String?
+  qrUser       QRUser?       @relation(fields: [qrUserId], references: [id], onDelete: Cascade)
+  dishId       String
+  dish         Dish          @relation(fields: [dishId], references: [id], onDelete: Cascade)
+  restaurantId String
+  restaurant   Restaurant    @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+
+  @@unique([guestId, dishId], name: "guest_dish_unique")
+  @@unique([qrUserId, dishId], name: "user_dish_unique")
+  @@index([dishId])
+  @@index([restaurantId])
+  @@index([qrUserId])
+  @@index([guestId])
 }

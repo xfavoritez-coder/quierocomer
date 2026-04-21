@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { trackUserRegistration } from "@/lib/qr/userRegistration";
 
 export async function POST(request: Request) {
   try {
-    const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId } = await request.json();
+    const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId, sessionId } = await request.json();
 
     if (!email || !name || !restaurantId) {
       return NextResponse.json({ error: "Nombre, email y restaurantId son requeridos" }, { status: 400 });
@@ -98,6 +99,31 @@ export async function POST(request: Request) {
         bannerVariantId: bannerVariantId || null,
       },
     });
+
+    // Track user registration (unified analytics)
+    const triggeredByMap: Record<string, string> = {
+      post_genio: "post_genio_capture",
+      cta_post_genio: "conversion_cta",
+      cta_repeat_dish: "conversion_cta",
+      cta_promo_unlock: "conversion_cta",
+      birthday_banner: "birthday_banner",
+      favorites: "favorites_threshold",
+    };
+    await trackUserRegistration({
+      qrUserId: user.id,
+      guestId: guestId || null,
+      restaurantId,
+      sessionId: sessionId || null,
+      triggeredBy: (triggeredByMap[source || ""] || "conversion_cta") as any,
+    });
+
+    // Migrate dish favorites from guest to user
+    if (guestId) {
+      await prisma.dishFavorite.updateMany({
+        where: { guestId, qrUserId: null },
+        data: { qrUserId: user.id, guestId: null },
+      }).catch(() => {});
+    }
 
     // Set cookie for immediate login
     const response = NextResponse.json({ ok: true, userId: user.id, message: "Revisa tu correo" });

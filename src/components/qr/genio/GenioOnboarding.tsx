@@ -52,11 +52,11 @@ const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail"
 
 import { getGuestId, getSessionId } from "@/lib/guestId";
 
-function trackStat(restaurantId: string, eventType: string, dishId?: string) {
+function trackStat(restaurantId: string, eventType: string, dishId?: string, genioSessionId?: string) {
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, dishId, guestId: getGuestId(), sessionId: getSessionId() }),
+    body: JSON.stringify({ eventType, restaurantId, dishId, genioSessionId, guestId: getGuestId(), sessionId: getSessionId() }),
   }).catch(() => {});
 }
 
@@ -71,6 +71,7 @@ function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_resul
 export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult }: GenioProps) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
+  const genioSessionId = useRef(crypto.randomUUID()).current;
 
   // Load saved preferences from localStorage
   const savedDiet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
@@ -219,7 +220,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     document.body.style.overflow = "hidden";
-    trackStat(restaurantId, "GENIO_START");
+    trackStat(restaurantId, "GENIO_START", undefined, genioSessionId);
     return () => { document.body.style.overflow = ""; };
   }, [restaurantId]);
 
@@ -382,7 +383,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setResultReasons(reasons);
       setLovedIds(new Set());
       setUsedIds((prev) => new Set([...prev, ...picks.map((p) => p.id)]));
-      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
+      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id, genioSessionId));
       const likedIds = [...liked];
       if (likedIds.length > 0) saveIngredients(likedIds, "genio_liked");
       saveIngredients(picks.map((p) => p.id), "genio_result");
@@ -400,7 +401,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setResults(picks);
       setResultReasons({});
       setLovedIds(new Set());
-      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id));
+      picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id, genioSessionId));
     }
     setStep(5);
   };
@@ -408,7 +409,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const retryRecommend = () => {
     // Penalize rejected dish ingredients
     results.forEach((r) => {
-      trackStat(restaurantId, "GENIO_DISH_REJECTED", r.id);
+      trackStat(restaurantId, "GENIO_DISH_REJECTED", r.id, genioSessionId);
     });
     // Save rejected ingredients with negative weight
     fetch("/api/qr/ingredients", {
@@ -455,7 +456,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Final pick: user chose this dish to view in carta
   const handleResult = (dish: Dish) => {
-    trackStat(restaurantId, "GENIO_DISH_ACCEPTED", dish.id);
+    trackStat(restaurantId, "GENIO_DISH_ACCEPTED", dish.id, genioSessionId);
     // Save with highest weight — this is what they actually want to eat
     fetch("/api/qr/ingredients", {
       method: "POST",

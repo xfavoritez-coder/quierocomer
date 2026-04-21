@@ -4,6 +4,7 @@ import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
+import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
@@ -58,6 +59,17 @@ export default function CartaLista({
   useEffect(() => { onReady?.(); }, [readyKey]);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!query || query.length < 2) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      const q = query.toLowerCase().trim();
+      const count = dishes.filter((d) => d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q)).length;
+      trackSearchPerformed(restaurant.id, q, count);
+    }, 500);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [query, dishes, restaurant.id]);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [genioExpanded, setGenioExpanded] = useState(true);
   const lastScrollY = useRef(0);

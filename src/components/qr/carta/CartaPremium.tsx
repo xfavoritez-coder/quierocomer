@@ -14,6 +14,7 @@ import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
+import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 
@@ -128,6 +129,19 @@ export default function CartaPremium({
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Track search with debounce
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2) return;
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      const q = searchQuery.toLowerCase().trim();
+      const count = dishes.filter((d) => d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q)).length;
+      trackSearchPerformed(restaurant.id, q, count);
+    }, 500);
+    return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
+  }, [searchQuery, dishes, restaurant.id]);
 
   // Fetch user (only if not provided via prop)
   useEffect(() => {

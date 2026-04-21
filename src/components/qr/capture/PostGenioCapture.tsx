@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { getGuestId } from "@/lib/guestId";
+import { getGuestId, getSessionId } from "@/lib/guestId";
 import GenioTip, { TIP_BG, TIP_TEXT_COLOR } from "../genio/GenioTip";
 
 interface Props {
@@ -45,6 +45,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
         restaurantId,
         source: "post_genio",
         guestId: getGuestId(),
+        sessionId: getSessionId(),
       }),
     });
 

@@ -31,18 +31,18 @@ export async function POST(request: Request) {
     const weatherStr = weather ? `${weather.weatherCondition}:${weather.weatherTemp}°C` : null;
     const timeOfDay = getTimeOfDay();
 
-    // Ensure GuestProfile exists
-    await prisma.guestProfile.upsert({
+    // Ensure GuestProfile exists and get visit count
+    const guest = await prisma.guestProfile.upsert({
       where: { id: guestId },
-      create: { id: guestId, linkedQrUserId: qrUserId },
-      update: { lastSeenAt: new Date(), visitCount: { increment: 1 }, linkedQrUserId: qrUserId || undefined },
+      create: { id: guestId, linkedQrUserId: qrUserId, deviceType: deviceType || null },
+      update: { lastSeenAt: new Date(), visitCount: { increment: 1 }, linkedQrUserId: qrUserId || undefined, deviceType: deviceType || undefined },
     });
 
     // Get IP address
     const forwarded = request.headers.get("x-forwarded-for");
     const ipAddress = forwarded ? forwarded.split(",")[0].trim() : request.headers.get("x-real-ip") || null;
 
-    // Create session immediately
+    // Create session with returning visitor flag
     const session = await prisma.session.create({
       data: {
         guestId,
@@ -52,6 +52,7 @@ export async function POST(request: Request) {
         ipAddress,
         weather: weatherStr,
         timeOfDay,
+        isReturningVisitor: guest.visitCount > 1,
       },
     });
 

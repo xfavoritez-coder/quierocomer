@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
-import { getGuestId } from "@/lib/guestId";
+import { getGuestId, getSessionId } from "@/lib/guestId";
 
 interface Props {
   restaurantId: string;
@@ -82,6 +82,7 @@ export default function ConversionCTA({ restaurantId, type, dishName, onRegister
         email, name, restaurantId,
         source: `cta_${type}`,
         guestId: getGuestId(),
+        sessionId: getSessionId(),
         dietType: localStorage.getItem("qr_diet"),
         restrictions: localStorage.getItem("qr_restrictions") ? JSON.parse(localStorage.getItem("qr_restrictions")!) : [],
       }),
