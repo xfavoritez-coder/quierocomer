@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
 const PUBLIC_PANEL_ROUTES = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
+const PUBLIC_PANEL_API_ROUTES = ["/api/panel/login"];
 const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password"];
 
 export function middleware(request: NextRequest) {
@@ -18,9 +19,21 @@ export function middleware(request: NextRequest) {
     if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
     }
-    const token = request.cookies.get("admin_token")?.value;
+    const token = request.cookies.get("panel_token")?.value;
     if (!token) {
       return NextResponse.redirect(new URL("/panel/login", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // --- Panel API routes ---
+  if (pathname.startsWith("/api/panel")) {
+    if (PUBLIC_PANEL_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
+      return NextResponse.next();
+    }
+    const token = request.cookies.get("panel_token")?.value;
+    if (!token) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
     return NextResponse.next();
   }
@@ -42,7 +55,7 @@ export function middleware(request: NextRequest) {
     if (PUBLIC_API_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
       return NextResponse.next();
     }
-    const token = request.cookies.get("admin_token")?.value;
+    const token = request.cookies.get("admin_token")?.value || request.cookies.get("panel_token")?.value;
     if (!token) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
@@ -53,5 +66,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/panel/:path*", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/", "/panel/:path*", "/admin/:path*", "/api/admin/:path*", "/api/panel/:path*"],
 };

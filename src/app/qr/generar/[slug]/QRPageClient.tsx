@@ -5,7 +5,7 @@ import QRCode from "qrcode";
 import { jsPDF } from "jspdf";
 
 interface Props {
-  restaurant: { id: string; slug: string; name: string; logoUrl: string | null };
+  restaurant: { id: string; slug: string; name: string; logoUrl: string | null; qrToken: string | null };
 }
 
 type Size = "small" | "medium" | "large";
@@ -29,7 +29,9 @@ export default function QRPageClient({ restaurant }: Props) {
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
 
-  const qrUrl = `${BASE_URL}/qr/${restaurant.slug}`;
+  const qrUrl = restaurant.qrToken
+    ? `${BASE_URL}/qr/${restaurant.slug}?t=${restaurant.qrToken}`
+    : `${BASE_URL}/qr/${restaurant.slug}`;
 
   // Generate QR with logo overlay
   useEffect(() => {

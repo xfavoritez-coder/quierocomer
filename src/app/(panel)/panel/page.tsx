@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { useAdminSession } from "@/lib/admin/useAdminSession"; // reads from SessionContext in panel
 import { Stat, RankList } from "@/components/admin/DashboardWidgets";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, Tag } from "lucide-react";
+import { Eye, QrCode, Bell, Tag, ExternalLink } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -116,7 +116,8 @@ export default function PanelDashboard() {
         const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}` : "#";
         return (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
-            <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
+            <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)", position: "relative" }}>
+              <ExternalLink size={12} color="var(--adm-text3)" style={{ position: "absolute", top: 8, right: 8 }} />
               <Eye size={20} color={GOLD} />
               <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textAlign: "center" }}>Ver mi carta</span>
             </a>

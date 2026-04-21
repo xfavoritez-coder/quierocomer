@@ -1,0 +1,116 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+
+export async function GET(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  const restaurantId = req.nextUrl.searchParams.get("restaurantId");
+  if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
+
+  try {
+    await requireRestaurantForOwner(req, restaurantId);
+  } catch (e) {
+    return authErrorResponse(e);
+  }
+
+  const categories = await prisma.category.findMany({
+    where: { restaurantId },
+    orderBy: { position: "asc" },
+    include: { _count: { select: { dishes: true } } },
+  });
+  return NextResponse.json(categories);
+}
+
+export async function POST(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  try {
+    const { restaurantId, name, description } = await req.json();
+    if (!restaurantId || !name) {
+      return NextResponse.json({ error: "restaurantId y name requeridos" }, { status: 400 });
+    }
+
+    await requireRestaurantForOwner(req, restaurantId);
+
+    const maxPos = await prisma.category.findFirst({
+      where: { restaurantId },
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+
+    const category = await prisma.category.create({
+      data: {
+        restaurantId,
+        name,
+        description: description || null,
+        position: (maxPos?.position ?? -1) + 1,
+      },
+    });
+
+    return NextResponse.json(category);
+  } catch (e: any) {
+    if (e.status) return authErrorResponse(e);
+    console.error("[Admin categories POST]", e);
+    return NextResponse.json({ error: "Error al crear categoría" }, { status: 500 });
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  try {
+    const { id, name, description, position, isActive } = await req.json();
+    if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+    const existing = await prisma.category.findUnique({ where: { id }, select: { restaurantId: true } });
+    if (!existing) return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
+
+    await requireRestaurantForOwner(req, existing.restaurantId);
+
+    const data: Record<string, any> = {};
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description || null;
+    if (position !== undefined) data.position = position;
+    if (isActive !== undefined) data.isActive = isActive;
+
+    const updated = await prisma.category.update({ where: { id }, data });
+    return NextResponse.json(updated);
+  } catch (e: any) {
+    if (e.status) return authErrorResponse(e);
+    console.error("[Admin categories PUT]", e);
+    return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+
+  try {
+    const { id } = await req.json();
+    if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+    const existing = await prisma.category.findUnique({
+      where: { id },
+      include: { _count: { select: { dishes: true } } },
+    });
+    if (!existing) return NextResponse.json({ error: "Categoría no encontrada" }, { status: 404 });
+
+    await requireRestaurantForOwner(req, existing.restaurantId);
+
+    if (existing._count.dishes > 0) {
+      return NextResponse.json({ error: `No se puede eliminar: tiene ${existing._count.dishes} plato(s). Mueve o elimina los platos primero.` }, { status: 400 });
+    }
+
+    await prisma.category.delete({ where: { id } });
+    return NextResponse.json({ success: true });
+  } catch (e: any) {
+    if (e.status) return authErrorResponse(e);
+    console.error("[Admin categories DELETE]", e);
+    return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });
+  }
+}

@@ -1,13 +1,14 @@
 "use client";
 import { usePathname } from "next/navigation";
-import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
+import { SessionContext } from "@/lib/admin/SessionContext";
 import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
 
 const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant } = useAdminSession();
+  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role } = usePanelSession();
 
   if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
 
@@ -24,16 +25,30 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     return null;
   }
 
+  const ctxValue = {
+    role,
+    name,
+    restaurants,
+    selectedRestaurantId,
+    isSuper: false,
+    loading: false,
+    error: false,
+    setSelectedRestaurant,
+    logout,
+  };
+
   return (
-    <AdminLayoutOwner
-      name={name}
-      restaurants={restaurants}
-      selectedRestaurantId={selectedRestaurantId}
-      setSelectedRestaurant={setSelectedRestaurant}
-      logout={logout}
-      basePath="/panel"
-    >
-      {children}
-    </AdminLayoutOwner>
+    <SessionContext.Provider value={ctxValue}>
+      <AdminLayoutOwner
+        name={name}
+        restaurants={restaurants}
+        selectedRestaurantId={selectedRestaurantId}
+        setSelectedRestaurant={setSelectedRestaurant}
+        logout={logout}
+        basePath="/panel"
+      >
+        {children}
+      </AdminLayoutOwner>
+    </SessionContext.Provider>
   );
 }

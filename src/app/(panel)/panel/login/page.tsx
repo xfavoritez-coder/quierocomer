@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { resetPanelSession } from "@/lib/admin/usePanelSession";
 
 function OasisBackground() {
   return (
@@ -42,6 +43,7 @@ export default function PanelLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const passRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,7 +51,7 @@ export default function PanelLogin() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/login", {
+      const res = await fetch("/api/panel/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -62,10 +64,12 @@ export default function PanelLogin() {
         setTimeout(() => passRef.current?.focus(), 100);
         return;
       }
-      if (remember) localStorage.setItem("qc_admin_remember", "1");
-      else { localStorage.removeItem("qc_admin_remember"); sessionStorage.setItem("qc_admin_session", "1"); }
+      if (remember) localStorage.setItem("qc_panel_remember", "1");
+      else { localStorage.removeItem("qc_panel_remember"); sessionStorage.setItem("panel_session", "1"); }
       // Store name for welcome toast
       sessionStorage.setItem("panel_welcome", data.name || "");
+      // Reset cached session so the panel layout fetches fresh data
+      resetPanelSession();
       router.push("/panel");
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
@@ -117,15 +121,29 @@ export default function PanelLogin() {
           </div>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
-            <input
-              ref={passRef}
-              type="password"
-              placeholder="Tu contraseña"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              style={inputStyle}
-              autoComplete="current-password"
-            />
+            <div style={{ position: "relative" }}>
+              <input
+                ref={passRef}
+                type={showPass ? "text" : "password"}
+                placeholder="Tu contraseña"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                style={{ ...inputStyle, paddingRight: 40 }}
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", justifyContent: "center" }}
+                tabIndex={-1}
+              >
+                {showPass ? (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7550" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                ) : (
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7550" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                )}
+              </button>
+            </div>
           </div>
 
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: -2 }}>
@@ -147,7 +165,7 @@ export default function PanelLogin() {
             border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer",
             boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
           }}>
-            {loading ? "Entrando..." : "Entrar a mi panel"}
+            {loading ? "Entrando..." : "Frotar lámpara"}
           </button>
 
           <div style={{ textAlign: "center", marginTop: 10 }}>

@@ -241,7 +241,10 @@ export default function AdminPromociones() {
   return (
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "#F4A623", margin: 0 }}>{isPanel ? "Ofertas" : "Promociones"}</h1>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "#F4A623", margin: 0 }}>{isPanel ? "Ofertas" : "Promociones"}</h1>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Crea ofertas y descuentos para atraer más clientes</p>
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {!isPanel && (
             <select

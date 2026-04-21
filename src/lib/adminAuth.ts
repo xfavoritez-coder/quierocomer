@@ -2,25 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Checks admin auth via cookie-based auth (admin_token + admin_id).
+ * Checks admin auth via cookie-based auth.
+ * Accepts both admin_* cookies (superadmin) and panel_* cookies (owner panel).
  * Returns null if authenticated, or a 401 response.
  */
 export function checkAdminAuth(req: NextRequest): NextResponse | null {
   const adminToken = req.cookies.get("admin_token")?.value;
   const adminId = req.cookies.get("admin_id")?.value;
-  if (adminToken && adminId) return null; // authenticated
+  if (adminToken && adminId) return null;
+
+  // Also accept panel cookies for shared API routes
+  const panelToken = req.cookies.get("panel_token")?.value;
+  const panelId = req.cookies.get("panel_id")?.value;
+  if (panelToken && panelId) return null;
 
   return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 }
 
-/** Get admin role from cookies */
+/** Get admin role from cookies (checks admin_* first, then panel_*) */
 export function getAdminRole(req: NextRequest): string | null {
-  return req.cookies.get("admin_role")?.value || null;
+  return req.cookies.get("admin_role")?.value || req.cookies.get("panel_role")?.value || null;
 }
 
-/** Get admin ID from cookies */
+/** Get admin ID from cookies (checks admin_* first, then panel_*) */
 export function getAdminId(req: NextRequest): string | null {
-  return req.cookies.get("admin_id")?.value || null;
+  return req.cookies.get("admin_id")?.value || req.cookies.get("panel_id")?.value || null;
 }
 
 /** Returns true if the current user is SUPERADMIN */

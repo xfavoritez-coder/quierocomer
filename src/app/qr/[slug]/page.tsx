@@ -48,7 +48,7 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string }>;
+  searchParams: Promise<{ mesa?: string; t?: string }>;
 }) {
   const { slug } = await params;
   const { mesa: tableId } = await searchParams;

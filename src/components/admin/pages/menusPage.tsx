@@ -25,6 +25,14 @@ export default function AdminMenus() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
 
+  // Category management
+  const [catMgmtOpen, setCatMgmtOpen] = useState(false);
+  const [fullCategories, setFullCategories] = useState<(Category & { _count?: { dishes: number } })[]>([]);
+  const [newCatName, setNewCatName] = useState("");
+  const [editingCat, setEditingCat] = useState<string | null>(null);
+  const [editCatName, setEditCatName] = useState("");
+  const [catSaving, setCatSaving] = useState(false);
+
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
   useEffect(() => {
@@ -43,6 +51,54 @@ export default function AdminMenus() {
     dishes.forEach(d => { if (d.category) cats.set(d.category.id, d.category.name); });
     return Array.from(cats.entries()).map(([id, name]) => ({ id, name }));
   }, [dishes]);
+
+  // Fetch full categories when management panel opens
+  useEffect(() => {
+    if (!catMgmtOpen || !selectedRestaurantId) return;
+    fetch(`/api/admin/categories?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setFullCategories(d); })
+      .catch(() => {});
+  }, [catMgmtOpen, selectedRestaurantId]);
+
+  const createCategory = async () => {
+    if (!newCatName.trim() || !selectedRestaurantId) return;
+    setCatSaving(true);
+    const res = await fetch("/api/admin/categories", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ restaurantId: selectedRestaurantId, name: newCatName.trim() }),
+    });
+    const cat = await res.json();
+    if (!res.ok) { setCatSaving(false); return; }
+    setFullCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]);
+    setNewCatName("");
+    setCatSaving(false);
+  };
+
+  const updateCategory = async (id: string, data: Record<string, any>) => {
+    setCatSaving(true);
+    await fetch("/api/admin/categories", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...data }),
+    });
+    setFullCategories(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
+    setEditingCat(null);
+    setCatSaving(false);
+    // Refresh dishes to update category names
+    if (data.name) {
+      setDishes(prev => prev.map(d => d.categoryId === id ? { ...d, category: { ...d.category, name: data.name } } : d));
+    }
+  };
+
+  const deleteCategory = async (id: string) => {
+    const cat = fullCategories.find(c => c.id === id);
+    if (cat?._count?.dishes && cat._count.dishes > 0) return;
+    const res = await fetch("/api/admin/categories", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+    if (res.ok) setFullCategories(prev => prev.filter(c => c.id !== id));
+  };
 
   const filtered = useMemo(() => {
     let list = dishes;
@@ -337,8 +393,8 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Platos</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{activeRestaurant?.name} · {filtered.length} platos</p>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Mi Carta</h1>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Administra los platos y categorías de {activeRestaurant?.name} · {filtered.length} platos</p>
         </div>
         <RestaurantPicker />
       </div>
@@ -358,6 +414,71 @@ export default function AdminMenus() {
           <option value="all">Todas las categorias</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+      </div>
+
+      {/* Category management */}
+      <div style={{ marginBottom: 16 }}>
+        <button onClick={() => setCatMgmtOpen(!catMgmtOpen)} style={{ padding: "8px 16px", background: catMgmtOpen ? "#F4A623" : "var(--adm-card)", color: catMgmtOpen ? "white" : "var(--adm-text2)", border: "1px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+          {catMgmtOpen ? "Cerrar categorías" : "Gestionar categorías"}
+        </button>
+
+        {catMgmtOpen && (
+          <div style={{ marginTop: 12, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16 }}>
+            {/* Create new */}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <input
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value)}
+                placeholder="Nombre de la nueva categoría..."
+                onKeyDown={e => e.key === "Enter" && createCategory()}
+                style={{ flex: 1, padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+              />
+              <button onClick={createCategory} disabled={catSaving || !newCatName.trim()} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newCatName.trim() ? 0.5 : 1 }}>
+                + Crear
+              </button>
+            </div>
+
+            {/* List */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {fullCategories.map(cat => (
+                <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: cat.isActive ? "transparent" : "rgba(0,0,0,0.03)", borderRadius: 8, border: "1px solid var(--adm-card-border)" }}>
+                  {editingCat === cat.id ? (
+                    <>
+                      <input
+                        value={editCatName}
+                        onChange={e => setEditCatName(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && updateCategory(cat.id, { name: editCatName })}
+                        style={{ flex: 1, padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+                        autoFocus
+                      />
+                      <button onClick={() => updateCategory(cat.id, { name: editCatName })} disabled={catSaving} style={{ padding: "4px 10px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+                      <button onClick={() => setEditingCat(null)} style={{ padding: "4px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer" }}>X</button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ flex: 1, fontFamily: F, fontSize: "0.85rem", color: cat.isActive ? "var(--adm-text)" : "var(--adm-text3)", fontWeight: 600 }}>
+                        {cat.name}
+                        <span style={{ fontWeight: 400, fontSize: "0.72rem", color: "var(--adm-text3)", marginLeft: 8 }}>
+                          {cat._count?.dishes ?? 0} plato{(cat._count?.dishes ?? 0) !== 1 ? "s" : ""}
+                        </span>
+                      </span>
+                      <button onClick={() => { setEditingCat(cat.id); setEditCatName(cat.name); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
+                      <button onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })} style={{ padding: "4px 10px", background: cat.isActive ? "rgba(255,100,100,0.08)" : "rgba(74,222,128,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: cat.isActive ? "#ff6b6b" : "#4ade80", cursor: "pointer", fontWeight: 600 }}>
+                        {cat.isActive ? "Ocultar" : "Mostrar"}
+                      </button>
+                      {(cat._count?.dishes ?? 0) === 0 && (
+                        <button onClick={() => deleteCategory(cat.id)} style={{ padding: "4px 10px", background: "rgba(255,100,100,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ff6b6b", cursor: "pointer", fontWeight: 600 }}>Eliminar</button>
+                      )}
+                    </>
+                  )}
+                </div>
+              ))}
+              {fullCategories.length === 0 && (
+                <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 16 }}>No hay categorías. Crea la primera arriba.</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {loading ? (

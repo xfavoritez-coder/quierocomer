@@ -76,10 +76,13 @@ export default function AdminAutomatizaciones() {
   return (
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Automatizaciones</h1>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Automatizaciones</h1>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Configura correos automáticos por cumpleaños, bienvenida o inactividad</p>
+        </div>
         <div style={{ display: "flex", gap: 10 }}>
           <RestaurantPicker />
-          {!creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nueva regla</button>}
+          {!creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nueva regla</button>}
         </div>
       </div>
 

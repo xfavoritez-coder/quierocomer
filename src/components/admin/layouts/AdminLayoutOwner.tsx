@@ -28,14 +28,14 @@ function buildNav(base: string) {
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Bell, label: "Garzón", href: `${base}/garzon` },
+    { icon: Users, label: "Segmentos", href: `${base}/segmentos` },
     { icon: Mail, label: "Campañas", href: `${base}/campanias` },
     { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
-    { icon: Users, label: "Segmentos", href: `${base}/segmentos` },
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
-    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
+    { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Grid3X3, label: "Más", href: "__more__" },
   ] as const;
   const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS.some(t => t.href === n.href));
@@ -83,7 +83,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     if (pwNew !== pwConfirm) { setPwError("Las contraseñas no coinciden"); return; }
     setPwLoading(true);
     try {
-      const res = await fetch("/api/admin/me/change-password", {
+      const pwEndpoint = basePath === "/panel" ? "/api/panel/change-password" : "/api/admin/me/change-password";
+      const res = await fetch(pwEndpoint, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ currentPassword: pwCurrent, newPassword: pwNew }),
       });

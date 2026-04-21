@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
         logoUrl: logoUrl || null, bannerUrl: bannerUrl || null,
         cartaTheme: cartaTheme || "PREMIUM",
         qrActivatedAt: new Date(),
+        qrToken: randomBytes(8).toString("base64url"),
         ownerId: ownerId || null,
       },
       select: { id: true, name: true, slug: true, createdAt: true },

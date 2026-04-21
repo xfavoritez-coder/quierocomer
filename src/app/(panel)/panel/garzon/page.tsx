@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { Bell, Smartphone, CheckCircle, Copy, Check, Shield } from "lucide-react";
+import { Bell, Smartphone, CheckCircle, Copy, Check, Shield, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import QRCode from "qrcode";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -10,9 +12,17 @@ const GOLD = "#F4A623";
 export default function GarzonPage() {
   const { restaurants, selectedRestaurantId } = useAdminSession();
   const [copied, setCopied] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
   const restaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const garzonLink = restaurant ? `https://quierocomer.cl/qr/admin/garzon/${restaurant.slug}` : "";
+
+  useEffect(() => {
+    if (!garzonLink) return;
+    QRCode.toDataURL(garzonLink, { width: 400, margin: 1, errorCorrectionLevel: "H", color: { dark: "#0e0e0e", light: "#ffffff" } })
+      .then(setQrDataUrl)
+      .catch(() => {});
+  }, [garzonLink]);
 
   const copyLink = () => {
     navigator.clipboard.writeText(garzonLink);
@@ -26,6 +36,9 @@ export default function GarzonPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
+      <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.78rem", marginBottom: 12 }}>
+        <ArrowLeft size={16} /> Volver al inicio
+      </Link>
       <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 8px" }}>Panel del Garzón</h1>
       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 24px", lineHeight: 1.5 }}>
         Permite a tus clientes llamar al garzón desde su celular. Tu equipo recibe la notificación al instante.
@@ -78,6 +91,14 @@ export default function GarzonPage() {
               </button>
             </div>
           </div>
+
+          {/* QR code */}
+          {qrDataUrl && (
+            <div style={{ textAlign: "center", padding: "12px 0" }}>
+              <img src={qrDataUrl} alt="QR panel garzón" style={{ width: 160, height: 160, borderRadius: 8 }} />
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>Escanea con el celular del garzón</p>
+            </div>
+          )}
 
           {/* Step 2 */}
           <div>

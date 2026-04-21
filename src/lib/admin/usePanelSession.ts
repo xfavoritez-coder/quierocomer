@@ -1,33 +1,30 @@
 "use client";
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
-import { useSessionContext } from "./SessionContext";
 
-interface AdminRestaurant {
+interface PanelRestaurant {
   id: string;
   name: string;
   slug: string;
 }
 
-export interface AdminSession {
-  role: "SUPERADMIN" | "OWNER";
+export interface PanelSession {
+  role: string;
   name: string;
-  restaurants: AdminRestaurant[];
+  restaurants: PanelRestaurant[];
   selectedRestaurantId: string | null;
-  isSuper: boolean;
   loading: boolean;
   error: boolean;
 }
 
-const SELECTED_KEY = "admin_selected_restaurant";
+const SELECTED_KEY = "panel_selected_restaurant";
 
-// ── Global store so all components share the same state ──
-let _session: AdminSession = {
+// ── Global store for panel (separate from admin) ──
+let _session: PanelSession = {
   role: "OWNER",
   name: "",
   restaurants: [],
   selectedRestaurantId: null,
-  isSuper: false,
   loading: true,
   error: false,
 };
@@ -51,20 +48,19 @@ function fetchSession() {
   if (_fetched) return;
   _fetched = true;
 
-  fetch("/api/admin/me")
+  fetch("/api/panel/me")
     .then((r) => {
       if (!r.ok) throw new Error("Not auth");
       return r.json();
     })
     .then((data) => {
       const savedId = typeof window !== "undefined" ? localStorage.getItem(SELECTED_KEY) : null;
-      const validSaved = data.restaurants.some((r: AdminRestaurant) => r.id === savedId);
+      const validSaved = data.restaurants.some((r: PanelRestaurant) => r.id === savedId);
       _session = {
         role: data.role,
         name: data.name,
         restaurants: data.restaurants,
         selectedRestaurantId: validSaved ? savedId : (data.selectedRestaurantId || data.restaurants[0]?.id || null),
-        isSuper: data.role === "SUPERADMIN",
         loading: false,
         error: false,
       };
@@ -76,15 +72,26 @@ function fetchSession() {
     });
 }
 
-export function useAdminSession() {
-  // If a SessionContext provider is wrapping us (panel or admin layout), use that
-  const ctxSession = useSessionContext();
+/** Call before navigating to /panel after login to ensure fresh fetch */
+export function resetPanelSession() {
+  _fetched = false;
+  _session = {
+    role: "OWNER",
+    name: "",
+    restaurants: [],
+    selectedRestaurantId: null,
+    loading: true,
+    error: false,
+  };
+  notify();
+}
 
+export function usePanelSession() {
   const session = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   useEffect(() => {
-    if (!ctxSession) fetchSession();
-  }, [ctxSession]);
+    fetchSession();
+  }, []);
 
   const setSelectedRestaurant = useCallback((id: string) => {
     localStorage.setItem(SELECTED_KEY, id);
@@ -93,13 +100,20 @@ export function useAdminSession() {
   }, []);
 
   const logout = useCallback(async () => {
-    await fetch("/api/admin/logout", { method: "POST" });
-    sessionStorage.removeItem("admin_session");
+    await fetch("/api/panel/logout", { method: "POST" });
+    sessionStorage.removeItem("panel_session");
     localStorage.removeItem(SELECTED_KEY);
     _fetched = false;
-    window.location.href = "/admin/login";
+    _session = {
+      role: "OWNER",
+      name: "",
+      restaurants: [],
+      selectedRestaurantId: null,
+      loading: true,
+      error: false,
+    };
+    window.location.href = "/panel/login";
   }, []);
 
-  if (ctxSession) return ctxSession;
   return { ...session, setSelectedRestaurant, logout };
 }

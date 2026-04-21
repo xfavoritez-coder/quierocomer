@@ -104,12 +104,12 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
 
   return (
     <div style={{ position: "relative", display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
-      {/* Success bubble */}
+      {/* Success bubble — opens to the left */}
       {state === "success" && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", bottom: size + 8, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", bottom: size + 8, right: 0,
             background: "#16a34a", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 600,
             boxShadow: "0 4px 12px rgba(22,163,74,0.3)", zIndex: 60,
@@ -117,23 +117,23 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           }}
         >
           ¡Garzón avisado!
-          <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
+          <div style={{ position: "absolute", bottom: -4, right: size / 2 - 4, transform: "rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
         </div>
       )}
 
-      {/* Error toast */}
+      {/* Error toast — opens to the left */}
       {toast && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", bottom: size + 8, left: "50%", transform: "translateX(-50%)",
+            position: "absolute", bottom: size + 8, right: 0,
             background: "#333", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 500,
             zIndex: 60, whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
           }}
         >
           {toast}
-          <div style={{ position: "absolute", bottom: -4, left: "50%", transform: "translateX(-50%) rotate(45deg)", width: 8, height: 8, background: "#333" }} />
+          <div style={{ position: "absolute", bottom: -4, right: size / 2 - 4, transform: "rotate(45deg)", width: 8, height: 8, background: "#333" }} />
         </div>
       )}
 
@@ -188,8 +188,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           80% { transform: rotate(-6deg); }
         }
         @keyframes waiterBubbleIn {
-          from { opacity: 0; transform: translateX(-50%) translateY(4px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </div>

@@ -163,7 +163,8 @@ export default function MiRestaurantePage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 20px" }}>Mi Restaurante</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Mi Restaurante</h1>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura la información y apariencia de tu local</p>
 
       {/* ── Info básica ── */}
       <Card title="Información básica" icon={Camera}>
