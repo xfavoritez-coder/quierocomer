@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { Bell, Smartphone, CheckCircle, Copy, Check, ExternalLink, QrCode, Shield } from "lucide-react";
+import { Bell, Smartphone, CheckCircle, Copy, Check, Shield } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -61,8 +61,11 @@ export default function GarzonPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Step 1: Share link */}
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 8px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 4px" }}>
               1. Comparte este link con tu garzón
+            </p>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 8px", lineHeight: 1.5 }}>
+              Envíalo por WhatsApp, email, o haz que escanee el código QR de más abajo.
             </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center", background: "var(--adm-input)", borderRadius: 10, padding: "10px 12px", border: "1px solid var(--adm-input-border)" }}>
               <span style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{garzonLink}</span>
@@ -82,7 +85,7 @@ export default function GarzonPage() {
               2. El garzón abre el link en su celular
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              Puede enviarlo por WhatsApp, email, o que escanee el QR de abajo.
+              Al abrirlo verá el panel de llamadas. Si no hay llamadas activas, verá un mensaje de espera.
             </p>
           </div>
 
@@ -92,34 +95,36 @@ export default function GarzonPage() {
               3. Activa las notificaciones
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              Cuando el navegador pregunte "¿Permitir notificaciones?", el garzón debe tocar <strong>"Permitir"</strong>. Así le llegarán alertas con sonido aunque tenga el celular bloqueado.
+              Cuando el navegador pregunte "¿Permitir notificaciones?", el garzón <strong>debe tocar "Permitir"</strong>. Esto es obligatorio para que reciba las alertas con sonido, incluso con el celular bloqueado.
             </p>
+            <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 8, padding: "8px 12px", marginTop: 8 }}>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#b91c1c", margin: 0, lineHeight: 1.5 }}>
+                Sin notificaciones activadas, el garzón no recibirá los llamados de los clientes.
+              </p>
+            </div>
           </div>
 
           {/* Step 4 */}
           <div>
             <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 4px" }}>
-              4. Opcional: guardar como app
+              4. Guardar como app en el celular
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-              En <strong>iPhone</strong>: Safari → Compartir → "Agregar a pantalla de inicio".<br />
-              En <strong>Android</strong>: Chrome → menú ⋮ → "Agregar a pantalla de inicio".<br />
-              Esto lo convierte en una app que se abre sin barra de navegador.
+              Para que las notificaciones funcionen de forma confiable, el garzón debe guardar el panel como app:
+            </p>
+            <div style={{ background: "var(--adm-hover)", borderRadius: 10, padding: "12px 14px", marginTop: 8 }}>
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: "0 0 6px" }}>
+                <strong>iPhone:</strong> Safari → Compartir (↑) → "Agregar a pantalla de inicio"
+              </p>
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0 }}>
+                <strong>Android:</strong> Chrome → menú (⋮) → "Agregar a pantalla de inicio"
+              </p>
+            </div>
+            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", marginTop: 6 }}>
+              Esto abre el panel sin barra de navegador y mantiene las notificaciones activas en segundo plano.
             </p>
           </div>
         </div>
-      </div>
-
-      {/* ── Actions ── */}
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <a href={garzonLink} target="_blank" rel="noopener noreferrer" style={{
-          flex: 1, padding: "12px", background: GOLD, color: "white", border: "none", borderRadius: 10,
-          fontFamily: F, fontSize: "0.85rem", fontWeight: 600, textDecoration: "none", textAlign: "center",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
-        }}>
-          <ExternalLink size={16} /> Abrir panel del garzón
-        </a>
       </div>
 
       {/* ── Security note ── */}
