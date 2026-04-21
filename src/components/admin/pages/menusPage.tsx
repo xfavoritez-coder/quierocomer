@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import DishModifiersEditor from "@/components/admin/DishModifiersEditor";
@@ -183,7 +183,23 @@ export default function AdminMenus() {
   const [eSpicy, setESpicy] = useState(false);
   const [eCategoryId, setECategoryId] = useState("");
   const [ingListOpen, setIngListOpen] = useState(false);
+  const [ePhotoUrl, setEPhotoUrl] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const ingRef = useRef<HTMLDivElement>(null);
+
+  // Close ingredient list on click outside
+  useEffect(() => {
+    if (!ingListOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (ingRef.current && !ingRef.current.contains(e.target as Node)) {
+        setIngListOpen(false);
+        setIngSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [ingListOpen]);
 
   const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
   const TAG_OPTIONS: { value: string; label: string }[] = [
@@ -196,7 +212,7 @@ export default function AdminMenus() {
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
     { value: "VEGETARIAN", label: "Vegetariano", icon: "🌱" },
     { value: "PESCETARIAN", label: "Pescetariano", icon: "🐟" },
-    { value: "OMNIVORE", label: "Omnívoro", icon: "🍖" },
+    { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
   ];
 
   const startEditDish = async (d: Dish) => {
@@ -212,6 +228,7 @@ export default function AdminMenus() {
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
     setECategoryId(d.categoryId);
+    setEPhotoUrl(d.photos?.[0] || "");
     setIngSearch("");
     setIngListOpen(false);
     // Load ingredients master list + linked
@@ -231,6 +248,7 @@ export default function AdminMenus() {
       description: eDesc || null,
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
+      photos: ePhotoUrl ? [ePhotoUrl] : [],
       ingredients: eIngredients || null,
       allergens: eAllergens.filter(a => a !== "ninguno").join(", ") || null,
       tags: eTags,
@@ -317,6 +335,29 @@ export default function AdminMenus() {
                 <input value={eName} onChange={e => setEName(e.target.value)} style={INP} />
               </div>
               <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Foto</label>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  {ePhotoUrl && <img src={ePhotoUrl} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />}
+                  <label style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, textAlign: "center", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>
+                    {photoUploading ? "Subiendo..." : ePhotoUrl ? "Cambiar foto" : "Subir foto"}
+                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setPhotoUploading(true);
+                      const fd = new FormData();
+                      fd.append("file", file);
+                      fd.append("localId", selectedRestaurantId || "");
+                      fd.append("dishName", eName);
+                      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                      const data = await res.json();
+                      if (data.url) setEPhotoUrl(data.url);
+                      setPhotoUploading(false);
+                    }} />
+                  </label>
+                  {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>}
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Categoría</label>
                 <select value={eCategoryId} onChange={e => setECategoryId(e.target.value)} style={{ ...INP, cursor: "pointer" }}>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -357,7 +398,7 @@ export default function AdminMenus() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
+              <div ref={ingRef} style={{ marginBottom: 14 }}>
                 <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados)</label>
                 {/* Selected pills */}
                 {eIngredientIds.length > 0 && (
@@ -416,9 +457,6 @@ export default function AdminMenus() {
                     })()}
                   </div>
                 )}
-                {ingListOpen && (
-                  <button onClick={() => { setIngListOpen(false); setIngSearch(""); }} style={{ marginTop: 4, padding: "4px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cerrar lista</button>
-                )}
               </div>
 
               <div style={{ marginBottom: 14 }}>
@@ -447,7 +485,7 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
+                <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
                 <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
               </div>
             </>
