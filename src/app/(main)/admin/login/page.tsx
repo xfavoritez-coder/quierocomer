@@ -301,6 +301,12 @@ export default function AdminLogin() {
               </span>
             ) : "Frotar la lámpara"}
           </button>
+
+          <div style={{ textAlign: "center", marginTop: 10 }}>
+            <a href="/admin/forgot-password" style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#8a7550", textDecoration: "none" }}>
+              ¿Olvidaste tu contraseña?
+            </a>
+          </div>
         </form>
       </div>
 

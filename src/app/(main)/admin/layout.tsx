@@ -6,7 +6,8 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const NAV = [
   { icon: "📊", label: "Dashboard", href: "/admin" },
-  { icon: "🏠", label: "Locales", href: "/admin/locales" },
+  { icon: "🏠", label: "Locales", href: "/admin/locales", superOnly: true },
+  { icon: "👤", label: "Owners", href: "/admin/owners", superOnly: true },
   { icon: "🍽️", label: "Platos", href: "/admin/menus" },
   { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
   { icon: "👥", label: "Segmentos", href: "/admin/segmentos" },
@@ -16,14 +17,14 @@ const NAV = [
   { icon: "🎭", label: "Experiencias", href: "/admin/experiencias" },
   { icon: "📈", label: "Analytics", href: "/admin/analytics" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
-];
+] as const;
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const { name, isSuper, loading, error, logout } = useAdminSession();
 
-  if (pathname === "/admin/login") return <>{children}</>;
+  if (pathname === "/admin/login" || pathname === "/admin/forgot-password" || pathname === "/admin/reset-password") return <>{children}</>;
   if (loading) return <div style={{ minHeight: "100vh", background: "#111111", display: "flex", alignItems: "center", justifyContent: "center" }}><p style={{ color: "#F4A623", fontFamily: "var(--font-display)", fontSize: "0.8rem" }}>🧞 Cargando...</p></div>;
   if (error) { if (typeof window !== "undefined") window.location.href = "/admin/login"; return null; }
 
@@ -43,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {menuOpen && (<>
         <div onClick={() => setMenuOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 998 }} />
         <div className="adm-mobilemenu">
-          {NAV.map(n => (
+          {NAV.filter(n => !("superOnly" in n && n.superOnly) || isSuper).map(n => (
             <Link key={n.href} href={n.href} onClick={() => setMenuOpen(false)} style={{ display: "flex", alignItems: "center", gap: "14px", padding: "18px 24px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "1.05rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderBottom: "1px solid #2A2A2A" }}>
               <span style={{ fontSize: "1.2rem" }}>{n.icon}</span> {n.label}
             </Link>
@@ -61,7 +62,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div style={{ fontSize: "0.7rem", color: "#666", fontFamily: "var(--font-display)" }}>{name}</div>
         </div>
         <nav style={{ flex: 1, padding: "8px 0" }}>
-          {NAV.map(n => (
+          {NAV.filter(n => !("superOnly" in n && n.superOnly) || isSuper).map(n => (
             <Link key={n.href} href={n.href} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 16px", textDecoration: "none", fontFamily: "var(--font-display)", fontSize: "0.82rem", color: isActive(n.href) ? "#F4A623" : "#888888", background: isActive(n.href) ? "rgba(255,214,0,0.1)" : "transparent", borderLeft: isActive(n.href) ? "3px solid #F4A623" : "3px solid transparent" }}>
               <span>{n.icon}</span>{n.label}
             </Link>
