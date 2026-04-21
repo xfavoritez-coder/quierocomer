@@ -35,6 +35,14 @@ export default function AdminMenus() {
   const [editCatName, setEditCatName] = useState("");
   const [catSaving, setCatSaving] = useState(false);
 
+  // Create new dish
+  const [creatingDish, setCreatingDish] = useState(false);
+  const [newDishName, setNewDishName] = useState("");
+  const [newDishPrice, setNewDishPrice] = useState("");
+  const [newDishDesc, setNewDishDesc] = useState("");
+  const [newDishCatId, setNewDishCatId] = useState("");
+  const [dishSaving, setDishSaving] = useState(false);
+
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
   useEffect(() => {
@@ -117,6 +125,33 @@ export default function AdminMenus() {
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const createDish = async () => {
+    if (!newDishName.trim() || !newDishPrice || !newDishCatId || !selectedRestaurantId) return;
+    setDishSaving(true);
+    try {
+      const res = await fetch("/api/admin/dishes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          restaurantId: selectedRestaurantId,
+          categoryId: newDishCatId,
+          name: newDishName.trim(),
+          price: Number(newDishPrice),
+          description: newDishDesc.trim() || null,
+        }),
+      });
+      const dish = await res.json();
+      if (res.ok) {
+        setDishes(prev => [...prev, dish]);
+        setNewDishName("");
+        setNewDishPrice("");
+        setNewDishDesc("");
+        setCreatingDish(false);
+      }
+    } catch {}
+    setDishSaving(false);
+  };
 
   const toggleDishActive = async (dish: Dish) => {
     await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !dish.isActive }) });
@@ -449,7 +484,7 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "platos" && (<>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap" }}>
         <input
           placeholder="Buscar plato..."
           value={search}
@@ -464,7 +499,43 @@ export default function AdminMenus() {
           <option value="all">Todas las categorias</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        {!creatingDish && (
+          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo plato</button>
+        )}
       </div>
+
+      {/* Create dish form */}
+      {creatingDish && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 20 }}>
+          <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px" }}>Nuevo plato</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Nombre *</label>
+              <input value={newDishName} onChange={e => setNewDishName(e.target.value)} placeholder="Ej: Roll de Salmón" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} autoFocus />
+            </div>
+            <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Precio *</label>
+                <input type="number" value={newDishPrice} onChange={e => setNewDishPrice(e.target.value)} placeholder="5990" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Categoría *</label>
+                <select value={newDishCatId} onChange={e => setNewDishCatId(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", cursor: "pointer" }}>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
+              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={createDish} disabled={dishSaving || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (!newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{dishSaving ? "Creando..." : "Crear plato"}</button>
+              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <p style={{ color: "#F4A623", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando platos...</p>
