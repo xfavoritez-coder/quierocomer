@@ -52,7 +52,8 @@
       "Bash(grep -r \"twilio\\\\|TWILIO\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx --include=*.json)",
       "Bash(find:*)",
       "Bash(grep -r \"createCategory\\\\|addCategory\\\\|editCategory\\\\|updateCategory\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(cd:*)"
     ]
   }
 }

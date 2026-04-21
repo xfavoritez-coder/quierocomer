@@ -379,7 +379,7 @@ export default function CartaPremium({
                       <DishCard
                         dish={dish}
                         variant="premium"
-                        onClick={() => (dish as any).modifierGroups?.length > 0 ? setModifierDish(dish) : setSelectedDish(dish)}
+                        onClick={() => (dish as any).modifierTemplates?.length > 0 ? setModifierDish(dish) : setSelectedDish(dish)}
                         averageRating={ratingMap[dish.id]}
                       />
                     </div>

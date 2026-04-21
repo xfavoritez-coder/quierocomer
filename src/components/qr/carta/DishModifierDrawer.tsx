@@ -38,7 +38,11 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   const [visible, setVisible] = useState(false);
   const [selections, setSelections] = useState<Record<string, string[]>>({});
 
-  const groups = dish.modifierGroups || [];
+  // Flatten all groups from all assigned templates
+  const groups = (dish.modifierTemplates || []).flatMap((t: any) => t.groups || []) as Group[];
+  // Fallback to legacy per-dish modifierGroups if no templates
+  const legacyGroups = (dish as any).modifierGroups || [];
+  const allGroups = groups.length > 0 ? groups : legacyGroups;
 
   // Initialize selections with defaults
   useEffect(() => {
@@ -46,7 +50,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
     document.body.style.overflow = "hidden";
 
     const initial: Record<string, string[]> = {};
-    groups.forEach(g => {
+    allGroups.forEach(g => {
       const defaults = g.options.filter(o => o.isDefault).map(o => o.id);
       initial[g.id] = defaults;
     });
@@ -72,7 +76,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   };
 
   // Calculate total price adjustment
-  const priceAdjustment = groups.reduce((total, g) => {
+  const priceAdjustment = allGroups.reduce((total, g) => {
     const selected = selections[g.id] || [];
     return total + g.options
       .filter(o => selected.includes(o.id))
@@ -83,7 +87,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   const totalPrice = basePrice + priceAdjustment;
 
   // Check if all required groups are satisfied
-  const allValid = groups.every(g => {
+  const allValid = allGroups.every(g => {
     if (!g.required) return true;
     const selected = selections[g.id] || [];
     return selected.length >= g.minSelect;
@@ -137,7 +141,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
 
         {/* Modifier groups */}
         <div style={{ padding: "20px 20px 0" }}>
-          {groups.map(group => {
+          {allGroups.map(group => {
             const selected = selections[group.id] || [];
             const isRadio = group.maxSelect === 1;
             const isSatisfied = !group.required || selected.length >= group.minSelect;

@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
-import DishModifiersEditor from "@/components/admin/DishModifiersEditor";
+import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -25,7 +25,7 @@ export default function AdminMenus() {
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
-  const [menuTab, setMenuTab] = useState<"platos" | "categorias">("platos");
+  const [menuTab, setMenuTab] = useState<"platos" | "categorias" | "modificadores">("platos");
 
   // Category management
   const [catMgmtOpen, setCatMgmtOpen] = useState(false);
@@ -186,6 +186,8 @@ export default function AdminMenus() {
   const [ePhotoUrl, setEPhotoUrl] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [assignedTemplateIds, setAssignedTemplateIds] = useState<string[]>([]);
   const ingRef = useRef<HTMLDivElement>(null);
 
   // Close ingredient list on click outside
@@ -231,7 +233,14 @@ export default function AdminMenus() {
     setEPhotoUrl(d.photos?.[0] || "");
     setIngSearch("");
     setIngListOpen(false);
-    // Load ingredients master list + linked
+    setAssignedTemplateIds(((d as any).modifierTemplates || []).map((t: any) => t.id));
+    // Load templates + ingredients
+    if (selectedRestaurantId) {
+      fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
+        .catch(() => {});
+    }
     fetch(`/api/admin/ingredients?dishId=${d.id}`)
       .then(r => r.json())
       .then(data => {
@@ -324,8 +333,27 @@ export default function AdminMenus() {
                 </button>
               </div>
 
-              {/* Modifiers */}
-              <DishModifiersEditor dishId={selectedDish.id} />
+              {/* Modifier templates assigned */}
+              {(() => {
+                const dishTemplates = (selectedDish as any).modifierTemplates || [];
+                return (
+                  <div style={{ marginTop: 16 }}>
+                    <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>Modificadores</h3>
+                    {dishTemplates.length > 0 ? (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                        {dishTemplates.map((t: any) => (
+                          <span key={t.id} style={{ fontFamily: FB, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: GOLD }}>{t.name}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Sin modificadores asignados</p>
+                    )}
+                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
+                      Asigna plantillas desde la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button> o edita el plato para gestionarlas.
+                    </p>
+                  </div>
+                );
+              })()}
             </>
           ) : (
             <>
@@ -471,6 +499,30 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Modificadores</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {availableTemplates.map(t => {
+                    const assigned = assignedTemplateIds.includes(t.id);
+                    return (
+                      <button key={t.id} onClick={async () => {
+                        const action = assigned ? "unassignDishId" : "assignDishId";
+                        await fetch("/api/admin/modifier-templates", {
+                          method: "PUT", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ templateId: t.id, [action]: selectedDish!.id }),
+                        });
+                        setAssignedTemplateIds(prev => assigned ? prev.filter(id => id !== t.id) : [...prev, t.id]);
+                      }} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: assigned ? GOLD : "var(--adm-text2)" }}>
+                        {assigned ? "✓ " : ""}{t.name}
+                      </button>
+                    );
+                  })}
+                  {availableTemplates.length === 0 && (
+                    <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>Crea plantillas en la pestaña "Modificadores"</p>
+                  )}
+                </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Tags</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
@@ -510,6 +562,7 @@ export default function AdminMenus() {
         {([
           { key: "platos" as const, label: "Platos" },
           { key: "categorias" as const, label: "Categorías" },
+          { key: "modificadores" as const, label: "Modificadores" },
         ]).map(tab => (
           <button key={tab.key} onClick={() => setMenuTab(tab.key)} style={{
             flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -687,6 +740,11 @@ export default function AdminMenus() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── Modificadores tab ── */}
+      {menuTab === "modificadores" && selectedRestaurantId && (
+        <ModifierTemplatesTab restaurantId={selectedRestaurantId} />
       )}
     </div>
   );

@@ -406,6 +406,7 @@ model Restaurant {
   promotionsMarketing   Promotion[]
   automationRules       AutomationRule[]
   genioInsights         GenioInsight[]
+  modifierTemplates     ModifierTemplate[]
   experience            Experience?
   tickets               RestaurantTicket[]
   dishFavorites         DishFavorite[]
@@ -455,43 +456,55 @@ model Dish {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
-  restaurant       Restaurant            @relation(fields: [restaurantId], references: [id])
-  category         Category              @relation(fields: [categoryId], references: [id])
-  reviews          Review[]
-  dishIngredients  DishIngredient[]
-  dishFavorites    DishFavorite[]
-  modifierGroups   DishModifierGroup[]
+  restaurant          Restaurant            @relation(fields: [restaurantId], references: [id])
+  category            Category              @relation(fields: [categoryId], references: [id])
+  reviews             Review[]
+  dishIngredients     DishIngredient[]
+  dishFavorites       DishFavorite[]
+  modifierTemplates   ModifierTemplate[]     // many-to-many: plantillas de modificadores asignadas
 
   @@index([restaurantId])
   @@index([categoryId])
 }
 
-model DishModifierGroup {
-  id         String   @id @default(cuid())
-  dishId     String
-  name       String                         // "Elige tu Roll", "Envoltura", "Tamaño"
-  required   Boolean  @default(false)        // ¿Es obligatorio elegir?
-  minSelect  Int      @default(0)            // mínimo de opciones a elegir
-  maxSelect  Int      @default(1)            // máximo de opciones (1 = radio, >1 = multi)
-  position   Int      @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+model ModifierTemplate {
+  id           String   @id @default(cuid())
+  restaurantId String
+  name         String                        // "Envolturas", "Salsas", "Tamaño"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  dish    Dish                  @relation(fields: [dishId], references: [id], onDelete: Cascade)
-  options DishModifierOption[]
+  restaurant Restaurant              @relation(fields: [restaurantId], references: [id])
+  groups     ModifierTemplateGroup[]
+  dishes     Dish[]                          // many-to-many: platos que usan esta plantilla
 
-  @@index([dishId])
+  @@index([restaurantId])
 }
 
-model DishModifierOption {
+model ModifierTemplateGroup {
+  id         String   @id @default(cuid())
+  templateId String
+  name       String                         // "Elige tu Roll", "Envoltura"
+  required   Boolean  @default(false)
+  minSelect  Int      @default(0)
+  maxSelect  Int      @default(1)
+  position   Int      @default(0)
+
+  template ModifierTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  options  ModifierTemplateOption[]
+
+  @@index([templateId])
+}
+
+model ModifierTemplateOption {
   id              String  @id @default(cuid())
   groupId         String
   name            String                      // "Salmón Roll", "Papel soya"
-  priceAdjustment Float   @default(0)          // +0, +500, -200
-  isDefault       Boolean @default(false)      // preseleccionado
+  priceAdjustment Float   @default(0)
+  isDefault       Boolean @default(false)
   position        Int     @default(0)
 
-  group DishModifierGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@index([groupId])
 }

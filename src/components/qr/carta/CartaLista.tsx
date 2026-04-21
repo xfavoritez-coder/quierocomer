@@ -165,7 +165,7 @@ export default function CartaLista({
   );
 
   const handleDishClick = (dish: Dish) => {
-    if ((dish as any).modifierGroups?.length > 0) {
+    if ((dish as any).modifierTemplates?.length > 0) {
       setModifierDish(dish);
       return;
     }

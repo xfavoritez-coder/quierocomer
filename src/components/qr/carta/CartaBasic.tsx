@@ -44,7 +44,7 @@ export default function CartaBasic({
 
   const handleDishClick = (dish: Dish) => {
     const d = dish as any;
-    if (d.modifierGroups?.length > 0) {
+    if (d.modifierTemplates?.length > 0) {
       setModifierDish(dish);
     } else {
       setSelectedDish(dish);

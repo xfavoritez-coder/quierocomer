@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const dishes = await prisma.dish.findMany({
     where: { restaurantId },
-    include: { category: { select: { id: true, name: true } } },
+    include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
   return NextResponse.json(dishes);

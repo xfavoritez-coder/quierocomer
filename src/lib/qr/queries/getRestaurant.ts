@@ -12,9 +12,13 @@ export async function getRestaurantBySlug(slug: string) {
         where: { isActive: true },
         orderBy: { position: "asc" },
         include: {
-          modifierGroups: {
-            orderBy: { position: "asc" },
-            include: { options: { orderBy: { position: "asc" } } },
+          modifierTemplates: {
+            include: {
+              groups: {
+                orderBy: { position: "asc" },
+                include: { options: { orderBy: { position: "asc" } } },
+              },
+            },
           },
         },
       },

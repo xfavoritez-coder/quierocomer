@@ -71,7 +71,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   const { setView } = useCartaView();
 
   const handleDishTap = useCallback((dish: Dish) => {
-    if ((dish as any).modifierGroups?.length > 0) {
+    if ((dish as any).modifierTemplates?.length > 0) {
       setModifierDish(dish);
     } else {
       setSelectedDish(dish);
