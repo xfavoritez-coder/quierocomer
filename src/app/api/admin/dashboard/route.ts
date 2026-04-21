@@ -43,6 +43,7 @@ export async function GET(req: NextRequest) {
     // If superadmin and no filter, no restriction
 
     const now = new Date();
+    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
     const weekAgo = daysAgo(7);
     const twoWeeksAgo = daysAgo(14);
     const monthAgo = daysAgo(30);
@@ -60,6 +61,12 @@ export async function GET(req: NextRequest) {
       sessionEngagement,
       activeRestaurants,
       topRestaurants,
+      todayScans,
+      todayWaiterCalls,
+      todayWaiterPending,
+      lastScan,
+      activePromos,
+      weekFavorites,
     ] = await Promise.all([
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } },
@@ -130,6 +137,33 @@ export async function GET(req: NextRequest) {
             take: 5,
           })
         : Promise.resolve([]),
+      // ── Owner-relevant KPIs ──
+      // Today's scans
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: todayStart } },
+      }),
+      // Today's waiter calls (answered)
+      prisma.waiterCall.count({
+        where: { ...restaurantFilter, calledAt: { gte: todayStart }, answeredAt: { not: null } },
+      }),
+      // Today's waiter calls (pending)
+      prisma.waiterCall.count({
+        where: { ...restaurantFilter, calledAt: { gte: todayStart }, answeredAt: null },
+      }),
+      // Last scan timestamp
+      prisma.session.findFirst({
+        where: restaurantFilter,
+        orderBy: { startedAt: "desc" },
+        select: { startedAt: true },
+      }),
+      // Active promotions count
+      prisma.promotion.count({
+        where: { ...restaurantFilter, status: "ACTIVE" },
+      }),
+      // Favorites this week
+      prisma.dishFavorite.count({
+        where: { ...restaurantFilter, createdAt: { gte: weekAgo } },
+      }),
     ]);
 
     // Resolve dish names
@@ -180,8 +214,17 @@ export async function GET(req: NextRequest) {
       topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
       topDishesGenio: topDishesGenio.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
       dietDistribution: dietDistribution.map((d) => ({ type: d.dietType || "Sin definir", count: d._count.id })),
+      abandonedThisWeek: abandoned,
+      activeThisWeek: active,
       activeRestaurantsCount: (activeRestaurants as any[]).length,
       topRestaurants: (topRestaurants as any[]).map((r: any) => ({ name: restMap[r.restaurantId] || r.restaurantId, visits: r._count.id })),
+      // Owner KPIs
+      todayScans,
+      todayWaiterCalls,
+      todayWaiterPending,
+      lastScanAt: lastScan?.startedAt || null,
+      activePromos,
+      weekFavorites,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
