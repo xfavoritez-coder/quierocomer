@@ -24,6 +24,7 @@ interface Promo {
   promoPrice: number | null;
   originalPrice: number | null;
   validUntil: string | null;
+  daysOfWeek?: number[];
   dishes: PromoDish[];
 }
 
@@ -248,7 +249,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>OFERTA</span>
+                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: p.daysOfWeek?.length ? "#C23B1E" : "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>{p.daysOfWeek?.length ? "HOY" : "OFERTA"}</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
