@@ -539,12 +539,12 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span
             className="font-[family-name:var(--font-playfair)]"
-            style={{ fontSize: "1.1rem", fontWeight: 400, color: "#0e0e0e" }}
+            style={{ fontSize: "1.1rem", fontWeight: 400, color: dish.discountPrice ? "#F4A623" : "#0e0e0e" }}
           >
-            ${dish.price?.toLocaleString("es-CL") ?? "—"}
+            ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
           </span>
           {dish.discountPrice && (
-            <span style={{ fontSize: "0.72rem", color: "#999", textDecoration: "line-through" }}>
+            <span style={{ fontSize: "0.78rem", color: "#999", textDecoration: "line-through" }}>
               ${dish.price?.toLocaleString("es-CL")}
             </span>
           )}
