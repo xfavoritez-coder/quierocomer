@@ -10,6 +10,8 @@ import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
 import ProfileDrawer from "../auth/ProfileDrawer";
+import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import FavoritesToasts from "./FavoritesToasts";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 
 interface Review {
@@ -104,7 +106,7 @@ export default function CartaRouter(props: Props) {
   const sharedProps = { ...props, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter };
 
   return (
-    <>
+    <FavoritesProvider>
       {(!isReady || view === "premium") && <CartaPremium {...sharedProps} />}
       {isReady && view === "lista" && <CartaLista {...sharedProps} />}
       {isReady && view === "viaje" && <CartaViaje {...sharedProps} />}
@@ -140,12 +142,14 @@ export default function CartaRouter(props: Props) {
         />
       )}
 
+      <FavoritesToasts />
+
       <style>{`
         @keyframes genioFloat {
           0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
           50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
         }
       `}</style>
-    </>
+    </FavoritesProvider>
   );
 }

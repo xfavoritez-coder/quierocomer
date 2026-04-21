@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
+import FavoriteHeart from "./FavoriteHeart";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
@@ -469,6 +470,7 @@ function DishListCard({
       {photo ? (
         <div style={{ width: 120, height: 120, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: "#f0f0f0" }}>
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="76px" />
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={14} style={{ position: "absolute", top: 4, right: 4 }} />
         </div>
       ) : (
         <div style={{ width: 120, height: 120, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg, #f7f7f5, #e8e4d8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>

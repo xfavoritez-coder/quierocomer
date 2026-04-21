@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronRight, LogOut, ChevronLeft, Pencil } from "lucide-react";
+import { ChevronRight, LogOut, ChevronLeft, Pencil, Heart } from "lucide-react";
 import LoginDrawer from "./LoginDrawer";
+import FavoriteHeart from "../carta/FavoriteHeart";
 
 interface QRUser {
   id: string;
@@ -46,6 +47,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
   const [visible, setVisible] = useState(false);
   const [visited, setVisited] = useState<VisitedRestaurant[]>([]);
   const [topIngredients, setTopIngredients] = useState<{ name: string; score: number }[]>([]);
+  const [favorites, setFavorites] = useState<{ id: string; dishId: string; dish: { id: string; name: string; price: number; photos: string[]; restaurantId: string } }[]>([]);
   const [editingIngredients, setEditingIngredients] = useState(false);
   const [confirmedIngs, setConfirmedIngs] = useState<Set<string>>(new Set());
   const [rejectedIngs, setRejectedIngs] = useState<Set<string>>(new Set());
@@ -73,6 +75,7 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
           if (d.experiences) setExperiences(d.experiences);
         })
         .catch(() => {});
+      fetch("/api/qr/favorites").then((r) => r.json()).then((d) => { if (d.favorites) setFavorites(d.favorites); }).catch(() => {});
     }
     return () => { document.body.style.overflow = ""; };
   }, [qrUser]);
@@ -234,6 +237,37 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
           <Row label="Cumpleaños" value={birthText} emoji="🎂" onClick={() => { setEditName(qrUser.name || ""); setEditBirthDate(qrUser.birthDate ? qrUser.birthDate.split("T")[0] : ""); setPage("edit-profile"); }} />
         </div>
       </div>
+
+      {/* Favorites */}
+      {favorites.length > 0 && (
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <Heart size={12} color="#F4A623" fill="#F4A623" />
+            <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Mis favoritos ({favorites.length})</h4>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {favorites.map((f) => (
+              <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "#fafafa", borderRadius: 10 }}>
+                {f.dish.photos?.[0] ? (
+                  <img src={f.dish.photos[0]} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "#eee", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px" }}>🍽</div>
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.dish.name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#999" }}>${f.dish.price.toLocaleString("es-CL")}</div>
+                </div>
+                <button onClick={async () => {
+                  await fetch(`/api/qr/favorites?dishId=${f.dishId}`, { method: "DELETE" });
+                  setFavorites((prev) => prev.filter((x) => x.id !== f.id));
+                }} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                  <Heart size={16} color="#F4A623" fill="#F4A623" />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Top ingredients */}
       {topIngredients.length > 0 && (

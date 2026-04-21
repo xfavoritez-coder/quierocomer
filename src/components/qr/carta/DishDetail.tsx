@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
+import FavoriteHeart from "./FavoriteHeart";
 
 interface DishDetailProps {
   dish: Dish;
@@ -224,19 +225,22 @@ export default function DishDetail({
           </div>
         )}
 
-        {/* Close button — top right */}
-        <button
-          onClick={close}
-          className="absolute flex items-center justify-center"
-          style={{
-            top: 16, right: 16, width: 36, height: 36, borderRadius: "50%",
-            background: "rgba(0,0,0,0.2)",
-            color: "white", fontSize: "1.1rem", border: "none", zIndex: 10,
-            textShadow: "0 1px 3px rgba(0,0,0,0.5)",
-          }}
-        >
-          ✕
-        </button>
+        {/* Favorite + Close — top right */}
+        <div className="absolute flex items-center" style={{ top: 16, right: 16, gap: 8, zIndex: 10 }}>
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} />
+          <button
+            onClick={close}
+            className="flex items-center justify-center"
+            style={{
+              width: 36, height: 36, borderRadius: "50%",
+              background: "rgba(0,0,0,0.2)",
+              color: "white", fontSize: "1.1rem", border: "none",
+              textShadow: "0 1px 3px rgba(0,0,0,0.5)",
+            }}
+          >
+            ✕
+          </button>
+        </div>
 
         {/* Position counter — top left */}
         <div
