@@ -40,6 +40,7 @@ export async function POST(req: NextRequest) {
         phone: phone || null, address: address || null,
         logoUrl: logoUrl || null, bannerUrl: bannerUrl || null,
         cartaTheme: cartaTheme || "PREMIUM",
+        qrActivatedAt: new Date(),
         ownerId: ownerId || null,
       },
       select: { id: true, name: true, slug: true, createdAt: true },
