@@ -31,13 +31,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       data: { resetToken: hashedToken, resetTokenExpiry: expiry },
     });
 
-    const resetLink = `${BASE_URL}/admin/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
+    const resetLink = `${BASE_URL}/panel/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
     const firstName = owner.name.split(" ")[0];
 
     await sendAdminEmail({
       to: owner.email,
-      subject: "¡Bienvenido a QuieroComer!",
-      html: welcomeOwnerEmailHtml(firstName, resetLink),
+      subject: "Tu panel de administración está listo · QuieroComer",
+      html: welcomeOwnerEmailHtml(firstName, owner.email, resetLink),
       purpose: "welcome",
     });
 

@@ -27,7 +27,7 @@ function buildNav(base: string) {
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: Bell, label: "Garzón", href: `${base}/mi-restaurante#garzon` },
+    { icon: Bell, label: "Garzón", href: `${base}/garzon` },
     { icon: Mail, label: "Campañas", href: `${base}/campanias` },
     { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
     { icon: Users, label: "Segmentos", href: `${base}/segmentos` },

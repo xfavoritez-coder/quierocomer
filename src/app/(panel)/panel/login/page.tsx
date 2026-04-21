@@ -1,8 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-
-/* Reuse the same Oasis SVG and login form but redirect to /panel */
+import { toast } from "sonner";
 
 function OasisBackground() {
   return (
@@ -28,60 +27,122 @@ export default function PanelLogin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [remember, setRemember] = useState(false);
+  const passRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); setLoading(true);
+    setError("");
+    setLoading(true);
     try {
-      const res = await fetch("/api/admin/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
       const data = await res.json();
-      if (!res.ok) { setError(data.error); setLoading(false); return; }
+      if (!res.ok) {
+        setError(data.error || "Error al iniciar sesión");
+        setPassword(""); // Clear password on error, keep email
+        setLoading(false);
+        setTimeout(() => passRef.current?.focus(), 100);
+        return;
+      }
       if (remember) localStorage.setItem("qc_admin_remember", "1");
       else { localStorage.removeItem("qc_admin_remember"); sessionStorage.setItem("qc_admin_session", "1"); }
+      // Store name for welcome toast
+      sessionStorage.setItem("panel_welcome", data.name || "");
       router.push("/panel");
-    } catch { setError("Error de conexión"); }
-    setLoading(false);
+    } catch {
+      setError("Error de conexión. Intenta de nuevo.");
+      setLoading(false);
+    }
   };
 
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "10px 14px", height: 40, boxSizing: "border-box", background: "#FFF9ED", border: "1px solid #E8C78A", borderRadius: 6, color: "#1a1a1a", fontFamily: "var(--font-display)", fontSize: "0.88rem", outline: "none" };
+  const F = "var(--font-display)";
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 14px", height: 40, boxSizing: "border-box",
+    background: "#FFF9ED", border: "1px solid #E8C78A", borderRadius: 6,
+    color: "#1a1a1a", fontFamily: F, fontSize: "0.88rem", outline: "none",
+  };
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden" }}>
       <OasisBackground />
       <div className="genie-float" style={{ position: "relative", zIndex: 2, fontSize: 58, lineHeight: 1, textAlign: "center", marginBottom: 12 }}>🧞</div>
+
       <div style={{ position: "relative", zIndex: 2, width: 320, maxWidth: "90%", padding: "32px 24px", background: "rgba(255,255,255,0.95)", borderRadius: 12, border: "0.5px solid rgba(244,166,35,0.5)", boxShadow: "0 12px 40px rgba(100,60,10,0.12)" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: 24, fontWeight: 500, margin: "0 0 4px", color: "#1a1a1a" }}>Quiero<span style={{ color: "#F4A623" }}>Comer</span></h1>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: 10, color: "#8a7550", letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>Panel de tu local</p>
+          <h1 style={{ fontFamily: F, fontSize: 24, fontWeight: 500, margin: "0 0 4px", color: "#1a1a1a" }}>
+            Quiero<span style={{ color: "#F4A623" }}>Comer</span>
+          </h1>
+          <p style={{ fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+            Panel de tu local
+          </p>
         </div>
+
+        {/* Error message */}
         {error && (
-          <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 6, padding: "8px 12px", marginBottom: 14, textAlign: "center" }}>
-            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.78rem", color: "#dc2626", margin: 0 }}>{error}</p>
+          <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "10px 14px", marginBottom: 14, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: "0.9rem", flexShrink: 0 }}>⚠️</span>
+            <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#dc2626", margin: 0, lineHeight: 1.4 }}>{error}</p>
           </div>
         )}
+
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Email</label>
-            <input type="email" placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} style={inputStyle} />
+            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Email</label>
+            <input
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              style={inputStyle}
+              autoComplete="email"
+            />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: "var(--font-display)", fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
-            <input type="password" placeholder="Tu contraseña" value={password} onChange={e => setPassword(e.target.value)} style={inputStyle} />
+            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
+            <input
+              ref={passRef}
+              type="password"
+              placeholder="Tu contraseña"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              style={inputStyle}
+              autoComplete="current-password"
+            />
           </div>
+
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: -2 }}>
-            <div onClick={() => setRemember(!remember)} style={{ width: 18, height: 18, borderRadius: 3, flexShrink: 0, background: remember ? "#F4A623" : "#FFF9ED", border: `1.5px solid ${remember ? "#F4A623" : "#E8C78A"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <div onClick={() => setRemember(!remember)} style={{
+              width: 18, height: 18, borderRadius: 3, flexShrink: 0,
+              background: remember ? "#F4A623" : "#FFF9ED",
+              border: `1.5px solid ${remember ? "#F4A623" : "#E8C78A"}`,
+              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+            }}>
               {remember && <span style={{ color: "white", fontSize: 11, lineHeight: 1 }}>✓</span>}
             </div>
-            <span style={{ fontFamily: "var(--font-display)", fontSize: 12, color: "#6B5435" }}>Recordar sesión</span>
+            <span style={{ fontFamily: F, fontSize: 12, color: "#6B5435" }}>Recordar sesión</span>
           </label>
-          <button type="submit" disabled={loading} style={{ width: "100%", height: 46, marginTop: 4, background: loading ? "#E8A942" : "#F4A623", color: "white", fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 700, border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)" }}>
+
+          <button type="submit" disabled={loading} style={{
+            width: "100%", height: 46, marginTop: 4,
+            background: loading ? "#E8A942" : "#F4A623",
+            color: "white", fontFamily: F, fontSize: 15, fontWeight: 700,
+            border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer",
+            boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
+          }}>
             {loading ? "Entrando..." : "Entrar a mi panel"}
           </button>
+
           <div style={{ textAlign: "center", marginTop: 10 }}>
-            <a href="/panel/forgot-password" style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#8a7550", textDecoration: "none" }}>¿Olvidaste tu contraseña?</a>
+            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.75rem", color: "#8a7550", textDecoration: "none" }}>
+              ¿Olvidaste tu contraseña?
+            </a>
           </div>
         </form>
       </div>
+
       <style>{`
         @keyframes floatGenie { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
         .genie-float { animation: floatGenie 3s ease-in-out infinite; }

@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { Stat, RankList } from "@/components/admin/DashboardWidgets";
+import { toast } from "sonner";
 import Link from "next/link";
 import { UtensilsCrossed, QrCode, Bell, Tag } from "lucide-react";
 
@@ -37,6 +38,18 @@ export default function PanelDashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const welcomeShown = useRef(false);
+
+  // Welcome toast on first load after login
+  useEffect(() => {
+    if (welcomeShown.current) return;
+    const name = sessionStorage.getItem("panel_welcome");
+    if (name) {
+      sessionStorage.removeItem("panel_welcome");
+      welcomeShown.current = true;
+      toast.success(`Bienvenido, ${name.split(" ")[0]}`, { duration: 2500 });
+    }
+  }, []);
 
   useEffect(() => {
     if (sessionLoading || !selectedRestaurantId) return;
@@ -72,8 +85,8 @@ export default function PanelDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
         {[
           { icon: UtensilsCrossed, label: "Editar carta", href: "/panel/menus" },
-          { icon: QrCode, label: "Mi QR", href: "/panel/mi-restaurante#qr" },
-          { icon: Bell, label: "Garzón", href: "/panel/mi-restaurante#garzon" },
+          { icon: QrCode, label: "Mi QR", href: "/panel/qr" },
+          { icon: Bell, label: "Garzón", href: "/panel/garzon" },
         ].map(a => (
           <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
             <a.icon size={20} color={GOLD} />

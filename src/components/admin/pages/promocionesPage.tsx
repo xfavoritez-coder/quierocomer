@@ -22,7 +22,7 @@ interface Promo {
 }
 
 export default function AdminPromociones() {
-  const { restaurants, loading: sessionLoading } = useAdminSession();
+  const { restaurants, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
   const [selectedLocal, setSelectedLocal] = useState<string>("");
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +53,11 @@ export default function AdminPromociones() {
   const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
   const [savingNew, setSavingNew] = useState(false);
+
+  // Auto-set selectedLocal from session (for owners)
+  useEffect(() => {
+    if (selectedRestaurantId && !selectedLocal) setSelectedLocal(selectedRestaurantId);
+  }, [selectedRestaurantId, selectedLocal]);
 
   // Load dishes when local changes
   useEffect(() => {

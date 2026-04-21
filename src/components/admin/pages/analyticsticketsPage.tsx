@@ -4,7 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 
 const F = "var(--font-display)";
-const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "#111", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
+const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
 
 const CONF_COLORS: Record<string, string> = { exact: "#4ade80", probable: "#7fbfdc", approximate: "#F4A623", none: "#ff6b6b" };
 
@@ -72,14 +72,14 @@ export default function TicketsPage() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", textDecoration: "none" }}>← Analytics</Link>
+          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Tickets POS</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setShowForm(!showForm)} style={{ padding: "8px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
             {showForm ? "Cancelar" : "+ Agregar"}
           </button>
-          <label style={{ padding: "8px 14px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>
+          <label style={{ padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>
             CSV
             <input type="file" accept=".csv" onChange={handleCSV} style={{ display: "none" }} />
           </label>
@@ -87,7 +87,7 @@ export default function TicketsPage() {
       </div>
 
       {showForm && (
-        <div style={{ background: "#1A1A1A", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
           <select value={formRestaurant} onChange={(e) => setFormRestaurant(e.target.value)} style={I}>
             <option value="">Seleccionar local</option>
             {restaurants.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -108,7 +108,7 @@ export default function TicketsPage() {
       {/* Filters */}
       <div style={{ display: "flex", gap: 4, marginBottom: 16, flexWrap: "wrap" }}>
         {["", "exact", "probable", "approximate", "none"].map((c) => (
-          <button key={c} onClick={() => setFilterConf(c)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: filterConf === c ? "#F4A623" : "rgba(255,255,255,0.05)", color: filterConf === c ? "#0a0a0a" : "#888" }}>
+          <button key={c} onClick={() => setFilterConf(c)} style={{ padding: "6px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: filterConf === c ? "#F4A623" : "var(--adm-hover)", color: filterConf === c ? "#0a0a0a" : "var(--adm-text2)" }}>
             {c || "Todos"}
           </button>
         ))}
@@ -119,20 +119,20 @@ export default function TicketsPage() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {tickets.map((t) => (
-            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12 }}>
+            <div key={t.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontFamily: F, fontSize: "1rem", color: "white", fontWeight: 700 }}>${Number(t.ticketTotal).toLocaleString("es-CL")}</span>
+                  <span style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", fontWeight: 700 }}>${Number(t.ticketTotal).toLocaleString("es-CL")}</span>
                   <span style={{ fontSize: "0.65rem", padding: "2px 8px", borderRadius: 4, background: `${CONF_COLORS[t.matchConfidence || "none"]}20`, color: CONF_COLORS[t.matchConfidence || "none"], fontWeight: 600, fontFamily: F }}>{t.matchConfidence || "none"}</span>
                 </div>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", margin: "2px 0 0" }}>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>
                   {t.restaurant?.name} {t.mesaId ? `· Mesa ${t.mesaId}` : ""} · {new Date(t.paidAt).toLocaleString("es-CL")} {t.ticketCountItems ? `· ${t.ticketCountItems} items` : ""}
                 </p>
               </div>
               <button onClick={() => handleDelete(t.id)} style={{ background: "none", border: "none", color: "#ff6b6b", cursor: "pointer", fontFamily: F, fontSize: "0.72rem" }}>×</button>
             </div>
           ))}
-          {tickets.length === 0 && <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets</p>}
+          {tickets.length === 0 && <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>No hay tickets</p>}
         </div>
       )}
     </div>

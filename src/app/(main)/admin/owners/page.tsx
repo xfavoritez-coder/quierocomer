@@ -140,8 +140,16 @@ export default function OwnersPage() {
   const handleSendResetLink = async (o: Owner) => {
     try {
       const res = await fetch(`/api/admin/owners/${o.id}/send-reset-link`, { method: "POST" });
-      if (res.ok) showToast(`Link enviado a ${o.email}`);
+      if (res.ok) showToast(`Link de reset enviado a ${o.email}`);
       else showToast("Error al enviar link");
+    } catch { showToast("Error de conexión"); }
+  };
+
+  const handleSendWelcome = async (o: Owner) => {
+    try {
+      const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST" });
+      if (res.ok) showToast(`Email de bienvenida enviado a ${o.email}`);
+      else showToast("Error al enviar email");
     } catch { showToast("Error de conexión"); }
   };
 
@@ -224,6 +232,7 @@ export default function OwnersPage() {
                         <button onClick={() => openEdit(o)} style={btnStyle(GOLD)}>Editar</button>
                         <button onClick={() => openPassword(o)} style={btnStyle("#8b5cf6")}>Password</button>
                         <button onClick={() => handleSendResetLink(o)} style={btnStyle("#3b82f6")}>Reset link</button>
+                        <button onClick={() => handleSendWelcome(o)} style={btnStyle("#10b981")}>Bienvenida</button>
                       </div>
                     </td>
                   </tr>

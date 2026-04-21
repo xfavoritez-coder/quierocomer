@@ -31,13 +31,13 @@ export default function SearchesPage() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", textDecoration: "none" }}>← Analytics</Link>
+          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Búsquedas fallidas</h1>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-            <option value="" style={{ background: "#1A1A1A" }}>Todos</option>
-            {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+          <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos</option>
+            {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
           </select>
           {data.length > 0 && (
             <button onClick={exportCSV} style={{ padding: "8px 14px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Exportar CSV</button>
@@ -50,10 +50,10 @@ export default function SearchesPage() {
       ) : data.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {data.map((d, i) => (
-            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12 }}>
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
               <div style={{ flex: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, margin: 0 }}>"{d.query}"</p>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", margin: "2px 0 0" }}>
+                <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, margin: 0 }}>"{d.query}"</p>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>
                   {d.timesSearched} búsquedas · {d.uniqueVisitors} visitantes · última: {new Date(d.lastSearchedAt).toLocaleDateString("es-CL")}
                 </p>
               </div>
@@ -62,7 +62,7 @@ export default function SearchesPage() {
           ))}
         </div>
       ) : (
-        <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>No hay búsquedas fallidas en el período</p>
+        <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>No hay búsquedas fallidas en el período</p>
       )}
     </div>
   );

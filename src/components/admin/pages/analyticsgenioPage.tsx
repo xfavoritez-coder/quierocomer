@@ -9,9 +9,9 @@ function CompareRow({ label, without, withG, unit = "" }: { label: string; witho
   const diff = without > 0 ? Math.round(((withG - without) / without) * 100) : withG > 0 ? 100 : 0;
   const diffColor = diff > 0 ? "#4ade80" : diff < 0 ? "#ff6b6b" : "#888";
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 8, padding: "14px 16px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, alignItems: "center" }}>
-      <div style={{ fontFamily: F, fontSize: "0.82rem", color: "#aaa" }}>{label}</div>
-      <div style={{ fontFamily: F, fontSize: "1rem", color: "#888", fontWeight: 600, textAlign: "center" }}>{without}{unit}</div>
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 8, padding: "14px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, alignItems: "center" }}>
+      <div style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>{label}</div>
+      <div style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text2)", fontWeight: 600, textAlign: "center" }}>{without}{unit}</div>
       <div style={{ fontFamily: F, fontSize: "1rem", color: "#F4A623", fontWeight: 700, textAlign: "center" }}>{withG}{unit}</div>
       <div style={{ fontFamily: F, fontSize: "0.85rem", color: diffColor, fontWeight: 700, textAlign: "right" }}>{diff > 0 ? "+" : ""}{diff}%</div>
     </div>
@@ -37,12 +37,12 @@ export default function GenioImpactPage() {
     <div style={{ maxWidth: 700 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", textDecoration: "none" }}>← Analytics</Link>
+          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>🧞 Impacto del Genio</h1>
         </div>
-        <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-          <option value="" style={{ background: "#1A1A1A" }}>Todos</option>
-          {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+        <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+          <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos</option>
+          {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
         </select>
       </div>
 
@@ -52,10 +52,10 @@ export default function GenioImpactPage() {
         <>
           {/* Header row */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 80px", gap: 8, padding: "10px 16px", marginBottom: 8 }}>
-            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em" }}>Métrica</div>
-            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "center" }}>Sin Genio ({data.withoutGenio.sessionCount})</div>
-            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "center" }}>Con Genio ({data.withGenio.sessionCount})</div>
-            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "right" }}>Δ</div>
+            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em" }}>Métrica</div>
+            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "center" }}>Sin Genio ({data.withoutGenio.sessionCount})</div>
+            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "center" }}>Con Genio ({data.withGenio.sessionCount})</div>
+            <div style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", textAlign: "right" }}>Δ</div>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

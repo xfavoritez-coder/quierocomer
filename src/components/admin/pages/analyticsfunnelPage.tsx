@@ -7,15 +7,15 @@ const F = "var(--font-display)";
 
 function FunnelStep({ label, value, pctRelative, pctAbsolute, color, isFirst }: { label: string; value: number; pctRelative: number; pctAbsolute: number; color: string; isFirst?: boolean }) {
   return (
-    <div style={{ textAlign: "center", padding: "20px 16px", background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 14 }}>
+    <div style={{ textAlign: "center", padding: "20px 16px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14 }}>
       {!isFirst && (
-        <div style={{ fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 8 }}>
+        <div style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 8 }}>
           ↓ {pctRelative}% del anterior · {pctAbsolute}% del total
         </div>
       )}
       <p style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color, margin: "0 0 4px" }}>{value}</p>
-      <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#aaa", margin: 0 }}>{label}</p>
-      <div style={{ marginTop: 10, height: 6, borderRadius: 3, background: "#2A2A2A" }}>
+      <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>{label}</p>
+      <div style={{ marginTop: 10, height: 6, borderRadius: 3, background: "var(--adm-card-border)" }}>
         <div style={{ width: `${pctAbsolute}%`, height: "100%", background: color, borderRadius: 3, transition: "width 0.5s" }} />
       </div>
     </div>
@@ -39,12 +39,12 @@ export default function FunnelPage() {
     <div style={{ maxWidth: 600 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", textDecoration: "none" }}>← Analytics</Link>
+          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Funnel de conversión</h1>
         </div>
-        <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-          <option value="" style={{ background: "#1A1A1A" }}>Todos</option>
-          {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+        <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+          <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos</option>
+          {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
         </select>
       </div>
 
