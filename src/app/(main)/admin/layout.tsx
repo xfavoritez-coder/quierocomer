@@ -5,6 +5,7 @@ import AdminLayoutSuper from "@/components/admin/layouts/AdminLayoutSuper";
 import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
 
 const PUBLIC_PATHS = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
+const SUPERADMIN_ONLY_PATHS = ["/admin/locales", "/admin/experiencias", "/admin/owners"];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // Auth error → redirect
   if (error) {
     if (typeof window !== "undefined") window.location.href = "/admin/login";
+    return null;
+  }
+
+  // Owner trying to access superadmin-only routes → redirect
+  if (!isSuper && SUPERADMIN_ONLY_PATHS.some(p => pathname.startsWith(p))) {
+    if (typeof window !== "undefined") window.location.href = "/admin";
     return null;
   }
 

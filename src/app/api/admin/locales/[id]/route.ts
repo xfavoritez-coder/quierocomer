@@ -1,11 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
+
+const OWNER_EDITABLE_FIELDS = [
+  "name", "description", "logoUrl", "bannerUrl",
+  "phone", "whatsapp", "address",
+  "instagram", "website", "scheduleJson",
+  "waiterPanelActive",
+];
+
+function pickFields(body: Record<string, any>, allowed: string[]): Record<string, any> {
+  const result: Record<string, any> = {};
+  for (const key of allowed) {
+    if (body[key] !== undefined) result[key] = body[key];
+  }
+  return result;
+}
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
   const { id } = await params;
+
+  try {
+    await assertOwnsRestaurant(req, id);
+  } catch (e: any) {
+    return authErrorResponse(e);
+  }
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id },
@@ -25,10 +46,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const { id } = await params;
 
   try {
+    await assertOwnsRestaurant(req, id);
     const body = await req.json();
-    const restaurant = await prisma.restaurant.update({
-      where: { id },
-      data: {
+
+    // Filter fields based on role
+    let data: Record<string, any>;
+    if (isSuperAdmin(req)) {
+      // Superadmin can edit everything
+      data = {
         ...(body.name !== undefined && { name: body.name }),
         ...(body.slug !== undefined && { slug: body.slug }),
         ...(body.description !== undefined && { description: body.description }),
@@ -41,10 +66,21 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.qrActivatedAt !== undefined && { qrActivatedAt: body.qrActivatedAt ? new Date(body.qrActivatedAt) : null }),
         ...(body.isActive !== undefined && { isActive: body.isActive }),
         ...(body.ownerId !== undefined && { ownerId: body.ownerId || null }),
-      },
-    });
+        ...(body.instagram !== undefined && { instagram: body.instagram }),
+        ...(body.website !== undefined && { website: body.website }),
+        ...(body.whatsapp !== undefined && { whatsapp: body.whatsapp }),
+        ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),
+        ...(body.waiterPanelActive !== undefined && { waiterPanelActive: body.waiterPanelActive }),
+      };
+    } else {
+      // Owner: silently filter to allowed fields only
+      data = pickFields(body, OWNER_EDITABLE_FIELDS);
+    }
+
+    const restaurant = await prisma.restaurant.update({ where: { id }, data });
     return NextResponse.json(restaurant);
-  } catch (e) {
+  } catch (e: any) {
+    if (e.status === 403) return authErrorResponse(e);
     console.error("[Admin restaurant PUT]", e);
     return NextResponse.json({ error: "Error al actualizar" }, { status: 500 });
   }
@@ -56,6 +92,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
 
   try {
+    // Only superadmin can deactivate
+    if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     await prisma.restaurant.update({ where: { id }, data: { isActive: false } });
     return NextResponse.json({ ok: true });
   } catch (e) {
