@@ -249,16 +249,16 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  <span style={{ display: "inline-block", fontSize: "12px", fontWeight: 700, color: p.daysOfWeek?.length ? "#C23B1E" : "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>{p.daysOfWeek?.length ? "HOY" : "OFERTA"}</span>
+                  <span style={{ display: "inline-block", fontSize: "13px", fontWeight: 700, color: p.daysOfWeek?.length ? "#C23B1E" : "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>{p.daysOfWeek?.length ? "HOY" : "OFERTA"}</span>
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
                   {p.description && (
-                    <p style={{ fontSize: "11.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
+                    <p style={{ fontSize: "12.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
                   )}
                   {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 5 }}>
-                      <span style={{ fontSize: "16px", fontWeight: 700, color: "#F4A623" }}>
+                      <span style={{ fontSize: "15px", fontWeight: 700, color: "#F4A623" }}>
                         ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
                       {p.originalPrice && (
@@ -275,7 +275,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
         </div>
         {/* Fade right — hide when at last card */}
         {promos.length > 1 && activeIdx < promos.length - 1 && (
-          <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, borderRadius: "0 16px 16px 0", transition: "opacity 0.2s ease" }} />
+          <div style={{ position: "absolute", top: 0, right: -20, width: 40, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, transition: "opacity 0.2s ease" }} />
         )}
         </div>
 

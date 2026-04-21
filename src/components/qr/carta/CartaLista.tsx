@@ -320,10 +320,7 @@ export default function CartaLista({
 
       {/* OFERTAS section */}
       {hasPromos && (
-        <section id="lista-cat-promos" style={{ padding: "20px 12px 0" }}>
-          <div style={{ padding: "0 8px", marginBottom: 8 }}>
-            <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 700, color: "#0e0e0e", margin: 0 }}>Ofertas</h2>
-          </div>
+        <section id="lista-cat-promos" style={{ padding: "12px 12px 0" }}>
           <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
