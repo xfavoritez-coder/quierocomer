@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
     const restaurantId = req.nextUrl.searchParams.get("restaurantId");
     if (!restaurantId) return NextResponse.json({ promos: [] });
 
-    const promotions = await prisma.promotion.findMany({
+    const allPromotions = await prisma.promotion.findMany({
       where: {
         restaurantId,
         status: "ACTIVE",
@@ -14,6 +14,11 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
     });
+
+    // Filter by day of week (Chile timezone)
+    const clNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const currentDay = clNow.getDay(); // 0=sunday
+    const promotions = allPromotions.filter(p => !p.daysOfWeek?.length || p.daysOfWeek.includes(currentDay));
 
     if (!promotions.length) return NextResponse.json({ promos: [] });
 
@@ -35,6 +40,7 @@ export async function GET(req: NextRequest) {
       promoPrice: p.promoPrice,
       originalPrice: p.originalPrice,
       validUntil: p.validUntil,
+      daysOfWeek: p.daysOfWeek || [],
       dishes: p.dishIds.map(id => dishMap[id]).filter(Boolean),
     }));
 

@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
     if (!restaurantId) return NextResponse.json({ promo: null });
 
     // Get active promos
-    const promos = await prisma.promotion.findMany({
+    const allPromos = await prisma.promotion.findMany({
       where: {
         restaurantId,
         status: "ACTIVE",
@@ -20,6 +20,11 @@ export async function GET(req: NextRequest) {
       },
       orderBy: { createdAt: "desc" },
     });
+
+    // Filter by day of week (Chile timezone)
+    const clNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const currentDay = clNow.getDay();
+    const promos = allPromos.filter(p => !p.daysOfWeek?.length || p.daysOfWeek.includes(currentDay));
 
     if (!promos.length) return NextResponse.json({ promo: null });
 
