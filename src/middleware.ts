@@ -22,6 +22,14 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/qr", request.url));
   }
 
+  // --- /panel/* → rewrite to /admin/* (friendly URL alias) ---
+  if (pathname.startsWith("/panel")) {
+    const newPath = pathname.replace(/^\/panel/, "/admin");
+    const url = request.nextUrl.clone();
+    url.pathname = newPath;
+    return NextResponse.rewrite(url);
+  }
+
   // --- Admin page routes ---
   if (pathname.startsWith("/admin")) {
     // Allow public admin routes
@@ -56,5 +64,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/", "/panel/:path*", "/admin/:path*", "/api/admin/:path*"],
 };
