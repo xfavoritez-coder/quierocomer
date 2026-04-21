@@ -154,14 +154,13 @@ export default function DishDetail({
   // Position counter
   const posText = `${currentIndex + 1} / ${allDishes.length}`;
 
-  // Compute transform + opacity for smooth native-feeling transitions
+  // Horizontal slide like CartaViaje — no fade, no scale
   const getTransform = () => {
-    if (slideOut === "left") return "translateX(-40%) scale(0.95)";
-    if (slideOut === "right") return "translateX(40%) scale(0.95)";
-    if (slideIn) return slideRef.current === "left" ? "translateX(40%) scale(0.95)" : "translateX(-40%) scale(0.95)";
-    return "translateX(0) scale(1)";
+    if (slideOut === "left") return "translateX(-100%)";
+    if (slideOut === "right") return "translateX(100%)";
+    if (slideIn) return slideRef.current === "left" ? "translateX(100%)" : "translateX(-100%)";
+    return "translateX(0)";
   };
-  const getOpacity = () => (slideOut || slideIn) ? 0 : 1;
 
   return (
     <div
@@ -183,8 +182,7 @@ export default function DishDetail({
           position: "absolute",
           inset: 0,
           transform: getTransform(),
-          opacity: getOpacity(),
-          transition: slideIn ? "none" : "transform 0.25s ease-out, opacity 0.2s ease-out",
+          transition: slideIn ? "none" : "transform 0.25s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}

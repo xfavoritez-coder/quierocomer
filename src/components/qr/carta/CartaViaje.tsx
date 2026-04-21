@@ -84,16 +84,16 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}
           className="fixed z-50 flex items-center"
           style={{
-            top: 18, left: 16, gap: 8,
+            top: 19, left: 16, gap: 8,
             background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             border: "1px solid rgba(255,255,255,0.08)", borderRadius: 50,
-            padding: "7px 12px 7px 7px", cursor: "pointer",
+            padding: "5px 10px 5px 5px", cursor: "pointer",
           }}
         >
           {restaurant.logoUrl ? (
-            <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0 }} />
+            <Image src={restaurant.logoUrl} alt={restaurant.name} width={29} height={29} className="rounded-full" style={{ flexShrink: 0 }} />
           ) : (
-            <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
+            <div style={{ width: 29, height: 29, borderRadius: "50%", background: "rgba(255,255,255,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: 700, color: "rgba(255,255,255,0.7)", flexShrink: 0 }}>
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
@@ -351,7 +351,7 @@ function CategoryTrack({
             className="vj-category-label-plain"
             style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto", color: "white", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
           >
-            {chapterNum} · <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
+            <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
           </button>
           <div className="vj-bullets-plain">
             {group.dishes.map((_, i) => (
@@ -609,7 +609,7 @@ const CSS = `
   .vj-chapter-content { text-align: center; position: relative; z-index: 2; max-width: 500px; }
   .vj-chapter-num { font-style: italic; font-weight: 300; font-size: 12px; letter-spacing: 0.4em; color: rgba(255,255,255,0.6); text-transform: uppercase; margin-bottom: 20px; opacity: 0; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-chapter.in-view .vj-chapter-num { opacity: 1; transform: translateY(0); }
-  .vj-chapter-name { font-weight: 500; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
+  .vj-chapter-name { font-weight: 400; font-size: clamp(44px, 13vw, 72px); line-height: 0.95; letter-spacing: -0.035em; margin: 16px 0 24px; opacity: 0; transform: translateY(40px); transition: all 1.4s var(--vj-ease) 0.6s; text-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
   .vj-chapter-name em { font-style: italic; font-weight: 600; display: block; color: #F4A623; }
   .vj-chapter.in-view .vj-chapter-name { opacity: 1; transform: translateY(0); }
   .vj-chapter-desc { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.5; opacity: 0; max-width: 28ch; margin: 0 auto 32px; transition: opacity 1s var(--vj-ease) 1.2s; }
@@ -709,7 +709,7 @@ const CSS = `
   .vj-title em { font-style: italic; font-weight: 300; }
   .vj-title-gradient em { background: linear-gradient(135deg, #f5d4a0 0%, #e8a06a 50%, #c9785a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .vj-ln { display: block; overflow: hidden; }
-  .vj-ln span { display: block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
+  .vj-ln span { display: inline-block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
   .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }

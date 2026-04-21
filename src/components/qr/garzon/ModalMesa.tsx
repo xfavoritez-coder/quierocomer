@@ -39,7 +39,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
       <div onClick={(e) => { if (e.target === e.currentTarget) close(); }} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)", opacity: visible ? 1 : 0, transition: "opacity 0.2s" }} />
       <div style={{
         position: "relative", zIndex: 1, background: "#0e0e0e", width: "100%",
-        borderRadius: "20px 20px 0 0", padding: "28px 24px 48px",
+        borderRadius: "20px 20px 0 0", padding: "28px 24px calc(48px + env(safe-area-inset-bottom))",
         transform: visible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.25s ease-out",
       }}>

@@ -88,12 +88,12 @@ export default function CartaPremium({
   marketingPromos,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
-  const [genioExpanded, setGenioExpanded] = useState(true);
+  const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      setGenioExpanded(y < lastScrollY.current || y < 100);
+      setGenioExpanded(y < lastScrollY.current && y > 100);
       lastScrollY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -440,18 +440,20 @@ export default function CartaPremium({
       </footer>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
+      {/* Floating buttons — Genio separate to avoid pushing others */}
+      <div className="fixed z-50 flex flex-col items-end" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0 15px", borderRadius: 50, gap: 6, transition: "all 0.3s ease", overflow: "hidden" }}
+          style={{ height: 52, width: genioExpanded ? "auto" : 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 18px 0 14px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
         >
-          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0 }}>🧞</span>
+          <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 3s ease-in-out infinite" }}>🧞</span>
           {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap" }}>¿Qué comer?</span>}
         </button>
         <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} waiterPanelActive={showWaiter} />
         <ViewSelector restaurantId={restaurant.id} />
       </div>
+      <style>{`@keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }`}</style>
 
       {selectedDish && (
         <DishDetail
