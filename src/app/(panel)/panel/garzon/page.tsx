@@ -94,9 +94,9 @@ export default function GarzonPage() {
 
           {/* QR code */}
           {qrDataUrl && (
-            <div style={{ textAlign: "center", padding: "12px 0" }}>
-              <img src={qrDataUrl} alt="QR panel garzón" style={{ width: 160, height: 160, borderRadius: 8 }} />
-              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>Escanea con el celular del garzón</p>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 0" }}>
+              <img src={qrDataUrl} alt="QR panel garzón" style={{ width: 120, height: 120, borderRadius: 8 }} />
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "8px 0 0", textAlign: "center" }}>Escanea con el celular del garzón</p>
             </div>
           )}
 
