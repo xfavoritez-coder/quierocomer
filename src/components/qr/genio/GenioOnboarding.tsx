@@ -269,7 +269,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  const next = () => setStep((s) => s + 1);
+  const STEP_NAMES = ["welcome", "diet", "restrictions", "dislikes", "grid", "results"];
+  const next = () => setStep((s) => {
+    const nextStep = s + 1;
+    trackStat(restaurantId, `GENIO_STEP_${STEP_NAMES[nextStep]?.toUpperCase() || nextStep}`, undefined, genioSessionId);
+    return nextStep;
+  });
 
   const toggleRestriction = (r: string) => {
     if (r === "ninguna") {
@@ -406,6 +411,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       saveIngredients(picks.map((p) => p.id), "genio_result");
     }
     setShowOverlay(false);
+    trackStat(restaurantId, "GENIO_STEP_RESULTS", undefined, genioSessionId);
     setStep(5);
   };
 
@@ -566,7 +572,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 })()}
               </p>
               <div className="flex flex-col items-center" style={{ gap: 12, marginTop: 16 }}>
-                <button onClick={() => { setSkipTransition(true); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); initGrid(photoFilter); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
+                <button onClick={() => { setSkipTransition(true); trackStat(restaurantId, "GENIO_STEP_GRID", undefined, genioSessionId); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); initGrid(photoFilter); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                   Continuar →
                 </button>
                 <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>

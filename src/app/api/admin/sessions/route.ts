@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
     // Genio events
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
     const genioEvents = sessionGuestIds.length ? await prisma.statEvent.findMany({
-      where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE"] } },
+      where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED"] } },
       select: { guestId: true, eventType: true, dishId: true, createdAt: true },
     }) : [];
 
@@ -117,8 +117,11 @@ export async function GET(req: NextRequest) {
       );
       if (matching.length > 0) {
         dbSessionsWithGenio.add(s.id);
-        const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[] };
+        const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[], lastStep: "" };
         let completesAfterLastStart = 0;
+        const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS"];
+        const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos", GENIO_STEP_GRID: "Grilla", GENIO_STEP_RESULTS: "Resultados" };
+        let maxStep = -1;
         for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
           if (e.eventType === "GENIO_START") { data.timesUsed++; completesAfterLastStart = 0; }
           if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
@@ -128,6 +131,8 @@ export async function GET(req: NextRequest) {
               completesAfterLastStart++;
             }
           }
+          const stepIdx = stepOrder.indexOf(e.eventType);
+          if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
         }
         genioDataByDbSession[s.id] = data;
       }
