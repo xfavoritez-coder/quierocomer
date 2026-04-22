@@ -136,7 +136,7 @@ export default function AdminAutomatizaciones() {
           <textarea placeholder="HTML del email (usa {{name}} y {{restaurant}})" value={fBody} onChange={e => setFBody(e.target.value)} rows={6} style={{ ...I, resize: "vertical", lineHeight: 1.5 }} />
 
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-            <button onClick={handleCreate} disabled={!fName || !fSubject} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Crear regla</button>
+            <button onClick={handleCreate} disabled={!fName || !fSubject} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Crear regla</button>
             <button onClick={resetForm} style={{ padding: "10px 20px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>

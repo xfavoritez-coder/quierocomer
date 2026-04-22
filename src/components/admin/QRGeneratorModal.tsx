@@ -39,7 +39,7 @@ export default function QRGeneratorModal({ restaurant, onClose }: Props) {
         </div>
 
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <a href={link} target="_blank" style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textAlign: "center", textDecoration: "none" }}>Abrir página</a>
+          <a href={link} target="_blank" style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textAlign: "center", textDecoration: "none" }}>Abrir página</a>
           <button onClick={onClose} style={{ padding: "10px 16px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cerrar</button>
         </div>
       </div>

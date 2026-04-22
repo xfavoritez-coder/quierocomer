@@ -157,7 +157,7 @@ export default function AdminCampanias() {
           )}
 
           <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-            <button onClick={editing ? handleUpdate : handleCreate} disabled={!fName} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+            <button onClick={editing ? handleUpdate : handleCreate} disabled={!fName} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
               {editing ? "Guardar cambios" : "Crear borrador"}
             </button>
             <button onClick={resetForm} style={{ padding: "10px 20px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>

@@ -76,7 +76,7 @@ export default function TicketsPage() {
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Tickets POS</h1>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={() => setShowForm(!showForm)} style={{ padding: "8px 16px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+          <button onClick={() => setShowForm(!showForm)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
             {showForm ? "Cancelar" : "+ Agregar"}
           </button>
           <label style={{ padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>
@@ -99,7 +99,7 @@ export default function TicketsPage() {
           </div>
           <input type="datetime-local" value={formPaidAt} onChange={(e) => setFormPaidAt(e.target.value)} style={I} />
           <input placeholder="Notas (opcional)" value={formNotes} onChange={(e) => setFormNotes(e.target.value)} style={I} />
-          <button onClick={handleSubmit} disabled={saving || !formRestaurant || !formTotal} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
+          <button onClick={handleSubmit} disabled={saving || !formRestaurant || !formTotal} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>
             {saving ? "Guardando..." : "Guardar y matchear"}
           </button>
         </div>

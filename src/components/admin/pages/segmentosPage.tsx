@@ -164,7 +164,7 @@ export default function AdminSegmentos() {
           <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Reglas</p>
           <RuleBuilder rules={newRules} onChange={setNewRules} restaurantId={selectedRestaurantId} />
           <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-            <button onClick={handleCreate} disabled={saving || !newName} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Crear segmento"}</button>
+            <button onClick={handleCreate} disabled={saving || !newName} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Crear segmento"}</button>
             <button onClick={() => setCreating(false)} style={{ padding: "10px 20px", background: "none", border: "1px solid #2A2A2A", borderRadius: 8, color: "#888", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>

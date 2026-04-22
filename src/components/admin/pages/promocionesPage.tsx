@@ -340,7 +340,7 @@ export default function AdminPromociones() {
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || !cImageUrl} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || !cImageUrl ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>
@@ -398,7 +398,7 @@ export default function AdminPromociones() {
           </div>
 
           <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
+            <button onClick={handleCreatePromo} disabled={savingNew || !cName || cSelectedDishes.length === 0} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: savingNew || !cName || cSelectedDishes.length === 0 ? 0.5 : 1 }}>{savingNew ? "Creando..." : "Crear promoción"}</button>
             <button onClick={resetCreate} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>
@@ -460,7 +460,7 @@ export default function AdminPromociones() {
           </div>
 
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
-            <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+            <button onClick={saveEdit} style={{ padding: "10px 20px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
             <button onClick={() => setEditing(null)} style={{ padding: "10px 20px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         </div>
