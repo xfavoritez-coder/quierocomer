@@ -107,7 +107,7 @@ export default function AdminDashboard() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
         <Stat label="🔔 Llamadas garzón" value={data.weekWaiterCalls ?? 0} sub="esta semana" />
-        <Stat label="⭐ Favoritos nuevos" value={data.weekFavorites ?? 0} sub="esta semana" />
+        <Stat label="👍 Me gusta nuevos" value={data.weekFavorites ?? 0} sub="esta semana" />
         <Stat label="📢 Promos activas" value={data.activePromos ?? 0} />
       </div>
 

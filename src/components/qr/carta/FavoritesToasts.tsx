@@ -19,7 +19,7 @@ export default function FavoritesToasts() {
             onClose={dismissConversion}
             
           >
-            <span>Tienes favoritos marcados. Regístrate con tu email y los guardamos siempre, en todos los restaurantes.</span>
+            <span>Tienes platos que te gustan. Regístrate con tu email y los guardamos siempre, en todos los restaurantes.</span>
             <button
               onClick={() => { dismissConversion(); setLoginOpen(true); }}
               className="active:scale-[0.98] transition-transform"
@@ -30,7 +30,7 @@ export default function FavoritesToasts() {
                 fontWeight: 700, fontFamily: "inherit", cursor: "pointer",
               }}
             >
-              Guardar mis favoritos
+              Guardar mis gustos
             </button>
           </GenioTip>
         </div>

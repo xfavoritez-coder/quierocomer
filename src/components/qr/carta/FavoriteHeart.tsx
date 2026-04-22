@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Heart } from "lucide-react";
+import { ThumbsUp } from "lucide-react";
 import { useFavorites } from "@/contexts/FavoritesContext";
 
 interface Props {
@@ -42,9 +42,9 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
         ref={btnRef}
         onClick={handleClick}
         className={className}
-        aria-label={active ? "Quitar de favoritos" : "Agregar a favoritos"}
+        aria-label={active ? "Quitar me gusta" : "Me gusta"}
         style={{
-          background: "rgba(255,255,255,0.85)",
+          background: active ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.85)",
           border: "none",
           borderRadius: "50%",
           width: size + 12,
@@ -53,12 +53,12 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
           alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
-          transition: "transform 0.1s",
-          animation: animating ? "heartBounce 0.4s ease-out" : undefined,
+          transition: "transform 0.1s, background 0.2s",
+          animation: animating ? "likeBounce 0.4s ease-out" : undefined,
           ...style,
         }}
       >
-        <Heart
+        <ThumbsUp
           size={size}
           color={active ? "#F4A623" : "#6B7280"}
           fill={active ? "#F4A623" : "none"}
@@ -66,30 +66,30 @@ export default function FavoriteHeart({ dishId, restaurantId, size = 20, classNa
         />
       </button>
 
-      {/* First-favorite tip — fixed position so it's never clipped by overflow:hidden */}
+      {/* First-like tip */}
       {showLocalTip && tipPos && (
         <div className="font-[family-name:var(--font-dm)]" style={{
           position: "fixed", right: tipPos.right, bottom: window.innerHeight - tipPos.top + 4,
           background: "#FFF4E6", borderRadius: 12, padding: "8px 12px",
           boxShadow: "0 4px 16px rgba(180,130,50,0.2)", zIndex: 200,
-          width: 200, animation: "heartTipIn 0.3s ease-out",
+          width: 200, animation: "likeTipIn 0.3s ease-out",
         }}>
           <p style={{ fontSize: "12px", color: "#5c3d1e", margin: 0, lineHeight: 1.4 }}>
-            Marca los que te gusten y el Genio te recomendará mejor
+            Dale me gusta a los platos y el Genio te recomendará mejor
           </p>
           <div style={{ position: "absolute", bottom: -5, right: 12, width: 10, height: 10, background: "#FFF4E6", transform: "rotate(45deg)" }} />
         </div>
       )}
 
       <style>{`
-        @keyframes heartBounce {
+        @keyframes likeBounce {
           0% { transform: scale(1); }
           20% { transform: scale(0.8); }
           50% { transform: scale(1.3); }
           70% { transform: scale(0.95); }
           100% { transform: scale(1); }
         }
-        @keyframes heartTipIn {
+        @keyframes likeTipIn {
           from { opacity: 0; transform: translateY(4px); }
           to { opacity: 1; transform: translateY(0); }
         }

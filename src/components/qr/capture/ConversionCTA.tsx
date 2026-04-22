@@ -18,7 +18,7 @@ const MAX_PER_SESSION = 1;
 const COPY: Record<string, { title: string; subtitle: string; cta: string }> = {
   post_genio: {
     title: "¿Te gustó la recomendación?",
-    subtitle: "Guarda tus favoritos para la próxima vez",
+    subtitle: "Guarda tus gustos para la próxima vez",
     cta: "Guardar con mi email",
   },
   repeat_dish: {

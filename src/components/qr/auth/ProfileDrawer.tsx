@@ -242,8 +242,8 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
       {favorites.length > 0 && (
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-            <Heart size={12} color="#F4A623" fill="#F4A623" />
-            <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Mis favoritos ({favorites.length})</h4>
+            <span style={{ fontSize: "0.7rem" }}>👍</span>
+            <h4 style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", color: "#bbb", letterSpacing: "0.08em", margin: 0 }}>Me gusta ({favorites.length})</h4>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {favorites.map((f) => (
