@@ -17,13 +17,17 @@ export async function GET(req: NextRequest) {
 export async function POST(request: Request) {
   try {
     const { guestId, dishIds, source } = await request.json();
-    // source: "picked" (weight 10) | "genio_result" (weight 5) | "genio_liked" (weight 3) | "viewed" (weight 1) | "rejected" (weight -2)
+    // source: "picked" (weight 10) | "genio_result" (weight 5) | "genio_liked" (weight 3) | "favorite" (weight 3) | "rejected" (weight -2)
+    // "viewed" removed — dwell time is not a reliable preference signal
 
     if (!guestId || !dishIds?.length) {
       return NextResponse.json({ ok: true }); // silently skip
     }
 
-    const weight = source === "picked" ? 10 : source === "genio_result" ? 5 : source === "genio_liked" ? 3 : source === "rejected" ? -2 : 1;
+    // Ignore "viewed" source — no longer contributes to score
+    if (source === "viewed") return NextResponse.json({ ok: true });
+
+    const weight = source === "picked" ? 10 : source === "genio_result" ? 5 : source === "genio_liked" ? 3 : source === "favorite" ? 3 : source === "rejected" ? -2 : 1;
 
     // Get ingredients from DishIngredient table
     const dishIngredients = await prisma.dishIngredient.findMany({

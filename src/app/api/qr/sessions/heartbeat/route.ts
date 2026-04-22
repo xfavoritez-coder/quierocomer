@@ -45,8 +45,9 @@ async function handleHeartbeat(request: Request) {
       }).catch(() => {});
     }
 
-    // On final heartbeat, accumulate favorite ingredients from viewed dishes (dwell > 3s)
-    if (isFinal && session.guestId && Array.isArray(dishesViewed) && dishesViewed.length > 0) {
+    // Ingredient scoring from views removed — dwell time is not a reliable signal
+    // Score now only comes from: favorites (+3), genio selections (+2), genio feedback (+1)
+    if (false && isFinal && session.guestId && Array.isArray(dishesViewed) && dishesViewed.length > 0) {
       const significantDishIds = dishesViewed
         .filter((d: any) => d.dishId && (d.dwellMs || 0) > 3000)
         .map((d: any) => d.dishId);
@@ -57,7 +58,6 @@ async function handleHeartbeat(request: Request) {
           select: { dishId: true, ingredient: { select: { name: true } } },
         });
 
-        // Fallback: text ingredients for dishes without DishIngredient links
         const idsWithLinks = new Set(dishIngredients.map(di => di.dishId));
         const idsWithout = significantDishIds.filter((id: string) => !idsWithLinks.has(id));
         let textIngr: string[] = [];
