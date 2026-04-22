@@ -108,7 +108,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             </span>
           </Link>
           {restaurants.length === 1 && (
-            <p style={{ fontFamily: F, fontSize: "0.74rem", color: "#999", fontWeight: 500, margin: "2px 0 0" }}>{restaurants[0].name}</p>
+            <p style={{ fontFamily: F, fontSize: "0.76rem", color: "#999", fontWeight: 500, margin: "-1px 0 0", paddingLeft: 28 }}>{restaurants[0].name}</p>
           )}
           {restaurants.length > 1 && (
             <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
@@ -153,7 +153,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               Quiero<span style={{ color: GOLD }}>Comer</span>
             </span>
             {restaurants.length === 1 && (
-              <span style={{ fontFamily: F, fontSize: "0.64rem", color: "#999", fontWeight: 500 }}>{restaurants[0].name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.66rem", color: "#999", fontWeight: 500, marginTop: -2 }}>{restaurants[0].name}</span>
             )}
           </div>
         </Link>
