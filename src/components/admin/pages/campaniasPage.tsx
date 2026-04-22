@@ -124,7 +124,7 @@ export default function AdminCampanias() {
         </div>
         <div style={{ display: "flex", gap: 10 }}>
           <RestaurantPicker />
-          {!creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nueva campaña</button>}
+          {!creating && <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo</button>}
         </div>
       </div>
 

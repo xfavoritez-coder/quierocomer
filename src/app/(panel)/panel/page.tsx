@@ -122,7 +122,7 @@ export default function PanelDashboard() {
               <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", textAlign: "center" }}>Ver mi carta</span>
             </a>
             {[
-              { icon: QrCode, label: "Mi QR", href: "/panel/qr" },
+              { icon: QrCode, label: "Imprimir QR", href: "/panel/qr" },
               { icon: Bell, label: "Garzón", href: "/panel/garzon" },
             ].map(a => (
               <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>

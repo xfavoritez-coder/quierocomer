@@ -24,13 +24,12 @@ function buildNav(base: string) {
   const SIDEBAR_NAV = [
     { icon: Home, label: "Inicio", href: base },
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
-    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
-    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: Bell, label: "Garzón", href: `${base}/garzon` },
+    { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Users, label: "Segmentos", href: `${base}/segmentos` },
-    { icon: Mail, label: "Campañas", href: `${base}/campanias` },
     { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
+    { icon: Mail, label: "Campañas", href: `${base}/campanias` },
+    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },

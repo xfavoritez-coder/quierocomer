@@ -591,7 +591,7 @@ export default function AdminMenus() {
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
         {!creatingDish && (
-          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo plato</button>
+          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", marginLeft: "auto" }}>+ Nuevo plato</button>
         )}
       </div>
 
