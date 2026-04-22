@@ -247,7 +247,8 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
             {calls.map((call) => {
               const isExpanded = expandedId === call.id;
               const name = call.table?.name || call.tableName || "Cliente";
-              const dietText = call.dietType ? dietLabels[call.dietType] || null : null;
+              const dl: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano" };
+              const dietText = call.dietType ? dl[call.dietType] || null : null;
               let resList: string[] = [];
               try { resList = call.restrictions ? JSON.parse(call.restrictions).filter((r: string) => r !== "ninguna") : []; } catch {}
 
