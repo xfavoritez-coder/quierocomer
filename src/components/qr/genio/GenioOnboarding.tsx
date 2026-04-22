@@ -954,13 +954,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.08)", margin: "8px 0" }} />
 
           {/* Save preferences CTA (not logged in) */}
-          {!qrUserProp ? (
-            <div style={{ width: "100%", maxWidth: 320 }}>
-              <PostGenioCapture restaurantId={restaurantId} />
-            </div>
-          ) : (
-            <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", margin: "4px 0 12px" }}>Tus gustos se guardan automáticamente ✓</p>
-          )}
+          <div style={{ width: "100%", maxWidth: 320 }}>
+            <PostGenioCapture restaurantId={restaurantId} />
+          </div>
         </div>
       )}
 

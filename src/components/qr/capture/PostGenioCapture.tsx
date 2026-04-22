@@ -13,7 +13,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
-  const [isRegistered, setIsRegistered] = useState(true);
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
       .catch(() => setIsRegistered(false));
   }, []);
 
-  if (isRegistered) return null;
+  if (isRegistered === null || isRegistered) return null;
 
   const handleSubmit = async () => {
     if (!email || !name || status !== "idle") return;
