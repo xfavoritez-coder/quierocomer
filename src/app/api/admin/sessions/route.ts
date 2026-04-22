@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
     for (const s of sessions) {
       const start = new Date(s.startedAt).getTime();
       const end = s.endedAt ? new Date(s.endedAt).getTime() : Date.now();
-      const margin = 60000;
+      const margin = 2 * 60 * 60 * 1000; // 2 hours — users may return without new session
       const matching = genioEvents.filter((e) =>
         e.guestId === s.guestId &&
         e.createdAt.getTime() >= start - margin &&
