@@ -886,8 +886,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {genioFeedback === "none" ? (
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
               <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>¿Acerté?</span>
-              <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👍 Sí</button>
-              <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👎 No tanto</button>
+              <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_like"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👍 Sí</button>
+              <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_dislike"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👎 No tanto</button>
             </div>
           ) : (
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", margin: "4px 0" }}>

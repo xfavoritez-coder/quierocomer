@@ -17,17 +17,24 @@ export async function GET(req: NextRequest) {
 export async function POST(request: Request) {
   try {
     const { guestId, dishIds, source } = await request.json();
-    // source: "picked" (weight 10) | "genio_result" (weight 5) | "genio_liked" (weight 3) | "favorite" (weight 3) | "rejected" (weight -2)
-    // "viewed" removed — dwell time is not a reliable preference signal
+    // Weights based on explicit user actions only:
+    // "favorite" (+5) — tapped heart, strongest signal
+    // "feedback_like" (+3) — confirmed genio recommendation was good
+    // "genio_liked" (+2) — selected dish in genio grid
+    // "picked" (+1) — genio suggested it (not confirmed by user)
+    // "genio_result" (+1) — appeared as result
+    // "feedback_dislike" (-3) — rejected genio recommendation
+    // "rejected" (-2) — explicitly rejected
 
     if (!guestId || !dishIds?.length) {
-      return NextResponse.json({ ok: true }); // silently skip
+      return NextResponse.json({ ok: true });
     }
 
-    // Ignore "viewed" source — no longer contributes to score
     if (source === "viewed") return NextResponse.json({ ok: true });
 
-    const weight = source === "picked" ? 10 : source === "genio_result" ? 5 : source === "genio_liked" ? 3 : source === "favorite" ? 3 : source === "rejected" ? -2 : 1;
+    const weights: Record<string, number> = { favorite: 5, feedback_like: 3, genio_liked: 2, picked: 1, genio_result: 1, feedback_dislike: -3, rejected: -2 };
+    const weight = weights[source] ?? 0;
+    if (weight === 0) return NextResponse.json({ ok: true });
 
     // Get ingredients from DishIngredient table
     const dishIngredients = await prisma.dishIngredient.findMany({
