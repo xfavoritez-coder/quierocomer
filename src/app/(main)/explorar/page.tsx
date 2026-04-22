@@ -62,7 +62,8 @@ function getUserDiet(): string | null {
 }
 
 function getDietLabel(diet: string): string {
-  return map[diet] ?? diet;
+  const labels: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano" };
+  return labels[diet] ?? diet;
 }
 
 export default function ExplorarPage() {
