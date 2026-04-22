@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
@@ -355,7 +355,8 @@ export default function IngredientesPage() {
             );
           }
           return (
-            <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+            <React.Fragment key={i.id}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
               <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500, flex: 1 }}>{i.name}</span>
               {i.isAllergen && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergenType || "alérgeno"}</span>}
               <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); setEAllergen(i.isAllergen); setEAllergenType(i.allergenType || ""); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
@@ -380,6 +381,7 @@ export default function IngredientesPage() {
                 <button onClick={() => setMerging(null)} style={{ marginTop: 4, padding: "3px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
               </div>
             )}
+            </React.Fragment>
           );
         })}
         {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>{search ? "Sin resultados" : "Sin ingredientes"}</p>}

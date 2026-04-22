@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
+export const maxDuration = 300; // 5 min timeout for bulk analysis
+
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
@@ -22,11 +24,12 @@ export async function POST(req: NextRequest) {
     let totalSuggested = 0;
 
     for (const dish of dishes) {
+      // Skip photo in bulk analysis — text only is faster and avoids timeouts
       const result = await extractIngredientsForDish(
         dish.id,
         dish.name,
         dish.description,
-        dish.photos?.[0] || null,
+        null,
       );
       results.push(result);
       totalMatched += result.matched.length;
