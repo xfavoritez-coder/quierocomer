@@ -39,7 +39,7 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
-          {isRec && <span style={{ fontSize: "12px", flexShrink: 0 }}>⭐</span>}
+          {isRec && <span style={{ fontSize: "13px", flexShrink: 0 }}>⭐</span>}
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
           <DishBadges dish={dish} />
         </h3>
