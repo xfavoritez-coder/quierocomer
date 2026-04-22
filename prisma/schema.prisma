@@ -112,13 +112,22 @@ enum DietType {
 model Ingredient {
   id              String             @id @default(cuid())
   name            String             @unique
-  aliases         String[]           // nombres alternativos que la IA puede usar (cebollino → cebollín)
+  aliases         String[]
   category        IngredientCategory
   isAllergen      Boolean            @default(false)
-  allergenType    String?            // gluten, lactosa, frutos secos, etc
+  allergenType    String?
   createdAt       DateTime           @default(now())
   dishes          IngredientTag[]
   dishIngredients DishIngredient[]
+  allergens       Allergen[]         // many-to-many: qué alérgenos tiene este ingrediente
+}
+
+model Allergen {
+  id          String       @id @default(cuid())
+  name        String       @unique  // "gluten", "lactosa", "frutos secos", etc
+  position    Int          @default(0)
+  createdAt   DateTime     @default(now())
+  ingredients Ingredient[] // many-to-many: ingredientes que contienen este alérgeno
 }
 
 model IgnoredIngredient {

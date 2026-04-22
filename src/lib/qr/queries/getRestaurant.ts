@@ -20,6 +20,13 @@ export async function getRestaurantBySlug(slug: string) {
               },
             },
           },
+          dishIngredients: {
+            include: {
+              ingredient: {
+                include: { allergens: { select: { id: true, name: true } } },
+              },
+            },
+          },
         },
       },
       promotions: {

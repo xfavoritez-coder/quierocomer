@@ -65,28 +65,13 @@ export async function POST(req: NextRequest) {
       console.error("[AI extract]", e);
     }
 
-    // Auto-suggest allergens from matched ingredients
-    let suggestedAllergens: string[] = [];
-    if (aiResult?.matched?.length) {
-      const allergenIngredients = await prisma.ingredient.findMany({
-        where: { name: { in: aiResult.matched, mode: "insensitive" }, isAllergen: true },
-        select: { name: true, allergenType: true },
-      });
-      suggestedAllergens = allergenIngredients.map(a => a.allergenType || a.name);
-      if (suggestedAllergens.length > 0) {
-        const existing = (allergens || "").split(",").map((s: string) => s.trim().toLowerCase()).filter(Boolean);
-        const merged = [...new Set([...existing, ...suggestedAllergens.map(s => s.toLowerCase())])].filter(s => s !== "ninguno");
-        await prisma.dish.update({ where: { id: dish.id }, data: { allergens: merged.join(", ") || null } });
-      }
-    }
-
-    // Re-fetch dish with updated ingredients + allergens
+    // Re-fetch dish with updated ingredients
     const updatedDish = await prisma.dish.findUnique({
       where: { id: dish.id },
       include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
     });
 
-    return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult, suggestedAllergens });
+    return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);
     return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });

@@ -175,7 +175,17 @@ function DishSlide({
   const isLongDesc = desc.length > 120;
   const expandDesc = expandedDescs.has(dish.id);
   const discountPercent = dish.discountPrice && dish.price > 0 ? Math.round(((dish.price - dish.discountPrice) / dish.price) * 100) : null;
-  const hasInfo = !!(dish.ingredients || dish.allergens);
+  // Derive allergens from ingredient → allergen chain
+  const dishIngs = (dish as any).dishIngredients || [];
+  const derivedAllergens: string[] = [];
+  const seenAllergens = new Set<string>();
+  for (const di of dishIngs) {
+    for (const a of (di.ingredient?.allergens || [])) {
+      if (!seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
+    }
+  }
+  const ingredientNames = dishIngs.map((di: any) => di.ingredient?.name).filter(Boolean);
+  const hasInfo = ingredientNames.length > 0 || derivedAllergens.length > 0;
 
   return (
     <div
@@ -315,21 +325,21 @@ function DishSlide({
           <div onClick={() => setShowInfo(false)} className="absolute" style={{ inset: 0, zIndex: 19 }} />
           <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 20, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
             <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-            {dish.ingredients && (
+            {ingredientNames.length > 0 && (
               <div style={{ marginBottom: 0 }}>
                 <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 10 }}>Ingredientes</h4>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {dish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
+                  {ingredientNames.map((i: string) => (
                     <span key={i} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "#d4d4d4" }}>{i}</span>
                   ))}
                 </div>
               </div>
             )}
-            {dish.allergens && dish.allergens !== "ninguno" && (
+            {derivedAllergens.length > 0 && (
               <div style={{ marginTop: 22 }}>
                 <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Contiene</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {dish.allergens.split(",").map(a => a.trim()).filter(Boolean).filter(a => a !== "ninguno").map(a => (
+                {derivedAllergens.map(a => (
                   <span key={a} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(234,179,8,0.12)", color: "#fbbf24" }}>⚠️ {a}</span>
                 ))}
                 </div>

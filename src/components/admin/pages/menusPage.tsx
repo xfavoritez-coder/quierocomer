@@ -271,7 +271,6 @@ export default function AdminMenus() {
     return () => document.removeEventListener("mousedown", handler);
   }, [ingListOpen]);
 
-  const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
   const TAG_OPTIONS: { value: string; label: string }[] = [
     { value: "RECOMMENDED", label: "Recomendado" },
     { value: "NEW", label: "Nuevo" },
@@ -359,7 +358,6 @@ export default function AdminMenus() {
     setSaving(false);
   };
 
-  const toggleAllergen = (a: string) => setEAllergens(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
   const toggleTag = (t: string) => setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
 
   if (selectedDish && editMode) return (
@@ -692,13 +690,16 @@ export default function AdminMenus() {
 
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Alérgenos</label>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {ALLERGEN_OPTIONS.map(a => (
-                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: eAllergens.includes(a) ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.1)" : "transparent", color: eAllergens.includes(a) ? "#e85530" : "var(--adm-text3)" }}>
-                      {eAllergens.includes(a) ? "⚠️ " : ""}{a}
-                    </button>
-                  ))}
-                </div>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+                  Los alérgenos se calculan automáticamente a partir de los ingredientes vinculados. Gestiónalos en <strong>Ingredientes → Alérgenos</strong>.
+                </p>
+                {eAllergens.length > 0 && (
+                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
+                    {eAllergens.map(a => (
+                      <span key={a} style={{ fontSize: "0.7rem", padding: "4px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {a}</span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ marginBottom: 14 }}>

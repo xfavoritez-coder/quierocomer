@@ -314,15 +314,32 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
     }
 
-    // Filter by restrictions
+    // Filter by restrictions using structured allergen data
     if (!restrictions.includes("ninguna") && restrictions.length > 0) {
       candidates = candidates.filter((d) => {
-        const info = `${d.allergens || ""} ${d.ingredients || ""}`.toLowerCase();
-        if (restrictions.includes("gluten") && info.includes("gluten")) return false;
-        if (restrictions.includes("lactosa") && (info.includes("lácteo") || info.includes("queso") || info.includes("crema"))) return false;
-        if (restrictions.includes("mariscos") && (info.includes("marisco") || info.includes("camarón"))) return false;
-        if (restrictions.includes("cerdo") && (info.includes("cerdo") || info.includes("tocino") || info.includes("jamón"))) return false;
-        if (restrictions.includes("frutos_secos") && (info.includes("almendra") || info.includes("nuez") || info.includes("maní"))) return false;
+        // Get allergen names from ingredient→allergen chain
+        const dishIngs = (d as any).dishIngredients || [];
+        const dishAllergens = new Set<string>();
+        for (const di of dishIngs) {
+          for (const a of (di.ingredient?.allergens || [])) {
+            dishAllergens.add(a.name);
+          }
+        }
+        // Also get ingredient names for non-allergen restrictions (cerdo, alcohol)
+        const ingNames = dishIngs.map((di: any) => di.ingredient?.name?.toLowerCase() || "");
+        const allText = [...dishAllergens, ...ingNames].join(" ");
+
+        for (const r of restrictions) {
+          if (r === "ninguna") continue;
+          // Direct allergen match (gluten, lactosa, mariscos, etc.)
+          if (dishAllergens.has(r)) return false;
+          // Mapped restrictions
+          if (r === "nueces" && (dishAllergens.has("frutos secos") || allText.includes("nuez"))) return false;
+          if (r === "almendras" && allText.includes("almendra")) return false;
+          if (r === "mani" && (dishAllergens.has("maní") || allText.includes("maní"))) return false;
+          if (r === "cerdo" && (allText.includes("cerdo") || allText.includes("tocino") || allText.includes("jamón"))) return false;
+          if (r === "alcohol" && allText.includes("alcohol")) return false;
+        }
         return true;
       });
     }
