@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import type { Dish } from "@prisma/client";
-import FavoriteHeart from "./FavoriteHeart";
 
 interface DishCardProps {
   dish: Dish;
@@ -95,7 +94,6 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
         {dish.tags?.includes("NEW") && (
           <span className="absolute font-[family-name:var(--font-dm)]" style={{ top: 7, left: 7, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
         )}
-        <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={16} style={{ position: "absolute", top: 6, right: 6 }} />
       </div>
       <div style={{ padding: "8px 2px 0" }}>
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
@@ -144,7 +142,6 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
       <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 10, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
       </span>
-      <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={16} style={{ position: "absolute", top: 7, right: 7, zIndex: 3 }} />
     </button>
   );
 }

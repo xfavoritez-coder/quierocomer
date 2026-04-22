@@ -874,7 +874,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
       {/* RESULT — overlays everything when step === 5 */}
       {step === 5 && mainResult && (
-        <div className="absolute flex flex-col items-center" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "56px 20px 20px", gap: 8, overflowY: "auto" }}>
+        <div className="absolute flex flex-col items-center genio-result-scroll" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "56px 20px 20px", gap: 8, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" as any }}>
           {/* Back + Close buttons */}
           <button onClick={() => setStep(4)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
             <ChevronLeft size={18} color="white" />
@@ -940,13 +940,13 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
           {/* Feedback */}
           {genioFeedback === "none" ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0 4px" }}>
               <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>¿Acerté?</span>
               <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_like"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👍 Sí</button>
               <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_dislike"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👎 No tanto</button>
             </div>
           ) : (
-            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", margin: "4px 0" }}>
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", margin: "16px 0 4px" }}>
               {genioFeedback === "like" ? "¡Genial! Gracias 🙌" : "Gracias, lo mejoraré 🧞"}
             </p>
           )}
@@ -965,6 +965,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       )}
 
       <style>{`
+        .genio-result-scroll::-webkit-scrollbar { display: none; }
         @keyframes genioPulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.1); }
