@@ -178,7 +178,12 @@ export default function IngredientesPage() {
       method: "DELETE", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    if (res.ok) setIngredients(prev => prev.filter(i => i.id !== id));
+    if (res.ok) {
+      setIngredients(prev => prev.filter(i => i.id !== id));
+    } else {
+      const data = await res.json().catch(() => null);
+      alert(data?.error || "No se pudo eliminar");
+    }
   };
 
   const catLabel = (cat: string) => CATEGORIES.find(c => c.value === cat);
