@@ -342,13 +342,13 @@ export default function AdminMenus() {
                     {dishTemplates.length > 0 ? (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                         {dishTemplates.map((t: any) => (
-                          <span key={t.id} style={{ fontFamily: FB, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: GOLD }}>{t.name}</span>
+                          <span key={t.id} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: GOLD }}>{t.name}</span>
                         ))}
                       </div>
                     ) : (
-                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Sin modificadores asignados</p>
+                      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Sin modificadores asignados</p>
                     )}
-                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
                       Asigna plantillas desde la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button> o edita el plato para gestionarlas.
                     </p>
                   </div>
@@ -517,7 +517,7 @@ export default function AdminMenus() {
                     );
                   })}
                   {availableTemplates.length === 0 && (
-                    <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>Crea plantillas en la pestaña "Modificadores"</p>
+                    <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>Crea plantillas en la pestaña "Modificadores"</p>
                   )}
                 </div>
               </div>
