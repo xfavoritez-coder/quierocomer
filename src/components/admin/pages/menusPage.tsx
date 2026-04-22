@@ -20,185 +20,49 @@ interface Restaurant { id: string; name: string; slug: string; }
 const F = "var(--font-display)";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#4ade80", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
-/* ── Inline modifier editor (used inside dish editMode) ── */
+/* ── Inline modifier preview (read-only, used inside dish editMode) ── */
 interface IMEOption { id: string; name: string; priceAdjustment: number; position: number; }
 interface IMEGroup { id: string; name: string; required: boolean; maxSelect: number; position: number; options: IMEOption[]; }
 
 function InlineModifierEditor({ templateId, restaurantId }: { templateId: string; restaurantId: string }) {
   const [groups, setGroups] = useState<IMEGroup[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dishCount, setDishCount] = useState(0);
-  const [editingGroup, setEditingGroup] = useState<string | null>(null);
-  const [egName, setEgName] = useState("");
-  const [editingOption, setEditingOption] = useState<string | null>(null);
-  const [eoName, setEoName] = useState("");
-  const [eoPrice, setEoPrice] = useState("");
-  const [addingOption, setAddingOption] = useState<string | null>(null);
-  const [newOptName, setNewOptName] = useState("");
-  const [newOptPrice, setNewOptPrice] = useState("");
-  const [addingGroup, setAddingGroup] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
 
   useEffect(() => {
     fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`)
       .then(r => r.json())
       .then((templates: any[]) => {
         const t = templates.find((x: any) => x.id === templateId);
-        if (t) {
-          setGroups(t.groups || []);
-          setDishCount(t.dishes?.length || 0);
-        }
+        if (t) setGroups(t.groups || []);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [templateId, restaurantId]);
 
-  const addGroup = async (name: string) => {
-    if (!name.trim()) return;
-    const res = await fetch("/api/admin/modifier-templates", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addGroupToTemplate: templateId, name: name.trim(), required: true, maxSelect: 1 }),
-    });
-    const group = await res.json();
-    if (res.ok) {
-      setGroups(prev => [...prev, { ...group, options: group.options || [] }]);
-      setAddingGroup(false);
-      setNewGroupName("");
-    }
-  };
-
-  const renameGroup = async (groupId: string) => {
-    if (!egName.trim()) return;
-    await fetch("/api/admin/modifier-templates", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupId, name: egName.trim() }),
-    });
-    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, name: egName.trim() } : g));
-    setEditingGroup(null);
-  };
-
-  const deleteGroup = async (groupId: string) => {
-    await fetch("/api/admin/modifier-templates", {
-      method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ groupId }),
-    });
-    setGroups(prev => prev.filter(g => g.id !== groupId));
-  };
-
-  const addOption = async (groupId: string) => {
-    if (!newOptName.trim()) return;
-    const res = await fetch("/api/admin/modifier-templates", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addOptionToGroup: groupId, name: newOptName.trim(), priceAdjustment: newOptPrice ? Number(newOptPrice) : 0 }),
-    });
-    const opt = await res.json();
-    if (res.ok) {
-      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, options: [...g.options, opt] } : g));
-      setNewOptName(""); setNewOptPrice(""); setAddingOption(null);
-    }
-  };
-
-  const renameOption = async (optionId: string) => {
-    if (!eoName.trim()) return;
-    await fetch("/api/admin/modifier-templates", {
-      method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ optionId, name: eoName.trim(), priceAdjustment: eoPrice ? Number(eoPrice) : 0 }),
-    });
-    setGroups(prev => prev.map(g => ({
-      ...g, options: g.options.map(o => o.id === optionId ? { ...o, name: eoName.trim(), priceAdjustment: eoPrice ? Number(eoPrice) : 0 } : o),
-    })));
-    setEditingOption(null);
-  };
-
-  const deleteOption = async (optionId: string) => {
-    await fetch("/api/admin/modifier-templates", {
-      method: "DELETE", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ optionId }),
-    });
-    setGroups(prev => prev.map(g => ({ ...g, options: g.options.filter(o => o.id !== optionId) })));
-  };
-
   if (loading) return <div style={{ padding: "8px 12px" }}><span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>Cargando...</span></div>;
 
   return (
     <div style={{ padding: "8px 12px 12px", borderTop: "1px solid var(--adm-card-border)" }}>
-      {dishCount > 1 && (
-        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#e85530", margin: "0 0 8px", padding: "4px 8px", background: "rgba(232,85,48,0.06)", borderRadius: 6 }}>
-          ⚠️ Usado en {dishCount} platos — los cambios afectarán a todos.
-        </p>
-      )}
       {groups.length === 0 && (
-        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>Sin grupos. Agrega uno para definir opciones.</p>
+        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0 }}>Sin grupos configurados. Configúralo en el tab Modificadores.</p>
       )}
       {groups.map(g => (
-        <div key={g.id} style={{ marginBottom: 10 }}>
-          {/* Group header */}
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-            {editingGroup === g.id ? (
-              <input value={egName} onChange={e => setEgName(e.target.value)} onBlur={() => renameGroup(g.id)} onKeyDown={e => e.key === "Enter" && renameGroup(g.id)}
-                style={{ flex: 1, padding: "3px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
-            ) : (
-              <span onClick={() => { setEditingGroup(g.id); setEgName(g.name); }} style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text)", cursor: "pointer" }}>
-                {g.name} <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.62rem" }}>({g.required ? "obligatorio" : "opcional"}, máx {g.maxSelect})</span>
-              </span>
-            )}
-            <button onClick={() => deleteGroup(g.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.55rem", padding: "1px 4px" }}>×</button>
-          </div>
-          {/* Options */}
-          <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2 }}>
+        <div key={g.id} style={{ marginBottom: 8 }}>
+          <span style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text)" }}>
+            {g.name} <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.62rem" }}>({g.required ? "obligatorio" : "opcional"}, máx {g.maxSelect})</span>
+          </span>
+          <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, marginTop: 3 }}>
             {g.options.map(o => (
               <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                {editingOption === o.id ? (
-                  <>
-                    <input value={eoName} onChange={e => setEoName(e.target.value)} onKeyDown={e => e.key === "Enter" && renameOption(o.id)}
-                      style={{ flex: 1, padding: "2px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
-                    <input value={eoPrice} onChange={e => setEoPrice(e.target.value)} placeholder="$" onKeyDown={e => e.key === "Enter" && renameOption(o.id)}
-                      style={{ width: 50, padding: "2px 4px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none", textAlign: "right" }} />
-                    <button onClick={() => renameOption(o.id)} style={{ background: "none", border: "none", color: "#4ade80", fontSize: "0.62rem", cursor: "pointer" }}>✓</button>
-                    <button onClick={() => setEditingOption(null)} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "0.55rem", cursor: "pointer" }}>×</button>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)" }}>·</span>
-                    <span onClick={() => { setEditingOption(o.id); setEoName(o.name); setEoPrice(o.priceAdjustment ? String(o.priceAdjustment) : ""); }} style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer", flex: 1 }}>
-                      {o.name}
-                    </span>
-                    {o.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623" }}>+${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}</span>}
-                    <button onClick={() => deleteOption(o.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.5rem", padding: "0 2px", opacity: 0.6 }}>×</button>
-                  </>
-                )}
+                <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)" }}>·</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", flex: 1 }}>{o.name}</span>
+                {o.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623" }}>+${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}</span>}
               </div>
             ))}
-            {/* Add option inline */}
-            {addingOption === g.id ? (
-              <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 2 }}>
-                <input value={newOptName} onChange={e => setNewOptName(e.target.value)} placeholder="Nombre" onKeyDown={e => e.key === "Enter" && addOption(g.id)}
-                  style={{ flex: 1, padding: "3px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
-                <input value={newOptPrice} onChange={e => setNewOptPrice(e.target.value)} placeholder="$" onKeyDown={e => e.key === "Enter" && addOption(g.id)}
-                  style={{ width: 45, padding: "3px 4px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none", textAlign: "right" }} />
-                <button onClick={() => addOption(g.id)} style={{ background: "none", border: "none", color: "#4ade80", fontSize: "0.62rem", cursor: "pointer" }}>✓</button>
-                <button onClick={() => { setAddingOption(null); setNewOptName(""); setNewOptPrice(""); }} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "0.55rem", cursor: "pointer" }}>×</button>
-              </div>
-            ) : (
-              <button onClick={() => setAddingOption(g.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", color: "#F4A623", padding: "2px 0", textAlign: "left" }}>+ opción</button>
-            )}
+            {g.options.length === 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)" }}>Sin opciones</span>}
           </div>
         </div>
       ))}
-      {addingGroup ? (
-        <div style={{ border: "1px dashed var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>
-          <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGroup(newGroupName)}
-            placeholder="Ej: Elige tu masa, Tipo de cocción..."
-            style={{ width: "100%", padding: "5px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" as const, marginBottom: 4 }} autoFocus />
-          <p style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)", margin: "0 0 6px", lineHeight: 1.4 }}>Este nombre se muestra al cliente en la carta</p>
-          <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => addGroup(newGroupName)} disabled={!newGroupName.trim()} style={{ padding: "4px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", opacity: !newGroupName.trim() ? 0.5 : 1 }}>Crear grupo</button>
-            <button onClick={() => { setAddingGroup(false); setNewGroupName(""); }} style={{ padding: "4px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontFamily: F, fontSize: "0.62rem" }}>Cancelar</button>
-          </div>
-        </div>
-      ) : (
-        <button onClick={() => setAddingGroup(true)} style={{ background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 6, cursor: "pointer", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: "6px 10px", width: "100%" }}>+ Agregar grupo</button>
-      )}
     </div>
   );
 }
