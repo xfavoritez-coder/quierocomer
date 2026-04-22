@@ -336,7 +336,14 @@ export default function AdminMenus() {
     });
     const saved = await res.json();
     const newCat = categories.find(c => c.id === eCategoryId) || selectedDish.category;
-    const updated = { ...selectedDish, ...updates, allergens: updates.allergens, tags: eTags as any, categoryId: eCategoryId, category: { id: newCat.id, name: newCat.name } };
+    // Merge server response with local data for immediate update
+    const updated = {
+      ...selectedDish,
+      ...saved,
+      categoryId: eCategoryId,
+      category: { id: newCat.id, name: newCat.name },
+      modifierTemplates: (selectedDish as any).modifierTemplates || [],
+    };
     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
     setSelectedDish(updated);
     setEditMode(false);
