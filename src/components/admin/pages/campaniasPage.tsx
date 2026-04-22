@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import { EMAIL_TEMPLATES } from "@/lib/campaigns/templates";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
@@ -109,7 +110,7 @@ export default function AdminCampanias() {
     setFName(""); setFSegment(""); setFSubject(""); setFBody(""); setFTemplate("");
   };
 
-  if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando campañas...</p>;
+  if (loading) return <SkeletonLoading type="cards" />;
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#888", fontFamily: F }}>Selecciona un local</p><RestaurantPicker /></div>

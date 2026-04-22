@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import { EMAIL_TEMPLATES } from "@/lib/campaigns/templates";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -70,7 +71,7 @@ export default function AdminAutomatizaciones() {
 
   const triggerInfo = TRIGGERS.find(t => t.value === fTrigger);
 
-  if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando...</p>;
+  if (loading) return <SkeletonLoading type="cards" />;
   if (!selectedRestaurantId) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "#888", fontFamily: F }}>Selecciona un local</p><RestaurantPicker /></div>;
 
   return (

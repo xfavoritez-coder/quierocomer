@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -49,7 +50,7 @@ export default function FunnelPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="analytics" />
       ) : data ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <FunnelStep label="Fantasmas únicos" value={data.totalGhosts} pctRelative={100} pctAbsolute={100} color="#F4A623" isFirst />

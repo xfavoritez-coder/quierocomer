@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -158,7 +159,7 @@ export default function MiRestaurantePage() {
 
   const selectedRestaurant = restaurants.find(r => r.id === rid);
 
-  if (loading) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: GOLD, fontFamily: F }}>🧞 Cargando...</p></div>;
+  if (loading) return <SkeletonLoading type="form" />;
   if (!data || !rid) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;
 
   return (

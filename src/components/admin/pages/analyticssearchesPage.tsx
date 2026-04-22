@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -46,7 +47,7 @@ export default function SearchesPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="list" />
       ) : data.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {data.map((d, i) => (

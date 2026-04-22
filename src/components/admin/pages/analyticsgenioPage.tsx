@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -47,7 +48,7 @@ export default function GenioImpactPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="table" />
       ) : data ? (
         <>
           {/* Header row */}

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
@@ -236,7 +237,7 @@ export default function AdminPromociones() {
     return p.status === filter;
   });
 
-  if (sessionLoading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando...</p>;
+  if (sessionLoading) return <SkeletonLoading type="cards" />;
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -467,7 +468,7 @@ export default function AdminPromociones() {
       )}
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando...</p>
+        <SkeletonLoading type="cards" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {filtered.map(p => {

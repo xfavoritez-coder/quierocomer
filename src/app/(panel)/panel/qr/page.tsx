@@ -3,6 +3,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import { QrCode, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -11,7 +12,7 @@ const GOLD = "#F4A623";
 export default function PanelQRPage() {
   const { restaurants, selectedRestaurantId, loading } = useAdminSession();
 
-  if (loading) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: GOLD, fontFamily: F }}>🧞 Cargando...</p></div>;
+  if (loading) return <SkeletonLoading type="form" />;
 
   const restaurant = restaurants.find(r => r.id === selectedRestaurantId);
   if (!restaurant) return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Selecciona un restaurant</p></div>;

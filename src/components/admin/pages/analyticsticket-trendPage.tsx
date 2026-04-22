@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -49,7 +50,7 @@ export default function TicketTrendPage() {
       {!restaurantId ? (
         <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Selecciona un local para ver la tendencia</p>
       ) : loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="analytics" />
       ) : data.length > 0 ? (
         <>
           {/* Simple bar chart */}

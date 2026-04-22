@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -74,7 +75,7 @@ export default function AnalyticsDashboard() {
       </div>
 
       {loading ? (
-        <p style={{ color: "var(--adm-accent)", fontFamily: F, fontSize: "0.85rem", textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="analytics" />
       ) : data ? (
         <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <Card label="Visitantes únicos" value={data.totalVisitors} color="var(--adm-accent)" />

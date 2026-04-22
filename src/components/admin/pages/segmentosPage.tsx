@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 
@@ -132,7 +133,7 @@ export default function AdminSegmentos() {
     setSaving(false);
   };
 
-  if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando segmentos...</p>;
+  if (loading) return <SkeletonLoading type="cards" />;
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}>

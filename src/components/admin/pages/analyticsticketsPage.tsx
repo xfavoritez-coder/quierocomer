@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const I: React.CSSProperties = { width: "100%", padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 10, boxSizing: "border-box" };
@@ -115,7 +116,7 @@ export default function TicketsPage() {
       </div>
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, textAlign: "center", padding: 40 }}>Cargando...</p>
+        <SkeletonLoading type="list" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {tickets.map((t) => (

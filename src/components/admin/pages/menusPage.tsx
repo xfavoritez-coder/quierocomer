@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -158,7 +159,7 @@ export default function AdminMenus() {
     setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: !d.isActive } : d));
   };
 
-  if (sessionLoading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando...</p>;
+  if (sessionLoading) return <SkeletonLoading type="list" />;
 
   if (!selectedRestaurantId) return (
     <div style={{ padding: 40, textAlign: "center" }}>
@@ -702,7 +703,7 @@ export default function AdminMenus() {
       )}
 
       {loading ? (
-        <p style={{ color: "#F4A623", fontFamily: F, padding: 40, textAlign: "center" }}>Cargando platos...</p>
+        <SkeletonLoading type="list" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {paginated.map(d => (
