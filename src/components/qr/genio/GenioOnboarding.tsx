@@ -7,7 +7,7 @@ import PostGenioCapture from "../capture/PostGenioCapture";
 import DishDetail from "../carta/DishDetail";
 import {
   X, UtensilsCrossed, Leaf, Sprout, Fish,
-  Check, Ban, Wheat, Milk,
+  Check, Ban, Wheat, Milk, Flame,
   Sparkles, ChevronLeft,
 } from "lucide-react";
 
@@ -96,6 +96,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           value: item.name,
         });
       }
+      // Fixed option: spicy (uses dish.isSpicy, not ingredient chain)
+      opts.push({ icon: Flame, label: "Sin picante", value: "_spicy" });
       setRestrictionOptions(opts);
     }).catch(() => {});
   }, []);
@@ -341,6 +343,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         // If the dish has any flag that matches user's restrictions, exclude it
         for (const r of restrictions) {
           if (r === "ninguna") continue;
+          if (r === "_spicy" && d.isSpicy) return false;
           if (dishFlags.has(r)) return false;
         }
         return true;

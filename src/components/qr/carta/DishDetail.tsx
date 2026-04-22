@@ -225,7 +225,10 @@ function DishSlide({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
-            <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>{dish.name}</h2>
+            <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+              {dish.tags?.includes("RECOMMENDED") && <span style={{ color: "#fbbf24", marginRight: 8 }}>★</span>}
+              {dish.name}
+            </h2>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
                 <>
@@ -237,7 +240,7 @@ function DishSlide({
               )}
             </div>
           </div>
-          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={18} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "0.5px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 18 }} />
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 20 }} />
         </div>
 
         {/* Rating + Stock */}
@@ -253,10 +256,10 @@ function DishSlide({
           <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver más</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver más</button>
         )}
         {isLongDesc && expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver menos</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver menos</button>
         )}
 
         {/* Modifier options */}
