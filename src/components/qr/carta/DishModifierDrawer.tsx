@@ -76,18 +76,18 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   };
 
   // Calculate total price adjustment
-  const priceAdjustment = allGroups.reduce((total, g) => {
+  const priceAdjustment = allGroups.reduce((total: number, g: Group) => {
     const selected = selections[g.id] || [];
     return total + g.options
-      .filter(o => selected.includes(o.id))
-      .reduce((sum, o) => sum + o.priceAdjustment, 0);
+      .filter((o: Option) => selected.includes(o.id))
+      .reduce((sum: number, o: Option) => sum + o.priceAdjustment, 0);
   }, 0);
 
   const basePrice = dish.discountPrice || dish.price;
   const totalPrice = basePrice + priceAdjustment;
 
   // Check if all required groups are satisfied
-  const allValid = allGroups.every(g => {
+  const allValid = allGroups.every((g: Group) => {
     if (!g.required) return true;
     const selected = selections[g.id] || [];
     return selected.length >= g.minSelect;
