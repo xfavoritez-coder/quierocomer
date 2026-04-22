@@ -16,7 +16,7 @@ export async function getRestaurantBySlug(slug: string) {
             include: {
               groups: {
                 orderBy: { position: "asc" },
-                include: { options: { orderBy: { position: "asc" } } },
+                include: { options: { where: { isHidden: false }, orderBy: { position: "asc" } } },
               },
             },
           },

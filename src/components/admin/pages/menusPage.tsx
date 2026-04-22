@@ -21,7 +21,7 @@ const F = "var(--font-display)";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#4ade80", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
 /* ── Inline modifier preview (read-only, used inside dish editMode) ── */
-interface IMEOption { id: string; name: string; priceAdjustment: number; position: number; }
+interface IMEOption { id: string; name: string; priceAdjustment: number; isHidden?: boolean; position: number; }
 interface IMEGroup { id: string; name: string; required: boolean; maxSelect: number; position: number; options: IMEOption[]; }
 
 function InlineModifierEditor({ templateId, restaurantId }: { templateId: string; restaurantId: string }) {
@@ -53,9 +53,10 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
           </span>
           <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2, marginTop: 3 }}>
             {g.options.map(o => (
-              <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 6, opacity: o.isHidden ? 0.4 : 1 }}>
                 <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)" }}>·</span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", flex: 1 }}>{o.name}</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", flex: 1, textDecoration: o.isHidden ? "line-through" : "none" }}>{o.name}</span>
+                {o.isHidden && <span style={{ fontSize: "0.55rem", color: "#ef4444", fontFamily: F }}>Oculto</span>}
                 {o.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623" }}>+${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}</span>}
               </div>
             ))}

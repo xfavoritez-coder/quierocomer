@@ -10,7 +10,7 @@ const GOLD = "#F4A623";
 const LBL: React.CSSProperties = { fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 };
 const INP: React.CSSProperties = { width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const };
 
-interface Option { id: string; name: string; description?: string | null; imageUrl?: string | null; priceAdjustment: number; isDefault: boolean; position: number; }
+interface Option { id: string; name: string; description?: string | null; imageUrl?: string | null; priceAdjustment: number; isDefault: boolean; isHidden?: boolean; position: number; }
 interface Group { id: string; name: string; required: boolean; minSelect: number; maxSelect: number; position: number; options: Option[]; }
 interface Template { id: string; name: string; groups: Group[]; dishes: { id: string; name: string }[]; }
 
@@ -257,7 +257,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                       </div>
                       <div style={{ padding: "6px 12px 10px" }}>
                         {group.options.map(opt => (
-                          <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+                          <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--adm-card-border)", opacity: opt.isHidden ? 0.4 : 1, transition: "opacity 0.2s" }}>
                             {editingOption === opt.id ? (
                               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
                                 <div style={{ display: "flex", gap: 6 }}>
@@ -291,10 +291,18 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                               </div>
                             ) : (
                               <>
-                                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{opt.name}</span>
+                                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: opt.isHidden ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, textDecoration: opt.isHidden ? "line-through" : "none" }}>{opt.name}</span>
+                                {opt.isHidden && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600 }}>Oculto</span>}
                                 {opt.imageUrl && <span style={{ fontSize: "0.6rem" }}>📷</span>}
                                 {opt.description && <span style={{ fontSize: "0.6rem" }}>📝</span>}
                                 {opt.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.75rem", color: opt.priceAdjustment > 0 ? GOLD : "#4ade80", fontWeight: 600 }}>{opt.priceAdjustment > 0 ? "+" : ""}${Math.abs(opt.priceAdjustment).toLocaleString("es-CL")}</span>}
+                                <button onClick={async () => {
+                                  const newHidden = !opt.isHidden;
+                                  await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: opt.id, isHidden: newHidden }) });
+                                  setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, groups: t.groups.map(g => g.id === group.id ? { ...g, options: g.options.map(o => o.id === opt.id ? { ...o, isHidden: newHidden } : o) } : g) } : t));
+                                }} style={{ padding: "2px 8px", background: opt.isHidden ? "rgba(74,222,128,0.1)" : "rgba(255,170,0,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: opt.isHidden ? "#4ade80" : "#b88a00", cursor: "pointer", fontWeight: 600 }}>
+                                  {opt.isHidden ? "Mostrar" : "Ocultar"}
+                                </button>
                                 <button onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ padding: "2px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
                                 <button onClick={() => deleteOption(template.id, group.id, opt.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
                               </>

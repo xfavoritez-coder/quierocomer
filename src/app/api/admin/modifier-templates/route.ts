@@ -201,6 +201,7 @@ export async function PUT(req: NextRequest) {
       if (body.isDefault !== undefined) data.isDefault = body.isDefault;
       if (body.description !== undefined) data.description = body.description;
       if (body.imageUrl !== undefined) data.imageUrl = body.imageUrl;
+      if (body.isHidden !== undefined) data.isHidden = body.isHidden;
 
       const updated = await prisma.modifierTemplateOption.update({ where: { id: body.optionId }, data });
       return NextResponse.json(updated);
