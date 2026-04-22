@@ -36,6 +36,8 @@ export default function AdminDashboard() {
   const [generatingInsights, setGeneratingInsights] = useState(false);
   const [emailHealth, setEmailHealth] = useState<{ failuresLast24h: number; configured: boolean } | null>(null);
 
+  const [refreshKey, setRefreshKey] = useState(0);
+
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
@@ -53,7 +55,7 @@ export default function AdminDashboard() {
     if (isSuper) {
       fetch("/api/admin/email-health").then(r => r.ok ? r.json() : null).then(d => { if (d) setEmailHealth(d); }).catch(() => {});
     }
-  }, [filterRestaurant, sessionLoading, selectedRestaurantId, isSuper]);
+  }, [filterRestaurant, sessionLoading, selectedRestaurantId, isSuper, refreshKey]);
 
   if (loading || sessionLoading) {
     return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: GOLD, fontFamily: F, fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
@@ -70,14 +72,17 @@ export default function AdminDashboard() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: 0 }}>Dashboard</h1>
-        <select
-          value={filterRestaurant}
-          onChange={e => setFilterRestaurant(e.target.value)}
-          style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-        >
-          <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
-          {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
-        </select>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <select
+            value={filterRestaurant}
+            onChange={e => setFilterRestaurant(e.target.value)}
+            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+          >
+            <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
+            {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
+          </select>
+          <button onClick={() => setRefreshKey(k => k + 1)} title="Actualizar" style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", color: "var(--adm-text3)" }}>↻</button>
+        </div>
       </div>
 
       {/* Email health warning */}

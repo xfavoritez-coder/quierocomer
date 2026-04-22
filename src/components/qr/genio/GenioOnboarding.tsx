@@ -997,6 +997,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             )}
             {/* Info */}
             <div style={{ padding: "16px 20px 24px" }}>
+              {(() => { const cat = categories.find(c => c.id === previewDish.categoryId); return cat ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>{cat.name}</span> : null; })()}
               <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
               {previewDish.description && (
                 <>
