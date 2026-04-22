@@ -57,7 +57,8 @@ export async function PUT(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto, linkToDishes } = await req.json();
+    const body = await req.json();
+    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto, linkToDishes } = body;
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
     // Link ingredient to multiple dishes at once
@@ -100,6 +101,17 @@ export async function PUT(req: NextRequest) {
       const ingredient = await prisma.ingredient.update({
         where: { id },
         data: { aliases: { push: alias } },
+      });
+      return NextResponse.json({ ingredient });
+    }
+
+    // Remove alias from ingredient
+    if (body.removeAlias) {
+      const current = await prisma.ingredient.findUnique({ where: { id }, select: { aliases: true } });
+      const updated = (current?.aliases || []).filter(a => a !== body.removeAlias);
+      const ingredient = await prisma.ingredient.update({
+        where: { id },
+        data: { aliases: updated },
       });
       return NextResponse.json({ ingredient });
     }

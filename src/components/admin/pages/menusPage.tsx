@@ -896,9 +896,9 @@ export default function AdminMenus() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                  {isRec && <span style={{ fontSize: "0.7rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
+                  {isRec && <span style={{ fontSize: "0.8rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
                   {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.59rem", fontWeight: 700, color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Recién agregado</span>}
-                  {d.tags?.includes("NEW") && <span style={{ fontSize: "0.56rem", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
+                  {d.tags?.includes("NEW") && <span style={{ fontSize: "0.56rem", fontWeight: 700, color: "white", background: "#e85530", padding: "0px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
                 </div>
                 <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
               </div>
