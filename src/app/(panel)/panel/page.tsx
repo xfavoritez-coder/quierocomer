@@ -123,7 +123,7 @@ export default function PanelDashboard() {
             </a>
             {[
               { icon: QrCode, label: "Imprimir QR", href: "/panel/qr" },
-              { icon: Bell, label: "Garzón", href: "/panel/garzon" },
+              { icon: Bell, label: "Panel garzón", href: "/panel/garzon" },
             ].map(a => (
               <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)" }}>
                 <a.icon size={20} color={GOLD} />
