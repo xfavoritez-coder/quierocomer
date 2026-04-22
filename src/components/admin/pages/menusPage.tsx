@@ -190,6 +190,18 @@ export default function AdminMenus() {
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<string[]>([]);
   const ingRef = useRef<HTMLDivElement>(null);
 
+  // Load templates when a dish is selected (not just in edit mode)
+  useEffect(() => {
+    if (!selectedDish || !selectedRestaurantId) return;
+    setAssignedTemplateIds(((selectedDish as any).modifierTemplates || []).map((t: any) => t.id));
+    if (availableTemplates.length === 0) {
+      fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
+        .then(r => r.json())
+        .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
+        .catch(() => {});
+    }
+  }, [selectedDish?.id]);
+
   // Close ingredient list on click outside
   useEffect(() => {
     if (!ingListOpen) return;
@@ -333,27 +345,44 @@ export default function AdminMenus() {
                 </button>
               </div>
 
-              {/* Modifier templates assigned */}
-              {(() => {
-                const dishTemplates = (selectedDish as any).modifierTemplates || [];
-                return (
-                  <div style={{ marginTop: 16 }}>
-                    <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>Modificadores</h3>
-                    {dishTemplates.length > 0 ? (
-                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                        {dishTemplates.map((t: any) => (
-                          <span key={t.id} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>{t.name}</span>
-                        ))}
-                      </div>
-                    ) : (
-                      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Sin modificadores asignados</p>
-                    )}
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
-                      Asigna plantillas desde la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button> o edita el plato para gestionarlas.
-                    </p>
+              {/* Modifier templates — assign/unassign directly */}
+              <div style={{ marginTop: 16 }}>
+                <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>Modificadores</h3>
+                {availableTemplates.length > 0 ? (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {availableTemplates.map(t => {
+                      const assigned = assignedTemplateIds.includes(t.id);
+                      return (
+                        <button key={t.id} onClick={async () => {
+                          const action = assigned ? "unassignDishId" : "assignDishId";
+                          await fetch("/api/admin/modifier-templates", {
+                            method: "PUT", headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ templateId: t.id, [action]: selectedDish.id }),
+                          });
+                          const newIds = assigned ? assignedTemplateIds.filter(id => id !== t.id) : [...assignedTemplateIds, t.id];
+                          setAssignedTemplateIds(newIds);
+                          // Update local dish data
+                          const newTemplates = newIds.map(id => availableTemplates.find(at => at.id === id)).filter(Boolean);
+                          const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
+                          setSelectedDish(updatedDish);
+                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
+                        }} style={{
+                          padding: "6px 14px", borderRadius: 50, border: "none", cursor: "pointer",
+                          fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+                          background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)",
+                          color: assigned ? "#F4A623" : "var(--adm-text3)",
+                        }}>
+                          {assigned ? "✓ " : ""}{t.name}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })()}
+                ) : (
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
+                    Crea plantillas en la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button>
+                  </p>
+                )}
+              </div>
             </>
           ) : (
             <>
