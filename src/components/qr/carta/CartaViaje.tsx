@@ -729,7 +729,7 @@ const CSS = `
   .vj-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
   .vj-v-light .vj-meta, .vj-v-spotlight .vj-meta { justify-content: center; }
   .vj-dish.in-view .vj-meta { opacity: 1; transform: translateY(0); }
-  .vj-price { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; padding: 6px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; }
+  .vj-price { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; padding: 6px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; }
 
   /* HERO */
   .vj-v-hero { flex-direction: column; justify-content: flex-end; }
