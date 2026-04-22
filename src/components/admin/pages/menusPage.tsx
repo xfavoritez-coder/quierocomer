@@ -137,8 +137,11 @@ export default function AdminMenus() {
       list = list.filter(d => d.name.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
-    // Recommended first, then alphabetical
+    // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
+      const aNew = recentlyCreated.has(a.id) ? 0 : 1;
+      const bNew = recentlyCreated.has(b.id) ? 0 : 1;
+      if (aNew !== bNew) return aNew - bNew;
       const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
       const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
       if (aRec !== bRec) return aRec - bRec;
