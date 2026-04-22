@@ -475,7 +475,7 @@ export default function CartaPremium({
       <style>{`@keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }`}</style>
 
       {modifierDish && (
-        <DishModifierDrawer dish={modifierDish} onClose={() => setModifierDish(null)} />
+        <DishModifierDrawer dish={modifierDish} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
       )}
 
       {selectedDish && (

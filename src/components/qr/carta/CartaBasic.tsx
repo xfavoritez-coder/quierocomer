@@ -133,7 +133,7 @@ export default function CartaBasic({
       )}
 
       {modifierDish && (
-        <DishModifierDrawer dish={modifierDish as any} onClose={() => setModifierDish(null)} />
+        <DishModifierDrawer dish={modifierDish as any} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
       )}
 
       {genioOpen && (

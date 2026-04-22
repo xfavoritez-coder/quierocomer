@@ -206,7 +206,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
 
         {/* Modifier drawer */}
         {modifierDish && (
-          <DishModifierDrawer dish={modifierDish} onClose={() => setModifierDish(null)} />
+          <DishModifierDrawer dish={modifierDish} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
         )}
 
         {/* Dish detail */}

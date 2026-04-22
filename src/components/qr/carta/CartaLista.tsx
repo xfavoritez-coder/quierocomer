@@ -450,7 +450,7 @@ export default function CartaLista({
       )}
 
       {modifierDish && (
-        <DishModifierDrawer dish={modifierDish} onClose={() => setModifierDish(null)} />
+        <DishModifierDrawer dish={modifierDish} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
       )}
 
       {/* DishDetail modal */}
