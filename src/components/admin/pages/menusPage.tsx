@@ -470,7 +470,7 @@ export default function AdminMenus() {
               )}
 
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                <button onClick={() => startEditDish(selectedDish)} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ flex: 1, padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
                 <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
                   {selectedDish.isActive ? "Desactivar" : "Activar"}
                 </button>
@@ -988,7 +988,7 @@ export default function AdminMenus() {
 
                   {/* Actions */}
                   <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "stretch" }}>
-                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "10px 28px", background: "#2d2d2a", border: "none", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
                     <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
                       {d.isActive ? (
                         <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
