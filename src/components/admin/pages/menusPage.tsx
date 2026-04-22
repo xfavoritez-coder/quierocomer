@@ -78,11 +78,11 @@ export default function AdminMenus() {
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
-  const [menuTab, setMenuTab] = useState<"platos" | "categorias" | "modificadores">("platos");
+  const [menuTab, setMenuTab] = useState<"productos" | "categorias" | "modificadores">("productos");
 
   // Reset when clicking same nav link (e.g. "Mi Carta" while viewing a dish)
   useEffect(() => {
-    const handler = () => { setSelectedDish(null); setExpandedDishId(null); setEditMode(false); setMenuTab("platos"); };
+    const handler = () => { setSelectedDish(null); setExpandedDishId(null); setEditMode(false); setMenuTab("productos"); };
     window.addEventListener("nav-same-page", handler);
     return () => window.removeEventListener("nav-same-page", handler);
   }, []);
@@ -240,7 +240,7 @@ export default function AdminMenus() {
         setRecentlyCreated(prev => new Set(prev).add(dish.id));
         setTimeout(() => setRecentlyCreated(prev => { const n = new Set(prev); n.delete(dish.id); return n; }), 5 * 60 * 1000);
         // Show AI feedback
-        let msg = "Plato creado";
+        let msg = "Producto creado";
         if (aiIngredients?.matched?.length > 0) {
           msg += ` · ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""} detectados`;
         }
@@ -255,8 +255,21 @@ export default function AdminMenus() {
   };
 
   const toggleDishActive = async (dish: Dish) => {
-    await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !dish.isActive }) });
-    setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: !d.isActive } : d));
+    const newActive = !dish.isActive;
+    // Optimistic update
+    setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: newActive } : d));
+    if (selectedDish?.id === dish.id) setSelectedDish({ ...selectedDish, isActive: newActive });
+    try {
+      const res = await fetch(`/api/admin/dishes/${dish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: newActive }) });
+      if (!res.ok) {
+        // Revert on error
+        setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: dish.isActive } : d));
+        console.error("Toggle failed:", await res.text());
+      }
+    } catch (e) {
+      setDishes(prev => prev.map(d => d.id === dish.id ? { ...d, isActive: dish.isActive } : d));
+      console.error("Toggle error:", e);
+    }
   };
 
   if (sessionLoading) return <SkeletonLoading type="list" />;
@@ -470,11 +483,11 @@ export default function AdminMenus() {
 
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
                 <button onClick={() => startEditDish(selectedDish)} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ flex: 1, padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
+                <button onClick={() => toggleDishActive(selectedDish)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
                   {selectedDish.isActive ? "Desactivar" : "Activar"}
                 </button>
                 <button onClick={async () => {
-                  if (!confirm(`¿Eliminar "${selectedDish.name}"? El plato dejará de aparecer en la carta y el panel.`)) return;
+                  if (!confirm(`¿Eliminar "${selectedDish.name}"? El producto dejará de aparecer en la carta y el panel.`)) return;
                   await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "DELETE" });
                   setDishes(prev => prev.filter(d => d.id !== selectedDish.id));
                   setSelectedDish(null);
@@ -617,7 +630,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Alérgenos</label>
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                  Los alérgenos se calculan automáticamente a partir de los ingredientes del plato.
+                  Los alérgenos se calculan automáticamente a partir de los ingredientes del producto.
                 </p>
                 {eAllergens.length > 0 && (
                   <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
@@ -768,7 +781,7 @@ export default function AdminMenus() {
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Mi Carta</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Administra los platos y categorías de {activeRestaurant?.name} · {filtered.length} platos</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Administra los productos y categorías de {activeRestaurant?.name} · {filtered.length} productos</p>
         </div>
         <RestaurantPicker />
       </div>
@@ -776,7 +789,7 @@ export default function AdminMenus() {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--adm-hover)", borderRadius: 10, padding: 3 }}>
         {([
-          { key: "platos" as const, label: "Platos" },
+          { key: "productos" as const, label: "Productos" },
           { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
         ]).map(tab => (
@@ -790,16 +803,16 @@ export default function AdminMenus() {
         ))}
       </div>
 
-      {menuTab === "platos" && (<>
+      {menuTab === "productos" && (<>
       {!creatingDish && (
         <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo plato</button>
+          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo producto</button>
         </div>
       )}
       <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 180, position: "relative" }}>
           <input
-            placeholder="Buscar plato..."
+            placeholder="Buscar producto..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ width: "100%", padding: "10px 14px", paddingRight: search ? 36 : 14, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
@@ -821,7 +834,7 @@ export default function AdminMenus() {
       {/* Create dish form */}
       {creatingDish && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px" }}>Nuevo plato</h3>
+          <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px" }}>Nuevo producto</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Nombre *</label>
@@ -988,7 +1001,7 @@ export default function AdminMenus() {
                   {/* Actions */}
                   <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "stretch" }}>
                     <button onClick={() => { setSelectedDish(d); startEditDish(d); }} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                    <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
+                    <button onClick={() => toggleDishActive(d)} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
                       {d.isActive ? (
                         <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
                       ) : (
@@ -1000,7 +1013,7 @@ export default function AdminMenus() {
                       {kebabOpenId === d.id && (
                         <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden", minWidth: 120 }}>
                           <button onClick={async () => {
-                            if (!confirm(`¿Eliminar "${d.name}"? El plato dejará de aparecer en la carta y el panel.`)) { setKebabOpenId(null); return; }
+                            if (!confirm(`¿Eliminar "${d.name}"? El producto dejará de aparecer en la carta y el panel.`)) { setKebabOpenId(null); return; }
                             await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
                             setDishes(prev => prev.filter(x => x.id !== d.id));
                             setExpandedDishId(null);
@@ -1020,7 +1033,7 @@ export default function AdminMenus() {
           })}
           {filtered.length === 0 && (
             <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", textAlign: "center", padding: 40 }}>
-              {dishes.length === 0 ? "Este local no tiene platos" : "No hay platos que coincidan"}
+              {dishes.length === 0 ? "Este local no tiene productos" : "No hay productos que coincidan"}
             </p>
           )}
         </div>
