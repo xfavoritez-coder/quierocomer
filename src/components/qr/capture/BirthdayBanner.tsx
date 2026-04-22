@@ -80,32 +80,32 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-4px); }
         }
-        @keyframes bdayPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(244,166,35,0.3); }
-          50% { box-shadow: 0 0 0 6px rgba(244,166,35,0); }
-        }
       `}</style>
-      <div
-        className="font-[family-name:var(--font-dm)]"
+      <button
+        onClick={() => setModalOpen(true)}
+        className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
         style={{
           margin: "28px 20px 4px",
           padding: "16px 18px",
+          width: "calc(100% - 40px)",
           background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
           backgroundSize: "200% 100%",
           animation: "bdaySlideIn 0.5s ease-out, bdayShimmer 8s ease-in-out 1s infinite",
-          border: "1px solid rgba(244,166,35,0.18)",
+          border: "1px solid rgba(244,166,35,0.22)",
           borderRadius: 14,
-          position: "relative",
           display: "flex",
           alignItems: "center",
           gap: 12,
+          cursor: "pointer",
+          boxShadow: "0 2px 8px rgba(180,130,40,0.1), inset 0 1px 0 rgba(255,255,255,0.6)",
+          textAlign: "left",
         }}
       >
         {/* Emoji */}
         <span style={{ fontSize: "1.6rem", flexShrink: 0, animation: "bdayBounce 2s ease-in-out infinite" }}>🎂</span>
 
-        {/* Text — always 2 lines: title + subtitle */}
-        <div style={{ flex: 1, minWidth: 0, paddingRight: 60 }}>
+        {/* Text */}
+        <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
           </p>
@@ -114,21 +114,9 @@ export default function BirthdayBanner({ restaurantId }: Props) {
           </p>
         </div>
 
-        {/* CTA */}
-        <button
-          onClick={() => setModalOpen(true)}
-          className="active:scale-95 transition-transform"
-          style={{
-            position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)",
-            flexShrink: 0, background: "#F4A623", color: "white", border: "none",
-            borderRadius: 50, padding: "8px 14px", fontSize: "0.82rem", fontWeight: 700,
-            fontFamily: "inherit", cursor: "pointer",
-            animation: "bdayPulse 2.5s ease-in-out infinite",
-          }}
-        >
-          Quiero
-        </button>
-      </div>
+        {/* Arrow hint */}
+        <span style={{ fontSize: "1rem", color: "#b45309", opacity: 0.4, flexShrink: 0 }}>›</span>
+      </button>
 
       {modalOpen && (
         <BirthdayModal
