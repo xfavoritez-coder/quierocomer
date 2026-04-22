@@ -334,17 +334,14 @@ export default function CartaLista({
       {grouped.map(({ category, dishes: catDishes }, index) => (
         <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 -4px 12px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
-          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "8px -4px 16px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", padding: "0 8px", marginBottom: 8 }}>
+          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "12px 0 16px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
+          <div style={{ padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
               style={{ fontSize: "1.1rem", fontWeight: 600, color: "#777" }}
             >
               {category.name}
             </h2>
-            <span style={{ fontSize: "0.68rem", color: "rgba(14,14,14,0.35)" }}>
-              {catDishes.length}
-            </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {catDishes.map((dish) => (
