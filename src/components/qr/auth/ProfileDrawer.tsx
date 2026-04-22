@@ -5,6 +5,8 @@ import { ChevronRight, LogOut, ChevronLeft, Pencil, Heart } from "lucide-react";
 import LoginDrawer from "./LoginDrawer";
 import FavoriteHeart from "../carta/FavoriteHeart";
 
+const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
+
 interface QRUser {
   id: string;
   name: string | null;

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
+const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
 
 function formatDuration(ms: number | null) {
   if (!ms) return "—";

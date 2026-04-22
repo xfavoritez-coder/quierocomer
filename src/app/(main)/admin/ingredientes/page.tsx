@@ -143,8 +143,23 @@ export default function IngredientesPage() {
     return true;
   });
 
+  // Check for exact duplicate or similar names
+  const checkDuplicate = (name: string, excludeId?: string): { exact: boolean; similar: string[] } => {
+    const lower = name.toLowerCase().trim();
+    const exact = ingredients.some(i => i.id !== excludeId && i.name.toLowerCase() === lower);
+    const similar = ingredients
+      .filter(i => i.id !== excludeId && i.name.toLowerCase() !== lower)
+      .filter(i => i.name.toLowerCase().includes(lower) || lower.includes(i.name.toLowerCase()))
+      .map(i => i.name)
+      .slice(0, 3);
+    return { exact, similar };
+  };
+
   const create = async () => {
     if (!newName.trim()) return;
+    const dup = checkDuplicate(newName);
+    if (dup.exact) { alert(`"${newName.trim()}" ya existe en la lista.`); return; }
+    if (dup.similar.length > 0 && !confirm(`Ya existen ingredientes similares: ${dup.similar.join(", ")}.\n\n¿Crear "${newName.trim()}" de todas formas?`)) return;
     const res = await fetch("/api/admin/ingredients", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: newName.trim(), category: newCat }),
@@ -167,6 +182,9 @@ export default function IngredientesPage() {
 
   const update = async () => {
     if (!editing || !eName.trim()) return;
+    const dup = checkDuplicate(eName, editing);
+    if (dup.exact) { alert(`"${eName.trim()}" ya existe en la lista.`); return; }
+    if (dup.similar.length > 0 && !confirm(`Ya existen ingredientes similares: ${dup.similar.join(", ")}.\n\n¿Guardar "${eName.trim()}" de todas formas?`)) return;
     await fetch("/api/admin/ingredients", {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id: editing, name: eName.trim(), category: eCat, isAllergen: eAllergen, allergenType: eAllergenType || null }),
