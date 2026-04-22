@@ -23,6 +23,8 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [expanded, setExpanded] = useState<string | null>(null);
 
   // Editing
+  const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
+  const [etName, setEtName] = useState("");
   const [editingOption, setEditingOption] = useState<string | null>(null);
   const [eoName, setEoName] = useState("");
   const [eoPrice, setEoPrice] = useState("");
@@ -47,6 +49,13 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     const t = await res.json();
     if (res.ok) { setTemplates(prev => [t, ...prev]); setNewName(""); setCreating(false); setExpanded(t.id); }
     setSaving(false);
+  };
+
+  const renameTemplate = async (id: string) => {
+    if (!etName.trim()) return;
+    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: id, name: etName.trim() }) });
+    setTemplates(prev => prev.map(t => t.id === id ? { ...t, name: etName.trim() } : t));
+    setEditingTemplate(null);
   };
 
   const deleteTemplate = async (id: string) => {
@@ -125,11 +134,26 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
           return (
             <div key={template.id} style={{ border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", background: "var(--adm-card)" }}>
               {/* Header */}
-              <button onClick={() => setExpanded(isExpanded ? null : template.id)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "14px 16px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", flex: 1 }}>{template.name}</span>
-                <span style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{template.groups.length} grupo{template.groups.length !== 1 ? "s" : ""} · {template.dishes.length} plato{template.dishes.length !== 1 ? "s" : ""}</span>
-                <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px" }}>
+                {editingTemplate === template.id ? (
+                  <>
+                    <input value={etName} onChange={e => setEtName(e.target.value)} onKeyDown={e => e.key === "Enter" && renameTemplate(template.id)} style={{ flex: 1, padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.92rem", fontWeight: 700, outline: "none" }} autoFocus />
+                    <button onClick={() => renameTemplate(template.id)} style={{ padding: "4px 10px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+                    <button onClick={() => setEditingTemplate(null)} style={{ padding: "4px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+                  </>
+                ) : (
+                  <>
+                    <button onClick={() => setExpanded(isExpanded ? null : template.id)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", flex: 1 }}>{template.name}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{template.groups.length} grupo{template.groups.length !== 1 ? "s" : ""} · {template.dishes.length} plato{template.dishes.length !== 1 ? "s" : ""}</span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+                    </button>
+                    <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template.id); setEtName(template.name); }} style={{ padding: "4px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, cursor: "pointer", flexShrink: 0 }} title="Editar nombre">
+                      <span style={{ fontSize: "0.75rem" }}>✏️</span>
+                    </button>
+                  </>
+                )}
+              </div>
 
               {/* Expanded content */}
               {isExpanded && (
