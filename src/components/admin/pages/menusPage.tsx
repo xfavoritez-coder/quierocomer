@@ -469,14 +469,17 @@ export default function AdminMenus() {
                   </div>
                 </div>
               )}
-              {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
+              {(selectedDish as any).allergenDetails && (
                 <div style={{ marginBottom: 9 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
+                  <div style={{ marginBottom: 5 }}>
                     <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Alérgenos</span>
                   </div>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
-                      <span key={a} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {a}</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {Object.entries((selectedDish as any).allergenDetails as Record<string, string[]>).map(([allergen, ingredients]) => (
+                      <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen}</span>
+                        <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: F }}>por {ingredients.join(", ")}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -633,10 +636,13 @@ export default function AdminMenus() {
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
                   Los alérgenos se detectan automáticamente a partir de los ingredientes del producto.
                 </p>
-                {eAllergens.length > 0 && (
-                  <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
-                    {eAllergens.map(a => (
-                      <span key={a} style={{ fontSize: "0.7rem", padding: "4px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {a}</span>
+                {(selectedDish as any)?.allergenDetails && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+                    {Object.entries((selectedDish as any).allergenDetails as Record<string, string[]>).map(([allergen, ingredients]) => (
+                      <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontSize: "0.7rem", padding: "4px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen}</span>
+                        <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: F }}>por {ingredients.join(", ")}</span>
+                      </div>
                     ))}
                   </div>
                 )}

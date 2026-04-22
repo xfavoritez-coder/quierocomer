@@ -28,15 +28,18 @@ export async function GET(req: NextRequest) {
 
   // Compute derived allergens for each dish (only type ALLERGEN, not RESTRICTION)
   const result = dishes.map(d => {
-    const allergenSet = new Set<string>();
+    const allergenMap: Record<string, string[]> = {};
     for (const di of d.dishIngredients) {
       for (const a of di.ingredient.allergens) {
-        if (a.type === "ALLERGEN") allergenSet.add(a.name);
+        if (a.type === "ALLERGEN") {
+          if (!allergenMap[a.name]) allergenMap[a.name] = [];
+          if (!allergenMap[a.name].includes(di.ingredient.name)) allergenMap[a.name].push(di.ingredient.name);
+        }
       }
     }
-    const derivedAllergens = [...allergenSet].join(", ") || null;
+    const derivedAllergens = Object.keys(allergenMap).join(", ") || null;
     const { dishIngredients: _, ...rest } = d;
-    return { ...rest, allergens: derivedAllergens };
+    return { ...rest, allergens: derivedAllergens, allergenDetails: Object.keys(allergenMap).length > 0 ? allergenMap : null };
   });
 
   return NextResponse.json(result);
