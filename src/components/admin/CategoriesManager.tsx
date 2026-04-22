@@ -33,7 +33,7 @@ function SortableDish({ dish, onMove, categories, currentCatId }: { dish: Dish; 
         )}
         <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
         <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
-        <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
+        <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Cambiar categoría</button>
       </div>
       {moving && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", padding: "4px 0 8px 42px" }}>
