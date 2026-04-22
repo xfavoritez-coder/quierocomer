@@ -151,8 +151,9 @@ export default function AdminMenus() {
           photos: newDishPhoto ? [newDishPhoto] : [],
         }),
       });
-      const dish = await res.json();
+      const data = await res.json();
       if (res.ok) {
+        const { aiIngredients, ...dish } = data;
         // Add to top of list and open it
         setDishes(prev => [dish, ...prev]);
         setSelectedDish(dish);
@@ -161,8 +162,15 @@ export default function AdminMenus() {
         setNewDishDesc("");
         setNewDishPhoto("");
         setCreatingDish(false);
-        setDishCreatedMsg("Plato creado. La IA está analizando ingredientes...");
-        setTimeout(() => setDishCreatedMsg(""), 5000);
+        // Show AI feedback
+        if (aiIngredients?.matched?.length > 0) {
+          setDishCreatedMsg(`Plato creado. IA vinculó ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""}: ${aiIngredients.matched.join(", ")}`);
+        } else if (aiIngredients?.suggested?.length > 0) {
+          setDishCreatedMsg(`Plato creado. IA detectó ${aiIngredients.suggested.length} ingrediente${aiIngredients.suggested.length > 1 ? "s" : ""} nuevos (pendientes de aprobación en admin).`);
+        } else {
+          setDishCreatedMsg("Plato creado.");
+        }
+        setTimeout(() => setDishCreatedMsg(""), 8000);
       }
     } catch {}
     setDishSaving(false);

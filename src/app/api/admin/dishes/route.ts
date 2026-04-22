@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
   const dishes = await prisma.dish.findMany({
-    where: { restaurantId },
+    where: { restaurantId, deletedAt: null },
     include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
@@ -55,12 +55,16 @@ export async function POST(req: NextRequest) {
       include: { category: { select: { id: true, name: true } } },
     });
 
-    // Extract ingredients in background (non-blocking)
-    extractIngredientsForDish(dish.id, name, description || null, photos?.[0] || null)
-      .then(r => console.log(`[AI] ${name}: ${r.matched.length} matched, ${r.suggested.length} suggested`))
-      .catch(e => console.error("[AI extract]", e));
+    // Extract ingredients (blocking, text-only for speed)
+    let aiResult = null;
+    try {
+      aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
+      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
+    } catch (e) {
+      console.error("[AI extract]", e);
+    }
 
-    return NextResponse.json(dish);
+    return NextResponse.json({ ...dish, aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);
     return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });

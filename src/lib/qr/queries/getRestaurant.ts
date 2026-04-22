@@ -9,7 +9,7 @@ export async function getRestaurantBySlug(slug: string) {
         orderBy: { position: "asc" },
       },
       dishes: {
-        where: { isActive: true },
+        where: { isActive: true, deletedAt: null },
         orderBy: { position: "asc" },
         include: {
           modifierTemplates: {

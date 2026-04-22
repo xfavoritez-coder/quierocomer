@@ -51,16 +51,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     // Re-extract ingredients if name, description, or photos changed (and no manual ingredientIds sent)
+    let aiResult = null;
     if ((body.name || body.description || body.photos) && body.ingredientIds === undefined) {
       const updated = await prisma.dish.findUnique({ where: { id }, select: { name: true, description: true, photos: true } });
       if (updated) {
-        extractIngredientsForDish(id, updated.name, updated.description, updated.photos?.[0] || null)
-          .then(r => { if (r.matched.length > 0) console.log(`[AI] ${updated.name}: ${r.matched.length} matched, ${r.suggested.length} suggested`); })
-          .catch(e => console.error("[AI extract]", e));
+        try {
+          aiResult = await extractIngredientsForDish(id, updated.name, updated.description, null);
+          console.log(`[AI] ${updated.name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
+        } catch (e) {
+          console.error("[AI extract]", e);
+        }
       }
     }
 
-    return NextResponse.json(dish);
+    return NextResponse.json({ ...dish, aiIngredients: aiResult });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
     console.error("[Admin dishes PUT]", e);
