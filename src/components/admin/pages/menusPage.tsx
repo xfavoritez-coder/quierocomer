@@ -220,10 +220,10 @@ export default function AdminMenus() {
 
   const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
   const TAG_OPTIONS: { value: string; label: string }[] = [
-    { value: "RECOMMENDED", label: "⭐ Recomendado" },
-    { value: "NEW", label: "🆕 Nuevo" },
-    { value: "MOST_ORDERED", label: "🔥 Más pedido" },
-    { value: "PROMOTION", label: "🏷️ Promoción" },
+    { value: "RECOMMENDED", label: "Recomendado" },
+    { value: "NEW", label: "Nuevo" },
+    { value: "MOST_ORDERED", label: "Más pedido" },
+    { value: "PROMOTION", label: "Promoción" },
   ];
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
@@ -599,8 +599,10 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
                     const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
+                    const active = eTags.includes(t.value);
                     return (
-                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled ? 0.5 : 1 }}>
+                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : active ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        {t.value === "RECOMMENDED" && <span style={{ fontSize: "0.7rem", opacity: active ? 1 : 0.4 }}>★</span>}
                         {t.label}{disabled ? " (pronto)" : ""}
                       </button>
                     );

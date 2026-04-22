@@ -435,8 +435,10 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
   const genie = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const d = dish as any;
+  const isRec = dish.tags?.includes("RECOMMENDED");
   const vjBadges = (
     <>
+      {isRec && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "11px", verticalAlign: "middle", background: "rgba(244,166,35,0.2)", color: "#F4A623", padding: "1px 8px", borderRadius: 50, fontWeight: 700, letterSpacing: "0.03em" }}>⭐</span>}
       {isNew && <VjNewBadge inline />}
       {d.dishDiet === "VEGAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌿</span>}
       {d.dishDiet === "VEGETARIAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌱</span>}

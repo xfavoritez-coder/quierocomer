@@ -68,7 +68,11 @@ export default function CartaBasic({
 
       <main className="px-4 pb-28">
         {categories.map((cat) => {
-          const catDishes = dishes.filter((d) => d.categoryId === cat.id);
+          const catDishes = dishes.filter((d) => d.categoryId === cat.id).sort((a, b) => {
+            const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
+            const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+            return aRec - bRec;
+          });
           if (!catDishes.length) return null;
           return (
             <section key={cat.id} id={`cat-${cat.id}`} className="pt-8">
