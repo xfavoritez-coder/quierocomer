@@ -178,11 +178,11 @@ export default function AdminMenus() {
         setTimeout(() => setRecentlyCreated(prev => { const n = new Set(prev); n.delete(dish.id); return n; }), 5 * 60 * 1000);
         // Show AI feedback
         if (aiIngredients?.matched?.length > 0) {
-          setDishCreatedMsg(`Plato creado. IA vinculó ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""}: ${aiIngredients.matched.join(", ")}`);
+          setDishCreatedMsg(`Plato creado · IA detectó ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""}: ${aiIngredients.matched.slice(0, 5).join(", ")}${aiIngredients.matched.length > 5 ? "..." : ""}`);
         } else if (aiIngredients?.suggested?.length > 0) {
-          setDishCreatedMsg(`Plato creado. IA detectó ${aiIngredients.suggested.length} ingrediente${aiIngredients.suggested.length > 1 ? "s" : ""} nuevos (pendientes de aprobación en admin).`);
+          setDishCreatedMsg(`Plato creado · IA encontró ${aiIngredients.suggested.length} ingrediente${aiIngredients.suggested.length > 1 ? "s" : ""} nuevos pendientes de aprobación`);
         } else {
-          setDishCreatedMsg("Plato creado.");
+          setDishCreatedMsg("Plato creado");
         }
         setTimeout(() => setDishCreatedMsg(""), 8000);
       }
@@ -371,6 +371,10 @@ export default function AdminMenus() {
 
               {selectedDish.ingredients && (
                 <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Ingredientes</span>
+                    {recentlyCreated.has(selectedDish.id) && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 50, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>Detectados por IA</span>}
+                  </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
                       <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F }}>{i}</span>
@@ -866,7 +870,7 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                   {isRec && <span style={{ fontSize: "0.7rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
-                  {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "#16a34a", background: "rgba(22,163,74,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
+                  {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Recién agregado</span>}
                   {d.tags.filter(t => t !== "RECOMMENDED").map(t => (
                     <span key={t} style={{ width: 6, height: 6, borderRadius: "50%", background: TAG_COLORS[t] || "#888", flexShrink: 0 }} />
                   ))}

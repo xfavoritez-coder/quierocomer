@@ -60,16 +60,18 @@ export async function POST(req: NextRequest) {
     let aiResult = null;
     try {
       aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
-      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested, diet: ${aiResult.detectedDiet}`);
-      // Update diet if detected and owner didn't set one (or left default)
-      if (aiResult.detectedDiet && (!dishDiet || dishDiet === "OMNIVORE") && aiResult.detectedDiet !== "OMNIVORE") {
-        await prisma.dish.update({ where: { id: dish.id }, data: { dishDiet: aiResult.detectedDiet as any } });
-      }
+      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
     } catch (e) {
       console.error("[AI extract]", e);
     }
 
-    return NextResponse.json({ ...dish, aiIngredients: aiResult });
+    // Re-fetch dish with updated ingredients
+    const updatedDish = await prisma.dish.findUnique({
+      where: { id: dish.id },
+      include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
+    });
+
+    return NextResponse.json({ ...(updatedDish || dish), aiIngredients: aiResult });
   } catch (e) {
     console.error("[Admin dishes POST]", e);
     return NextResponse.json({ error: "Error al crear plato" }, { status: 500 });
