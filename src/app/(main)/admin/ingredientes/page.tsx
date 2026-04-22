@@ -110,8 +110,10 @@ export default function IngredientesPage() {
   const [newAllergen, setNewAllergen] = useState(false);
   const [newAllergenType, setNewAllergenType] = useState("");
 
-  // Edit
+  // Edit + merge
   const [editing, setEditing] = useState<string | null>(null);
+  const [merging, setMerging] = useState<string | null>(null);
+  const [mergeSearch, setMergeSearch] = useState("");
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("");
   const [eAllergen, setEAllergen] = useState(false);
@@ -357,8 +359,27 @@ export default function IngredientesPage() {
               <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500, flex: 1 }}>{i.name}</span>
               {i.isAllergen && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergenType || "alérgeno"}</span>}
               <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); setEAllergen(i.isAllergen); setEAllergenType(i.allergenType || ""); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
+              <button onClick={() => { setMerging(i.id); setMergeSearch(""); }} style={{ padding: "4px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
               <button onClick={() => remove(i.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>
             </div>
+            {merging === i.id && (
+              <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "10px 14px", marginTop: -4, marginBottom: 4 }}>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "0 0 6px" }}><strong>{i.name}</strong> es alias de:</p>
+                <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} autoFocus />
+                <div style={{ maxHeight: 120, overflowY: "auto" }}>
+                  {ingredients.filter(t => t.id !== i.id && (!mergeSearch || t.name.includes(mergeSearch.toLowerCase()))).slice(0, 10).map(target => (
+                    <button key={target.id} onClick={async () => {
+                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: target.id, addAlias: i.name }) });
+                      await remove(i.id);
+                      setMerging(null);
+                    }} style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)" }}>
+                      {target.name}
+                    </button>
+                  ))}
+                </div>
+                <button onClick={() => setMerging(null)} style={{ marginTop: 4, padding: "3px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
+              </div>
+            )}
           );
         })}
         {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>{search ? "Sin resultados" : "Sin ingredientes"}</p>}

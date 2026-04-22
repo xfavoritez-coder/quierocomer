@@ -26,21 +26,9 @@ function DishBadges({ dish }: { dish: Dish }) {
 function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
-  return (
-    <button
-      onClick={onClick}
-      className="flex gap-3 w-full text-left"
-      style={isRec ? {
-        padding: "14px 12px",
-        borderRadius: 14,
-        background: "rgba(244,166,35,0.04)",
-        boxShadow: "inset 0 0 0 2px rgba(244,166,35,0.35)",
-        marginBottom: 8,
-      } : {
-        padding: "16px 0",
-        borderBottom: "1px solid #f0f0f0",
-      }}
-    >
+
+  const inner = (
+    <>
       <div className="shrink-0 relative overflow-hidden bg-neutral-900" style={{ width: 80, height: 80, borderRadius: 10 }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="80px" />
@@ -51,7 +39,7 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
-          {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "12px", flexShrink: 0 }}>⭐</span>}
+          {isRec && <span style={{ fontSize: "12px", flexShrink: 0 }}>⭐</span>}
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
           <DishBadges dish={dish} />
         </h3>
@@ -76,7 +64,19 @@ function BasicCard({ dish, onClick, averageRating }: Omit<DishCardProps, "varian
           )}
         </div>
       </div>
-    </button>
+    </>
+  );
+
+  if (isRec) {
+    return (
+      <div style={{ borderRadius: 14, background: "rgba(244,166,35,0.04)", border: "2px solid rgba(244,166,35,0.3)", marginBottom: 8 }}>
+        <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "14px 12px", background: "transparent" }}>{inner}</button>
+      </div>
+    );
+  }
+
+  return (
+    <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "16px 0", borderBottom: "1px solid #f0f0f0" }}>{inner}</button>
   );
 }
 
@@ -85,7 +85,8 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
   return (
-    <button onClick={onClick} className="flex flex-col text-left w-full" style={{ background: isRec ? "rgba(244,166,35,0.04)" : "none", boxShadow: isRec ? "inset 0 0 0 2px rgba(244,166,35,0.35)" : "none", borderRadius: isRec ? 14 : 0, padding: isRec ? 4 : 0 }}>
+    <div style={isRec ? { borderRadius: 14, background: "rgba(244,166,35,0.04)", border: "2px solid rgba(244,166,35,0.3)", padding: 4 } : {}}>
+    <button onClick={onClick} className="flex flex-col text-left w-full" style={{ background: "transparent" }}>
       <div className="relative w-full bg-neutral-900 overflow-hidden" style={{ aspectRatio: "3/4", borderRadius: 10 }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="155px" style={{ transform: "scale(1.08)" }} />
@@ -114,6 +115,7 @@ function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
         </div>
       </div>
     </button>
+    </div>
   );
 }
 
