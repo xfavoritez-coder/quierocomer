@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
-import crypto from "crypto";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { sendAdminEmail, welcomeOwnerEmailHtml } from "@/lib/email/sendAdminEmail";
 
@@ -16,28 +14,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id } = await params;
 
+    const { password: tempPassword } = await req.json().catch(() => ({ password: null }));
+
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id },
-      select: { id: true, email: true, name: true },
+      include: { restaurants: { select: { name: true, slug: true }, take: 1 } },
     });
     if (!owner) return NextResponse.json({ error: "Owner no encontrado" }, { status: 404 });
 
-    const rawToken = crypto.randomUUID();
-    const hashedToken = await bcrypt.hash(rawToken, 10);
-    const expiry = new Date(Date.now() + 60 * 60 * 1000);
-
-    await prisma.restaurantOwner.update({
-      where: { id },
-      data: { resetToken: hashedToken, resetTokenExpiry: expiry },
-    });
-
-    const resetLink = `${BASE_URL}/panel/reset-password?token=${encodeURIComponent(rawToken)}&email=${encodeURIComponent(owner.email)}`;
     const firstName = owner.name.split(" ")[0];
+    const restaurant = owner.restaurants[0];
+    const qrLink = restaurant ? `${BASE_URL}/qr/${restaurant.slug}` : null;
 
     await sendAdminEmail({
       to: owner.email,
-      subject: "Tu panel de administración está listo · QuieroComer",
-      html: welcomeOwnerEmailHtml(firstName, owner.email, resetLink),
+      subject: `${firstName}, tu carta digital está lista 🧞`,
+      html: welcomeOwnerEmailHtml(firstName, owner.email, tempPassword || "", qrLink, `${BASE_URL}/panel`),
       purpose: "welcome",
     });
 

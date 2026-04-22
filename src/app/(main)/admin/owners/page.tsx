@@ -96,7 +96,7 @@ export default function OwnersPage() {
 
       // Send welcome email if checked
       if (formSendWelcome && data.owner?.id) {
-        await fetch(`/api/admin/owners/${data.owner.id}/send-welcome`, { method: "POST" });
+        await fetch(`/api/admin/owners/${data.owner.id}/send-welcome`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: formPassword }) });
       }
 
       setModal(null); showToast("Owner creado"); fetchOwners();
@@ -146,8 +146,10 @@ export default function OwnersPage() {
   };
 
   const handleSendWelcome = async (o: Owner) => {
+    const pw = prompt("Contraseña del owner (se incluirá en el email):");
+    if (!pw) return;
     try {
-      const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST" });
+      const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
       if (res.ok) showToast(`Email de bienvenida enviado a ${o.email}`);
       else showToast("Error al enviar email");
     } catch { showToast("Error de conexión"); }
