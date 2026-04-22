@@ -1002,16 +1002,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
               {previewDish.description && (
                 <>
-                  <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", display: previewDescExpanded ? "block" : "-webkit-box", WebkitLineClamp: previewDescExpanded ? undefined : 3, WebkitBoxOrient: "vertical" as any, overflow: previewDescExpanded ? "visible" : "hidden" }}>{previewDish.description}</p>
+                  <p style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", display: previewDescExpanded ? "block" : "-webkit-box", WebkitLineClamp: previewDescExpanded ? undefined : 3, WebkitBoxOrient: "vertical" as any, overflow: previewDescExpanded ? "visible" : "hidden" }}>{previewDish.description}</p>
                   {previewDish.description.length > 100 && (
-                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", padding: 0, marginBottom: 8, cursor: "pointer" }}>
+                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: 0, marginBottom: 8, marginLeft: "auto", cursor: "pointer" }}>
                       {previewDescExpanded ? "ver menos" : "ver más"}
                     </button>
                   )}
                 </>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 600 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
+                <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 400 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
                 {previewDish.discountPrice && <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", textDecoration: "line-through" }}>${previewDish.price?.toLocaleString("es-CL")}</span>}
               </div>
               {/* Action buttons */}
