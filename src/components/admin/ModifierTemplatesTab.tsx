@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { norm } from "@/lib/normalize";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -39,6 +40,9 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [addingOptionTo, setAddingOptionTo] = useState<string | null>(null);
   const [newOptName, setNewOptName] = useState("");
   const [newOptPrice, setNewOptPrice] = useState("");
+  const [allDishes, setAllDishes] = useState<{ id: string; name: string }[]>([]);
+  const [dishPickerFor, setDishPickerFor] = useState<string | null>(null);
+  const [dishSearch, setDishSearch] = useState("");
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -47,6 +51,10 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
       .then(d => { if (Array.isArray(d)) setTemplates(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
+    fetch(`/api/admin/dishes?restaurantId=${restaurantId}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setAllDishes(d.map((x: any) => ({ id: x.id, name: x.name }))); })
+      .catch(() => {});
   }, [restaurantId]);
 
   const createTemplate = async () => {
@@ -181,14 +189,47 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
               {/* Expanded content */}
               {isExpanded && (
                 <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--adm-card-border)" }}>
-                  {/* Assigned dishes */}
-                  {template.dishes.length > 0 && (
-                    <div style={{ margin: "12px 0", display: "flex", gap: 4, flexWrap: "wrap" }}>
+                  {/* Assigned dishes — removable + add new */}
+                  <div style={{ margin: "12px 0" }}>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
                       {template.dishes.map(d => (
-                        <span key={d.id} style={{ fontSize: "0.72rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: FB }}>{d.name}</span>
+                        <span key={d.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.72rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: FB }}>
+                          {d.name}
+                          <span onClick={async () => {
+                            await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: template.id, unassignDishId: d.id }) });
+                            setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, dishes: t.dishes.filter(x => x.id !== d.id) } : t));
+                          }} style={{ cursor: "pointer", fontSize: "0.58rem", opacity: 0.6, marginLeft: 2 }}>×</span>
+                        </span>
                       ))}
+                      {/* Add dish button */}
+                      <div style={{ position: "relative" }}>
+                        <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setDishSearch(""); }} style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "none", border: "1px dashed var(--adm-card-border)", color: "var(--adm-text3)", cursor: "pointer", fontFamily: F }}>+ plato</button>
+                        {dishPickerFor === template.id && (
+                          <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 240, overflow: "hidden" }}>
+                            <input value={dishSearch} onChange={e => setDishSearch(e.target.value)} placeholder="Buscar plato..."
+                              style={{ width: "100%", padding: "8px 12px", border: "none", borderBottom: "1px solid var(--adm-card-border)", background: "transparent", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} autoFocus />
+                            <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                              {allDishes
+                                .filter(d => !template.dishes.some(td => td.id === d.id) && (!dishSearch || norm(d.name).includes(norm(dishSearch))))
+                                .slice(0, 15)
+                                .map(d => (
+                                  <button key={d.id} onClick={async () => {
+                                    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: template.id, assignDishId: d.id }) });
+                                    setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, dishes: [...t.dishes, d] } : t));
+                                    setDishPickerFor(null);
+                                    setDishSearch("");
+                                  }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{d.name}</button>
+                                ))}
+                              {allDishes.filter(d => !template.dishes.some(td => td.id === d.id) && (!dishSearch || norm(d.name).includes(norm(dishSearch)))).length === 0 && (
+                                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", padding: 12, margin: 0 }}>Sin resultados</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                    {template.dishes.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>Sin platos asignados</p>}
+                  </div>
 
                   {/* Groups */}
                   {template.groups.map(group => (
@@ -284,7 +325,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGroup(template.id, newGroupName)}
                           placeholder="Ej: Elige tu masa, Tipo de cocción..."
                           style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" as const, marginBottom: 4 }} autoFocus />
-                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Este nombre se muestra al cliente en la carta</p>
+                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Este título se muestra al cliente en la carta</p>
                         <div style={{ display: "flex", gap: 6 }}>
                           <button onClick={() => addGroup(template.id, newGroupName)} disabled={!newGroupName.trim()} style={{ padding: "6px 14px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: !newGroupName.trim() ? 0.5 : 1 }}>Crear grupo</button>
                           <button onClick={() => { setAddingGroupTo(null); setNewGroupName(""); }} style={{ padding: "6px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
