@@ -64,12 +64,12 @@ export default function AdminMenus() {
 
   // Fetch full categories when tab is active or management panel opens
   useEffect(() => {
-    if ((!catMgmtOpen && menuTab !== "categorias") || !selectedRestaurantId) return;
+    if (menuTab !== "categorias" || !selectedRestaurantId) return;
     fetch(`/api/admin/categories?restaurantId=${selectedRestaurantId}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setFullCategories(d); })
       .catch(() => {});
-  }, [catMgmtOpen, selectedRestaurantId]);
+  }, [menuTab, selectedRestaurantId]);
 
   const createCategory = async () => {
     if (!newCatName.trim() || !selectedRestaurantId) return;
