@@ -42,7 +42,10 @@ export default function AdminMenus() {
   const [newDishPrice, setNewDishPrice] = useState("");
   const [newDishDesc, setNewDishDesc] = useState("");
   const [newDishCatId, setNewDishCatId] = useState("");
+  const [newDishPhoto, setNewDishPhoto] = useState("");
+  const [newDishPhotoUploading, setNewDishPhotoUploading] = useState(false);
   const [dishSaving, setDishSaving] = useState(false);
+  const [dishCreatedMsg, setDishCreatedMsg] = useState("");
 
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
@@ -145,15 +148,21 @@ export default function AdminMenus() {
           name: newDishName.trim(),
           price: Number(newDishPrice),
           description: newDishDesc.trim() || null,
+          photos: newDishPhoto ? [newDishPhoto] : [],
         }),
       });
       const dish = await res.json();
       if (res.ok) {
-        setDishes(prev => [...prev, dish]);
+        // Add to top of list and open it
+        setDishes(prev => [dish, ...prev]);
+        setSelectedDish(dish);
         setNewDishName("");
         setNewDishPrice("");
         setNewDishDesc("");
+        setNewDishPhoto("");
         setCreatingDish(false);
+        setDishCreatedMsg("Plato creado. La IA está analizando ingredientes...");
+        setTimeout(() => setDishCreatedMsg(""), 5000);
       }
     } catch {}
     setDishSaving(false);
@@ -750,13 +759,43 @@ export default function AdminMenus() {
             </div>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
-              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
+            </div>
+            <div>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Foto</label>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                {newDishPhoto && <img src={newDishPhoto} alt="" style={{ width: 48, height: 48, borderRadius: 8, objectFit: "cover" }} />}
+                <label style={{ padding: "8px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
+                  {newDishPhotoUploading ? "Subiendo..." : newDishPhoto ? "Cambiar" : "Subir foto"}
+                  <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setNewDishPhotoUploading(true);
+                    const fd = new FormData();
+                    fd.append("file", file);
+                    fd.append("localId", selectedRestaurantId || "");
+                    fd.append("dishName", newDishName || "plato");
+                    const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                    const data = await res.json();
+                    if (data.url) setNewDishPhoto(data.url);
+                    setNewDishPhotoUploading(false);
+                  }} />
+                </label>
+                {newDishPhoto && <button onClick={() => setNewDishPhoto("")} style={{ padding: "4px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>}
+              </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={createDish} disabled={dishSaving || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (!newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{dishSaving ? "Creando..." : "Crear plato"}</button>
-              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
             </div>
           </div>
+        </div>
+      )}
+
+      {dishCreatedMsg && (
+        <div style={{ padding: "10px 14px", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 10, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: "0.85rem" }}>✓</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a" }}>{dishCreatedMsg}</span>
         </div>
       )}
 

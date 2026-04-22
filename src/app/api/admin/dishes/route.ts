@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Extract ingredients in background (non-blocking)
     extractIngredientsForDish(dish.id, name, description || null, photos?.[0] || null)
-      .then(r => { if (r.matched.length > 0) console.log(`[AI] ${name}: ${r.matched.length} matched, ${r.suggested.length} suggested`); })
+      .then(r => console.log(`[AI] ${name}: ${r.matched.length} matched, ${r.suggested.length} suggested`))
       .catch(e => console.error("[AI extract]", e));
 
     return NextResponse.json(dish);
