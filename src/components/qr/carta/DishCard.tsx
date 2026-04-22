@@ -125,7 +125,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
     <button
       onClick={onClick}
       className="relative text-left overflow-hidden w-full bg-neutral-900"
-      style={{ height: "calc(155px * 4 / 3 + 52px)", borderRadius: 10 }}
+      style={{ height: "calc(155px * 4 / 3 + 52px)", borderRadius: 10, boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" }}
     >
       {photo ? (
         <Image src={photo} alt={dish.name} fill className="object-cover" sizes="155px" style={{ transform: "scale(1.08)" }} />
@@ -134,7 +134,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
       )}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
       <div className="absolute" style={{ top: 7, left: 7, display: "flex", flexDirection: "column", gap: 4, zIndex: 2 }}>
-        <span className="font-[family-name:var(--font-dm)]" style={{ background: "#F4A623", color: "white", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, display: "inline-flex", alignItems: "center", gap: 3 }}>★ Recomendado</span>
+        <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>⭐ Recomendado</span>
         {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em", alignSelf: "flex-start" }}>NUEVO</span>}
       </div>
       <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 28, left: 10, right: 10, fontSize: "1rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
