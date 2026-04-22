@@ -202,13 +202,12 @@ export default function AdminMenus() {
   useEffect(() => {
     if (!selectedDish || !selectedRestaurantId) return;
     setAssignedTemplateIds(((selectedDish as any).modifierTemplates || []).map((t: any) => t.id));
-    if (availableTemplates.length === 0) {
-      fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
-        .then(r => r.json())
-        .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
-        .catch(() => {});
-    }
-  }, [selectedDish?.id]);
+    setModPickerOpen(false);
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
+      .catch(() => {});
+  }, [selectedDish?.id, selectedRestaurantId]);
 
   // Close ingredient list on click outside
   useEffect(() => {
