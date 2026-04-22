@@ -477,6 +477,7 @@ function DishListCard({
   const geniePick = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const isPromo = dish.tags?.includes("PROMOTION");
+  const isRec = dish.tags?.includes("RECOMMENDED");
 
   return (
     <button
@@ -487,9 +488,9 @@ function DishListCard({
         display: "flex",
         gap: 12,
         padding: 10,
-        background: "white",
+        background: isRec ? "rgba(244,166,35,0.04)" : "white",
         borderRadius: 14,
-        border: "1px solid rgba(0,0,0,0.04)",
+        border: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.04)",
         textAlign: "left",
         cursor: "pointer",
         fontFamily: "inherit",
