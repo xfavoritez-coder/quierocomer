@@ -178,7 +178,7 @@ export default function AdminMenus() {
       });
       const data = await res.json();
       if (res.ok) {
-        const { aiIngredients, ...dish } = data;
+        const { aiIngredients, suggestedAllergens, ...dish } = data;
         // Add to top of list and open it
         setDishes(prev => [dish, ...prev]);
         setSelectedDish(dish);
@@ -192,13 +192,14 @@ export default function AdminMenus() {
         setRecentlyCreated(prev => new Set(prev).add(dish.id));
         setTimeout(() => setRecentlyCreated(prev => { const n = new Set(prev); n.delete(dish.id); return n; }), 5 * 60 * 1000);
         // Show AI feedback
+        let msg = "Plato creado";
         if (aiIngredients?.matched?.length > 0) {
-          setDishCreatedMsg(`Plato creado · IA detectó ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""}: ${aiIngredients.matched.slice(0, 5).join(", ")}${aiIngredients.matched.length > 5 ? "..." : ""}`);
-        } else if (aiIngredients?.suggested?.length > 0) {
-          setDishCreatedMsg(`Plato creado · IA encontró ${aiIngredients.suggested.length} ingrediente${aiIngredients.suggested.length > 1 ? "s" : ""} nuevos pendientes de aprobación`);
-        } else {
-          setDishCreatedMsg("Plato creado");
+          msg += ` · ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""} detectados`;
         }
+        if (suggestedAllergens?.length > 0) {
+          msg += ` · Sugerimos alérgenos: ${suggestedAllergens.join(", ")}`;
+        }
+        setDishCreatedMsg(msg);
         setTimeout(() => setDishCreatedMsg(""), 8000);
       }
     } catch {}
