@@ -37,11 +37,16 @@ export default function DishDetail({
   // Mount: lock body, scroll to initial dish
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
-    const scrollY = window.scrollY;
-    document.body.style.overflow = "hidden";
-    document.body.style.position = "fixed";
-    document.body.style.width = "100%";
-    document.body.style.top = `-${scrollY}px`;
+
+    // If body is already locked (e.g. by Genio), don't re-lock
+    const alreadyLocked = document.body.style.position === "fixed";
+    if (!alreadyLocked) {
+      const scrollY = window.scrollY;
+      document.body.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.width = "100%";
+      document.body.style.top = `-${scrollY}px`;
+    }
 
     // Scroll to the selected dish instantly
     const el = scrollRef.current;
@@ -50,12 +55,14 @@ export default function DishDetail({
     }
 
     return () => {
-      const top = document.body.style.top;
-      document.body.style.overflow = "";
-      document.body.style.position = "";
-      document.body.style.width = "";
-      document.body.style.top = "";
-      window.scrollTo(0, parseInt(top || "0") * -1);
+      if (!alreadyLocked) {
+        const top = document.body.style.top;
+        document.body.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.width = "";
+        document.body.style.top = "";
+        window.scrollTo(0, parseInt(top || "0") * -1);
+      }
     };
   }, [currentIndex]);
 
@@ -111,7 +118,7 @@ export default function DishDetail({
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 100, background: "#000",
+        zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
     >
@@ -222,7 +229,7 @@ function DishSlide({
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>
 
         {/* BLOQUE 1: Header — info left + heart right */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
             <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
