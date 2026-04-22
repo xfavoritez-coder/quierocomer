@@ -81,13 +81,13 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     const opt = await res.json();
     if (res.ok) {
       setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: [...g.options, opt] } : g) } : t));
-      setEditingOption(opt.id); setEoName(opt.name); setEoPrice("0");
+      setEditingOption(opt.id); setEoName(""); setEoPrice("0");
     }
   };
 
   const saveOption = async (templateId: string, groupId: string) => {
-    if (!editingOption) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, name: eoName, priceAdjustment: Number(eoPrice) || 0 }) });
+    if (!editingOption || !eoName.trim()) return;
+    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, name: eoName.trim(), priceAdjustment: Number(eoPrice) || 0 }) });
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: g.options.map(o => o.id === editingOption ? { ...o, name: eoName, priceAdjustment: Number(eoPrice) || 0 } : o) } : g) } : t));
     setEditingOption(null);
   };
@@ -159,7 +159,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                           <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                             {editingOption === opt.id ? (
                               <>
-                                <input value={eoName} onChange={e => setEoName(e.target.value)} style={{ ...INP, flex: 1 }} autoFocus onKeyDown={e => e.key === "Enter" && saveOption(template.id, group.id)} />
+                                <input value={eoName} onChange={e => setEoName(e.target.value)} placeholder="Nombre de la opción" style={{ ...INP, flex: 1 }} autoFocus onKeyDown={e => e.key === "Enter" && saveOption(template.id, group.id)} />
                                 <div style={{ width: 75 }}><input type="number" value={eoPrice} onChange={e => setEoPrice(e.target.value)} placeholder="+$" style={{ ...INP, textAlign: "right" as const }} /></div>
                                 <button onClick={() => saveOption(template.id, group.id)} style={{ padding: "3px 8px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
                                 <button onClick={() => setEditingOption(null)} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
