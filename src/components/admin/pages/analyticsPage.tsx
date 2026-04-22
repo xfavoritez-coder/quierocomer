@@ -48,6 +48,7 @@ export default function AnalyticsDashboard() {
     { label: "Ticket Trend", href: `${basePath}/analytics/ticket-trend`, icon: "📊" },
     { label: "Búsquedas", href: `${basePath}/analytics/searches`, icon: "🔍" },
     { label: "Genio", href: `${basePath}/analytics/genio`, icon: "🧞" },
+    { label: "Garzón", href: `${basePath}/analytics/garzon`, icon: "🔔" },
   ];
 
   return (
