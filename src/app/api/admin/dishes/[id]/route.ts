@@ -55,7 +55,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const updated = await prisma.dish.findUnique({ where: { id }, select: { name: true, description: true, photos: true } });
       if (updated) {
         extractIngredientsForDish(id, updated.name, updated.description, updated.photos?.[0] || null)
-          .then(r => { if (r.extracted.length > 0) console.log(`[AI] ${updated.name}: re-extracted ${r.extracted.length} ingredients (${r.created.length} new)`); })
+          .then(r => { if (r.matched.length > 0) console.log(`[AI] ${updated.name}: ${r.matched.length} matched, ${r.suggested.length} suggested`); })
           .catch(e => console.error("[AI extract]", e));
       }
     }
