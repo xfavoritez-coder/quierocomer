@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     const owner = await prisma.restaurantOwner.findUnique({
       where: { email },
-      include: { restaurants: { select: { id: true, name: true, slug: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
 
     if (!owner) {

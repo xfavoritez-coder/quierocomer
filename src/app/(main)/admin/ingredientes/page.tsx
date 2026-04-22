@@ -53,7 +53,7 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
   if (mode === "edit") {
     return (
       <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid var(--adm-card-border)" }}>
-        <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) onApprove(editName.trim()); }} style={{ flex: 1, padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+        <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) onApprove(editName.trim()); }} style={{ flex: 1, padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
         <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "5px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
         <button onClick={() => setMode("default")} style={{ padding: "5px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
       </div>
@@ -67,7 +67,7 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
         <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", margin: "0 0 8px" }}>
           <strong style={{ color: "#F4A623" }}>{originalName}</strong> es alias de:
         </p>
-        <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 6, boxSizing: "border-box" as const }} autoFocus />
+        <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "7px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 6, boxSizing: "border-box" as const }} autoFocus />
         <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 8 }}>
           {filtered.slice(0, 15).map(i => (
             <button key={i.id} onClick={() => onAliasOf(i.id)} style={{ display: "flex", alignItems: "center", width: "100%", padding: "8px 10px", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}
@@ -164,7 +164,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
           style={{ flex: 1, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
         <div style={{ display: "flex", gap: 6 }}>
           <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && create()} placeholder={`Nuevo ${label}`}
-            style={{ width: 140, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }} />
+            style={{ width: 140, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }} />
           <button onClick={create} disabled={!newName.trim()} style={{ padding: "10px 16px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newName.trim() ? 0.5 : 1 }}>+</button>
         </div>
       </div>
@@ -185,7 +185,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
                         setEditingId(null);
                       }
                       if (e.key === "Escape") setEditingId(null);
-                    }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+                    }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
                     <button onClick={async () => {
                       if (!editName.trim()) return;
                       await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId: a.id, name: editName.trim() }) });
@@ -219,7 +219,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
                     </div>
                   )}
                   <input value={ingSearch} onChange={e => setIngSearch(e.target.value)} placeholder="Buscar ingrediente para vincular..."
-                    style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} />
+                    style={{ width: "100%", padding: "8px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} />
                   {ingSearch && (
                     <div style={{ maxHeight: 120, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
                       {ingredients
@@ -378,7 +378,7 @@ export default function IngredientesPage() {
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
-            background: tab === t.key ? "white" : "transparent",
+            background: tab === t.key ? "#FFF4E0" : "transparent",
             color: tab === t.key ? GOLD : "var(--adm-text3)",
             boxShadow: tab === t.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
           }}>{t.label}</button>
@@ -393,7 +393,7 @@ export default function IngredientesPage() {
         <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Extrae ingredientes automáticamente de todos los platos de un local usando IA (nombre + descripción + foto).</p>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <select value={analyzeLocal} onChange={e => setAnalyzeLocal(e.target.value)}
-            style={{ flex: 1, padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+            style={{ flex: 1, padding: "8px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
             <option value="">Selecciona un local</option>
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
@@ -498,15 +498,10 @@ export default function IngredientesPage() {
         )}
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-        {(() => { const a = ingredients.filter(i => i.allergens.length > 0).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} con alérgenos</span> : null; })()}
-      </div>
-
       {/* Search + create */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
         <input placeholder="Buscar ingrediente..." value={search} onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+          style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
         {!creating && (
           <button onClick={() => setCreating(true)} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo</button>
         )}
@@ -519,7 +514,7 @@ export default function IngredientesPage() {
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
           <div style={{ marginBottom: 10 }}>
             <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre del ingrediente" autoFocus
-              style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const }} />
+              style={{ width: "100%", padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const }} />
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={create} disabled={!newName.trim()} style={{ padding: "8px 16px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newName.trim() ? 0.5 : 1 }}>Crear</button>
@@ -542,7 +537,7 @@ export default function IngredientesPage() {
             return (
               <div key={i.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 14 }}>
                 <div style={{ marginBottom: 8 }}>
-                  <input value={eName} onChange={e => setEName(e.target.value)} style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }} />
+                  <input value={eName} onChange={e => setEName(e.target.value)} style={{ width: "100%", padding: "8px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }} />
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <div style={{ flex: 1 }} />
@@ -626,7 +621,7 @@ export default function IngredientesPage() {
             Ingredientes que la IA no volverá a sugerir. Puedes restaurarlos si cambias de opinión.
           </p>
           <input placeholder="Buscar ignorado..." value={search} onChange={e => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 12, boxSizing: "border-box" as const }} />
+            style={{ width: "100%", padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 12, boxSizing: "border-box" as const }} />
           {(() => {
             const filteredIgnored = ignoredList.filter(ig => !search || norm(ig.name).includes(norm(search)));
             return filteredIgnored.length > 0 ? (

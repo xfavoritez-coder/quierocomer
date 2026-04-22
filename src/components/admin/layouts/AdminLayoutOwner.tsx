@@ -8,7 +8,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-interface Restaurant { id: string; name: string; slug: string; }
+interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; }
 
 interface Props {
   name: string;
@@ -60,6 +60,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
   const isActive = (href: string) => href === basePath ? pathname === basePath : pathname.startsWith(href);
   const initial = name?.charAt(0)?.toUpperCase() || "?";
+  const activeRest = restaurants.find(r => r.id === selectedRestaurantId) || restaurants[0];
+  const restInitials = activeRest?.name?.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "?";
+
+  const RestLogo = ({ size = 36 }: { size?: number }) => (
+    activeRest?.logoUrl
+      ? <img src={activeRest.logoUrl} alt="" style={{ width: size, height: size, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+      : <div style={{ width: size, height: size, borderRadius: 8, background: "#1a5f3f", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: size * 0.39, fontWeight: 700, fontFamily: F, flexShrink: 0 }}>{restInitials}</div>
+  );
 
   // Drawer helpers
   const openMore = () => { setMoreOpen(true); requestAnimationFrame(() => setMoreVisible(true)); };
@@ -99,20 +107,18 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
     <div className="theme-light" style={{ minHeight: "100vh", background: "#FFFFFF" }}>
       {/* ── Desktop Sidebar (≥768px) ── */}
       <aside className="owl-sidebar">
-        {/* Logo */}
-        <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid #E8D0A0" }}>
-          {restaurants.length === 1 && (
-            <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", margin: "0 0 4px" }}>{restaurants[0].name}</p>
-          )}
-          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: "1.2rem" }}>🧞</span>
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "#1a1a1a" }}>
-              Quiero<span style={{ color: GOLD }}>Comer</span>
-            </span>
+        {/* Header */}
+        <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid #E8D0A0" }}>
+          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+            <RestLogo size={36} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+              <p style={{ fontFamily: F, fontSize: "11.5px", color: "#888", fontWeight: 500, margin: "3px 0 0" }}>QuieroComer</p>
+            </div>
           </Link>
           {restaurants.length > 1 && (
             <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
-              style={{ marginTop: 8, width: "100%", padding: "5px 8px", background: "white", border: "1px solid #E8D0A0", borderRadius: 6, fontFamily: FB, fontSize: "0.72rem", color: "#1a1a1a", outline: "none", cursor: "pointer" }}>
+              style={{ marginTop: 10, width: "100%", padding: "5px 8px", background: "white", border: "1px solid #E8D0A0", borderRadius: 6, fontFamily: FB, fontSize: "0.72rem", color: "#1a1a1a", outline: "none", cursor: "pointer" }}>
               {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
             </select>
           )}
@@ -146,24 +152,20 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
 
       {/* ── Mobile Header (<768px) ── */}
       <header className="owl-mobile-header">
-        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{ fontSize: "1.2rem" }}>🧞</span>
-          <div style={{ lineHeight: 1.1 }}>
-            {restaurants.length === 1 && (
-              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "block" }}>{restaurants[0].name}</span>
-            )}
-            <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
-              Quiero<span style={{ color: GOLD }}>Comer</span>
-            </span>
+        <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
+          <RestLogo size={32} />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+            <p style={{ fontFamily: F, fontSize: "10.5px", color: "#888", fontWeight: 500, margin: "2px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
         {restaurants.length > 1 && (
           <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
-            style={{ padding: "6px 10px", background: "white", border: "1px solid #E8D0A0", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "#1a1a1a", outline: "none", maxWidth: 160, cursor: "pointer" }}>
+            style={{ padding: "6px 10px", background: "white", border: "1px solid #E8D0A0", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "#1a1a1a", outline: "none", maxWidth: 140, cursor: "pointer", flexShrink: 0 }}>
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <button onClick={openAccount} style={{ width: 36, height: 36, borderRadius: "50%", background: GOLD, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "0.85rem", fontWeight: 700 }}>
+        <button onClick={openAccount} style={{ width: 34, height: 34, borderRadius: "50%", background: GOLD, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, flexShrink: 0 }}>
           {initial}
         </button>
       </header>

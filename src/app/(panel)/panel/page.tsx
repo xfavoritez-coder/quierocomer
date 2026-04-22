@@ -147,20 +147,9 @@ export default function PanelDashboard() {
         <Stat icon="⏱️" label="Duración promedio" value={avgText} />
         <Stat icon="🧞" label="Usaron el Genio" value={data.genioUsedThisWeek} color={GOLD} />
         <Stat icon="🔔" label="Llamados garzón" value={data.weekWaiterCalls || 0} />
-        <Stat icon="❤️" label="Platos favoriteados" value={data.weekFavorites} />
+        <Stat icon="👍" label="Me gusta" value={data.weekFavorites} />
       </div>
 
-      {/* Promos */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "space-between", boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <Tag size={18} color={GOLD} />
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0, fontWeight: 600 }}>{data.activePromos} oferta{data.activePromos !== 1 ? "s" : ""} activa{data.activePromos !== 1 ? "s" : ""}</p>
-            {data.activePromos === 0 && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Crea tu primera oferta</p>}
-          </div>
-        </div>
-        <Link href="/panel/promociones" style={{ padding: "6px 14px", background: `${GOLD}18`, border: `1px solid ${GOLD}30`, borderRadius: 8, color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600, textDecoration: "none" }}>{data.activePromos === 0 ? "Crear" : "Gestionar"}</Link>
-      </div>
 
       {/* Abandonment */}
       {data.abandonedThisWeek > 0 && (

@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
     if (adminId === "superadmin" && adminRole === "SUPERADMIN") {
       const restaurants = await prisma.restaurant.findMany({
         where: { isActive: true },
-        select: { id: true, name: true, slug: true },
+        select: { id: true, name: true, slug: true, logoUrl: true },
         orderBy: { name: "asc" },
       });
       return NextResponse.json({
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     // Owner
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: adminId! },
-      include: { restaurants: { select: { id: true, name: true, slug: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
 
     if (!owner) {

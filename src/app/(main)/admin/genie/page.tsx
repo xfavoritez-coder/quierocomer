@@ -66,6 +66,7 @@ export default function AdminSessions() {
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRestaurant, setFilterRestaurant] = useState<string>("");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -79,7 +80,6 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  const [refreshKey, setRefreshKey] = useState(0);
   }, [filterRestaurant, sessionLoading, page, refreshKey]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
