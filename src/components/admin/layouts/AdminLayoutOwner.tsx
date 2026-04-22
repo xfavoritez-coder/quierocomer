@@ -150,9 +150,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <span style={{ fontSize: "1.2rem" }}>🧞</span>
           <div style={{ lineHeight: 1.1 }}>
             {restaurants.length === 1 && (
-              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#999", display: "block" }}>{restaurants[0].name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "block" }}>{restaurants[0].name}</span>
             )}
-            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
+            <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
               Quiero<span style={{ color: GOLD }}>Comer</span>
             </span>
           </div>

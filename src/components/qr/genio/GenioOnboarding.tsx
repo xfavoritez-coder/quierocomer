@@ -59,7 +59,7 @@ function trackStat(restaurantId: string, eventType: string, dishId?: string, gen
   }).catch(() => {});
 }
 
-function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_result") {
+function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_result" | "feedback_like" | "feedback_dislike") {
   fetch("/api/qr/ingredients", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

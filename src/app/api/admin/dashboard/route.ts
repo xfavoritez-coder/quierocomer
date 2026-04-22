@@ -68,6 +68,7 @@ export async function GET(req: NextRequest) {
       lastScan,
       activePromos,
       weekFavorites,
+      weekWaiterCalls,
     ] = await Promise.all([
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } },
@@ -165,6 +166,10 @@ export async function GET(req: NextRequest) {
       prisma.dishFavorite.count({
         where: { ...restaurantFilter, createdAt: { gte: weekAgo } },
       }),
+      // Waiter calls this week
+      prisma.waiterCall.count({
+        where: { ...restaurantFilter, calledAt: { gte: weekAgo } },
+      }),
     ]);
 
     // Resolve dish names
@@ -226,6 +231,7 @@ export async function GET(req: NextRequest) {
       lastScanAt: lastScan?.startedAt || null,
       activePromos,
       weekFavorites,
+      weekWaiterCalls,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);

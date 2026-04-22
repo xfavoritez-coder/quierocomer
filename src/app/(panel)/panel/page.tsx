@@ -144,9 +144,9 @@ export default function PanelDashboard() {
       {/* Week */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Esta semana</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <Stat icon="👥" label="Visitas" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "var(--adm-positive)" : undefined} />
         <Stat icon="⏱️" label="Duración promedio" value={avgText} />
         <Stat icon="🧞" label="Usaron el Genio" value={data.genioUsedThisWeek} color={GOLD} />
+        <Stat icon="🔔" label="Llamados garzón" value={data.weekWaiterCalls || 0} />
         <Stat icon="❤️" label="Platos favoriteados" value={data.weekFavorites} />
       </div>
 
