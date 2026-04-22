@@ -179,7 +179,13 @@ export default function CartaPremium({
     if (!visited) localStorage.setItem(cookieKey, String(Date.now()));
   }, [restaurant.id]);
 
-  const heroDishes = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+  const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+  const heroDishes = recommended.length > 0
+    ? recommended
+    : [...dishes]
+        .filter(d => d.photos?.[0])
+        .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
+        .slice(0, 3);
 
   // Build sorted dish list matching carta visual order (category by category, recommended first)
   const sortedDishes = useMemo(() => {
