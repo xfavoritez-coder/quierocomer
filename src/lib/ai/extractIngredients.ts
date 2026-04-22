@@ -174,7 +174,6 @@ Return ONLY the JSON object, nothing else.`,
       matched: [...new Set(actualMatched)],
       suggested: filteredSuggestions,
       linkedCount: ingredientIds.length,
-      detectedDiet,
     };
   } catch (e) {
     console.error("[extractIngredients] Error:", e);

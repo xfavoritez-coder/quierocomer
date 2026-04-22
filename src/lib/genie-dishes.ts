@@ -57,9 +57,9 @@ export async function getInitialDishes(userId?: string, sessionId?: string, excl
   const isVegetarian = userDietRestrictions.includes("vegetariano");
 
   // Diet type filter: vegans see only VEGAN, vegetarians see VEGAN+VEGETARIAN, etc.
-  const allowedDietTypes: DT[] = isVegan ? ["VEGAN"]
+  const allowedDietTypes = (isVegan ? ["VEGAN"]
     : isVegetarian ? ["VEGAN", "VEGETARIAN"]
-    : ["VEGAN", "VEGETARIAN", "OMNIVORE"];
+    : ["VEGAN", "VEGETARIAN", "OMNIVORE"]) as any;
 
   // Fetch candidate dishes (food only, no desserts/drinks, diet compatible)
   const dishes = await prisma.menuItem.findMany({
