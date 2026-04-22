@@ -36,6 +36,8 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
   const [addingOption, setAddingOption] = useState<string | null>(null);
   const [newOptName, setNewOptName] = useState("");
   const [newOptPrice, setNewOptPrice] = useState("");
+  const [addingGroup, setAddingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
 
   useEffect(() => {
     fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`)
@@ -51,16 +53,17 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
       .finally(() => setLoading(false));
   }, [templateId, restaurantId]);
 
-  const addGroup = async () => {
+  const addGroup = async (name: string) => {
+    if (!name.trim()) return;
     const res = await fetch("/api/admin/modifier-templates", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addGroupToTemplate: templateId, name: "Nuevo grupo", required: true, maxSelect: 1 }),
+      body: JSON.stringify({ addGroupToTemplate: templateId, name: name.trim(), required: true, maxSelect: 1 }),
     });
     const group = await res.json();
     if (res.ok) {
       setGroups(prev => [...prev, { ...group, options: group.options || [] }]);
-      setEditingGroup(group.id);
-      setEgName(group.name);
+      setAddingGroup(false);
+      setNewGroupName("");
     }
   };
 
@@ -182,7 +185,20 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
           </div>
         </div>
       ))}
-      <button onClick={addGroup} style={{ background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 6, cursor: "pointer", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: "6px 10px", width: "100%" }}>+ Agregar grupo</button>
+      {addingGroup ? (
+        <div style={{ border: "1px dashed var(--adm-card-border)", borderRadius: 8, padding: "8px 10px" }}>
+          <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGroup(newGroupName)}
+            placeholder="Ej: Elige tu masa, Tipo de cocción..."
+            style={{ width: "100%", padding: "5px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" as const, marginBottom: 4 }} autoFocus />
+          <p style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)", margin: "0 0 6px", lineHeight: 1.4 }}>Este nombre se muestra al cliente en la carta</p>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => addGroup(newGroupName)} disabled={!newGroupName.trim()} style={{ padding: "4px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", opacity: !newGroupName.trim() ? 0.5 : 1 }}>Crear grupo</button>
+            <button onClick={() => { setAddingGroup(false); setNewGroupName(""); }} style={{ padding: "4px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontFamily: F, fontSize: "0.62rem" }}>Cancelar</button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setAddingGroup(true)} style={{ background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 6, cursor: "pointer", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: "6px 10px", width: "100%" }}>+ Agregar grupo</button>
+      )}
     </div>
   );
 }
@@ -783,12 +799,12 @@ export default function AdminMenus() {
                   </div>
                 )}
 
-                {/* Assign + Create row */}
+                {/* Add + Create row */}
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   {availableTemplates.length > 0 && (
                     <div style={{ position: "relative" }}>
                       <button onClick={() => setEditModPickerOpen(!editModPickerOpen)} style={{ padding: "7px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                        + Asignar
+                        + Agregar
                       </button>
                       {editModPickerOpen && (
                         <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 240, overflow: "hidden" }}>
@@ -824,7 +840,7 @@ export default function AdminMenus() {
                   )}
                   {editModQuickCreating ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input value={editModQuickName} onChange={e => setEditModQuickName(e.target.value)} placeholder="Nombre" onKeyDown={async (e) => {
+                      <input value={editModQuickName} onChange={e => setEditModQuickName(e.target.value)} placeholder="Ej: Extras, Acompañamiento..." onKeyDown={async (e) => {
                         if (e.key !== "Enter" || !editModQuickName.trim() || !selectedRestaurantId || !selectedDish) return;
                         const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: editModQuickName.trim() }) });
                         const t = await res.json();
@@ -835,12 +851,24 @@ export default function AdminMenus() {
                           setEditModQuickName(""); setEditModQuickCreating(false);
                           setEditModExpanded(t.id);
                         }
-                      }} style={{ padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", width: 140 }} autoFocus />
+                      }} style={{ padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", width: 170 }} autoFocus />
+                      <button onClick={async () => {
+                        if (!editModQuickName.trim() || !selectedRestaurantId || !selectedDish) return;
+                        const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: editModQuickName.trim() }) });
+                        const t = await res.json();
+                        if (res.ok) {
+                          setAvailableTemplates(prev => [...prev, { id: t.id, name: t.name }]);
+                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
+                          setAssignedTemplateIds(prev => [...prev, t.id]);
+                          setEditModQuickName(""); setEditModQuickCreating(false);
+                          setEditModExpanded(t.id);
+                        }
+                      }} disabled={!editModQuickName.trim()} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: !editModQuickName.trim() ? 0.5 : 1 }}>Crear</button>
                       <button onClick={() => { setEditModQuickCreating(false); setEditModQuickName(""); }} style={{ padding: "5px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.7rem" }}>×</button>
                     </div>
                   ) : (
                     <button onClick={() => setEditModQuickCreating(true)} style={{ padding: "7px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>
-                      + Crear
+                      + Crear nuevo
                     </button>
                   )}
                 </div>
