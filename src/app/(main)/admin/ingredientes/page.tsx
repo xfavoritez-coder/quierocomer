@@ -106,6 +106,10 @@ export default function IngredientesPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisResults, setAnalysisResults] = useState<{ dishesProcessed: number; totalMatched: number; totalSuggested: number; allSuggestions: string[]; results: AnalysisResult[] } | null>(null);
 
+  // Review
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewResults, setReviewResults] = useState<{ total: number; issues: any[]; summary: any } | null>(null);
+
   // Create
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -295,6 +299,65 @@ export default function IngredientesPage() {
       {/* Stats */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
         {(() => { const a = ingredients.filter(i => i.isAllergen).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} alérgenos</span> : null; })()}
+      </div>
+
+      {/* Review consistency */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: reviewResults ? 12 : 0 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>Revisar consistencia</h3>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>IA busca duplicados, errores y sugerencias de limpieza</p>
+          </div>
+          <button onClick={async () => {
+            setReviewing(true); setReviewResults(null);
+            const res = await fetch("/api/admin/ingredients-review", { method: "POST" });
+            const data = await res.json();
+            if (!data.error) setReviewResults(data);
+            setReviewing(false);
+          }} disabled={reviewing} style={{ padding: "8px 18px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: reviewing ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            {reviewing ? "Revisando..." : "Revisar"}
+          </button>
+        </div>
+
+        {reviewResults && (
+          <div>
+            {/* Summary */}
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              {reviewResults.summary.duplicates > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600 }}>Duplicados: {reviewResults.summary.duplicates}</span>}
+              {reviewResults.summary.typos > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F, fontWeight: 600 }}>Errores: {reviewResults.summary.typos}</span>}
+              {reviewResults.summary.generic > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>Genéricos: {reviewResults.summary.generic}</span>}
+              {reviewResults.summary.orphans > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(0,0,0,0.04)", color: "var(--adm-text3)", fontFamily: F, fontWeight: 600 }}>Sin usar: {reviewResults.summary.orphans}</span>}
+              {reviewResults.issues.length === 0 && <span style={{ fontSize: "0.78rem", color: "#16a34a", fontFamily: F, fontWeight: 600 }}>Todo limpio, sin problemas detectados</span>}
+            </div>
+
+            {/* Issues list */}
+            {reviewResults.issues.length > 0 && (
+              <div style={{ maxHeight: 300, overflowY: "auto" }}>
+                {reviewResults.issues.map((issue: any, idx: number) => {
+                  const colors: Record<string, { bg: string; color: string; label: string }> = {
+                    DUPLICATE: { bg: "rgba(239,68,68,0.06)", color: "#ef4444", label: "Duplicado" },
+                    TYPO: { bg: "rgba(244,166,35,0.06)", color: GOLD, label: "Error" },
+                    TOO_GENERIC: { bg: "rgba(127,191,220,0.06)", color: "#7fbfdc", label: "Genérico" },
+                    ORPHAN: { bg: "rgba(0,0,0,0.02)", color: "var(--adm-text3)", label: "Sin usar" },
+                    SHORT: { bg: "rgba(244,166,35,0.06)", color: GOLD, label: "Corto" },
+                    MERGE_SUGGESTION: { bg: "rgba(192,132,252,0.06)", color: "#c084fc", label: "Fusionar" },
+                  };
+                  const c = colors[issue.type] || colors.ORPHAN;
+                  return (
+                    <div key={idx} style={{ padding: "8px 12px", background: c.bg, borderRadius: 8, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 50, background: c.bg, color: c.color, fontFamily: F, fontWeight: 700, border: `1px solid ${c.color}20`, flexShrink: 0 }}>{c.label}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", fontWeight: 600 }}>{issue.ingredients.join(" / ")}</span>
+                        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{issue.suggestion}</p>
+                      </div>
+                      <span style={{ fontSize: "0.6rem", color: "var(--adm-text3)", fontFamily: F, flexShrink: 0 }}>{issue.action}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Search + create */}
