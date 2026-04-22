@@ -16,6 +16,7 @@ import DishDetail from "./DishDetail";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
+import { norm } from "@/lib/normalize";
 
 
 interface Review {
@@ -66,8 +67,8 @@ export default function CartaLista({
     if (!query || query.length < 2) return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
-      const q = query.toLowerCase().trim();
-      const count = dishes.filter((d) => d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q)).length;
+      const q = norm(query.trim());
+      const count = dishes.filter((d) => norm(d.name || "").includes(q) || norm(d.description || "").includes(q)).length;
       trackSearchPerformed(restaurant.id, q, count);
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
@@ -152,8 +153,8 @@ export default function CartaLista({
   const filtered = useMemo(() => {
     return dishes.filter((d) => {
       if (query) {
-        const q = query.toLowerCase().trim();
-        return d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q);
+        const q = norm(query.trim());
+        return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q);
       }
       return true;
     });

@@ -6,6 +6,7 @@ import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { norm } from "@/lib/normalize";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -304,8 +305,8 @@ export default function AdminMenus() {
   const filtered = useMemo(() => {
     let list = dishes;
     if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(d => d.name.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q));
+      const q = norm(search);
+      list = list.filter(d => norm(d.name).includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     // Recently created first, then recommended, then alphabetical
@@ -703,7 +704,7 @@ export default function AdminMenus() {
                   <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "thin" }}>
                     {(() => {
                       const filteredIngs = allIngredients
-                        .filter(i => (!ingSearch || i.name.toLowerCase().includes(ingSearch.toLowerCase())) && !eIngredientIds.includes(i.id));
+                        .filter(i => (!ingSearch || norm(i.name).includes(norm(ingSearch))) && !eIngredientIds.includes(i.id));
                       return (
                         <>
                           {filteredIngs.slice(0, 30).map(i => (
@@ -799,7 +800,7 @@ export default function AdminMenus() {
                           />
                           <div style={{ maxHeight: 160, overflowY: "auto" }}>
                             {availableTemplates
-                              .filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || t.name.toLowerCase().includes(editModSearch.toLowerCase())))
+                              .filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || norm(t.name).includes(norm(editModSearch))))
                               .map(t => (
                                 <button key={t.id} onClick={async () => {
                                   await fetch("/api/admin/modifier-templates", {
@@ -813,7 +814,7 @@ export default function AdminMenus() {
                                   {t.name}
                                 </button>
                               ))}
-                            {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || t.name.toLowerCase().includes(editModSearch.toLowerCase()))).length === 0 && (
+                            {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || norm(t.name).includes(norm(editModSearch)))).length === 0 && (
                               <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", padding: 10, margin: 0 }}>Sin resultados</p>
                             )}
                           </div>

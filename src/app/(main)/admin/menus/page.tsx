@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
+import { norm } from "@/lib/normalize";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -47,8 +48,8 @@ export default function AdminMenus() {
   const filtered = useMemo(() => {
     let list = dishes;
     if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(d => d.name.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q));
+      const q = norm(search);
+      list = list.filter(d => norm(d.name).includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     return list;
@@ -194,7 +195,7 @@ export default function AdminMenus() {
               )}
 
               <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                <button onClick={() => startEditDish(selectedDish)} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ flex: 1, padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
                 <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
                   {selectedDish.isActive ? "Desactivar" : "Activar"}
                 </button>
@@ -267,7 +268,7 @@ export default function AdminMenus() {
                 {ingSearch && (
                   <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
                     {allIngredients
-                      .filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id))
+                      .filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id))
                       .slice(0, 15)
                       .map(i => (
                         <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
@@ -275,7 +276,7 @@ export default function AdminMenus() {
                           <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
                         </button>
                       ))}
-                    {allIngredients.filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id)).length === 0 && (
+                    {allIngredients.filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id)).length === 0 && (
                       <button onClick={async () => {
                         const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
                         const data = await res.json();

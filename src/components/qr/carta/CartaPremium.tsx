@@ -10,6 +10,7 @@ import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
+import { norm } from "@/lib/normalize";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
@@ -138,8 +139,8 @@ export default function CartaPremium({
     if (!searchQuery || searchQuery.length < 2) return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
-      const q = searchQuery.toLowerCase().trim();
-      const count = dishes.filter((d) => d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q)).length;
+      const q = norm(searchQuery.trim());
+      const count = dishes.filter((d) => norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q)).length;
       trackSearchPerformed(restaurant.id, q, count);
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
@@ -299,7 +300,7 @@ export default function CartaPremium({
           </div>
         )}
 
-        {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (d.name?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.description?.toLowerCase().includes(searchQuery.toLowerCase().trim()) || d.ingredients?.toLowerCase().includes(searchQuery.toLowerCase().trim())))) && (
+        {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (norm(d.name || "").includes(norm(searchQuery.trim())) || norm(d.description || "").includes(norm(searchQuery.trim())) || norm(d.ingredients || "").includes(norm(searchQuery.trim()))))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
             <p style={{ color: "rgba(14,14,14,0.45)", fontSize: "0.95rem" }}>
@@ -319,8 +320,8 @@ export default function CartaPremium({
             .filter((d) => d.categoryId === cat.id)
             .filter((d) => {
               if (!searchQuery) return true;
-              const q = searchQuery.toLowerCase().trim();
-              return d.name?.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q);
+              const q = norm(searchQuery.trim());
+              return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q);
             })
             .sort((a, b) => {
               const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;

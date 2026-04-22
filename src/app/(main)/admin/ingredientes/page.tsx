@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { norm } from "@/lib/normalize";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -60,7 +61,7 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
   }
 
   if (mode === "alias") {
-    const filtered = existingIngredients.filter(i => !aliasSearch || i.name.includes(aliasSearch.toLowerCase()));
+    const filtered = existingIngredients.filter(i => !aliasSearch || norm(i.name).includes(norm(aliasSearch)));
     return (
       <div style={{ padding: "10px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid rgba(244,166,35,0.25)", maxWidth: 320 }}>
         <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", margin: "0 0 8px" }}>
@@ -145,7 +146,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
 
   if (loading) return <SkeletonLoading type="cards" />;
 
-  const filtered = items.filter(a => !search || a.name.includes(search.toLowerCase()));
+  const filtered = items.filter(a => !search || norm(a.name).includes(norm(search)));
 
   return (
     <div>
@@ -199,7 +200,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
                   {ingSearch && (
                     <div style={{ maxHeight: 120, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
                       {ingredients
-                        .filter(i => i.name.includes(ingSearch.toLowerCase()) && !a.ingredients.some(ai => ai.id === i.id))
+                        .filter(i => norm(i.name).includes(norm(ingSearch)) && !a.ingredients.some(ai => ai.id === i.id))
                         .slice(0, 10)
                         .map(i => (
                           <button key={i.id} onClick={() => { linkIngredient(a.id, i.id); setIngSearch(""); }}
@@ -272,7 +273,7 @@ export default function IngredientesPage() {
   }, []);
 
   const filtered = ingredients.filter(i => {
-    if (search && !i.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (search && !norm(i.name).includes(norm(search))) return false;
     if (catFilter !== "all" && i.category !== catFilter) return false;
     return true;
   });
@@ -283,7 +284,7 @@ export default function IngredientesPage() {
     const exact = ingredients.some(i => i.id !== excludeId && i.name.toLowerCase() === lower);
     const similar = ingredients
       .filter(i => i.id !== excludeId && i.name.toLowerCase() !== lower)
-      .filter(i => i.name.toLowerCase().includes(lower) || lower.includes(i.name.toLowerCase()))
+      .filter(i => norm(i.name).includes(lower) || lower.includes(norm(i.name)))
       .map(i => i.name)
       .slice(0, 3);
     return { exact, similar };
@@ -558,7 +559,7 @@ export default function IngredientesPage() {
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "0 0 6px" }}><strong>{i.name}</strong> es alias de:</p>
                 <input value={mergeSearch} onChange={e => setMergeSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "6px 10px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} autoFocus />
                 <div style={{ maxHeight: 120, overflowY: "auto" }}>
-                  {ingredients.filter(t => t.id !== i.id && (!mergeSearch || t.name.includes(mergeSearch.toLowerCase()))).slice(0, 10).map(target => (
+                  {ingredients.filter(t => t.id !== i.id && (!mergeSearch || norm(t.name).includes(norm(mergeSearch)))).slice(0, 10).map(target => (
                     <button key={target.id} onClick={async () => {
                       if (!confirm(`¿Fusionar "${i.name}" → "${target.name}"? Los platos que tenían "${i.name}" se reasignarán a "${target.name}".`)) return;
                       // 1. Add alias
@@ -604,7 +605,7 @@ export default function IngredientesPage() {
           <input placeholder="Buscar ignorado..." value={search} onChange={e => setSearch(e.target.value)}
             style={{ width: "100%", padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", marginBottom: 12, boxSizing: "border-box" as const }} />
           {(() => {
-            const filteredIgnored = ignoredList.filter(ig => !search || ig.name.includes(search.toLowerCase()));
+            const filteredIgnored = ignoredList.filter(ig => !search || norm(ig.name).includes(norm(search)));
             return filteredIgnored.length > 0 ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                 {filteredIgnored.map(ig => (

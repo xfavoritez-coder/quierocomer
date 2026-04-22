@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
+import { norm } from "@/lib/normalize";
 
 interface Restaurant {
   id: string;
@@ -39,8 +40,8 @@ export default function AdminLocales() {
   const filtered = useMemo(() => {
     let list = restaurants;
     if (search) {
-      const q = search.toLowerCase();
-      list = list.filter(r => r.name.toLowerCase().includes(q) || r.slug.toLowerCase().includes(q));
+      const q = norm(search);
+      list = list.filter(r => norm(r.name).includes(q) || norm(r.slug).includes(q));
     }
     if (filter === "activos") list = list.filter(r => r.isActive);
     if (filter === "inactivos") list = list.filter(r => !r.isActive);
