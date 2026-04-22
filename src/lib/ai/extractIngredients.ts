@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-sonnet-4-6";
 
 interface ExtractionResult {
   dishId: string;
@@ -92,16 +92,20 @@ Return ONLY the JSON object, nothing else.`,
     });
 
     if (!res.ok) {
-      console.error("[extractIngredients] API error:", res.status, await res.text());
+      const errText = await res.text();
+      console.error(`[extractIngredients] ${dishName}: API error ${res.status}:`, errText.substring(0, 200));
       return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
     }
 
     const data = await res.json();
     const text = data.content?.[0]?.text || "{}";
+    console.log(`[extractIngredients] ${dishName}: AI response:`, text.substring(0, 200));
 
     // Parse JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
+      console.log(`[extractIngredients] ${dishName}: No JSON found in response`);
+
       return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
     }
 
