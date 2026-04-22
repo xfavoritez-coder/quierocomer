@@ -54,6 +54,7 @@ interface SessionData {
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   topFavorites: { name: string; score: number }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
+  waiterCalls: { id: string; tableName: string | null; calledAt: string; answeredAt: string | null; responseTime: number | null }[];
 }
 
 export default function AdminSessions() {
@@ -133,6 +134,7 @@ export default function AdminSessions() {
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
+                      {s.waiterCalls?.length > 0 && <span style={{ color: "#16a34a" }}>· 🔔 Garzón ({s.waiterCalls.length})</span>}
                       {s.experienceSubmissions.length > 0 && <span style={{ color: "#c084fc" }}>· {s.experienceSubmissions[0].templateEmoji} Experiencia</span>}
                     </div>
                   </div>
@@ -208,6 +210,25 @@ export default function AdminSessions() {
                                 </div>
                               )}
                             </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Waiter calls */}
+                    {s.waiterCalls?.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Llamados al garzón ({s.waiterCalls.length})</p>
+                        {s.waiterCalls.map(wc => (
+                          <div key={wc.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 8, marginBottom: 4 }}>
+                            <div style={{ width: 8, height: 8, borderRadius: "50%", background: wc.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
+                            <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#e0e0e0", flex: 1 }}>{wc.tableName || "Sin mesa"}</span>
+                            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#888" }}>{new Date(wc.calledAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
+                            {wc.responseTime !== null ? (
+                              <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{wc.responseTime < 60 ? `${wc.responseTime}s` : `${Math.floor(wc.responseTime / 60)}m ${wc.responseTime % 60}s`}</span>
+                            ) : (
+                              <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>Sin atender</span>
+                            )}
                           </div>
                         ))}
                       </div>

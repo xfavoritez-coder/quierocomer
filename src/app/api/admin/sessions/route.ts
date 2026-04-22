@@ -162,6 +162,21 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // Waiter calls by session
+    const sessionIds = sessions.map(s => s.id);
+    const waiterCalls = sessionIds.length ? await prisma.waiterCall.findMany({
+      where: { sessionId: { in: sessionIds } },
+      select: { id: true, sessionId: true, tableName: true, calledAt: true, answeredAt: true },
+      orderBy: { calledAt: "asc" },
+    }) : [];
+    const waiterCallsBySession: Record<string, typeof waiterCalls> = {};
+    for (const wc of waiterCalls) {
+      if (wc.sessionId) {
+        if (!waiterCallsBySession[wc.sessionId]) waiterCallsBySession[wc.sessionId] = [];
+        waiterCallsBySession[wc.sessionId].push(wc);
+      }
+    }
+
     // Enrich
     const enriched = sessions.map((s) => {
       const viewed = (s.dishesViewed as any[]) || [];
@@ -192,6 +207,13 @@ export async function GET(req: NextRequest) {
           resultTraits: sub.assignedResult?.traits || [],
           status: sub.status,
           submittedAt: sub.submittedAt,
+        })),
+        waiterCalls: (waiterCallsBySession[s.id] || []).map(wc => ({
+          id: wc.id,
+          tableName: wc.tableName,
+          calledAt: wc.calledAt,
+          answeredAt: wc.answeredAt,
+          responseTime: wc.answeredAt ? Math.round((new Date(wc.answeredAt).getTime() - new Date(wc.calledAt).getTime()) / 1000) : null,
         })),
       };
     });
