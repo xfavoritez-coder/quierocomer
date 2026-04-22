@@ -100,6 +100,7 @@ export default function IngredientesPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [tab, setTab] = useState<"ingredientes" | "alergenos" | "ignorados">("ingredientes");
   const [catFilter, setCatFilter] = useState("all");
 
   // Analyze carta
@@ -198,9 +199,9 @@ export default function IngredientesPage() {
     if (dup.similar.length > 0 && !confirm(`Ya existen ingredientes similares: ${dup.similar.join(", ")}.\n\n¿Guardar "${eName.trim()}" de todas formas?`)) return;
     await fetch("/api/admin/ingredients", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: editing, name: eName.trim(), category: eCat, isAllergen: eAllergen, allergenType: eAllergenType || null }),
+      body: JSON.stringify({ id: editing, name: eName.trim(), category: eCat }),
     });
-    setIngredients(prev => prev.map(i => i.id === editing ? { ...i, name: eName.trim().toLowerCase(), category: eCat, isAllergen: eAllergen, allergenType: eAllergenType || null } : i));
+    setIngredients(prev => prev.map(i => i.id === editing ? { ...i, name: eName.trim().toLowerCase(), category: eCat } : i));
     setEditing(null);
   };
 
@@ -227,7 +228,26 @@ export default function IngredientesPage() {
   return (
     <div style={{ maxWidth: 800 }}>
       <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: "0 0 4px" }}>Ingredientes</h1>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Base de ingredientes compartida por todos los locales · {ingredients.length} total</p>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 16px" }}>Base de ingredientes compartida por todos los locales · {ingredients.length} total</p>
+
+      {/* Tabs */}
+      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--adm-hover)", borderRadius: 10, padding: 3 }}>
+        {([
+          { key: "ingredientes" as const, label: "Ingredientes" },
+          { key: "alergenos" as const, label: "Alérgenos" },
+          { key: "ignorados" as const, label: `Ignorados (${ignoredList.length})` },
+        ]).map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)} style={{
+            flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
+            background: tab === t.key ? "white" : "transparent",
+            color: tab === t.key ? GOLD : "var(--adm-text3)",
+            boxShadow: tab === t.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+          }}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab === "ingredientes" && (<>
 
       {/* Analyze carta */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }}>
@@ -345,71 +365,6 @@ export default function IngredientesPage() {
         {(() => { const a = ingredients.filter(i => i.isAllergen).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} alérgenos</span> : null; })()}
       </div>
 
-      {/* Review consistency */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: reviewResults ? 12 : 0 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 2px" }}>Revisar consistencia</h3>
-            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0 }}>IA busca duplicados, errores y sugerencias de limpieza</p>
-          </div>
-          <button onClick={async () => {
-            setReviewing(true); setReviewResults(null);
-            try {
-              const res = await fetch("/api/admin/ingredients-review", { method: "POST" });
-              const data = await res.json();
-              if (!data.error) setReviewResults(data);
-              else setReviewResults({ total: 0, issues: [{ type: "ERROR", ingredients: [], suggestion: data.error, action: "review" }], summary: { duplicates: 0, typos: 0, generic: 0, orphans: 0, short: 0, mergeSuggestions: 0 } });
-            } catch {
-              setReviewResults({ total: 0, issues: [{ type: "ERROR", ingredients: [], suggestion: "Error de conexión o timeout. Intenta de nuevo.", action: "review" }], summary: { duplicates: 0, typos: 0, generic: 0, orphans: 0, short: 0, mergeSuggestions: 0 } });
-            }
-            setReviewing(false);
-          }} disabled={reviewing} style={{ padding: "8px 18px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: reviewing ? 0.5 : 1, whiteSpace: "nowrap" }}>
-            {reviewing ? "Revisando..." : "Revisar"}
-          </button>
-        </div>
-
-        {reviewResults && (
-          <div>
-            {/* Summary */}
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
-              {reviewResults.summary.duplicates > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600 }}>Duplicados: {reviewResults.summary.duplicates}</span>}
-              {reviewResults.summary.typos > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F, fontWeight: 600 }}>Errores: {reviewResults.summary.typos}</span>}
-              {reviewResults.summary.generic > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>Genéricos: {reviewResults.summary.generic}</span>}
-              {reviewResults.summary.orphans > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(0,0,0,0.04)", color: "var(--adm-text3)", fontFamily: F, fontWeight: 600 }}>Sin usar: {reviewResults.summary.orphans}</span>}
-              {reviewResults.issues.length === 0 && <span style={{ fontSize: "0.78rem", color: "#16a34a", fontFamily: F, fontWeight: 600 }}>Todo limpio, sin problemas detectados</span>}
-            </div>
-
-            {/* Issues list */}
-            {reviewResults.issues.length > 0 && (
-              <div style={{ maxHeight: 300, overflowY: "auto" }}>
-                {reviewResults.issues.map((issue: any, idx: number) => {
-                  const colors: Record<string, { bg: string; color: string; label: string }> = {
-                    DUPLICATE: { bg: "rgba(239,68,68,0.06)", color: "#ef4444", label: "Duplicado" },
-                    TYPO: { bg: "rgba(244,166,35,0.06)", color: GOLD, label: "Error" },
-                    TOO_GENERIC: { bg: "rgba(127,191,220,0.06)", color: "#7fbfdc", label: "Genérico" },
-                    ORPHAN: { bg: "rgba(0,0,0,0.02)", color: "var(--adm-text3)", label: "Sin usar" },
-                    SHORT: { bg: "rgba(244,166,35,0.06)", color: GOLD, label: "Corto" },
-                    MERGE_SUGGESTION: { bg: "rgba(192,132,252,0.06)", color: "#c084fc", label: "Fusionar" },
-                    ERROR: { bg: "rgba(239,68,68,0.06)", color: "#ef4444", label: "Error" },
-                  };
-                  const c = colors[issue.type] || colors.ORPHAN;
-                  return (
-                    <div key={idx} style={{ padding: "8px 12px", background: c.bg, borderRadius: 8, marginBottom: 4, display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: "0.62rem", padding: "2px 6px", borderRadius: 50, background: c.bg, color: c.color, fontFamily: F, fontWeight: 700, border: `1px solid ${c.color}20`, flexShrink: 0 }}>{c.label}</span>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", fontWeight: 600 }}>{issue.ingredients.join(" / ")}</span>
-                        <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{issue.suggestion}</p>
-                      </div>
-                      <span style={{ fontSize: "0.6rem", color: "var(--adm-text3)", fontFamily: F, flexShrink: 0 }}>{issue.action}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Search + create */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
         <input placeholder="Buscar ingrediente..." value={search} onChange={e => setSearch(e.target.value)}
@@ -419,21 +374,7 @@ export default function IngredientesPage() {
         )}
       </div>
 
-      {/* Ignored */}
-      {ignoredList.length > 0 && (
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 14, alignItems: "center" }}>
-          <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", marginRight: 4 }}>Ignorados:</span>
-          {ignoredList.map(ig => (
-            <span key={ig.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 50, background: "rgba(0,0,0,0.04)", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
-              {ig.name}
-              <button onClick={async () => {
-                await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unignoreId: ig.id }) });
-                setIgnoredList(prev => prev.filter(x => x.id !== ig.id));
-              }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.55rem", color: "var(--adm-text3)", padding: 0 }}>×</button>
-            </span>
-          ))}
-        </div>
-      )}
+
 
       {/* Create form */}
       {creating && (
@@ -441,18 +382,6 @@ export default function IngredientesPage() {
           <div style={{ marginBottom: 10 }}>
             <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre del ingrediente" autoFocus
               style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const }} />
-          </div>
-          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-              <input type="checkbox" checked={newAllergen} onChange={e => setNewAllergen(e.target.checked)} /> ⚠️ Es alérgeno
-            </label>
-            {newAllergen && (
-              <select value={newAllergenType} onChange={e => setNewAllergenType(e.target.value)}
-                style={{ padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none" }}>
-                <option value="">Tipo de alérgeno</option>
-                {ALLERGEN_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
-              </select>
-            )}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button onClick={create} disabled={!newName.trim()} style={{ padding: "8px 16px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newName.trim() ? 0.5 : 1 }}>Crear</button>
@@ -478,15 +407,6 @@ export default function IngredientesPage() {
                   <input value={eName} onChange={e => setEName(e.target.value)} style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }} />
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                    <input type="checkbox" checked={eAllergen} onChange={e => setEAllergen(e.target.checked)} /> ⚠️ Alérgeno
-                  </label>
-                  {eAllergen && (
-                    <select value={eAllergenType} onChange={e => setEAllergenType(e.target.value)} style={{ padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none" }}>
-                      <option value="">Tipo</option>
-                      {ALLERGEN_TYPES.map(a => <option key={a} value={a}>{a}</option>)}
-                    </select>
-                  )}
                   <div style={{ flex: 1 }} />
                   <button onClick={update} style={{ padding: "6px 12px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
                   <button onClick={() => setEditing(null)} style={{ padding: "6px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
@@ -553,7 +473,73 @@ export default function IngredientesPage() {
         })}
         {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>{search ? "Sin resultados" : "Sin ingredientes"}</p>}
       </div>
+      </>)}
 
+      {/* Tab: Alérgenos */}
+      {tab === "alergenos" && (
+        <div>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Marca ingredientes como alérgenos. Los platos que los contengan mostrarán la advertencia automáticamente.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {ingredients.filter(i => i.isAllergen).length > 0 ? (
+              <>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 6 }}>Ingredientes marcados como alérgenos:</p>
+                {ingredients.filter(i => i.isAllergen).map(i => (
+                  <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "#faeeda", borderRadius: 10 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.85rem", color: "#854f0b", fontWeight: 500, flex: 1 }}>⚠️ {i.name}</span>
+                    {i.allergenType && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#854f0b", opacity: 0.7 }}>{i.allergenType}</span>}
+                    <button onClick={async () => {
+                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, isAllergen: false, allergenType: null }) });
+                      setIngredients(prev => prev.map(x => x.id === i.id ? { ...x, isAllergen: false, allergenType: null } : x));
+                    }} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>
+                  </div>
+                ))}
+              </>
+            ) : (
+              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 20 }}>No hay ingredientes marcados como alérgenos</p>
+            )}
+            <div style={{ marginTop: 16 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 8 }}>Agregar ingrediente como alérgeno:</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {ingredients.filter(i => !i.isAllergen).slice(0, search ? undefined : 20).filter(i => !search || i.name.includes(search.toLowerCase())).map(i => (
+                  <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{i.name}</span>
+                    <button onClick={async () => {
+                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, isAllergen: true, allergenType: i.name }) });
+                      setIngredients(prev => prev.map(x => x.id === i.id ? { ...x, isAllergen: true, allergenType: i.name } : x));
+                    }} style={{ padding: "4px 10px", background: "rgba(234,179,8,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#854f0b", cursor: "pointer", fontWeight: 600 }}>Marcar alérgeno</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Ignorados */}
+      {tab === "ignorados" && (
+        <div>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Ingredientes que la IA no volverá a sugerir. Puedes restaurarlos si cambias de opinión.
+          </p>
+          {ignoredList.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {ignoredList.map(ig => (
+                <div key={ig.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", flex: 1 }}>{ig.name}</span>
+                  <button onClick={async () => {
+                    await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unignoreId: ig.id }) });
+                    setIgnoredList(prev => prev.filter(x => x.id !== ig.id));
+                  }} style={{ padding: "4px 10px", background: "rgba(22,163,74,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Restaurar</button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 32 }}>No hay ingredientes ignorados</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
