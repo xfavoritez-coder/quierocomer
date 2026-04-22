@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
+import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -28,11 +29,26 @@ const CATEGORIES = [
 
 const ALLERGEN_TYPES = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
 
+interface AnalysisResult {
+  dishId: string;
+  dishName: string;
+  extracted: string[];
+  matched: string[];
+  created: string[];
+  linkedCount: number;
+}
+
 export default function IngredientesPage() {
+  const { restaurants } = useAdminSession();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("all");
+
+  // Analyze carta
+  const [analyzeLocal, setAnalyzeLocal] = useState("");
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analysisResults, setAnalysisResults] = useState<{ dishesProcessed: number; totalExtracted: number; totalCreated: number; results: AnalysisResult[] } | null>(null);
 
   // Create
   const [creating, setCreating] = useState(false);
@@ -110,6 +126,66 @@ export default function IngredientesPage() {
     <div style={{ maxWidth: 800 }}>
       <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: "0 0 4px" }}>Ingredientes</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Base de ingredientes compartida por todos los locales · {ingredients.length} total</p>
+
+      {/* Analyze carta */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 20 }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Analizar carta con IA</h3>
+        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Extrae ingredientes automáticamente de todos los platos de un local usando IA (nombre + descripción + foto).</p>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <select value={analyzeLocal} onChange={e => setAnalyzeLocal(e.target.value)}
+            style={{ flex: 1, padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+            <option value="">Selecciona un local</option>
+            {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+          </select>
+          <button onClick={async () => {
+            if (!analyzeLocal || analyzing) return;
+            setAnalyzing(true);
+            setAnalysisResults(null);
+            const res = await fetch("/api/admin/analyze-carta", {
+              method: "POST", headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ restaurantId: analyzeLocal }),
+            });
+            const data = await res.json();
+            if (!data.error) {
+              setAnalysisResults(data);
+              // Reload ingredients
+              fetch("/api/admin/ingredients").then(r => r.json()).then(d => setIngredients(d.ingredients || []));
+            }
+            setAnalyzing(false);
+          }} disabled={!analyzeLocal || analyzing}
+            style={{ padding: "8px 18px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !analyzeLocal || analyzing ? 0.5 : 1, whiteSpace: "nowrap" }}>
+            {analyzing ? "Analizando..." : "Analizar"}
+          </button>
+        </div>
+
+        {/* Results */}
+        {analysisResults && (
+          <div style={{ marginTop: 14, borderTop: "1px solid var(--adm-card-border)", paddingTop: 14 }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{analysisResults.dishesProcessed} platos procesados</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: GOLD, fontWeight: 600 }}>{analysisResults.totalExtracted} ingredientes extraídos</span>
+              {analysisResults.totalCreated > 0 && <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", fontWeight: 600 }}>{analysisResults.totalCreated} nuevos creados</span>}
+            </div>
+            <div style={{ maxHeight: 300, overflowY: "auto" }}>
+              {analysisResults.results.map(r => (
+                <div key={r.dishId} style={{ padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{r.dishName}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{r.extracted.length} ingredientes</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {r.extracted.map(ing => {
+                      const isNew = r.created.includes(ing);
+                      return <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: isNew ? "rgba(22,163,74,0.08)" : "var(--adm-hover)", color: isNew ? "#16a34a" : "var(--adm-text2)", fontFamily: F }}>{isNew ? "✨ " : ""}{ing}</span>;
+                    })}
+                    {r.extracted.length === 0 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontFamily: F }}>Sin ingredientes detectados</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>

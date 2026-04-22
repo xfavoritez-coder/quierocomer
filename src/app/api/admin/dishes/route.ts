@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
+import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -53,6 +54,11 @@ export async function POST(req: NextRequest) {
       },
       include: { category: { select: { id: true, name: true } } },
     });
+
+    // Extract ingredients in background (non-blocking)
+    extractIngredientsForDish(dish.id, name, description || null, photos?.[0] || null)
+      .then(r => { if (r.extracted.length > 0) console.log(`[AI] ${name}: extracted ${r.extracted.length} ingredients (${r.created.length} new)`); })
+      .catch(e => console.error("[AI extract]", e));
 
     return NextResponse.json(dish);
   } catch (e) {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
+import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -47,6 +48,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
       const ings = await prisma.ingredient.findMany({ where: { id: { in: body.ingredientIds } }, select: { name: true } });
       await prisma.dish.update({ where: { id }, data: { ingredients: ings.map(i => i.name).join(", ") || null } });
+    }
+
+    // Re-extract ingredients if name, description, or photos changed (and no manual ingredientIds sent)
+    if ((body.name || body.description || body.photos) && body.ingredientIds === undefined) {
+      const updated = await prisma.dish.findUnique({ where: { id }, select: { name: true, description: true, photos: true } });
+      if (updated) {
+        extractIngredientsForDish(id, updated.name, updated.description, updated.photos?.[0] || null)
+          .then(r => { if (r.extracted.length > 0) console.log(`[AI] ${updated.name}: re-extracted ${r.extracted.length} ingredients (${r.created.length} new)`); })
+          .catch(e => console.error("[AI extract]", e));
+      }
     }
 
     return NextResponse.json(dish);
