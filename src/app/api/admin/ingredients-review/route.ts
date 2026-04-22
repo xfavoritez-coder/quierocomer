@@ -78,14 +78,20 @@ Return ONLY the JSON array.`,
 
     if (!res.ok) {
       const err = await res.text();
-      console.error("[ingredients-review] API error:", err.substring(0, 200));
-      return NextResponse.json({ error: "Error de IA" }, { status: 500 });
+      console.error("[ingredients-review] API error:", res.status, err.substring(0, 300));
+      return NextResponse.json({ error: `Error de IA (${res.status}): ${err.substring(0, 100)}` }, { status: 500 });
     }
 
     const data = await res.json();
     const text = data.content?.[0]?.text || "[]";
+    console.log("[ingredients-review] AI response:", text.substring(0, 200));
     const jsonMatch = text.match(/\[[\s\S]*\]/);
-    const issues = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    let issues: any[] = [];
+    try {
+      issues = jsonMatch ? JSON.parse(jsonMatch[0]) : [];
+    } catch {
+      console.error("[ingredients-review] Failed to parse JSON:", text.substring(0, 200));
+    }
 
     // Add orphan detection locally (faster than AI for this)
     const orphans = ingredients.filter(i => !usageMap[i.id]).map(i => i.name);
