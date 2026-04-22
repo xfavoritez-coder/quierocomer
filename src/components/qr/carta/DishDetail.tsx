@@ -211,7 +211,7 @@ function DishSlide({
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 70%, transparent 100%)", padding: "80px 20px 40px", zIndex: 5 }}>
         {/* Badges */}
         <div className="flex items-center" style={{ gap: 6, marginBottom: 6 }}>
-          {isRecommended && <span style={{ background: "rgba(0,0,0,0.6)", color: "white", border: "none", fontSize: "0.78rem", fontWeight: 700, padding: "5px 14px", borderRadius: 50, backdropFilter: "blur(4px)" }}>⭐ Recomendado</span>}
+          {isRecommended && <span style={{ background: "rgba(0,0,0,0.6)", color: "white", border: "none", fontSize: "0.78rem", fontWeight: 400, padding: "5px 11px", borderRadius: 50, backdropFilter: "blur(4px)" }}>⭐ Recomendado</span>}
           {averageRating && <span style={{ background: "rgba(255,255,255,0.12)", color: "white", fontSize: "0.7rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
           {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(255,255,255,0.12)", color: "white", fontSize: "0.7rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
         </div>
@@ -227,11 +227,11 @@ function DishSlide({
           {dish.discountPrice ? (
             <>
               <span className="line-through" style={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
               {discountPercent && <span style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.75rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4 }}>-{discountPercent}%</span>}
             </>
           ) : (
-            <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400 }}>${dish.price.toLocaleString("es-CL")}</span>
+            <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>${dish.price.toLocaleString("es-CL")}</span>
           )}
         </div>
 
