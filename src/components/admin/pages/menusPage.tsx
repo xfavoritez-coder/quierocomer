@@ -391,7 +391,7 @@ export default function AdminMenus() {
                         + Asignar
                       </button>
                       {modPickerOpen && (
-                        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 10, width: 260, overflow: "hidden" }}>
+                        <div style={{ position: "fixed", marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 260, overflow: "hidden" }}>
                           <input
                             value={modSearch} onChange={e => setModSearch(e.target.value)}
                             placeholder="Buscar plantilla..."
@@ -432,18 +432,37 @@ export default function AdminMenus() {
                   {quickModCreating ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <input value={quickModName} onChange={e => setQuickModName(e.target.value)} placeholder="Nombre de plantilla" onKeyDown={async (e) => {
-                        if (e.key === "Enter" && quickModName.trim() && selectedRestaurantId) {
-                          const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: quickModName.trim() }) });
-                          const t = await res.json();
-                          if (res.ok) { setAvailableTemplates(prev => [...prev, { id: t.id, name: t.name }]); setQuickModName(""); setQuickModCreating(false); }
+                        if (e.key !== "Enter" || !quickModName.trim() || !selectedRestaurantId || !selectedDish) return;
+                        const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: quickModName.trim() }) });
+                        const t = await res.json();
+                        if (res.ok) {
+                          const newTemplates = [...availableTemplates, { id: t.id, name: t.name }];
+                          setAvailableTemplates(newTemplates);
+                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
+                          const newIds = [...assignedTemplateIds, t.id];
+                          setAssignedTemplateIds(newIds);
+                          const updatedDish = { ...selectedDish, modifierTemplates: newIds.map(x => newTemplates.find(at => at.id === x)).filter(Boolean) } as any;
+                          setSelectedDish(updatedDish);
+                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
+                          setQuickModName(""); setQuickModCreating(false);
                         }
                       }} style={{ padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", width: 160 }} autoFocus />
                       <button onClick={async () => {
-                        if (!quickModName.trim() || !selectedRestaurantId) return;
+                        if (!quickModName.trim() || !selectedRestaurantId || !selectedDish) return;
                         const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: quickModName.trim() }) });
                         const t = await res.json();
-                        if (res.ok) { setAvailableTemplates(prev => [...prev, { id: t.id, name: t.name }]); setQuickModName(""); setQuickModCreating(false); }
-                      }} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Crear</button>
+                        if (res.ok) {
+                          const newTemplates = [...availableTemplates, { id: t.id, name: t.name }];
+                          setAvailableTemplates(newTemplates);
+                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
+                          const newIds = [...assignedTemplateIds, t.id];
+                          setAssignedTemplateIds(newIds);
+                          const updatedDish = { ...selectedDish, modifierTemplates: newIds.map(x => newTemplates.find(at => at.id === x)).filter(Boolean) } as any;
+                          setSelectedDish(updatedDish);
+                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
+                          setQuickModName(""); setQuickModCreating(false);
+                        }
+                      }} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Crear
                       <button onClick={() => { setQuickModCreating(false); setQuickModName(""); }} style={{ padding: "7px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
                     </div>
                   ) : (
