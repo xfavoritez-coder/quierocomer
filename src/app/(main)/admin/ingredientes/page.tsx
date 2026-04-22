@@ -94,8 +94,15 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
   );
 }
 
-function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
-  const [allergens, setAllergens] = useState<{ id: string; name: string; ingredients: { id: string; name: string }[] }[]>([]);
+function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient[]; type: "ALLERGEN" | "RESTRICTION" }) {
+  const isRestriction = type === "RESTRICTION";
+  const label = isRestriction ? "restricción" : "alérgeno";
+  const labelPlural = isRestriction ? "restricciones" : "alérgenos";
+  const icon = isRestriction ? "🚫" : "⚠️";
+  const chipBg = isRestriction ? "rgba(139,92,246,0.1)" : "#faeeda";
+  const chipColor = isRestriction ? "#7c3aed" : "#854f0b";
+
+  const [items, setItems] = useState<{ id: string; name: string; ingredients: { id: string; name: string }[] }[]>([]);
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [search, setSearch] = useState("");
@@ -105,59 +112,61 @@ function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
   const GOLD = "#F4A623";
 
   useEffect(() => {
-    fetch("/api/admin/allergens")
+    fetch(`/api/admin/allergens?type=${type}`)
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setAllergens(d); })
+      .then(d => { if (Array.isArray(d)) setItems(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [type]);
 
   const create = async () => {
     if (!newName.trim()) return;
-    const res = await fetch("/api/admin/allergens", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newName.trim().toLowerCase() }) });
+    const res = await fetch("/api/admin/allergens", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: newName.trim().toLowerCase(), type }) });
     const a = await res.json();
-    if (res.ok) { setAllergens(prev => [...prev, { ...a, ingredients: [] }]); setNewName(""); }
+    if (res.ok) { setItems(prev => [...prev, { ...a, ingredients: [] }]); setNewName(""); }
   };
 
   const remove = async (id: string) => {
-    if (!confirm("¿Eliminar este alérgeno?")) return;
+    if (!confirm(`¿Eliminar este ${label}?`)) return;
     await fetch("/api/admin/allergens", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
-    setAllergens(prev => prev.filter(a => a.id !== id));
+    setItems(prev => prev.filter(a => a.id !== id));
   };
 
-  const linkIngredient = async (allergenId: string, ingredientId: string) => {
-    await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId, linkIngredientId: ingredientId }) });
+  const linkIngredient = async (itemId: string, ingredientId: string) => {
+    await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId: itemId, linkIngredientId: ingredientId }) });
     const ing = ingredients.find(i => i.id === ingredientId);
-    if (ing) setAllergens(prev => prev.map(a => a.id === allergenId ? { ...a, ingredients: [...a.ingredients, { id: ing.id, name: ing.name }] } : a));
+    if (ing) setItems(prev => prev.map(a => a.id === itemId ? { ...a, ingredients: [...a.ingredients, { id: ing.id, name: ing.name }] } : a));
   };
 
-  const unlinkIngredient = async (allergenId: string, ingredientId: string) => {
-    await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId, unlinkIngredientId: ingredientId }) });
-    setAllergens(prev => prev.map(a => a.id === allergenId ? { ...a, ingredients: a.ingredients.filter(i => i.id !== ingredientId) } : a));
+  const unlinkIngredient = async (itemId: string, ingredientId: string) => {
+    await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId: itemId, unlinkIngredientId: ingredientId }) });
+    setItems(prev => prev.map(a => a.id === itemId ? { ...a, ingredients: a.ingredients.filter(i => i.id !== ingredientId) } : a));
   };
 
   if (loading) return <SkeletonLoading type="cards" />;
 
-  const filtered = allergens.filter(a => !search || a.name.includes(search.toLowerCase()));
+  const filtered = items.filter(a => !search || a.name.includes(search.toLowerCase()));
 
   return (
     <div>
       <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
-        Gestiona los alérgenos de la plataforma y vincula ingredientes. Los platos mostrarán automáticamente los alérgenos de sus ingredientes.
+        {isRestriction
+          ? "Gestiona restricciones dietarias (cerdo, alcohol, etc.) y vincula ingredientes. El genio usará estas restricciones para filtrar platos."
+          : "Gestiona los alérgenos de la plataforma y vincula ingredientes. Los platos mostrarán automáticamente los alérgenos de sus ingredientes."}
       </p>
 
       {/* Search + Create */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar alérgeno..."
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Buscar ${label}...`}
           style={{ flex: 1, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
         <div style={{ display: "flex", gap: 6 }}>
-          <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && create()} placeholder="Nuevo alérgeno"
+          <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && create()} placeholder={`Nuevo ${label}`}
             style={{ width: 140, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }} />
           <button onClick={create} disabled={!newName.trim()} style={{ padding: "10px 16px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newName.trim() ? 0.5 : 1 }}>+</button>
         </div>
       </div>
 
-      {/* Allergen list */}
+      {/* List */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {filtered.map(a => {
           const isExp = expanded === a.id;
@@ -165,8 +174,8 @@ function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
             <div key={a.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
                 <button onClick={() => setExpanded(isExp ? null : a.id)} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: "1rem" }}>⚠️</span>
-                  <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#854f0b" }}>{a.name}</span>
+                  <span style={{ fontSize: "1rem" }}>{icon}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: chipColor }}>{a.name}</span>
                   <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{a.ingredients.length} ingrediente{a.ingredients.length !== 1 ? "s" : ""}</span>
                   <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--adm-text3)", transform: isExp ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
                 </button>
@@ -175,18 +184,16 @@ function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
 
               {isExp && (
                 <div style={{ padding: "0 14px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
-                  {/* Linked ingredients */}
                   {a.ingredients.length > 0 && (
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", margin: "10px 0" }}>
                       {a.ingredients.map(ing => (
-                        <span key={ing.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.72rem", padding: "3px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F }}>
+                        <span key={ing.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.72rem", padding: "3px 10px", borderRadius: 50, background: chipBg, color: chipColor, fontFamily: F }}>
                           {ing.name}
-                          <button onClick={() => unlinkIngredient(a.id, ing.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#854f0b", fontSize: "0.6rem", padding: 0 }}>×</button>
+                          <button onClick={() => unlinkIngredient(a.id, ing.id)} style={{ background: "none", border: "none", cursor: "pointer", color: chipColor, fontSize: "0.6rem", padding: 0 }}>×</button>
                         </span>
                       ))}
                     </div>
                   )}
-                  {/* Add ingredient */}
                   <input value={ingSearch} onChange={e => setIngSearch(e.target.value)} placeholder="Buscar ingrediente para vincular..."
                     style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} />
                   {ingSearch && (
@@ -197,7 +204,7 @@ function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
                         .map(i => (
                           <button key={i.id} onClick={() => { linkIngredient(a.id, i.id); setIngSearch(""); }}
                             style={{ display: "block", width: "100%", padding: "7px 10px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)" }}
-                            onMouseOver={e => (e.currentTarget.style.background = "rgba(234,179,8,0.06)")}
+                            onMouseOver={e => (e.currentTarget.style.background = isRestriction ? "rgba(139,92,246,0.06)" : "rgba(234,179,8,0.06)")}
                             onMouseOut={e => (e.currentTarget.style.background = "transparent")}
                           >{i.name}</button>
                         ))}
@@ -208,7 +215,7 @@ function AllergenTab({ ingredients }: { ingredients: Ingredient[] }) {
             </div>
           );
         })}
-        {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 32 }}>{search ? "Sin resultados" : "No hay alérgenos"}</p>}
+        {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 32 }}>{search ? "Sin resultados" : `No hay ${labelPlural}`}</p>}
       </div>
     </div>
   );
@@ -219,7 +226,7 @@ export default function IngredientesPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"ingredientes" | "alergenos" | "ignorados">("ingredientes");
+  const [tab, setTab] = useState<"ingredientes" | "alergenos" | "restricciones" | "ignorados">("ingredientes");
   const [catFilter, setCatFilter] = useState("all");
 
   // Analyze carta
@@ -341,6 +348,7 @@ export default function IngredientesPage() {
         {([
           { key: "ingredientes" as const, label: "Ingredientes" },
           { key: "alergenos" as const, label: "Alérgenos" },
+          { key: "restricciones" as const, label: "Restricciones" },
           { key: "ignorados" as const, label: `Ignorados (${ignoredList.length})` },
         ]).map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
@@ -582,7 +590,10 @@ export default function IngredientesPage() {
       </>)}
 
       {/* Tab: Alérgenos */}
-      {tab === "alergenos" && (<AllergenTab ingredients={ingredients} />)}
+      {tab === "alergenos" && (<AllergenRestrictionTab ingredients={ingredients} type="ALLERGEN" />)}
+
+      {/* Tab: Restricciones */}
+      {tab === "restricciones" && (<AllergenRestrictionTab ingredients={ingredients} type="RESTRICTION" />)}
 
       {/* Tab: Ignorados */}
       {tab === "ignorados" && (

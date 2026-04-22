@@ -122,10 +122,16 @@ model Ingredient {
 
 model Allergen {
   id          String       @id @default(cuid())
-  name        String       @unique  // "gluten", "lactosa", "frutos secos", etc
+  name        String       @unique  // "gluten", "lactosa", "cerdo", "alcohol", etc
+  type        AllergenType @default(ALLERGEN)
   position    Int          @default(0)
   createdAt   DateTime     @default(now())
-  ingredients Ingredient[] // many-to-many: ingredientes que contienen este alérgeno
+  ingredients Ingredient[] // many-to-many: ingredientes vinculados
+}
+
+enum AllergenType {
+  ALLERGEN     // alérgenos reales (gluten, lactosa, maní, etc)
+  RESTRICTION  // preferencias dietarias (cerdo, alcohol, etc)
 }
 
 model IgnoredIngredient {

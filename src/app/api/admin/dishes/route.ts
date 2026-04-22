@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
       dishIngredients: {
         include: {
           ingredient: {
-            include: { allergens: { select: { id: true, name: true } } },
+            include: { allergens: { select: { id: true, name: true, type: true } } },
           },
         },
       },
@@ -26,12 +26,12 @@ export async function GET(req: NextRequest) {
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
 
-  // Compute derived allergens for each dish
+  // Compute derived allergens for each dish (only type ALLERGEN, not RESTRICTION)
   const result = dishes.map(d => {
     const allergenSet = new Set<string>();
     for (const di of d.dishIngredients) {
       for (const a of di.ingredient.allergens) {
-        allergenSet.add(a.name);
+        if (a.type === "ALLERGEN") allergenSet.add(a.name);
       }
     }
     const derivedAllergens = [...allergenSet].join(", ") || null;

@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
+import type { AllergenType } from "@prisma/client";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
+  const type = (req.nextUrl.searchParams.get("type") || "ALLERGEN") as AllergenType;
+
   const allergens = await prisma.allergen.findMany({
+    where: { type },
     orderBy: { position: "asc" },
     include: { ingredients: { select: { id: true, name: true } } },
   });
@@ -17,13 +21,21 @@ export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
-  const { name } = await req.json();
+  const { name, type } = await req.json();
   if (!name?.trim()) return NextResponse.json({ error: "name requerido" }, { status: 400 });
 
-  const maxPos = await prisma.allergen.findFirst({ orderBy: { position: "desc" }, select: { position: true } });
+  const maxPos = await prisma.allergen.findFirst({
+    where: { type: type || "ALLERGEN" },
+    orderBy: { position: "desc" },
+    select: { position: true },
+  });
 
   const allergen = await prisma.allergen.create({
-    data: { name: name.trim().toLowerCase(), position: (maxPos?.position ?? -1) + 1 },
+    data: {
+      name: name.trim().toLowerCase(),
+      type: type || "ALLERGEN",
+      position: (maxPos?.position ?? -1) + 1,
+    },
   });
   return NextResponse.json(allergen);
 }

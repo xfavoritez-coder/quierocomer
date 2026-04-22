@@ -180,7 +180,7 @@ function DishSlide({
   const seenAllergens = new Set<string>();
   for (const di of dishIngs) {
     for (const a of (di.ingredient?.allergens || [])) {
-      if (!seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
+      if (a.type === "ALLERGEN" && !seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
     }
   }
   const ingredientNames = dishIngs.map((di: any) => di.ingredient?.name).filter(Boolean);

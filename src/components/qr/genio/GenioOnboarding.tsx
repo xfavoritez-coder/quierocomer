@@ -28,17 +28,12 @@ const DIET_OPTIONS = [
   { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
 ];
 
-const RESTRICTION_OPTIONS = [
-  { icon: Check, label: "Ninguna", value: "ninguna" },
-  { icon: Milk, label: "Sin lactosa", value: "lactosa" },
-  { icon: Wheat, label: "Sin gluten", value: "gluten" },
-  { icon: Ban, label: "Sin nueces", value: "nueces" },
-  { icon: Ban, label: "Sin almendras", value: "almendras" },
-  { icon: Ban, label: "Sin maní", value: "mani" },
-  { icon: Fish, label: "Sin mariscos", value: "mariscos" },
-  { icon: Ban, label: "Sin cerdo", value: "cerdo" },
-  { icon: Ban, label: "Sin alcohol", value: "alcohol" },
-];
+// Icon map for known restriction/allergen names
+const RESTRICTION_ICON_MAP: Record<string, typeof Ban> = {
+  lactosa: Milk, gluten: Wheat, mariscos: Fish,
+};
+
+type RestrictionOption = { icon: typeof Ban; label: string; value: string };
 
 const DISLIKE_OPTIONS = [
   "Palta", "Cebolla", "Tomate", "Cilantro", "Ajo", "Picante",
@@ -84,6 +79,24 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   useEffect(() => {
     fetch(`/api/qr/ingredients?guestId=${getGuestId()}`).then(r => r.json()).then(d => {
       if (d.favorites) setFavIngredients(d.favorites);
+    }).catch(() => {});
+  }, []);
+
+  // Load restrictions/allergens dynamically from DB
+  const [restrictionOptions, setRestrictionOptions] = useState<RestrictionOption[]>([
+    { icon: Check, label: "Ninguna", value: "ninguna" },
+  ]);
+  useEffect(() => {
+    fetch("/api/qr/restrictions").then(r => r.json()).then((items: { name: string; type: string }[]) => {
+      const opts: RestrictionOption[] = [{ icon: Check, label: "Ninguna", value: "ninguna" }];
+      for (const item of items) {
+        opts.push({
+          icon: RESTRICTION_ICON_MAP[item.name] || Ban,
+          label: `Sin ${item.name}`,
+          value: item.name,
+        });
+      }
+      setRestrictionOptions(opts);
     }).catch(() => {});
   }, []);
 
@@ -314,31 +327,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
     }
 
-    // Filter by restrictions using structured allergen data
+    // Filter by restrictions using structured allergen/restriction data
     if (!restrictions.includes("ninguna") && restrictions.length > 0) {
       candidates = candidates.filter((d) => {
-        // Get allergen names from ingredient→allergen chain
         const dishIngs = (d as any).dishIngredients || [];
-        const dishAllergens = new Set<string>();
+        // Collect all allergen/restriction names linked to this dish's ingredients
+        const dishFlags = new Set<string>();
         for (const di of dishIngs) {
           for (const a of (di.ingredient?.allergens || [])) {
-            dishAllergens.add(a.name);
+            dishFlags.add(a.name);
           }
         }
-        // Also get ingredient names for non-allergen restrictions (cerdo, alcohol)
-        const ingNames = dishIngs.map((di: any) => di.ingredient?.name?.toLowerCase() || "");
-        const allText = [...dishAllergens, ...ingNames].join(" ");
-
+        // If the dish has any flag that matches user's restrictions, exclude it
         for (const r of restrictions) {
           if (r === "ninguna") continue;
-          // Direct allergen match (gluten, lactosa, mariscos, etc.)
-          if (dishAllergens.has(r)) return false;
-          // Mapped restrictions
-          if (r === "nueces" && (dishAllergens.has("frutos secos") || allText.includes("nuez"))) return false;
-          if (r === "almendras" && allText.includes("almendra")) return false;
-          if (r === "mani" && (dishAllergens.has("maní") || allText.includes("maní"))) return false;
-          if (r === "cerdo" && (allText.includes("cerdo") || allText.includes("tocino") || allText.includes("jamón"))) return false;
-          if (r === "alcohol" && allText.includes("alcohol")) return false;
+          if (dishFlags.has(r)) return false;
         }
         return true;
       });
@@ -541,7 +544,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
-                  const resLabels: Record<string, string> = { lactosa: "lactosa", gluten: "gluten", nueces: "nueces", almendras: "almendras", mani: "maní", frutos_secos: "nueces", mariscos: "mariscos", cerdo: "cerdo", alcohol: "alcohol" };
+                  const resLabels: Record<string, string> = Object.fromEntries(restrictionOptions.filter(r => r.value !== "ninguna").map(r => [r.value, r.value]));
                   const dietLabels: Record<string, string> = { omnivore: "carnívoro", vegetarian: "vegetariano", vegan: "vegano" };
                   const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];
@@ -618,7 +621,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             ¿Tienes alguna restricción?
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {RESTRICTION_OPTIONS.map((r) => {
+            {restrictionOptions.map((r) => {
               const sel = restrictions.includes(r.value);
               const Icon = r.icon;
               return (

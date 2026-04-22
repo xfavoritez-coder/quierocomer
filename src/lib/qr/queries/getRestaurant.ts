@@ -23,7 +23,7 @@ export async function getRestaurantBySlug(slug: string) {
           dishIngredients: {
             include: {
               ingredient: {
-                include: { allergens: { select: { id: true, name: true } } },
+                include: { allergens: { select: { id: true, name: true, type: true } } },
               },
             },
           },
