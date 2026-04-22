@@ -110,7 +110,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
             {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
           </p>
           <p style={{ fontSize: "0.85rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
-            {existingUser ? "Guárdalo y recibe una sorpresa 🎁" : "Regístrate y recibe una sorpresa 🎁"}
+            {existingUser ? "Guárdalo y recibe una sorpresa 🎁" : "Dinos tu fecha y recibe una sorpresa 🎁"}
           </p>
         </div>
 
@@ -126,7 +126,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
             animation: "bdayPulse 2.5s ease-in-out infinite",
           }}
         >
-          Me apunto
+          Quiero
         </button>
       </div>
 
