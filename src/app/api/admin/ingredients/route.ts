@@ -55,8 +55,18 @@ export async function PUT(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { id, name, category, isAllergen, allergenType } = await req.json();
+    const { id, name, category, isAllergen, allergenType, addAlias } = await req.json();
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+    // Add alias to existing ingredient
+    if (addAlias) {
+      const alias = addAlias.toLowerCase().trim();
+      const ingredient = await prisma.ingredient.update({
+        where: { id },
+        data: { aliases: { push: alias } },
+      });
+      return NextResponse.json({ ingredient });
+    }
 
     const data: Record<string, any> = {};
     if (name !== undefined) data.name = name.toLowerCase().trim();

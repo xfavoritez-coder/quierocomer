@@ -37,25 +37,56 @@ interface AnalysisResult {
   linkedCount: number;
 }
 
-function SuggestionRow({ originalName, onApprove, onReject }: { originalName: string; onApprove: (name: string) => void; onReject: () => void }) {
-  const [editing, setEditing] = useState(false);
+function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf, onReject }: {
+  originalName: string;
+  existingIngredients: Ingredient[];
+  onApprove: (name: string) => void;
+  onAliasOf: (targetId: string) => void;
+  onReject: () => void;
+}) {
+  const [mode, setMode] = useState<"default" | "edit" | "alias">("default");
   const [editName, setEditName] = useState(originalName);
+  const [aliasSearch, setAliasSearch] = useState("");
+  const F = "var(--font-display)";
+
+  if (mode === "edit") {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(127,191,220,0.2)" }}>
+        <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) onApprove(editName.trim()); }} style={{ flex: 1, padding: "4px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+        <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "3px 8px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+        <button onClick={() => setMode("default")} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+      </div>
+    );
+  }
+
+  if (mode === "alias") {
+    const filtered = existingIngredients.filter(i => !aliasSearch || i.name.includes(aliasSearch.toLowerCase()));
+    return (
+      <div style={{ padding: "8px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(244,166,35,0.2)" }}>
+        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "0 0 6px" }}>
+          <strong>{originalName}</strong> es alias de:
+        </p>
+        <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "5px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} autoFocus />
+        <div style={{ maxHeight: 120, overflowY: "auto" }}>
+          {filtered.slice(0, 15).map(i => (
+            <button key={i.id} onClick={() => onAliasOf(i.id)} style={{ display: "block", width: "100%", padding: "5px 8px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)" }}>
+              {i.name}
+            </button>
+          ))}
+          {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: 8, margin: 0 }}>Sin resultados</p>}
+        </div>
+        <button onClick={() => setMode("default")} style={{ marginTop: 4, padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(127,191,220,0.2)" }}>
-      {editing ? (
-        <>
-          <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) { onApprove(editName.trim()); } }} style={{ flex: 1, padding: "4px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
-          <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "3px 8px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
-          <button onClick={() => { setEditing(false); setEditName(originalName); }} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
-        </>
-      ) : (
-        <>
-          <span style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#7fbfdc", flex: 1 }}>{originalName}</span>
-          <button onClick={() => setEditing(true)} style={{ padding: "2px 6px", background: "none", border: "none", cursor: "pointer", opacity: 0.5, fontSize: "0.65rem" }}>✏️</button>
-          <button onClick={() => onApprove(originalName)} style={{ padding: "3px 10px", background: "rgba(22,163,74,0.08)", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
-          <button onClick={onReject} style={{ padding: "3px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "#ef4444", cursor: "pointer" }}>×</button>
-        </>
-      )}
+      <span style={{ fontFamily: F, fontSize: "0.75rem", color: "#7fbfdc", flex: 1 }}>{originalName}</span>
+      <button onClick={() => setMode("edit")} style={{ padding: "2px 6px", background: "none", border: "none", cursor: "pointer", opacity: 0.5, fontSize: "0.65rem" }} title="Editar nombre">✏️</button>
+      <button onClick={() => onApprove(originalName)} style={{ padding: "3px 10px", background: "rgba(22,163,74,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
+      <button onClick={() => setMode("alias")} style={{ padding: "3px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
+      <button onClick={onReject} style={{ padding: "3px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#ef4444", cursor: "pointer" }}>Ignorar</button>
     </div>
   );
 }
@@ -196,7 +227,7 @@ export default function IngredientesPage() {
                 <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 10px" }}>Aprueba los que quieras agregar a la base maestra. Al aprobar, se vinculan automáticamente a los platos que los usan.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {analysisResults.allSuggestions.map(originalName => (
-                    <SuggestionRow key={originalName} originalName={originalName} onApprove={async (finalName) => {
+                    <SuggestionRow key={originalName} originalName={originalName} existingIngredients={ingredients} onApprove={async (finalName) => {
                       const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: finalName, originalName: finalName !== originalName ? originalName : undefined }) });
                       const d = await res.json();
                       if (d.ingredient) {
@@ -208,6 +239,19 @@ export default function IngredientesPage() {
                           results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, finalName] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
                         } : null);
                       }
+                    }} onAliasOf={async (targetId) => {
+                      // Add originalName as alias to the target ingredient
+                      const target = ingredients.find(i => i.id === targetId);
+                      if (!target) return;
+                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: targetId, addAlias: originalName }) });
+                      // Update local state
+                      setIngredients(prev => prev.map(i => i.id === targetId ? { ...i } : i));
+                      setAnalysisResults(prev => prev ? {
+                        ...prev,
+                        allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
+                        totalSuggested: prev.totalSuggested - 1,
+                        results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, target.name] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
+                      } : null);
                     }} onReject={() => {
                       setAnalysisResults(prev => prev ? {
                         ...prev,
