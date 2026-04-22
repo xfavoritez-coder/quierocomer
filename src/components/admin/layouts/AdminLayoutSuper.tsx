@@ -17,6 +17,7 @@ const NAV = [
   { icon: "📈", label: "Analytics", href: "/admin/analytics" },
   { icon: "🔔", label: "Garzón", href: "/admin/analytics-garzon" },
   { icon: "👤", label: "Usuarios", href: "/admin/usuarios" },
+  { icon: "🥬", label: "Ingredientes", href: "/admin/ingredientes" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 

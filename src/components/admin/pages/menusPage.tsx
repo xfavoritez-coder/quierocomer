@@ -452,6 +452,9 @@ export default function AdminMenus() {
                     </button>
                   )}
                 </div>
+                {availableTemplates.length > 0 && assignedTemplateIds.length === 0 && (
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>Asigna una plantilla o crea una nueva. Configura sus opciones en el tab "Modificadores".</p>
+                )}
               </div>
             </>
           ) : (
