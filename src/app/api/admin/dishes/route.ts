@@ -12,10 +12,34 @@ export async function GET(req: NextRequest) {
 
   const dishes = await prisma.dish.findMany({
     where: { restaurantId, deletedAt: null },
-    include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } } },
+    include: {
+      category: { select: { id: true, name: true } },
+      modifierTemplates: { select: { id: true, name: true } },
+      dishIngredients: {
+        include: {
+          ingredient: {
+            include: { allergens: { select: { id: true, name: true } } },
+          },
+        },
+      },
+    },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
-  return NextResponse.json(dishes);
+
+  // Compute derived allergens for each dish
+  const result = dishes.map(d => {
+    const allergenSet = new Set<string>();
+    for (const di of d.dishIngredients) {
+      for (const a of di.ingredient.allergens) {
+        allergenSet.add(a.name);
+      }
+    }
+    const derivedAllergens = [...allergenSet].join(", ") || null;
+    const { dishIngredients: _, ...rest } = d;
+    return { ...rest, allergens: derivedAllergens };
+  });
+
+  return NextResponse.json(result);
 }
 
 export async function POST(req: NextRequest) {

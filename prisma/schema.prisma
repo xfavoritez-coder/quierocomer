@@ -114,8 +114,6 @@ model Ingredient {
   name            String             @unique
   aliases         String[]
   category        IngredientCategory
-  isAllergen      Boolean            @default(false)
-  allergenType    String?
   createdAt       DateTime           @default(now())
   dishes          IngredientTag[]
   dishIngredients DishIngredient[]

@@ -81,7 +81,7 @@ export default function AdminMenus() {
   const [eDiscountPrice, setEDiscountPrice] = useState("");
   const [eIngredients, setEIngredients] = useState("");
   const [eIngredientIds, setEIngredientIds] = useState<string[]>([]);
-  const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string; isAllergen: boolean }[]>([]);
+  const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string }[]>([]);
   const [ingSearch, setIngSearch] = useState("");
   const [eAllergens, setEAllergens] = useState<string[]>([]);
   const [eTags, setETags] = useState<string[]>([]);
@@ -133,7 +133,6 @@ export default function AdminMenus() {
       price: Number(ePrice),
       discountPrice: eDiscountPrice ? Number(eDiscountPrice) : null,
       ingredients: eIngredients || null,
-      allergens: eAllergens.filter(a => a !== "ninguno").join(", ") || null,
       tags: eTags,
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
@@ -144,7 +143,7 @@ export default function AdminMenus() {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    const updated = { ...selectedDish, ...updates, allergens: updates.allergens, tags: eTags as any };
+    const updated = { ...selectedDish, ...updates, tags: eTags as any };
     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
     setSelectedDish(updated);
     setEditMode(false);
@@ -252,7 +251,7 @@ export default function AdminMenus() {
                       const ing = allIngredients.find(i => i.id === id);
                       return ing ? (
                         <span key={id} onClick={() => setEIngredientIds(prev => prev.filter(x => x !== id))} style={{ fontSize: "0.72rem", padding: "3px 8px", borderRadius: 50, background: "rgba(244,166,35,0.12)", color: "#F4A623", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                          {ing.isAllergen ? "⚠️ " : ""}{ing.name} <span style={{ fontSize: "10px", opacity: 0.6 }}>×</span>
+                          {ing.name} <span style={{ fontSize: "10px", opacity: 0.6 }}>×</span>
                         </span>
                       ) : null;
                     })}
@@ -274,7 +273,6 @@ export default function AdminMenus() {
                         <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
                           <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
-                          {i.isAllergen && <span style={{ fontSize: "0.6rem", color: "#e85530" }}>⚠️</span>}
                         </button>
                       ))}
                     {allIngredients.filter(i => i.name.toLowerCase().includes(ingSearch.toLowerCase()) && !eIngredientIds.includes(i.id)).length === 0 && (

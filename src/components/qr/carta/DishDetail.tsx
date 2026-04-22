@@ -169,7 +169,6 @@ function DishSlide({
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
   const averageRating = ratingMap[dish.id];
-  const isRecommended = dish.tags?.includes("RECOMMENDED");
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
   const isLongDesc = desc.length > 120;
@@ -209,56 +208,49 @@ function DishSlide({
         </div>
       )}
 
-      {/* Top bar: counter, recommended badge, favorite, close */}
+      {/* Top bar: counter + close only */}
       <div className="absolute flex items-center" style={{ top: 16, left: 16, right: 16, zIndex: 10 }}>
         <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
         <div style={{ flex: 1 }} />
-        <div className="flex items-center" style={{ gap: 8 }}>
-          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={14} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }} />
-          <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
-        </div>
+        <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
       </div>
 
-      {/* Recommended badge — top left under counter */}
-      {isRecommended && (
-        <span className="absolute" style={{ top: 54, left: 14, zIndex: 10, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", color: "white", fontSize: "11.5px", fontWeight: 500, padding: "5px 11px", borderRadius: 999 }}>
-          <span style={{ color: "#fbbf24" }}>★</span> Recomendado
-        </span>
-      )}
+      {/* Bottom gradient — 60% height */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.5) 65%, transparent 100%)", zIndex: 4 }} />
 
-      {/* Info overlay — stronger gradient */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "65%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.5) 65%, transparent 100%)", zIndex: 4 }} />
+      {/* Content overlay */}
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>
 
-        {/* Category */}
-        {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
-
-        {/* Title + Price row */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px", flex: 1 }}>{dish.name}</h2>
-          <div style={{ flexShrink: 0, marginLeft: 12 }}>
-            {dish.discountPrice ? (
-              <div style={{ textAlign: "right" }}>
-                <span className="line-through" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", display: "block" }}>${dish.price.toLocaleString("es-CL")}</span>
-                <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
-              </div>
-            ) : (
-              <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
-            )}
+        {/* BLOQUE 1: Header — info left + heart right */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 14 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
+            <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>{dish.name}</h2>
+            <div style={{ marginTop: 6 }}>
+              {dish.discountPrice ? (
+                <>
+                  <span className="line-through" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                </>
+              ) : (
+                <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
+              )}
+            </div>
           </div>
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={18} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "0.5px solid rgba(255,255,255,0.25)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 18 }} />
         </div>
 
         {/* Rating + Stock */}
         {(averageRating || (dish.stockCountdown != null && dish.stockCountdown > 0)) && (
-          <div className="flex items-center" style={{ gap: 6, marginTop: 8 }}>
+          <div className="flex items-center" style={{ gap: 6, marginBottom: 10 }}>
             {averageRating && <span style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
             {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
           </div>
         )}
 
-        {/* Description */}
+        {/* BLOQUE 2: Description — full width */}
         {desc && (
-          <p style={{ marginTop: 10, fontSize: "13.5px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{desc}</p>
+          <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
           <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver más</button>
@@ -273,30 +265,26 @@ function DishSlide({
           const allGroups = templates.flatMap((t: any) => t.groups || []);
           if (allGroups.length === 0) return null;
 
-          // Check if any option has rich data (image, description, or price)
           const hasRichOptions = allGroups.some((g: any) => g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0));
 
           if (hasRichOptions) {
-            // Interactive selector — content changes on selection
             return (
               <div style={{ marginTop: 14 }}>
                 {allGroups.map((g: any) => {
                   const hasRich = g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0);
                   if (!hasRich) {
-                    // Informative only
                     return (
                       <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", margin: "0 0 4px" }}>
                         <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => o.name).join(" · ")}
                       </p>
                     );
                   }
-                  return null; // Rich groups handled by parent component
+                  return null;
                 })}
               </div>
             );
           }
 
-          // Informative text only
           return (
             <div style={{ marginTop: 14 }}>
               {allGroups.map((g: any) => (
@@ -311,6 +299,7 @@ function DishSlide({
           );
         })()}
 
+        {/* BLOQUE 3: Link ingredientes */}
         {hasInfo && (
           <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 14, background: "none", border: "none", borderBottom: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 500, padding: "0 0 2px", cursor: "pointer" }}>
             Ver ingredientes

@@ -12,8 +12,7 @@ interface Ingredient {
   id: string;
   name: string;
   category: string;
-  isAllergen: boolean;
-  allergenType: string | null;
+  allergens: { id: string; name: string }[];
   aliases?: string[];
 }
 
@@ -236,8 +235,6 @@ export default function IngredientesPage() {
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const [newCat, setNewCat] = useState("OTHER");
-  const [newAllergen, setNewAllergen] = useState(false);
-  const [newAllergenType, setNewAllergenType] = useState("");
 
   // Edit + merge
   const [editing, setEditing] = useState<string | null>(null);
@@ -258,8 +255,6 @@ export default function IngredientesPage() {
   const [ignoredList, setIgnoredList] = useState<{ id: string; name: string }[]>([]);
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("");
-  const [eAllergen, setEAllergen] = useState(false);
-  const [eAllergenType, setEAllergenType] = useState("");
 
   useEffect(() => {
     fetch("/api/admin/ingredients")
@@ -298,17 +293,8 @@ export default function IngredientesPage() {
     });
     const d = await res.json();
     if (d.ingredient) {
-      // Update allergen if needed
-      if (newAllergen) {
-        await fetch("/api/admin/ingredients", {
-          method: "PUT", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: d.ingredient.id, isAllergen: true, allergenType: newAllergenType || null }),
-        });
-        d.ingredient.isAllergen = true;
-        d.ingredient.allergenType = newAllergenType || null;
-      }
-      setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
-      setNewName(""); setNewCat("OTHER"); setNewAllergen(false); setNewAllergenType(""); setCreating(false);
+      setIngredients(prev => [...prev, { ...d.ingredient, allergens: [] }].sort((a, b) => a.name.localeCompare(b.name)));
+      setNewName(""); setNewCat("OTHER"); setCreating(false);
     }
   };
 
@@ -482,7 +468,7 @@ export default function IngredientesPage() {
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-        {(() => { const a = ingredients.filter(i => i.isAllergen).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} alérgenos</span> : null; })()}
+        {(() => { const a = ingredients.filter(i => i.allergens.length > 0).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} con alérgenos</span> : null; })()}
       </div>
 
       {/* Search + create */}
@@ -554,8 +540,8 @@ export default function IngredientesPage() {
                   </div>
                 )}
               </div>
-              {i.isAllergen && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergenType || "alérgeno"}</span>}
-              <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); setEAllergen(i.isAllergen); setEAllergenType(i.allergenType || ""); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
+              {i.allergens.length > 0 && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergens.map(a => a.name).join(", ")}</span>}
+              <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
               <button onClick={() => { setMerging(merging === i.id ? null : i.id); setMergeSearch(""); }} style={{ padding: "4px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
               <button onClick={() => remove(i.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>
             </div>

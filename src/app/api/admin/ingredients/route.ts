@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const ingredients = await prisma.ingredient.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
     orderBy: { name: "asc" },
-    select: { id: true, name: true, category: true, isAllergen: true, allergenType: true, aliases: true },
+    select: { id: true, name: true, category: true, aliases: true, allergens: { select: { id: true, name: true } } },
   });
 
   let linkedIds: string[] = [];
@@ -58,7 +58,7 @@ export async function PUT(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto, linkToDishes } = body;
+    const { id, name, category, addAlias, mergeInto, linkToDishes } = body;
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
     // Link ingredient to multiple dishes at once
@@ -119,9 +119,6 @@ export async function PUT(req: NextRequest) {
     const data: Record<string, any> = {};
     if (name !== undefined) data.name = name.toLowerCase().trim();
     if (category !== undefined) data.category = category;
-    if (isAllergen !== undefined) data.isAllergen = isAllergen;
-    if (allergenType !== undefined) data.allergenType = allergenType || null;
-
     const ingredient = await prisma.ingredient.update({ where: { id }, data });
 
     // If name changed, update text field on all linked dishes

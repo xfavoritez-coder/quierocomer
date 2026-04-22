@@ -65,17 +65,17 @@ export async function GET(req: NextRequest) {
     const dishIngredients = allDishIds.size > 0
       ? await prisma.dishIngredient.findMany({
           where: { dishId: { in: Array.from(allDishIds) } },
-          select: { dishId: true, ingredient: { select: { id: true, name: true, isAllergen: true, allergenType: true } } },
+          select: { dishId: true, ingredient: { select: { id: true, name: true, allergens: { select: { name: true } } } } },
         })
       : [];
-    const ingredientsByDish: Record<string, { name: string; isAllergen: boolean; allergenType: string | null }[]> = {};
+    const ingredientsByDish: Record<string, { name: string; allergens: { name: string }[] }[]> = {};
     for (const di of dishIngredients) {
       if (!ingredientsByDish[di.dishId]) ingredientsByDish[di.dishId] = [];
       ingredientsByDish[di.dishId].push(di.ingredient);
     }
     for (const d of dishNames) {
       if (!ingredientsByDish[d.id] && d.ingredients) {
-        ingredientsByDish[d.id] = d.ingredients.split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({ name: name.toLowerCase(), isAllergen: false, allergenType: null }));
+        ingredientsByDish[d.id] = d.ingredients.split(/[,;]+/).map((s: string) => s.trim()).filter(Boolean).map((name: string) => ({ name: name.toLowerCase(), allergens: [] }));
       }
     }
 
