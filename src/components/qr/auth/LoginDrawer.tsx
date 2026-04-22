@@ -8,6 +8,7 @@ interface Props {
 }
 
 export default function LoginDrawer({ onClose }: Props) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [visible, setVisible] = useState(false);
@@ -21,12 +22,12 @@ export default function LoginDrawer({ onClose }: Props) {
   const close = () => { setVisible(false); setTimeout(onClose, 250); };
 
   const handleSubmit = async () => {
-    if (!email || status !== "idle") return;
+    if (!name.trim() || !email || status !== "idle") return;
     setStatus("loading");
     await fetch("/api/qr/user/magic-link", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, name: name.trim() }),
     });
     setStatus("success");
   };
@@ -53,11 +54,13 @@ export default function LoginDrawer({ onClose }: Props) {
               <h3 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e" }}>Ingresa o regístrate</h3>
               <p style={{ color: "#888", fontSize: "0.88rem", marginTop: 4 }}>Te enviamos un link a tu correo. Sin contraseña.</p>
             </div>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Tu nombre"
+              style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #eee", background: "#f8f8f8", fontSize: "1rem", color: "#0e0e0e", outline: "none", fontFamily: "inherit", marginBottom: 10 }} />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #eee", background: "#f8f8f8", fontSize: "1rem", color: "#0e0e0e", outline: "none", fontFamily: "inherit" }} />
             <p style={{ color: "#bbb", fontSize: "0.75rem", marginTop: 6, textAlign: "center" }}>Si no tienes cuenta, te crearemos una automáticamente</p>
-            <button onClick={handleSubmit}
-              style={{ width: "100%", marginTop: 8, padding: 14, borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", fontFamily: "inherit", opacity: status === "loading" ? 0.6 : 1 }}>
+            <button onClick={handleSubmit} disabled={!name.trim() || !email}
+              style={{ width: "100%", marginTop: 8, padding: 14, borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", fontFamily: "inherit", opacity: (!name.trim() || !email || status === "loading") ? 0.5 : 1 }}>
               {status === "loading" ? "Enviando..." : "Continuar →"}
             </button>
           </>

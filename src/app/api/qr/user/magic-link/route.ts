@@ -3,14 +3,14 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { email } = await request.json();
+    const { email, name } = await request.json();
     if (!email) return NextResponse.json({ error: "Email requerido" }, { status: 400 });
 
-    // Find or create user
+    // Find or create user, update name if provided
     const user = await prisma.qRUser.upsert({
       where: { email },
-      update: {},
-      create: { email },
+      update: name ? { name } : {},
+      create: { email, name: name || null },
     });
 
     // Generate magic token
