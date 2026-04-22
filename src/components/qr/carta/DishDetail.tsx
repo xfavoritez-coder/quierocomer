@@ -239,10 +239,10 @@ function DishSlide({
           <p style={{ marginTop: 10, fontSize: "1.05rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.75, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", padding: 0, marginTop: 2 }}>ver más</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver más</button>
         )}
         {isLongDesc && expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", padding: 0, marginTop: 2 }}>ver menos</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver menos</button>
         )}
 
         {/* Modifier options */}
@@ -290,7 +290,7 @@ function DishSlide({
         })()}
 
         {hasInfo && (
-          <button onClick={() => setShowInfo(true)} style={{ marginTop: 12, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(4px)", color: "white", fontSize: "0.92rem", fontWeight: 500, padding: "8px 16px", borderRadius: 6, border: "none" }}>Ver ingredientes ▾</button>
+          <button onClick={() => setShowInfo(true)} style={{ display: "block", marginTop: 12, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(4px)", color: "white", fontSize: "0.92rem", fontWeight: 500, padding: "8px 16px", borderRadius: 6, border: "none" }}>Ver ingredientes ▾</button>
         )}
       </div>
 

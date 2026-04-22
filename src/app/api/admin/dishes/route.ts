@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
       console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested, diet: ${aiResult.detectedDiet}`);
       // Update diet if detected and owner didn't set one (or left default)
       if (aiResult.detectedDiet && (!dishDiet || dishDiet === "OMNIVORE") && aiResult.detectedDiet !== "OMNIVORE") {
-        await prisma.dish.update({ where: { id: dish.id }, data: { dishDiet: aiResult.detectedDiet } });
+        await prisma.dish.update({ where: { id: dish.id }, data: { dishDiet: aiResult.detectedDiet as any } });
       }
     } catch (e) {
       console.error("[AI extract]", e);
