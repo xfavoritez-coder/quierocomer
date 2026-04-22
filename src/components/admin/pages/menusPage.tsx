@@ -826,7 +826,7 @@ export default function AdminMenus() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={createDish} disabled={dishSaving || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (!newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{dishSaving ? "Creando..." : "Crear plato"}</button>
+              <button onClick={createDish} disabled={dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice || !newDishCatId} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: (dishSaving || newDishPhotoUploading || !newDishName.trim() || !newDishPrice) ? 0.5 : 1 }}>{newDishPhotoUploading ? "Subiendo foto..." : dishSaving ? "Creando..." : "Crear plato"}</button>
               <button onClick={() => { setCreatingDish(false); setNewDishName(""); setNewDishPrice(""); setNewDishDesc(""); setNewDishPhoto(""); }} style={{ padding: "10px 16px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
             </div>
           </div>
