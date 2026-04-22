@@ -72,7 +72,6 @@ function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_resul
 export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp }: GenioProps) {
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [previewDish, setPreviewDish] = useState<Dish | null>(null);
   const genioSessionId = useRef(crypto.randomUUID()).current;
 
   // Load saved preferences from localStorage
