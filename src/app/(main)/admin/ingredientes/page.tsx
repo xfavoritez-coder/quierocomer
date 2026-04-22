@@ -51,10 +51,10 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
 
   if (mode === "edit") {
     return (
-      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(127,191,220,0.2)" }}>
-        <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) onApprove(editName.trim()); }} style={{ flex: 1, padding: "4px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
-        <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "3px 8px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
-        <button onClick={() => setMode("default")} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid var(--adm-card-border)" }}>
+        <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) onApprove(editName.trim()); }} style={{ flex: 1, padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+        <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "5px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+        <button onClick={() => setMode("default")} style={{ padding: "5px 10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
       </div>
     );
   }
@@ -62,31 +62,34 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
   if (mode === "alias") {
     const filtered = existingIngredients.filter(i => !aliasSearch || i.name.includes(aliasSearch.toLowerCase()));
     return (
-      <div style={{ padding: "8px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(244,166,35,0.2)" }}>
-        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "0 0 6px" }}>
-          <strong>{originalName}</strong> es alias de:
+      <div style={{ padding: "10px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid rgba(244,166,35,0.25)", maxWidth: 320 }}>
+        <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", margin: "0 0 8px" }}>
+          <strong style={{ color: "#F4A623" }}>{originalName}</strong> es alias de:
         </p>
-        <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "5px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", marginBottom: 4, boxSizing: "border-box" as const }} autoFocus />
-        <div style={{ maxHeight: 120, overflowY: "auto" }}>
+        <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 6, boxSizing: "border-box" as const }} autoFocus />
+        <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 8 }}>
           {filtered.slice(0, 15).map(i => (
-            <button key={i.id} onClick={() => onAliasOf(i.id)} style={{ display: "block", width: "100%", padding: "5px 8px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)" }}>
+            <button key={i.id} onClick={() => onAliasOf(i.id)} style={{ display: "flex", alignItems: "center", width: "100%", padding: "8px 10px", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}
+              onMouseOver={e => (e.currentTarget.style.background = "rgba(244,166,35,0.06)")}
+              onMouseOut={e => (e.currentTarget.style.background = "transparent")}
+            >
               {i.name}
             </button>
           ))}
-          {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: 8, margin: 0 }}>Sin resultados</p>}
+          {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", padding: 12, margin: 0, textAlign: "center" }}>Sin resultados</p>}
         </div>
-        <button onClick={() => setMode("default")} style={{ marginTop: 4, padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
+        <button onClick={() => setMode("default")} style={{ padding: "5px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(127,191,220,0.2)" }}>
-      <span style={{ fontFamily: F, fontSize: "0.75rem", color: "#7fbfdc", flex: 1 }}>{originalName}</span>
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid var(--adm-card-border)" }}>
+      <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#7fbfdc", fontWeight: 600, flex: 1 }}>{originalName}</span>
       <button onClick={() => setMode("edit")} style={{ padding: "2px 6px", background: "none", border: "none", cursor: "pointer", opacity: 0.5, fontSize: "0.65rem" }} title="Editar nombre">✏️</button>
-      <button onClick={() => onApprove(originalName)} style={{ padding: "3px 10px", background: "rgba(22,163,74,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
-      <button onClick={() => setMode("alias")} style={{ padding: "3px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
-      <button onClick={onReject} style={{ padding: "3px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "#ef4444", cursor: "pointer" }}>Ignorar</button>
+      <button onClick={() => onApprove(originalName)} style={{ padding: "4px 10px", background: "rgba(22,163,74,0.1)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.68rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
+      <button onClick={() => setMode("alias")} style={{ padding: "4px 10px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.68rem", color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
+      <button onClick={onReject} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>Ignorar</button>
     </div>
   );
 }
