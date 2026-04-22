@@ -287,23 +287,13 @@ export default function IngredientesPage() {
 
       {/* Stats */}
       <div style={{ display: "flex", gap: 6, marginBottom: 20, flexWrap: "wrap" }}>
-        {CATEGORIES.map(c => {
-          const count = ingredients.filter(i => i.category === c.value).length;
-          if (!count) return null;
-          return <span key={c.value} style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{c.icon} {c.label} ({count})</span>;
-        })}
-        {(() => { const a = ingredients.filter(i => i.isAllergen).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ Alérgenos ({a})</span> : null; })()}
+        {(() => { const a = ingredients.filter(i => i.isAllergen).length; return a ? <span style={{ fontFamily: F, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530" }}>⚠️ {a} alérgenos</span> : null; })()}
       </div>
 
-      {/* Search + filter + create */}
+      {/* Search + create */}
       <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
         <input placeholder="Buscar ingrediente..." value={search} onChange={e => setSearch(e.target.value)}
           style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
-        <select value={catFilter} onChange={e => setCatFilter(e.target.value)}
-          style={{ padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-          <option value="all">Todas</option>
-          {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
-        </select>
         {!creating && (
           <button onClick={() => setCreating(true)} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo</button>
         )}
@@ -312,13 +302,9 @@ export default function IngredientesPage() {
       {/* Create form */}
       {creating && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
-          <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+          <div style={{ marginBottom: 10 }}>
             <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nombre del ingrediente" autoFocus
-              style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
-            <select value={newCat} onChange={e => setNewCat(e.target.value)}
-              style={{ padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
-            </select>
+              style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const }} />
           </div>
           <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 10 }}>
             <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
@@ -346,11 +332,8 @@ export default function IngredientesPage() {
           if (editing === i.id) {
             return (
               <div key={i.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: 14 }}>
-                <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                  <input value={eName} onChange={e => setEName(e.target.value)} style={{ flex: 1, padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }} />
-                  <select value={eCat} onChange={e => setECat(e.target.value)} style={{ padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none" }}>
-                    {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
-                  </select>
+                <div style={{ marginBottom: 8 }}>
+                  <input value={eName} onChange={e => setEName(e.target.value)} style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const }} />
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>
@@ -371,9 +354,7 @@ export default function IngredientesPage() {
           }
           return (
             <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-              <span style={{ fontSize: "0.85rem" }}>{cat?.icon}</span>
               <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500, flex: 1 }}>{i.name}</span>
-              <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{cat?.label}</span>
               {i.isAllergen && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergenType || "alérgeno"}</span>}
               <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); setEAllergen(i.isAllergen); setEAllergenType(i.allergenType || ""); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
               <button onClick={() => remove(i.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>
