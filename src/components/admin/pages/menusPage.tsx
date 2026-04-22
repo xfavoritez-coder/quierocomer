@@ -974,9 +974,9 @@ export default function AdminMenus() {
                   )}
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: 6, marginTop: 16, alignItems: "center" }}>
-                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ flex: 1, padding: "9px", background: "#1a1a1a", border: "none", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                    <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "9px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "stretch" }}>
+                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "10px 28px", background: "#2d2d2a", border: "none", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                    <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
                       {d.isActive ? (
                         <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
                       ) : (
@@ -984,7 +984,7 @@ export default function AdminMenus() {
                       )}
                     </button>
                     <div style={{ position: "relative" }}>
-                      <button onClick={() => setKebabOpenId(kebabOpenId === d.id ? null : d.id)} style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #e5e0d3", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", color: "#6b6b65" }}>⋯</button>
+                      <button onClick={() => setKebabOpenId(kebabOpenId === d.id ? null : d.id)} style={{ width: 38, borderRadius: 8, border: "1px solid #e5e0d3", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", color: "#6b6b65" }}>⋯</button>
                       {kebabOpenId === d.id && (
                         <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden", minWidth: 120 }}>
                           <button onClick={async () => {
