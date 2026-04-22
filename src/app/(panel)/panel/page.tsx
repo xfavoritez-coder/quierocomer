@@ -17,7 +17,7 @@ interface DashData {
   topDishesGenio: { name: string; count: number }[];
   abandonedThisWeek: number;
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
-  lastScanAt: string | null; activePromos: number; weekFavorites: number;
+  lastScanAt: string | null; activePromos: number; weekFavorites: number; weekWaiterCalls: number;
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
