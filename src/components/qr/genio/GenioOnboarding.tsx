@@ -815,8 +815,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   }}>
                   <div className="absolute" style={{ inset: 0, background: "#333" }} />
                   {photo && <Image src={photo} alt={d.name} fill className="object-cover" sizes="33vw" style={{ position: "absolute", zIndex: 1 }} />}
-                  <button onClick={(e) => { e.stopPropagation(); toggleLike(d.id); }} className="absolute flex items-center justify-center" style={{ top: 6, right: 6, width: 32, height: 32, borderRadius: "50%", background: sel ? "#F4A623" : "rgba(255,255,255,0.15)", border: sel ? "none" : "2.5px solid rgba(255,255,255,0.5)", transition: "all 0.15s", zIndex: 4, cursor: "pointer" }}>
-                    {sel && <Check size={16} color="#0e0e0e" strokeWidth={3} />}
+                  <button onClick={(e) => { e.stopPropagation(); toggleLike(d.id); }} className="absolute flex items-center justify-center" style={{ top: 6, right: 6, width: 32, height: 32, borderRadius: "50%", background: sel ? "#F4A623" : "rgba(0,0,0,0.35)", border: sel ? "2px solid #F4A623" : "2px solid rgba(255,255,255,0.7)", boxShadow: "0 2px 6px rgba(0,0,0,0.3)", transition: "all 0.15s", zIndex: 4, cursor: "pointer" }}>
+                    {sel && <Check size={16} color="white" strokeWidth={3} />}
                   </button>
                   <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)", zIndex: 2 }} />
                   <span className="absolute" style={{ bottom: 4, left: 5, right: 5, color: "white", fontSize: "0.9rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", zIndex: 3 }}>
