@@ -118,7 +118,12 @@ export default function AdminMenus() {
       list = list.filter(d => d.name.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
-    return list;
+    // Recommended first
+    return [...list].sort((a, b) => {
+      const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
+      const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+      return aRec - bRec;
+    });
   }, [dishes, search, catFilter]);
 
   // Reset page when filters change
@@ -708,15 +713,19 @@ export default function AdminMenus() {
         <SkeletonLoading type="list" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {paginated.map(d => (
+          {paginated.map(d => {
+            const isRec = d.tags?.includes("RECOMMENDED");
+            return (
             <button key={d.id} onClick={() => setSelectedDish(d)} style={{
               display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
-              background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12,
+              background: isRec ? "rgba(244,166,35,0.03)" : "var(--adm-card)",
+              border: isRec ? "1.5px solid rgba(244,166,35,0.3)" : "1px solid var(--adm-card-border)",
+              borderRadius: 12,
               cursor: "pointer", width: "100%", textAlign: "left", opacity: d.isActive ? 1 : 0.5,
               transition: "border-color 0.2s",
             }}
-              onMouseOver={e => (e.currentTarget.style.borderColor = "rgba(244,166,35,0.3)")}
-              onMouseOut={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
+              onMouseOver={e => (e.currentTarget.style.borderColor = "rgba(244,166,35,0.4)")}
+              onMouseOut={e => (e.currentTarget.style.borderColor = isRec ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)")}
             >
               {d.photos?.[0] ? (
                 <img src={d.photos[0]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
@@ -726,7 +735,8 @@ export default function AdminMenus() {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                  {d.tags.map(t => (
+                  {isRec && <span style={{ fontSize: "0.7rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
+                  {d.tags.filter(t => t !== "RECOMMENDED").map(t => (
                     <span key={t} style={{ width: 6, height: 6, borderRadius: "50%", background: TAG_COLORS[t] || "#888", flexShrink: 0 }} />
                   ))}
                 </div>
@@ -737,7 +747,8 @@ export default function AdminMenus() {
                 {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Inactivo</p>}
               </div>
             </button>
-          ))}
+            );
+          })}
           {filtered.length === 0 && (
             <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", textAlign: "center", padding: 40 }}>
               {dishes.length === 0 ? "Este local no tiene platos" : "No hay platos que coincidan"}
