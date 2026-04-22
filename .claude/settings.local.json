@@ -57,7 +57,8 @@
       "Bash(grep -A2 '\"\"build\"\"' package.json)",
       "Bash(rm c:/Proyectos/quierocomer/src/app/api/admin/dishes/[id]/modifiers/route.ts)",
       "Bash(rmdir c:/Proyectos/quierocomer/src/app/api/admin/dishes/[id]/modifiers)",
-      "Bash(cd:*amos subir foto opcional, sino quiere subir foto no hay problema se ingresa la opcoin sin foto pero si camibiando algo si desea, la descripcion por ej, y si no \\(la dejamos pocional\\) o que camie el precio. pero si no hay nada que cambiar entonces no ponemos el select en el modal de producto para que)"
+      "WebFetch(domain:toteat.app)",
+      "Bash(timeout 10)"
     ]
   }
 }

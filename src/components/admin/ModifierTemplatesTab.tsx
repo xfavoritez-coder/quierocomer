@@ -34,6 +34,11 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [eoDesc, setEoDesc] = useState("");
   const [eoImage, setEoImage] = useState("");
   const [eoUploading, setEoUploading] = useState(false);
+  const [addingGroupTo, setAddingGroupTo] = useState<string | null>(null);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [addingOptionTo, setAddingOptionTo] = useState<string | null>(null);
+  const [newOptName, setNewOptName] = useState("");
+  const [newOptPrice, setNewOptPrice] = useState("");
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -69,13 +74,18 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     setTemplates(prev => prev.filter(t => t.id !== id));
   };
 
-  const addGroup = async (templateId: string) => {
+  const addGroup = async (templateId: string, name: string) => {
+    if (!name.trim()) return;
     const res = await fetch("/api/admin/modifier-templates", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addGroupToTemplate: templateId, name: "Nuevo grupo", required: true, maxSelect: 1 }),
+      body: JSON.stringify({ addGroupToTemplate: templateId, name: name.trim(), required: true, maxSelect: 1 }),
     });
     const group = await res.json();
-    if (res.ok) setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: [...t.groups, { ...group, options: group.options || [] }] } : t));
+    if (res.ok) {
+      setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: [...t.groups, { ...group, options: group.options || [] }] } : t));
+      setAddingGroupTo(null);
+      setNewGroupName("");
+    }
   };
 
   const updateGroup = async (templateId: string, groupId: string, data: Record<string, any>) => {
@@ -88,15 +98,18 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.filter(g => g.id !== groupId) } : t));
   };
 
-  const addOption = async (templateId: string, groupId: string) => {
+  const addOption = async (templateId: string, groupId: string, name: string, price: string) => {
+    if (!name.trim()) return;
     const res = await fetch("/api/admin/modifier-templates", {
       method: "PUT", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ addOptionToGroup: groupId, name: "Nueva opción" }),
+      body: JSON.stringify({ addOptionToGroup: groupId, name: name.trim(), priceAdjustment: price ? Number(price) : 0 }),
     });
     const opt = await res.json();
     if (res.ok) {
       setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: [...g.options, opt] } : g) } : t));
-      setEditingOption(opt.id); setEoName(""); setEoPrice("0"); setEoDesc(""); setEoImage("");
+      setAddingOptionTo(null);
+      setNewOptName("");
+      setNewOptPrice("");
     }
   };
 
@@ -247,14 +260,42 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                             )}
                           </div>
                         ))}
-                        <button onClick={() => addOption(template.id, group.id)} style={{ marginTop: 8, padding: "5px 12px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: GOLD, cursor: "pointer", width: "100%" }}>+ Agregar opción</button>
+                        {addingOptionTo === group.id ? (
+                          <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center" }}>
+                            <input value={newOptName} onChange={e => setNewOptName(e.target.value)} onKeyDown={e => e.key === "Enter" && addOption(template.id, group.id, newOptName, newOptPrice)}
+                              placeholder="Ej: Panko, Sésamo, Salmón..."
+                              style={{ flex: 1, padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+                            <input value={newOptPrice} onChange={e => setNewOptPrice(e.target.value)} onKeyDown={e => e.key === "Enter" && addOption(template.id, group.id, newOptName, newOptPrice)}
+                              placeholder="+$"
+                              style={{ width: 65, padding: "6px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", textAlign: "right" as const }} />
+                            <button onClick={() => addOption(template.id, group.id, newOptName, newOptPrice)} disabled={!newOptName.trim()} style={{ padding: "6px 10px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer", opacity: !newOptName.trim() ? 0.5 : 1 }}>Crear</button>
+                            <button onClick={() => { setAddingOptionTo(null); setNewOptName(""); setNewOptPrice(""); }} style={{ padding: "4px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.65rem" }}>×</button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setAddingOptionTo(group.id)} style={{ marginTop: 8, padding: "5px 12px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: GOLD, cursor: "pointer", width: "100%" }}>+ Agregar opción</button>
+                        )}
                       </div>
                     </div>
                   ))}
 
-                  <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-                    <button onClick={() => addGroup(template.id)} style={{ padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>+ Agregar grupo</button>
-                    <button onClick={() => deleteTemplate(template.id)} style={{ padding: "8px 14px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "#ef4444", cursor: "pointer", fontWeight: 600 }}>Eliminar plantilla</button>
+                  <div style={{ marginTop: 12 }}>
+                    {addingGroupTo === template.id ? (
+                      <div style={{ border: "1px dashed var(--adm-card-border)", borderRadius: 10, padding: "10px 12px", marginBottom: 8 }}>
+                        <input value={newGroupName} onChange={e => setNewGroupName(e.target.value)} onKeyDown={e => e.key === "Enter" && addGroup(template.id, newGroupName)}
+                          placeholder="Ej: Elige tu masa, Tipo de cocción..."
+                          style={{ width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" as const, marginBottom: 4 }} autoFocus />
+                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Este nombre se muestra al cliente en la carta</p>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => addGroup(template.id, newGroupName)} disabled={!newGroupName.trim()} style={{ padding: "6px 14px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer", opacity: !newGroupName.trim() ? 0.5 : 1 }}>Crear grupo</button>
+                          <button onClick={() => { setAddingGroupTo(null); setNewGroupName(""); }} style={{ padding: "6px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>Cancelar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button onClick={() => setAddingGroupTo(template.id)} style={{ padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>+ Agregar grupo</button>
+                        <button onClick={() => deleteTemplate(template.id)} style={{ padding: "8px 14px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "#ef4444", cursor: "pointer", fontWeight: 600 }}>Eliminar plantilla</button>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
