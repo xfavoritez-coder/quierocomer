@@ -199,11 +199,8 @@ function DishSlide({
         </div>
       )}
 
-      {/* Favorite + Close */}
-      <div className="absolute flex items-center" style={{ top: 16, right: 16, gap: 8, zIndex: 10 }}>
-        <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} />
-        <button onClick={onClose} className="flex items-center justify-center" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "white", fontSize: "1.1rem", border: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>✕</button>
-      </div>
+      {/* Close */}
+      <button onClick={onClose} className="absolute flex items-center justify-center" style={{ top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "white", fontSize: "1.1rem", border: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)", zIndex: 10 }}>✕</button>
 
       {/* Counter */}
       <div className="absolute" style={{ top: 20, left: 16, color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, zIndex: 10, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
@@ -221,7 +218,10 @@ function DishSlide({
 
         {categoryName && <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3, display: "block" }}>{categoryName}</span>}
 
-        <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", lineHeight: 1.2, margin: 0 }}>{dish.name}</h2>
+        <div className="flex items-center" style={{ gap: 10 }}>
+          <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", lineHeight: 1.2, margin: 0 }}>{dish.name}</h2>
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={22} />
+        </div>
 
         <div className="flex items-center" style={{ marginTop: 6, gap: 8 }}>
           {dish.discountPrice ? (
@@ -240,6 +240,9 @@ function DishSlide({
         )}
         {isLongDesc && !expandDesc && (
           <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", padding: 0, marginTop: 2 }}>ver más</button>
+        )}
+        {isLongDesc && expandDesc && (
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", padding: 0, marginTop: 2 }}>ver menos</button>
         )}
 
         {/* Modifier options */}
