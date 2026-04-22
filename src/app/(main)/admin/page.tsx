@@ -22,6 +22,7 @@ interface DashData {
   activeRestaurantsCount: number; topRestaurants: { name: string; visits: number }[];
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; activePromos: number; weekFavorites: number;
+  weekWaiterCalls: number;
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
@@ -61,7 +62,6 @@ export default function AdminDashboard() {
     return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Sin datos disponibles</p></div>;
   }
 
-  const deltaText = data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs semana pasada` : "Sin datos previos";
   const avgMin = Math.floor(data.avgSessionDuration / 60);
   const avgSec = data.avgSessionDuration % 60;
   const avgText = avgMin > 0 ? `${avgMin}m ${avgSec}s` : `${avgSec}s`;
@@ -94,14 +94,16 @@ export default function AdminDashboard() {
 
       {/* Main metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="Visitas esta semana" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "var(--adm-positive)" : undefined} />
         <Stat label="Visitantes únicos" value={data.totalGuests} />
         <Stat label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} color="var(--adm-positive)" />
         <Stat label="Duración promedio" value={avgText} />
+        <Stat label="🧞 Genio usado" value={data.genioUsedThisWeek} color={GOLD} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="🧞 Genio usado esta semana" value={data.genioUsedThisWeek} color={GOLD} />
+        <Stat label="🔔 Llamadas garzón" value={data.weekWaiterCalls ?? 0} sub="esta semana" />
+        <Stat label="⭐ Favoritos nuevos" value={data.weekFavorites ?? 0} sub="esta semana" />
+        <Stat label="📢 Promos activas" value={data.activePromos ?? 0} />
       </div>
 
       <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
