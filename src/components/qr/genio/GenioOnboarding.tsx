@@ -624,7 +624,15 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             ¿Tienes alguna restricción?
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {restrictionOptions.map((r) => {
+            {restrictionOptions.filter(r => {
+              if (r.value === "ninguna" || r.value === "_spicy") return true;
+              // Hide animal-product restrictions for vegans/vegetarians
+              const animalRestrictions = ["mariscos", "cerdo", "pescado"];
+              const dairyEggRestrictions = ["lactosa", "huevo"];
+              if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
+              if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
+              return true;
+            }).map((r) => {
               const sel = restrictions.includes(r.value);
               const Icon = r.icon;
               return (
