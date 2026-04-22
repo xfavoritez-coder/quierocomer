@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
-    const { restaurantId, categoryId, name, description, price, discountPrice, photos, tags, isHero, ingredients, allergens } = body;
+    const { restaurantId, categoryId, name, description, price, discountPrice, photos, tags, isHero, ingredients, allergens, dishDiet } = body;
 
     if (!restaurantId || !categoryId || !name || price == null) {
       return NextResponse.json({ error: "restaurantId, categoryId, name y price requeridos" }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(req: NextRequest) {
         isHero: !!isHero,
         ingredients: ingredients || null,
         allergens: allergens || null,
+        dishDiet: dishDiet || "OMNIVORE",
         position: (maxPos?.position ?? -1) + 1,
       },
       include: { category: { select: { id: true, name: true } } },

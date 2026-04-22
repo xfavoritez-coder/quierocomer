@@ -44,6 +44,7 @@ export default function AdminMenus() {
   const [newDishCatId, setNewDishCatId] = useState("");
   const [newDishPhoto, setNewDishPhoto] = useState("");
   const [newDishPhotoUploading, setNewDishPhotoUploading] = useState(false);
+  const [newDishDiet, setNewDishDiet] = useState("OMNIVORE");
   const [dishSaving, setDishSaving] = useState(false);
   const [dishCreatedMsg, setDishCreatedMsg] = useState("");
 
@@ -149,6 +150,7 @@ export default function AdminMenus() {
           price: Number(newDishPrice),
           description: newDishDesc.trim() || null,
           photos: newDishPhoto ? [newDishPhoto] : [],
+          dishDiet: newDishDiet,
         }),
       });
       const data = await res.json();
@@ -161,6 +163,7 @@ export default function AdminMenus() {
         setNewDishPrice("");
         setNewDishDesc("");
         setNewDishPhoto("");
+        setNewDishDiet("OMNIVORE");
         setCreatingDish(false);
         // Show AI feedback
         if (aiIngredients?.matched?.length > 0) {
@@ -355,7 +358,15 @@ export default function AdminMenus() {
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
 
-              {selectedDish.ingredients && <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 8px" }}>🥘 {selectedDish.ingredients}</p>}
+              {selectedDish.ingredients && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
+                      <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F }}>{i}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
               {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
                 <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                   {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
@@ -768,6 +779,16 @@ export default function AdminMenus() {
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
               <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
+            </div>
+            <div>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Tipo de dieta</label>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {DIET_OPTIONS.map(d => (
+                  <button key={d.value} type="button" onClick={() => setNewDishDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: newDishDiet === d.value ? "1.5px solid rgba(74,222,128,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: newDishDiet === d.value ? "rgba(74,222,128,0.1)" : "transparent", color: newDishDiet === d.value ? "#4ade80" : "var(--adm-text3)" }}>
+                    {d.icon} {d.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Foto</label>
