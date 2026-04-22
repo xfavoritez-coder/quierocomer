@@ -21,12 +21,14 @@ export async function extractIngredientsForDish(
     return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
   }
 
-  // Get existing master ingredient list with aliases
+  // Get existing master ingredient list with aliases + ignored list
   const existing = await prisma.ingredient.findMany({
     select: { id: true, name: true, aliases: true },
     orderBy: { name: "asc" },
   });
   const existingNames = existing.map(i => i.name);
+  const ignored = await prisma.ignoredIngredient.findMany({ select: { name: true } });
+  const ignoredNames = new Set(ignored.map(i => i.name.toLowerCase()));
 
   // Build prompt
   const contentParts: any[] = [];
@@ -163,11 +165,14 @@ Return ONLY the JSON object, nothing else.`,
       data: { ingredients: actualMatched.join(", ") || null },
     });
 
+    // Filter out ignored ingredients from suggestions
+    const filteredSuggestions = [...new Set(remainingSuggestions)].filter(s => !ignoredNames.has(s.toLowerCase()));
+
     return {
       dishId,
       dishName,
       matched: [...new Set(actualMatched)],
-      suggested: [...new Set(remainingSuggestions)],
+      suggested: filteredSuggestions,
       linkedCount: ingredientIds.length,
     };
   } catch (e) {

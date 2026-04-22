@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
     linkedIds = links.map(l => l.ingredientId);
   }
 
-  return NextResponse.json({ ingredients, linkedIds });
+  const ignored = await prisma.ignoredIngredient.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } });
+
+  return NextResponse.json({ ingredients, linkedIds, ignored });
 }
 
 export async function POST(req: NextRequest) {
@@ -88,7 +90,24 @@ export async function DELETE(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { id } = await req.json();
+    const { id, ignoreName, unignoreId } = await req.json();
+
+    // Add to ignored list
+    if (ignoreName) {
+      await prisma.ignoredIngredient.upsert({
+        where: { name: ignoreName.toLowerCase().trim() },
+        update: {},
+        create: { name: ignoreName.toLowerCase().trim() },
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    // Remove from ignored list
+    if (unignoreId) {
+      await prisma.ignoredIngredient.delete({ where: { id: unignoreId } });
+      return NextResponse.json({ success: true });
+    }
+
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
     // Check if used

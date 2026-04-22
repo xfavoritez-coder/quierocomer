@@ -114,6 +114,7 @@ export default function IngredientesPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [merging, setMerging] = useState<string | null>(null);
   const [mergeSearch, setMergeSearch] = useState("");
+  const [ignoredList, setIgnoredList] = useState<{ id: string; name: string }[]>([]);
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("");
   const [eAllergen, setEAllergen] = useState(false);
@@ -122,7 +123,7 @@ export default function IngredientesPage() {
   useEffect(() => {
     fetch("/api/admin/ingredients")
       .then(r => r.json())
-      .then(d => setIngredients(d.ingredients || []))
+      .then(d => { setIngredients(d.ingredients || []); setIgnoredList(d.ignored || []); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
@@ -254,7 +255,8 @@ export default function IngredientesPage() {
                         totalSuggested: prev.totalSuggested - 1,
                         results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, target.name] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
                       } : null);
-                    }} onReject={() => {
+                    }} onReject={async () => {
+                      await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ignoreName: originalName }) });
                       setAnalysisResults(prev => prev ? {
                         ...prev,
                         allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
@@ -386,6 +388,24 @@ export default function IngredientesPage() {
         })}
         {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>{search ? "Sin resultados" : "Sin ingredientes"}</p>}
       </div>
+
+      {/* Ignored list */}
+      {ignoredList.length > 0 && (
+        <div style={{ marginTop: 24 }}>
+          <h2 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Ignorados ({ignoredList.length})</h2>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {ignoredList.map(ig => (
+              <span key={ig.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 50, background: "var(--adm-hover)", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                {ig.name}
+                <button onClick={async () => {
+                  await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unignoreId: ig.id }) });
+                  setIgnoredList(prev => prev.filter(x => x.id !== ig.id));
+                }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.6rem", color: "var(--adm-text3)", padding: 0, marginLeft: 2 }}>×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
