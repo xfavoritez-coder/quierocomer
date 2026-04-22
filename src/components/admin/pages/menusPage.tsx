@@ -188,6 +188,8 @@ export default function AdminMenus() {
   const [saving, setSaving] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<string[]>([]);
+  const [modPickerOpen, setModPickerOpen] = useState(false);
+  const [modSearch, setModSearch] = useState("");
   const ingRef = useRef<HTMLDivElement>(null);
 
   // Load templates when a dish is selected (not just in edit mode)
@@ -345,41 +347,81 @@ export default function AdminMenus() {
                 </button>
               </div>
 
-              {/* Modifier templates — assign/unassign directly */}
+              {/* Modifier templates — pills + assign button */}
               <div style={{ marginTop: 16 }}>
                 <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>Modificadores</h3>
-                {availableTemplates.length > 0 ? (
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {availableTemplates.map(t => {
-                      const assigned = assignedTemplateIds.includes(t.id);
+                {/* Assigned pills with remove */}
+                {assignedTemplateIds.length > 0 && (
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
+                    {assignedTemplateIds.map(id => {
+                      const t = availableTemplates.find(at => at.id === id);
+                      if (!t) return null;
                       return (
-                        <button key={t.id} onClick={async () => {
-                          const action = assigned ? "unassignDishId" : "assignDishId";
-                          await fetch("/api/admin/modifier-templates", {
-                            method: "PUT", headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ templateId: t.id, [action]: selectedDish.id }),
-                          });
-                          const newIds = assigned ? assignedTemplateIds.filter(id => id !== t.id) : [...assignedTemplateIds, t.id];
-                          setAssignedTemplateIds(newIds);
-                          // Update local dish data
-                          const newTemplates = newIds.map(id => availableTemplates.find(at => at.id === id)).filter(Boolean);
-                          const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
-                          setSelectedDish(updatedDish);
-                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
-                        }} style={{
-                          padding: "6px 14px", borderRadius: 50, border: "none", cursor: "pointer",
-                          fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
-                          background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)",
-                          color: assigned ? "#F4A623" : "var(--adm-text3)",
-                        }}>
-                          {assigned ? "✓ " : ""}{t.name}
-                        </button>
+                        <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 12px", borderRadius: 50, background: "rgba(244,166,35,0.12)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#F4A623" }}>
+                          {t.name}
+                          <span onClick={async () => {
+                            await fetch("/api/admin/modifier-templates", {
+                              method: "PUT", headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ templateId: id, unassignDishId: selectedDish.id }),
+                            });
+                            const newIds = assignedTemplateIds.filter(x => x !== id);
+                            setAssignedTemplateIds(newIds);
+                            const newTemplates = newIds.map(x => availableTemplates.find(at => at.id === x)).filter(Boolean);
+                            const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
+                            setSelectedDish(updatedDish);
+                            setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
+                          }} style={{ cursor: "pointer", fontSize: "0.68rem", opacity: 0.6, marginLeft: 2 }}>×</span>
+                        </span>
                       );
                     })}
                   </div>
+                )}
+                {/* Assign button + dropdown */}
+                {availableTemplates.length > 0 ? (
+                  <div style={{ position: "relative" }}>
+                    <button onClick={() => { setModPickerOpen(!modPickerOpen); setModSearch(""); }} style={{ padding: "7px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
+                      + Asignar modificador
+                    </button>
+                    {modPickerOpen && (
+                      <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.1)", zIndex: 10, width: 260, overflow: "hidden" }}>
+                        <input
+                          value={modSearch} onChange={e => setModSearch(e.target.value)}
+                          placeholder="Buscar plantilla..."
+                          style={{ width: "100%", padding: "10px 12px", border: "none", borderBottom: "1px solid var(--adm-card-border)", background: "transparent", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }}
+                          autoFocus
+                        />
+                        <div style={{ maxHeight: 180, overflowY: "auto" }}>
+                          {availableTemplates
+                            .filter(t => !assignedTemplateIds.includes(t.id) && (!modSearch || t.name.toLowerCase().includes(modSearch.toLowerCase())))
+                            .map(t => (
+                              <button key={t.id} onClick={async () => {
+                                await fetch("/api/admin/modifier-templates", {
+                                  method: "PUT", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }),
+                                });
+                                const newIds = [...assignedTemplateIds, t.id];
+                                setAssignedTemplateIds(newIds);
+                                const newTemplates = newIds.map(x => availableTemplates.find(at => at.id === x)).filter(Boolean);
+                                const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
+                                setSelectedDish(updatedDish);
+                                setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
+                                setModPickerOpen(false);
+                              }} style={{ display: "block", width: "100%", padding: "10px 12px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)" }}>
+                                {t.name}
+                              </button>
+                            ))}
+                          {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!modSearch || t.name.toLowerCase().includes(modSearch.toLowerCase()))).length === 0 && (
+                            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", padding: 14, margin: 0 }}>
+                              {assignedTemplateIds.length === availableTemplates.length ? "Todas asignadas" : "Sin resultados"}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
-                    Crea plantillas en la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button>
+                    Crea plantillas en <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button>
                   </p>
                 )}
               </div>
