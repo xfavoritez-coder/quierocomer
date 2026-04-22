@@ -35,10 +35,7 @@ const RESTRICTION_ICON_MAP: Record<string, typeof Ban> = {
 
 type RestrictionOption = { icon: typeof Ban; label: string; value: string };
 
-const DISLIKE_OPTIONS = [
-  "Palta", "Cebolla", "Tomate", "Cilantro", "Ajo", "Picante",
-  "Pepino", "Aceitunas", "Champiñón", "Soya", "Jengibre", "Queso",
-];
+// Dislikes: loaded dynamically from DB
 
 const FOOD_KEYWORDS = ["fondo", "principal", "pizza", "hamburguesa", "plato", "sushi", "roll", "gohan", "chirashi", "para compartir", "compartir", "street", "entrada", "aperitivo", "caliente", "clasica", "premium", "tabla"];
 const SWEET_KEYWORDS = ["postre", "dulce", "kuchen", "torta", "helado"];
@@ -106,7 +103,28 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [dietType, setDietType] = useState<DietType | null>(savedDiet as DietType | null);
   const [restrictions, setRestrictions] = useState<string[]>(savedRestrictions ? JSON.parse(savedRestrictions) : []);
   const [dislikes, setDislikes] = useState<string[]>(savedDislikes ? JSON.parse(savedDislikes) : []);
+  const [popularDislikes, setPopularDislikes] = useState<string[]>([]);
+  const [dislikeSearch, setDislikeSearch] = useState("");
+  const [dislikeResults, setDislikeResults] = useState<string[]>([]);
   const [liked, setLiked] = useState<Set<string>>(new Set());
+
+  // Load popular dislikes
+  useEffect(() => {
+    fetch("/api/qr/dislikes").then(r => r.json()).then(d => {
+      if (d.popular) setPopularDislikes(d.popular);
+    }).catch(() => {});
+  }, []);
+
+  // Search dislikes with debounce
+  useEffect(() => {
+    if (!dislikeSearch || dislikeSearch.length < 2) { setDislikeResults([]); return; }
+    const timer = setTimeout(() => {
+      fetch(`/api/qr/dislikes?q=${encodeURIComponent(dislikeSearch)}`).then(r => r.json()).then(d => {
+        if (d.results) setDislikeResults(d.results.filter((r: string) => !dislikes.includes(r)));
+      }).catch(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [dislikeSearch, dislikes]);
   const [photoFilter, setPhotoFilter] = useState<"platos" | "dulce" | "bebida">("platos");
 
   // Akinator grid: 9 dishes that evolve as you select
@@ -671,33 +689,54 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 8 }}>
             ¿Algo que prefieras evitar?
           </h2>
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 24 }}>
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 20 }}>
             No lo filtraremos, pero el Genio lo tendrá en cuenta
           </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center" }}>
-            {DISLIKE_OPTIONS.map((item) => {
-              const sel = dislikes.includes(item.toLowerCase());
-              return (
-                <button key={item} onClick={() => {
-                  setDislikes((prev) => {
-                    const val = item.toLowerCase();
-                    const updated = prev.includes(val) ? prev.filter((x) => x !== val) : [...prev, val];
-                    localStorage.setItem("qr_dislikes", JSON.stringify(updated));
-                    return updated;
-                  });
-                }}
-                  className="transition-all duration-200"
-                  style={{
-                    padding: "8px 18px", borderRadius: 50,
-                    border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.15)"}`,
-                    background: sel ? "rgba(244,166,35,0.1)" : "transparent",
-                    color: sel ? "#F4A623" : "rgba(255,255,255,0.7)",
-                    fontSize: "0.95rem", fontWeight: 500,
-                  }}>
-                  {sel ? "✕ " : ""}{item}
+
+          {/* Selected dislikes */}
+          {dislikes.length > 0 && (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+              {dislikes.map(d => (
+                <button key={d} onClick={() => {
+                  setDislikes(prev => { const updated = prev.filter(x => x !== d); localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+                }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid #F4A623", background: "rgba(244,166,35,0.1)", color: "#F4A623", fontSize: "0.92rem", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                  {d} <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>✕</span>
                 </button>
-              );
-            })}
+              ))}
+            </div>
+          )}
+
+          {/* Search input */}
+          <div style={{ position: "relative", marginBottom: 16 }}>
+            <input
+              value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
+              placeholder="Buscar ingrediente..."
+              style={{ width: "100%", padding: "12px 16px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" }}
+            />
+            {dislikeResults.length > 0 && (
+              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 12, overflow: "hidden", zIndex: 10, maxHeight: 180, overflowY: "auto" }}>
+                {dislikeResults.map(r => (
+                  <button key={r} onClick={() => {
+                    setDislikes(prev => { const updated = [...prev, r]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+                    setDislikeSearch(""); setDislikeResults([]);
+                  }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.08)", textAlign: "left", color: "rgba(255,255,255,0.8)", fontSize: "0.92rem", cursor: "pointer" }}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Popular quick picks */}
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Más comunes</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
+            {popularDislikes.filter(p => !dislikes.includes(p)).map(item => (
+              <button key={item} onClick={() => {
+                setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+              }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
+                {item}
+              </button>
+            ))}
           </div>
           <button
             onClick={() => {
