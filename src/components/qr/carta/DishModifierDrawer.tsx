@@ -50,8 +50,8 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
     document.body.style.overflow = "hidden";
 
     const initial: Record<string, string[]> = {};
-    allGroups.forEach(g => {
-      const defaults = g.options.filter(o => o.isDefault).map(o => o.id);
+    allGroups.forEach((g: Group) => {
+      const defaults = g.options.filter((o: Option) => o.isDefault).map((o: Option) => o.id);
       initial[g.id] = defaults;
     });
     setSelections(initial);
