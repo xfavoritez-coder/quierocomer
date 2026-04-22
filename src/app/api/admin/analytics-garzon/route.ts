@@ -14,8 +14,9 @@ export async function GET(req: NextRequest) {
       await requireRestaurantForOwner(req, restaurantId);
     }
 
-    const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    // Use Chile timezone for "today" calculation
+    const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const todayStart = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate());
     const weekStart = new Date(todayStart);
     weekStart.setDate(weekStart.getDate() - 7);
     const monthStart = new Date(todayStart);

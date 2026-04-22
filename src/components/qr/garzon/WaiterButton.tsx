@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { Bell, Check } from "lucide-react";
 import ModalMesa from "./ModalMesa";
+import { getSessionId, getGuestId } from "@/lib/guestId";
 
 interface WaiterButtonProps {
   restaurantId: string;
@@ -51,6 +52,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           restaurantId,
           tableId: tableId || "general",
           tableName: effectiveTableName,
+          sessionId: getSessionId(),
+          guestId: getGuestId(),
           dietType: typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null,
           restrictions: typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null,
         }),

@@ -559,6 +559,8 @@ model WaiterCall {
   tableId      String?
   tableName    String?
   restaurantId String
+  sessionId    String?
+  guestId      String?
   dietType     String?
   restrictions String?
   calledAt     DateTime
@@ -570,6 +572,7 @@ model WaiterCall {
 
   @@index([restaurantId])
   @@index([tableId])
+  @@index([sessionId])
 }
 
 model Customer {

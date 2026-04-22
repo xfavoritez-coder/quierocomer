@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
-    const { restaurantId, tableId, tableName, dietType, restrictions } = await request.json();
+    const { restaurantId, tableId, tableName, sessionId, guestId, dietType, restrictions } = await request.json();
 
     if (!restaurantId) {
       return NextResponse.json({ error: "Missing restaurantId" }, { status: 400 });
@@ -15,6 +15,8 @@ export async function POST(request: Request) {
         restaurantId,
         tableId: tableId && !["general", "test", "demo"].includes(tableId) ? tableId : null,
         tableName: tableName || "Mesa 11",
+        sessionId: sessionId || null,
+        guestId: guestId || null,
         dietType: dietType || null,
         restrictions: restrictions || null,
         calledAt: new Date(),
