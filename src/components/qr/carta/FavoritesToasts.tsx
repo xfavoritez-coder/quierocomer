@@ -17,7 +17,7 @@ export default function FavoritesToasts() {
           <GenioTip
             arrow={null}
             onClose={dismissConversion}
-            badgeLabel="Guardar"
+            
           >
             <span>Tienes favoritos marcados. Regístrate con tu email y los guardamos siempre, en todos los restaurantes.</span>
             <button

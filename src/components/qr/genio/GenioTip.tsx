@@ -100,7 +100,6 @@ export default function GenioTip({ children, id, style, arrow = "bottom-right", 
         }}
       >
         {onClose && <TipClose onClick={onClose} />}
-        <TipBadge label={badgeLabel} />
         <div style={{ color: TIP_TEXT_COLOR, fontSize: "14px", lineHeight: 1.5, fontWeight: 400 }}>
           {children}
         </div>

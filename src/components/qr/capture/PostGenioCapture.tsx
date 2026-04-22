@@ -69,7 +69,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
       <GenioTip
         arrow={null as any}
         onClose={undefined}
-        badgeLabel="Tip del Genio"
+        
         style={{ width: 280, cursor: "pointer" }}
       >
         <button

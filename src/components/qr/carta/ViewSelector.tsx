@@ -161,7 +161,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           id="genio-tip-container"
           onClose={dismissTooltip}
           arrow="right"
-          badgeLabel="Vistas"
+          
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
           Cambia de vista y descubre tu favorita.

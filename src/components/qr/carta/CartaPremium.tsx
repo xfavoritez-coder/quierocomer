@@ -539,7 +539,7 @@ export default function CartaPremium({
           <GenioTip
             arrow="bottom-right"
             onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
-            badgeLabel="Tus gustos"
+            
           >
             <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
             <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
