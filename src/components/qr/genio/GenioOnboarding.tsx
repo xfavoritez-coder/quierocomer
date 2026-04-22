@@ -874,7 +874,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
       {/* RESULT — overlays everything when step === 5 */}
       {step === 5 && mainResult && (
-        <div className="absolute flex flex-col items-center genio-result-scroll" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "56px 20px 20px", gap: 8, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" as any }}>
+        <div className="absolute flex flex-col items-center genio-result-scroll" style={{ inset: 0, zIndex: 30, background: "#0e0e0e", padding: "44px 20px 20px", gap: 4, overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none" as any }}>
           {/* Back + Close buttons */}
           <button onClick={() => setStep(4)} className="absolute flex items-center justify-center" style={{ top: 16, left: 20, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none", zIndex: 10 }}>
             <ChevronLeft size={18} color="white" />
@@ -884,7 +884,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </button>
 
           {/* Genio header */}
-          <span style={{ fontSize: "2.4rem", marginBottom: 2 }}>🧞</span>
+          <span style={{ fontSize: "2rem", marginBottom: 0 }}>🧞</span>
           <span style={{ color: "#F4A623", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
             El Genio recomienda
           </span>
