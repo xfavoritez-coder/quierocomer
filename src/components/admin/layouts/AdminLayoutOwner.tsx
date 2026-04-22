@@ -123,7 +123,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             const active = isActive(item.href);
             const Icon = item.icon;
             return (
-              <Link key={item.href} href={item.href} style={{
+              <Link key={item.href} href={item.href} onClick={() => { if (active) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
                 display: "flex", alignItems: "center", gap: 10, padding: "0 16px", height: 44, textDecoration: "none",
                 background: active ? "#FDEFC7" : "transparent", color: active ? GOLD : "#8a7550",
                 fontFamily: FB, fontSize: "0.84rem", fontWeight: 500, borderLeft: active ? `3px solid ${GOLD}` : "3px solid transparent",
@@ -190,7 +190,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             );
           }
           return (
-            <Link key={tab.href} href={tab.href} style={{
+            <Link key={tab.href} href={tab.href} onClick={() => { if (isActive(tab.href)) window.dispatchEvent(new CustomEvent("nav-same-page")); }} style={{
               display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
               textDecoration: "none", padding: "8px 12px", minWidth: 64, minHeight: 44,
             }}>

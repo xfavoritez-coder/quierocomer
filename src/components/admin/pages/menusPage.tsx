@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
+import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
@@ -28,7 +29,13 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const [menuTab, setMenuTab] = useState<"platos" | "categorias" | "modificadores">("platos");
 
-  // Reset selected dish when clicking tabs (fixes "Mi Carta" not resetting)
+  // Reset when clicking same nav link (e.g. "Mi Carta" while viewing a dish)
+  useEffect(() => {
+    const handler = () => { setSelectedDish(null); setEditMode(false); setMenuTab("platos"); };
+    window.addEventListener("nav-same-page", handler);
+    return () => window.removeEventListener("nav-same-page", handler);
+  }, []);
+
   const handleTabChange = (tab: typeof menuTab) => {
     setMenuTab(tab);
     setSelectedDish(null);
