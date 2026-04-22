@@ -111,6 +111,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [resultReasons, setResultReasons] = useState<Record<string, string[]>>({});
   const [lovedIds, setLovedIds] = useState<Set<string>>(new Set());
   const [usedIds, setUsedIds] = useState<Set<string>>(new Set());
+  const [genioFeedback, setGenioFeedback] = useState<"none" | "like" | "dislike">("none");
   const [showOverlay, setShowOverlay] = useState(false);
 
   const TOTAL_STEPS = 5;
@@ -856,7 +857,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 320 }}>
                 {altResults.map((alt) => (
                   <div key={alt.id} className="relative overflow-hidden" style={{ flex: 1, aspectRatio: "3/4", borderRadius: 14 }}>
-                    <button onClick={() => promoteResult(alt)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
+                    <button onClick={() => setPreviewDish(alt)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
                       {alt.photos?.[0] && <Image src={alt.photos[0]} alt={alt.name} fill className="object-cover" sizes="40vw" />}
                       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "40px 10px 10px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%)" }}>
                         <p className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "0.88rem", fontWeight: 700, color: "white", lineHeight: 1.15, margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
@@ -885,8 +886,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             Ver {mainResult.name} en la carta
           </button>
 
+          {/* Feedback */}
+          {genioFeedback === "none" ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0" }}>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>¿Acerté?</span>
+              <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👍 Sí</button>
+              <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👎 No tanto</button>
+            </div>
+          ) : (
+            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", margin: "4px 0" }}>
+              {genioFeedback === "like" ? "¡Genial! Gracias 🙌" : "Gracias, lo mejoraré 🧞"}
+            </p>
+          )}
+
           <PostGenioCapture restaurantId={restaurantId} />
-          <button onClick={retryRecommend} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: 12 }}>
+          <button onClick={() => { setGenioFeedback("none"); retryRecommend(); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: 12 }}>
             🔄 Recomendar otros
           </button>
         </div>
