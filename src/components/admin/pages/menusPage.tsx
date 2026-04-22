@@ -585,7 +585,7 @@ export default function AdminMenus() {
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Descripción</label>
-                <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={2} style={{ ...INP, resize: "vertical" }} />
+                <textarea value={eDesc} onChange={e => setEDesc(e.target.value)} rows={4} style={{ ...INP, resize: "vertical", minHeight: 80 }} />
               </div>
               <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                 <div style={{ flex: 1 }}>

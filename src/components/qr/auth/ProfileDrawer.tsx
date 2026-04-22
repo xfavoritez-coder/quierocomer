@@ -6,6 +6,7 @@ import LoginDrawer from "./LoginDrawer";
 import FavoriteHeart from "../carta/FavoriteHeart";
 
 const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
+const DIET_EMOJI: Record<string, string> = { VEGAN: "🌿", VEGETARIAN: "🌱", OMNIVORE: "🍖", vegan: "🌿", vegetarian: "🌱", omnivore: "🍖" };
 
 interface QRUser {
   id: string;
