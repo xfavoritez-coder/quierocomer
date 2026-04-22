@@ -42,7 +42,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   const groups = ((dish as any).modifierTemplates || []).flatMap((t: any) => t.groups || []) as Group[];
   // Fallback to legacy per-dish modifierGroups if no templates
   const legacyGroups = (dish as any).modifierGroups || [];
-  const allGroups = groups.length > 0 ? groups : legacyGroups;
+  const allGroups: Group[] = groups.length > 0 ? groups : legacyGroups;
 
   // Initialize selections with defaults
   useEffect(() => {
