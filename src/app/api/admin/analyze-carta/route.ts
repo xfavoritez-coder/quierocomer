@@ -18,8 +18,8 @@ export async function POST(req: NextRequest) {
     });
 
     const results = [];
-    let totalExtracted = 0;
-    let totalCreated = 0;
+    let totalMatched = 0;
+    let totalSuggested = 0;
 
     for (const dish of dishes) {
       const result = await extractIngredientsForDish(
@@ -29,14 +29,18 @@ export async function POST(req: NextRequest) {
         dish.photos?.[0] || null,
       );
       results.push(result);
-      totalExtracted += result.extracted.length;
-      totalCreated += result.created.length;
+      totalMatched += result.matched.length;
+      totalSuggested += result.suggested.length;
     }
+
+    // Collect all unique suggestions
+    const allSuggestions = [...new Set(results.flatMap(r => r.suggested))].sort();
 
     return NextResponse.json({
       dishesProcessed: dishes.length,
-      totalExtracted,
-      totalCreated,
+      totalMatched,
+      totalSuggested,
+      allSuggestions,
       results,
     });
   } catch (e) {

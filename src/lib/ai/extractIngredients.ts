@@ -6,9 +6,8 @@ const MODEL = "claude-haiku-4-5-20251001";
 interface ExtractionResult {
   dishId: string;
   dishName: string;
-  extracted: string[];
-  matched: string[];
-  created: string[];
+  matched: string[];      // ingredientes que ya existían y fueron vinculados
+  suggested: string[];    // ingredientes nuevos que la IA detectó pero NO creó
   linkedCount: number;
 }
 
@@ -19,11 +18,17 @@ export async function extractIngredientsForDish(
   photoUrl: string | null,
 ): Promise<ExtractionResult> {
   if (!ANTHROPIC_API_KEY) {
-    return { dishId, dishName, extracted: [], matched: [], created: [], linkedCount: 0 };
+    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
   }
 
+  // Get existing master ingredient list
+  const existing = await prisma.ingredient.findMany({
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+  const existingNames = existing.map(i => i.name);
+
   // Build prompt
-  const messages: any[] = [];
   const contentParts: any[] = [];
 
   if (photoUrl) {
@@ -43,26 +48,33 @@ export async function extractIngredientsForDish(
 
   contentParts.push({
     type: "text",
-    text: `Analyze this dish and extract ALL visible and likely ingredients.
+    text: `Analyze this dish and identify its ingredients.
 
 Dish name: "${dishName}"
 ${description ? `Description: "${description}"` : "No description."}
 ${photoUrl ? "A photo of the dish is attached." : "No photo available."}
 
-Return ONLY a JSON array of ingredient names in Spanish, lowercase. Include:
-- Main proteins (salmón, pollo, tofu, etc.)
-- Vegetables and greens
-- Sauces and dressings
-- Carbs (arroz, pan, etc.)
-- Toppings and garnishes
-- Any other visible or implied ingredients
+EXISTING INGREDIENTS DATABASE (use these names EXACTLY when possible):
+${existingNames.length > 0 ? existingNames.join(", ") : "(empty - no ingredients yet)"}
 
-Example: ["salmón", "palta", "arroz", "sésamo", "salsa soya", "cebolla morada"]
+Rules:
+1. If an ingredient matches one from the existing list, use the EXACT name from the list (e.g., if "cebollín" exists, don't say "cebollino" or "cebolleta")
+2. If an ingredient is NOT in the existing list, still include it but I'll handle it separately
+3. Use simple, common names in Spanish (e.g., "salmón" not "salmón atlántico fresco")
+4. Don't include generic terms like "salsa estilo ceviche" — break it down into actual ingredients if possible, or use a simple name like "leche de tigre"
+5. Don't include cooking methods or preparations as ingredients
 
-Return ONLY the JSON array, nothing else.`,
+Return a JSON object with two arrays:
+{
+  "matched": ["ingrediente1", "ingrediente2"],
+  "new": ["ingrediente3", "ingrediente4"]
+}
+
+"matched" = ingredients that exist in the database (use exact names)
+"new" = ingredients NOT in the database
+
+Return ONLY the JSON object, nothing else.`,
   });
-
-  messages.push({ role: "user", content: contentParts });
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -75,51 +87,44 @@ Return ONLY the JSON array, nothing else.`,
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 500,
-        messages,
+        messages: [{ role: "user", content: contentParts }],
       }),
     });
 
     if (!res.ok) {
       console.error("[extractIngredients] API error:", res.status, await res.text());
-      return { dishId, dishName, extracted: [], matched: [], created: [], linkedCount: 0 };
+      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
     }
 
     const data = await res.json();
-    const text = data.content?.[0]?.text || "[]";
+    const text = data.content?.[0]?.text || "{}";
 
-    // Parse JSON array from response
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    // Parse JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { dishId, dishName, extracted: [], matched: [], created: [], linkedCount: 0 };
+      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
     }
 
-    const ingredients: string[] = JSON.parse(jsonMatch[0])
-      .map((i: string) => i.toLowerCase().trim())
-      .filter((i: string) => i.length > 1);
+    const parsed = JSON.parse(jsonMatch[0]);
+    const matchedNames: string[] = (parsed.matched || []).map((i: string) => i.toLowerCase().trim()).filter((i: string) => i.length > 1);
+    const suggestedNames: string[] = (parsed.new || []).map((i: string) => i.toLowerCase().trim()).filter((i: string) => i.length > 1);
 
-    // Match against existing ingredients or create new ones
-    const matched: string[] = [];
-    const created: string[] = [];
+    // Link matched ingredients to dish
     const ingredientIds: string[] = [];
+    const actualMatched: string[] = [];
 
-    for (const name of ingredients) {
-      let ingredient = await prisma.ingredient.findFirst({
-        where: { name: { equals: name, mode: "insensitive" } },
-      });
-
+    for (const name of matchedNames) {
+      const ingredient = existing.find(e => e.name.toLowerCase() === name.toLowerCase());
       if (ingredient) {
-        matched.push(name);
+        ingredientIds.push(ingredient.id);
+        actualMatched.push(name);
       } else {
-        ingredient = await prisma.ingredient.create({
-          data: { name, category: "OTHER" },
-        });
-        created.push(name);
+        // IA said it matched but it doesn't exist — treat as suggestion
+        suggestedNames.push(name);
       }
-
-      ingredientIds.push(ingredient.id);
     }
 
-    // Link ingredients to dish (replace existing)
+    // Replace dish ingredient links
     await prisma.dishIngredient.deleteMany({ where: { dishId } });
     if (ingredientIds.length > 0) {
       await prisma.dishIngredient.createMany({
@@ -128,22 +133,22 @@ Return ONLY the JSON array, nothing else.`,
       });
     }
 
-    // Update the text field too
+    // Update text field with matched ingredients only
+    const allNames = [...actualMatched, ...suggestedNames.map(s => `[${s}]`)];
     await prisma.dish.update({
       where: { id: dishId },
-      data: { ingredients: ingredients.join(", ") || null },
+      data: { ingredients: actualMatched.join(", ") || null },
     });
 
     return {
       dishId,
       dishName,
-      extracted: ingredients,
-      matched,
-      created,
+      matched: actualMatched,
+      suggested: [...new Set(suggestedNames)],
       linkedCount: ingredientIds.length,
     };
   } catch (e) {
     console.error("[extractIngredients] Error:", e);
-    return { dishId, dishName, extracted: [], matched: [], created: [], linkedCount: 0 };
+    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
   }
 }

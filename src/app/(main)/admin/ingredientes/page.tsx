@@ -32,9 +32,8 @@ const ALLERGEN_TYPES = ["gluten", "lactosa", "frutos secos", "maní", "mariscos"
 interface AnalysisResult {
   dishId: string;
   dishName: string;
-  extracted: string[];
   matched: string[];
-  created: string[];
+  suggested: string[];
   linkedCount: number;
 }
 
@@ -48,7 +47,7 @@ export default function IngredientesPage() {
   // Analyze carta
   const [analyzeLocal, setAnalyzeLocal] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysisResults, setAnalysisResults] = useState<{ dishesProcessed: number; totalExtracted: number; totalCreated: number; results: AnalysisResult[] } | null>(null);
+  const [analysisResults, setAnalysisResults] = useState<{ dishesProcessed: number; totalMatched: number; totalSuggested: number; allSuggestions: string[]; results: AnalysisResult[] } | null>(null);
 
   // Create
   const [creating, setCreating] = useState(false);
@@ -162,23 +161,57 @@ export default function IngredientesPage() {
         {analysisResults && (
           <div style={{ marginTop: 14, borderTop: "1px solid var(--adm-card-border)", paddingTop: 14 }}>
             <div style={{ display: "flex", gap: 12, marginBottom: 12 }}>
-              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{analysisResults.dishesProcessed} platos procesados</span>
-              <span style={{ fontFamily: F, fontSize: "0.78rem", color: GOLD, fontWeight: 600 }}>{analysisResults.totalExtracted} ingredientes extraídos</span>
-              {analysisResults.totalCreated > 0 && <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", fontWeight: 600 }}>{analysisResults.totalCreated} nuevos creados</span>}
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{analysisResults.dishesProcessed} platos</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: GOLD, fontWeight: 600 }}>{analysisResults.totalMatched} vinculados</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#7fbfdc", fontWeight: 600 }}>{analysisResults.totalSuggested} sugeridos</span>
             </div>
+
+            {/* Suggestions to approve */}
+            {analysisResults.allSuggestions.length > 0 && (
+              <div style={{ background: "rgba(127,191,220,0.06)", border: "1px solid rgba(127,191,220,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#7fbfdc", margin: "0 0 8px" }}>Ingredientes sugeridos (no creados aún)</p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 10px" }}>Aprueba los que quieras agregar a la base maestra. Al aprobar, se vinculan automáticamente a los platos que los usan.</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {analysisResults.allSuggestions.map(name => (
+                    <button key={name} onClick={async () => {
+                      // Create ingredient
+                      const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+                      const d = await res.json();
+                      if (d.ingredient) {
+                        setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
+                        // Remove from suggestions
+                        setAnalysisResults(prev => prev ? {
+                          ...prev,
+                          allSuggestions: prev.allSuggestions.filter(s => s !== name),
+                          totalSuggested: prev.totalSuggested - 1,
+                          results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(name) ? [...r.matched, name] : r.matched, suggested: r.suggested.filter(s => s !== name) })),
+                        } : null);
+                        // Re-link: find dishes that had this suggestion and link
+                        const dishIds = analysisResults.results.filter(r => r.suggested.includes(name)).map(r => r.dishId);
+                        for (const did of dishIds) {
+                          await fetch(`/api/admin/dishes/${did}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ingredientIds: undefined }) });
+                        }
+                      }
+                    }} style={{ padding: "4px 12px", borderRadius: 50, border: "1px solid rgba(127,191,220,0.3)", background: "white", fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>
+                      + {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Per dish results */}
             <div style={{ maxHeight: 300, overflowY: "auto" }}>
               {analysisResults.results.map(r => (
                 <div key={r.dishId} style={{ padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{r.dishName}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{r.extracted.length} ingredientes</span>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{r.matched.length} vinculados · {r.suggested.length} sugeridos</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {r.extracted.map(ing => {
-                      const isNew = r.created.includes(ing);
-                      return <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: isNew ? "rgba(22,163,74,0.08)" : "var(--adm-hover)", color: isNew ? "#16a34a" : "var(--adm-text2)", fontFamily: F }}>{isNew ? "✨ " : ""}{ing}</span>;
-                    })}
-                    {r.extracted.length === 0 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontFamily: F }}>Sin ingredientes detectados</span>}
+                    {r.matched.map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F }}>{ing}</span>)}
+                    {r.suggested.map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontStyle: "italic" }}>{ing}</span>)}
+                    {r.matched.length === 0 && r.suggested.length === 0 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontFamily: F }}>Sin ingredientes detectados</span>}
                   </div>
                 </div>
               ))}
