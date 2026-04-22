@@ -57,8 +57,24 @@ export async function PUT(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto } = await req.json();
+    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto, linkToDishes } = await req.json();
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+    // Link ingredient to multiple dishes at once
+    if (linkToDishes && Array.isArray(linkToDishes)) {
+      for (const dishId of linkToDishes) {
+        const exists = await prisma.dishIngredient.findFirst({ where: { dishId, ingredientId: id } });
+        if (!exists) {
+          await prisma.dishIngredient.create({ data: { dishId, ingredientId: id } });
+        }
+      }
+      // Update text field on each dish
+      for (const dishId of linkToDishes) {
+        const ings = await prisma.dishIngredient.findMany({ where: { dishId }, include: { ingredient: { select: { name: true } } } });
+        await prisma.dish.update({ where: { id: dishId }, data: { ingredients: ings.map(i => i.ingredient.name).join(", ") || null } });
+      }
+      return NextResponse.json({ success: true, linked: linkToDishes.length });
+    }
 
     // Merge: reassign all dish links from this ingredient to target, then delete
     if (mergeInto) {

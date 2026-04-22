@@ -247,6 +247,11 @@ export default function IngredientesPage() {
                       const d = await res.json();
                       if (d.ingredient) {
                         setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
+                        // Auto-link to all dishes that had this suggestion
+                        const dishIds = analysisResults.results.filter(r => r.suggested.includes(originalName)).map(r => r.dishId);
+                        if (dishIds.length > 0) {
+                          await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.ingredient.id, linkToDishes: dishIds }) });
+                        }
                         setAnalysisResults(prev => prev ? {
                           ...prev,
                           allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
