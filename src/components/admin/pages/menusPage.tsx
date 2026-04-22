@@ -220,10 +220,10 @@ export default function AdminMenus() {
 
   const ALLERGEN_OPTIONS = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
   const TAG_OPTIONS: { value: string; label: string }[] = [
-    { value: "RECOMMENDED", label: "Recomendado" },
-    { value: "NEW", label: "Nuevo" },
-    { value: "MOST_ORDERED", label: "Más pedido" },
-    { value: "PROMOTION", label: "Promoción" },
+    { value: "RECOMMENDED", label: "⭐ Recomendado" },
+    { value: "NEW", label: "🆕 Nuevo" },
+    { value: "MOST_ORDERED", label: "🔥 Más pedido" },
+    { value: "PROMOTION", label: "🏷️ Promoción" },
   ];
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
