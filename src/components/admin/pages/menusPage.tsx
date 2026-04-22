@@ -361,7 +361,11 @@ export default function AdminMenus() {
             <>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <div>
-                  <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: 0 }}>{selectedDish.name}</h2>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <h2 style={{ fontFamily: F, fontSize: "1.2rem", color: "var(--adm-text)", margin: 0 }}>{selectedDish.name}</h2>
+                    {selectedDish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.82rem", color: "#F4A623" }}>★</span>}
+                    {selectedDish.tags?.includes("NEW") && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "white", background: "#e85530", padding: "2px 7px", borderRadius: 50 }}>Nuevo</span>}
+                  </div>
                   <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{selectedDish.category.name}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -371,9 +375,8 @@ export default function AdminMenus() {
               </div>
               {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
 
-              {/* Badges */}
+              {/* Diet + Spicy badges */}
               <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                {selectedDish.tags.map(t => <span key={t} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${TAG_COLORS[t] || "#888"}20`, color: TAG_COLORS[t] || "#888" }}>{t}</span>)}
                 {(selectedDish as any).dishDiet && (selectedDish as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.icon} {DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.label}</span>}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
@@ -382,14 +385,14 @@ export default function AdminMenus() {
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Ingredientes</span>
-                    <span style={{ fontSize: "0.58rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontFamily: F, fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 3 }}>
+                    <span style={{ fontSize: "0.6rem", padding: "2.5px 8px", borderRadius: 50, background: "#eeedfe", color: "#534ab7", fontFamily: F, fontWeight: 500, display: "inline-flex", alignItems: "center", gap: 3 }}>
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 1l.5 1.5L21 3l-1.5.5L19 5l-.5-1.5L17 3l1.5-.5z" opacity="0.6"/></svg>
                       Detectados con IA
                     </span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
-                      <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F }}>{i}</span>
+                      <span key={i} style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "#f3f0e8", color: "#5f5e5a", fontFamily: F, fontWeight: 500 }}>{i}</span>
                     ))}
                   </div>
                 </div>
@@ -887,9 +890,7 @@ export default function AdminMenus() {
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                   {isRec && <span style={{ fontSize: "0.7rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
                   {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.59rem", fontWeight: 700, color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Recién agregado</span>}
-                  {d.tags.filter(t => t !== "RECOMMENDED").map(t => (
-                    <span key={t} style={{ width: 6, height: 6, borderRadius: "50%", background: TAG_COLORS[t] || "#888", flexShrink: 0 }} />
-                  ))}
+                  {d.tags?.includes("NEW") && <span style={{ fontSize: "0.56rem", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
                 </div>
                 <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
               </div>
