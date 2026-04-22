@@ -878,12 +878,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </>
           )}
 
-          <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.1)", margin: "6px 0" }} />
-
-          {/* Action: go to carta with main dish */}
-          <button onClick={() => handleResult(mainResult)} className="active:scale-95 transition-transform"
-            style={{ width: 280, background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "13px 0", borderRadius: 50, border: "none", textAlign: "center" }}>
-            Ver {mainResult.name} en la carta
+          {/* Retry button */}
+          <button onClick={() => { setGenioFeedback("none"); retryRecommend(); }} className="active:scale-95 transition-transform"
+            style={{ width: 280, background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.88rem", fontWeight: 600, padding: "12px 0", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", textAlign: "center", margin: "6px 0" }}>
+            🔄 Recomendar otros
           </button>
 
           {/* Feedback */}
@@ -899,10 +897,18 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </p>
           )}
 
-          <PostGenioCapture restaurantId={restaurantId} />
-          <button onClick={() => { setGenioFeedback("none"); retryRecommend(); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginBottom: 12 }}>
-            🔄 Recomendar otros
-          </button>
+          <div style={{ width: 40, height: 1, background: "rgba(255,255,255,0.08)", margin: "8px 0" }} />
+
+          {/* Save preferences CTA (not logged in) */}
+          {!qrUserProp ? (
+            <div style={{ width: "100%", maxWidth: 320, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 16, padding: "18px 20px", textAlign: "center" }}>
+              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.88rem", fontWeight: 600, margin: "0 0 4px" }}>Ya conozco tus gustos 🧞</p>
+              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", margin: "0 0 14px", lineHeight: 1.5 }}>Guarda tus preferencias para que te dé mejores sugerencias la próxima vez</p>
+              <PostGenioCapture restaurantId={restaurantId} />
+            </div>
+          ) : (
+            <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", margin: "4px 0 12px" }}>Tus gustos se guardan automáticamente ✓</p>
+          )}
         </div>
       )}
 
