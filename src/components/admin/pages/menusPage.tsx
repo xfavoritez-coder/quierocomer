@@ -898,12 +898,16 @@ export default function AdminMenus() {
                 )}
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                     {isRec && <span style={{ fontSize: "0.8rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
+                    <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                     {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.59rem", fontWeight: 700, color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Recién agregado</span>}
                     {d.tags?.includes("NEW") && <span style={{ fontSize: "0.56rem", fontWeight: 700, color: "white", background: "#e85530", padding: "0px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
                   </div>
-                  <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
+                    {(d as any).dishDiet && (d as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.58rem", color: "#4ade80" }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon}</span>}
+                    {(d as any).isSpicy && <span style={{ fontSize: "0.58rem" }}>🌶️</span>}
+                  </div>
                 </div>
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
@@ -932,7 +936,7 @@ export default function AdminMenus() {
                       <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Ingredientes</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
-                          <span key={i} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "#f3f0e8", color: "#5f5e5a", fontFamily: F }}>{i}</span>
+                          <span key={i} style={{ fontSize: "0.63rem", padding: "2px 8px", borderRadius: 50, background: "#f3f0e8", color: "#5f5e5a", fontFamily: F }}>{i}</span>
                         ))}
                       </div>
                     </div>
