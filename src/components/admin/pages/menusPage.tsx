@@ -274,6 +274,11 @@ export default function AdminMenus() {
     { value: "RECOMMENDED", label: "Recomendado" },
     { value: "NEW", label: "Nuevo" },
   ];
+  const DIET_COLORS: Record<string, { bg: string; color: string }> = {
+    OMNIVORE: { bg: "rgba(139,90,43,0.1)", color: "#8b5a2b" },
+    VEGAN: { bg: "rgba(74,222,128,0.1)", color: "#4ade80" },
+    VEGETARIAN: { bg: "rgba(74,222,128,0.1)", color: "#4ade80" },
+  };
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
@@ -386,7 +391,7 @@ export default function AdminMenus() {
 
               {/* Diet + Spicy badges */}
               <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
-                {(selectedDish as any).dishDiet && (selectedDish as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.icon} {DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet)?.label}</span>}
+                {(selectedDish as any).dishDiet && (() => { const dc = DIET_COLORS[(selectedDish as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet); return <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
 
@@ -905,7 +910,7 @@ export default function AdminMenus() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                     <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
-                    {(d as any).dishDiet && (d as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.58rem", color: "#4ade80" }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon}</span>}
+                    {(d as any).dishDiet && <span style={{ fontSize: "0.58rem", color: (DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE).color }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon}</span>}
                     {(d as any).isSpicy && <span style={{ fontSize: "0.58rem" }}>🌶️</span>}
                   </div>
                 </div>
@@ -923,9 +928,9 @@ export default function AdminMenus() {
                   {d.description && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "10px 0" }}>{d.description}</p>}
 
                   {/* Diet + Spicy */}
-                  {(((d as any).dishDiet && (d as any).dishDiet !== "OMNIVORE") || (d as any).isSpicy) && (
+                  {((d as any).dishDiet || (d as any).isSpicy) && (
                     <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
-                      {(d as any).dishDiet && (d as any).dishDiet !== "OMNIVORE" && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon} {DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.label}</span>}
+                      {(d as any).dishDiet && (() => { const dc = DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(o => o.value === (d as any).dishDiet); return <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                       {(d as any).isSpicy && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
                     </div>
                   )}
