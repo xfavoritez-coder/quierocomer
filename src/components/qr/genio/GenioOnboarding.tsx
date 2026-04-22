@@ -786,7 +786,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 )}
               </>
             ) : (
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1rem", margin: 0 }}>Toca los platos que te llaman 👆</p>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.01rem", margin: 0 }}>Selecciona los platos que te llaman 👇</p>
             )}
           </div>
 
@@ -814,8 +814,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   }}>
                   <div className="absolute" style={{ inset: 0, background: "#333" }} />
                   {photo && <Image src={photo} alt={d.name} fill className="object-cover" sizes="33vw" style={{ position: "absolute", zIndex: 1 }} />}
-                  <button onClick={(e) => { e.stopPropagation(); toggleLike(d.id); }} className="absolute flex items-center justify-center" style={{ top: 6, right: 6, width: 26, height: 26, borderRadius: "50%", background: sel ? "#F4A623" : "rgba(255,255,255,0.2)", border: sel ? "none" : "2px solid rgba(255,255,255,0.5)", transition: "all 0.15s", zIndex: 4, cursor: "pointer" }}>
-                    {sel && <Check size={14} color="#0e0e0e" strokeWidth={3} />}
+                  <button onClick={(e) => { e.stopPropagation(); toggleLike(d.id); }} className="absolute flex items-center justify-center" style={{ top: 6, right: 6, width: 32, height: 32, borderRadius: "50%", background: sel ? "#F4A623" : "rgba(255,255,255,0.15)", border: sel ? "none" : "2.5px solid rgba(255,255,255,0.5)", transition: "all 0.15s", zIndex: 4, cursor: "pointer" }}>
+                    {sel && <Check size={16} color="#0e0e0e" strokeWidth={3} />}
                   </button>
                   <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "45%", background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)", zIndex: 2 }} />
                   <span className="absolute" style={{ bottom: 4, left: 5, right: 5, color: "white", fontSize: "0.9rem", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", zIndex: 3 }}>
@@ -1007,9 +1007,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
       {/* Grid dish preview — lightweight modal with "Me gusta" */}
       {previewDish && step === 4 && (
-        <div className="fixed inset-0 flex items-end justify-center" style={{ zIndex: 200 }}>
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, padding: "20px" }}>
           <div onClick={() => setPreviewDish(null)} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.7)" }} />
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: "24px 24px 0 0", overflow: "hidden", maxHeight: "80dvh" }}>
+          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, overflow: "hidden", maxHeight: "80dvh" }}>
             {/* Photo */}
             {previewDish.photos?.[0] && (
               <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
@@ -1021,7 +1021,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <div style={{ padding: "16px 20px 24px" }}>
               <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
               {previewDish.description && (
-                <p style={{ fontSize: "0.89rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{previewDish.description}</p>
+                <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{previewDish.description}</p>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 600 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
