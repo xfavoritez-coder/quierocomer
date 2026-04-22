@@ -342,14 +342,14 @@ export default function AdminMenus() {
                     {dishTemplates.length > 0 ? (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                         {dishTemplates.map((t: any) => (
-                          <span key={t.id} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: GOLD }}>{t.name}</span>
+                          <span key={t.id} style={{ fontFamily: F, fontSize: "0.78rem", padding: "4px 12px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>{t.name}</span>
                         ))}
                       </div>
                     ) : (
                       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Sin modificadores asignados</p>
                     )}
                     <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
-                      Asigna plantillas desde la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button> o edita el plato para gestionarlas.
+                      Asigna plantillas desde la pestaña <button onClick={() => { setSelectedDish(null); setMenuTab("modificadores"); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", padding: 0 }}>Modificadores</button> o edita el plato para gestionarlas.
                     </p>
                   </div>
                 );
@@ -511,7 +511,7 @@ export default function AdminMenus() {
                           body: JSON.stringify({ templateId: t.id, [action]: selectedDish!.id }),
                         });
                         setAssignedTemplateIds(prev => assigned ? prev.filter(id => id !== t.id) : [...prev, t.id]);
-                      }} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: assigned ? GOLD : "var(--adm-text2)" }}>
+                      }} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: assigned ? "#F4A623" : "var(--adm-text2)" }}>
                         {assigned ? "✓ " : ""}{t.name}
                       </button>
                     );
