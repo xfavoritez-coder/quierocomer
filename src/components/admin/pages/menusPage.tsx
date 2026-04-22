@@ -650,7 +650,7 @@ export default function AdminMenus() {
                       return (
                         <>
                           {filteredIngs.slice(0, 30).map(i => (
-                            <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                            <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngListOpen(false); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
                               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
                               {i.isAllergen && <span style={{ fontSize: "0.6rem", color: "#e85530" }}>⚠️</span>}
                             </button>
