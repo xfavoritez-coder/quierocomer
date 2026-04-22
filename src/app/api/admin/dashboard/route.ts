@@ -43,7 +43,8 @@ export async function GET(req: NextRequest) {
     // If superadmin and no filter, no restriction
 
     const now = new Date();
-    const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+    const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const todayStart = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate());
     const weekAgo = daysAgo(7);
     const twoWeeksAgo = daysAgo(14);
     const monthAgo = daysAgo(30);
