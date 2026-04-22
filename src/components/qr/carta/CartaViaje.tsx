@@ -6,7 +6,6 @@ import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/cl
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { Sparkles, User } from "lucide-react";
-import DishDetail from "./DishDetail";
 import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -62,15 +61,10 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
-  const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
   const [railLight, setRailLight] = useState(false);
   const { setView } = useCartaView();
-
-  const handleDishTap = useCallback((dish: Dish) => {
-    setSelectedDish(dish);
-  }, []);
 
   const sortedDishes = useMemo(() => {
     const r: Dish[] = [];
@@ -174,7 +168,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
-                onDishTap={handleDishTap}
               />
             );
           })}
@@ -191,26 +184,12 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             categories={categories}
             qrUser={qrUser}
             onClose={() => setGenioOpen(false)}
-            onResult={(dish) => {
+            onResult={() => {
               setGenioOpen(false);
-              setTimeout(() => handleDishTap(dish), 250);
             }}
           />
         )}
 
-        {/* Dish detail */}
-        {selectedDish && (
-          <DishDetail
-            dish={selectedDish}
-            allDishes={dishes}
-            categories={categories}
-            restaurantId={restaurant.id}
-            reviews={reviews}
-            ratingMap={ratingMap}
-            onClose={() => setSelectedDish(null)}
-            onChangeDish={setSelectedDish}
-          />
-        )}
 
       </div>
     </>
@@ -291,13 +270,13 @@ function ChapterOpening({
 
 /* =============== CATEGORY TRACK (chapter title + dishes in horizontal) =============== */
 function CategoryTrack({
-  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, onActive, onDishTap,
+  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, onActive,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
   index: number; palette: Palette;
   poetic: { prefix: string; accent: string };
   totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string;
-  onActive: () => void; onDishTap: (d: Dish) => void;
+  onActive: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -403,7 +382,6 @@ function CategoryTrack({
             variant={getVariant(dish, i)}
             palette={palette}
             index={i + 1}
-            onClick={() => onDishTap(dish)}
           />
         ))}
       </div>
@@ -428,8 +406,8 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
 }
 
 /* =============== DISH SLIDE =============== */
-function DishSlide({ dish, variant, palette, index, onClick }: {
-  dish: Dish; variant: SlideVariant; palette: Palette; index: number; onClick: () => void;
+function DishSlide({ dish, variant, palette, index }: {
+  dish: Dish; variant: SlideVariant; palette: Palette; index: number;
 }) {
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
@@ -453,11 +431,10 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
       ? "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 25%, rgba(0,0,0,0.35) 50%, rgba(0,0,0,0.7) 80%, rgba(0,0,0,0.8) 100%)"
       : undefined;
     return (
-    <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index} onClick={onClick}>
+    <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index}>
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
-        <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
           <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
         </h3>
@@ -479,11 +456,10 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
     const descLen = pitch.length;
     const photoHeight = descLen > 80 ? "52%" : descLen > 40 ? "57%" : "62%";
     return (
-      <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index} onClick={onClick}>
+      <div className="vj-slide-item vj-dish vj-v-split" data-slide-idx={index}>
         <div className="vj-split-photo" style={{ height: photoHeight }}><PhotoBg dish={dish} /><div className="vj-split-gradient" /></div>
         <div className="vj-split-info">
           <div className="vj-split-divider" />
-          {eyebrowText && <span className="vj-split-eyebrow">{eyebrowText}</span>}
           <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
             <span className="vj-ln"><span>{firstWord}{restWords ? <><br /><em>{restWords}</em></> : null}{vjBadges}</span></span>
           </h3>
@@ -500,16 +476,14 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
     <div
       className="vj-slide-item vj-dish vj-v-light"
       data-slide-idx={index}
-      onClick={onClick}
     >
-      <span className="vj-eyebrow" style={{ color: accentColor }}>{dish.tags?.includes("NEW") ? "Nuevo" : ""}</span>
       <div className="vj-photo-wrap">
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
         <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
       </h3>
-      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "22px" }}>{pitch}</p>}
+      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "24px" }}>{pitch}</p>}
       <div className="vj-meta">
         <span className="vj-price font-[family-name:var(--font-fraunces)]">
           ${dish.price?.toLocaleString("es-CL")}
@@ -520,7 +494,7 @@ function DishSlide({ dish, variant, palette, index, onClick }: {
 
   // SPOTLIGHT (Genio)
   return (
-    <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} onClick={onClick} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
+    <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
       <div className="vj-spot-wrap">
         <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
       </div>
@@ -715,14 +689,14 @@ const CSS = `
   .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; }
   .vj-eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; margin-bottom: 12px; font-weight: 500; display: inline-block; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-dish.in-view .vj-eyebrow { opacity: 0.7; transform: translateY(0); }
-  .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; }
+  .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vj-title em { font-style: italic; font-weight: 300; }
   .vj-title-gradient em { background: linear-gradient(135deg, #f5d4a0 0%, #e8a06a 50%, #c9785a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .vj-ln { display: block; overflow: hidden; }
   .vj-ln span { display: inline-block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
-  .vj-pitch { font-weight: 300; font-style: italic; font-size: 19px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 21px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .vj-dish.in-view .vj-pitch { opacity: 0.9; transform: translateY(0); }
   .vj-v-light .vj-pitch { margin-left: auto; margin-right: auto; color: #1a0e08; }
   .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
@@ -747,9 +721,9 @@ const CSS = `
   .vj-split-info { flex: 1; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 3; }
   .vj-split-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #F4A623, transparent); margin-bottom: 16px; }
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
-  .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
+  .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
-  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 16px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; }
+  .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 18px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
   .vj-split-price-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 

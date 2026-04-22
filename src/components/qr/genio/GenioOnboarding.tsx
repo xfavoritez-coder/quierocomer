@@ -985,34 +985,34 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       {previewDish && step === 4 && (
         <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, padding: "20px" }}>
           <div onClick={() => setPreviewDish(null)} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.7)" }} />
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, overflow: "auto", maxHeight: "80dvh" }}>
-            {/* Photo */}
+          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, maxHeight: "85dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            {/* Photo — fixed */}
             {previewDish.photos?.[0] && (
-              <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", flexShrink: 0 }}>
                 <Image src={previewDish.photos[0]} alt={previewDish.name} fill className="object-cover" sizes="400px" />
                 <button onClick={() => setPreviewDish(null)} style={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.4)", border: "none", color: "white", fontSize: "0.9rem", cursor: "pointer", zIndex: 2 }}>✕</button>
               </div>
             )}
-            {/* Info */}
-            <div style={{ padding: "16px 20px 24px" }}>
+            {/* Info — scrollable */}
+            <div style={{ padding: "16px 20px 24px", overflowY: "auto", flex: 1 }}>
               {(() => { const cat = categories.find(c => c.id === previewDish.categoryId); return cat ? <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.72rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 4 }}>{cat.name}</span> : null; })()}
-              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
+              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 2px" }}>{previewDish.name}</h3>
+              <div style={{ marginBottom: 10 }}>
+                <span style={{ color: "#F4A623", fontSize: "0.95rem", fontWeight: 400 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
+                {previewDish.discountPrice && <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.82rem", textDecoration: "line-through", marginLeft: 6 }}>${previewDish.price?.toLocaleString("es-CL")}</span>}
+              </div>
               {previewDish.description && (
                 <>
                   <p style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", display: previewDescExpanded ? "block" : "-webkit-box", WebkitLineClamp: previewDescExpanded ? undefined : 3, WebkitBoxOrient: "vertical" as any, overflow: previewDescExpanded ? "visible" : "hidden" }}>{previewDish.description}</p>
                   {previewDish.description.length > 100 && (
-                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: 0, marginBottom: 8, marginLeft: "auto", cursor: "pointer" }}>
+                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: 0, marginBottom: 8, marginRight: "auto", cursor: "pointer" }}>
                       {previewDescExpanded ? "ver menos" : "ver más"}
                     </button>
                   )}
                 </>
               )}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-                <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 400 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
-                {previewDish.discountPrice && <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", textDecoration: "line-through" }}>${previewDish.price?.toLocaleString("es-CL")}</span>}
-              </div>
               {/* Action buttons */}
-              <div style={{ display: "flex", gap: 10 }}>
+              <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
                 <button onClick={() => { toggleLike(previewDish.id); setPreviewDish(null); }} className="active:scale-95 transition-transform"
                   style={{ flex: 1, padding: "14px", borderRadius: 50, border: "none", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
                     background: liked.has(previewDish.id) ? "rgba(255,255,255,0.1)" : "#F4A623",
