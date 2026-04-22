@@ -525,6 +525,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
                   const resLabels: Record<string, string> = { lactosa: "lactosa", gluten: "gluten", nueces: "nueces", almendras: "almendras", mani: "maní", frutos_secos: "nueces", mariscos: "mariscos", cerdo: "cerdo", alcohol: "alcohol" };
+                  const dietLabels: Record<string, string> = { omnivore: "carnívoro", vegetarian: "vegetariano", vegan: "vegano" };
                   const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];
                   const filtered = resList.filter((r: string) => r !== "ninguna").map((r: string) => resLabels[r] || r);
