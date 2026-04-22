@@ -199,44 +199,56 @@ function DishSlide({
         </div>
       )}
 
-      {/* Close */}
-      <button onClick={onClose} className="absolute flex items-center justify-center" style={{ top: 16, right: 16, width: 36, height: 36, borderRadius: "50%", background: "rgba(0,0,0,0.2)", color: "white", fontSize: "1.1rem", border: "none", textShadow: "0 1px 3px rgba(0,0,0,0.5)", zIndex: 10 }}>✕</button>
-
-      {/* Counter */}
-      <div className="absolute" style={{ top: 20, left: 16, color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, zIndex: 10, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-        {index + 1} / {total}
+      {/* Top bar: counter, recommended badge, favorite, close */}
+      <div className="absolute flex items-center" style={{ top: 16, left: 16, right: 16, zIndex: 10 }}>
+        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
+        <div style={{ flex: 1 }} />
+        <div className="flex items-center" style={{ gap: 8 }}>
+          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={14} style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }} />
+          <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
+        </div>
       </div>
 
-      {/* Info overlay */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0.2) 70%, transparent 100%)", padding: "80px 20px 40px", zIndex: 5 }}>
-        {/* Badges */}
-        <div className="flex items-center" style={{ gap: 6, marginBottom: 6 }}>
-          {isRecommended && <span style={{ background: "rgba(0,0,0,0.6)", color: "white", border: "none", fontSize: "0.78rem", fontWeight: 400, padding: "5px 11px", borderRadius: 50, backdropFilter: "blur(4px)" }}>⭐ Recomendado</span>}
-          {averageRating && <span style={{ background: "rgba(255,255,255,0.12)", color: "white", fontSize: "0.7rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
-          {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(255,255,255,0.12)", color: "white", fontSize: "0.7rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
+      {/* Recommended badge — top left under counter */}
+      {isRecommended && (
+        <span className="absolute" style={{ top: 54, left: 14, zIndex: 10, background: "rgba(0,0,0,0.65)", backdropFilter: "blur(8px)", color: "white", fontSize: "11.5px", fontWeight: 500, padding: "5px 11px", borderRadius: 999 }}>
+          <span style={{ color: "#fbbf24" }}>★</span> Recomendado
+        </span>
+      )}
+
+      {/* Info overlay — stronger gradient */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "65%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.5) 65%, transparent 100%)", zIndex: 4 }} />
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>
+
+        {/* Category */}
+        {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
+
+        {/* Title + Price row */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <h2 style={{ fontSize: "26px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px", flex: 1 }}>{dish.name}</h2>
+          <div style={{ flexShrink: 0, marginLeft: 12 }}>
+            {dish.discountPrice ? (
+              <div style={{ textAlign: "right" }}>
+                <span className="line-through" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", display: "block" }}>${dish.price.toLocaleString("es-CL")}</span>
+                <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              </div>
+            ) : (
+              <span style={{ color: "#fbbf24", fontSize: "18px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
+            )}
+          </div>
         </div>
 
-        {categoryName && <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 3, display: "block" }}>{categoryName}</span>}
+        {/* Rating + Stock */}
+        {(averageRating || (dish.stockCountdown != null && dish.stockCountdown > 0)) && (
+          <div className="flex items-center" style={{ gap: 6, marginTop: 8 }}>
+            {averageRating && <span style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
+            {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
+          </div>
+        )}
 
-        <div className="flex items-center" style={{ gap: 10 }}>
-          <h2 style={{ fontSize: "1.8rem", fontWeight: 800, color: "white", lineHeight: 1.2, margin: 0 }}>{dish.name}</h2>
-          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={22} />
-        </div>
-
-        <div className="flex items-center" style={{ marginTop: 6, gap: 8 }}>
-          {dish.discountPrice ? (
-            <>
-              <span className="line-through" style={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
-              {discountPercent && <span style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.75rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4 }}>-{discountPercent}%</span>}
-            </>
-          ) : (
-            <span style={{ color: isRecommended ? "#F4A623" : "white", fontSize: "1.2rem", fontWeight: 400, textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>${dish.price.toLocaleString("es-CL")}</span>
-          )}
-        </div>
-
+        {/* Description */}
         {desc && (
-          <p style={{ marginTop: 10, fontSize: "1.05rem", color: "rgba(255,255,255,0.85)", lineHeight: 1.75, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{desc}</p>
+          <p style={{ marginTop: 10, fontSize: "13.5px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
           <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.79rem", padding: 0, marginTop: 2 }}>ver más</button>
@@ -290,7 +302,10 @@ function DishSlide({
         })()}
 
         {hasInfo && (
-          <button onClick={() => setShowInfo(true)} style={{ display: "block", marginTop: 12, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(4px)", color: "white", fontSize: "0.92rem", fontWeight: 500, padding: "8px 16px", borderRadius: 6, border: "none" }}>Ver ingredientes ▾</button>
+          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 14, background: "none", border: "none", borderBottom: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 500, padding: "0 0 2px", cursor: "pointer" }}>
+            Ver ingredientes
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+          </button>
         )}
       </div>
 
