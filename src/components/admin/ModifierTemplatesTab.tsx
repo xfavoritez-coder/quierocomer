@@ -25,6 +25,8 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   // Editing
   const [editingTemplate, setEditingTemplate] = useState<string | null>(null);
   const [etName, setEtName] = useState("");
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [egName, setEgName] = useState("");
   const [editingOption, setEditingOption] = useState<string | null>(null);
   const [eoName, setEoName] = useState("");
   const [eoPrice, setEoPrice] = useState("");
@@ -149,7 +151,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         <span onClick={(e) => { e.stopPropagation(); setEditingTemplate(template.id); setEtName(template.name); }} style={{ fontSize: "0.65rem", cursor: "pointer", opacity: 0.5 }}>✏️</span>
                       </span>
                       <span style={{ flex: 1 }} />
-                      <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{template.groups.length} grupo{template.groups.length !== 1 ? "s" : ""} · {template.dishes.length} plato{template.dishes.length !== 1 ? "s" : ""}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{template.groups.length} grupo{template.groups.length !== 1 ? "s" : ""}{template.dishes.length > 0 ? ` · ${template.dishes.length} plato${template.dishes.length !== 1 ? "s" : ""}` : ""}</span>
                       <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
                     </button>
                   </>
@@ -172,10 +174,23 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                   {template.groups.map(group => (
                     <div key={group.id} style={{ border: "1px solid var(--adm-card-border)", borderRadius: 10, marginTop: 12, overflow: "hidden" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "var(--adm-hover)" }}>
-                        <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", flex: 1 }}>{group.name}</span>
-                        <button onClick={() => updateGroup(template.id, group.id, { required: !group.required, minSelect: !group.required ? 1 : 0 })} style={{ padding: "2px 8px", borderRadius: 6, border: "none", fontSize: "0.62rem", fontFamily: F, fontWeight: 600, cursor: "pointer", background: group.required ? "rgba(244,166,35,0.12)" : "var(--adm-card)", color: group.required ? GOLD : "var(--adm-text3)" }}>
-                          {group.required ? "Obligatorio" : "Opcional"}
-                        </button>
+                        {editingGroup === group.id ? (
+                          <>
+                            <input value={egName} onChange={e => setEgName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { updateGroup(template.id, group.id, { name: egName.trim() }); setEditingGroup(null); } }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, outline: "none" }} autoFocus />
+                            <button onClick={() => { updateGroup(template.id, group.id, { name: egName.trim() }); setEditingGroup(null); }} style={{ padding: "3px 8px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+                            <button onClick={() => setEditingGroup(null)} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+                          </>
+                        ) : (
+                          <>
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, flex: 1 }}>
+                              <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{group.name}</span>
+                              <span onClick={() => { setEditingGroup(group.id); setEgName(group.name); }} style={{ fontSize: "0.6rem", cursor: "pointer", opacity: 0.5 }}>✏️</span>
+                            </span>
+                            <button onClick={() => updateGroup(template.id, group.id, { required: !group.required, minSelect: !group.required ? 1 : 0 })} style={{ padding: "2px 8px", borderRadius: 6, border: "none", fontSize: "0.62rem", fontFamily: F, fontWeight: 600, cursor: "pointer", background: group.required ? "rgba(244,166,35,0.12)" : "var(--adm-card)", color: group.required ? GOLD : "var(--adm-text3)" }}>
+                              {group.required ? "Obligatorio" : "Opcional"}
+                            </button>
+                          </>
+                        )}
                         {group.maxSelect > 1 && <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>máx {group.maxSelect}</span>}
                         <button onClick={() => deleteGroup(template.id, group.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontSize: "0.62rem", fontFamily: F, color: "#ef4444", cursor: "pointer", fontWeight: 600 }}>Eliminar</button>
                       </div>
