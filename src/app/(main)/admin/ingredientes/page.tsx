@@ -310,9 +310,14 @@ export default function IngredientesPage() {
           </div>
           <button onClick={async () => {
             setReviewing(true); setReviewResults(null);
-            const res = await fetch("/api/admin/ingredients-review", { method: "POST" });
-            const data = await res.json();
-            if (!data.error) setReviewResults(data);
+            try {
+              const res = await fetch("/api/admin/ingredients-review", { method: "POST" });
+              const data = await res.json();
+              if (!data.error) setReviewResults(data);
+              else setReviewResults({ total: 0, issues: [{ type: "ERROR", ingredients: [], suggestion: data.error, action: "review" }], summary: { duplicates: 0, typos: 0, generic: 0, orphans: 0, short: 0, mergeSuggestions: 0 } });
+            } catch {
+              setReviewResults({ total: 0, issues: [{ type: "ERROR", ingredients: [], suggestion: "Error de conexión o timeout. Intenta de nuevo.", action: "review" }], summary: { duplicates: 0, typos: 0, generic: 0, orphans: 0, short: 0, mergeSuggestions: 0 } });
+            }
             setReviewing(false);
           }} disabled={reviewing} style={{ padding: "8px 18px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", opacity: reviewing ? 0.5 : 1, whiteSpace: "nowrap" }}>
             {reviewing ? "Revisando..." : "Revisar"}
@@ -341,6 +346,7 @@ export default function IngredientesPage() {
                     ORPHAN: { bg: "rgba(0,0,0,0.02)", color: "var(--adm-text3)", label: "Sin usar" },
                     SHORT: { bg: "rgba(244,166,35,0.06)", color: GOLD, label: "Corto" },
                     MERGE_SUGGESTION: { bg: "rgba(192,132,252,0.06)", color: "#c084fc", label: "Fusionar" },
+                    ERROR: { bg: "rgba(239,68,68,0.06)", color: "#ef4444", label: "Error" },
                   };
                   const c = colors[issue.type] || colors.ORPHAN;
                   return (
