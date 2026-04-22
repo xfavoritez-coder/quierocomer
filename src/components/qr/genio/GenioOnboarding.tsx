@@ -705,7 +705,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   {liked.size === 1 ? "plato seleccionado" : "platos seleccionados"}
                 </span>
                 {!showOverlay && liked.size < 4 && (
-                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", marginLeft: 4 }}>
+                  <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.86rem", marginLeft: 4 }}>
                     {liked.size === 1 ? "· sigue seleccionando" : liked.size === 2 ? "· un poco más" : "· ya casi 🤔"}
                   </span>
                 )}
@@ -927,7 +927,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <div style={{ padding: "16px 20px 24px" }}>
               <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
               {previewDish.description && (
-                <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{previewDish.description}</p>
+                <p style={{ fontSize: "0.89rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{previewDish.description}</p>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 600 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
@@ -938,7 +938,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <button onClick={() => { toggleLike(previewDish.id); setPreviewDish(null); }} className="active:scale-95 transition-transform"
                   style={{ flex: 1, padding: "14px", borderRadius: 50, border: "none", fontSize: "0.95rem", fontWeight: 700, cursor: "pointer",
                     background: liked.has(previewDish.id) ? "rgba(255,255,255,0.1)" : "#F4A623",
-                    color: liked.has(previewDish.id) ? "rgba(255,255,255,0.5)" : "#0e0e0e",
+                    color: liked.has(previewDish.id) ? "rgba(255,255,255,0.5)" : "white",
                   }}>
                   {liked.has(previewDish.id) ? "Quitar selección" : "Me gusta 👆"}
                 </button>

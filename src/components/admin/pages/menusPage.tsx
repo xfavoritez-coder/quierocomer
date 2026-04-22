@@ -28,6 +28,13 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const [menuTab, setMenuTab] = useState<"platos" | "categorias" | "modificadores">("platos");
 
+  // Reset selected dish when clicking tabs (fixes "Mi Carta" not resetting)
+  const handleTabChange = (tab: typeof menuTab) => {
+    setMenuTab(tab);
+    setSelectedDish(null);
+    setEditMode(false);
+  };
+
   // Category management
   const [catMgmtOpen, setCatMgmtOpen] = useState(false);
   const [fullCategories, setFullCategories] = useState<(Category & { _count?: { dishes: number } })[]>([]);
@@ -47,6 +54,7 @@ export default function AdminMenus() {
   const [newDishDiet, setNewDishDiet] = useState("OMNIVORE");
   const [dishSaving, setDishSaving] = useState(false);
   const [dishCreatedMsg, setDishCreatedMsg] = useState("");
+  const [recentlyCreated, setRecentlyCreated] = useState<Set<string>>(new Set());
 
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
@@ -165,6 +173,9 @@ export default function AdminMenus() {
         setNewDishPhoto("");
         setNewDishDiet("OMNIVORE");
         setCreatingDish(false);
+        // Badge "Recién creado" — disappears after 5 min
+        setRecentlyCreated(prev => new Set(prev).add(dish.id));
+        setTimeout(() => setRecentlyCreated(prev => { const n = new Set(prev); n.delete(dish.id); return n; }), 5 * 60 * 1000);
         // Show AI feedback
         if (aiIngredients?.matched?.length > 0) {
           setDishCreatedMsg(`Plato creado. IA vinculó ${aiIngredients.matched.length} ingrediente${aiIngredients.matched.length > 1 ? "s" : ""}: ${aiIngredients.matched.join(", ")}`);
@@ -722,7 +733,7 @@ export default function AdminMenus() {
           { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
         ]).map(tab => (
-          <button key={tab.key} onClick={() => setMenuTab(tab.key)} style={{
+          <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
             background: menuTab === tab.key ? "white" : "transparent",
@@ -777,10 +788,6 @@ export default function AdminMenus() {
               </div>
             </div>
             <div>
-              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
-              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
-            </div>
-            <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Tipo de dieta</label>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {DIET_OPTIONS.map(d => (
@@ -789,6 +796,10 @@ export default function AdminMenus() {
                   </button>
                 ))}
               </div>
+            </div>
+            <div>
+              <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
+              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
             </div>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Foto</label>
@@ -855,6 +866,7 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                   {isRec && <span style={{ fontSize: "0.7rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
+                  {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.58rem", fontWeight: 700, color: "#16a34a", background: "rgba(22,163,74,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
                   {d.tags.filter(t => t !== "RECOMMENDED").map(t => (
                     <span key={t} style={{ width: 6, height: 6, borderRadius: "50%", background: TAG_COLORS[t] || "#888", flexShrink: 0 }} />
                   ))}

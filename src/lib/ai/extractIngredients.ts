@@ -9,6 +9,7 @@ interface ExtractionResult {
   matched: string[];      // ingredientes que ya existían y fueron vinculados
   suggested: string[];    // ingredientes nuevos que la IA detectó pero NO creó
   linkedCount: number;
+  detectedDiet: string | null;  // VEGAN, VEGETARIAN, PESCETARIAN, OMNIVORE
 }
 
 export async function extractIngredientsForDish(
@@ -18,7 +19,7 @@ export async function extractIngredientsForDish(
   photoUrl: string | null,
 ): Promise<ExtractionResult> {
   if (!ANTHROPIC_API_KEY) {
-    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
+    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0, detectedDiet: null };
   }
 
   // Get existing master ingredient list with aliases + ignored list
@@ -66,10 +67,13 @@ Rules:
 4. Don't include generic terms like "salsa estilo ceviche" — break it down into actual ingredients if possible, or use a simple name like "leche de tigre"
 5. Don't include cooking methods or preparations as ingredients
 
-Return a JSON object with two arrays:
+Also detect the diet type based on ingredients.
+
+Return a JSON object:
 {
   "matched": ["ingrediente1", "ingrediente2"],
-  "new": ["ingrediente3", "ingrediente4"]
+  "new": ["ingrediente3", "ingrediente4"],
+  "diet": "VEGAN" | "VEGETARIAN" | "PESCETARIAN" | "OMNIVORE"
 }
 
 "matched" = ingredients that exist in the database (use exact names)
@@ -96,7 +100,7 @@ Return ONLY the JSON object, nothing else.`,
     if (!res.ok) {
       const errText = await res.text();
       console.error(`[extractIngredients] ${dishName}: API error ${res.status}:`, errText.substring(0, 200));
-      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
+      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0, detectedDiet: null };
     }
 
     const data = await res.json();
@@ -108,12 +112,13 @@ Return ONLY the JSON object, nothing else.`,
     if (!jsonMatch) {
       console.log(`[extractIngredients] ${dishName}: No JSON found in response`);
 
-      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
+      return { dishId, dishName, matched: [], suggested: [], linkedCount: 0, detectedDiet: null };
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
     const matchedNames: string[] = (parsed.matched || []).map((i: string) => i.toLowerCase().trim()).filter((i: string) => i.length > 1);
     const suggestedNames: string[] = (parsed.new || []).map((i: string) => i.toLowerCase().trim()).filter((i: string) => i.length > 1);
+    const detectedDiet = ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"].includes(parsed.diet) ? parsed.diet : null;
 
     // Link matched ingredients to dish
     const ingredientIds: string[] = [];
@@ -174,9 +179,10 @@ Return ONLY the JSON object, nothing else.`,
       matched: [...new Set(actualMatched)],
       suggested: filteredSuggestions,
       linkedCount: ingredientIds.length,
+      detectedDiet,
     };
   } catch (e) {
     console.error("[extractIngredients] Error:", e);
-    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
+    return { dishId, dishName, matched: [], suggested: [], linkedCount: 0, detectedDiet: null };
   }
 }

@@ -60,7 +60,11 @@ export async function POST(req: NextRequest) {
     let aiResult = null;
     try {
       aiResult = await extractIngredientsForDish(dish.id, name, description || null, null);
-      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
+      console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested, diet: ${aiResult.detectedDiet}`);
+      // Update diet if detected and owner didn't set one (or left default)
+      if (aiResult.detectedDiet && (!dishDiet || dishDiet === "OMNIVORE") && aiResult.detectedDiet !== "OMNIVORE") {
+        await prisma.dish.update({ where: { id: dish.id }, data: { dishDiet: aiResult.detectedDiet } });
+      }
     } catch (e) {
       console.error("[AI extract]", e);
     }
