@@ -260,13 +260,13 @@ function DishSlide({
 
         {/* BLOQUE 2: Description — full width */}
         {desc && (
-          <p style={{ margin: 0, fontSize: "16px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%" }}>{desc}</p>
+          <p style={{ margin: 0, fontSize: "17px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver más</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver más</button>
         )}
         {isLongDesc && expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver menos</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver menos</button>
         )}
 
         {/* Modifier options */}
@@ -284,7 +284,7 @@ function DishSlide({
                   const hasRich = g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0);
                   if (!hasRich) {
                     return (
-                      <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", margin: "0 0 4px" }}>
+                      <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: "0 0 4px" }}>
                         <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => o.name).join(" · ")}
                       </p>
                     );
@@ -298,7 +298,7 @@ function DishSlide({
           return (
             <div style={{ marginTop: 14 }}>
               {allGroups.map((g: any) => (
-                <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", margin: "0 0 4px" }}>
+                <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: "0 0 4px" }}>
                   <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => {
                     const price = o.priceAdjustment ? ` (+$${Math.abs(o.priceAdjustment).toLocaleString("es-CL")})` : "";
                     return o.name + price;
@@ -323,7 +323,7 @@ function DishSlide({
         <>
           <div onClick={() => setShowInfo(false)} className="absolute" style={{ inset: 0, zIndex: 19 }} />
           <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 20, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
-            <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.9rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             {ingredientNames.length > 0 && (
               <div style={{ marginBottom: 0 }}>
                 <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 10 }}>Ingredientes</h4>
