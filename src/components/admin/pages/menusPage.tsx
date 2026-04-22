@@ -396,10 +396,15 @@ export default function AdminMenus() {
                 </div>
               )}
               {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
-                <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
-                  {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
-                    <span key={a} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>⚠️ {a}</span>
-                  ))}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Alérgenos</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                    {selectedDish.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
+                      <span key={a} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 50, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {a}</span>
+                    ))}
+                  </div>
                 </div>
               )}
 
