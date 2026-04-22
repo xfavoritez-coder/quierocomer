@@ -112,6 +112,7 @@ enum DietType {
 model Ingredient {
   id              String             @id @default(cuid())
   name            String             @unique
+  aliases         String[]           // nombres alternativos que la IA puede usar (cebollino → cebollín)
   category        IngredientCategory
   isAllergen      Boolean            @default(false)
   allergenType    String?            // gluten, lactosa, frutos secos, etc
@@ -447,6 +448,7 @@ model Dish {
   tags           DishTag[]
   isHero         Boolean      @default(false)
   isActive       Boolean      @default(true)
+  deletedAt      DateTime?    // soft delete — null = activo, fecha = eliminado
   stockCountdown Int?
   ingredients    String?      // legacy text field (kept for backwards compat)
   allergens      String?      // legacy text field

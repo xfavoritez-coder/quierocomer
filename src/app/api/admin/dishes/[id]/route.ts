@@ -80,7 +80,8 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!existing) return NextResponse.json({ error: "Plato no encontrado" }, { status: 404 });
     await assertOwnsRestaurant(req, existing.restaurantId);
 
-    await prisma.dish.update({ where: { id }, data: { isActive: false } });
+    // Soft delete: mark as inactive + set deletedAt
+    await prisma.dish.update({ where: { id }, data: { isActive: false, deletedAt: new Date() } });
     return NextResponse.json({ ok: true });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);

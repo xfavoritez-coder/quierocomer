@@ -29,13 +29,18 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { name, category } = await req.json();
+    const { name, category, originalName } = await req.json();
     if (!name) return NextResponse.json({ error: "name requerido" }, { status: 400 });
 
+    const cleanName = name.toLowerCase().trim();
+    const aliases = originalName && originalName.toLowerCase().trim() !== cleanName
+      ? [originalName.toLowerCase().trim()]
+      : [];
+
     const ingredient = await prisma.ingredient.upsert({
-      where: { name: name.toLowerCase().trim() },
-      update: {},
-      create: { name: name.toLowerCase().trim(), category: category || "OTHER" },
+      where: { name: cleanName },
+      update: aliases.length > 0 ? { aliases: { push: aliases[0] } } : {},
+      create: { name: cleanName, category: category || "OTHER", aliases },
     });
     return NextResponse.json({ ingredient });
   } catch (e) {

@@ -352,6 +352,14 @@ export default function AdminMenus() {
                 <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
                   {selectedDish.isActive ? "Desactivar" : "Activar"}
                 </button>
+                <button onClick={async () => {
+                  if (!confirm(`¿Eliminar "${selectedDish.name}"? El plato dejará de aparecer en la carta y el panel.`)) return;
+                  await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "DELETE" });
+                  setDishes(prev => prev.filter(d => d.id !== selectedDish.id));
+                  setSelectedDish(null);
+                }} style={{ padding: "10px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+                  Eliminar
+                </button>
               </div>
 
               {/* Modifier templates — pills + assign button */}

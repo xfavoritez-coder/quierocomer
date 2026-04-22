@@ -21,9 +21,9 @@ export async function extractIngredientsForDish(
     return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
   }
 
-  // Get existing master ingredient list
+  // Get existing master ingredient list with aliases
   const existing = await prisma.ingredient.findMany({
-    select: { id: true, name: true },
+    select: { id: true, name: true, aliases: true },
     orderBy: { name: "asc" },
   });
   const existingNames = existing.map(i => i.name);
@@ -113,14 +113,34 @@ Return ONLY the JSON object, nothing else.`,
     const ingredientIds: string[] = [];
     const actualMatched: string[] = [];
 
+    // Helper: find ingredient by name or alias
+    const findByNameOrAlias = (name: string) => {
+      const lower = name.toLowerCase();
+      return existing.find(e =>
+        e.name.toLowerCase() === lower ||
+        e.aliases.some(a => a.toLowerCase() === lower)
+      );
+    };
+
     for (const name of matchedNames) {
-      const ingredient = existing.find(e => e.name.toLowerCase() === name.toLowerCase());
+      const ingredient = findByNameOrAlias(name);
       if (ingredient) {
         ingredientIds.push(ingredient.id);
-        actualMatched.push(name);
+        actualMatched.push(ingredient.name); // use canonical name, not alias
       } else {
-        // IA said it matched but it doesn't exist — treat as suggestion
         suggestedNames.push(name);
+      }
+    }
+
+    // Also check suggestions against aliases (IA might not know they exist)
+    const remainingSuggestions: string[] = [];
+    for (const name of suggestedNames) {
+      const ingredient = findByNameOrAlias(name);
+      if (ingredient) {
+        ingredientIds.push(ingredient.id);
+        actualMatched.push(ingredient.name);
+      } else {
+        remainingSuggestions.push(name);
       }
     }
 
@@ -134,7 +154,6 @@ Return ONLY the JSON object, nothing else.`,
     }
 
     // Update text field with matched ingredients only
-    const allNames = [...actualMatched, ...suggestedNames.map(s => `[${s}]`)];
     await prisma.dish.update({
       where: { id: dishId },
       data: { ingredients: actualMatched.join(", ") || null },
@@ -143,8 +162,8 @@ Return ONLY the JSON object, nothing else.`,
     return {
       dishId,
       dishName,
-      matched: actualMatched,
-      suggested: [...new Set(suggestedNames)],
+      matched: [...new Set(actualMatched)],
+      suggested: [...new Set(remainingSuggestions)],
       linkedCount: ingredientIds.length,
     };
   } catch (e) {

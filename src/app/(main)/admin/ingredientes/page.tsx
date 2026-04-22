@@ -37,6 +37,29 @@ interface AnalysisResult {
   linkedCount: number;
 }
 
+function SuggestionRow({ originalName, onApprove, onReject }: { originalName: string; onApprove: (name: string) => void; onReject: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(originalName);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "white", borderRadius: 8, border: "1px solid rgba(127,191,220,0.2)" }}>
+      {editing ? (
+        <>
+          <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && editName.trim()) { onApprove(editName.trim()); } }} style={{ flex: 1, padding: "4px 8px", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+          <button onClick={() => { if (editName.trim()) onApprove(editName.trim()); }} style={{ padding: "3px 8px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+          <button onClick={() => { setEditing(false); setEditName(originalName); }} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+        </>
+      ) : (
+        <>
+          <span style={{ fontFamily: "var(--font-display)", fontSize: "0.75rem", color: "#7fbfdc", flex: 1 }}>{originalName}</span>
+          <button onClick={() => setEditing(true)} style={{ padding: "2px 6px", background: "none", border: "none", cursor: "pointer", opacity: 0.5, fontSize: "0.65rem" }}>✏️</button>
+          <button onClick={() => onApprove(originalName)} style={{ padding: "3px 10px", background: "rgba(22,163,74,0.08)", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
+          <button onClick={onReject} style={{ padding: "3px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: "var(--font-display)", fontSize: "0.65rem", color: "#ef4444", cursor: "pointer" }}>×</button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function IngredientesPage() {
   const { restaurants } = useAdminSession();
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
@@ -171,30 +194,28 @@ export default function IngredientesPage() {
               <div style={{ background: "rgba(127,191,220,0.06)", border: "1px solid rgba(127,191,220,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
                 <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#7fbfdc", margin: "0 0 8px" }}>Ingredientes sugeridos (no creados aún)</p>
                 <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 10px" }}>Aprueba los que quieras agregar a la base maestra. Al aprobar, se vinculan automáticamente a los platos que los usan.</p>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {analysisResults.allSuggestions.map(name => (
-                    <button key={name} onClick={async () => {
-                      // Create ingredient
-                      const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name }) });
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {analysisResults.allSuggestions.map(originalName => (
+                    <SuggestionRow key={originalName} originalName={originalName} onApprove={async (finalName) => {
+                      const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: finalName, originalName: finalName !== originalName ? originalName : undefined }) });
                       const d = await res.json();
                       if (d.ingredient) {
                         setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
-                        // Remove from suggestions
                         setAnalysisResults(prev => prev ? {
                           ...prev,
-                          allSuggestions: prev.allSuggestions.filter(s => s !== name),
+                          allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(name) ? [...r.matched, name] : r.matched, suggested: r.suggested.filter(s => s !== name) })),
+                          results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, finalName] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
                         } : null);
-                        // Re-link: find dishes that had this suggestion and link
-                        const dishIds = analysisResults.results.filter(r => r.suggested.includes(name)).map(r => r.dishId);
-                        for (const did of dishIds) {
-                          await fetch(`/api/admin/dishes/${did}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ingredientIds: undefined }) });
-                        }
                       }
-                    }} style={{ padding: "4px 12px", borderRadius: 50, border: "1px solid rgba(127,191,220,0.3)", background: "white", fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>
-                      + {name}
-                    </button>
+                    }} onReject={() => {
+                      setAnalysisResults(prev => prev ? {
+                        ...prev,
+                        allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
+                        totalSuggested: prev.totalSuggested - 1,
+                        results: prev.results.map(r => ({ ...r, suggested: r.suggested.filter(s => s !== originalName) })),
+                      } : null);
+                    }} />
                   ))}
                 </div>
               </div>
