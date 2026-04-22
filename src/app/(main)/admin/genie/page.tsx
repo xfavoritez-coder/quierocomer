@@ -79,7 +79,8 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filterRestaurant, sessionLoading, page]);
+  const [refreshKey, setRefreshKey] = useState(0);
+  }, [filterRestaurant, sessionLoading, page, refreshKey]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
@@ -90,14 +91,17 @@ export default function AdminSessions() {
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Sesiones</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{total} sesiones totales</p>
         </div>
-        <select
-          value={filterRestaurant}
-          onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}
-          style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-        >
-          <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
-          {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
-        </select>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <select
+            value={filterRestaurant}
+            onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}
+            style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+          >
+            <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
+            {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
+          </select>
+          <button onClick={() => setRefreshKey(k => k + 1)} title="Actualizar" style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #2A2A2A", background: "rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", color: "#888" }}>↻</button>
+        </div>
       </div>
 
       {sessions.length === 0 ? (

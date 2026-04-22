@@ -82,9 +82,9 @@ export default function ProfileDrawer({ qrUser, restaurantId, onClose, onLogout 
 
   const close = () => { setVisible(false); setTimeout(onClose, 250); };
 
-  if (!qrUser) return <LoginDrawer onClose={onClose} />;
+  if (!qrUser || !qrUser.email) return <LoginDrawer onClose={onClose} />;
 
-  const initial = (qrUser.name || qrUser.email).charAt(0).toUpperCase();
+  const initial = (qrUser.name || qrUser.email || "?").charAt(0).toUpperCase();
 
   const saveField = async (data: Record<string, unknown>) => {
     setSaving(true);

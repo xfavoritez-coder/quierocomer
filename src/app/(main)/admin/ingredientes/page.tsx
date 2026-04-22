@@ -161,7 +161,7 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
       {/* Search + Create */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder={`Buscar ${label}...`}
-          style={{ flex: 1, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
+          style={{ flex: 1, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
         <div style={{ display: "flex", gap: 6 }}>
           <input value={newName} onChange={e => setNewName(e.target.value)} onKeyDown={e => e.key === "Enter" && create()} placeholder={`Nuevo ${label}`}
             style={{ width: 140, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }} />

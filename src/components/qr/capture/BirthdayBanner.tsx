@@ -85,7 +85,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
         onClick={() => setModalOpen(true)}
         className="font-[family-name:var(--font-dm)] active:scale-[0.97] active:brightness-95 transition-all duration-100"
         style={{
-          margin: "28px 20px 4px",
+          margin: "28px 20px 20px",
           padding: "16px 18px",
           width: "calc(100% - 40px)",
           background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #fffbeb 100%)",
