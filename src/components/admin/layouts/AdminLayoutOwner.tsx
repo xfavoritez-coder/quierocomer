@@ -102,11 +102,11 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         {/* Logo */}
         <div style={{ padding: "18px 16px 14px", borderBottom: "1px solid #E8D0A0" }}>
           {restaurants.length === 1 && (
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#999", fontWeight: 500, margin: "0 0 4px" }}>{restaurants[0].name}</p>
+            <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", margin: "0 0 4px" }}>{restaurants[0].name}</p>
           )}
           <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
             <span style={{ fontSize: "1.2rem" }}>🧞</span>
-            <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a" }}>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "#1a1a1a" }}>
               Quiero<span style={{ color: GOLD }}>Comer</span>
             </span>
           </Link>
@@ -150,9 +150,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <span style={{ fontSize: "1.2rem" }}>🧞</span>
           <div style={{ lineHeight: 1.1 }}>
             {restaurants.length === 1 && (
-              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#999", fontWeight: 500, display: "block" }}>{restaurants[0].name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#999", display: "block" }}>{restaurants[0].name}</span>
             )}
-            <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
+            <span style={{ fontFamily: F, fontSize: "0.8rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
               Quiero<span style={{ color: GOLD }}>Comer</span>
             </span>
           </div>
