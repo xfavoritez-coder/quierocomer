@@ -987,7 +987,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       {previewDish && step === 4 && (
         <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, padding: "20px" }}>
           <div onClick={() => setPreviewDish(null)} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.7)" }} />
-          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, overflow: "hidden", maxHeight: "80dvh" }}>
+          <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, overflow: "auto", maxHeight: "80dvh" }}>
             {/* Photo */}
             {previewDish.photos?.[0] && (
               <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
