@@ -263,10 +263,10 @@ function DishSlide({
           <p style={{ margin: 0, fontSize: "17px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 3, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%" }}>{desc}</p>
         )}
         {isLongDesc && !expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver más</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4, marginLeft: "auto" }}>ver más</button>
         )}
         {isLongDesc && expandDesc && (
-          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4 }}>ver menos</button>
+          <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.delete(dish.id); return new Set(n); })} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", padding: 0, marginTop: 4, marginBottom: 4, marginLeft: "auto" }}>ver menos</button>
         )}
 
         {/* Modifier options */}
