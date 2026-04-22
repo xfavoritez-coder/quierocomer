@@ -445,6 +445,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setLovedIds(new Set());
       picks.forEach((p) => trackStat(restaurantId, "GENIO_COMPLETE", p.id, genioSessionId));
     }
+    trackStat(restaurantId, "GENIO_STEP_RESULTS", undefined, genioSessionId);
     setStep(5);
   };
 
@@ -594,7 +595,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <button onClick={() => { setSkipTransition(true); trackStat(restaurantId, "GENIO_STEP_GRID", undefined, genioSessionId); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); initGrid(photoFilter); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                   Continuar →
                 </button>
-                <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
+                <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
                   Cambiar preferencias
                 </button>
               </div>
@@ -608,7 +609,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.5 }}>
                 Dime qué se te antoja y te recomiendo el plato perfecto
               </p>
-              <button onClick={() => setStep(1)} className="active:scale-95 transition-transform" style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
+              <button onClick={() => { trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
                 Empezar →
               </button>
               <button onClick={surpriseMe} className="active:scale-95 transition-transform" style={{ marginTop: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", fontWeight: 500, padding: "12px 28px", borderRadius: 50 }}>
