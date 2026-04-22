@@ -242,6 +242,50 @@ function DishSlide({
           <button onClick={() => setExpandedDescs((s) => { const n = new Set(s); n.add(dish.id); return n; })} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", padding: 0, marginTop: 2 }}>ver más</button>
         )}
 
+        {/* Modifier options */}
+        {(() => {
+          const templates = (dish as any).modifierTemplates || [];
+          const allGroups = templates.flatMap((t: any) => t.groups || []);
+          if (allGroups.length === 0) return null;
+
+          // Check if any option has rich data (image, description, or price)
+          const hasRichOptions = allGroups.some((g: any) => g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0));
+
+          if (hasRichOptions) {
+            // Interactive selector — content changes on selection
+            return (
+              <div style={{ marginTop: 14 }}>
+                {allGroups.map((g: any) => {
+                  const hasRich = g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0);
+                  if (!hasRich) {
+                    // Informative only
+                    return (
+                      <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", margin: "0 0 4px" }}>
+                        <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => o.name).join(" · ")}
+                      </p>
+                    );
+                  }
+                  return null; // Rich groups handled by parent component
+                })}
+              </div>
+            );
+          }
+
+          // Informative text only
+          return (
+            <div style={{ marginTop: 14 }}>
+              {allGroups.map((g: any) => (
+                <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", margin: "0 0 4px" }}>
+                  <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => {
+                    const price = o.priceAdjustment ? ` (+$${Math.abs(o.priceAdjustment).toLocaleString("es-CL")})` : "";
+                    return o.name + price;
+                  }).join(" · ")}
+                </p>
+              ))}
+            </div>
+          );
+        })()}
+
         {hasInfo && (
           <button onClick={() => setShowInfo(true)} style={{ marginTop: 12, background: "rgba(255,255,255,0.12)", backdropFilter: "blur(4px)", color: "white", fontSize: "0.92rem", fontWeight: 500, padding: "8px 16px", borderRadius: 6, border: "none" }}>Ver ingredientes ▾</button>
         )}

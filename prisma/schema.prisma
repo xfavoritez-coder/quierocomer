@@ -500,6 +500,8 @@ model ModifierTemplateOption {
   id              String  @id @default(cuid())
   groupId         String
   name            String                      // "Salmón Roll", "Papel soya"
+  description     String?                     // descripción opcional que reemplaza la del plato
+  imageUrl        String?                     // foto opcional que reemplaza la del plato
   priceAdjustment Float   @default(0)
   isDefault       Boolean @default(false)
   position        Int     @default(0)

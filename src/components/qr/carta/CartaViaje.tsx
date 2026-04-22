@@ -7,7 +7,6 @@ import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessio
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { Sparkles, User } from "lucide-react";
 import DishDetail from "./DishDetail";
-import DishModifierDrawer from "./DishModifierDrawer";
 import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -64,18 +63,13 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   useEffect(() => { onReady?.(); }, [readyKey]);
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const [modifierDish, setModifierDish] = useState<any>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
   const [railLight, setRailLight] = useState(false);
   const { setView } = useCartaView();
 
   const handleDishTap = useCallback((dish: Dish) => {
-    if ((dish as any).modifierTemplates?.length > 0) {
-      setModifierDish(dish);
-    } else {
-      setSelectedDish(dish);
-    }
+    setSelectedDish(dish);
   }, []);
 
   const sortedDishes = useMemo(() => {
@@ -202,11 +196,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               setTimeout(() => handleDishTap(dish), 250);
             }}
           />
-        )}
-
-        {/* Modifier drawer */}
-        {modifierDish && (
-          <DishModifierDrawer dish={modifierDish} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
         )}
 
         {/* Dish detail */}

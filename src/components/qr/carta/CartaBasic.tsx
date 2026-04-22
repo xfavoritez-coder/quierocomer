@@ -9,7 +9,6 @@ import DishDetail from "./DishDetail";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
-import DishModifierDrawer from "./DishModifierDrawer";
 
 interface Review {
   id: string;
@@ -39,17 +38,7 @@ export default function CartaBasic({
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const [modifierDish, setModifierDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
-
-  const handleDishClick = (dish: Dish) => {
-    const d = dish as any;
-    if (d.modifierTemplates?.length > 0) {
-      setModifierDish(dish);
-    } else {
-      setSelectedDish(dish);
-    }
-  };
 
   const heroDishes = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
 
@@ -97,7 +86,7 @@ export default function CartaBasic({
                     key={dish.id}
                     dish={dish}
                     variant="basic"
-                    onClick={() => handleDishClick(dish)}
+                    onClick={() => setSelectedDish(dish)}
                     averageRating={ratingMap[dish.id]}
                   />
                 ))}
@@ -132,9 +121,6 @@ export default function CartaBasic({
         />
       )}
 
-      {modifierDish && (
-        <DishModifierDrawer dish={modifierDish as any} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
-      )}
 
       {genioOpen && (
         <GenioOnboarding

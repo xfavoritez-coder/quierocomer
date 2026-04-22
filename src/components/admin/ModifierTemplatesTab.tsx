@@ -8,7 +8,7 @@ const GOLD = "#F4A623";
 const LBL: React.CSSProperties = { fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 };
 const INP: React.CSSProperties = { width: "100%", padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const };
 
-interface Option { id: string; name: string; priceAdjustment: number; isDefault: boolean; position: number; }
+interface Option { id: string; name: string; description?: string | null; imageUrl?: string | null; priceAdjustment: number; isDefault: boolean; position: number; }
 interface Group { id: string; name: string; required: boolean; minSelect: number; maxSelect: number; position: number; options: Option[]; }
 interface Template { id: string; name: string; groups: Group[]; dishes: { id: string; name: string }[]; }
 
@@ -30,6 +30,9 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [editingOption, setEditingOption] = useState<string | null>(null);
   const [eoName, setEoName] = useState("");
   const [eoPrice, setEoPrice] = useState("");
+  const [eoDesc, setEoDesc] = useState("");
+  const [eoImage, setEoImage] = useState("");
+  const [eoUploading, setEoUploading] = useState(false);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -92,14 +95,17 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     const opt = await res.json();
     if (res.ok) {
       setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: [...g.options, opt] } : g) } : t));
-      setEditingOption(opt.id); setEoName(""); setEoPrice("0");
+      setEditingOption(opt.id); setEoName(""); setEoPrice("0"); setEoDesc(""); setEoImage("");
     }
   };
 
   const saveOption = async (templateId: string, groupId: string) => {
     if (!editingOption || !eoName.trim()) return;
-    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, name: eoName.trim(), priceAdjustment: Number(eoPrice) || 0 }) });
-    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: g.options.map(o => o.id === editingOption ? { ...o, name: eoName, priceAdjustment: Number(eoPrice) || 0 } : o) } : g) } : t));
+    const payload: Record<string, any> = { optionId: editingOption, name: eoName.trim(), priceAdjustment: Number(eoPrice) || 0 };
+    if (eoDesc !== undefined) payload.description = eoDesc || null;
+    if (eoImage !== undefined) payload.imageUrl = eoImage || null;
+    await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: g.options.map(o => o.id === editingOption ? { ...o, name: eoName.trim(), priceAdjustment: Number(eoPrice) || 0, description: eoDesc || null, imageUrl: eoImage || null } : o) } : g) } : t));
     setEditingOption(null);
   };
 
@@ -198,17 +204,43 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         {group.options.map(opt => (
                           <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                             {editingOption === opt.id ? (
-                              <>
-                                <input value={eoName} onChange={e => setEoName(e.target.value)} placeholder="Nombre de la opción" style={{ ...INP, flex: 1 }} autoFocus onKeyDown={e => e.key === "Enter" && saveOption(template.id, group.id)} />
-                                <div style={{ width: 75 }}><input type="number" value={eoPrice} onChange={e => setEoPrice(e.target.value)} placeholder="+$" style={{ ...INP, textAlign: "right" as const }} /></div>
-                                <button onClick={() => saveOption(template.id, group.id)} style={{ padding: "3px 8px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
-                                <button onClick={() => setEditingOption(null)} style={{ padding: "3px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
-                              </>
+                              <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
+                                <div style={{ display: "flex", gap: 6 }}>
+                                  <input value={eoName} onChange={e => setEoName(e.target.value)} placeholder="Nombre de la opción" style={{ ...INP, flex: 1 }} autoFocus />
+                                  <div style={{ width: 75 }}><input type="number" value={eoPrice} onChange={e => setEoPrice(e.target.value)} placeholder="+$" style={{ ...INP, textAlign: "right" as const }} /></div>
+                                </div>
+                                <input value={eoDesc} onChange={e => setEoDesc(e.target.value)} placeholder="Descripción (opcional)" style={INP} />
+                                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                                  {eoImage && <img src={eoImage} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover" }} />}
+                                  <label style={{ padding: "5px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", cursor: "pointer" }}>
+                                    {eoUploading ? "..." : eoImage ? "Cambiar foto" : "Foto (opcional)"}
+                                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      setEoUploading(true);
+                                      const fd = new FormData();
+                                      fd.append("file", file);
+                                      fd.append("localId", restaurantId);
+                                      fd.append("dishName", eoName || "opcion");
+                                      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                                      const data = await res.json();
+                                      if (data.url) setEoImage(data.url);
+                                      setEoUploading(false);
+                                    }} />
+                                  </label>
+                                  {eoImage && <button onClick={() => setEoImage("")} style={{ padding: "3px 6px", background: "none", border: "none", fontSize: "0.6rem", color: "#ef4444", cursor: "pointer" }}>×</button>}
+                                  <div style={{ flex: 1 }} />
+                                  <button onClick={() => saveOption(template.id, group.id)} style={{ padding: "5px 12px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
+                                  <button onClick={() => setEditingOption(null)} style={{ padding: "5px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
+                                </div>
+                              </div>
                             ) : (
                               <>
                                 <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{opt.name}</span>
+                                {opt.imageUrl && <span style={{ fontSize: "0.6rem" }}>📷</span>}
+                                {opt.description && <span style={{ fontSize: "0.6rem" }}>📝</span>}
                                 {opt.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.75rem", color: opt.priceAdjustment > 0 ? GOLD : "#4ade80", fontWeight: 600 }}>{opt.priceAdjustment > 0 ? "+" : ""}${Math.abs(opt.priceAdjustment).toLocaleString("es-CL")}</span>}
-                                <button onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); }} style={{ padding: "2px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
+                                <button onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ padding: "2px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
                                 <button onClick={() => deleteOption(template.id, group.id, opt.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
                               </>
                             )}

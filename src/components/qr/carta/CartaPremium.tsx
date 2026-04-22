@@ -18,7 +18,6 @@ import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessio
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
-import DishModifierDrawer from "./DishModifierDrawer";
 
 interface Review {
   id: string;
@@ -115,7 +114,6 @@ export default function CartaPremium({
   }, [activeCategory]);
 
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
-  const [modifierDish, setModifierDish] = useState<any>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [qrUserLocal, setQrUserLocal] = useState<any>(null);
   const [profileOpenLocal, setProfileOpenLocal] = useState(false);
@@ -379,7 +377,7 @@ export default function CartaPremium({
                       <DishCard
                         dish={dish}
                         variant="premium"
-                        onClick={() => (dish as any).modifierTemplates?.length > 0 ? setModifierDish(dish) : setSelectedDish(dish)}
+                        onClick={() => setSelectedDish(dish)}
                         averageRating={ratingMap[dish.id]}
                       />
                     </div>
@@ -473,10 +471,6 @@ export default function CartaPremium({
         <ViewSelector restaurantId={restaurant.id} />
       </div>
       <style>{`@keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }`}</style>
-
-      {modifierDish && (
-        <DishModifierDrawer dish={modifierDish} onClose={() => { const d = modifierDish; setModifierDish(null); setSelectedDish(d); }} />
-      )}
 
       {selectedDish && (
         <DishDetail
