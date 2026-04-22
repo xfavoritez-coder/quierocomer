@@ -185,8 +185,16 @@ export default function AdminSessions() {
                     {/* Genio data */}
                     {s.usedGenio && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                        <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>🧞 Genio{s.genioData?.timesUsed ? ` (${s.genioData.timesUsed}x)` : ""}</span>
-                        {s.genioData?.lastStep && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {s.genioData.lastStep}</span>}
+                        {(() => {
+                          const completed = (s.genioData?.recommendations?.length ?? 0) > 0;
+                          const step = s.genioData?.lastStep;
+                          return completed
+                            ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Genio completado{s.genioData?.timesUsed && s.genioData.timesUsed > 1 ? ` (${s.genioData.timesUsed}x)` : ""}</span>
+                            : <>
+                                <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
+                                {step && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {step}</span>}
+                              </>;
+                        })()}
                         {s.genioData?.recommendations?.map((rec, i) => (
                           <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: rec.isBestMatch ? "rgba(244,166,35,0.1)" : "rgba(74,222,128,0.1)", color: rec.isBestMatch ? "#F4A623" : "#4ade80", fontWeight: rec.isBestMatch ? 600 : 400 }}>
                             {rec.isBestMatch ? "⭐ " : ""}Recomendó: {rec.name}
