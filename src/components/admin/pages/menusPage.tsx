@@ -457,8 +457,8 @@ export default function AdminMenus() {
               {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
 
               {selectedDish.ingredients && (
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ marginBottom: 6 }}>
+                <div style={{ marginBottom: 9 }}>
+                  <div style={{ marginBottom: 5 }}>
                     <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Ingredientes</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -469,8 +469,8 @@ export default function AdminMenus() {
                 </div>
               )}
               {selectedDish.allergens && selectedDish.allergens !== "ninguno" && (
-                <div style={{ marginBottom: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                <div style={{ marginBottom: 9 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 5 }}>
                     <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Alérgenos</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
@@ -952,20 +952,20 @@ export default function AdminMenus() {
               {isExpanded && (
                 <div style={{ padding: "0 14px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
                   {/* Description */}
-                  {d.description && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "10px 0" }}>{d.description}</p>}
-
                   {/* Diet + Spicy */}
                   {((d as any).dishDiet || (d as any).isSpicy) && (
-                    <div style={{ display: "flex", gap: 6, marginBottom: 8, flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", gap: 6, margin: "10px 0 8px", flexWrap: "wrap" }}>
                       {(d as any).dishDiet && (() => { const dc = DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(o => o.value === (d as any).dishDiet); return <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                       {(d as any).isSpicy && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
                     </div>
                   )}
 
+                  {d.description && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "6px 0 10px" }}>{d.description}</p>}
+
                   {/* Ingredients */}
                   {d.ingredients && (
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Ingredientes</span>
+                    <div style={{ marginBottom: 7 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Ingredientes</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
                           <span key={i} style={{ fontSize: "0.63rem", padding: "2px 8px", borderRadius: 50, background: "#f3f0e8", color: "#5f5e5a", fontFamily: F }}>{i}</span>
@@ -976,8 +976,8 @@ export default function AdminMenus() {
 
                   {/* Allergens */}
                   {d.allergens && d.allergens !== "ninguno" && (
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Alérgenos</span>
+                    <div style={{ marginBottom: 7 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Alérgenos</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
                           <span key={a} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F }}>⚠️ {a}</span>
@@ -988,8 +988,8 @@ export default function AdminMenus() {
 
                   {/* Modifiers */}
                   {(d as any).modifierTemplates?.length > 0 && (
-                    <div style={{ marginBottom: 8 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Modificadores</span>
+                    <div style={{ marginBottom: 7 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 3 }}>Modificadores</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {(d as any).modifierTemplates.map((t: any) => (
                           <span key={t.id} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: "#F4A623", fontFamily: F }}>{t.name}</span>
