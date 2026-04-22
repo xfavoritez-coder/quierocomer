@@ -531,7 +531,7 @@ export default function AdminMenus() {
                 <label style={LBL}>Tipo de dieta</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {DIET_OPTIONS.map(d => (
-                    <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.15)" : "var(--adm-hover)", color: eDiet === d.value ? "#4ade80" : "var(--adm-text2)" }}>
+                    <button key={d.value} onClick={() => setEDiet(d.value)} style={{ padding: "6px 12px", borderRadius: 8, border: eDiet === d.value ? "1.5px solid rgba(74,222,128,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eDiet === d.value ? "rgba(74,222,128,0.1)" : "transparent", color: eDiet === d.value ? "#4ade80" : "var(--adm-text3)" }}>
                       {d.icon} {d.label}
                     </button>
                   ))}
@@ -541,7 +541,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Características</label>
                 <div style={{ display: "flex", gap: 6 }}>
-                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "var(--adm-hover)", color: eSpicy ? "#e85530" : "var(--adm-text2)" }}>
+                  <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
                   </button>
                 </div>
@@ -612,7 +612,7 @@ export default function AdminMenus() {
                 <label style={LBL}>Alérgenos</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {ALLERGEN_OPTIONS.map(a => (
-                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.15)" : "var(--adm-hover)", color: eAllergens.includes(a) ? "#e85530" : "var(--adm-text2)" }}>
+                    <button key={a} onClick={() => toggleAllergen(a)} style={{ padding: "5px 10px", borderRadius: 6, border: eAllergens.includes(a) ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eAllergens.includes(a) ? "rgba(232,85,48,0.1)" : "transparent", color: eAllergens.includes(a) ? "#e85530" : "var(--adm-text3)" }}>
                       {eAllergens.includes(a) ? "⚠️ " : ""}{a}
                     </button>
                   ))}
@@ -632,7 +632,7 @@ export default function AdminMenus() {
                           body: JSON.stringify({ templateId: t.id, [action]: selectedDish!.id }),
                         });
                         setAssignedTemplateIds(prev => assigned ? prev.filter(id => id !== t.id) : [...prev, t.id]);
-                      }} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: assigned ? "#F4A623" : "var(--adm-text2)" }}>
+                      }} style={{ padding: "6px 12px", borderRadius: 8, border: assigned ? "1.5px solid rgba(244,166,35,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.1)" : "transparent", color: assigned ? "#F4A623" : "var(--adm-text3)" }}>
                         {assigned ? "✓ " : ""}{t.name}
                       </button>
                     );
@@ -650,7 +650,7 @@ export default function AdminMenus() {
                     const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
                     const active = eTags.includes(t.value);
                     return (
-                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : active ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled ? 0.5 : 1, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: disabled ? "var(--adm-text3)" : active ? TAG_COLORS[t.value] : "var(--adm-text3)", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 4 }}>
                         {t.value === "RECOMMENDED" && <span style={{ fontSize: "0.7rem", opacity: active ? 1 : 0.4 }}>★</span>}
                         {t.label}{disabled ? " (pronto)" : ""}
                       </button>
