@@ -44,8 +44,15 @@ export async function PUT(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
 
-  const { allergenId, linkIngredientId, unlinkIngredientId } = await req.json();
+  const { allergenId, linkIngredientId, unlinkIngredientId, name } = await req.json();
   if (!allergenId) return NextResponse.json({ error: "allergenId requerido" }, { status: 400 });
+
+  if (name !== undefined) {
+    await prisma.allergen.update({
+      where: { id: allergenId },
+      data: { name: name.trim().toLowerCase() },
+    });
+  }
 
   if (linkIngredientId) {
     await prisma.allergen.update({

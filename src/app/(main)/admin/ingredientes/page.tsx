@@ -109,6 +109,8 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [ingSearch, setIngSearch] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
   const F = "var(--font-display)";
   const GOLD = "#F4A623";
 
@@ -174,12 +176,33 @@ function AllergenRestrictionTab({ ingredients, type }: { ingredients: Ingredient
           return (
             <div key={a.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px" }}>
+                {editingId === a.id ? (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
+                    <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={async e => {
+                      if (e.key === "Enter" && editName.trim()) {
+                        await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId: a.id, name: editName.trim() }) });
+                        setItems(prev => prev.map(x => x.id === a.id ? { ...x, name: editName.trim().toLowerCase() } : x));
+                        setEditingId(null);
+                      }
+                      if (e.key === "Escape") setEditingId(null);
+                    }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+                    <button onClick={async () => {
+                      if (!editName.trim()) return;
+                      await fetch("/api/admin/allergens", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergenId: a.id, name: editName.trim() }) });
+                      setItems(prev => prev.map(x => x.id === a.id ? { ...x, name: editName.trim().toLowerCase() } : x));
+                      setEditingId(null);
+                    }} style={{ padding: "4px 10px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
+                    <button onClick={() => setEditingId(null)} style={{ padding: "4px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.68rem" }}>×</button>
+                  </div>
+                ) : (
                 <button onClick={() => setExpanded(isExp ? null : a.id)} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, display: "flex", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: "1rem" }}>{icon}</span>
                   <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: chipColor }}>{a.name}</span>
                   <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{a.ingredients.length} ingrediente{a.ingredients.length !== 1 ? "s" : ""}</span>
                   <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--adm-text3)", transform: isExp ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
                 </button>
+                )}
+                <span onClick={(e) => { e.stopPropagation(); setEditingId(a.id); setEditName(a.name); }} style={{ fontSize: "0.6rem", cursor: "pointer", opacity: 0.5 }}>✏️</span>
                 <button onClick={() => remove(a.id)} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
               </div>
 

@@ -296,7 +296,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Alérgenos</label>
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                  Los alérgenos se calculan automáticamente a partir de los ingredientes del plato.
+                  Los alérgenos se detectan automáticamente a partir de los ingredientes del producto.
                 </p>
                 {eAllergens.length > 0 && (
                   <div style={{ display: "flex", gap: 5, flexWrap: "wrap", marginTop: 8 }}>
