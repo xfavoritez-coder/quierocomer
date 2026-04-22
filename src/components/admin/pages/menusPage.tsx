@@ -913,7 +913,7 @@ export default function AdminMenus() {
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
                   {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Inactivo</p>}
                 </div>
-                <span style={{ fontSize: "0.7rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
+                <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
               </button>
 
               {/* Expanded content */}
@@ -967,7 +967,7 @@ export default function AdminMenus() {
                   )}
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: 6, marginTop: 10 }}>
+                  <div style={{ display: "flex", gap: 6, marginTop: 16 }}>
                     <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ flex: 1, padding: "8px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.15)", borderRadius: 8, color: "#7fbfdc", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
                     <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, background: d.isActive ? "rgba(255,100,100,0.08)" : "rgba(74,222,128,0.08)", color: d.isActive ? "#ff6b6b" : "#4ade80" }}>
                       {d.isActive ? "Ocultar" : "Mostrar"}
