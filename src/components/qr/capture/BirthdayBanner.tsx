@@ -83,7 +83,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
       `}</style>
       <button
         onClick={() => setModalOpen(true)}
-        className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
+        className="font-[family-name:var(--font-dm)] active:scale-[0.97] active:brightness-95 transition-all duration-100"
         style={{
           margin: "28px 20px 4px",
           padding: "16px 18px",
@@ -115,7 +115,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
         </div>
 
         {/* Arrow hint */}
-        <span style={{ fontSize: "1rem", color: "#b45309", opacity: 0.4, flexShrink: 0 }}>›</span>
+        <span style={{ fontSize: "1.4rem", color: "#b45309", opacity: 0.35, flexShrink: 0, fontWeight: 300 }}>›</span>
       </button>
 
       {modalOpen && (
