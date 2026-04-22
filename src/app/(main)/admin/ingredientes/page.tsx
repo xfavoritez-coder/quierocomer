@@ -194,6 +194,9 @@ export default function IngredientesPage() {
   };
 
   const remove = async (id: string) => {
+    const ing = ingredients.find(i => i.id === id);
+    if (!ing) return;
+    if (!confirm(`¿Eliminar "${ing.name}"? Se desvinculará de todos los platos que lo usen.`)) return;
     const res = await fetch("/api/admin/ingredients", {
       method: "DELETE", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),

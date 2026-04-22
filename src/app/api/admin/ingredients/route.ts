@@ -154,12 +154,18 @@ export async function DELETE(req: NextRequest) {
 
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
-    // Check if used
-    const count = await prisma.dishIngredient.count({ where: { ingredientId: id } });
-    if (count > 0) return NextResponse.json({ error: `No se puede eliminar: usado en ${count} plato(s)` }, { status: 400 });
+    // Unlink from all dishes first
+    const links = await prisma.dishIngredient.findMany({ where: { ingredientId: id }, select: { dishId: true } });
+    await prisma.dishIngredient.deleteMany({ where: { ingredientId: id } });
+
+    // Update text field on affected dishes
+    for (const link of links) {
+      const remaining = await prisma.dishIngredient.findMany({ where: { dishId: link.dishId }, include: { ingredient: { select: { name: true } } } });
+      await prisma.dish.update({ where: { id: link.dishId }, data: { ingredients: remaining.map(r => r.ingredient.name).join(", ") || null } });
+    }
 
     await prisma.ingredient.delete({ where: { id } });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, unlinked: links.length });
   } catch (e) {
     console.error("[Admin ingredients DELETE]", e);
     return NextResponse.json({ error: "Error" }, { status: 500 });
