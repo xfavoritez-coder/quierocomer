@@ -57,8 +57,26 @@ export async function PUT(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { id, name, category, isAllergen, allergenType, addAlias } = await req.json();
+    const { id, name, category, isAllergen, allergenType, addAlias, mergeInto } = await req.json();
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
+
+    // Merge: reassign all dish links from this ingredient to target, then delete
+    if (mergeInto) {
+      // Reassign all DishIngredient links
+      const links = await prisma.dishIngredient.findMany({ where: { ingredientId: id } });
+      for (const link of links) {
+        // Check if target already linked to this dish
+        const exists = await prisma.dishIngredient.findFirst({ where: { dishId: link.dishId, ingredientId: mergeInto } });
+        if (!exists) {
+          await prisma.dishIngredient.update({ where: { id: link.id }, data: { ingredientId: mergeInto } });
+        } else {
+          await prisma.dishIngredient.delete({ where: { id: link.id } });
+        }
+      }
+      // Delete the source ingredient
+      await prisma.ingredient.delete({ where: { id } });
+      return NextResponse.json({ success: true, merged: links.length });
+    }
 
     // Add alias to existing ingredient
     if (addAlias) {

@@ -391,10 +391,17 @@ export default function IngredientesPage() {
                 <div style={{ maxHeight: 120, overflowY: "auto" }}>
                   {ingredients.filter(t => t.id !== i.id && (!mergeSearch || t.name.includes(mergeSearch.toLowerCase()))).slice(0, 10).map(target => (
                     <button key={target.id} onClick={async () => {
+                      // 1. Add alias
                       await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: target.id, addAlias: i.name }) });
-                      await remove(i.id);
+                      // 2. Reassign dish links from source to target
+                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, mergeInto: target.id }) });
+                      // 3. Update local state
+                      setIngredients(prev => prev.filter(x => x.id !== i.id));
                       setMerging(null);
-                    }} style={{ display: "block", width: "100%", padding: "6px 10px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)" }}>
+                    }} style={{ display: "flex", alignItems: "center", width: "100%", padding: "8px 10px", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)" }}
+                      onMouseOver={e => (e.currentTarget.style.background = "rgba(244,166,35,0.06)")}
+                      onMouseOut={e => (e.currentTarget.style.background = "transparent")}
+                    >
                       {target.name}
                     </button>
                   ))}
