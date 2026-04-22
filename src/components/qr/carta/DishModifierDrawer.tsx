@@ -39,7 +39,7 @@ export default function DishModifierDrawer({ dish, onClose }: Props) {
   const [selections, setSelections] = useState<Record<string, string[]>>({});
 
   // Flatten all groups from all assigned templates
-  const groups = (dish.modifierTemplates || []).flatMap((t: any) => t.groups || []) as Group[];
+  const groups = ((dish as any).modifierTemplates || []).flatMap((t: any) => t.groups || []) as Group[];
   // Fallback to legacy per-dish modifierGroups if no templates
   const legacyGroups = (dish as any).modifierGroups || [];
   const allGroups = groups.length > 0 ? groups : legacyGroups;
