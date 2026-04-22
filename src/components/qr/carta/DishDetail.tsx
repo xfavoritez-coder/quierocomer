@@ -301,16 +301,23 @@ function DishSlide({
           <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 20, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
             <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             {dish.ingredients && (
-              <div style={{ marginBottom: dish.allergens ? 16 : 0 }}>
-                <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 6 }}>Ingredientes</h4>
-                <p style={{ color: "rgba(255,255,255,0.75)", fontSize: "1.06rem", lineHeight: 1.5 }}>{dish.ingredients}</p>
+              <div style={{ marginBottom: 0 }}>
+                <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 10 }}>Ingredientes</h4>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {dish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
+                    <span key={i} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "#d4d4d4" }}>{i}</span>
+                  ))}
+                </div>
               </div>
             )}
             {dish.allergens && dish.allergens !== "ninguno" && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <div style={{ marginTop: 22 }}>
+                <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Contiene</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {dish.allergens.split(",").map(a => a.trim()).filter(Boolean).filter(a => a !== "ninguno").map(a => (
-                  <span key={a} style={{ fontSize: "0.94rem", padding: "4px 10px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#c9883a", border: "1px solid rgba(244,166,35,0.2)" }}>⚠️ {a}</span>
+                  <span key={a} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(234,179,8,0.12)", color: "#fbbf24" }}>⚠️ {a}</span>
                 ))}
+                </div>
               </div>
             )}
           </div>
