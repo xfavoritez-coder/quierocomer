@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -114,7 +115,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: g.options.filter(o => o.id !== optionId) } : g) } : t));
   };
 
-  if (loading) return <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", padding: 32, textAlign: "center" }}>Cargando modificadores...</p>;
+  if (loading) return <SkeletonLoading type="cards" />;
 
   return (
     <div>

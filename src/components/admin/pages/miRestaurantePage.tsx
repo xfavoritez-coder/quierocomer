@@ -183,16 +183,6 @@ export default function MiRestaurantePage() {
           </div>
         </Field>
 
-        {/* Banner */}
-        <Field label="Banner / Portada">
-          {bannerUrl ? (
-            <div style={{ position: "relative", marginBottom: 8 }}>
-              <img src={bannerUrl} alt="Banner" style={{ width: "100%", height: 120, objectFit: "cover", borderRadius: 10, border: "1px solid var(--adm-card-border)" }} />
-            </div>
-          ) : null}
-          <SubirFoto folder="banners" label={bannerUrl ? "Cambiar banner" : "Subir banner"} height="40px" onUpload={(url: string) => setBannerUrl(url)} />
-        </Field>
-
         <Field label="Nombre del local">
           <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
         </Field>

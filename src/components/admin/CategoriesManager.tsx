@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -195,7 +196,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
     await fetch("/api/admin/categories/reorder", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, categoryIds: reordered.map(c => c.id) }) });
   };
 
-  if (loading) return <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", padding: 32, textAlign: "center" }}>Cargando categorías...</p>;
+  if (loading) return <SkeletonLoading type="cards" />;
 
   return (
     <div>

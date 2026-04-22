@@ -776,12 +776,17 @@ export default function AdminMenus() {
         </div>
       )}
       <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap" }}>
-        <input
-          placeholder="Buscar plato..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ flex: 1, minWidth: 180, padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }}
-        />
+        <div style={{ flex: 1, minWidth: 180, position: "relative" }}>
+          <input
+            placeholder="Buscar plato..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px", paddingRight: search ? 36 : 14, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "0.85rem", padding: 2 }}>✕</button>
+          )}
+        </div>
         <select
           value={catFilter}
           onChange={e => setCatFilter(e.target.value)}
