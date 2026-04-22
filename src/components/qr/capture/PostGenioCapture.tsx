@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
-import GenioTip, { TIP_BG, TIP_TEXT_COLOR } from "../genio/GenioTip";
+import { TIP_BG } from "../genio/GenioTip";
 
 interface Props {
   restaurantId: string;
@@ -65,28 +65,19 @@ export default function PostGenioCapture({ restaurantId }: Props) {
 
   return (
     <>
-      {/* Trigger — uses GenioTip style */}
-      <GenioTip
-        arrow={null as any}
-        onClose={undefined}
-        
-        style={{ width: 280, cursor: "pointer" }}
+      {/* Trigger */}
+      <button
+        onClick={() => setModalOpen(true)}
+        className="active:scale-95 transition-transform"
+        style={{
+          width: "100%", padding: "14px 20px", borderRadius: 50,
+          background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.25)",
+          cursor: "pointer", fontFamily: "inherit", textAlign: "center",
+          color: "#F4A623", fontSize: "0.88rem", fontWeight: 600,
+        }}
       >
-        <button
-          onClick={() => setModalOpen(true)}
-          className="active:scale-95 transition-transform"
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            fontFamily: "inherit", padding: 0, color: TIP_TEXT_COLOR,
-            fontSize: "14px", lineHeight: 1.5, fontWeight: 400, textAlign: "left",
-          }}
-        >
-          Guarda tus gustos para que te recomiende mejor la próxima vez.
-          <span style={{ display: "block", color: "#F4A623", fontWeight: 600, marginTop: 6, fontSize: "13px" }}>
-            Guardar mis gustos →
-          </span>
-        </button>
-      </GenioTip>
+        🧞 Guardar mis gustos
+      </button>
 
       {/* Modal */}
       {modalOpen && (

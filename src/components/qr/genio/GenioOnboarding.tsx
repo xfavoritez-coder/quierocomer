@@ -107,6 +107,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [dislikeSearch, setDislikeSearch] = useState("");
   const [dislikeResults, setDislikeResults] = useState<string[]>([]);
   const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [previewDescExpanded, setPreviewDescExpanded] = useState(false);
 
   // Load popular dislikes
   useEffect(() => {
@@ -806,7 +807,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%)", backgroundSize: "200% 100%", animation: "shimmerSlide 1.2s ease-in-out infinite" }} />
                     </div>
                   ) : (
-                <div onClick={() => setPreviewDish(d)}
+                <div onClick={() => { setPreviewDish(d); setPreviewDescExpanded(false); }}
                   className="relative overflow-hidden w-full h-full"
                   style={{
                     aspectRatio: "1", borderRadius: 10, padding: 0, background: "#222", cursor: "pointer",
@@ -892,12 +893,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div className="relative overflow-hidden" style={{ width: "100%", maxWidth: 320, aspectRatio: "4/5", borderRadius: 18, flexShrink: 0 }}>
             <button onClick={() => setPreviewDish(mainResult)} style={{ position: "absolute", inset: 0, border: "none", padding: 0, cursor: "pointer", background: "none" }}>
               {mainResult.photos?.[0] && <Image src={mainResult.photos[0]} alt={mainResult.name} fill className="object-cover" sizes="85vw" />}
-              <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 50%, transparent 100%)" }}>
+              <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "60px 16px 16px", background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)" }}>
                 <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", lineHeight: 1.15, margin: "0 0 4px", textAlign: "left" }}>
                   {mainResult.name}
                 </h2>
                 {mainResult.description && (
-                  <p className="line-clamp-2" style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.85rem", lineHeight: 1.4, margin: 0, textAlign: "left" }}>
+                  <p className="line-clamp-2" style={{ color: "rgba(255,255,255,0.75)", fontSize: "0.86rem", lineHeight: 1.4, margin: 0, textAlign: "left" }}>
                     {mainResult.description}
                   </p>
                 )}
@@ -906,21 +907,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 </span>
               </div>
             </button>
-            <div className="absolute" style={{ top: 12, left: 12, background: "#F4A623", color: "#0e0e0e", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>
+            <div className="absolute" style={{ top: 12, left: 12, background: "#F4A623", color: "white", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>
               ⭐ MEJOR MATCH
             </div>
-            {/* Heart button */}
-            <button onClick={(e) => { e.stopPropagation(); loveDish(mainResult); }} className="absolute active:scale-90 transition-transform" style={{ top: 12, right: 12, width: 36, height: 36, borderRadius: "50%", background: lovedIds.has(mainResult.id) ? "#F4A623" : "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", transition: "background 0.2s" }}>
-              {lovedIds.has(mainResult.id) ? "❤️" : "🤍"}
-            </button>
           </div>
-
-          {/* Why this recommendation */}
-          {resultReasons[mainResult.id]?.length > 0 && (
-            <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.75rem", fontStyle: "italic", margin: "2px 0 0", maxWidth: 320, textAlign: "center" }}>
-              Porque te gusta {resultReasons[mainResult.id].slice(0, 2).join(" y ")}
-            </p>
-          )}
 
           {/* 2 alternatives — click swaps to main */}
           {altResults.length > 0 && (
@@ -942,21 +932,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                         </span>
                       </div>
                     </button>
-                    {/* Mini heart */}
-                    <button onClick={(e) => { e.stopPropagation(); loveDish(alt); }} className="absolute active:scale-90 transition-transform" style={{ top: 6, right: 6, width: 28, height: 28, borderRadius: "50%", background: lovedIds.has(alt.id) ? "#F4A623" : "rgba(0,0,0,0.4)", backdropFilter: "blur(8px)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", transition: "background 0.2s" }}>
-                      {lovedIds.has(alt.id) ? "❤️" : "🤍"}
-                    </button>
                   </div>
                 ))}
               </div>
             </>
           )}
-
-          {/* Retry button */}
-          <button onClick={() => { setGenioFeedback("none"); retryRecommend(); }} className="active:scale-95 transition-transform"
-            style={{ width: 280, background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.88rem", fontWeight: 600, padding: "12px 0", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", textAlign: "center", margin: "6px 0" }}>
-            🔄 Recomendar otros
-          </button>
 
           {/* Feedback */}
           {genioFeedback === "none" ? (
@@ -975,9 +955,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
           {/* Save preferences CTA (not logged in) */}
           {!qrUserProp ? (
-            <div style={{ width: "100%", maxWidth: 320, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 16, padding: "18px 20px", textAlign: "center" }}>
-              <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.88rem", fontWeight: 600, margin: "0 0 4px" }}>Ya conozco tus gustos 🧞</p>
-              <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", margin: "0 0 14px", lineHeight: 1.5 }}>Guarda tus preferencias para que te dé mejores sugerencias la próxima vez</p>
+            <div style={{ width: "100%", maxWidth: 320 }}>
               <PostGenioCapture restaurantId={restaurantId} />
             </div>
           ) : (
@@ -1021,7 +999,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <div style={{ padding: "16px 20px 24px" }}>
               <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.3rem", fontWeight: 700, color: "white", margin: "0 0 4px" }}>{previewDish.name}</h3>
               {previewDish.description && (
-                <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 12px", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{previewDish.description}</p>
+                <>
+                  <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", display: previewDescExpanded ? "block" : "-webkit-box", WebkitLineClamp: previewDescExpanded ? undefined : 3, WebkitBoxOrient: "vertical" as any, overflow: previewDescExpanded ? "visible" : "hidden" }}>{previewDish.description}</p>
+                  {previewDish.description.length > 100 && (
+                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.78rem", padding: 0, marginBottom: 8, cursor: "pointer" }}>
+                      {previewDescExpanded ? "ver menos" : "ver más"}
+                    </button>
+                  )}
+                </>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
                 <span style={{ color: "#F4A623", fontSize: "1.1rem", fontWeight: 600 }}>${previewDish.price?.toLocaleString("es-CL")}</span>
