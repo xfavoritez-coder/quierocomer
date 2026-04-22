@@ -137,11 +137,12 @@ export default function AdminMenus() {
       list = list.filter(d => d.name.toLowerCase().includes(q) || d.description?.toLowerCase().includes(q) || d.ingredients?.toLowerCase().includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
-    // Recommended first
+    // Recommended first, then alphabetical
     return [...list].sort((a, b) => {
       const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
       const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
-      return aRec - bRec;
+      if (aRec !== bRec) return aRec - bRec;
+      return a.name.localeCompare(b.name, "es");
     });
   }, [dishes, search, catFilter]);
 
