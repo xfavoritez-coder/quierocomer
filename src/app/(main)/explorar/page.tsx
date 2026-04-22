@@ -62,7 +62,6 @@ function getUserDiet(): string | null {
 }
 
 function getDietLabel(diet: string): string {
-  const map: Record<string, string> = { vegano: "veganos", vegetariano: "vegetarianos", pescetariano: "pescetarianos" };
   return map[diet] ?? diet;
 }
 

@@ -28,14 +28,11 @@ interface Props {
   onLogout: () => void;
 }
 
-const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
-const DIET_EMOJI: Record<string, string> = { omnivore: "🍽", vegetarian: "🥬", vegan: "🌿", pescetarian: "🐟" };
 
 const ALL_DIETS = [
   { value: "omnivore", label: "Carnívoro", emoji: "🍽" },
   { value: "vegetarian", label: "Vegetariano", emoji: "🥬" },
   { value: "vegan", label: "Vegano", emoji: "🌿" },
-  { value: "pescetarian", label: "Pescetariano", emoji: "🐟" },
 ];
 
 const ALL_RESTRICTIONS = ["lactosa", "gluten", "nueces", "almendras", "maní", "mariscos", "cerdo", "alcohol"];

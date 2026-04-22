@@ -167,7 +167,6 @@ export async function generateAutoSegments(restaurantId: string): Promise<Rule[]
   for (const d of dietCounts) {
     if (d._count.id >= 3 && d.dietType) {
       suggestions.push({
-        name: `${d.dietType === "vegetarian" ? "Vegetarianos" : d.dietType === "vegan" ? "Veganos" : d.dietType === "pescetarian" ? "Pescetarianos" : "Omnivoros"}`,
         description: `${d._count.id} clientes con dieta ${d.dietType}`,
         rules: [{ field: "dietType", operator: "eq", value: d.dietType }],
       });

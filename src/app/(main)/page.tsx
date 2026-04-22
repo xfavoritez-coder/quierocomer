@@ -11,7 +11,6 @@ const DIET_TYPES = [
   { v: "como de todo", emoji: "🍽️", l: "Como de todo" },
   { v: "vegetariano", emoji: "🌱", l: "Vegetariano" },
   { v: "vegano", emoji: "🌿", l: "Vegano" },
-  { v: "pescetariano", emoji: "🐟", l: "Pescetariano" },
 ];
 
 const ALLERGIES = [
@@ -457,7 +456,6 @@ export default function GeniePage() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {ALLERGIES.filter(a => {
                 if (dietType === "vegetariano") return a.v !== "sin cerdo"; // ya no come carne
-                if (dietType === "pescetariano") return a.v !== "sin cerdo"; // ya no come cerdo
                 return true;
               }).map(a => {
                 const active = allergies.includes(a.v);

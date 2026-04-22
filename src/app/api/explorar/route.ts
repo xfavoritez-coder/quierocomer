@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 const DIET_TO_DIETTYPE: Record<string, string[]> = {
   vegano: ["VEGAN"],
   vegetariano: ["VEGAN", "VEGETARIAN"],
-  pescetariano: ["VEGAN", "VEGETARIAN"],
 };
 
 const PAGE_SIZE = 20;

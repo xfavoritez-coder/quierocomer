@@ -100,7 +100,6 @@ export default function AdminMenus() {
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
     { value: "VEGETARIAN", label: "Vegetariano", icon: "🌱" },
-    { value: "PESCETARIAN", label: "Pescetariano", icon: "🐟" },
     { value: "OMNIVORE", label: "Omnívoro", icon: "🍖" },
   ];
 

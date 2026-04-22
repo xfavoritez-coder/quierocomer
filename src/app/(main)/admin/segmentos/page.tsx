@@ -8,7 +8,6 @@ const F = "var(--font-display)";
 const FIELD_OPTIONS = [
   { value: "dietType", label: "Tipo de dieta", operators: ["eq", "neq"], values: [
     { value: "omnivore", label: "Omnívoro" }, { value: "vegetarian", label: "Vegetariano" },
-    { value: "vegan", label: "Vegano" }, { value: "pescetarian", label: "Pescetariano" },
   ]},
   { value: "restriction", label: "Restricción", operators: ["contains"], values: [
     { value: "lactosa", label: "Sin lactosa" }, { value: "gluten", label: "Sin gluten" },

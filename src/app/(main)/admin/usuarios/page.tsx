@@ -33,7 +33,7 @@ interface UserDetail {
   events: any[];
 }
 
-const DIET_LABELS: Record<string, string> = { VEGAN: "🌿 Vegano", VEGETARIAN: "🌱 Vegetariano", PESCETARIAN: "🐟 Pescetariano", OMNIVORE: "🍖 Carnívoro" };
+const DIET_LABELS: Record<string, string> = { VEGAN: "🌿 Vegano", VEGETARIAN: "🌱 Vegetariano", OMNIVORE: "🍖 Carnívoro" };
 
 function timeAgo(date: string): string {
   const diff = Date.now() - new Date(date).getTime();

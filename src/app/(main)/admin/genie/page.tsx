@@ -4,7 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
-const DIET_LABELS: Record<string, string> = { omnivore: "Omnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano", OMNIVORE: "Omnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano", PESCETARIAN: "Pescetariano" };
+const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", OMNIVORE: "Carnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
 
 function formatDate(date: string) {
   const d = new Date(date);

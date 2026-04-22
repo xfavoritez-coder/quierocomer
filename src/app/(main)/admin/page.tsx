@@ -7,7 +7,6 @@ import Link from "next/link";
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
 
-const DIET_LABELS: Record<string, string> = { omnivore: "Omnívoro", vegetarian: "Vegetariano", vegan: "Vegano", pescetarian: "Pescetariano" };
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
 
 interface DashData {

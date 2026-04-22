@@ -40,11 +40,8 @@ export async function getGroupRecommendation(groupId: string, userLat?: number, 
     }
     const isVegan = dietRestrictions.includes("vegano");
     const isVegetarian = dietRestrictions.includes("vegetariano");
-    const isPescetarian = dietRestrictions.includes("pescetariano");
     const allowedDiet = isVegan ? ["VEGAN"]
       : isVegetarian ? ["VEGAN", "VEGETARIAN"]
-      : isPescetarian ? ["VEGAN", "VEGETARIAN", "PESCETARIAN"]
-      : ["VEGAN", "VEGETARIAN", "PESCETARIAN", "OMNIVORE"];
 
     profiles.push({
       memberId: member.id,

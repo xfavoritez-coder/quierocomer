@@ -20,14 +20,12 @@ interface GenioProps {
   qrUser?: { name: string | null; email: string } | null;
 }
 
-type DietType = "omnivore" | "vegetarian" | "vegan" | "pescetarian";
-// HungerLevel removed — Genio deduces from photo selections
+type DietType = "omnivore" | "vegetarian" | "vegan";
 
 const DIET_OPTIONS = [
   { icon: UtensilsCrossed, label: "Carnívoro", value: "omnivore" as DietType },
   { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
   { icon: Sprout, label: "Vegano", value: "vegan" as DietType },
-  { icon: Fish, label: "Pescetariano", value: "pescetarian" as DietType },
 ];
 
 const RESTRICTION_OPTIONS = [
@@ -526,7 +524,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
-                  const dietLabels: Record<string, string> = { omnivore: "eres carnívoro", vegetarian: "eres vegetariano", vegan: "eres vegano", pescetarian: "eres pescetariano" };
                   const resLabels: Record<string, string> = { lactosa: "lactosa", gluten: "gluten", nueces: "nueces", almendras: "almendras", mani: "maní", frutos_secos: "nueces", mariscos: "mariscos", cerdo: "cerdo", alcohol: "alcohol" };
                   const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];

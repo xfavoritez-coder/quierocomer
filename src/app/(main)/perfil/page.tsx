@@ -8,7 +8,6 @@ const DIET_TYPES = [
   { v: "como de todo", l: "Como de todo" },
   { v: "vegetariano", l: "Vegetariano" },
   { v: "vegano", l: "Vegano" },
-  { v: "pescetariano", l: "Pescetariano" },
 ];
 const RESTRICTIONS = [
   { v: "sin gluten", l: "Sin gluten" },
