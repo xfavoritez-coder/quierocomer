@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import QRCode from "qrcode";
 
 interface DesktopWrapperProps {
   restaurantName: string;
@@ -10,6 +11,7 @@ interface DesktopWrapperProps {
 
 export default function DesktopWrapper({ restaurantName, slug, children }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
     const check = () => setIsDesktop(window.innerWidth >= 768);
@@ -17,6 +19,12 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  useEffect(() => {
+    const url = `https://quierocomer.cl/qr/${slug}`;
+    QRCode.toDataURL(url, { width: 400, margin: 1, errorCorrectionLevel: "H", color: { dark: "#0e0e0e", light: "#ffffff" } })
+      .then(setQrDataUrl).catch(() => {});
+  }, [slug]);
 
   // Don't render anything until we know (prevents flash)
   if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#0a0a0a" }} />;
@@ -72,51 +80,12 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
           Esta carta está diseñada para verse en tu celular. Escanea el QR o abre el link desde tu teléfono.
         </p>
 
-        {/* QR placeholder */}
-        <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, marginBottom: 24 }}>
-          <div style={{ width: "100%", aspectRatio: "1", background: "white", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
-            {/* Simple QR visual using CSS grid */}
-            <svg viewBox="0 0 100 100" width="100%" height="100%">
-              <rect x="10" y="10" width="25" height="25" rx="3" fill="#0a0a0a" />
-              <rect x="13" y="13" width="19" height="19" rx="2" fill="white" />
-              <rect x="17" y="17" width="11" height="11" rx="1" fill="#0a0a0a" />
-              <rect x="65" y="10" width="25" height="25" rx="3" fill="#0a0a0a" />
-              <rect x="68" y="13" width="19" height="19" rx="2" fill="white" />
-              <rect x="72" y="17" width="11" height="11" rx="1" fill="#0a0a0a" />
-              <rect x="10" y="65" width="25" height="25" rx="3" fill="#0a0a0a" />
-              <rect x="13" y="68" width="19" height="19" rx="2" fill="white" />
-              <rect x="17" y="72" width="11" height="11" rx="1" fill="#0a0a0a" />
-              <rect x="40" y="10" width="5" height="5" fill="#0a0a0a" />
-              <rect x="48" y="10" width="5" height="5" fill="#0a0a0a" />
-              <rect x="40" y="18" width="5" height="5" fill="#0a0a0a" />
-              <rect x="48" y="22" width="5" height="5" fill="#0a0a0a" />
-              <rect x="40" y="30" width="5" height="5" fill="#0a0a0a" />
-              <rect x="10" y="40" width="5" height="5" fill="#0a0a0a" />
-              <rect x="18" y="44" width="5" height="5" fill="#0a0a0a" />
-              <rect x="26" y="40" width="5" height="5" fill="#0a0a0a" />
-              <rect x="40" y="40" width="5" height="5" fill="#F4A623" />
-              <rect x="48" y="40" width="5" height="5" fill="#F4A623" />
-              <rect x="44" y="44" width="5" height="5" fill="#F4A623" />
-              <rect x="40" y="48" width="5" height="5" fill="#F4A623" />
-              <rect x="48" y="48" width="5" height="5" fill="#F4A623" />
-              <rect x="56" y="40" width="5" height="5" fill="#0a0a0a" />
-              <rect x="60" y="48" width="5" height="5" fill="#0a0a0a" />
-              <rect x="68" y="40" width="5" height="5" fill="#0a0a0a" />
-              <rect x="80" y="44" width="5" height="5" fill="#0a0a0a" />
-              <rect x="40" y="56" width="5" height="5" fill="#0a0a0a" />
-              <rect x="52" y="60" width="5" height="5" fill="#0a0a0a" />
-              <rect x="40" y="68" width="5" height="5" fill="#0a0a0a" />
-              <rect x="48" y="72" width="5" height="5" fill="#0a0a0a" />
-              <rect x="56" y="68" width="5" height="5" fill="#0a0a0a" />
-              <rect x="68" y="56" width="5" height="5" fill="#0a0a0a" />
-              <rect x="76" y="60" width="5" height="5" fill="#0a0a0a" />
-              <rect x="68" y="68" width="5" height="5" fill="#0a0a0a" />
-              <rect x="80" y="72" width="5" height="5" fill="#0a0a0a" />
-              <rect x="72" y="80" width="5" height="5" fill="#0a0a0a" />
-              <rect x="84" y="84" width="5" height="5" fill="#0a0a0a" />
-            </svg>
+        {/* QR code */}
+        {qrDataUrl && (
+          <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, marginBottom: 24 }}>
+            <img src={qrDataUrl} alt="QR" style={{ width: "100%", borderRadius: 8 }} />
           </div>
-        </div>
+        )}
 
         <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.82rem" }}>
           quierocomer.cl/qr/{slug}
