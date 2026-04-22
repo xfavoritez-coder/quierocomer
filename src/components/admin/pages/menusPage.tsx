@@ -371,7 +371,7 @@ export default function AdminMenus() {
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
                     <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Ingredientes</span>
-                    <span style={{ fontSize: "0.58rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>IA</span>
+                    <span style={{ fontSize: "0.58rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontFamily: F, fontWeight: 600 }}>Detectados con IA</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
