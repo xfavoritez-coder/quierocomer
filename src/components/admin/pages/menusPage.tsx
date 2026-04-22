@@ -27,6 +27,7 @@ export default function AdminMenus() {
   const [catFilter, setCatFilter] = useState<string>("all");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
+  const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const [menuTab, setMenuTab] = useState<"platos" | "categorias" | "modificadores">("platos");
@@ -953,7 +954,7 @@ export default function AdminMenus() {
                       <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", display: "block", marginBottom: 4 }}>Alérgenos</span>
                       <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
                         {d.allergens.split(",").map(a => a.trim()).filter(a => a && a !== "ninguno").map(a => (
-                          <span key={a} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "rgba(232,85,48,0.06)", color: "#e85530", fontFamily: F }}>⚠️ {a}</span>
+                          <span key={a} style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F }}>⚠️ {a}</span>
                         ))}
                       </div>
                     </div>
@@ -972,19 +973,32 @@ export default function AdminMenus() {
                   )}
 
                   {/* Actions */}
-                  <div style={{ display: "flex", gap: 6, marginTop: 16 }}>
-                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ flex: 1, padding: "8px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.15)", borderRadius: 8, color: "#7fbfdc", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                    <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, background: d.isActive ? "rgba(255,100,100,0.08)" : "rgba(74,222,128,0.08)", color: d.isActive ? "#ff6b6b" : "#4ade80" }}>
-                      {d.isActive ? "Ocultar" : "Mostrar"}
+                  <div style={{ display: "flex", gap: 6, marginTop: 16, alignItems: "center" }}>
+                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ flex: 1, padding: "9px", background: "#1a1a1a", border: "none", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
+                    <button onClick={() => { toggleDishActive(d); setDishes(prev => prev.map(x => x.id === d.id ? { ...x, isActive: !x.isActive } : x)); }} style={{ padding: "9px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
+                      {d.isActive ? (
+                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
+                      ) : (
+                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostrar</>
+                      )}
                     </button>
-                    <button onClick={async () => {
-                      if (!confirm(`¿Eliminar "${d.name}"?`)) return;
-                      await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
-                      setDishes(prev => prev.filter(x => x.id !== d.id));
-                      setExpandedDishId(null);
-                    }} style={{ padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, background: "rgba(239,68,68,0.06)", color: "#ef4444" }}>
-                      Eliminar
-                    </button>
+                    <div style={{ position: "relative" }}>
+                      <button onClick={() => setKebabOpenId(kebabOpenId === d.id ? null : d.id)} style={{ width: 36, height: 36, borderRadius: 8, border: "1px solid #e5e0d3", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", color: "#6b6b65" }}>⋯</button>
+                      {kebabOpenId === d.id && (
+                        <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden", minWidth: 120 }}>
+                          <button onClick={async () => {
+                            if (!confirm(`¿Eliminar "${d.name}"? El plato dejará de aparecer en la carta y el panel.`)) { setKebabOpenId(null); return; }
+                            await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
+                            setDishes(prev => prev.filter(x => x.id !== d.id));
+                            setExpandedDishId(null);
+                            setKebabOpenId(null);
+                          }} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "#ef4444", textAlign: "left" }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                            Eliminar
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
