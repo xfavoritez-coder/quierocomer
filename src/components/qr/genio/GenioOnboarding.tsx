@@ -24,8 +24,8 @@ type DietType = "omnivore" | "vegetarian" | "vegan";
 
 const DIET_OPTIONS = [
   { icon: UtensilsCrossed, label: "Carnívoro", value: "omnivore" as DietType },
-  { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
   { icon: Sprout, label: "Vegano", value: "vegan" as DietType },
+  { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
 ];
 
 const RESTRICTION_OPTIONS = [
