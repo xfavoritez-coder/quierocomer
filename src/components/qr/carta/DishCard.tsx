@@ -124,6 +124,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
   const photo = dish.photos?.[0];
   // Match total height of normal card: photo (155 * 4/3 = 207) + text area (~52) = ~259px
   return (
+    <div style={{ borderRadius: 14, background: "rgba(244,166,35,0.04)", border: "2px solid rgba(244,166,35,0.3)", padding: 4 }}>
     <button
       onClick={onClick}
       className="relative text-left overflow-hidden w-full bg-neutral-900"
@@ -148,6 +149,7 @@ function PremiumFeaturedCard({ dish, onClick }: Omit<DishCardProps, "variant">) 
       </span>
       <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={16} style={{ position: "absolute", top: 7, right: 7, zIndex: 3 }} />
     </button>
+    </div>
   );
 }
 

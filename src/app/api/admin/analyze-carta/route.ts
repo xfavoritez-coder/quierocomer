@@ -32,6 +32,8 @@ export async function POST(req: NextRequest) {
         null,
       );
       results.push(result);
+      // Small delay to avoid rate limiting
+      await new Promise(r => setTimeout(r, 500));
       totalMatched += result.matched.length;
       totalSuggested += result.suggested.length;
     }

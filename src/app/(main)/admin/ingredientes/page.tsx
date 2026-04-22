@@ -303,6 +303,22 @@ export default function IngredientesPage() {
         )}
       </div>
 
+      {/* Ignored */}
+      {ignoredList.length > 0 && (
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 14, alignItems: "center" }}>
+          <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", marginRight: 4 }}>Ignorados:</span>
+          {ignoredList.map(ig => (
+            <span key={ig.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 50, background: "rgba(0,0,0,0.04)", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
+              {ig.name}
+              <button onClick={async () => {
+                await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unignoreId: ig.id }) });
+                setIgnoredList(prev => prev.filter(x => x.id !== ig.id));
+              }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.55rem", color: "var(--adm-text3)", padding: 0 }}>×</button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Create form */}
       {creating && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: 16, marginBottom: 16 }}>
@@ -389,23 +405,6 @@ export default function IngredientesPage() {
         {filtered.length === 0 && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 40 }}>{search ? "Sin resultados" : "Sin ingredientes"}</p>}
       </div>
 
-      {/* Ignored list */}
-      {ignoredList.length > 0 && (
-        <div style={{ marginTop: 24 }}>
-          <h2 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Ignorados ({ignoredList.length})</h2>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {ignoredList.map(ig => (
-              <span key={ig.id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 50, background: "var(--adm-hover)", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                {ig.name}
-                <button onClick={async () => {
-                  await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ unignoreId: ig.id }) });
-                  setIgnoredList(prev => prev.filter(x => x.id !== ig.id));
-                }} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "0.6rem", color: "var(--adm-text3)", padding: 0, marginLeft: 2 }}>×</button>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
