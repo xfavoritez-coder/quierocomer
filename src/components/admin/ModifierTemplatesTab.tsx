@@ -144,12 +144,13 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                 ) : (
                   <>
                     <button onClick={() => setExpanded(isExpanded ? null : template.id)} style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)", flex: 1 }}>{template.name}</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 700, color: "var(--adm-text)" }}>{template.name}</span>
+                        <span onClick={(e) => { e.stopPropagation(); setEditingTemplate(template.id); setEtName(template.name); }} style={{ fontSize: "0.65rem", cursor: "pointer", opacity: 0.5 }}>✏️</span>
+                      </span>
+                      <span style={{ flex: 1 }} />
                       <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{template.groups.length} grupo{template.groups.length !== 1 ? "s" : ""} · {template.dishes.length} plato{template.dishes.length !== 1 ? "s" : ""}</span>
                       <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
-                    </button>
-                    <button onClick={(e) => { e.stopPropagation(); setEditingTemplate(template.id); setEtName(template.name); }} style={{ padding: "4px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, cursor: "pointer", flexShrink: 0 }} title="Editar nombre">
-                      <span style={{ fontSize: "0.75rem" }}>✏️</span>
                     </button>
                   </>
                 )}
