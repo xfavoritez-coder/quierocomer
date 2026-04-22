@@ -470,7 +470,7 @@ export default function AdminMenus() {
                           setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
                           setQuickModName(""); setQuickModCreating(false);
                         }
-                      }} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Crear
+                      }} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Crear</button>
                       <button onClick={() => { setQuickModCreating(false); setQuickModName(""); }} style={{ padding: "7px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
                     </div>
                   ) : (
