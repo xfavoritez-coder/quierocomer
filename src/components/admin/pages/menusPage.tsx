@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
+import CategoriesManager from "@/components/admin/CategoriesManager";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
@@ -913,66 +914,8 @@ export default function AdminMenus() {
       </>)}
 
       {/* ── Categorías tab ── */}
-      {menuTab === "categorias" && (
-        <div>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-            Crea, edita o elimina las secciones de tu carta. Los platos se organizan dentro de estas categorías.
-          </p>
-
-          {/* Inline create */}
-          <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-            <input
-              value={newCatName}
-              onChange={e => setNewCatName(e.target.value)}
-              placeholder="Nombre de la nueva categoría..."
-              onKeyDown={e => e.key === "Enter" && createCategory()}
-              style={{ flex: 1, padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }}
-            />
-            <button onClick={createCategory} disabled={catSaving || !newCatName.trim()} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", opacity: !newCatName.trim() ? 0.5 : 1 }}>
-              + Crear
-            </button>
-          </div>
-
-          {/* Categories list */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {fullCategories.map(cat => (
-              <div key={cat.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: cat.isActive ? "var(--adm-card)" : "rgba(0,0,0,0.02)", borderRadius: 12, border: "1px solid var(--adm-card-border)" }}>
-                {editingCat === cat.id ? (
-                  <>
-                    <input
-                      value={editCatName}
-                      onChange={e => setEditCatName(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && updateCategory(cat.id, { name: editCatName })}
-                      style={{ flex: 1, padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }}
-                      autoFocus
-                    />
-                    <button onClick={() => updateCategory(cat.id, { name: editCatName })} disabled={catSaving} style={{ padding: "6px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
-                    <button onClick={() => setEditingCat(null)} style={{ padding: "6px 14px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
-                  </>
-                ) : (
-                  <>
-                    <span style={{ flex: 1, fontFamily: F, fontSize: "0.88rem", color: cat.isActive ? "var(--adm-text)" : "var(--adm-text3)", fontWeight: 600 }}>
-                      {cat.name}
-                      <span style={{ fontWeight: 400, fontSize: "0.75rem", color: "var(--adm-text3)", marginLeft: 10 }}>
-                        {cat._count?.dishes ?? 0} plato{(cat._count?.dishes ?? 0) !== 1 ? "s" : ""}
-                      </span>
-                    </span>
-                    <button onClick={() => { setEditingCat(cat.id); setEditCatName(cat.name); }} style={{ padding: "6px 12px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
-                    <button onClick={() => updateCategory(cat.id, { isActive: !cat.isActive })} style={{ padding: "6px 12px", background: cat.isActive ? "rgba(255,100,100,0.08)" : "rgba(74,222,128,0.08)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: cat.isActive ? "#ff6b6b" : "#4ade80", cursor: "pointer", fontWeight: 600 }}>
-                      {cat.isActive ? "Ocultar" : "Mostrar"}
-                    </button>
-                    {(cat._count?.dishes ?? 0) === 0 && (
-                      <button onClick={() => deleteCategory(cat.id)} style={{ padding: "6px 12px", background: "rgba(255,100,100,0.08)", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "#ff6b6b", cursor: "pointer", fontWeight: 600 }}>Eliminar</button>
-                    )}
-                  </>
-                )}
-              </div>
-            ))}
-            {fullCategories.length === 0 && (
-              <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: 32 }}>No hay categorías. Crea la primera arriba.</p>
-            )}
-          </div>
-        </div>
+      {menuTab === "categorias" && selectedRestaurantId && (
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} />
       )}
 
       {/* ── Modificadores tab ── */}
