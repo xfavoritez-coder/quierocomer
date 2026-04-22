@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
-import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -50,46 +49,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       await prisma.dish.update({ where: { id }, data: { ingredients: ings.map(i => i.name).join(", ") || null } });
     }
 
-    // Re-extract ingredients when name, description, or photos change
-    // Adds NEW ingredients without removing existing ones
-    let aiResult = null;
-    if (body.name !== undefined || body.description !== undefined || body.photos !== undefined) {
-      const updated = await prisma.dish.findUnique({ where: { id }, select: { name: true, description: true, photos: true } });
-      if (updated) {
-        try {
-          // Get current linked ingredient IDs
-          const currentLinks = await prisma.dishIngredient.findMany({ where: { dishId: id }, select: { ingredientId: true } });
-          const currentIds = new Set(currentLinks.map(l => l.ingredientId));
-
-          // Run AI extraction (this replaces all links)
-          aiResult = await extractIngredientsForDish(id, updated.name, updated.description, null);
-
-          // Re-add any ingredients the owner had that AI didn't detect
-          for (const prevId of currentIds) {
-            const stillLinked = await prisma.dishIngredient.findFirst({ where: { dishId: id, ingredientId: prevId } });
-            if (!stillLinked) {
-              await prisma.dishIngredient.create({ data: { dishId: id, ingredientId: prevId } });
-            }
-          }
-
-          // Refresh text field with all ingredients
-          const allIngs = await prisma.dishIngredient.findMany({ where: { dishId: id }, include: { ingredient: { select: { name: true } } } });
-          await prisma.dish.update({ where: { id }, data: { ingredients: allIngs.map(i => i.ingredient.name).join(", ") || null } });
-
-          console.log(`[AI] ${updated.name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
-        } catch (e) {
-          console.error("[AI extract]", e);
-        }
-      }
-    }
-
-    // Re-fetch with updated ingredients
-    const finalDish = await prisma.dish.findUnique({
-      where: { id },
-      include: { category: { select: { id: true, name: true } }, modifierTemplates: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
-    });
-
-    return NextResponse.json({ ...(finalDish || dish), aiIngredients: aiResult });
+    return NextResponse.json(dish);
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
     console.error("[Admin dishes PUT]", e);
