@@ -8,6 +8,7 @@ const F = "var(--font-display)";
 const GOLD = "#F4A623";
 
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
+const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
 
 interface DashData {
   visitsThisWeek: number; visitsLastWeek: number; visitsDelta: number | null;
