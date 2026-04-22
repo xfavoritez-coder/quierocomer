@@ -111,6 +111,16 @@ export async function PUT(req: NextRequest) {
     if (allergenType !== undefined) data.allergenType = allergenType || null;
 
     const ingredient = await prisma.ingredient.update({ where: { id }, data });
+
+    // If name changed, update text field on all linked dishes
+    if (name !== undefined) {
+      const links = await prisma.dishIngredient.findMany({ where: { ingredientId: id }, select: { dishId: true } });
+      for (const link of links) {
+        const dishIngs = await prisma.dishIngredient.findMany({ where: { dishId: link.dishId }, include: { ingredient: { select: { name: true } } } });
+        await prisma.dish.update({ where: { id: link.dishId }, data: { ingredients: dishIngs.map(di => di.ingredient.name).join(", ") || null } });
+      }
+    }
+
     return NextResponse.json({ ingredient });
   } catch (e) {
     console.error("[Admin ingredients PUT]", e);
