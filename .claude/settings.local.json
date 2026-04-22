@@ -53,7 +53,10 @@
       "Bash(find:*)",
       "Bash(grep -r \"createCategory\\\\|addCategory\\\\|editCategory\\\\|updateCategory\" /c/Proyectos/quierocomer/src --include=*.ts --include=*.tsx)",
       "Bash(grep:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(grep -A2 '\"\"build\"\"' package.json)",
+      "Bash(rm c:/Proyectos/quierocomer/src/app/api/admin/dishes/[id]/modifiers/route.ts)",
+      "Bash(rmdir c:/Proyectos/quierocomer/src/app/api/admin/dishes/[id]/modifiers)"
     ]
   }
 }
