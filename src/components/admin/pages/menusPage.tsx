@@ -19,6 +19,173 @@ interface Restaurant { id: string; name: string; slug: string; }
 const F = "var(--font-display)";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#4ade80", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
+/* ── Inline modifier editor (used inside dish editMode) ── */
+interface IMEOption { id: string; name: string; priceAdjustment: number; position: number; }
+interface IMEGroup { id: string; name: string; required: boolean; maxSelect: number; position: number; options: IMEOption[]; }
+
+function InlineModifierEditor({ templateId, restaurantId }: { templateId: string; restaurantId: string }) {
+  const [groups, setGroups] = useState<IMEGroup[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dishCount, setDishCount] = useState(0);
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [egName, setEgName] = useState("");
+  const [editingOption, setEditingOption] = useState<string | null>(null);
+  const [eoName, setEoName] = useState("");
+  const [eoPrice, setEoPrice] = useState("");
+  const [addingOption, setAddingOption] = useState<string | null>(null);
+  const [newOptName, setNewOptName] = useState("");
+  const [newOptPrice, setNewOptPrice] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`)
+      .then(r => r.json())
+      .then((templates: any[]) => {
+        const t = templates.find((x: any) => x.id === templateId);
+        if (t) {
+          setGroups(t.groups || []);
+          setDishCount(t.dishes?.length || 0);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [templateId, restaurantId]);
+
+  const addGroup = async () => {
+    const res = await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ addGroupToTemplate: templateId, name: "Nuevo grupo", required: true, maxSelect: 1 }),
+    });
+    const group = await res.json();
+    if (res.ok) {
+      setGroups(prev => [...prev, { ...group, options: group.options || [] }]);
+      setEditingGroup(group.id);
+      setEgName(group.name);
+    }
+  };
+
+  const renameGroup = async (groupId: string) => {
+    if (!egName.trim()) return;
+    await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ groupId, name: egName.trim() }),
+    });
+    setGroups(prev => prev.map(g => g.id === groupId ? { ...g, name: egName.trim() } : g));
+    setEditingGroup(null);
+  };
+
+  const deleteGroup = async (groupId: string) => {
+    await fetch("/api/admin/modifier-templates", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ groupId }),
+    });
+    setGroups(prev => prev.filter(g => g.id !== groupId));
+  };
+
+  const addOption = async (groupId: string) => {
+    if (!newOptName.trim()) return;
+    const res = await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ addOptionToGroup: groupId, name: newOptName.trim(), priceAdjustment: newOptPrice ? Number(newOptPrice) : 0 }),
+    });
+    const opt = await res.json();
+    if (res.ok) {
+      setGroups(prev => prev.map(g => g.id === groupId ? { ...g, options: [...g.options, opt] } : g));
+      setNewOptName(""); setNewOptPrice(""); setAddingOption(null);
+    }
+  };
+
+  const renameOption = async (optionId: string) => {
+    if (!eoName.trim()) return;
+    await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ optionId, name: eoName.trim(), priceAdjustment: eoPrice ? Number(eoPrice) : 0 }),
+    });
+    setGroups(prev => prev.map(g => ({
+      ...g, options: g.options.map(o => o.id === optionId ? { ...o, name: eoName.trim(), priceAdjustment: eoPrice ? Number(eoPrice) : 0 } : o),
+    })));
+    setEditingOption(null);
+  };
+
+  const deleteOption = async (optionId: string) => {
+    await fetch("/api/admin/modifier-templates", {
+      method: "DELETE", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ optionId }),
+    });
+    setGroups(prev => prev.map(g => ({ ...g, options: g.options.filter(o => o.id !== optionId) })));
+  };
+
+  if (loading) return <div style={{ padding: "8px 12px" }}><span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>Cargando...</span></div>;
+
+  return (
+    <div style={{ padding: "8px 12px 12px", borderTop: "1px solid var(--adm-card-border)" }}>
+      {dishCount > 1 && (
+        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#e85530", margin: "0 0 8px", padding: "4px 8px", background: "rgba(232,85,48,0.06)", borderRadius: 6 }}>
+          ⚠️ Usado en {dishCount} platos — los cambios afectarán a todos.
+        </p>
+      )}
+      {groups.length === 0 && (
+        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>Sin grupos. Agrega uno para definir opciones.</p>
+      )}
+      {groups.map(g => (
+        <div key={g.id} style={{ marginBottom: 10 }}>
+          {/* Group header */}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+            {editingGroup === g.id ? (
+              <input value={egName} onChange={e => setEgName(e.target.value)} onBlur={() => renameGroup(g.id)} onKeyDown={e => e.key === "Enter" && renameGroup(g.id)}
+                style={{ flex: 1, padding: "3px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+            ) : (
+              <span onClick={() => { setEditingGroup(g.id); setEgName(g.name); }} style={{ fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: "var(--adm-text)", cursor: "pointer" }}>
+                {g.name} <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.62rem" }}>({g.required ? "obligatorio" : "opcional"}, máx {g.maxSelect})</span>
+              </span>
+            )}
+            <button onClick={() => deleteGroup(g.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.55rem", padding: "1px 4px" }}>×</button>
+          </div>
+          {/* Options */}
+          <div style={{ paddingLeft: 10, display: "flex", flexDirection: "column", gap: 2 }}>
+            {g.options.map(o => (
+              <div key={o.id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                {editingOption === o.id ? (
+                  <>
+                    <input value={eoName} onChange={e => setEoName(e.target.value)} onKeyDown={e => e.key === "Enter" && renameOption(o.id)}
+                      style={{ flex: 1, padding: "2px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+                    <input value={eoPrice} onChange={e => setEoPrice(e.target.value)} placeholder="$" onKeyDown={e => e.key === "Enter" && renameOption(o.id)}
+                      style={{ width: 50, padding: "2px 4px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none", textAlign: "right" }} />
+                    <button onClick={() => renameOption(o.id)} style={{ background: "none", border: "none", color: "#4ade80", fontSize: "0.62rem", cursor: "pointer" }}>✓</button>
+                    <button onClick={() => setEditingOption(null)} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "0.55rem", cursor: "pointer" }}>×</button>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)" }}>·</span>
+                    <span onClick={() => { setEditingOption(o.id); setEoName(o.name); setEoPrice(o.priceAdjustment ? String(o.priceAdjustment) : ""); }} style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer", flex: 1 }}>
+                      {o.name}
+                    </span>
+                    {o.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "#F4A623" }}>+${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}</span>}
+                    <button onClick={() => deleteOption(o.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.5rem", padding: "0 2px", opacity: 0.6 }}>×</button>
+                  </>
+                )}
+              </div>
+            ))}
+            {/* Add option inline */}
+            {addingOption === g.id ? (
+              <div style={{ display: "flex", gap: 4, alignItems: "center", marginTop: 2 }}>
+                <input value={newOptName} onChange={e => setNewOptName(e.target.value)} placeholder="Nombre" onKeyDown={e => e.key === "Enter" && addOption(g.id)}
+                  style={{ flex: 1, padding: "3px 6px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none" }} autoFocus />
+                <input value={newOptPrice} onChange={e => setNewOptPrice(e.target.value)} placeholder="$" onKeyDown={e => e.key === "Enter" && addOption(g.id)}
+                  style={{ width: 45, padding: "3px 4px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 4, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text)", outline: "none", textAlign: "right" }} />
+                <button onClick={() => addOption(g.id)} style={{ background: "none", border: "none", color: "#4ade80", fontSize: "0.62rem", cursor: "pointer" }}>✓</button>
+                <button onClick={() => { setAddingOption(null); setNewOptName(""); setNewOptPrice(""); }} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "0.55rem", cursor: "pointer" }}>×</button>
+              </div>
+            ) : (
+              <button onClick={() => setAddingOption(g.id)} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", color: "#F4A623", padding: "2px 0", textAlign: "left" }}>+ opción</button>
+            )}
+          </div>
+        </div>
+      ))}
+      <button onClick={addGroup} style={{ background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 6, cursor: "pointer", fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", padding: "6px 10px", width: "100%" }}>+ Agregar grupo</button>
+    </div>
+  );
+}
+
 export default function AdminMenus() {
   const { selectedRestaurantId, restaurants, isSuper, loading: sessionLoading } = useAdminSession();
   const [dishes, setDishes] = useState<Dish[]>([]);
@@ -241,17 +408,19 @@ export default function AdminMenus() {
   const [saving, setSaving] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<string[]>([]);
-  const [modPickerOpen, setModPickerOpen] = useState(false);
-  const [modSearch, setModSearch] = useState("");
-  const [quickModName, setQuickModName] = useState("");
-  const [quickModCreating, setQuickModCreating] = useState(false);
+  const [editModExpanded, setEditModExpanded] = useState<string | null>(null);
+  const [editModPickerOpen, setEditModPickerOpen] = useState(false);
+  const [editModSearch, setEditModSearch] = useState("");
+  const [editModQuickCreating, setEditModQuickCreating] = useState(false);
+  const [editModQuickName, setEditModQuickName] = useState("");
   const ingRef = useRef<HTMLDivElement>(null);
 
   // Load templates when a dish is selected (not just in edit mode)
   useEffect(() => {
     if (!selectedDish || !selectedRestaurantId) return;
     setAssignedTemplateIds(((selectedDish as any).modifierTemplates || []).map((t: any) => t.id));
-    setModPickerOpen(false);
+    setEditModPickerOpen(false);
+    setEditModExpanded(null);
     fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
@@ -434,127 +603,6 @@ export default function AdminMenus() {
                 </button>
               </div>
 
-              {/* Modifier templates — pills + assign button */}
-              <div style={{ marginTop: 16 }}>
-                <h3 style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px" }}>Modificadores</h3>
-                {/* Assigned pills with remove */}
-                {assignedTemplateIds.length > 0 && (
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 10 }}>
-                    {assignedTemplateIds.map(id => {
-                      const t = availableTemplates.find(at => at.id === id);
-                      if (!t) return null;
-                      return (
-                        <span key={id} style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "5px 12px", borderRadius: 50, background: "rgba(244,166,35,0.12)", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#F4A623" }}>
-                          {t.name}
-                          <span onClick={async () => {
-                            await fetch("/api/admin/modifier-templates", {
-                              method: "PUT", headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ templateId: id, unassignDishId: selectedDish.id }),
-                            });
-                            const newIds = assignedTemplateIds.filter(x => x !== id);
-                            setAssignedTemplateIds(newIds);
-                            const newTemplates = newIds.map(x => availableTemplates.find(at => at.id === x)).filter(Boolean);
-                            const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
-                            setSelectedDish(updatedDish);
-                            setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
-                          }} style={{ cursor: "pointer", fontSize: "0.68rem", opacity: 0.6, marginLeft: 2 }}>×</span>
-                        </span>
-                      );
-                    })}
-                  </div>
-                )}
-                {/* Assign button + dropdown */}
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {availableTemplates.length > 0 && (
-                    <div style={{ position: "relative" }}>
-                      <button onClick={() => { setModPickerOpen(!modPickerOpen); setModSearch(""); setQuickModCreating(false); }} style={{ padding: "7px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                        + Asignar
-                      </button>
-                      {modPickerOpen && (
-                        <div style={{ position: "fixed", marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 260, overflow: "hidden" }}>
-                          <input
-                            value={modSearch} onChange={e => setModSearch(e.target.value)}
-                            placeholder="Buscar plantilla..."
-                            style={{ width: "100%", padding: "10px 12px", border: "none", borderBottom: "1px solid var(--adm-card-border)", background: "transparent", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }}
-                            autoFocus
-                          />
-                          <div style={{ maxHeight: 180, overflowY: "auto" }}>
-                            {availableTemplates
-                              .filter(t => !assignedTemplateIds.includes(t.id) && (!modSearch || t.name.toLowerCase().includes(modSearch.toLowerCase())))
-                              .map(t => (
-                                <button key={t.id} onClick={async () => {
-                                  await fetch("/api/admin/modifier-templates", {
-                                    method: "PUT", headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }),
-                                  });
-                                  const newIds = [...assignedTemplateIds, t.id];
-                                  setAssignedTemplateIds(newIds);
-                                  const newTemplates = newIds.map(x => availableTemplates.find(at => at.id === x)).filter(Boolean);
-                                  const updatedDish = { ...selectedDish, modifierTemplates: newTemplates } as any;
-                                  setSelectedDish(updatedDish);
-                                  setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
-                                  setModPickerOpen(false);
-                                }} style={{ display: "block", width: "100%", padding: "10px 12px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)" }}>
-                                  {t.name}
-                                </button>
-                              ))}
-                            {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!modSearch || t.name.toLowerCase().includes(modSearch.toLowerCase()))).length === 0 && (
-                              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", padding: 14, margin: 0 }}>
-                                {assignedTemplateIds.length === availableTemplates.length ? "Todas asignadas" : "Sin resultados"}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {/* Quick create template */}
-                  {quickModCreating ? (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input value={quickModName} onChange={e => setQuickModName(e.target.value)} placeholder="Nombre de plantilla" onKeyDown={async (e) => {
-                        if (e.key !== "Enter" || !quickModName.trim() || !selectedRestaurantId || !selectedDish) return;
-                        const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: quickModName.trim() }) });
-                        const t = await res.json();
-                        if (res.ok) {
-                          const newTemplates = [...availableTemplates, { id: t.id, name: t.name }];
-                          setAvailableTemplates(newTemplates);
-                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
-                          const newIds = [...assignedTemplateIds, t.id];
-                          setAssignedTemplateIds(newIds);
-                          const updatedDish = { ...selectedDish, modifierTemplates: newIds.map(x => newTemplates.find(at => at.id === x)).filter(Boolean) } as any;
-                          setSelectedDish(updatedDish);
-                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
-                          setQuickModName(""); setQuickModCreating(false);
-                        }
-                      }} style={{ padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", width: 160 }} autoFocus />
-                      <button onClick={async () => {
-                        if (!quickModName.trim() || !selectedRestaurantId || !selectedDish) return;
-                        const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: quickModName.trim() }) });
-                        const t = await res.json();
-                        if (res.ok) {
-                          const newTemplates = [...availableTemplates, { id: t.id, name: t.name }];
-                          setAvailableTemplates(newTemplates);
-                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
-                          const newIds = [...assignedTemplateIds, t.id];
-                          setAssignedTemplateIds(newIds);
-                          const updatedDish = { ...selectedDish, modifierTemplates: newIds.map(x => newTemplates.find(at => at.id === x)).filter(Boolean) } as any;
-                          setSelectedDish(updatedDish);
-                          setDishes(prev => prev.map(d => d.id === selectedDish.id ? updatedDish : d));
-                          setQuickModName(""); setQuickModCreating(false);
-                        }
-                      }} style={{ padding: "7px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", fontWeight: 700, cursor: "pointer" }}>Crear</button>
-                      <button onClick={() => { setQuickModCreating(false); setQuickModName(""); }} style={{ padding: "7px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
-                    </div>
-                  ) : (
-                    <button onClick={() => setQuickModCreating(true)} style={{ padding: "7px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-                      + Crear plantilla
-                    </button>
-                  )}
-                </div>
-                {availableTemplates.length > 0 && assignedTemplateIds.length === 0 && (
-                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "6px 0 0" }}>Asigna una plantilla o crea una nueva. Configura sus opciones en el tab "Modificadores".</p>
-                )}
-              </div>
             </>
           ) : (
             <>
@@ -700,26 +748,99 @@ export default function AdminMenus() {
                 )}
               </div>
 
+              {/* Modificadores — inline management */}
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Modificadores</label>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {availableTemplates.map(t => {
-                    const assigned = assignedTemplateIds.includes(t.id);
-                    return (
-                      <button key={t.id} onClick={async () => {
-                        const action = assigned ? "unassignDishId" : "assignDishId";
-                        await fetch("/api/admin/modifier-templates", {
-                          method: "PUT", headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ templateId: t.id, [action]: selectedDish!.id }),
-                        });
-                        setAssignedTemplateIds(prev => assigned ? prev.filter(id => id !== t.id) : [...prev, t.id]);
-                      }} style={{ padding: "6px 12px", borderRadius: 8, border: assigned ? "1.5px solid rgba(244,166,35,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: assigned ? "rgba(244,166,35,0.1)" : "transparent", color: assigned ? "#F4A623" : "var(--adm-text3)" }}>
-                        {assigned ? "✓ " : ""}{t.name}
+
+                {/* Assigned list with expandable preview */}
+                {assignedTemplateIds.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 }}>
+                    {assignedTemplateIds.map(id => {
+                      const t = availableTemplates.find(at => at.id === id);
+                      if (!t) return null;
+                      const isExpanded = editModExpanded === id;
+                      return (
+                        <div key={id} style={{ background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, overflow: "hidden" }}>
+                          <div style={{ display: "flex", alignItems: "center", padding: "8px 12px", gap: 8 }}>
+                            <button onClick={() => setEditModExpanded(isExpanded ? null : id)} style={{ flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", padding: 0, display: "flex", alignItems: "center", gap: 6 }}>
+                              <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#F4A623" }}>{t.name}</span>
+                              <span style={{ fontSize: "0.6rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+                            </button>
+                            <span onClick={async () => {
+                              await fetch("/api/admin/modifier-templates", {
+                                method: "PUT", headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ templateId: id, unassignDishId: selectedDish!.id }),
+                              });
+                              setAssignedTemplateIds(prev => prev.filter(x => x !== id));
+                              if (editModExpanded === id) setEditModExpanded(null);
+                            }} style={{ cursor: "pointer", fontSize: "0.6rem", color: "#ef4444", padding: "2px 6px", background: "rgba(239,68,68,0.06)", borderRadius: 4 }}>×</span>
+                          </div>
+                          {isExpanded && <InlineModifierEditor templateId={id} restaurantId={selectedRestaurantId!} />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Assign + Create row */}
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  {availableTemplates.length > 0 && (
+                    <div style={{ position: "relative" }}>
+                      <button onClick={() => setEditModPickerOpen(!editModPickerOpen)} style={{ padding: "7px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>
+                        + Asignar
                       </button>
-                    );
-                  })}
-                  {availableTemplates.length === 0 && (
-                    <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>Crea plantillas en la pestaña "Modificadores"</p>
+                      {editModPickerOpen && (
+                        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 240, overflow: "hidden" }}>
+                          <input
+                            value={editModSearch} onChange={e => setEditModSearch(e.target.value)}
+                            placeholder="Buscar..."
+                            style={{ width: "100%", padding: "8px 12px", border: "none", borderBottom: "1px solid var(--adm-card-border)", background: "transparent", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }}
+                            autoFocus
+                          />
+                          <div style={{ maxHeight: 160, overflowY: "auto" }}>
+                            {availableTemplates
+                              .filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || t.name.toLowerCase().includes(editModSearch.toLowerCase())))
+                              .map(t => (
+                                <button key={t.id} onClick={async () => {
+                                  await fetch("/api/admin/modifier-templates", {
+                                    method: "PUT", headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish!.id }),
+                                  });
+                                  setAssignedTemplateIds(prev => [...prev, t.id]);
+                                  setEditModPickerOpen(false);
+                                  setEditModSearch("");
+                                }} style={{ display: "block", width: "100%", padding: "8px 12px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>
+                                  {t.name}
+                                </button>
+                              ))}
+                            {availableTemplates.filter(t => !assignedTemplateIds.includes(t.id) && (!editModSearch || t.name.toLowerCase().includes(editModSearch.toLowerCase()))).length === 0 && (
+                              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", padding: 10, margin: 0 }}>Sin resultados</p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {editModQuickCreating ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input value={editModQuickName} onChange={e => setEditModQuickName(e.target.value)} placeholder="Nombre" onKeyDown={async (e) => {
+                        if (e.key !== "Enter" || !editModQuickName.trim() || !selectedRestaurantId || !selectedDish) return;
+                        const res = await fetch("/api/admin/modifier-templates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId: selectedRestaurantId, name: editModQuickName.trim() }) });
+                        const t = await res.json();
+                        if (res.ok) {
+                          setAvailableTemplates(prev => [...prev, { id: t.id, name: t.name }]);
+                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: t.id, assignDishId: selectedDish.id }) });
+                          setAssignedTemplateIds(prev => [...prev, t.id]);
+                          setEditModQuickName(""); setEditModQuickCreating(false);
+                          setEditModExpanded(t.id);
+                        }
+                      }} style={{ padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", width: 140 }} autoFocus />
+                      <button onClick={() => { setEditModQuickCreating(false); setEditModQuickName(""); }} style={{ padding: "5px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.7rem" }}>×</button>
+                    </div>
+                  ) : (
+                    <button onClick={() => setEditModQuickCreating(true)} style={{ padding: "7px 14px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>
+                      + Crear
+                    </button>
                   )}
                 </div>
               </div>
