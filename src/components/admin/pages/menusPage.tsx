@@ -259,8 +259,6 @@ export default function AdminMenus() {
   const TAG_OPTIONS: { value: string; label: string }[] = [
     { value: "RECOMMENDED", label: "Recomendado" },
     { value: "NEW", label: "Nuevo" },
-    { value: "MOST_ORDERED", label: "Más pedido" },
-    { value: "PROMOTION", label: "Promoción" },
   ];
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
@@ -372,8 +370,8 @@ export default function AdminMenus() {
               {selectedDish.ingredients && (
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Ingredientes</span>
-                    {recentlyCreated.has(selectedDish.id) && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 50, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>Detectados por IA</span>}
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>Ingredientes</span>
+                    <span style={{ fontSize: "0.58rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>IA</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                     {selectedDish.ingredients.split(",").map(i => i.trim()).filter(Boolean).map(i => (
@@ -618,7 +616,7 @@ export default function AdminMenus() {
                   value={ingSearch}
                   onChange={e => { setIngSearch(e.target.value); setIngListOpen(true); }}
                   onFocus={() => setIngListOpen(true)}
-                  placeholder="Filtrar ingredientes..."
+                  placeholder="Agregar ingrediente..."
                   style={{ ...INP, marginBottom: 4 }}
                 />
                 {/* Filterable ingredient list — always visible when open */}
@@ -697,12 +695,11 @@ export default function AdminMenus() {
                 <label style={LBL}>Tags</label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
-                    const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
                     const active = eTags.includes(t.value);
                     return (
-                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: disabled ? "var(--adm-text3)" : active ? TAG_COLORS[t.value] : "var(--adm-text3)", opacity: disabled ? 0.4 : 1, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <button key={t.value} onClick={() => toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: active ? TAG_COLORS[t.value] : "var(--adm-text3)", display: "inline-flex", alignItems: "center", gap: 4 }}>
                         {t.value === "RECOMMENDED" && <span style={{ fontSize: "0.7rem", opacity: active ? 1 : 0.4 }}>★</span>}
-                        {t.label}{disabled ? " (pronto)" : ""}
+                        {t.label}
                       </button>
                     );
                   })}
