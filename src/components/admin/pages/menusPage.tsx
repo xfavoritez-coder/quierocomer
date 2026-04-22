@@ -575,6 +575,11 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "platos" && (<>
+      {!creatingDish && (
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
+          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo plato</button>
+        </div>
+      )}
       <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap" }}>
         <input
           placeholder="Buscar plato..."
@@ -590,9 +595,6 @@ export default function AdminMenus() {
           <option value="all">Todas las categorias</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
-        {!creatingDish && (
-          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", marginLeft: "auto" }}>+ Nuevo plato</button>
-        )}
       </div>
 
       {/* Create dish form */}
