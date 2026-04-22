@@ -14,6 +14,7 @@ interface Ingredient {
   category: string;
   isAllergen: boolean;
   allergenType: string | null;
+  aliases?: string[];
 }
 
 const CATEGORIES = [
@@ -121,6 +122,7 @@ export default function IngredientesPage() {
   const [editing, setEditing] = useState<string | null>(null);
   const [merging, setMerging] = useState<string | null>(null);
   const [mergeSearch, setMergeSearch] = useState("");
+  const [mergeMsg, setMergeMsg] = useState("");
   const [ignoredList, setIgnoredList] = useState<{ id: string; name: string }[]>([]);
   const [eName, setEName] = useState("");
   const [eCat, setECat] = useState("");
@@ -428,6 +430,12 @@ export default function IngredientesPage() {
       )}
 
       {/* List */}
+      {mergeMsg && (
+        <div style={{ padding: "10px 14px", background: "rgba(192,132,252,0.08)", border: "1px solid rgba(192,132,252,0.15)", borderRadius: 10, marginBottom: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: "0.82rem" }}>🔗</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#c084fc" }}>{mergeMsg}</span>
+        </div>
+      )}
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {filtered.map(i => {
           const cat = catLabel(i.category);
@@ -457,7 +465,14 @@ export default function IngredientesPage() {
           return (
             <React.Fragment key={i.id}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
-              <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500, flex: 1 }}>{i.name}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500 }}>{i.name}</span>
+                {i.aliases && i.aliases.length > 0 && (
+                  <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 3 }}>
+                    {i.aliases.map(a => <span key={a} style={{ fontSize: "0.6rem", padding: "1px 6px", borderRadius: 50, background: "rgba(192,132,252,0.08)", color: "#c084fc", fontFamily: F }}>← {a}</span>)}
+                  </div>
+                )}
+              </div>
               {i.isAllergen && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergenType || "alérgeno"}</span>}
               <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); setEAllergen(i.isAllergen); setEAllergenType(i.allergenType || ""); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
               <button onClick={() => { setMerging(i.id); setMergeSearch(""); }} style={{ padding: "4px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
@@ -470,13 +485,17 @@ export default function IngredientesPage() {
                 <div style={{ maxHeight: 120, overflowY: "auto" }}>
                   {ingredients.filter(t => t.id !== i.id && (!mergeSearch || t.name.includes(mergeSearch.toLowerCase()))).slice(0, 10).map(target => (
                     <button key={target.id} onClick={async () => {
+                      if (!confirm(`¿Fusionar "${i.name}" → "${target.name}"? Los platos que tenían "${i.name}" se reasignarán a "${target.name}".`)) return;
                       // 1. Add alias
                       await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: target.id, addAlias: i.name }) });
                       // 2. Reassign dish links from source to target
-                      await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, mergeInto: target.id }) });
+                      const mergeRes = await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, mergeInto: target.id }) });
+                      const mergeData = await mergeRes.json();
                       // 3. Update local state
-                      setIngredients(prev => prev.filter(x => x.id !== i.id));
+                      setIngredients(prev => prev.filter(x => x.id !== i.id).map(x => x.id === target.id ? { ...x, aliases: [...(x.aliases || []), i.name] } : x));
                       setMerging(null);
+                      setMergeMsg(`"${i.name}" fusionado con "${target.name}" (${mergeData.merged || 0} platos actualizados)`);
+                      setTimeout(() => setMergeMsg(""), 6000);
                     }} style={{ display: "flex", alignItems: "center", width: "100%", padding: "8px 10px", background: "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", textAlign: "left", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)" }}
                       onMouseOver={e => (e.currentTarget.style.background = "rgba(244,166,35,0.06)")}
                       onMouseOut={e => (e.currentTarget.style.background = "transparent")}

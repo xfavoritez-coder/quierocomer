@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const ingredients = await prisma.ingredient.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
     orderBy: { name: "asc" },
-    select: { id: true, name: true, category: true, isAllergen: true, allergenType: true },
+    select: { id: true, name: true, category: true, isAllergen: true, allergenType: true, aliases: true },
   });
 
   let linkedIds: string[] = [];

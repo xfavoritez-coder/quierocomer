@@ -109,6 +109,7 @@ export async function getRecommendations(ctx: GenieContext, userId?: string, ses
   const isVegetarian = userDiet.includes("vegetariano");
   const allowedDietTypes: DT[] = isVegan ? ["VEGAN"]
     : isVegetarian ? ["VEGAN", "VEGETARIAN"]
+    : ["VEGAN", "VEGETARIAN", "OMNIVORE"];
 
   // 2. Fetch candidates
   const candidates = await prisma.menuItem.findMany({
