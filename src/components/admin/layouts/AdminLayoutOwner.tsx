@@ -108,7 +108,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             </span>
           </Link>
           {restaurants.length === 1 && (
-            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#8a7550", margin: "6px 0 0" }}>{restaurants[0].name}</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: GOLD, fontWeight: 600, margin: "6px 0 0", letterSpacing: "0.02em" }}>{restaurants[0].name}</p>
           )}
           {restaurants.length > 1 && (
             <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
@@ -148,9 +148,14 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <header className="owl-mobile-header">
         <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
           <span style={{ fontSize: "1.2rem" }}>🧞</span>
-          <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a" }}>
-            Quiero<span style={{ color: GOLD }}>Comer</span>
-          </span>
+          <div>
+            <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "#1a1a1a", display: "block" }}>
+              Quiero<span style={{ color: GOLD }}>Comer</span>
+            </span>
+            {restaurants.length === 1 && (
+              <span style={{ fontFamily: F, fontSize: "0.62rem", color: GOLD, fontWeight: 600, letterSpacing: "0.02em" }}>{restaurants[0].name}</span>
+            )}
+          </div>
         </Link>
         {restaurants.length > 1 && (
           <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
