@@ -10,18 +10,22 @@ interface Logo { slug: string; name: string; logoUrl: string | null; color: stri
 function InfoTip({ text, dark }: { text: string; dark?: boolean }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [open]);
+  const show = () => { if (timerRef.current) clearTimeout(timerRef.current); setOpen(true); };
+  const hide = () => { timerRef.current = setTimeout(() => setOpen(false), 200); };
   return (
-    <span ref={ref} style={{ position: "relative", display: "inline-flex", marginLeft: 6, flexShrink: 0 }}>
-      <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}
+    <span ref={ref} style={{ position: "relative", display: "inline-flex", marginLeft: 6, flexShrink: 0 }}
+      onMouseEnter={show} onMouseLeave={hide}>
+      <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
         style={{ width: 15, height: 15, borderRadius: "50%", border: "none", cursor: "help", background: dark ? "rgba(255,255,255,0.12)" : "#e8e3d8", color: dark ? "#aaa" : "#888", fontFamily: "Georgia,serif", fontStyle: "italic", fontSize: "9px", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}>i</button>
       {open && (
-        <span style={{ position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: dark ? "#333" : "#1a1a1a", color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: "12px", lineHeight: 1.45, width: 220, zIndex: 50, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", pointerEvents: "none" }}>
+        <span style={{ position: "absolute", bottom: "calc(100% + 8px)", left: "50%", transform: "translateX(-50%)", background: dark ? "#333" : "#1a1a1a", color: "#fff", padding: "8px 12px", borderRadius: 8, fontSize: "12px", lineHeight: 1.45, width: 220, zIndex: 50, boxShadow: "0 4px 16px rgba(0,0,0,0.15)" }}>
           {text}
           <span style={{ position: "absolute", top: "100%", left: "50%", transform: "translateX(-50%)", borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderTop: `6px solid ${dark ? "#333" : "#1a1a1a"}` }} />
         </span>
@@ -58,8 +62,16 @@ function DesertSVG() {
 /* ─── Night Footer Dunes SVG ─── */
 function FooterDunesSVG() {
   return (
+    <>
+    {/* Moon as separate SVG to keep it round */}
+    <div style={{ position: "absolute", right: "15%", bottom: 110, width: 48, height: 48, zIndex: 2 }}>
+      <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%" }}>
+        <circle cx="24" cy="24" r="22" fill="#fef3c7" opacity="0.95" />
+        <circle cx="24" cy="24" r="22" fill="url(#moonGlow)" opacity="0.3" />
+        <defs><radialGradient id="moonGlow"><stop offset="0%" stopColor="#fff" /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
+      </svg>
+    </div>
     <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 140 }}>
-      <circle cx="650" cy="30" r="24" fill="#fef3c7" opacity="0.95" />
       <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.5" />
       <path d="M0 120 Q150 90 300 110 Q450 85 600 105 Q700 90 800 100 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.7" />
       <path d="M0 140 Q200 120 400 135 Q600 120 800 140 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.9" />
@@ -70,6 +82,7 @@ function FooterDunesSVG() {
       <rect x="675" y="93" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-22 675 93)" />
       <rect x="687" y="90" width="3" height="16" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(18 687 90)" />
     </svg>
+    </>
   );
 }
 
@@ -119,14 +132,17 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </svg>
           </button>
         </div>
-        {mobileMenu && (
-          <div className="lnd-nav-mobile" style={{ display: "none", flexDirection: "column", background: "#fff", borderBottom: "1px solid #eeeae0", padding: "8px 24px 16px" }}>
-            <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "12px 0", fontSize: 14, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 500, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
-            <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "12px 0", fontSize: 14, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 500, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
-            <Link href="/panel/login" style={{ padding: "12px 0", fontSize: 14, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 500, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesion</Link>
-            <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 8, textAlign: "center", padding: "10px 0", background: "#111", color: "#fff", borderRadius: 8, textDecoration: "none", fontFamily: F, fontWeight: 600, fontSize: 14 }}>Agendar demo</a>
-          </div>
-        )}
+        {/* Mobile slide-in menu */}
+        {mobileMenu && <div onClick={() => setMobileMenu(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 98 }} />}
+        <div className="lnd-nav-mobile lnd-slide-menu" style={{ display: "none", position: "fixed", top: 0, right: 0, bottom: 0, width: 260, background: "#fff", zIndex: 99, flexDirection: "column", padding: "24px 24px 40px", boxShadow: "-4px 0 20px rgba(0,0,0,0.08)", transform: mobileMenu ? "translateX(0)" : "translateX(100%)", transition: "transform 0.3s ease" }}>
+          <button onClick={() => setMobileMenu(false)} style={{ alignSelf: "flex-end", background: "none", border: "none", cursor: "pointer", marginBottom: 24, padding: 4 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
+          </button>
+          <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
+          <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
+          <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesion</Link>
+          <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 20, textAlign: "center", padding: "12px 0", background: "#111", color: "#fff", borderRadius: 10, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Agendar demo</a>
+        </div>
       </nav>
 
       {/* ══════ HERO ══════ */}
@@ -147,13 +163,13 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ LOGOS BAR ══════ */}
-      <section style={{ background: "#fff", borderTop: "1px solid #f5e6c8", borderBottom: "1px solid #f5e6c8", padding: "32px 0" }}>
+      <section style={{ background: "#faf6ee", borderTop: "1px solid #f5e6c8", borderBottom: "1px solid #eeeae0", padding: "32px 0" }}>
         <p style={{ fontSize: "11.5px", fontWeight: 600, color: "#999", letterSpacing: "1.5px", textTransform: "uppercase", textAlign: "center", marginBottom: 18, padding: "0 24px", fontFamily: F }}>
           Restaurantes que ya confian en QuieroComer
         </p>
         <div className="lnd-logos-track" style={{ position: "relative" }}>
-          <div style={{ overflowX: "auto", scrollSnapType: "x mandatory", padding: "6px 24px", WebkitOverflowScrolling: "touch" as any, scrollbarWidth: "none" as any }}>
-            <div style={{ display: "inline-flex", gap: 10, paddingRight: 40 }}>
+          <div className="lnd-logos-scroll" style={{ overflowX: "auto", scrollSnapType: "x mandatory", padding: "6px 24px", WebkitOverflowScrolling: "touch" as any, scrollbarWidth: "none" as any }}>
+            <div className="lnd-logos-row" style={{ display: "inline-flex", gap: 10, paddingRight: 40 }}>
               {logos.map((l) => (
                 <a key={l.slug} href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer"
                   className="lnd-logo-chip"
@@ -317,8 +333,11 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
+      {/* ══════ TRANSITION TO NIGHT ══════ */}
+      <div style={{ height: 120, background: "linear-gradient(180deg, #ffffff 0%, #f5f0e8 20%, #e8d5b8 45%, #c9a87c 65%, #8b6b3d 80%, #4a3520 90%, #1e1b4b 100%)" }} />
+
       {/* ══════ FOOTER NOCHE ══════ */}
-      <footer style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #4c1d95 40%, #7e22ce 70%, #be185d 90%, #f97316 100%)", color: "#fff", padding: "60px 24px 24px", position: "relative", overflow: "hidden", marginTop: 40 }}>
+      <footer style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #4c1d95 40%, #7e22ce 70%, #be185d 90%, #f97316 100%)", color: "#fff", padding: "60px 24px 24px", position: "relative", overflow: "hidden" }}>
         {/* Stars */}
         {[
           { l: 80, t: 20, s: 2, o: 0.7 }, { l: 200, t: 35, s: 3, o: 0.5 }, { l: 350, t: 15, s: 2, o: 0.9 },
@@ -363,8 +382,14 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       {/* ══════ CSS ══════ */}
       <style>{`
         @keyframes lndFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        .lnd-logos-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, #ffffff); pointer-events: none; z-index: 2; }
-        .lnd-logos-track > div::-webkit-scrollbar { display: none; }
+        .lnd-logos-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, #faf6ee); pointer-events: none; z-index: 2; }
+        .lnd-logos-scroll::-webkit-scrollbar { display: none; }
+        @media (min-width: 769px) {
+          .lnd-logos-scroll { display: flex !important; justify-content: center; }
+          .lnd-logos-row { padding-right: 0 !important; }
+          .lnd-logos-track::after { display: none; }
+        }
+        @media (max-width: 768px) { .lnd-slide-menu { display: flex !important; } }
         .lnd-logo-chip:hover { border-color: #d4a015 !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(212,160,21,0.12); }
         .lnd-feature-card:hover { border-color: #d4a015 !important; transform: translateY(-3px); box-shadow: 0 4px 16px rgba(212,160,21,0.1); }
         @media (max-width: 768px) {
