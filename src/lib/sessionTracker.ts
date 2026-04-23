@@ -143,8 +143,14 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
 }
 
 /** Start tracking a session for a restaurant */
+const SESSION_MAX_AGE = 30 * 60_000; // 30 minutes — after this, create a fresh session
 export function startSession(restaurantId: string, tableId?: string, isQrScan?: boolean) {
-  if (session && session.restaurantId === restaurantId && !session.closed) return;
+  if (session && session.restaurantId === restaurantId && !session.closed) {
+    const age = Date.now() - session.startedAt;
+    if (age < SESSION_MAX_AGE) return; // still fresh, skip
+    // Stale session — close it and create new one
+    closeSession("stale");
+  }
   if (startingSession) return; // prevent double-call from React StrictMode
 
   // Close previous session if switching restaurants
