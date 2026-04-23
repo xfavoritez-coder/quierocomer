@@ -28,15 +28,17 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
     // Log success
     await prisma.emailLog.create({
       data: { to, subject, purpose, status: "sent" },
-    }).catch(() => {}); // don't fail if log insert fails
+    }).catch(() => {});
     return data;
   } catch (err) {
-    // Log failure (only if not already logged above)
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    await prisma.emailLog.create({
-      data: { to, subject, purpose, status: "failed", errorMsg },
-    }).catch(() => {});
-    throw err; // re-throw so caller can handle
+    if (!(err instanceof Error && err.message.startsWith("Resend"))) {
+      // Only log if not already logged above
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      await prisma.emailLog.create({
+        data: { to, subject, purpose, status: "failed", errorMsg },
+      }).catch(() => {});
+    }
+    throw err;
   }
 }
 

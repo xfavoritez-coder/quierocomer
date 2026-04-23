@@ -36,6 +36,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Send welcome error:", error);
-    return NextResponse.json({ error: "Error" }, { status: 500 });
+    const msg = error instanceof Error ? error.message : "Error desconocido";
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
