@@ -18,6 +18,7 @@ const NAV = [
   { icon: "🔔", label: "Garzón", href: "/admin/analytics-garzon" },
   { icon: "👤", label: "Usuarios", href: "/admin/usuarios" },
   { icon: "🥬", label: "Ingredientes", href: "/admin/ingredientes" },
+  { icon: "📣", label: "Marketing", href: "/admin/marketing" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
 ];
 
