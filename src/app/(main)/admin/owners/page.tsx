@@ -151,7 +151,10 @@ export default function OwnersPage() {
     try {
       const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
       if (res.ok) showToast(`Email de bienvenida enviado a ${o.email}`);
-      else showToast("Error al enviar email");
+      else {
+        const body = await res.json().catch(() => ({}));
+        showToast(`Error al enviar email: ${body.error || res.status}`);
+      }
     } catch { showToast("Error de conexión"); }
   };
 

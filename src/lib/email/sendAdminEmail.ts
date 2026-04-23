@@ -14,14 +14,24 @@ interface SendEmailOptions {
 
 export async function sendAdminEmail({ to, subject, html, purpose = "other" }: SendEmailOptions) {
   try {
-    const result = await resend.emails.send({ from: FROM, to, subject, html });
+    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
+
+    if (error) {
+      const errorMsg = error.message || JSON.stringify(error);
+      console.error("Resend error:", errorMsg);
+      await prisma.emailLog.create({
+        data: { to, subject, purpose, status: "failed", errorMsg },
+      }).catch(() => {});
+      throw new Error(errorMsg);
+    }
+
     // Log success
     await prisma.emailLog.create({
       data: { to, subject, purpose, status: "sent" },
     }).catch(() => {}); // don't fail if log insert fails
-    return result;
+    return data;
   } catch (err) {
-    // Log failure
+    // Log failure (only if not already logged above)
     const errorMsg = err instanceof Error ? err.message : String(err);
     await prisma.emailLog.create({
       data: { to, subject, purpose, status: "failed", errorMsg },
