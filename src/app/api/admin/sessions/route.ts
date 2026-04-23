@@ -16,6 +16,8 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const restaurantId = url.searchParams.get("restaurantId");
     const dateFilter = url.searchParams.get("date"); // YYYY-MM-DD
+    const dateFrom = url.searchParams.get("from"); // YYYY-MM-DD
+    const dateTo = url.searchParams.get("to"); // YYYY-MM-DD
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = 30;
     const skip = (page - 1) * limit;
@@ -27,6 +29,10 @@ export async function GET(req: NextRequest) {
       const start = new Date(dateFilter + "T00:00:00");
       const end = new Date(dateFilter + "T23:59:59.999");
       where.startedAt = { gte: start, lte: end };
+    } else if (dateFrom || dateTo) {
+      where.startedAt = {};
+      if (dateFrom) where.startedAt.gte = new Date(dateFrom + "T00:00:00");
+      if (dateTo) where.startedAt.lte = new Date(dateTo + "T23:59:59.999");
     }
 
     if (restaurantId) {

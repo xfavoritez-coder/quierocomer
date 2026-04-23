@@ -95,14 +95,35 @@ export default function AdminSessions() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRestaurant, setFilterRestaurant] = useState<string>("");
   const [filterDate, setFilterDate] = useState<string>("");
+  const [filterPreset, setFilterPreset] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const toDateStr = (d: Date) => d.toISOString().split("T")[0];
+  const today = () => toDateStr(new Date());
+  const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return toDateStr(d); };
+  const weekAgo = () => { const d = new Date(); d.setDate(d.getDate() - 7); return toDateStr(d); };
+
+  const applyPreset = (preset: string) => {
+    setFilterPreset(preset);
+    setFilterDate("");
+    setPage(1);
+  };
 
   useEffect(() => {
     if (sessionLoading) return;
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
     if (filterRestaurant) params.set("restaurantId", filterRestaurant);
-    if (filterDate) params.set("date", filterDate);
+    if (filterDate) {
+      params.set("date", filterDate);
+    } else if (filterPreset === "hoy") {
+      params.set("date", today());
+    } else if (filterPreset === "ayer") {
+      params.set("date", yesterday());
+    } else if (filterPreset === "semana") {
+      params.set("from", weekAgo());
+      params.set("to", today());
+    }
     fetch(`/api/admin/sessions?${params}`)
       .then(r => r.json())
       .then(d => {
@@ -110,7 +131,7 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filterRestaurant, filterDate, sessionLoading, page, refreshKey]);
+  }, [filterRestaurant, filterDate, filterPreset, sessionLoading, page, refreshKey]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
@@ -122,19 +143,41 @@ export default function AdminSessions() {
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{total} sesiones totales</p>
         </div>
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          {/* Quick presets */}
+          {[
+            { key: "hoy", label: "Hoy" },
+            { key: "ayer", label: "Ayer" },
+            { key: "semana", label: "Esta semana" },
+          ].map(p => {
+            const active = filterPreset === p.key && !filterDate;
+            return (
+              <button
+                key={p.key}
+                onClick={() => { if (active) { setFilterPreset(""); } else { applyPreset(p.key); } setPage(1); }}
+                style={{
+                  padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+                  background: active ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)",
+                  border: active ? "1px solid rgba(244,166,35,0.4)" : "1px solid #2A2A2A",
+                  color: active ? "#F4A623" : "#888",
+                }}
+              >{p.label}</button>
+            );
+          })}
+          {/* Date picker */}
           <input
             type="date"
             value={filterDate}
-            onChange={e => { setFilterDate(e.target.value); setPage(1); }}
-            style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", colorScheme: "dark" }}
+            onChange={e => { setFilterDate(e.target.value); setFilterPreset(""); setPage(1); }}
+            style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: `1px solid ${filterDate ? "rgba(244,166,35,0.4)" : "#2A2A2A"}`, borderRadius: 10, color: filterDate ? "#F4A623" : "white", fontFamily: F, fontSize: "0.78rem", outline: "none", colorScheme: "dark" }}
           />
-          {filterDate && (
-            <button onClick={() => { setFilterDate(""); setPage(1); }} style={{ padding: "8px 12px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 10, color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Limpiar</button>
+          {(filterDate || filterPreset) && (
+            <button onClick={() => { setFilterDate(""); setFilterPreset(""); setPage(1); }} style={{ padding: "7px 12px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>✕</button>
           )}
+          {/* Restaurant filter */}
           <select
             value={filterRestaurant}
             onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}
-            style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+            style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.78rem", outline: "none" }}
           >
             <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
             {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
