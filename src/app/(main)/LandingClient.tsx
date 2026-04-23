@@ -453,19 +453,15 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <p style={{ fontSize: 15, color: "#16a34a", fontWeight: 600, fontFamily: F }}>Recibido. Te contactamos pronto.</p>
           ) : (
             <form onSubmit={handleSubmit} className="lnd-cta-form" style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 440, margin: "0 auto" }}>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre" required
-                  style={{ flex: 1, padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none", minWidth: 0 }} />
-                <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+56 9 1234 5678"
-                  style={{ flex: 1, padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none", minWidth: 0 }} />
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@restaurante.cl" required
-                  style={{ flex: 1, padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none", minWidth: 0 }} />
-                <button type="submit" disabled={sending} style={{ padding: "12px 20px", background: "#fbbf24", color: "#111", borderRadius: 10, border: "none", fontFamily: F, fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(251,191,36,0.3)" }}>
-                  {sending ? "..." : "Quiero probar →"}
-                </button>
-              </div>
+              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre" required
+                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
+              <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+56 9 1234 5678"
+                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@restaurante.cl" required
+                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
+              <button type="submit" disabled={sending} style={{ padding: "12px 20px", background: "#fbbf24", color: "#111", borderRadius: 10, border: "none", fontFamily: F, fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(251,191,36,0.3)" }}>
+                {sending ? "..." : "Quiero probar →"}
+              </button>
             </form>
           )}
         </div>
@@ -507,7 +503,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </div>
           </div>
           {/* Bottom */}
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, textAlign: "center" }}>
+          <div style={{ paddingTop: 20, textAlign: "center" }}>
             <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile con 💛 y mucha hambre</span>
           </div>
         </div>

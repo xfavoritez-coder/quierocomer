@@ -125,19 +125,19 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         </button>
 
         {/* Floating buttons — cinematic style */}
-        <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
+        <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
           <button
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
             style={{
-              width: 48, height: 48,
+              width: 58, height: 58,
               background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
               border: "1px solid rgba(244,166,35,0.3)", boxShadow: "0 0 20px rgba(244,166,35,0.15)",
             }}
           >
-            <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
+            <span style={{ fontSize: "26px", lineHeight: 1 }}>🧞</span>
           </button>
-          {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} size={48} waiterPanelActive={showWaiter} />}
+          {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} size={58} waiterPanelActive={showWaiter} />}
           <ViewSelector restaurantId={restaurant.id} />
         </div>
 

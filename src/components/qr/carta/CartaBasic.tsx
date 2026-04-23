@@ -110,13 +110,13 @@ export default function CartaBasic({
       </main>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-center" style={{ right: 12, bottom: "calc(28px + env(safe-area-inset-bottom))", gap: 8 }}>
+      <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          style={{ width: 60, height: 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
         >
-          <Sparkles size={22} color="white" />
+          <Sparkles size={26} color="white" />
         </button>
         {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} />}
       </div>

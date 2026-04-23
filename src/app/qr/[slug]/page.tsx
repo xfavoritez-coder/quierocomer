@@ -56,7 +56,8 @@ export default async function CartaPage({
   searchParams: Promise<{ mesa?: string; t?: string; vista?: string; lang?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, vista: urlView, lang: urlLang } = await searchParams;
+  const { mesa: tableId, t: qrToken, vista: urlView, lang: urlLang } = await searchParams;
+  const isQrScan = !!(tableId || qrToken);
 
   // Resolve language: URL param > Accept-Language header > fallback (es)
   let lang: Lang = "es";
@@ -117,6 +118,7 @@ export default async function CartaPage({
     ratingMap: restaurant.ratingMap,
     reviews: restaurant.reviews,
     tableId,
+    isQrScan,
     initialView: serverView,
     lang,
     happyHours: (restaurant as any).happyHours || [],

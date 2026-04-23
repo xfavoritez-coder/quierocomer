@@ -1,10 +1,35 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
 const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", OMNIVORE: "Carnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
+
+function formatLanguage(lang: string): string {
+  const LANG_MAP: Record<string, string> = {
+    es: "Español", en: "Inglés", pt: "Portugués", fr: "Francés", de: "Alemán", it: "Italiano",
+    ja: "Japonés", ko: "Coreano", zh: "Chino", ru: "Ruso", ar: "Árabe", hi: "Hindi",
+    nl: "Holandés", sv: "Sueco", da: "Danés", no: "Noruego", fi: "Finlandés", pl: "Polaco",
+    tr: "Turco", he: "Hebreo", th: "Tailandés", vi: "Vietnamita", uk: "Ucraniano", cs: "Checo",
+    ro: "Rumano", hu: "Húngaro", el: "Griego", id: "Indonesio", ms: "Malayo", ca: "Catalán",
+  };
+  const REGION_MAP: Record<string, string> = {
+    US: "EE.UU.", GB: "Reino Unido", AU: "Australia", CA: "Canadá", NZ: "Nueva Zelanda",
+    ES: "España", MX: "México", AR: "Argentina", CL: "Chile", CO: "Colombia", PE: "Perú",
+    VE: "Venezuela", EC: "Ecuador", UY: "Uruguay", BR: "Brasil", PT: "Portugal",
+    FR: "Francia", DE: "Alemania", AT: "Austria", CH: "Suiza", IT: "Italia",
+    JP: "Japón", KR: "Corea", CN: "China", TW: "Taiwán", HK: "Hong Kong",
+    IN: "India", RU: "Rusia", ZA: "Sudáfrica",
+  };
+  const code = lang.split("-")[0].toLowerCase();
+  const region = lang.split("-")[1]?.toUpperCase();
+  const name = LANG_MAP[code] || code;
+  if (region && REGION_MAP[region]) return `${name} (${REGION_MAP[region]})`;
+  if (region) return `${name} (${region})`;
+  return name;
+}
 
 function formatDate(date: string) {
   const d = new Date(date);
@@ -72,12 +97,14 @@ interface SessionData {
   guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null; preferences: any };
   qrUser: { id: string; name: string | null; email: string; dietType: string | null } | null;
   tableId: string | null;
+  isQrScan: boolean;
   usedGenio: boolean;
   genioData: { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[]; lastStep?: string } | null;
   visitDays: number;
   ipAddress: string | null;
   userAgent: string | null;
   referer: string | null;
+  externalReferer: string | null;
   language: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
@@ -88,15 +115,19 @@ interface SessionData {
 
 export default function AdminSessions() {
   const { restaurants, loading: sessionLoading } = useAdminSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const filterRestaurant = searchParams.get("restaurantId") || "";
+  const filterDate = searchParams.get("date") || "";
+  const filterPreset = searchParams.get("preset") || "";
+  const page = parseInt(searchParams.get("page") || "1");
+
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [filterRestaurant, setFilterRestaurant] = useState<string>("");
-  const [filterDate, setFilterDate] = useState<string>("");
-  const [filterPreset, setFilterPreset] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const toDateStr = (d: Date) => d.toISOString().split("T")[0];
@@ -104,11 +135,20 @@ export default function AdminSessions() {
   const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); return toDateStr(d); };
   const weekAgo = () => { const d = new Date(); d.setDate(d.getDate() - 7); return toDateStr(d); };
 
-  const applyPreset = (preset: string) => {
-    setFilterPreset(preset);
-    setFilterDate("");
-    setPage(1);
-  };
+  const updateParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [k, v] of Object.entries(updates)) {
+      if (v === null || v === "") params.delete(k);
+      else params.set(k, v);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : "?", { scroll: false });
+  }, [searchParams, router]);
+
+  const setPage = (p: number) => updateParams({ page: p <= 1 ? null : String(p) });
+  const setFilterRestaurant = (v: string) => updateParams({ restaurantId: v || null, page: null });
+  const setFilterDate = (v: string) => updateParams({ date: v || null, preset: null, page: null });
+  const applyPreset = (preset: string) => updateParams({ preset, date: null, page: null });
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -154,7 +194,7 @@ export default function AdminSessions() {
             return (
               <button
                 key={p.key}
-                onClick={() => { if (active) { setFilterPreset(""); } else { applyPreset(p.key); } setPage(1); }}
+                onClick={() => { if (active) { updateParams({ preset: null, page: null }); } else { applyPreset(p.key); } }}
                 style={{
                   padding: "7px 14px", borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
                   background: active ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)",
@@ -168,16 +208,16 @@ export default function AdminSessions() {
           <input
             type="date"
             value={filterDate}
-            onChange={e => { setFilterDate(e.target.value); setFilterPreset(""); setPage(1); }}
+            onChange={e => setFilterDate(e.target.value)}
             style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: `1px solid ${filterDate ? "rgba(244,166,35,0.4)" : "#2A2A2A"}`, borderRadius: 10, color: filterDate ? "#F4A623" : "white", fontFamily: F, fontSize: "0.78rem", outline: "none", colorScheme: "dark" }}
           />
           {(filterDate || filterPreset) && (
-            <button onClick={() => { setFilterDate(""); setFilterPreset(""); setPage(1); }} style={{ padding: "7px 12px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>✕</button>
+            <button onClick={() => updateParams({ date: null, preset: null, page: null })} style={{ padding: "7px 12px", background: "none", border: "1px solid #2A2A2A", borderRadius: 10, color: "#888", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>✕</button>
           )}
           {/* Restaurant filter */}
           <select
             value={filterRestaurant}
-            onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}
+            onChange={e => setFilterRestaurant(e.target.value)}
             style={{ padding: "7px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.78rem", outline: "none" }}
           >
             <option value="" style={{ background: "#1A1A1A" }}>Todos los locales</option>
@@ -212,8 +252,10 @@ export default function AdminSessions() {
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600 }}>{s.restaurant.name}</span>
                       {s.tableId
-                        ? <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>QR Mesa</span>
-                        : <span style={{ fontSize: "0.6rem", background: "rgba(255,255,255,0.06)", color: "#888", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Sin QR</span>}
+                        ? <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>QR Mesa {s.tableId}</span>
+                        : s.isQrScan
+                        ? <span style={{ fontSize: "0.6rem", background: "rgba(96,165,250,0.15)", color: "#60a5fa", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>QR General</span>
+                        : <span style={{ fontSize: "0.6rem", background: "rgba(255,255,255,0.06)", color: "#888", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Link directo</span>}
                       {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>🔔 Garzón</span>}
                       {s.isBot && <span style={{ fontSize: "0.6rem", background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Bot</span>}
                       {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
@@ -255,8 +297,9 @@ export default function AdminSessions() {
                       {s.weather && <div><span style={{ color: "#999" }}>Clima: </span>{s.weather}</div>}
                       {s.ipAddress && <div><span style={{ color: "#999" }}>IP: </span>{s.ipAddress}</div>}
                       {s.userAgent && <div><span style={{ color: "#999" }}>Navegador: </span>{parseUA(s.userAgent)}</div>}
-                      {s.referer && <div><span style={{ color: "#999" }}>Desde: </span>{(() => { try { return new URL(s.referer).hostname; } catch { return s.referer; } })()}</div>}
-                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{s.language}</div>}
+                      {s.referer && <div><span style={{ color: "#999" }}>Página: </span>{(() => { try { const u = new URL(s.referer); return u.pathname === "/" ? "/" : u.pathname; } catch { return s.referer; } })()}</div>}
+                      {s.externalReferer && <div><span style={{ color: "#999" }}>Fuente: </span>{(() => { try { return new URL(s.externalReferer).hostname; } catch { return s.externalReferer; } })()}</div>}
+                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}</div>}
                     </div>
 
                     {/* User preferences (always shown if present) */}
@@ -439,9 +482,9 @@ export default function AdminSessions() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page <= 1 ? "transparent" : "rgba(255,255,255,0.04)", color: page <= 1 ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
+          <button disabled={page <= 1} onClick={() => setPage(page - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page <= 1 ? "transparent" : "rgba(255,255,255,0.04)", color: page <= 1 ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
           <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", padding: "8px 12px" }}>{page} / {totalPages}</span>
-          <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page >= totalPages ? "transparent" : "rgba(255,255,255,0.04)", color: page >= totalPages ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
+          <button disabled={page >= totalPages} onClick={() => setPage(page + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid #2A2A2A", background: page >= totalPages ? "transparent" : "rgba(255,255,255,0.04)", color: page >= totalPages ? "#555" : "white", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
         </div>
       )}
 

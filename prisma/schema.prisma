@@ -884,6 +884,7 @@ model Session {
   ipAddress      String?
   userAgent      String?
   referer        String?
+  externalReferer String?
   language       String?
   closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
   weather        String?
@@ -896,6 +897,7 @@ model Session {
   searchesCount       Int     @default(0)
   converted           Boolean @default(false)
   isReturningVisitor  Boolean @default(false)
+  isQrScan            Boolean @default(false)
   tableId             String?
 
   guest          GuestProfile @relation(fields: [guestId], references: [id])

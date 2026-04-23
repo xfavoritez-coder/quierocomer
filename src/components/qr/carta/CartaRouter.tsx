@@ -34,6 +34,7 @@ interface Props {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  isQrScan?: boolean;
   marketingPromos?: any[];
   initialView?: string;
   lang?: Lang;
@@ -92,8 +93,8 @@ export default function CartaRouter(props: Props) {
 
   // Start session tracking
   useEffect(() => {
-    startSession(props.restaurant.id, props.tableId);
-  }, [props.restaurant.id, props.tableId]);
+    startSession(props.restaurant.id, props.tableId, props.isQrScan);
+  }, [props.restaurant.id, props.tableId, props.isQrScan]);
 
   // Track view changes
   useEffect(() => {

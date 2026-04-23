@@ -143,7 +143,7 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
 }
 
 /** Start tracking a session for a restaurant */
-export function startSession(restaurantId: string, tableId?: string) {
+export function startSession(restaurantId: string, tableId?: string, isQrScan?: boolean) {
   if (session && session.restaurantId === restaurantId && !session.closed) return;
   if (startingSession) return; // prevent double-call from React StrictMode
 
@@ -179,6 +179,8 @@ export function startSession(restaurantId: string, tableId?: string) {
       restaurantId,
       tableId: tableId || null,
       deviceType,
+      externalReferer: document.referrer || null,
+      isQrScan: isQrScan || false,
     }),
   })
     .then(r => {

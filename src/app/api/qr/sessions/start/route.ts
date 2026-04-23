@@ -21,7 +21,7 @@ function getTimeOfDay(): TimeOfDay {
 
 export async function POST(request: Request) {
   try {
-    const { guestId, restaurantId, tableId, deviceType } = await request.json();
+    const { guestId, restaurantId, tableId, deviceType, externalReferer, isQrScan } = await request.json();
     if (!guestId || !restaurantId) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
@@ -61,10 +61,12 @@ export async function POST(request: Request) {
         ipAddress,
         userAgent,
         referer,
+        externalReferer: externalReferer || null,
         language,
         weather: weatherStr,
         timeOfDay,
         isBot,
+        isQrScan: isQrScan || false,
         isReturningVisitor: guest.visitCount > 1,
       },
     });
