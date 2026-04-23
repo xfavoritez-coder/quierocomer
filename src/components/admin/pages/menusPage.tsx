@@ -296,6 +296,7 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [eFlavorTags, setEFlavorTags] = useState<string[]>([]);
   const [eCategoryId, setECategoryId] = useState("");
   const [ingListOpen, setIngListOpen] = useState(false);
   const [ePhotoUrl, setEPhotoUrl] = useState("");
@@ -362,6 +363,7 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setEFlavorTags((d as any).flavorTags || []);
     setECategoryId(d.categoryId);
     setEPhotoUrl(d.photos?.[0] || "");
     setIngSearch("");
@@ -396,6 +398,7 @@ export default function AdminMenus() {
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
+      flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
     };
     if (eCategoryId !== selectedDish.categoryId) {
@@ -456,10 +459,15 @@ export default function AdminMenus() {
                   {selectedDish.discountPrice && <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#4ade80", margin: 0 }}>${selectedDish.discountPrice.toLocaleString("es-CL")}</p>}
                 </div>
               </div>
-              {/* Diet + Spicy badges */}
+              {/* Diet + Spicy + Flavor badges */}
               <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
                 {(selectedDish as any).dishDiet && (() => { const dc = DIET_COLORS[(selectedDish as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet); return <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
+                {((selectedDish as any).flavorTags || []).map((f: string) => {
+                  const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
+                  const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
+                  return <span key={f} style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${colors[f] || "#888"}1a`, color: colors[f] || "#888" }}>{icons[f] || "•"} {f.charAt(0).toUpperCase() + f.slice(1)}</span>;
+                })}
               </div>
               {selectedDish.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "0 0 12px" }}>{selectedDish.description}</p>}
 
@@ -571,10 +579,24 @@ export default function AdminMenus() {
 
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Características</label>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
                   </button>
+                  {[
+                    { value: "dulce", icon: "🍯", color: "#f59e0b" },
+                    { value: "agridulce", icon: "🍊", color: "#fb923c" },
+                    { value: "ácido", icon: "🍋", color: "#a3e635" },
+                    { value: "umami", icon: "🍄", color: "#c084fc" },
+                    { value: "ahumado", icon: "🔥", color: "#a78bfa" },
+                  ].map(f => {
+                    const active = eFlavorTags.includes(f.value);
+                    return (
+                      <button key={f.value} onClick={() => setEFlavorTags(prev => active ? prev.filter(t => t !== f.value) : [...prev, f.value])} style={{ padding: "6px 12px", borderRadius: 8, border: active ? `1.5px solid ${f.color}33` : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: active ? `${f.color}1a` : "transparent", color: active ? f.color : "var(--adm-text3)" }}>
+                        {f.icon} {f.value.charAt(0).toUpperCase() + f.value.slice(1)}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -956,6 +978,10 @@ export default function AdminMenus() {
                     <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
                     {(d as any).dishDiet && <span style={{ fontSize: "0.58rem", color: (DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE).color }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon}</span>}
                     {(d as any).isSpicy && <span style={{ fontSize: "0.58rem" }}>🌶️</span>}
+                    {((d as any).flavorTags || []).map((f: string) => {
+                      const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
+                      return <span key={f} style={{ fontSize: "0.58rem" }}>{icons[f] || "•"}</span>;
+                    })}
                   </div>
                 </div>
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
@@ -970,10 +996,15 @@ export default function AdminMenus() {
                 <div style={{ padding: "0 14px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
                   {/* Description */}
                   {/* Diet + Spicy */}
-                  {((d as any).dishDiet || (d as any).isSpicy) && (
+                  {((d as any).dishDiet || (d as any).isSpicy || ((d as any).flavorTags || []).length > 0) && (
                     <div style={{ display: "flex", gap: 6, margin: "10px 0 8px", flexWrap: "wrap" }}>
                       {(d as any).dishDiet && (() => { const dc = DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(o => o.value === (d as any).dishDiet); return <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                       {(d as any).isSpicy && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
+                      {((d as any).flavorTags || []).map((f: string) => {
+                        const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
+                        const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
+                        return <span key={f} style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${colors[f] || "#888"}1a`, color: colors[f] || "#888" }}>{icons[f] || "•"} {f.charAt(0).toUpperCase() + f.slice(1)}</span>;
+                      })}
                     </div>
                   )}
 

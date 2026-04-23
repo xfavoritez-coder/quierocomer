@@ -397,9 +397,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       const favMatched: string[] = [];
       dishIngr.forEach((i) => { if (favIngredients[i]) { score += Math.min(favIngredients[i], 10); favMatched.push(i); } });
       if (favMatched.length > 0 && matchedIngr.length === 0) why.push("te gusta " + favMatched.slice(0, 2).join(" y "));
-      // Penalize dislikes
+      // Penalize dislikes (ingredients + flavor tags)
       const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
-      dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
+      const dishFlavors = ((d as any).flavorTags || []) as string[];
+      dislikes.forEach((dl) => {
+        if (dishDesc.includes(dl)) score -= 8;
+        // Also penalize if dislike matches a flavor tag (e.g. "dulce", "agridulce")
+        if (dishFlavors.includes(dl)) score -= 6;
+      });
       score += Math.random() * 5;
 
       reasons[d.id] = why;
@@ -737,8 +742,25 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             )}
           </div>
 
-          {/* Popular quick picks */}
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Más comunes</p>
+          {/* Flavor dislikes */}
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Sabores</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+            {[
+              { value: "dulce", icon: "🍯" },
+              { value: "agridulce", icon: "🍊" },
+              { value: "ácido", icon: "🍋" },
+              { value: "ahumado", icon: "🔥" },
+            ].filter(f => !dislikes.includes(f.value)).map(f => (
+              <button key={f.value} onClick={() => {
+                setDislikes(prev => { const updated = [...prev, f.value]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+              }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
+                {f.icon} {f.value}
+              </button>
+            ))}
+          </div>
+
+          {/* Popular ingredient picks */}
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Ingredientes comunes</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
             {popularDislikes.filter(p => !dislikes.includes(p)).map(item => (
               <button key={item} onClick={() => {

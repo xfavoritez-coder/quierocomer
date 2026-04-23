@@ -45,6 +45,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.allergens !== undefined && { allergens: body.allergens || null }),
         ...(body.dishDiet !== undefined && { dishDiet: body.dishDiet }),
         ...(body.isSpicy !== undefined && { isSpicy: body.isSpicy }),
+        ...(body.flavorTags !== undefined && { flavorTags: body.flavorTags }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
       },

@@ -490,6 +490,7 @@ model Dish {
   allergens      String?      // legacy text field
   dishDiet       DishDietType @default(OMNIVORE)
   isSpicy        Boolean      @default(false)
+  flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
   position       Int
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
