@@ -471,7 +471,7 @@ export default function IngredientesPage() {
                         if (!res.ok || !d.ingredient) { alert(d.error || "Error al crear ingrediente"); return; }
                         setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
                         // Auto-link to all dishes that had this suggestion
-                        const dishIds = analysisResults.results.filter(r => r.suggested.includes(originalName)).map(r => r.dishId);
+                        const dishIds = analysisResults.results.filter(r => (r.suggested || []).includes(originalName)).map(r => r.dishId);
                         if (dishIds.length > 0) {
                           const linkRes = await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.ingredient.id, linkToDishes: dishIds }) });
                           if (!linkRes.ok) { const err = await linkRes.json().catch(() => ({})); alert(err.error || "Error al vincular ingrediente a platos"); }
@@ -480,7 +480,7 @@ export default function IngredientesPage() {
                           ...prev,
                           allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, finalName] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
+                          results: prev.results.map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), finalName] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al aprobar ingrediente"); }
                     }} onAliasOf={async (targetId) => {
@@ -494,7 +494,7 @@ export default function IngredientesPage() {
                           ...prev,
                           allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, matched: r.suggested.includes(originalName) ? [...r.matched, target.name] : r.matched, suggested: r.suggested.filter(s => s !== originalName) })),
+                          results: prev.results.map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), target.name] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al agregar alias"); }
                     }} onReject={async () => {
@@ -504,7 +504,7 @@ export default function IngredientesPage() {
                           ...prev,
                           allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, suggested: r.suggested.filter(s => s !== originalName) })),
+                          results: prev.results.map(r => ({ ...r, suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al ignorar ingrediente"); }
                     }} />
@@ -519,12 +519,12 @@ export default function IngredientesPage() {
                 <div key={r.dishId} style={{ padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{r.dishName}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{r.matched.length} vinculados · {r.suggested.length} sugeridos</span>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{(r.matched || []).length} vinculados · {(r.suggested || []).length} sugeridos</span>
                   </div>
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {r.matched.map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F }}>{ing}</span>)}
-                    {r.suggested.map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontStyle: "italic" }}>{ing}</span>)}
-                    {r.matched.length === 0 && r.suggested.length === 0 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontFamily: F }}>Sin ingredientes detectados</span>}
+                    {(r.matched || []).map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F }}>{ing}</span>)}
+                    {(r.suggested || []).map(ing => <span key={ing} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontStyle: "italic" }}>{ing}</span>)}
+                    {(r.matched || []).length === 0 && (r.suggested || []).length === 0 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", fontFamily: F }}>Sin ingredientes detectados</span>}
                   </div>
                 </div>
               ))}
