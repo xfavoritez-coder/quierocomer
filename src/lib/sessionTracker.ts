@@ -181,7 +181,10 @@ export function startSession(restaurantId: string, tableId?: string) {
       deviceType,
     }),
   })
-    .then(r => r.json())
+    .then(r => {
+      if (!r.ok) throw new Error(`Session start failed: ${r.status}`);
+      return r.json();
+    })
     .then(data => {
       startingSession = false;
       // Use captured reference to avoid race conditions
@@ -190,9 +193,11 @@ export function startSession(restaurantId: string, tableId?: string) {
         // Start heartbeat ONLY after we have the DB session ID
         if (heartbeatTimer) clearInterval(heartbeatTimer);
         heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+      } else {
+        console.warn("[QC] Session reference mismatch or missing sessionId", { match: newSession === session, hasId: !!data.sessionId });
       }
     })
-    .catch(() => { startingSession = false; });
+    .catch(err => { startingSession = false; console.error("[QC] Session start error:", err); });
 
   // Fire SESSION_START stat event
   fetch("/api/qr/stats", {
@@ -204,7 +209,7 @@ export function startSession(restaurantId: string, tableId?: string) {
       guestId: getGuestId(),
       sessionId: getSessionId(),
     }),
-  }).catch(() => {});
+  }).catch(err => console.error("[QC] Stat event error:", err));
 
   if (!activityBound) {
     bindActivityListeners();

@@ -7,6 +7,8 @@ import type { TimeOfDay } from "@prisma/client";
 const DEFAULT_LAT = -33.4489;
 const DEFAULT_LNG = -70.6693;
 
+const BOT_PATTERNS = /bot|crawl|spider|facebookexternalhit|WhatsApp|Googlebot|bingbot|Slurp|DuckDuckBot|Baiduspider|YandexBot|Sogou|Twitterbot|LinkedInBot|TelegramBot|Applebot|PetalBot|MJ12bot|AhrefsBot|SemrushBot|DataForSeoBot|preview/i;
+
 function getTimeOfDay(): TimeOfDay {
   const now = new Date();
   const clHour = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours();
@@ -45,6 +47,9 @@ export async function POST(request: Request) {
     const referer = request.headers.get("referer") || null;
     const language = request.headers.get("accept-language")?.split(",")[0]?.trim() || null;
 
+    // Detect bots from user agent
+    const isBot = userAgent ? BOT_PATTERNS.test(userAgent) : false;
+
     // Create session with returning visitor flag
     const session = await prisma.session.create({
       data: {
@@ -58,6 +63,7 @@ export async function POST(request: Request) {
         language,
         weather: weatherStr,
         timeOfDay,
+        isBot,
         isReturningVisitor: guest.visitCount > 1,
       },
     });

@@ -64,6 +64,7 @@ interface SessionData {
   weather: string | null;
   timeOfDay: string | null;
   viewHistory: { view: string; durationMs: number }[] | null;
+  isBot: boolean;
   isAbandoned: boolean;
   pickedDishId: string | null;
   pickedDish: { id: string; name: string; price: number; photos: string[] } | null;
@@ -155,8 +156,9 @@ export default function AdminSessions() {
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                       <span style={{ fontFamily: F, fontSize: "0.88rem", color: "white", fontWeight: 600 }}>{s.restaurant.name}</span>
+                      {s.isBot && <span style={{ fontSize: "0.6rem", background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Bot</span>}
                       {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
-                      {!s.qrUser && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
+                      {!s.qrUser && !s.isBot && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
                     </div>
                     <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span>{formatDate(s.startedAt)}</span>
