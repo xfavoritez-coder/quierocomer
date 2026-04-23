@@ -113,7 +113,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <RestLogo size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              <p style={{ fontFamily: F, fontSize: "11.5px", color: "#888", fontWeight: 500, margin: "3px 0 0" }}>QuieroComer</p>
+              <p style={{ fontFamily: F, fontSize: "11.5px", color: "#888", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
             </div>
           </Link>
           {restaurants.length > 1 && (
@@ -156,7 +156,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           <RestLogo size={32} />
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-            <p style={{ fontFamily: F, fontSize: "10.5px", color: "#888", fontWeight: 500, margin: "2px 0 0" }}>QuieroComer</p>
+            <p style={{ fontFamily: F, fontSize: "10.5px", color: "#888", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
         {restaurants.length > 1 && (

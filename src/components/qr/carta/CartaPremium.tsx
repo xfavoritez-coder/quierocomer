@@ -467,6 +467,21 @@ export default function CartaPremium({
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
+        {/* Second visit toast positioned above all floating buttons */}
+        {showSecondVisitToast && (
+          <div style={{ width: 240, marginBottom: 4 }}>
+            <GenioTip
+              arrow="bottom-right"
+              onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
+            >
+              <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "white", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
+                <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid #e8e0d6", borderRadius: 50, padding: "8px 12px", color: "#999", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit" }}>No</button>
+              </div>
+            </GenioTip>
+          </div>
+        )}
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
@@ -535,22 +550,7 @@ export default function CartaPremium({
         </div>
       )}
 
-      {/* Second visit toast — GenioTip above Genio button */}
-      {showSecondVisitToast && (
-        <div className="fixed" style={{ right: 12, bottom: "calc(150px + env(safe-area-inset-bottom))", zIndex: 80, width: 240 }}>
-          <GenioTip
-            arrow="bottom-right"
-            onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
-            
-          >
-            <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "white", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
-              <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid #e8e0d6", borderRadius: 50, padding: "8px 12px", color: "#999", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit" }}>No</button>
-            </div>
-          </GenioTip>
-        </div>
-      )}
+      {/* Second visit toast moved inside floating buttons container above */}
 
       {/* Email capture modal */}
       {showEmailModal && (
