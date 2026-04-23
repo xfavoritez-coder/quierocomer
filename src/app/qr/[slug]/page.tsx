@@ -119,6 +119,7 @@ export default async function CartaPage({
     tableId,
     initialView: serverView,
     lang,
+    happyHours: (restaurant as any).happyHours || [],
   };
 
   return (

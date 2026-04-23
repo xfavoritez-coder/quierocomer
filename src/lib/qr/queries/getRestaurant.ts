@@ -47,6 +47,9 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
       schedules: {
         where: { isActive: true },
       },
+      happyHours: {
+        where: { isActive: true },
+      },
       reviews: {
         where: { isVerified: true },
         select: {

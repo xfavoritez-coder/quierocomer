@@ -9,6 +9,7 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
+import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { LangProvider } from "@/contexts/LangContext";
@@ -36,6 +37,7 @@ interface Props {
   marketingPromos?: any[];
   initialView?: string;
   lang?: Lang;
+  happyHours?: any[];
 }
 
 export default function CartaRouter(props: Props) {
@@ -118,11 +120,14 @@ export default function CartaRouter(props: Props) {
   }, [view, isReady]);
 
   const readyKey = readyKeyRef.current;
-  const sharedProps = { ...props, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter };
+  const activeHH = getActiveHappyHour(props.happyHours || []);
+  const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
+  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter };
 
   return (
     <LangProvider value={lang}>
       <FavoritesProvider>
+        <HappyHourBanner happyHours={props.happyHours || []} />
         {view === "premium" && <CartaPremium {...sharedProps} />}
         {view === "lista" && <CartaLista {...sharedProps} />}
         {view === "viaje" && <CartaViaje {...sharedProps} />}

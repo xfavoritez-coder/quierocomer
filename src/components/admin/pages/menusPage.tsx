@@ -5,6 +5,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
+import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
 
@@ -79,7 +80,7 @@ export default function AdminMenus() {
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
-  const [menuTab, setMenuTab] = useState<"productos" | "categorias" | "modificadores">("productos");
+  const [menuTab, setMenuTab] = useState<"productos" | "categorias" | "modificadores" | "horarios">("productos");
 
   // Reset when clicking same nav link (e.g. "Mi Carta" while viewing a dish)
   useEffect(() => {
@@ -834,6 +835,7 @@ export default function AdminMenus() {
           { key: "productos" as const, label: "Productos" },
           { key: "modificadores" as const, label: "Modificadores" },
           { key: "categorias" as const, label: "Categorías" },
+          { key: "horarios" as const, label: "Horarios" },
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -1107,6 +1109,11 @@ export default function AdminMenus() {
       {/* ── Modificadores tab ── */}
       {menuTab === "modificadores" && selectedRestaurantId && (
         <ModifierTemplatesTab restaurantId={selectedRestaurantId} />
+      )}
+
+      {/* ── Horarios tab ── */}
+      {menuTab === "horarios" && selectedRestaurantId && (
+        <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
       )}
     </div>
   );

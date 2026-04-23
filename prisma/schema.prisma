@@ -431,6 +431,7 @@ model Restaurant {
   experience            Experience?
   tickets               RestaurantTicket[]
   dishFavorites         DishFavorite[]
+  happyHours            HappyHour[]
 
   @@index([ownerId])
 }
@@ -800,6 +801,35 @@ model RestaurantScheduleRule {
 enum ScheduleRuleType {
   TIME_OF_DAY
   WEATHER
+}
+
+// ─── Happy Hour / Horarios especiales ────────────────────────────────
+
+model HappyHour {
+  id             String   @id @default(cuid())
+  restaurantId   String
+  name           String                    // "Hand Roll Hour"
+  days           Int[]                     // 0=dom, 1=lun, ... 6=sab
+  startTime      String                    // "16:00"
+  endTime        String                    // "19:00"
+  discountType   HappyHourDiscountType     // FIXED_PRICE or PERCENTAGE
+  discountValue  Float                     // 3990 (fixed) or 20 (percent)
+  categoryIds    String[]                  // categories affected
+  dishIds        String[]                  // specific dishes (if empty = all in categories)
+  bannerText     String?                   // "Todos los hand rolls a $3.990"
+  bannerColor    String   @default("#f59e0b") // gradient accent color
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
+}
+
+enum HappyHourDiscountType {
+  FIXED_PRICE
+  PERCENTAGE
 }
 
 model WaiterPushSubscription {
