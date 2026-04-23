@@ -131,13 +131,16 @@ export default function AdminMenus() {
 
   const categories = useMemo(() => {
     const cats = new Map<string, string>();
+    // Include categories from dishes
     dishes.forEach(d => { if (d.category) cats.set(d.category.id, d.category.name); });
+    // Also include empty categories from fullCategories
+    fullCategories.forEach(c => { if (!cats.has(c.id)) cats.set(c.id, c.name); });
     return Array.from(cats.entries()).map(([id, name]) => ({ id, name }));
-  }, [dishes]);
+  }, [dishes, fullCategories]);
 
-  // Fetch full categories when tab is active or management panel opens
+  // Fetch full categories (including empty ones) on load and tab change
   useEffect(() => {
-    if (menuTab !== "categorias" || !selectedRestaurantId) return;
+    if (!selectedRestaurantId) return;
     fetch(`/api/admin/categories?restaurantId=${selectedRestaurantId}`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setFullCategories(d); })
