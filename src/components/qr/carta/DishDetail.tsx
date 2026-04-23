@@ -103,14 +103,36 @@ export default function DishDetail({
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  // Swipe up/down to close
-  const touchRef = useRef<{ y: number } | null>(null);
-  const handleTouchStart = (e: React.TouchEvent) => { touchRef.current = { y: e.touches[0].clientY }; };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchRef.current) return;
-    const dy = touchRef.current.y - e.changedTouches[0].clientY;
+  // Swipe up/down to close (with visual drag + prevent horizontal scroll hijack)
+  const touchRef = useRef<{ x: number; y: number; locked: "v" | "h" | null; dy: number } | null>(null);
+  const [dragY, setDragY] = useState(0);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null, dy: 0 };
+    setDragY(0);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const t = touchRef.current;
+    if (!t) return;
+    const dx = e.touches[0].clientX - t.x;
+    const dy = e.touches[0].clientY - t.y;
+    // Lock direction after 10px of movement
+    if (!t.locked && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
+      t.locked = Math.abs(dy) > Math.abs(dx) ? "v" : "h";
+    }
+    if (t.locked === "v") {
+      e.preventDefault(); // block horizontal scroll
+      t.dy = dy;
+      setDragY(dy);
+    }
+  };
+  const handleTouchEnd = () => {
+    const t = touchRef.current;
     touchRef.current = null;
-    if (Math.abs(dy) > 80) close();
+    if (t?.locked === "v" && Math.abs(t.dy) > 80) {
+      close();
+    } else {
+      setDragY(0);
+    }
   };
 
   return (
@@ -129,8 +151,12 @@ export default function DishDetail({
           display: "flex", width: "100%", height: "100%",
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
+          transform: dragY ? `translateY(${dragY * 0.4}px)` : undefined,
+          opacity: dragY ? Math.max(0.2, 1 - Math.abs(dragY) / 400) : 1,
+          transition: dragY ? "none" : "transform 0.25s ease-out, opacity 0.25s ease-out",
         }}
         onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
         {allDishes.map((d, idx) => (
