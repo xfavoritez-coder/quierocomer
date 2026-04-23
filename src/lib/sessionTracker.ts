@@ -49,6 +49,9 @@ let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let currentDishId: string | null = null;
 let currentDishStart: number | null = null;
+let lastRestaurantId: string | undefined;
+let lastTableId: string | undefined;
+let lastIsQrScan: boolean | undefined;
 let deviceType: string | null = null;
 let activityBound = false;
 let startingSession = false; // prevent duplicate start calls
@@ -73,7 +76,12 @@ function bindActivityListeners() {
   window.addEventListener("scroll", reset, { passive: true });
   window.addEventListener("click", reset, { passive: true });
   window.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") closeSession("pagehide");
+    if (document.visibilityState === "hidden") {
+      closeSession("pagehide");
+    } else if (document.visibilityState === "visible" && (!session || session.closed)) {
+      // User returned (unlocked phone, switched back to tab) — start fresh session
+      if (lastRestaurantId) startSession(lastRestaurantId, lastTableId, lastIsQrScan);
+    }
   });
   window.addEventListener("beforeunload", () => closeSession("beforeunload"));
 }
@@ -145,6 +153,9 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
 /** Start tracking a session for a restaurant */
 const SESSION_MAX_AGE = 30 * 60_000; // 30 minutes — after this, create a fresh session
 export function startSession(restaurantId: string, tableId?: string, isQrScan?: boolean) {
+  lastRestaurantId = restaurantId;
+  lastTableId = tableId;
+  lastIsQrScan = isQrScan;
   if (session && session.restaurantId === restaurantId && !session.closed) {
     const age = Date.now() - session.startedAt;
     if (age < SESSION_MAX_AGE) return; // still fresh, skip
