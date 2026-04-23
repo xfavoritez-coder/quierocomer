@@ -26,6 +26,7 @@ interface CartaProps {
   ratingMap: Record<string, { avg: number; count: number }>;
   reviews: Review[];
   tableId?: string;
+  isQrScan?: boolean;
 }
 
 export default function CartaBasic({
@@ -35,10 +36,12 @@ export default function CartaBasic({
   ratingMap,
   reviews,
   tableId,
+  isQrScan,
 }: CartaProps) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
+  const showWaiter = !!(tableId || isQrScan);
 
   const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
   const heroDishes = recommended.length > 0
@@ -118,7 +121,7 @@ export default function CartaBasic({
         >
           <Sparkles size={26} color="white" />
         </button>
-        {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} />}
+        {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} />}
       </div>
 
       {selectedDish && (

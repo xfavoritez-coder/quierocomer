@@ -14,6 +14,12 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
   const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
+    // Allow desktop preview via ?preview=true (for restaurant owners from panel)
+    const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
+    if (isPreview) {
+      setIsDesktop(false);
+      return;
+    }
     const check = () => setIsDesktop(window.innerWidth >= 768);
     check();
     window.addEventListener("resize", check);

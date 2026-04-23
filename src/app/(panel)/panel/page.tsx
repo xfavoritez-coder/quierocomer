@@ -114,7 +114,7 @@ export default function PanelDashboard() {
       {/* Quick actions */}
       {(() => {
         const rest = restaurants.find(r => r.id === selectedRestaurantId);
-        const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}` : "#";
+        const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}?preview=true` : "#";
         return (
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
             <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: "14px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", boxShadow: "var(--adm-card-shadow, none)", position: "relative" }}>

@@ -76,15 +76,19 @@ export default function CartaRouter(props: Props) {
     }).catch(() => {});
   }, []);
 
-  // Set mesa token if arriving from table QR
+  // Set mesa token if arriving from table QR or general QR with token
   const [showWaiter, setShowWaiter] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const mesa = params.get("mesa");
+    const hasToken = !!params.get("t");
     const isDemo = params.get("demo") === "true";
     if (mesa) {
       setMesaToken(props.restaurant.id, mesa, isDemo);
+      setShowWaiter(true);
+    } else if (hasToken) {
+      // QR general con token — mostrar garzón (el cliente indica su mesa al llamar)
       setShowWaiter(true);
     } else {
       setShowWaiter(hasMesaToken(props.restaurant.id));
