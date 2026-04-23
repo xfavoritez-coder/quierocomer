@@ -458,12 +458,12 @@ export default function IngredientesPage() {
             </div>
 
             {/* Suggestions to approve */}
-            {analysisResults.allSuggestions.length > 0 && (
+            {(analysisResults.allSuggestions || []).length > 0 && (
               <div style={{ background: "rgba(127,191,220,0.06)", border: "1px solid rgba(127,191,220,0.15)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
                 <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#7fbfdc", margin: "0 0 8px" }}>Ingredientes sugeridos (no creados aún)</p>
                 <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 10px" }}>Aprueba los que quieras agregar a la base maestra. Al aprobar, se vinculan automáticamente a los platos que los usan.</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {analysisResults.allSuggestions.map(originalName => (
+                  {(analysisResults.allSuggestions || []).map(originalName => (
                     <SuggestionRow key={originalName} originalName={originalName} existingIngredients={ingredients} onApprove={async (finalName) => {
                       try {
                         const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: finalName, originalName: finalName !== originalName ? originalName : undefined }) });
@@ -471,16 +471,16 @@ export default function IngredientesPage() {
                         if (!res.ok || !d.ingredient) { alert(d.error || "Error al crear ingrediente"); return; }
                         setIngredients(prev => [...prev, d.ingredient].sort((a, b) => a.name.localeCompare(b.name)));
                         // Auto-link to all dishes that had this suggestion
-                        const dishIds = analysisResults.results.filter(r => (r.suggested || []).includes(originalName)).map(r => r.dishId);
+                        const dishIds = (analysisResults.results || []).filter(r => (r.suggested || []).includes(originalName)).map(r => r.dishId);
                         if (dishIds.length > 0) {
                           const linkRes = await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.ingredient.id, linkToDishes: dishIds }) });
                           if (!linkRes.ok) { const err = await linkRes.json().catch(() => ({})); alert(err.error || "Error al vincular ingrediente a platos"); }
                         }
                         setAnalysisResults(prev => prev ? {
                           ...prev,
-                          allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
+                          allSuggestions: (prev.allSuggestions || []).filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), finalName] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
+                          results: (prev.results || []).map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), finalName] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al aprobar ingrediente"); }
                     }} onAliasOf={async (targetId) => {
@@ -492,9 +492,9 @@ export default function IngredientesPage() {
                         setIngredients(prev => prev.map(i => i.id === targetId ? { ...i } : i));
                         setAnalysisResults(prev => prev ? {
                           ...prev,
-                          allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
+                          allSuggestions: (prev.allSuggestions || []).filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), target.name] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
+                          results: (prev.results || []).map(r => ({ ...r, matched: (r.suggested || []).includes(originalName) ? [...(r.matched || []), target.name] : (r.matched || []), suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al agregar alias"); }
                     }} onReject={async () => {
@@ -502,9 +502,9 @@ export default function IngredientesPage() {
                         await fetch("/api/admin/ingredients", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ignoreName: originalName }) });
                         setAnalysisResults(prev => prev ? {
                           ...prev,
-                          allSuggestions: prev.allSuggestions.filter(s => s !== originalName),
+                          allSuggestions: (prev.allSuggestions || []).filter(s => s !== originalName),
                           totalSuggested: prev.totalSuggested - 1,
-                          results: prev.results.map(r => ({ ...r, suggested: (r.suggested || []).filter(s => s !== originalName) })),
+                          results: (prev.results || []).map(r => ({ ...r, suggested: (r.suggested || []).filter(s => s !== originalName) })),
                         } : null);
                       } catch { alert("Error de conexión al ignorar ingrediente"); }
                     }} />
@@ -515,7 +515,7 @@ export default function IngredientesPage() {
 
             {/* Per dish results */}
             <div style={{ maxHeight: 300, overflowY: "auto" }}>
-              {analysisResults.results.map(r => (
+              {(analysisResults.results || []).map(r => (
                 <div key={r.dishId} style={{ padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                     <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{r.dishName}</span>
