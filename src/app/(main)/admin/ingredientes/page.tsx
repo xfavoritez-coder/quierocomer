@@ -425,7 +425,13 @@ export default function IngredientesPage() {
                     const msg = JSON.parse(line);
                     if (msg.type === "progress") setAnalyzeProgress({ done: msg.done, total: msg.total, dish: msg.dish });
                     if (msg.type === "done") {
-                      setAnalysisResults(msg);
+                      setAnalysisResults({
+                        dishesProcessed: msg.dishesProcessed || 0,
+                        totalMatched: msg.totalMatched || 0,
+                        totalSuggested: msg.totalSuggested || 0,
+                        allSuggestions: msg.allSuggestions || [],
+                        results: (msg.results || []).map((r: any) => ({ ...r, matched: r.matched || [], suggested: r.suggested || [] })),
+                      });
                       fetch("/api/admin/ingredients").then(r => r.json()).then(d => setIngredients(d.ingredients || []));
                     }
                   } catch {}
