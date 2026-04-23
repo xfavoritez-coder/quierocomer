@@ -121,8 +121,9 @@ ${step(1, "Revisa tu carta", `Mira cómo se ve tu menú y que esté todo bien en
 ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e imprimir el código QR. Ponlo en cada mesa y listo.")}
 
 <div style="text-align:center">
-  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:white;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Entrar a mi panel →
+  <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${panelLink}" style="height:48px;v-text-anchor:middle;width:220px" arcsize="21%" fillcolor="#F4A623" stroke="f"><v:textbox inset="0,0,0,0"><center style="color:#ffffff;font-size:16px;font-weight:bold">Entrar a mi panel →</center></v:textbox></v:roundrect><![endif]-->
+  <a href="${panelLink}" style="display:inline-block;background-color:#F4A623;color:#ffffff!important;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;mso-hide:all">
+    <span style="color:#ffffff">Entrar a mi panel →</span>
   </a>
 </div>`);
 }
