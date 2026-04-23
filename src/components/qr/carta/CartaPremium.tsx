@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -94,11 +94,17 @@ export default function CartaPremium({
   const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
+    let ticking = false;
     const onScroll = () => {
-      const y = window.scrollY;
-      const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
-      setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
-      lastScrollY.current = y;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
+        setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
+        lastScrollY.current = y;
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -136,21 +142,6 @@ export default function CartaPremium({
   }, []);
 
   const [birthdayCountdown, setBirthdayCountdown] = useState<number | null>(null);
-  useEffect(() => {
-    fetch("/api/qr/user/me")
-      .then(r => r.json())
-      .then(d => {
-        if (d.user?.birthDate) {
-          const today = new Date();
-          const birth = new Date(d.user.birthDate);
-          const thisYear = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
-          if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1);
-          const days = Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          if (days <= 30) setBirthdayCountdown(days);
-        }
-      })
-      .catch(() => {});
-  }, []);
 
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
@@ -174,13 +165,7 @@ export default function CartaPremium({
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [searchQuery, dishes, restaurant.id]);
 
-  // Fetch user (only if not provided via prop)
-  useEffect(() => {
-    if (qrUserProp !== undefined) return;
-    fetch("/api/qr/user/me").then((r) => r.json()).then((d) => { if (d.user) setQrUserLocal(d.user); }).catch(() => {});
-  }, [qrUserProp]);
-
-  // Second visit detection + verification toast
+  // Single fetch for user data — used for birthday countdown, second visit detection, and local user state
   useEffect(() => {
     const cookieKey = `qr_visited_${restaurant.id}`;
     const dismissKey = `qr_toast_dismissed_${restaurant.id}`;
@@ -192,21 +177,42 @@ export default function CartaPremium({
       window.history.replaceState({}, "", window.location.pathname);
     }
 
-    // Second visit logic
+    // Determine if second visit check is needed
     const visited = localStorage.getItem(cookieKey);
     const dismissed = localStorage.getItem(dismissKey);
     const hasPrefs = localStorage.getItem("qr_diet") || localStorage.getItem("qr_restrictions");
     const viewTipNotSeen = !localStorage.getItem("quierocomer_carta_view_tooltip_shown");
-    if (visited && !dismissed && hasPrefs && !viewTipNotSeen && !sessionStorage.getItem("qr_capture_shown")) {
-      fetch("/api/qr/user/me").then((r) => r.json()).then((d) => {
-        if (!d.user) {
+    const needsSecondVisitCheck = visited && !dismissed && hasPrefs && !viewTipNotSeen && !sessionStorage.getItem("qr_capture_shown");
+
+    if (!visited) localStorage.setItem(cookieKey, String(Date.now()));
+
+    // Single fetch for all user-related data
+    fetch("/api/qr/user/me")
+      .then((r) => r.json())
+      .then((d) => {
+        // Set local user state if not provided via prop
+        if (qrUserProp === undefined && d.user) {
+          setQrUserLocal(d.user);
+        }
+
+        // Birthday countdown
+        if (d.user?.birthDate) {
+          const today = new Date();
+          const birth = new Date(d.user.birthDate);
+          const thisYear = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+          if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1);
+          const days = Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (days <= 30) setBirthdayCountdown(days);
+        }
+
+        // Second visit detection
+        if (needsSecondVisitCheck && !d.user) {
           setTimeout(() => setShowSecondVisitToast(true), 3000);
           sessionStorage.setItem("qr_capture_shown", "true");
         }
-      }).catch(() => {});
-    }
-    if (!visited) localStorage.setItem(cookieKey, String(Date.now()));
-  }, [restaurant.id]);
+      })
+      .catch(() => {});
+  }, [restaurant.id, qrUserProp]);
 
   const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
   const heroDishes = recommended.length > 0
@@ -233,28 +239,26 @@ export default function CartaPremium({
     return result;
   }, [categories, dishes]);
 
-  const handleScroll = useCallback(() => {
-    // Check real categories first (reverse order = bottom to top)
-    for (const cat of [...categories].reverse()) {
-      const el = document.getElementById(`cat-${cat.id}`);
-      if (el && el.getBoundingClientRect().top <= 52) {
-        setActiveCategory(cat.id);
-        return;
-      }
-    }
-    // If no category matched, check promos section
-    if (hasPromos) {
-      const promoEl = document.getElementById("cat-promos");
-      if (promoEl && promoEl.getBoundingClientRect().top <= 52) {
-        setActiveCategory("promos");
-      }
-    }
-  }, [categories, hasPromos]);
-
+  // IntersectionObserver-based active category detection
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const observers: IntersectionObserver[] = [];
+    const allCats = hasPromos
+      ? [{ id: "promos" }, ...categories]
+      : categories;
+    for (const cat of allCats) {
+      const el = document.getElementById(`cat-${cat.id}`);
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveCategory(cat.id);
+        },
+        { rootMargin: "-80px 0px -80% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+    return () => observers.forEach(obs => obs.disconnect());
+  }, [categories, hasPromos]);
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>

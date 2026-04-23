@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -48,20 +48,23 @@ export default function CartaBasic({
         .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
         .slice(0, 3);
 
-  const handleScroll = useCallback(() => {
-    for (const cat of [...categories].reverse()) {
-      const el = document.getElementById(`cat-${cat.id}`);
-      if (el && el.getBoundingClientRect().top <= 66) {
-        setActiveCategory(cat.id);
-        break;
-      }
-    }
-  }, [categories]);
-
+  // IntersectionObserver-based active category detection
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const observers: IntersectionObserver[] = [];
+    for (const cat of categories) {
+      const el = document.getElementById(`cat-${cat.id}`);
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveCategory(cat.id);
+        },
+        { rootMargin: "-80px 0px -80% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+    return () => observers.forEach(obs => obs.disconnect());
+  }, [categories]);
 
   return (
     <div className="min-h-screen bg-[#faf6ee] font-[family-name:var(--font-dm)]">

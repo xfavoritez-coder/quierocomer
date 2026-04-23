@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -77,11 +77,17 @@ export default function CartaLista({
   const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
+    let ticking = false;
     const onScroll = () => {
-      const y = window.scrollY;
-      const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
-      setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
-      lastScrollY.current = y;
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const y = window.scrollY;
+        const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
+        setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
+        lastScrollY.current = y;
+        ticking = false;
+      });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -112,27 +118,26 @@ export default function CartaLista({
     }
   }, [activeCategory]);
 
-  // Detect active category on scroll
-  const handleScroll = useCallback(() => {
-    for (const cat of [...categories].reverse()) {
-      const el = document.getElementById(`lista-cat-${cat.id}`);
-      if (el && el.getBoundingClientRect().top <= 120) {
-        setActiveCategory(cat.id);
-        return;
-      }
-    }
-    if (hasPromos) {
-      const promoEl = document.getElementById("lista-cat-promos");
-      if (promoEl && promoEl.getBoundingClientRect().top <= 120) {
-        setActiveCategory("promos");
-      }
-    }
-  }, [categories, hasPromos]);
-
+  // IntersectionObserver-based active category detection
   useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+    const observers: IntersectionObserver[] = [];
+    const allCats = hasPromos
+      ? [{ id: "promos" }, ...categories]
+      : categories;
+    for (const cat of allCats) {
+      const el = document.getElementById(`lista-cat-${cat.id}`);
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        ([entry]) => {
+          if (entry.isIntersecting) setActiveCategory(cat.id);
+        },
+        { rootMargin: "-80px 0px -80% 0px", threshold: 0 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+    return () => observers.forEach(obs => obs.disconnect());
+  }, [categories, hasPromos]);
 
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];

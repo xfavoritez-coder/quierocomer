@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       },
     },
     orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
+    take: 500,
   });
 
   // Compute derived allergens for each dish (only type ALLERGEN, not RESTRICTION)
