@@ -98,9 +98,15 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: category.isActive ? "rgba(255,100,100,0.06)" : "rgba(74,222,128,0.06)", color: category.isActive ? "#ff6b6b" : "#4ade80" }}>
                 {category.isActive ? "Ocultar" : "Mostrar"}
               </button>
-              {dishes.length === 0 && (
-                <button onClick={() => onDelete(category.id)} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
-              )}
+              <button onClick={() => {
+                if (dishes.length > 0) {
+                  if (confirm(`"${category.name}" tiene ${dishes.length} plato(s). ¿Quieres moverlos a otra categoría y eliminarla?`)) {
+                    onDelete(category.id);
+                  }
+                } else {
+                  onDelete(category.id);
+                }
+              }} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "#ef4444", cursor: "pointer" }}>Eliminar</button>
             </>
           )}
         </div>
@@ -164,6 +170,25 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
   };
 
   const deleteCategory = async (id: string) => {
+    const catDishes = allDishes.filter(d => d.categoryId === id);
+    const otherCats = categories.filter(c => c.id !== id);
+
+    // If has dishes, move them to the first other category
+    if (catDishes.length > 0 && otherCats.length > 0) {
+      const targetCat = otherCats[0];
+      for (const d of catDishes) {
+        await fetch("/api/admin/dishes/reorder", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ moveDishId: d.id, toCategoryId: targetCat.id }),
+        });
+      }
+      // Update local dishes state
+      onDishesChange(allDishes.map(d =>
+        d.categoryId === id ? { ...d, categoryId: targetCat.id, category: { id: targetCat.id, name: targetCat.name } } : d
+      ));
+    }
+
     const res = await fetch("/api/admin/categories", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) });
     if (res.ok) setCategories(prev => prev.filter(c => c.id !== id));
   };
