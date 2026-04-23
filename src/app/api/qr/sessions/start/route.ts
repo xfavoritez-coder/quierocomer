@@ -56,6 +56,7 @@ export async function POST(request: Request) {
         guestId,
         qrUserId,
         restaurantId,
+        tableId: tableId || null,
         deviceType: deviceType || null,
         ipAddress,
         userAgent,

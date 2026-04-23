@@ -896,6 +896,7 @@ model Session {
   searchesCount       Int     @default(0)
   converted           Boolean @default(false)
   isReturningVisitor  Boolean @default(false)
+  tableId             String?
 
   guest          GuestProfile @relation(fields: [guestId], references: [id])
   qrUser         QRUser?      @relation(fields: [qrUserId], references: [id])
