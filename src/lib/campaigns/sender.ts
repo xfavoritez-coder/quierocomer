@@ -66,6 +66,8 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
 
   for (let i = 0; i < users.length; i += BATCH_SIZE) {
     const batch = users.slice(i, i + BATCH_SIZE);
+    const successUserIds: string[] = [];
+    const failedUserIds: string[] = [];
 
     for (const user of batch) {
       try {
@@ -104,24 +106,36 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
           signal: AbortSignal.timeout(10000),
         });
 
-        // Update recipient status
-        await prisma.campaignRecipient.updateMany({
-          where: { campaignId, qrUserId: user.id },
-          data: { status: "sent", sentAt: new Date() },
-        });
-
-        // Update user's lastEmailAt
-        await prisma.qRUser.update({ where: { id: user.id }, data: { lastEmailAt: new Date() } });
-
+        successUserIds.push(user.id);
         sent++;
       } catch (e: any) {
         errors.push(`${user.email}: ${e.message}`);
-        await prisma.campaignRecipient.updateMany({
-          where: { campaignId, qrUserId: user.id },
-          data: { status: "failed" },
-        });
+        failedUserIds.push(user.id);
         failed++;
       }
+    }
+
+    // Batch update successful recipients and users
+    const batchTime = new Date();
+    if (successUserIds.length > 0) {
+      await Promise.all([
+        prisma.campaignRecipient.updateMany({
+          where: { campaignId, qrUserId: { in: successUserIds } },
+          data: { status: "sent", sentAt: batchTime },
+        }),
+        prisma.qRUser.updateMany({
+          where: { id: { in: successUserIds } },
+          data: { lastEmailAt: batchTime },
+        }),
+      ]);
+    }
+
+    // Batch update failed recipients
+    if (failedUserIds.length > 0) {
+      await prisma.campaignRecipient.updateMany({
+        where: { campaignId, qrUserId: { in: failedUserIds } },
+        data: { status: "failed" },
+      });
     }
 
     await new Promise(r => setTimeout(r, 1000)); // Rate limit protection

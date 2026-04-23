@@ -940,6 +940,7 @@ model EmailLog {
   purpose   String   // password_reset, welcome, campaign, automation, experience
   status    String   // sent, failed
   errorMsg  String?
+  dismissed Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@index([createdAt])

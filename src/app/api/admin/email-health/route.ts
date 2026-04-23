@@ -13,11 +13,11 @@ export async function GET(req: NextRequest) {
     const [counts, lastFailure] = await Promise.all([
       prisma.emailLog.groupBy({
         by: ["status"],
-        where: { createdAt: { gte: since } },
+        where: { createdAt: { gte: since }, dismissed: false },
         _count: { id: true },
       }),
       prisma.emailLog.findFirst({
-        where: { status: "failed" },
+        where: { status: "failed", dismissed: false },
         orderBy: { createdAt: "desc" },
         select: { createdAt: true, errorMsg: true, to: true, purpose: true },
       }),

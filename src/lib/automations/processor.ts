@@ -50,6 +50,9 @@ export async function processAutomations(): Promise<ProcessResult[]> {
       });
       skipped += rawRecipients.length - recipients.length;
 
+      // Collect successful sends for batch DB update
+      const successfulUsers: { id: string; triggerHistory: Record<string, string> }[] = [];
+
       for (const user of recipients) {
         try {
           const subject = (rule.subject || "")
@@ -75,14 +78,10 @@ export async function processAutomations(): Promise<ProcessResult[]> {
             signal: AbortSignal.timeout(10000),
           });
 
-          // Update lastEmailAt + trigger history
           const existingHistory = ((user as any).triggerHistory as Record<string, string>) || {};
-          await prisma.qRUser.update({
-            where: { id: user.id },
-            data: {
-              lastEmailAt: now,
-              triggerHistory: { ...existingHistory, [rule.trigger]: now.toISOString() },
-            },
+          successfulUsers.push({
+            id: user.id,
+            triggerHistory: { ...existingHistory, [rule.trigger]: now.toISOString() },
           });
           queued++;
 
@@ -90,6 +89,26 @@ export async function processAutomations(): Promise<ProcessResult[]> {
         } catch {
           skipped++;
         }
+      }
+
+      // Batch update: lastEmailAt for all successful users
+      if (successfulUsers.length > 0) {
+        const successIds = successfulUsers.map(u => u.id);
+        await prisma.qRUser.updateMany({
+          where: { id: { in: successIds } },
+          data: { lastEmailAt: now },
+        });
+
+        // triggerHistory is per-user JSON, so we need individual updates for it
+        // but we batch them with Promise.all instead of sequential awaits
+        await Promise.all(
+          successfulUsers.map(u =>
+            prisma.qRUser.update({
+              where: { id: u.id },
+              data: { triggerHistory: u.triggerHistory },
+            })
+          )
+        );
       }
     } catch (e) {
       console.error(`Automation ${rule.trigger} error:`, e);

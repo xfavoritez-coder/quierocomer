@@ -7,30 +7,43 @@ function restaurantFilter(restaurantId: string | null) {
 
 export async function getVisitorMetrics(restaurantId: string | null, from: Date, to: Date): Promise<VisitorMetrics> {
   const rf = restaurantFilter(restaurantId);
+  const where = { ...rf, startedAt: { gte: from, lte: to } };
 
-  const sessions = await prisma.session.findMany({
-    where: { ...rf, startedAt: { gte: from, lte: to } },
-    select: { guestId: true, qrUserId: true, durationMs: true, dishesViewed: true, isReturningVisitor: true, converted: true },
-  });
+  // Use DB aggregations instead of loading all sessions into memory
+  const [
+    totalSessions,
+    uniqueGuestsResult,
+    returningGuestsResult,
+    convertedGuestsResult,
+    durationAgg,
+    // dishesViewed is JSON so we still need in-memory for avg dishes
+    dishSessions,
+  ] = await Promise.all([
+    prisma.session.count({ where }),
+    prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
+    prisma.session.groupBy({ by: ["guestId"], where: { ...where, isReturningVisitor: true }, _count: true }).then((r) => r.length),
+    prisma.session.groupBy({ by: ["guestId"], where: { ...where, converted: true }, _count: true }).then((r) => r.length),
+    prisma.session.aggregate({ where: { ...where, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
+    prisma.session.findMany({ where, select: { dishesViewed: true }, take: 5000 }),
+  ]);
 
-  const uniqueGuests = new Set(sessions.map((s) => s.guestId));
-  const returningGuests = new Set(sessions.filter((s) => s.isReturningVisitor).map((s) => s.guestId));
-  const convertedGuests = new Set(sessions.filter((s) => s.converted).map((s) => s.guestId));
+  const totalVisitors = uniqueGuestsResult;
+  const returningVisitors = returningGuestsResult;
+  const convertedCount = convertedGuestsResult;
 
-  const durations = sessions.map((s) => s.durationMs || 0).filter((d) => d > 0);
-  const dishCounts = sessions.map((s) => {
+  const dishCounts = dishSessions.map((s) => {
     const dv = s.dishesViewed as any[];
     return Array.isArray(dv) ? dv.length : 0;
   });
 
   return {
-    totalVisitors: uniqueGuests.size,
-    returningVisitors: returningGuests.size,
-    returningPct: uniqueGuests.size > 0 ? Math.round((returningGuests.size / uniqueGuests.size) * 100) : 0,
-    convertedCount: convertedGuests.size,
-    conversionPct: uniqueGuests.size > 0 ? Math.round((convertedGuests.size / uniqueGuests.size) * 100) : 0,
-    totalSessions: sessions.length,
-    avgDurationMs: durations.length > 0 ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : 0,
+    totalVisitors,
+    returningVisitors,
+    returningPct: totalVisitors > 0 ? Math.round((returningVisitors / totalVisitors) * 100) : 0,
+    convertedCount,
+    conversionPct: totalVisitors > 0 ? Math.round((convertedCount / totalVisitors) * 100) : 0,
+    totalSessions,
+    avgDurationMs: Math.round(durationAgg._avg.durationMs || 0),
     avgDishesViewed: dishCounts.length > 0 ? Math.round((dishCounts.reduce((a, b) => a + b, 0) / dishCounts.length) * 10) / 10 : 0,
   };
 }
@@ -129,6 +142,7 @@ export async function getFailedSearches(restaurantId: string | null, from: Date,
       OR: [{ resultsCount: 0 }, { clickedResultId: null }],
     },
     select: { query: true, guestId: true, restaurantId: true, createdAt: true, resultsCount: true },
+    take: 5000,
   });
 
   // Aggregate
@@ -162,12 +176,14 @@ export async function getGenioImpact(restaurantId: string | null, from: Date, to
   const genioEvents = await prisma.statEvent.findMany({
     where: { ...rf, eventType: "GENIO_START", createdAt: { gte: from, lte: to } },
     select: { sessionId: true },
+    take: 5000,
   });
   const genioSessionIds = new Set(genioEvents.map((e) => e.sessionId));
 
   const allSessions = await prisma.session.findMany({
     where: { ...rf, startedAt: { gte: from, lte: to } },
     select: { id: true, guestId: true, durationMs: true, dishesViewed: true, converted: true, isReturningVisitor: true },
+    take: 5000,
   });
 
   const withGenio = allSessions.filter((s) => genioSessionIds.has(s.id));

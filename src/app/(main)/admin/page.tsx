@@ -35,6 +35,9 @@ export default function AdminDashboard() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const [generatingInsights, setGeneratingInsights] = useState(false);
   const [emailHealth, setEmailHealth] = useState<{ failuresLast24h: number; configured: boolean } | null>(null);
+  const [emailLogsOpen, setEmailLogsOpen] = useState(false);
+  const [emailLogs, setEmailLogs] = useState<{ id: string; to: string; subject: string; errorMsg: string | null; createdAt: string }[]>([]);
+  const [emailLogsLoading, setEmailLogsLoading] = useState(false);
 
   const [refreshKey, setRefreshKey] = useState(0);
 
@@ -87,13 +90,73 @@ export default function AdminDashboard() {
 
       {/* Email health warning */}
       {emailHealth && (emailHealth.failuresLast24h > 0 || !emailHealth.configured) && (
-        <div style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
+        <div
+          onClick={() => {
+            if (emailHealth.configured && emailHealth.failuresLast24h > 0) {
+              setEmailLogsOpen(true);
+              setEmailLogsLoading(true);
+              fetch("/api/admin/email-logs?status=failed")
+                .then(r => r.json())
+                .then(d => setEmailLogs(d.logs || []))
+                .catch(() => {})
+                .finally(() => setEmailLogsLoading(false));
+            }
+          }}
+          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10, cursor: emailHealth.failuresLast24h > 0 ? "pointer" : "default" }}
+        >
           <span style={{ fontSize: "1.1rem" }}>⚠️</span>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: 0 }}>
             {!emailHealth.configured
               ? "Resend API key no configurada."
-              : `${emailHealth.failuresLast24h} email${emailHealth.failuresLast24h > 1 ? "s" : ""} fallido${emailHealth.failuresLast24h > 1 ? "s" : ""} en las últimas 24h.`}
+              : `${emailHealth.failuresLast24h} email${emailHealth.failuresLast24h > 1 ? "s" : ""} fallido${emailHealth.failuresLast24h > 1 ? "s" : ""} en las últimas 24h. Toca para ver detalles.`}
           </p>
+        </div>
+      )}
+
+      {/* Email logs modal */}
+      {emailLogsOpen && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setEmailLogsOpen(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #1a1a2e)", border: "1px solid var(--adm-card-border, #333)", borderRadius: 16, padding: "20px 24px", maxWidth: 600, width: "100%", maxHeight: "80vh", overflow: "auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+              <h3 style={{ fontFamily: F, fontSize: "1rem", color: GOLD, margin: 0 }}>Emails fallidos</h3>
+              <button onClick={() => setEmailLogsOpen(false)} style={{ background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: "1.2rem", cursor: "pointer", padding: 4 }}>✕</button>
+            </div>
+            {emailLogsLoading ? (
+              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2, #aaa)", textAlign: "center", padding: 20 }}>Cargando...</p>
+            ) : emailLogs.length === 0 ? (
+              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2, #aaa)", textAlign: "center", padding: 20 }}>Sin emails fallidos pendientes</p>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {emailLogs.map(log => (
+                    <div key={log.id} style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 10, padding: "10px 14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text, #eee)", fontWeight: 600 }}>{log.to}</span>
+                        <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3, #888)" }}>{new Date(log.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+                      </div>
+                      <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2, #aaa)", margin: "2px 0" }}>{log.subject}</p>
+                      {log.errorMsg && <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#ef4444", margin: "4px 0 0", wordBreak: "break-all" }}>{log.errorMsg}</p>}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={async () => {
+                    await fetch("/api/admin/email-logs", {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ action: "dismiss_all" }),
+                    });
+                    setEmailLogs([]);
+                    setEmailLogsOpen(false);
+                    setEmailHealth(prev => prev ? { ...prev, failuresLast24h: 0 } : prev);
+                  }}
+                  style={{ marginTop: 14, width: "100%", padding: "10px 0", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, color: GOLD, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Marcar como leidos
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
 
