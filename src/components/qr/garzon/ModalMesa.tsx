@@ -26,11 +26,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
 
   const handleSubmit = () => {
     if (!value) return;
-    if (panelActive) {
-      onSaveAndCall(value);
-    } else {
-      onSave(value);
-    }
+    onSave(value);
     close();
   };
 
@@ -56,12 +52,12 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
           className="font-[family-name:var(--font-playfair)]"
           style={{ fontSize: "1.3rem", fontWeight: 900, color: "white", textAlign: "center", margin: "0 0 6px" }}
         >
-          {panelActive ? "¿En qué mesa estás?" : "Pídele al garzón tu número de mesa"}
+          ¿En qué mesa estás?
         </h3>
 
         {/* Subtitle */}
-        <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.4)", textAlign: "center", margin: "0 0 24px" }}>
-          {panelActive ? "Te avisamos cuando llegue el garzón." : "Así podrás llamarlo cuando lo necesites."}
+        <p style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.4)", textAlign: "center", margin: "0 0 24px" }}>
+          Así podrás llamar al garzón cuando lo necesites.
         </p>
 
         {/* Input */}
@@ -95,7 +91,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
             opacity: value ? 1 : 0.4,
           }}
         >
-          {panelActive ? "Guardar y llamar" : "Guardar"}
+          Guardar
         </button>
 
         {/* Cancel */}
