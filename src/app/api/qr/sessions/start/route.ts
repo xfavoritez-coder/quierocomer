@@ -38,9 +38,12 @@ export async function POST(request: Request) {
       update: { lastSeenAt: new Date(), visitCount: { increment: 1 }, linkedQrUserId: qrUserId || undefined, deviceType: deviceType || undefined },
     });
 
-    // Get IP address
+    // Get IP address + browser metadata from headers
     const forwarded = request.headers.get("x-forwarded-for");
     const ipAddress = forwarded ? forwarded.split(",")[0].trim() : request.headers.get("x-real-ip") || null;
+    const userAgent = request.headers.get("user-agent") || null;
+    const referer = request.headers.get("referer") || null;
+    const language = request.headers.get("accept-language")?.split(",")[0]?.trim() || null;
 
     // Create session with returning visitor flag
     const session = await prisma.session.create({
@@ -50,6 +53,9 @@ export async function POST(request: Request) {
         restaurantId,
         deviceType: deviceType || null,
         ipAddress,
+        userAgent,
+        referer,
+        language,
         weather: weatherStr,
         timeOfDay,
         isReturningVisitor: guest.visitCount > 1,

@@ -50,6 +50,8 @@ let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let currentDishId: string | null = null;
 let currentDishStart: number | null = null;
 let deviceType: string | null = null;
+let activityBound = false;
+let startingSession = false; // prevent duplicate start calls
 
 function getDeviceType(): string {
   if (typeof window === "undefined") return "unknown";
@@ -143,15 +145,17 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
 /** Start tracking a session for a restaurant */
 export function startSession(restaurantId: string, tableId?: string) {
   if (session && session.restaurantId === restaurantId && !session.closed) return;
+  if (startingSession) return; // prevent double-call from React StrictMode
 
   // Close previous session if switching restaurants
   if (session && !session.closed) {
     closeSession("new_session");
   }
 
+  startingSession = true;
   deviceType = getDeviceType();
 
-  session = {
+  const newSession: SessionData = {
     restaurantId,
     tableId,
     dbSessionId: null,
@@ -164,6 +168,7 @@ export function startSession(restaurantId: string, tableId?: string) {
     pickedDishId: null,
     closed: false,
   };
+  session = newSession;
 
   // Create session in DB immediately, THEN start heartbeat
   fetch("/api/qr/sessions/start", {
@@ -178,14 +183,16 @@ export function startSession(restaurantId: string, tableId?: string) {
   })
     .then(r => r.json())
     .then(data => {
-      if (session && data.sessionId) {
-        session.dbSessionId = data.sessionId;
+      startingSession = false;
+      // Use captured reference to avoid race conditions
+      if (newSession === session && data.sessionId) {
+        newSession.dbSessionId = data.sessionId;
         // Start heartbeat ONLY after we have the DB session ID
         if (heartbeatTimer) clearInterval(heartbeatTimer);
         heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
       }
     })
-    .catch(() => {});
+    .catch(() => { startingSession = false; });
 
   // Fire SESSION_START stat event
   fetch("/api/qr/stats", {
@@ -199,7 +206,10 @@ export function startSession(restaurantId: string, tableId?: string) {
     }),
   }).catch(() => {});
 
-  bindActivityListeners();
+  if (!activityBound) {
+    bindActivityListeners();
+    activityBound = true;
+  }
   resetInactivityTimer();
 }
 
@@ -286,6 +296,7 @@ export function trackDishPicked(dishId: string) {
 export function closeSession(reason: string = "manual") {
   if (!session || session.closed) return;
   session.closed = true;
+  startingSession = false;
 
   if (inactivityTimer) clearTimeout(inactivityTimer);
   if (heartbeatTimer) clearInterval(heartbeatTimer);

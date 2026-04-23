@@ -849,6 +849,9 @@ model Session {
   viewHistory    Json?     // [{ view: 'premium', durationMs: 12000 }, ...]
   deviceType     String?   // 'mobile' | 'tablet' | 'desktop'
   ipAddress      String?
+  userAgent      String?
+  referer        String?
+  language       String?
   closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
   weather        String?
   timeOfDay      TimeOfDay?

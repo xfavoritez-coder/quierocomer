@@ -18,6 +18,30 @@ function formatDuration(ms: number | null) {
   return `${Math.floor(s / 60)}m ${s % 60}s`;
 }
 
+function parseUA(ua: string | null): string {
+  if (!ua) return "";
+  let browser = "Navegador desconocido";
+  let os = "";
+  // OS
+  if (/iPhone|iPad/.test(ua)) os = "iOS";
+  else if (/Android/.test(ua)) { const m = ua.match(/Android\s([\d.]+)/); os = m ? `Android ${m[1]}` : "Android"; }
+  else if (/Mac OS X/.test(ua)) os = "macOS";
+  else if (/Windows/.test(ua)) os = "Windows";
+  else if (/Linux/.test(ua)) os = "Linux";
+  // Browser
+  if (/Instagram/.test(ua)) browser = "Instagram";
+  else if (/FBAN|FBAV/.test(ua)) browser = "Facebook";
+  else if (/CriOS/.test(ua)) browser = "Chrome (iOS)";
+  else if (/FxiOS/.test(ua)) browser = "Firefox (iOS)";
+  else if (/EdgA?\//.test(ua)) browser = "Edge";
+  else if (/SamsungBrowser/.test(ua)) browser = "Samsung Browser";
+  else if (/OPR|Opera/.test(ua)) browser = "Opera";
+  else if (/Chrome\//.test(ua) && !/Edg/.test(ua)) browser = "Chrome";
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) browser = "Safari";
+  else if (/Firefox\//.test(ua)) browser = "Firefox";
+  return os ? `${browser} · ${os}` : browser;
+}
+
 function timeAgo(date: string) {
   const diff = Date.now() - new Date(date).getTime();
   const mins = Math.floor(diff / 60000);
@@ -50,6 +74,9 @@ interface SessionData {
   genioData: { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[]; lastStep?: string } | null;
   visitDays: number;
   ipAddress: string | null;
+  userAgent: string | null;
+  referer: string | null;
+  language: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   topFavorites: { name: string; score: number }[];
@@ -135,6 +162,7 @@ export default function AdminSessions() {
                       <span>{formatDate(s.startedAt)}</span>
                       {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}
                       {s.deviceType && <span>· {s.deviceType}</span>}
+                      {s.userAgent && !s.deviceType && <span>· {parseUA(s.userAgent).split(" · ")[0]}</span>}
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
@@ -164,6 +192,9 @@ export default function AdminSessions() {
                       <div><span style={{ color: "#999" }}>Fecha: </span>{formatDate(s.startedAt)}</div>
                       {s.weather && <div><span style={{ color: "#999" }}>Clima: </span>{s.weather}</div>}
                       {s.ipAddress && <div><span style={{ color: "#999" }}>IP: </span>{s.ipAddress}</div>}
+                      {s.userAgent && <div><span style={{ color: "#999" }}>Navegador: </span>{parseUA(s.userAgent)}</div>}
+                      {s.referer && <div><span style={{ color: "#999" }}>Desde: </span>{(() => { try { return new URL(s.referer).hostname; } catch { return s.referer; } })()}</div>}
+                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{s.language}</div>}
                     </div>
 
                     {/* User preferences (always shown if present) */}
