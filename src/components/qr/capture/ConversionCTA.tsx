@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 interface Props {
   restaurantId: string;
@@ -59,7 +60,7 @@ export default function ConversionCTA({ restaurantId, type, dishName, onRegister
     // Track CTA shown
     fetch("/api/qr/stats", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "QR_SCAN", restaurantId, guestId: getGuestId(), sessionId: getGuestId() }),
+      body: JSON.stringify({ eventType: "QR_SCAN", restaurantId, guestId: getGuestId(), sessionId: getGuestId(), dbSessionId: getDbSessionId() }),
     }).catch(() => {});
 
     sessionStorage.setItem("quierocomer_cta_count", String(sessionCount + 1));

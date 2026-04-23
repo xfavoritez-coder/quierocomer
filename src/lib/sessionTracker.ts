@@ -199,7 +199,7 @@ export function startSession(restaurantId: string, tableId?: string) {
     })
     .catch(err => { startingSession = false; console.error("[QC] Session start error:", err); });
 
-  // Fire SESSION_START stat event
+  // Fire SESSION_START stat event (dbSessionId not yet available, will be null)
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -208,6 +208,7 @@ export function startSession(restaurantId: string, tableId?: string) {
       restaurantId,
       guestId: getGuestId(),
       sessionId: getSessionId(),
+      dbSessionId: null,
     }),
   }).catch(err => console.error("[QC] Stat event error:", err));
 
@@ -272,6 +273,7 @@ function flushCurrentDish() {
         dishId: currentDishId,
         guestId: getGuestId(),
         sessionId: getSessionId(),
+        dbSessionId: session.dbSessionId,
       }),
     }).catch(() => {});
   }
@@ -289,6 +291,11 @@ export function trackCategoryDwell(categoryId: string, dwellMs: number) {
   } else {
     session.categoryDwells.set(categoryId, { categoryId, dwellMs });
   }
+}
+
+/** Get the DB session ID (available after session start completes) */
+export function getDbSessionId(): string | null {
+  return session?.dbSessionId ?? null;
 }
 
 /** Track when user picks a dish */

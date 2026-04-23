@@ -42,12 +42,13 @@ const SWEET_KEYWORDS = ["postre", "dulce", "kuchen", "torta", "helado"];
 const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "extra", "sour", "schop"];
 
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 function trackStat(restaurantId: string, eventType: string, dishId?: string, genioSessionId?: string) {
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, dishId, genioSessionId, guestId: getGuestId(), sessionId: getSessionId() }),
+    body: JSON.stringify({ eventType, restaurantId, dishId, genioSessionId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
   }).catch(() => {});
 }
 

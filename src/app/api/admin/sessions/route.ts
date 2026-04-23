@@ -90,55 +90,71 @@ export async function GET(req: NextRequest) {
       : [];
     const catMap = Object.fromEntries(catNames.map((c) => [c.id, c.name]));
 
-    // Genio events
+    // ── Genio events: scoped to each session via dbSessionId or time range ──
+    const sessionIds = sessions.map(s => s.id);
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
-    const genioEvents = sessionGuestIds.length ? await prisma.statEvent.findMany({
-      where: { guestId: { in: sessionGuestIds }, eventType: { in: ["GENIO_START", "GENIO_COMPLETE", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED"] } },
-      select: { guestId: true, eventType: true, dishId: true, createdAt: true },
+
+    // Try dbSessionId first (new events), fall back to time range (legacy events)
+    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED"];
+
+    const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
+      where: {
+        eventType: { in: genioEventTypes },
+        OR: [
+          // New: linked by dbSessionId
+          { dbSessionId: { in: sessionIds } },
+          // Legacy fallback: by guestId + time range of any session
+          ...(sessionGuestIds.length ? [{
+            guestId: { in: sessionGuestIds },
+            dbSessionId: null,
+            createdAt: {
+              gte: new Date(Math.min(...sessions.map(s => s.startedAt.getTime())) - 60_000),
+              lte: new Date(Math.max(...sessions.map(s => (s.endedAt?.getTime() || Date.now()))) + 60_000),
+            },
+          }] : []),
+        ],
+      },
+      select: { guestId: true, dbSessionId: true, eventType: true, dishId: true, createdAt: true },
     }) : [];
 
-    const genioCompletes = genioEvents.filter((e) => e.eventType === "GENIO_COMPLETE");
-    const genioDishIds = [...new Set(genioCompletes.filter((e) => e.dishId).map((e) => e.dishId!))];
+    const genioDishIds = [...new Set(genioEvents.filter(e => e.eventType === "GENIO_COMPLETE" && e.dishId).map(e => e.dishId!))];
     const genioDishes = genioDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: genioDishIds } }, select: { id: true, name: true },
     }) : [];
     const genioDishMap = Object.fromEntries(genioDishes.map((d) => [d.id, d.name]));
 
-    const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[] }> = {};
+    const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[]; lastStep: string }> = {};
     const dbSessionsWithGenio = new Set<string>();
+
     for (const s of sessions) {
-      const start = new Date(s.startedAt).getTime();
-      const end = s.endedAt ? new Date(s.endedAt).getTime() : Date.now();
-      const margin = 2 * 60 * 60 * 1000; // 2 hours — users may return without new session
+      // Match events: prefer dbSessionId, fall back to guestId + time window
+      const start = s.startedAt.getTime();
+      const end = s.endedAt ? s.endedAt.getTime() : Date.now();
       const matching = genioEvents.filter((e) =>
-        e.guestId === s.guestId &&
-        e.createdAt.getTime() >= start - margin &&
-        e.createdAt.getTime() <= end + margin,
+        e.dbSessionId === s.id ||
+        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
       );
-      if (matching.length > 0) {
-        dbSessionsWithGenio.add(s.id);
-        const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[], lastStep: "" };
-        let completesAfterLastStart = 0;
-        const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS"];
-        const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos", GENIO_STEP_GRID: "Grilla", GENIO_STEP_RESULTS: "Resultados" };
-        let maxStep = -1;
-        for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
-          if (e.eventType === "GENIO_START") { data.timesUsed++; completesAfterLastStart = 0; }
-          if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
-            const name = genioDishMap[e.dishId];
-            if (name) {
-              data.recommendations.push({ name, isBestMatch: completesAfterLastStart === 0 });
-              completesAfterLastStart++;
-            }
-          }
-          const stepIdx = stepOrder.indexOf(e.eventType);
-          if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
+      if (matching.length === 0) continue;
+
+      dbSessionsWithGenio.add(s.id);
+      const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[], lastStep: "" };
+      let completesAfterLastStart = 0;
+      const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS"];
+      const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos", GENIO_STEP_GRID: "Grilla", GENIO_STEP_RESULTS: "Resultados" };
+      let maxStep = -1;
+      for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
+        if (e.eventType === "GENIO_START") { data.timesUsed++; completesAfterLastStart = 0; }
+        if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
+          const name = genioDishMap[e.dishId];
+          if (name) { data.recommendations.push({ name, isBestMatch: completesAfterLastStart === 0 }); completesAfterLastStart++; }
         }
-        genioDataByDbSession[s.id] = data;
+        const stepIdx = stepOrder.indexOf(e.eventType);
+        if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
       }
+      genioDataByDbSession[s.id] = data;
     }
 
-    // Experience submissions
+    // ── Experience submissions: scoped to session time range ──
     const expSubmissions = sessionGuestIds.length ? await prisma.experienceSubmission.findMany({
       where: { guestId: { in: sessionGuestIds } },
       select: {
@@ -147,14 +163,19 @@ export async function GET(req: NextRequest) {
         experience: { select: { template: { select: { name: true, iconEmoji: true } } } },
       },
     }) : [];
-    const expByGuest: Record<string, typeof expSubmissions> = {};
-    for (const sub of expSubmissions) {
-      const key = sub.guestId || "";
-      if (!expByGuest[key]) expByGuest[key] = [];
-      expByGuest[key].push(sub);
-    }
 
-    // Visit days
+    // ── DishFavorites: scoped to session time range ──
+    const dishFavorites = sessionGuestIds.length ? await prisma.dishFavorite.findMany({
+      where: { guestId: { in: sessionGuestIds } },
+      select: { id: true, guestId: true, dishId: true, createdAt: true, restaurantId: true },
+    }) : [];
+    const favDishIds = [...new Set(dishFavorites.map(f => f.dishId))];
+    const favDishes = favDishIds.length ? await prisma.dish.findMany({
+      where: { id: { in: favDishIds } }, select: { id: true, name: true, photos: true },
+    }) : [];
+    const favDishMap = Object.fromEntries(favDishes.map(d => [d.id, d]));
+
+    // ── Visit days (for badge, stays per guest) ──
     const allGuestSessions = sessionGuestIds.length ? await prisma.session.findMany({
       where: { guestId: { in: sessionGuestIds } },
       select: { guestId: true, startedAt: true },
@@ -167,8 +188,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Waiter calls by session
-    const sessionIds = sessions.map(s => s.id);
+    // ── Waiter calls by session ──
     const waiterCalls = sessionIds.length ? await prisma.waiterCall.findMany({
       where: { sessionId: { in: sessionIds } },
       select: { id: true, sessionId: true, tableName: true, calledAt: true, answeredAt: true },
@@ -182,12 +202,22 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Enrich
+    // ── Enrich: scope everything to each session ──
     const enriched = sessions.map((s) => {
       const viewed = (s.dishesViewed as any[]) || [];
       const cats = (s.categoriesViewed as any[]) || [];
-      const favIngs = (s.guest.favoriteIngredients as Record<string, number>) || {};
-      const topFavorites = Object.entries(favIngs).sort((a, b) => b[1] - a[1]).slice(0, 5).map(([name, score]) => ({ name, score }));
+      const start = s.startedAt.getTime();
+      const end = s.endedAt ? s.endedAt.getTime() : Date.now();
+
+      // Scope experiences to this session's time range
+      const sessionExps = expSubmissions.filter(sub =>
+        sub.guestId === s.guestId && sub.submittedAt.getTime() >= start - 60_000 && sub.submittedAt.getTime() <= end + 60_000
+      );
+
+      // Scope dish favorites to this session's time range
+      const sessionFavs = dishFavorites.filter(f =>
+        f.guestId === s.guestId && f.createdAt.getTime() >= start - 60_000 && f.createdAt.getTime() <= end + 60_000
+      );
 
       return {
         ...s,
@@ -203,8 +233,13 @@ export async function GET(req: NextRequest) {
         usedGenio: dbSessionsWithGenio.has(s.id),
         genioData: genioDataByDbSession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
-        topFavorites,
-        experienceSubmissions: (expByGuest[s.guestId] || []).map((sub) => ({
+        dishFavorites: sessionFavs.map(f => ({
+          id: f.id,
+          dishId: f.dishId,
+          dish: favDishMap[f.dishId] || null,
+          createdAt: f.createdAt,
+        })),
+        experienceSubmissions: sessionExps.map((sub) => ({
           id: sub.id,
           templateName: sub.experience.template.name,
           templateEmoji: sub.experience.template.iconEmoji,

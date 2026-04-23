@@ -3,12 +3,13 @@
  * Uses guestId (persistent) + sessionId (per-tab) from centralized lib.
  */
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 function track(restaurantId: string, eventType: string, extra?: Record<string, unknown>) {
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), ...extra }),
+    body: JSON.stringify({ eventType, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), ...extra }),
   }).catch(() => {});
 }
 

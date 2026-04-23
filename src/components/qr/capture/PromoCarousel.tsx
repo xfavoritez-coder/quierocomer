@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 interface PromoDish {
   id: string;
@@ -38,7 +39,7 @@ function trackPromo(restaurantId: string, eventType: string, dishId?: string, pr
   fetch("/api/qr/stats", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, dishId: dishId || null, promoId: promoId || null, guestId: getGuestId(), sessionId: getSessionId() }),
+    body: JSON.stringify({ eventType, restaurantId, dishId: dishId || null, promoId: promoId || null, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
   }).catch(() => {});
 }
 

@@ -80,7 +80,7 @@ interface SessionData {
   language: string | null;
   dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
-  topFavorites: { name: string; score: number }[];
+  dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
   waiterCalls: { id: string; tableName: string | null; calledAt: string; answeredAt: string | null; responseTime: number | null }[];
 }
@@ -169,6 +169,7 @@ export default function AdminSessions() {
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
                       {s.waiterCalls?.length > 0 && <span style={{ color: "#16a34a" }}>· 🔔 Garzón ({s.waiterCalls.length})</span>}
+                      {s.dishFavorites?.length > 0 && <span style={{ color: "#ef4444" }}>· ❤️ {s.dishFavorites.length}</span>}
                       {s.experienceSubmissions.length > 0 && <span style={{ color: "#c084fc" }}>· {s.experienceSubmissions[0].templateEmoji} Experiencia</span>}
                     </div>
                   </div>
@@ -280,15 +281,20 @@ export default function AdminSessions() {
                       </div>
                     )}
 
-                    {/* Guest favorite ingredients (accumulated) */}
-                    {s.topFavorites.length > 0 && (
+                    {/* Dish favorites added during this session */}
+                    {s.dishFavorites?.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Le gusta</p>
-                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                          {s.topFavorites.map((fav, i) => (
-                            <span key={fav.name} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: i === 0 ? "rgba(74,222,128,0.12)" : "rgba(74,222,128,0.06)", color: "#4ade80", fontWeight: i === 0 ? 600 : 400, border: `1px solid ${i === 0 ? "rgba(74,222,128,0.25)" : "rgba(74,222,128,0.12)"}` }}>
-                              {fav.name} ({fav.score})
-                            </span>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Favoritos ❤️ ({s.dishFavorites.length})</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {s.dishFavorites.map((fav) => (
+                            <div key={fav.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(239,68,68,0.04)", borderRadius: 8, border: "1px solid rgba(239,68,68,0.12)" }}>
+                              {fav.dish?.photos?.[0] ? (
+                                <img src={fav.dish.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
+                              ) : (
+                                <div style={{ width: 28, height: 28, borderRadius: 5, background: "#2A2A2A", flexShrink: 0 }} />
+                              )}
+                              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ef4444", flex: 1 }}>❤️ {fav.dish?.name || fav.dishId.slice(0, 8)}</span>
+                            </div>
                           ))}
                         </div>
                       </div>

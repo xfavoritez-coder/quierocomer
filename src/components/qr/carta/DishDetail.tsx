@@ -5,7 +5,7 @@ import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
-import { trackDishEnter, trackDishLeave } from "@/lib/sessionTracker";
+import { trackDishEnter, trackDishLeave, getDbSessionId } from "@/lib/sessionTracker";
 
 interface DishDetailProps {
   dish: Dish;
@@ -71,7 +71,7 @@ export default function DishDetail({
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "DISH_VIEW", dishId: dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId() }),
+      body: JSON.stringify({ eventType: "DISH_VIEW", dishId: dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
     }).catch(() => {});
   }, [dish.id, restaurantId]);
 

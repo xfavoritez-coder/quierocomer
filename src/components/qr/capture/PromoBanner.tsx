@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { getGuestId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 interface Props {
   restaurantId: string;
@@ -44,7 +45,7 @@ export default function PromoBanner({ restaurantId }: Props) {
           // Track PROMO_VIEWED
           fetch("/api/qr/stats", {
             method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ eventType: "QR_SCAN", restaurantId, guestId, sessionId: guestId }),
+            body: JSON.stringify({ eventType: "QR_SCAN", restaurantId, guestId, sessionId: guestId, dbSessionId: getDbSessionId() }),
           }).catch(() => {});
           // Show with delay
           setTimeout(() => setVisible(true), 2000);

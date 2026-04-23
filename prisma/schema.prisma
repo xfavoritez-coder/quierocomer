@@ -675,7 +675,8 @@ model StatEvent {
   tableId      String?
   promoId      String?
   eventType    StatEventType
-  sessionId    String
+  sessionId    String        // UUID de tab (legacy)
+  dbSessionId  String?       // Session.id real de la DB
   guestId      String?
   qrUserId     String?
   weather         String?
@@ -695,6 +696,7 @@ model StatEvent {
   @@index([guestId])
   @@index([qrUserId])
   @@index([sessionId])
+  @@index([dbSessionId])
   @@index([genioSessionId])
   @@index([eventType, createdAt])
 }
