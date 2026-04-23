@@ -409,64 +409,18 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
   return null;
 }
 
-/* =============== EXPANDABLE PITCH =============== */
-function VjPitch({ text, className, style, isLight }: { text: string; className?: string; style?: React.CSSProperties; isLight?: boolean }) {
-  const lang = useLang();
-  const [expanded, setExpanded] = useState(false);
-  const [clamped, setClamped] = useState(false);
-  const pRef = useRef<HTMLParagraphElement>(null);
-
-  // Detect actual visual overflow instead of guessing by character count
-  useEffect(() => {
-    const el = pRef.current;
-    if (!el) return;
-    // Check after fonts load and layout settles
-    const check = () => setClamped(el.scrollHeight > el.clientHeight + 2);
-    check();
-    // Re-check once fonts are ready (Fraunces is variable-width)
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(check);
-    }
-  }, [text]);
-
-  const btnColor = isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)";
+/* =============== PITCH (full description, no truncation) =============== */
+function VjPitch({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties; isLight?: boolean }) {
+  // Remove WebkitLineClamp from passed style to show full text
+  const { WebkitLineClamp: _, WebkitBoxOrient: _2, display: _3, overflow: _4, ...cleanStyle } = (style || {}) as any;
 
   return (
-    <div style={{ position: "relative" }}>
-      <p
-        ref={pRef}
-        className={`vj-pitch font-[family-name:var(--font-fraunces)] ${className || ""}`}
-        style={{ ...style, WebkitLineClamp: expanded ? 999 : 3 }}
-      >
-        {text}
-      </p>
-      {clamped && !expanded && (
-        <button
-          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: btnColor, fontSize: "13px", fontWeight: 600,
-            padding: "4px 0", marginTop: 0, fontStyle: "normal",
-          }}
-        >
-          {t(lang, "seeMore")}
-        </button>
-      )}
-      {expanded && (
-        <button
-          onClick={(e) => { e.stopPropagation(); setExpanded(false); setClamped(true); }}
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: btnColor, fontSize: "13px", fontWeight: 600,
-            padding: "4px 0", marginTop: 0, fontStyle: "normal",
-          }}
-        >
-          {t(lang, "seeLess")}
-        </button>
-      )}
-    </div>
+    <p
+      className={`vj-pitch font-[family-name:var(--font-fraunces)] ${className || ""}`}
+      style={{ ...cleanStyle, display: "block", overflow: "visible" }}
+    >
+      {text}
+    </p>
   );
 }
 
