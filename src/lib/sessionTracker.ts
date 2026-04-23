@@ -78,9 +78,14 @@ function bindActivityListeners() {
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       closeSession("pagehide");
-    } else if (document.visibilityState === "visible" && (!session || session.closed)) {
+    } else if (document.visibilityState === "visible") {
       // User returned (unlocked phone, switched back to tab) — start fresh session
-      if (lastRestaurantId) startSession(lastRestaurantId, lastTableId, lastIsQrScan);
+      if (!lastRestaurantId) return;
+      const tryResume = () => {
+        if (startingSession) { setTimeout(tryResume, 200); return; }
+        if (!session || session.closed) startSession(lastRestaurantId!, lastTableId, lastIsQrScan);
+      };
+      tryResume();
     }
   });
   window.addEventListener("beforeunload", () => closeSession("beforeunload"));
