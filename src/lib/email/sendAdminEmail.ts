@@ -44,7 +44,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
 
 /** Wrap content in the branded admin email template */
 export function adminEmailTemplate(content: string): string {
-  return `<html><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
+  return `<html><head><meta name="color-scheme" content="light dark"><meta name="supported-color-schemes" content="light dark"><style>:root{color-scheme:light dark}@media(prefers-color-scheme:dark){.email-btn,a.email-btn span{color:#ffffff!important}}</style></head><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
 <div style="max-width:640px;margin:0 auto;padding:40px 16px">
 <div style="text-align:center;margin-bottom:16px">
 <p style="font-size:32px;margin:0">🧞</p>
@@ -121,7 +121,7 @@ ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e
 <div style="text-align:center">
   <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
     <td align="center" bgcolor="#F4A623" style="border-radius:10px;padding:14px 32px">
-      <a href="${panelLink}" target="_blank" style="font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;letter-spacing:0.5px"><span style="color:#ffffff;text-decoration:none">Entrar a mi panel &#8594;</span></a>
+      <a href="${panelLink}" target="_blank" class="email-btn" style="font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;letter-spacing:0.5px"><span style="color:#ffffff!important;text-decoration:none">Entrar a mi panel &#8594;</span></a>
     </td>
   </tr></table>
 </div>`);
