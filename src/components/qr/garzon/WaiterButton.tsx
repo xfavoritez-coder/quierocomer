@@ -113,7 +113,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", bottom: size + 8, right: 0,
+            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
             background: "#16a34a", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 600,
             boxShadow: "0 4px 12px rgba(22,163,74,0.3)", zIndex: 60,
@@ -121,7 +121,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           }}
         >
           ¡Garzón avisado!
-          <div style={{ position: "absolute", bottom: -4, right: size / 2 - 4, transform: "rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
+          <div style={{ position: "absolute", top: "50%", right: -4, transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#16a34a" }} />
         </div>
       )}
 
@@ -130,14 +130,14 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", bottom: size + 8, right: 0,
+            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
             background: "#333", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 500,
             zIndex: 60, whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
           }}
         >
           {toast}
-          <div style={{ position: "absolute", bottom: -4, right: size / 2 - 4, transform: "rotate(45deg)", width: 8, height: 8, background: "#333" }} />
+          <div style={{ position: "absolute", top: "50%", right: -4, transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#333" }} />
         </div>
       )}
 
