@@ -1291,3 +1291,35 @@ model DishFavorite {
   @@index([qrUserId])
   @@index([guestId])
 }
+
+// ─── Platform Campaigns (marketing masivo) ─────────────────────────────
+
+model PlatformCampaign {
+  id             String   @id @default(cuid())
+  subject        String
+  status         String   @default("draft") // draft, sending, sent
+  totalContacts  Int      @default(0)
+  totalSent      Int      @default(0)
+  totalErrors    Int      @default(0)
+  createdAt      DateTime @default(now())
+  sentAt         DateTime?
+  contacts       PlatformCampaignContact[]
+}
+
+model PlatformCampaignContact {
+  id            String    @id @default(cuid())
+  campaignId    String
+  email         String
+  openedAt      DateTime?
+  clickedAt     DateTime?
+  unsubscribedAt DateTime?
+  errorMsg      String?
+  sentAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  campaign      PlatformCampaign @relation(fields: [campaignId], references: [id])
+
+  @@unique([campaignId, email])
+  @@index([email])
+  @@index([campaignId])
+}
