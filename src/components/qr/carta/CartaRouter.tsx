@@ -11,9 +11,11 @@ import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
+import { LangProvider } from "@/contexts/LangContext";
 import FavoritesToasts from "./FavoritesToasts";
 import NameModal from "../auth/NameModal";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
+import type { Lang } from "@/lib/qr/i18n";
 
 interface Review {
   id: string;
@@ -32,10 +34,13 @@ interface Props {
   reviews: Review[];
   tableId?: string;
   marketingPromos?: any[];
+  initialView?: string;
+  lang?: Lang;
 }
 
 export default function CartaRouter(props: Props) {
-  const { view, isReady } = useCartaView((props.restaurant as any).defaultView);
+  const lang = props.lang || "es";
+  const { view, isReady } = useCartaView((props.restaurant as any).defaultView, props.initialView);
   const trackedRef = useRef<string | null>(null);
   // Check cookie instantly to avoid flash of "not logged in"
   const [qrUser, setQrUser] = useState<any>(() => {
@@ -116,54 +121,56 @@ export default function CartaRouter(props: Props) {
   const sharedProps = { ...props, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter };
 
   return (
-    <FavoritesProvider>
-      {(!isReady || view === "premium") && <CartaPremium {...sharedProps} />}
-      {isReady && view === "lista" && <CartaLista {...sharedProps} />}
-      {isReady && view === "viaje" && <CartaViaje {...sharedProps} />}
+    <LangProvider value={lang}>
+      <FavoritesProvider>
+        {view === "premium" && <CartaPremium {...sharedProps} />}
+        {view === "lista" && <CartaLista {...sharedProps} />}
+        {view === "viaje" && <CartaViaje {...sharedProps} />}
 
-      {overlay && (
-        <div
-          className="fixed flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
-          style={{
-            top: 0, left: 0, right: 0, bottom: 0, minHeight: "100dvh",
-            zIndex: 200,
-            background: "#0e0e0e",
-            opacity: fadeOut ? 0 : 1,
-            transition: "opacity 0.3s ease",
-          }}
-        >
-          <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
-            {overlay.view === "lista" && <List size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
-            {overlay.view === "premium" && <BookOpen size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
-            {overlay.view === "viaje" && <Rocket size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+        {overlay && (
+          <div
+            className="fixed flex flex-col items-center justify-center font-[family-name:var(--font-dm)]"
+            style={{
+              top: 0, left: 0, right: 0, bottom: 0, minHeight: "100dvh",
+              zIndex: 200,
+              background: "#0e0e0e",
+              opacity: fadeOut ? 0 : 1,
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
+              {overlay.view === "lista" && <List size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+              {overlay.view === "premium" && <BookOpen size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+              {overlay.view === "viaje" && <Rocket size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+            </div>
+            <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20 }}>
+              Cargando vista {overlay.label}
+            </p>
           </div>
-          <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20 }}>
-            Cargando vista {overlay.label}
-          </p>
-        </div>
-      )}
+        )}
 
-      {profileOpen && (
-        <ProfileDrawer
-          qrUser={qrUser}
-          restaurantId={props.restaurant.id}
-          onClose={() => setProfileOpen(false)}
-          onLogout={() => { setQrUser(null); setProfileOpen(false); }}
-        />
-      )}
+        {profileOpen && (
+          <ProfileDrawer
+            qrUser={qrUser}
+            restaurantId={props.restaurant.id}
+            onClose={() => setProfileOpen(false)}
+            onLogout={() => { setQrUser(null); setProfileOpen(false); }}
+          />
+        )}
 
-      <FavoritesToasts />
+        <FavoritesToasts />
 
-      {showNameModal && (
-        <NameModal onSave={(name) => { setShowNameModal(false); setQrUser((prev: any) => prev ? { ...prev, name } : prev); }} />
-      )}
+        {showNameModal && (
+          <NameModal onSave={(name) => { setShowNameModal(false); setQrUser((prev: any) => prev ? { ...prev, name } : prev); }} />
+        )}
 
-      <style>{`
-        @keyframes genioFloat {
-          0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
-          50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
-        }
-      `}</style>
-    </FavoritesProvider>
+        <style>{`
+          @keyframes genioFloat {
+            0%, 100% { transform: translateY(0) scale(1); opacity: 0.7; }
+            50% { transform: translateY(-8px) scale(1.15); opacity: 1; }
+          }
+        `}</style>
+      </FavoritesProvider>
+    </LangProvider>
   );
 }

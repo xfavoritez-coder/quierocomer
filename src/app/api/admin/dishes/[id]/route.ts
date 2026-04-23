@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse } from "@/lib/adminAuth";
+import { translateDish } from "@/lib/ai/translateContent";
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);
@@ -49,6 +50,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       },
       include: { category: { select: { id: true, name: true } }, dishIngredients: { select: { ingredientId: true } } },
     });
+
+    // Re-translate if Spanish description changed
+    if (body.description !== undefined) {
+      // Reset auto-translations, keep manual ones
+      await prisma.dishTranslation.updateMany({
+        where: { dishId: id, isManual: false },
+        data: { description: null },
+      });
+      translateDish(id).catch((e) => console.error("[translate dish]", e));
+    }
 
     // Sync DishIngredient links if ingredientIds provided
     if (body.ingredientIds !== undefined) {

@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { Layers, List, BookOpen, Rocket, Check } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Layers, List, BookOpen, Rocket, Globe } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
+import { useLang } from "@/contexts/LangContext";
+import { LANG_FLAGS, SUPPORTED_LANGS, t } from "@/lib/qr/i18n";
+import type { Lang } from "@/lib/qr/i18n";
 import GenioTip from "../genio/GenioTip";
 
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
+const LANG_STORAGE_KEY = "qc_lang";
 
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
   { value: "lista", label: "Lista", Icon: List },
@@ -20,6 +25,10 @@ interface Props {
 
 export default function ViewSelector({ restaurantId }: Props) {
   const { view, setView } = useCartaView();
+  const lang = useLang();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -39,15 +48,12 @@ export default function ViewSelector({ restaurantId }: Props) {
   }, [open]);
 
   // First-time tooltip with attention pulse
-  const pulseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!localStorage.getItem(TOOLTIP_KEY)) {
       const timer = setTimeout(() => setShowTooltip(true), 1800);
       return () => clearTimeout(timer);
     }
   }, []);
-
-  // No bounce — just static tooltip
 
   const dismissTooltip = () => {
     setShowTooltip(false);
@@ -58,13 +64,20 @@ export default function ViewSelector({ restaurantId }: Props) {
     setOpen(false);
     if (next === view) return;
     const option = OPTIONS.find((o) => o.value === next);
-    // Show overlay IMMEDIATELY before React re-renders
     showViewTransition(option?.label || "", next);
     setView(next);
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);
     }).catch(() => {});
   };
+
+  const handleLangChange = useCallback((next: Lang) => {
+    if (next === lang) return;
+    localStorage.setItem(LANG_STORAGE_KEY, next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lang", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [lang, pathname, router, searchParams]);
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
@@ -76,46 +89,82 @@ export default function ViewSelector({ restaurantId }: Props) {
             position: "absolute",
             right: 62,
             display: "flex",
-            alignItems: "center",
-            gap: 8,
+            flexDirection: "column",
+            gap: 0,
             background: "rgba(0,0,0,0.75)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderRadius: 50,
-            padding: "6px 8px",
+            borderRadius: 20,
+            padding: "6px 6px",
             boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
             border: "1px solid rgba(255,255,255,0.1)",
             animation: "vsSlideIn 0.25s cubic-bezier(0.16,1,0.3,1)",
             whiteSpace: "nowrap",
           }}
         >
-          {OPTIONS.map(({ value, label, Icon }) => {
-            const isActive = view === value;
-            return (
-              <button
-                key={value}
-                role="menuitem"
-                onClick={() => handleSelect(value)}
-                className="flex items-center active:scale-95 transition-transform"
-                style={{
-                  gap: 5,
-                  padding: "8px 14px",
-                  borderRadius: 50,
-                  border: "none",
-                  cursor: "pointer",
-                  fontFamily: "inherit",
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                  transition: "all 0.15s",
-                  background: isActive ? "white" : "transparent",
-                  color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.75)",
-                }}
-              >
-                <Icon size={14} strokeWidth={1.75} />
-                {label}
-              </button>
-            );
-          })}
+          {/* View options row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
+            {OPTIONS.map(({ value, label, Icon }) => {
+              const isActive = view === value;
+              return (
+                <button
+                  key={value}
+                  role="menuitem"
+                  onClick={() => handleSelect(value)}
+                  className="flex items-center active:scale-95 transition-transform"
+                  style={{
+                    gap: 5,
+                    padding: "8px 14px",
+                    borderRadius: 50,
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    transition: "all 0.15s",
+                    background: isActive ? "white" : "transparent",
+                    color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.75)",
+                  }}
+                >
+                  <Icon size={14} strokeWidth={1.75} />
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 8px" }} />
+
+          {/* Language selector row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
+            <Globe size={12} style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+            {SUPPORTED_LANGS.map((l) => {
+              const isActive = lang === l;
+              return (
+                <button
+                  key={l}
+                  onClick={() => handleLangChange(l)}
+                  className="active:scale-95 transition-transform"
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 50,
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    transition: "all 0.15s",
+                    background: isActive ? "rgba(244,166,35,0.2)" : "transparent",
+                    color: isActive ? "#F4A623" : "rgba(255,255,255,0.5)",
+                  }}
+                >
+                  {LANG_FLAGS[l]}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Arrow pointing right to the trigger button */}
           <div style={{
@@ -161,7 +210,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           id="genio-tip-container"
           onClose={dismissTooltip}
           arrow="right"
-          
+
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
           Cambia de vista y descubre tu favorita.

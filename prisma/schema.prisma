@@ -450,10 +450,26 @@ model Category {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
-  dishes     Dish[]
+  restaurant   Restaurant            @relation(fields: [restaurantId], references: [id])
+  dishes       Dish[]
+  translations CategoryTranslation[]
 
   @@index([restaurantId])
+}
+
+model CategoryTranslation {
+  id         String   @id @default(cuid())
+  categoryId String
+  lang       String   // "en" | "pt"
+  name       String
+  isManual   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([categoryId, lang])
+  @@index([categoryId])
 }
 
 model Dish {
@@ -484,9 +500,25 @@ model Dish {
   dishIngredients     DishIngredient[]
   dishFavorites       DishFavorite[]
   modifierTemplates   ModifierTemplate[]     // many-to-many: plantillas de modificadores asignadas
+  translations        DishTranslation[]
 
   @@index([restaurantId])
   @@index([categoryId])
+}
+
+model DishTranslation {
+  id          String   @id @default(cuid())
+  dishId      String
+  lang        String   // "en" | "pt"
+  description String?
+  isManual    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  dish Dish @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, lang])
+  @@index([dishId])
 }
 
 model ModifierTemplate {

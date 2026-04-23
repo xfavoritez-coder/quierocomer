@@ -1,12 +1,18 @@
 import { prisma } from "@/lib/prisma";
+import type { Lang } from "@/lib/qr/i18n";
 
-export async function getRestaurantBySlug(slug: string) {
+export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
+  const needTranslations = lang !== "es";
+
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug, isActive: true },
     include: {
       categories: {
         where: { isActive: true },
         orderBy: { position: "asc" },
+        ...(needTranslations && {
+          include: { translations: { where: { lang } } },
+        }),
       },
       dishes: {
         where: { isActive: true, deletedAt: null },
@@ -27,6 +33,9 @@ export async function getRestaurantBySlug(slug: string) {
               },
             },
           },
+          ...(needTranslations && {
+            translations: { where: { lang } },
+          }),
         },
       },
       promotions: {
@@ -64,6 +73,19 @@ export async function getRestaurantBySlug(slug: string) {
   }
   for (const dishId of Object.keys(ratingMap)) {
     ratingMap[dishId].avg = ratingMap[dishId].avg / ratingMap[dishId].count;
+  }
+
+  // Overlay translations: replace description/name with translated versions
+  // Components receive the same shape — no changes needed downstream
+  if (needTranslations) {
+    for (const cat of restaurant.categories as any[]) {
+      const tr = cat.translations?.[0];
+      if (tr?.name) cat.name = tr.name;
+    }
+    for (const dish of restaurant.dishes as any[]) {
+      const tr = dish.translations?.[0];
+      if (tr?.description) dish.description = tr.description;
+    }
   }
 
   return { ...restaurant, ratingMap };

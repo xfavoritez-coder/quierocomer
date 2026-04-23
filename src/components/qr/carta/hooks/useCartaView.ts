@@ -13,15 +13,35 @@ function isValidView(v: string | null): v is CartaView {
   return v !== null && VALID_VIEWS.includes(v as CartaView);
 }
 
-export function useCartaView(restaurantDefaultView?: string | null) {
+export function useCartaView(restaurantDefaultView?: string | null, serverView?: string | null) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [view, setViewState] = useState<CartaView>(FALLBACK_VIEW);
-  const [isReady, setIsReady] = useState(false);
+
+  // Resolve initial view synchronously to avoid flash:
+  // If serverView is provided (from SSR), use it immediately.
+  // Then on client, localStorage may override it.
+  const initialView: CartaView = isValidView(serverView ?? null)
+    ? (serverView as CartaView)
+    : isValidView(restaurantDefaultView ?? null)
+      ? (restaurantDefaultView as CartaView)
+      : FALLBACK_VIEW;
+
+  const [view, setViewState] = useState<CartaView>(initialView);
+  // Start ready immediately when serverView is provided
+  const [isReady, setIsReady] = useState(!!serverView);
 
   useEffect(() => {
-    // Priority: URL param > localStorage > restaurant default > fallback
+    // If we already have a server view, only check localStorage override
+    if (serverView) {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (isValidView(stored) && stored !== view) {
+        setViewState(stored);
+      }
+      return;
+    }
+
+    // Fallback: original resolution logic for cases without serverView
     const urlView = searchParams.get("vista");
     if (isValidView(urlView)) {
       setViewState(urlView);
@@ -38,7 +58,7 @@ export function useCartaView(restaurantDefaultView?: string | null) {
       setViewState(restaurantDefaultView as CartaView);
     }
     setIsReady(true);
-  }, [searchParams, restaurantDefaultView]);
+  }, [searchParams, restaurantDefaultView, serverView]);
 
   const setView = useCallback(
     (next: CartaView) => {

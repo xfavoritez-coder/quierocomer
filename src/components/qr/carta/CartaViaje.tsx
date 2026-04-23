@@ -10,6 +10,9 @@ import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { useCartaView } from "./hooks/useCartaView";
+import { useLang } from "@/contexts/LangContext";
+import { t, chapterWord } from "@/lib/qr/i18n";
+import type { Lang } from "@/lib/qr/i18n";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
 interface Props {
@@ -30,7 +33,6 @@ interface Props {
 type SlideVariant = "hero" | "split" | "light" | "spotlight";
 type Palette = "ocean" | "earth" | "fire" | "cream";
 
-const CHAPTER_WORDS = ["uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"];
 
 function getVariant(dish: Dish, idx: number): SlideVariant {
   if (isGeniePick(dish)) return "spotlight";
@@ -60,6 +62,7 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
+  const lang = useLang();
   const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
   const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
@@ -149,7 +152,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         <div className="vj-reel" id="vj-reel">
 
           {/* ===== COVER ===== */}
-          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} />
+          <CoverSlide restaurant={restaurant} chapterCount={grouped.length} lang={lang} />
 
           {/* ===== CHAPTERS + TRACKS ===== */}
           {grouped.map((group, idx) => {
@@ -167,13 +170,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 dishes={group.dishes}
                 hasGenie={hasGenie}
                 categoryName={group.category.name}
+                lang={lang}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
               />
             );
           })}
 
           {/* ===== OUTRO ===== */}
-          <OutroSlide onGenio={() => setGenioOpen(true)} onSwitchView={() => setView("lista")} />
+          <OutroSlide onGenio={() => setGenioOpen(true)} onSwitchView={() => setView("lista")} lang={lang} />
         </div>
 
         {/* Genio */}
@@ -197,7 +201,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
 }
 
 /* =============== COVER =============== */
-function CoverSlide({ restaurant, chapterCount }: { restaurant: Restaurant; chapterCount: number }) {
+function CoverSlide({ restaurant, chapterCount, lang }: { restaurant: Restaurant; chapterCount: number; lang: Lang }) {
   const words = restaurant.name.split(" ");
   const w1 = words[0] || "";
   const w2 = words.slice(1).join(" ") || "";
@@ -207,16 +211,16 @@ function CoverSlide({ restaurant, chapterCount }: { restaurant: Restaurant; chap
       <div className="vj-cover-bg" />
       <div className="vj-cover-grain" />
       <div className="vj-cover-center">
-        <div className="vj-cover-kicker">LA CARTA</div>
+        <div className="vj-cover-kicker">{t(lang, "theMenu")}</div>
         <h1 className="vj-cover-title font-[family-name:var(--font-fraunces)]">
           <span className="vj-line"><span>{w1}</span></span>
           {w2 && <span className="vj-line"><span><em>{w2}</em></span></span>}
         </h1>
         <p className="vj-cover-sub font-[family-name:var(--font-fraunces)]">
-          Un recorrido por {chapterCount} secciones. Desliza para comenzar.
+          {t(lang, "aTourThrough")} {chapterCount} {t(lang, "sections")}. {t(lang, "slideToStart")}
         </p>
       </div>
-      <div className="vj-cover-cue">Comenzar</div>
+      <div className="vj-cover-cue">{t(lang, "start")}</div>
     </section>
   );
 }
@@ -254,29 +258,29 @@ function ChapterOpening({
 
       <div className="vj-chapter-content">
         <div className="vj-chapter-num font-[family-name:var(--font-fraunces)]">
-          Sección {CHAPTER_WORDS[index] || index + 1}
+          {t("es", "section")} {chapterWord("es", index)}
         </div>
         <h2 className="vj-chapter-name font-[family-name:var(--font-fraunces)]">
           {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
         </h2>
         <div className="vj-chapter-count">
-          {dishCount} {dishCount === 1 ? "plato" : "platos"}
+          {dishCount} {dishCount === 1 ? t("es", "plate") : t("es", "plates")}
         </div>
       </div>
-      <div className="vj-chapter-hint">Desliza →</div>
+      <div className="vj-chapter-hint">{t("es", "slideRight")}</div>
     </section>
   );
 }
 
 /* =============== CATEGORY TRACK (chapter title + dishes in horizontal) =============== */
 function CategoryTrack({
-  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, onActive,
+  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, lang, onActive,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
   index: number; palette: Palette;
   poetic: { prefix: string; accent: string };
   totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string;
-  onActive: () => void;
+  lang: Lang; onActive: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -365,12 +369,12 @@ function CategoryTrack({
               {poetic.prefix}{poetic.prefix ? <br /> : ""}<em>{poetic.accent}</em>
             </h2>
             <div style={{ fontSize: "16px", letterSpacing: "0.2em", textTransform: "uppercase" as const, opacity: 0.65 }}>
-              {group.dishes.length} {group.dishes.length === 1 ? "plato" : "platos"}
+              {group.dishes.length} {group.dishes.length === 1 ? t(lang, "plate") : t(lang, "plates")}
             </div>
           </div>
 
           <div style={{ position: "absolute", bottom: 40, left: "50%", transform: "translateX(-50%)", fontSize: "11px", letterSpacing: "0.3em", textTransform: "uppercase" as const, opacity: 0.45 }}>
-            Desliza →
+            {t(lang, "slideRight")}
           </div>
         </div>
 
@@ -407,42 +411,59 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
 
 /* =============== EXPANDABLE PITCH =============== */
 function VjPitch({ text, className, style, isLight }: { text: string; className?: string; style?: React.CSSProperties; isLight?: boolean }) {
+  const lang = useLang();
   const [expanded, setExpanded] = useState(false);
-  const isLong = text.length > 90;
+  const [clamped, setClamped] = useState(false);
+  const pRef = useRef<HTMLParagraphElement>(null);
+
+  // Detect actual visual overflow instead of guessing by character count
+  useEffect(() => {
+    const el = pRef.current;
+    if (!el) return;
+    // Check after fonts load and layout settles
+    const check = () => setClamped(el.scrollHeight > el.clientHeight + 2);
+    check();
+    // Re-check once fonts are ready (Fraunces is variable-width)
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(check);
+    }
+  }, [text]);
+
+  const btnColor = isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)";
+
   return (
     <div style={{ position: "relative" }}>
       <p
+        ref={pRef}
         className={`vj-pitch font-[family-name:var(--font-fraunces)] ${className || ""}`}
         style={{ ...style, WebkitLineClamp: expanded ? 999 : 3 }}
       >
         {text}
       </p>
-      {isLong && !expanded && (
+      {clamped && !expanded && (
         <button
           onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
           className="font-[family-name:var(--font-dm)]"
           style={{
             background: "none", border: "none", cursor: "pointer",
-            color: isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)",
-            fontSize: "13px", fontWeight: 600, padding: "4px 0", marginTop: -8,
-            fontStyle: "normal",
+            color: btnColor, fontSize: "13px", fontWeight: 600,
+            padding: "4px 0", marginTop: 0, fontStyle: "normal",
           }}
         >
-          ver más
+          {t(lang, "seeMore")}
         </button>
       )}
-      {isLong && expanded && (
+      {expanded && (
         <button
-          onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+          onClick={(e) => { e.stopPropagation(); setExpanded(false); setClamped(true); }}
           className="font-[family-name:var(--font-dm)]"
           style={{
             background: "none", border: "none", cursor: "pointer",
-            color: isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)",
-            fontSize: "13px", fontWeight: 600, padding: "4px 0", marginTop: -8,
-            fontStyle: "normal",
+            color: btnColor, fontSize: "13px", fontWeight: 600,
+            padding: "4px 0", marginTop: 0, fontStyle: "normal",
           }}
         >
-          ver menos
+          {t(lang, "seeLess")}
         </button>
       )}
     </div>
@@ -481,7 +502,7 @@ function DishSlide({ dish, variant, palette, index }: {
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-          <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
+          <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap" }}><span>{dish.name}</span>{vjBadges}</span></span>
         </h3>
         {pitch && <VjPitch text={pitch} />}
         <div className="vj-meta">
@@ -526,7 +547,7 @@ function DishSlide({ dish, variant, palette, index }: {
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
+        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap" }}><span>{dish.name}</span>{vjBadges}</span></span>
       </h3>
       {pitch && <VjPitch text={pitch} isLight />}
       <div className="vj-meta">
@@ -545,7 +566,7 @@ function DishSlide({ dish, variant, palette, index }: {
       </div>
       <span className="vj-eyebrow" style={{ color: "#F4A623" }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
       <h3 className="vj-title vj-title-gradient font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
+        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap" }}><span>{dish.name}</span>{vjBadges}</span></span>
       </h3>
       {pitch && <VjPitch text={pitch} />}
       <div className="vj-meta">
@@ -556,17 +577,17 @@ function DishSlide({ dish, variant, palette, index }: {
 }
 
 /* =============== OUTRO =============== */
-function OutroSlide({ onGenio, onSwitchView }: { onGenio: () => void; onSwitchView: () => void }) {
+function OutroSlide({ onGenio, onSwitchView, lang }: { onGenio: () => void; onSwitchView: () => void; lang: Lang }) {
   return (
     <section className="vj-outro" data-section="outro">
       <div className="vj-outro-bg" />
       <div className="vj-outro-inner">
         <div style={{ fontSize: "3rem", marginBottom: 24, animation: "genioOutroFloat 2s ease-in-out infinite" }}>🧞</div>
         <h3 className="font-[family-name:var(--font-fraunces)]">
-          ¿No te decides <em>qué pedir</em>?
+          {t(lang, "cantDecide")} <em>{t(lang, "whatToOrder")}</em>?
         </h3>
-        <p>El Genio te puede ayudar a elegir.</p>
-        <button className="vj-outro-cta" onClick={onGenio}>Preguntar al Genio ✦</button>
+        <p>{t(lang, "genieCanHelp")}</p>
+        <button className="vj-outro-cta" onClick={onGenio}>{t(lang, "askGenie")}</button>
       </div>
     </section>
   );
@@ -574,16 +595,18 @@ function OutroSlide({ onGenio, onSwitchView }: { onGenio: () => void; onSwitchVi
 
 /* =============== HOOKS =============== */
 function useInView(ref: React.RefObject<HTMLElement | null>, cb: (inView: boolean) => void) {
+  const cbRef = useRef(cb);
+  cbRef.current = cb;
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach((e) => cb(e.isIntersecting)),
+      (entries) => entries.forEach((e) => cbRef.current(e.isIntersecting)),
       { threshold: 0.55 },
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [ref, cb]);
+  }, [ref]);
 }
 
 /* =============== ALL CSS =============== */
@@ -766,7 +789,7 @@ const CSS = `
   .vj-split-info { flex: 1; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 3; }
   .vj-split-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #F4A623, transparent); margin-bottom: 16px; }
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
-  .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
   .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
   .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 18px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }

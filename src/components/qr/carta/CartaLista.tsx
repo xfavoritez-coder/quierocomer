@@ -16,6 +16,8 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 
 interface Review {
@@ -59,6 +61,7 @@ export default function CartaLista({
   marketingPromos,
 }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
+  const lang = useLang();
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -230,7 +233,7 @@ export default function CartaLista({
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar en la carta..."
+            placeholder={t(lang, "search")}
             className="font-[family-name:var(--font-dm)]"
             style={{ flex: 1, border: "none", outline: "none", fontSize: "0.92rem", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
           />
@@ -374,8 +377,8 @@ export default function CartaLista({
         <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
           🧞
         </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir en {restaurant.name}?</h3>
-        <p style={{ fontSize: "12px", color: "#8a5a2c", margin: "0 0 16px" }}>El Genio conoce cada plato y puede ayudarte</p>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
+        <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "genieKnows")}</p>
         <button
           onClick={() => setGenioOpen(true)}
           className="active:scale-[0.97] transition-transform"
@@ -387,7 +390,7 @@ export default function CartaLista({
             boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
           }}
         >
-          Preguntar al Genio
+          {t(lang, "askGenieShort")}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
         </button>
       </div>

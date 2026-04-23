@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
+import { translateCategory } from "@/lib/ai/translateContent";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -50,6 +51,9 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Translate category name to en/pt in background
+    translateCategory(category.id).catch((e) => console.error("[translate cat]", e));
+
     return NextResponse.json(category);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
@@ -78,6 +82,16 @@ export async function PUT(req: NextRequest) {
     if (isActive !== undefined) data.isActive = isActive;
 
     const updated = await prisma.category.update({ where: { id }, data });
+
+    // Re-translate if name changed
+    if (name !== undefined) {
+      await prisma.categoryTranslation.updateMany({
+        where: { categoryId: id, isManual: false },
+        data: { name: "" },
+      });
+      translateCategory(id).catch((e) => console.error("[translate cat]", e));
+    }
+
     return NextResponse.json(updated);
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

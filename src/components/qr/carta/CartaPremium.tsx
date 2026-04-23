@@ -19,6 +19,8 @@ import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessio
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface Review {
   id: string;
@@ -89,6 +91,7 @@ export default function CartaPremium({
   showWaiter,
   marketingPromos,
 }: CartaProps) {
+  const lang = useLang();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [genioExpanded, setGenioExpanded] = useState(false);
@@ -276,7 +279,7 @@ export default function CartaPremium({
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Buscar en la carta..."
+            placeholder={t(lang, "search")}
             className="font-[family-name:var(--font-dm)]"
             style={{
               flex: 1,
@@ -460,8 +463,8 @@ export default function CartaPremium({
         <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
           🧞
         </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir en {restaurant.name}?</h3>
-        <p style={{ fontSize: "12.5px", color: "#8a5a2c", margin: "0 0 18px" }}>El Genio conoce cada plato y puede ayudarte</p>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
+        <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
         <button
           onClick={() => setGenioOpen(true)}
           className="active:scale-[0.97] transition-transform"
@@ -473,7 +476,7 @@ export default function CartaPremium({
             boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
           }}
         >
-          Preguntar al Genio
+          {t(lang, "askGenieShort")}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
         </button>
       </div>

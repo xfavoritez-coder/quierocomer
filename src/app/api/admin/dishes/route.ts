@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
+import { translateDish } from "@/lib/ai/translateContent";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -91,6 +92,11 @@ export async function POST(req: NextRequest) {
       console.log(`[AI] ${name}: ${aiResult.matched.length} matched, ${aiResult.suggested.length} suggested`);
     } catch (e) {
       console.error("[AI extract]", e);
+    }
+
+    // Translate description to en/pt in background
+    if (description) {
+      translateDish(dish.id).catch((e) => console.error("[translate dish]", e));
     }
 
     // Re-fetch dish with updated ingredients
