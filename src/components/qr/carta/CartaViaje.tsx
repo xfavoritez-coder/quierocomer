@@ -137,7 +137,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           >
             <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
           </button>
-          <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} size={48} waiterPanelActive={showWaiter} />
+          {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} size={48} waiterPanelActive={showWaiter} />}
           <ViewSelector restaurantId={restaurant.id} />
         </div>
 

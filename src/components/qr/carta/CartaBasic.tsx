@@ -118,7 +118,7 @@ export default function CartaBasic({
         >
           <Sparkles size={22} color="white" />
         </button>
-        <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={tableId ? `Mesa ${tableId}` : undefined} />
+        {tableId && <WaiterButton restaurantId={restaurant.id} tableId={tableId} tableName={`Mesa ${tableId}`} />}
       </div>
 
       {selectedDish && (
