@@ -186,15 +186,15 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               {logos.map((l) => (
                 <a key={l.slug} href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer"
                   className="lnd-logo-chip"
-                  style={{ display: "flex", alignItems: "center", gap: 10, background: "#fff", border: "1px solid #f0ebe0", borderRadius: 999, padding: "8px 16px 8px 8px", textDecoration: "none", flexShrink: 0, scrollSnapAlign: "start", transition: "all 0.2s" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #f0ebe0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, scrollSnapAlign: "start", transition: "all 0.2s" }}>
                   {l.logoUrl ? (
-                    <img src={l.logoUrl} alt={l.name} style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover" }} />
+                    <img src={l.logoUrl} alt={l.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
                   ) : (
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: l.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 12, fontWeight: 700 }}>{l.initials}</div>
+                    <div style={{ width: 38, height: 38, borderRadius: "50%", background: l.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 14, fontWeight: 700 }}>{l.initials}</div>
                   )}
                   <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
-                    <span style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#333" }}>{l.name}</span>
-                    <span style={{ fontSize: 10, fontWeight: 600, color: "#d4a015" }}>Ver carta →</span>
+                    <span style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#333" }}>{l.name}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: "#d4a015" }}>Ver carta →</span>
                   </div>
                 </a>
               ))}
@@ -267,7 +267,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           </div>
 
           {/* 4 Feature Cards */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+          <div className="lnd-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
             {/* Card 1: Diseño premium */}
             <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
               <div style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
@@ -432,10 +432,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#e5e5e5" }}>
-                  <Check color="#fbbf24" /> <span>Integracion con Toteat y Justo</span>
-                  <span style={{ background: "rgba(251,191,36,0.25)", color: "#fbbf24", padding: "1px 6px", borderRadius: 4, fontSize: "9.5px", fontWeight: 700, letterSpacing: "0.3px", textTransform: "uppercase", marginLeft: 4 }}>Proximamente</span>
-                </div>
               </div>
             </div>
           </div>
@@ -526,6 +522,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           .lnd-nav-desktop { display: none !important; }
           .lnd-nav-mobile { display: flex !important; }
           .lnd-genio-grid { grid-template-columns: 1fr !important; }
+          .lnd-features-grid { grid-template-columns: 1fr !important; }
           .lnd-plans-grid { grid-template-columns: 1fr !important; }
           .lnd-cta-form { flex-direction: column !important; }
           .lnd-footer-top { flex-direction: column !important; }
