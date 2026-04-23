@@ -46,7 +46,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
 export function adminEmailTemplate(content: string): string {
   return `<html><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
 <div style="max-width:640px;margin:0 auto;padding:40px 16px">
-<div style="text-align:center;margin-bottom:32px">
+<div style="text-align:center;margin-bottom:16px">
 <p style="font-size:32px;margin:0">🧞</p>
 </div>
 <div style="background-color:#2d1a08;border-radius:20px;border:1px solid rgba(232,168,76,0.25);padding:36px 36px">
@@ -79,26 +79,34 @@ export function resetPasswordEmailHtml(name: string, resetLink: string): string 
 /** Welcome email for new owners */
 export function welcomeOwnerEmailHtml(name: string, email: string, password: string, qrLink: string | null, panelLink: string): string {
   const step = (n: number, title: string, body: string) => `
-<div style="margin-bottom:20px">
+<div style="margin-bottom:28px">
   <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
-    <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">${n}</td>
-    <td style="padding-left:10px;color:#FFD600;font-size:15px;font-weight:bold">${title}</td>
+    <td width="38" valign="top" style="padding-top:1px">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">${n}</td>
+      </tr></table>
+    </td>
+    <td valign="top" style="color:#FFD600;font-size:15px;font-weight:bold">${title}</td>
   </tr></table>
   <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0">${body}</p>
 </div>`;
 
   return adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Todo listo, ${name}! 🎉</h2>
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:28px;text-align:center">¡Todo listo, ${name}! 🎉</h2>
 <p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px">
   Tu carta QR ya está funcionando. Solo debes seguir los 3 siguientes pasos para dejar todo listo y comenzar a aumentar tus ventas.
 </p>
 
 ${step(1, "Revisa tu carta", `Mira cómo se ve tu menú y que esté todo bien en${qrLink ? ` <a href="${qrLink}" style="color:#FFD600;text-decoration:underline">${qrLink.replace("https://", "")}</a>` : " tu link QR"}.`)}
 
-<div style="margin-bottom:20px">
+<div style="margin-bottom:28px">
   <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
-    <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">2</td>
-    <td style="padding-left:10px;color:#FFD600;font-size:15px;font-weight:bold">Ajusta lo que necesites</td>
+    <td width="38" valign="top" style="padding-top:1px">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">2</td>
+      </tr></table>
+    </td>
+    <td valign="top" style="color:#FFD600;font-size:15px;font-weight:bold">Ajusta lo que necesites</td>
   </tr></table>
   <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 12px">Entra a tu panel con los siguientes accesos y corrige lo que haga falta.</p>
   <div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:16px 18px">
@@ -112,8 +120,8 @@ ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e
 
 <div style="text-align:center">
   <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
-    <td align="center" bgcolor="#F4A623" style="border-radius:10px">
-      <a href="${panelLink}" target="_blank" style="display:inline-block;padding:14px 32px;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.5px">Entrar a mi panel →</a>
+    <td align="center" bgcolor="#F4A623" style="border-radius:10px;padding:14px 32px">
+      <a href="${panelLink}" target="_blank" style="font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;letter-spacing:0.5px"><span style="color:#ffffff;text-decoration:none">Entrar a mi panel &#8594;</span></a>
     </td>
   </tr></table>
 </div>`);
