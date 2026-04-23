@@ -36,10 +36,19 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
           box-shadow: 0 0 60px rgba(0,0,0,0.06);
         }
 
-        /* Category nav: center tabs instead of edge-to-edge scroll */
+        /* Category nav: wrap instead of horizontal scroll */
+        .qr-desktop-wrap nav.sticky .flex.overflow-x-auto,
+        .qr-desktop-wrap .sticky.top-0 .flex.overflow-x-auto {
+          flex-wrap: wrap !important;
+          overflow-x: visible !important;
+          gap: 4px 20px;
+          padding-top: 4px;
+          padding-bottom: 4px;
+        }
         .qr-desktop-wrap nav.sticky,
         .qr-desktop-wrap .sticky.top-0 {
-          border-radius: 0;
+          height: auto !important;
+          min-height: 44px;
         }
 
         /* CartaPremium: convert horizontal scroll to wrapping grid */
