@@ -9,11 +9,6 @@ const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/a
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Redirect root to /qr landing
-  if (pathname === "/") {
-    return NextResponse.redirect(new URL("/qr", request.url));
-  }
-
   // --- Panel page routes (owner panel) ---
   if (pathname.startsWith("/panel")) {
     if (PUBLIC_PANEL_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
