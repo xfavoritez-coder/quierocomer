@@ -195,14 +195,14 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     })
     .then(data => {
       startingSession = false;
-      // Use captured reference to avoid race conditions
-      if (newSession === session && data.sessionId) {
-        newSession.dbSessionId = data.sessionId;
-        // Start heartbeat ONLY after we have the DB session ID
+      if (!data.sessionId) return;
+      // Assign dbSessionId to whichever session is current
+      const target = newSession === session ? newSession : session;
+      if (target && !target.dbSessionId) {
+        target.dbSessionId = data.sessionId;
+        // Start heartbeat
         if (heartbeatTimer) clearInterval(heartbeatTimer);
         heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
-      } else {
-        console.warn("[QC] Session reference mismatch or missing sessionId", { match: newSession === session, hasId: !!data.sessionId });
       }
     })
     .catch(err => { startingSession = false; console.error("[QC] Session start error:", err); });

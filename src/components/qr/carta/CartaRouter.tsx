@@ -76,7 +76,7 @@ export default function CartaRouter(props: Props) {
     }).catch(() => {});
   }, []);
 
-  // Persist QR scan flag in sessionStorage so it survives view changes
+  // Persist QR scan flag in sessionStorage so it survives view changes & in-app browser URL stripping
   const isQrScan = (() => {
     if (typeof window === "undefined") return props.isQrScan || false;
     const key = `qr_scan_${props.restaurant.id}`;
@@ -84,7 +84,16 @@ export default function CartaRouter(props: Props) {
       sessionStorage.setItem(key, "1");
       return true;
     }
-    return sessionStorage.getItem(key) === "1";
+    if (sessionStorage.getItem(key) === "1") return true;
+    // Heuristic: in-app browsers (Instagram, WhatsApp) strip query params
+    // If referrer is empty and we're on a /qr/ page, likely a QR scan
+    const ua = navigator.userAgent;
+    const isInApp = /Instagram|FBAN|FBAV|WhatsApp|Line\//i.test(ua);
+    if (isInApp) {
+      sessionStorage.setItem(key, "1");
+      return true;
+    }
+    return false;
   })();
 
   // Set mesa token if arriving from table QR or general QR with token
