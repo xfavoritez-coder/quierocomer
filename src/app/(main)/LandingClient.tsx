@@ -138,7 +138,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           <div className="lnd-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 28 }}>
             <a href="#funcionalidades" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Funcionalidades</a>
             <a href="#planes" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Planes</a>
-            <Link href="/panel/login" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Iniciar sesion</Link>
+            <Link href="/panel/login" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Iniciar sesión</Link>
             <a href="#contacto" style={{ fontSize: 13, color: "#fff", background: "#111", padding: "8px 16px", borderRadius: 8, textDecoration: "none", fontFamily: F, fontWeight: 600 }}>Agendar demo</a>
           </div>
           <button className="lnd-nav-mobile" onClick={() => setMobileMenu(!mobileMenu)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
@@ -152,7 +152,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           <div className="lnd-nav-mobile" style={{ display: "none", flexDirection: "column", background: "#fff", borderBottom: "1px solid #eeeae0", padding: "4px 24px 16px" }}>
             <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
             <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
-            <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesion</Link>
+            <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesión</Link>
             <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 12, textAlign: "center", padding: "12px 0", background: "#111", color: "#fff", borderRadius: 10, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Agendar demo</a>
           </div>
         )}
@@ -168,7 +168,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             La carta digital que <span style={{ color: "#d4a015" }}>recomienda</span> y sube tu ticket
           </h1>
           <p style={{ fontFamily: B, fontSize: "clamp(15px, 2.5vw, 16px)", color: "#555", lineHeight: 1.5, maxWidth: 520, margin: "0 auto 28px" }}>
-            Un garzon inteligente que aprende de cada cliente y lo guia hacia los platos que te convienen.
+            Un garzón inteligente que aprende de cada cliente y lo guía hacia los platos que justo quiere pedir.
           </p>
           <a href="#contacto" style={{ display: "inline-block", padding: "12px 22px", background: "#111", color: "#fff", borderRadius: 10, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Agenda tu demo →</a>
         </div>
@@ -178,7 +178,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       {/* ══════ LOGOS BAR ══════ */}
       <section style={{ background: "#faf6ee", borderTop: "1px solid #f5e6c8", borderBottom: "1px solid #eeeae0", padding: "32px 0" }}>
         <p style={{ fontSize: "11.5px", fontWeight: 600, color: "#999", letterSpacing: "1.5px", textTransform: "uppercase", textAlign: "center", marginBottom: 18, padding: "0 24px", fontFamily: F }}>
-          Restaurantes que ya confian en QuieroComer
+          Restaurantes que ya confían en QuieroComer
         </p>
         <div className="lnd-logos-track" style={{ position: "relative" }}>
           <div className="lnd-logos-scroll" style={{ overflowX: "auto", padding: "6px 0", scrollbarWidth: "none" as any }}>
@@ -207,9 +207,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <section id="funcionalidades" style={{ background: "#fff", padding: "60px 24px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ maxWidth: 580, margin: "0 auto 36px", textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>¿Por que QuieroComer?</p>
+            <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>¿Por qué QuieroComer?</p>
             <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 12, color: "#111" }}>Una carta que vende por ti</h2>
-            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.55 }}>Mas que un QR: una experiencia que convierte navegacion en ventas.</p>
+            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.55 }}>Más que un QR: una experiencia que convierte navegación en ventas.</p>
           </div>
 
           {/* Genio Card */}
@@ -232,7 +232,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ display: "flex", gap: 8 }}>
                 <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg, #fbbf24, #f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>🧞</div>
                 <div>
-                  <div style={{ background: "#fff8e7", color: "#78350f", padding: "10px 14px", borderRadius: "10px 10px 10px 3px", fontSize: "13.5px", lineHeight: 1.45, border: "0.5px solid #f5e6c8" }}>Te recomiendo el tiradito o el ceviche del dia.</div>
+                  <div style={{ background: "#fff8e7", color: "#78350f", padding: "10px 14px", borderRadius: "10px 10px 10px 3px", fontSize: "13.5px", lineHeight: 1.45, border: "0.5px solid #f5e6c8" }}>Te recomiendo el tiradito o el ceviche del día.</div>
                   <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                     {/* Tiradito Manglar */}
                     <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "0.5px solid #f5e6c8", padding: "6px 10px 6px 6px", borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
@@ -398,9 +398,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#f3f0e8", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
-                  { t: "Menu digital QR", tip: "Tu carta accesible con un codigo QR desde la mesa" },
-                  { t: "Vista simple", tip: "Layout clasico de carta digital: fotos, nombre, precio y descripcion" },
-                  { t: "El Genio incluido 🧞", tip: "Tu garzon con IA que recomienda platos en lenguaje natural" },
+                  { t: "Menú digital QR", tip: "Tu carta accesible con un código QR desde la mesa" },
+                  { t: "Vista simple", tip: "Layout clásico de carta digital: fotos, nombre, precio y descripción" },
+                  { t: "El Genio incluido 🧞", tip: "Tu garzón con IA que recomienda platos en lenguaje natural" },
                   { t: "Experiencias virales", tip: "Juegos tipo 'que pizza eres' que tus clientes comparten en redes, haciendo viral tu restaurante" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
@@ -420,15 +420,15 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
                 {[
-                  { t: "3 vistas personalizables", tip: "Elige entre 3 estilos visuales de carta segun el tipo de restaurante" },
+                  { t: "3 vistas personalizables", tip: "Elige entre 3 estilos visuales de carta según el tipo de restaurante" },
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
-                  { t: "Publicar ofertas del dia", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
-                  { t: "Estadisticas avanzadas", tip: "Datos detallados: que platos leen mas, conversion, horas peak" },
-                  { t: "Automatizaciones", tip: "Acciones que se ejecutan solas segun reglas que tu defines" },
-                  { t: "Llamar al garzon", tip: "Tus clientes llaman al garzon desde su celular, sin levantarse" },
-                  { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automaticamente a ingles y portugues" },
-                  { t: "Banners y promos dinamicas", tip: "Cintas de anuncios y promociones que rotan segun horario y temporada" },
-                  { t: "Campanas de clientes", tip: "Reconecta con clientes que no vuelven, felicita cumpleaneros, y fideliza en automatico" },
+                  { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
+                  { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
+                  { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
+                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
+                  { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
+                  { t: "Banners y promos dinamicas", tip: "Cintas de anuncios y promociones que rotan según horario y temporada" },
+                  { t: "Campañas de clientes", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros, y fideliza en automático" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
@@ -445,7 +445,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             ¿Listo para probar<br />la carta que sube tu ticket?
           </h2>
           <p style={{ fontSize: 16, color: "#666", maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.5 }}>
-            Dejanos tu correo y te contactamos en 24 horas para mostrarte una demo.
+            Déjanos tu correo y te contactamos en 24 horas para mostrarte una demo.
           </p>
           {submitted ? (
             <p style={{ fontSize: 15, color: "#16a34a", fontWeight: 600, fontFamily: F }}>Recibido. Te contactamos pronto.</p>
@@ -493,7 +493,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 12 }}>Empresa</h5>
                 <a href="#contacto" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.85)", textDecoration: "none", padding: "4px 0" }}>Contacto</a>
                 <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.45)", padding: "4px 0" }}>Privacidad</span>
-                <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.45)", padding: "4px 0" }}>Terminos</span>
+                <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.45)", padding: "4px 0" }}>Términos</span>
               </div>
             </div>
           </div>
