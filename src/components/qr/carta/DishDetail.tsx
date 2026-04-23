@@ -103,12 +103,10 @@ export default function DishDetail({
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  // Swipe up/down to close (with visual drag + prevent horizontal scroll hijack)
+  // Swipe up/down to close — simple fade out, no drag animation
   const touchRef = useRef<{ x: number; y: number; locked: "v" | "h" | null; dy: number } | null>(null);
-  const [dragY, setDragY] = useState(0);
   const handleTouchStart = (e: React.TouchEvent) => {
     touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null, dy: 0 };
-    setDragY(0);
   };
   const handleTouchMove = (e: React.TouchEvent) => {
     const t = touchRef.current;
@@ -116,27 +114,20 @@ export default function DishDetail({
     const dx = Math.abs(e.touches[0].clientX - t.x);
     const dy = e.touches[0].clientY - t.y;
     const adx = dx, ady = Math.abs(dy);
-    // Lock direction after 18px — require 2:1 ratio to avoid diagonal ambiguity
     if (!t.locked && (adx > 18 || ady > 18)) {
       if (ady > adx * 2) t.locked = "v";
       else if (adx > 8) t.locked = "h";
-      // else still ambiguous, wait for more movement
     }
     if (t.locked === "v") {
-      e.preventDefault(); // block horizontal scroll
+      e.preventDefault();
       t.dy = dy;
-      setDragY(dy);
     }
   };
   const handleTouchEnd = () => {
     const t = touchRef.current;
     touchRef.current = null;
-    if (t?.locked === "v" && Math.abs(t.dy) > 80) {
-      // Animate out in the drag direction before closing
-      setDragY(t.dy > 0 ? 600 : -600);
-      setTimeout(() => { setDragY(0); close(); }, 200);
-    } else {
-      setDragY(0);
+    if (t?.locked === "v" && Math.abs(t.dy) > 60) {
+      close(); // fade out via visible → false
     }
   };
 
@@ -156,9 +147,6 @@ export default function DishDetail({
           display: "flex", width: "100%", height: "100%",
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
-          transform: dragY ? `translateY(${Math.abs(dragY) > 500 ? dragY : dragY * 0.4}px)` : undefined,
-          opacity: dragY ? Math.max(0.2, 1 - Math.abs(dragY) / 400) : 1,
-          transition: Math.abs(dragY) > 500 ? "transform 0.2s ease-in, opacity 0.2s ease-in" : dragY ? "none" : "transform 0.25s ease-out, opacity 0.25s ease-out",
         }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
