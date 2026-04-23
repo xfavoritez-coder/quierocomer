@@ -1,14 +1,94 @@
 "use client";
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
+import { toast } from "sonner";
 
 const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
 
+function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
+  const F = "var(--font-display)";
+  const GOLD = "#F4A623";
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "10px 14px", height: 40, boxSizing: "border-box",
+    background: "#FFF9ED", border: "1px solid #E8C78A", borderRadius: 6,
+    color: "#1a1a1a", fontFamily: F, fontSize: "0.88rem", outline: "none",
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!currentPassword || !newPassword || !confirmPassword) { setError("Todos los campos son requeridos"); return; }
+    if (newPassword.length < 8) { setError("La nueva contraseña debe tener al menos 8 caracteres"); return; }
+    if (!/\d/.test(newPassword)) { setError("La nueva contraseña debe contener al menos 1 número"); return; }
+    if (newPassword !== confirmPassword) { setError("Las contraseñas no coinciden"); return; }
+    setSaving(true);
+    try {
+      const res = await fetch("/api/panel/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || "Error al cambiar contraseña"); setSaving(false); return; }
+      toast.success("Contraseña actualizada");
+      onDone();
+    } catch { setError("Error de conexión"); }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
+      <div style={{ background: "white", borderRadius: 16, padding: 28, width: "100%", maxWidth: 380, boxShadow: "0 12px 40px rgba(0,0,0,0.2)" }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span style={{ fontSize: 40 }}>🔐</span>
+          <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#1a1a1a", margin: "8px 0 4px" }}>Cambio de contraseña requerido</h2>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#8a7550", margin: 0 }}>Por seguridad, debes cambiar tu contraseña temporal antes de continuar.</p>
+        </div>
+
+        {error && (
+          <div style={{ background: "#FEF2F2", border: "1px solid #FECACA", borderRadius: 8, padding: "8px 12px", marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#dc2626", margin: 0 }}>{error}</p>
+          </div>
+        )}
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Contraseña actual</label>
+            <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} placeholder="Tu contraseña temporal" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Nueva contraseña</label>
+            <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} placeholder="Mín. 8 caracteres, 1 número" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#8a7550", marginBottom: 4, textTransform: "uppercase", letterSpacing: "1px" }}>Confirmar contraseña</label>
+            <input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="Repite la nueva contraseña" style={inputStyle} />
+          </div>
+          <button onClick={handleSubmit} disabled={saving} style={{
+            width: "100%", height: 44, marginTop: 4,
+            background: saving ? "#E8A942" : GOLD,
+            color: "white", fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
+            border: "none", borderRadius: 8, cursor: saving ? "wait" : "pointer",
+          }}>
+            {saving ? "Guardando..." : "Cambiar contraseña"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role } = usePanelSession();
+  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword } = usePanelSession();
 
   if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
 
@@ -83,6 +163,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   return (
     <SessionContext.Provider value={ctxValue}>
+      {mustChangePassword && <ForceChangePasswordModal onDone={clearMustChangePassword} />}
       <AdminLayoutOwner
         name={name}
         restaurants={restaurants}

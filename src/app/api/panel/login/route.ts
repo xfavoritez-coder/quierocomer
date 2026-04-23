@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
       role: owner.role,
       name: owner.name,
       restaurants: owner.restaurants,
+      mustChangePassword: owner.mustChangePassword,
     });
     setPanelCookies(response, token, owner.role, owner.id);
     return response;

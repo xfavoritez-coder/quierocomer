@@ -27,6 +27,7 @@ export async function GET(req: NextRequest) {
       name: owner.name,
       restaurants: owner.restaurants,
       selectedRestaurantId: owner.restaurants[0]?.id || null,
+      mustChangePassword: owner.mustChangePassword,
     });
   } catch (error) {
     console.error("Panel me error:", error);

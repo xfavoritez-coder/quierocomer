@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await prisma.restaurantOwner.update({
       where: { id: panelId },
-      data: { passwordHash },
+      data: { passwordHash, mustChangePassword: false },
     });
 
     return NextResponse.json({ success: true });

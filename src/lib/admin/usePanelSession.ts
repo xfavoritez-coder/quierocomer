@@ -15,6 +15,7 @@ export interface PanelSession {
   selectedRestaurantId: string | null;
   loading: boolean;
   error: boolean;
+  mustChangePassword: boolean;
 }
 
 const SELECTED_KEY = "panel_selected_restaurant";
@@ -27,6 +28,7 @@ let _session: PanelSession = {
   selectedRestaurantId: null,
   loading: true,
   error: false,
+  mustChangePassword: false,
 };
 let _listeners = new Set<() => void>();
 let _fetched = false;
@@ -63,6 +65,7 @@ function fetchSession() {
         selectedRestaurantId: validSaved ? savedId : (data.selectedRestaurantId || data.restaurants[0]?.id || null),
         loading: false,
         error: false,
+        mustChangePassword: data.mustChangePassword || false,
       };
       notify();
     })
@@ -82,6 +85,7 @@ export function resetPanelSession() {
     selectedRestaurantId: null,
     loading: true,
     error: false,
+    mustChangePassword: false,
   };
   notify();
 }
@@ -111,9 +115,15 @@ export function usePanelSession() {
       selectedRestaurantId: null,
       loading: true,
       error: false,
+      mustChangePassword: false,
     };
     window.location.href = "/panel/login";
   }, []);
 
-  return { ...session, setSelectedRestaurant, logout };
+  const clearMustChangePassword = useCallback(() => {
+    _session = { ..._session, mustChangePassword: false };
+    notify();
+  }, []);
+
+  return { ...session, setSelectedRestaurant, logout, clearMustChangePassword };
 }

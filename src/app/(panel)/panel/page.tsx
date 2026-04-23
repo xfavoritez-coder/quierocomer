@@ -18,6 +18,7 @@ interface DashData {
   abandonedThisWeek: number;
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; activePromos: number; weekFavorites: number; weekWaiterCalls: number;
+  todayUniqueVisitors: number;
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
@@ -138,6 +139,7 @@ export default function PanelDashboard() {
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Hoy</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         <Stat icon="📱" label="Escaneos hoy" value={data.todayScans} />
+        <Stat icon="👤" label="Visitantes únicos hoy" value={data.todayUniqueVisitors} />
         <Stat icon="🔔" label="Llamados garzón" value={data.todayWaiterCalls + data.todayWaiterPending} sub={data.todayWaiterPending > 0 ? `${data.todayWaiterPending} pendiente${data.todayWaiterPending > 1 ? "s" : ""}` : undefined} color={data.todayWaiterPending > 0 ? "#ef4444" : undefined} />
       </div>
 

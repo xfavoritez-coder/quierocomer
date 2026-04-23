@@ -2,6 +2,31 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 
+/** Delete an owner — superadmin only */
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  try {
+    const { id } = await params;
+    const owner = await prisma.restaurantOwner.findUnique({ where: { id }, include: { restaurants: { select: { id: true } } } });
+    if (!owner) return NextResponse.json({ error: "Owner no encontrado" }, { status: 404 });
+
+    // Unlink restaurants (don't delete them, just remove ownerId)
+    await prisma.restaurant.updateMany({ where: { ownerId: id }, data: { ownerId: null } });
+    // Delete uploaded tickets
+    await prisma.restaurantTicket.deleteMany({ where: { uploadedById: id } });
+    // Delete owner
+    await prisma.restaurantOwner.delete({ where: { id } });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Delete owner error:", error);
+    return NextResponse.json({ error: "Error al eliminar" }, { status: 500 });
+  }
+}
+
 /** Update an owner — superadmin only */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const authErr = checkAdminAuth(req);

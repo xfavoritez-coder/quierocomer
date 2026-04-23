@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Grid3X3, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Grid3X3, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -253,6 +253,9 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             </div>
           )}
           <div style={{ padding: "8px 20px", flex: 1 }}>
+            <a href="/panel/perfil" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
+              <UserCog size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi perfil</span>
+            </a>
             <button onClick={() => setPwOpen(true)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
               <Lock size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Cambiar contraseña</span>
             </button>

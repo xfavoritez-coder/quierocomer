@@ -146,14 +146,27 @@ export default function OwnersPage() {
   };
 
   const handleSendWelcome = async (o: Owner) => {
-    const pw = prompt("Contraseña del owner (se incluirá en el email):");
-    if (!pw) return;
+    if (!confirm(`¿Enviar email de bienvenida a ${o.email}? Se generará una contraseña automática.`)) return;
     try {
-      const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw }) });
+      const res = await fetch(`/api/admin/owners/${o.id}/send-welcome`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
       if (res.ok) showToast(`Email de bienvenida enviado a ${o.email}`);
       else {
         const body = await res.json().catch(() => ({}));
         showToast(`Error al enviar email: ${body.error || res.status}`);
+      }
+    } catch { showToast("Error de conexión"); }
+  };
+
+  const handleDelete = async (o: Owner) => {
+    if (!confirm(`¿Eliminar al dueño "${o.name}" (${o.email})? Sus restaurantes no se eliminarán, solo se desvinculan.`)) return;
+    try {
+      const res = await fetch(`/api/admin/owners/${o.id}`, { method: "DELETE" });
+      if (res.ok) {
+        setOwners(prev => prev.filter(x => x.id !== o.id));
+        showToast(`Dueño ${o.name} eliminado`);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        showToast(`Error: ${body.error || res.status}`);
       }
     } catch { showToast("Error de conexión"); }
   };
@@ -238,6 +251,7 @@ export default function OwnersPage() {
                         <button onClick={() => openPassword(o)} style={btnStyle("#8b5cf6")}>Password</button>
                         <button onClick={() => handleSendResetLink(o)} style={btnStyle("#3b82f6")}>Reset link</button>
                         <button onClick={() => handleSendWelcome(o)} style={btnStyle("#10b981")}>Bienvenida</button>
+                        <button onClick={() => handleDelete(o)} style={btnStyle("#ef4444")}>Eliminar</button>
                       </div>
                     </td>
                   </tr>

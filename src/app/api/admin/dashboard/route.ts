@@ -69,6 +69,7 @@ export async function GET(req: NextRequest) {
       activePromos,
       weekFavorites,
       weekWaiterCalls,
+      uniqueVisitorsToday,
     ] = await Promise.all([
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } },
@@ -170,6 +171,12 @@ export async function GET(req: NextRequest) {
       prisma.waiterCall.count({
         where: { ...restaurantFilter, calledAt: { gte: weekAgo } },
       }),
+      // Today's unique visitors (distinct guestId in sessions)
+      prisma.session.findMany({
+        where: { ...restaurantFilter, startedAt: { gte: todayStart } },
+        select: { guestId: true },
+        distinct: ["guestId"],
+      }),
     ]);
 
     // Resolve dish names
@@ -232,6 +239,7 @@ export async function GET(req: NextRequest) {
       activePromos,
       weekFavorites,
       weekWaiterCalls,
+      todayUniqueVisitors: uniqueVisitorsToday.length,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
