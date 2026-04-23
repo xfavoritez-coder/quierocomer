@@ -45,11 +45,11 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
 /** Wrap content in the branded admin email template */
 export function adminEmailTemplate(content: string): string {
   return `<html><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
-<div style="max-width:560px;margin:0 auto;padding:40px 24px">
+<div style="max-width:640px;margin:0 auto;padding:40px 16px">
 <div style="text-align:center;margin-bottom:32px">
 <p style="font-size:32px;margin:0">🧞</p>
 </div>
-<div style="background-color:#2d1a08;border-radius:20px;border:1px solid rgba(232,168,76,0.25);padding:40px 32px">
+<div style="background-color:#2d1a08;border-radius:20px;border:1px solid rgba(232,168,76,0.25);padding:36px 36px">
 ${content}
 </div>
 <div style="text-align:center;margin-top:32px">
