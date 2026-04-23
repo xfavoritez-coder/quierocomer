@@ -214,6 +214,7 @@ export default function AdminSessions() {
                       {s.tableId
                         ? <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>QR Mesa</span>
                         : <span style={{ fontSize: "0.6rem", background: "rgba(255,255,255,0.06)", color: "#888", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Sin QR</span>}
+                      {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>🔔 Garzón</span>}
                       {s.isBot && <span style={{ fontSize: "0.6rem", background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Bot</span>}
                       {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
                       {!s.qrUser && !s.isBot && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
