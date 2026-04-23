@@ -94,6 +94,7 @@ export default function AdminSessions() {
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [filterRestaurant, setFilterRestaurant] = useState<string>("");
+  const [filterDate, setFilterDate] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -101,6 +102,7 @@ export default function AdminSessions() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
     if (filterRestaurant) params.set("restaurantId", filterRestaurant);
+    if (filterDate) params.set("date", filterDate);
     fetch(`/api/admin/sessions?${params}`)
       .then(r => r.json())
       .then(d => {
@@ -108,7 +110,7 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filterRestaurant, sessionLoading, page, refreshKey]);
+  }, [filterRestaurant, filterDate, sessionLoading, page, refreshKey]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
@@ -119,7 +121,16 @@ export default function AdminSessions() {
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Sesiones</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "4px 0 0" }}>{total} sesiones totales</p>
         </div>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            type="date"
+            value={filterDate}
+            onChange={e => { setFilterDate(e.target.value); setPage(1); }}
+            style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", colorScheme: "dark" }}
+          />
+          {filterDate && (
+            <button onClick={() => { setFilterDate(""); setPage(1); }} style={{ padding: "8px 12px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 10, color: "#F4A623", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Limpiar</button>
+          )}
           <select
             value={filterRestaurant}
             onChange={e => { setFilterRestaurant(e.target.value); setPage(1); }}

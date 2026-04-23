@@ -15,12 +15,20 @@ export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
     const restaurantId = url.searchParams.get("restaurantId");
+    const dateFilter = url.searchParams.get("date"); // YYYY-MM-DD
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = 30;
     const skip = (page - 1) * limit;
 
     // Build where filter with ownership enforcement
     const where: any = {};
+
+    if (dateFilter) {
+      const start = new Date(dateFilter + "T00:00:00");
+      const end = new Date(dateFilter + "T23:59:59.999");
+      where.startedAt = { gte: start, lte: end };
+    }
+
     if (restaurantId) {
       await requireRestaurantForOwner(req, restaurantId);
       where.restaurantId = restaurantId;

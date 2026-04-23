@@ -422,7 +422,7 @@ export default function CartaLista({
       </footer>
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-end" style={{ right: 12, bottom: "calc(24px + env(safe-area-inset-bottom))", gap: 8 }}>
+      <div className="fixed z-50 flex flex-col items-end" style={{ right: 12, bottom: "calc(36px + env(safe-area-inset-bottom))", gap: 8 }}>
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
