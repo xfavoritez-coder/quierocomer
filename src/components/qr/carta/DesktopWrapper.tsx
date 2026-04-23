@@ -32,9 +32,8 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
       .then(setQrDataUrl).catch(() => {});
   }, [slug]);
 
-  // Don't render anything until we know (prevents flash)
-  if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#0a0a0a" }} />;
-  if (!isDesktop) return <>{children}</>;
+  // Show children immediately until we know — avoids black flash on mobile
+  if (isDesktop === null || !isDesktop) return <>{children}</>;
 
   // Hide floating buttons on desktop
   const hideButtonsStyle = `

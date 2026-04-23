@@ -109,19 +109,16 @@ export default function DishDetail({
   const touchRef = useRef<{ x: number; y: number; locked: "v" | "h" | null; dy: number } | null>(null);
   const handleTouchStart = (e: React.TouchEvent) => {
     touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null, dy: 0 };
-    // Temporarily disable horizontal snap while detecting direction
-    if (scrollRef.current) scrollRef.current.style.scrollSnapType = "none";
   };
   const handleTouchMove = (e: React.TouchEvent) => {
     const t = touchRef.current;
     if (!t) return;
     const dx = Math.abs(e.touches[0].clientX - t.x);
     const dy = e.touches[0].clientY - t.y;
-    const ady = Math.abs(dy);
-    if (!t.locked && (dx > 12 || ady > 12)) {
-      t.locked = ady >= dx ? "v" : "h";
-      // Re-enable snap if horizontal
-      if (t.locked === "h" && scrollRef.current) scrollRef.current.style.scrollSnapType = "x mandatory";
+    const adx = dx, ady = Math.abs(dy);
+    if (!t.locked && (adx > 18 || ady > 18)) {
+      if (ady > adx * 2) t.locked = "v";
+      else if (adx > 8) t.locked = "h";
     }
     if (t.locked === "v") {
       e.preventDefault();
@@ -131,10 +128,8 @@ export default function DishDetail({
   const handleTouchEnd = () => {
     const t = touchRef.current;
     touchRef.current = null;
-    // Restore snap
-    if (scrollRef.current) scrollRef.current.style.scrollSnapType = "x mandatory";
     if (t?.locked === "v" && Math.abs(t.dy) > 60) {
-      close();
+      close(); // fade out via visible → false
     }
   };
 
