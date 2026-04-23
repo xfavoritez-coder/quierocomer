@@ -13,15 +13,16 @@ const NAV = [
 export default function GenieShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Don't render shell for admin or auth pages
+  // Don't render shell for admin, auth, or landing pages
   const isAdmin = pathname.startsWith("/admin");
   const isAuth = pathname.startsWith("/login") || pathname.startsWith("/registro");
+  const isLanding = pathname === "/";
 
   // Admin/auth pages skip GenieShell entirely — start ready immediately
-  const [ready, setReady] = useState(isAdmin || isAuth);
+  const [ready, setReady] = useState(isAdmin || isAuth || isLanding);
 
   useEffect(() => {
-    if (isAdmin || isAuth) { setReady(true); return; }
+    if (isAdmin || isAuth || isLanding) { setReady(true); return; }
 
     // Init session
     if (typeof window !== "undefined") {
@@ -42,7 +43,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   );
 
   // Admin and auth pages render without shell
-  if (isAdmin || isAuth) return <>{children}</>;
+  if (isAdmin || isAuth || isLanding) return <>{children}</>;
 
   const hideNav = false; // Nav always visible
 
