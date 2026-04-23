@@ -1,0 +1,629 @@
+"use client";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import SwipeDishGrid from "@/components/SwipeDishGrid";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Dish = any;
+
+const DIET_TYPES = [
+  { v: "como de todo", emoji: "🍽️", l: "Como de todo" },
+  { v: "vegetariano", emoji: "🌱", l: "Vegetariano" },
+  { v: "vegano", emoji: "🌿", l: "Vegano" },
+];
+
+const ALLERGIES = [
+  { v: "sin gluten", l: "Sin gluten" },
+  { v: "sin mariscos", l: "Sin mariscos" },
+  { v: "sin frutos secos", l: "Sin frutos secos" },
+  { v: "sin lácteos", l: "Sin lacteos" },
+  { v: "sin cerdo", l: "Sin cerdo" },
+  { v: "ninguna", l: "Ninguna" },
+];
+
+const FITNESS_OPTIONS = [
+  { v: "NONE", emoji: "🍔", l: "En modo chancho", sub: "como lo que sea" },
+  { v: "GAINING", emoji: "💪", l: "Subiendo masa", sub: "busco calorias y proteina" },
+  { v: "CUTTING", emoji: "🥗", l: "Cuidandome", sub: "proteinas, bajo carbo" },
+  { v: "MAINTAINING", emoji: "😐", l: "Sin preferencia", sub: "" },
+];
+
+function getWeatherIcon(code: number): string {
+  // Rain/snow always win regardless of time
+  if ([51,53,55,61,63,65].includes(code)) return "🌧";
+  if ([56,57,66,67].includes(code)) return "🌨";
+  if ([71,73,75,77].includes(code)) return "❄️";
+  // Clear/cloudy depends on time of day
+  const h = new Date().getHours();
+  const isNight = h >= 20 || h < 6;
+  if (code === 0) return isNight ? "🌙" : (h < 12 ? "🌅" : "☀️");
+  // Cloudy (1,2,3)
+  return isNight ? "☁️" : "⛅";
+}
+
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h >= 6 && h < 12) return "Buenos días";
+  if (h >= 12 && h < 20) return "Buena tarde";
+  return "Buenas noches";
+}
+
+function getSubtitle(): string {
+  const hour = new Date().getHours();
+  const minutes = new Date().getMinutes();
+  const timeDecimal = hour + minutes / 60;
+
+  const franja =
+    timeDecimal >= 6    && timeDecimal < 10   ? 'morning' :
+    timeDecimal >= 10   && timeDecimal < 12.5 ? 'brunch' :
+    timeDecimal >= 12.5 && timeDecimal < 17   ? 'lunch' :
+    timeDecimal >= 17   && timeDecimal < 19   ? 'once' :
+    timeDecimal >= 19   && timeDecimal < 23   ? 'dinner' :
+    'latenight';
+
+  const mensajes: Record<string, string[]> = {
+    morning: [
+      "Buen momento para un desayuno",
+      "El día recién empieza, hay que cargarlo bien",
+      "¿Con qué arrancamos hoy?",
+      "Mañana de esas que piden algo rico",
+      "El Genio ya sabe que buscas desayunar",
+    ],
+    brunch: [
+      "Hora del brunch, el mejor momento",
+      "¿Un brunch para arrancar bien el día?",
+      "El Genio tiene ideas para el brunch",
+      "Mañana perfecta para un brunch",
+      "Brunch, porque el desayuno se quedó corto",
+    ],
+    lunch: [
+      "¿Qué se te antoja para almorzar?",
+      "Almuerzo, la hora más importante del día",
+      "El estómago ya está hablando",
+      "Algo bueno para el almuerzo, vamos",
+      "El Genio tiene ideas para el almuerzo",
+    ],
+    once: [
+      "Algo para la once quizás",
+      "Esa hora entre el almuerzo y la cena",
+      "¿Un café con algo dulce?",
+      "La once no se negocia",
+      "Hora de algo rico para la tarde",
+    ],
+    dinner: [
+      "Una buena noche para cenar bien",
+      "¿Qué se te antoja para la cena?",
+      "El Genio tiene algo bueno para la noche",
+      "Noche de esas que piden algo especial",
+      "Termina bien el día con algo rico",
+    ],
+    latenight: [
+      "¿Antojo de noche?",
+      "El Genio no duerme, tú tampoco",
+      "Noche larga, hay que comer algo",
+      "¿Qué se come a esta hora?",
+      "Antojo nocturno, el Genio entiende",
+    ],
+  };
+
+  const msgs = mensajes[franja];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+function getSessionId(): string {
+  return localStorage.getItem("genie_session_id") ?? "";
+}
+function getVisitId(): string {
+  return sessionStorage.getItem("genieVisitId") ?? "";
+}
+
+export default function GeniePage() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "hunger" | "dishes">("loading");
+  const [activeFilter, setActiveFilter] = useState<"PLATOS" | "DULCE" | "BEBESTIBLE">("PLATOS");
+  const [pendingFeedback, setPendingFeedback] = useState<{ interactionId: string; dishName: string; dishImage: string | null } | null>(null);
+  const [hungerLevel, setHungerLevel] = useState("");
+  const [subtitle] = useState(() => getSubtitle()); // Stable per session, no re-roll on re-render
+
+  // Onboarding state
+  const [obStep, setObStep] = useState(0);
+  const [dietType, setDietType] = useState("");
+  const [allergies, setAllergies] = useState<string[]>([]);
+  const [fitnessMode, setFitnessMode] = useState("NONE");
+  const [userName, setUserName] = useState("");
+  const [savingOb, setSavingOb] = useState(false);
+
+  // Dishes state
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [loadingDishes, setLoadingDishes] = useState(false);
+  const seenIdsRef = useRef<string[]>([]);
+  const geoRequested = useRef(false);
+  const [previewDish, setPreviewDish] = useState<Dish | null>(null);
+
+  // Weather state
+  const [weatherInfo, setWeatherInfo] = useState<{icon: string, temp: number, greeting: string, city: string} | null>(null);
+
+  // Fetch weather
+  useEffect(() => {
+    const fetchWeather = async () => {
+      try {
+        const raw = sessionStorage.getItem("userCoords");
+        const coords = raw ? JSON.parse(raw) : { lat: -33.4569, lng: -70.6483 };
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,weathercode`);
+        if (res.ok) {
+          const data = await res.json();
+          const code = data.current?.weathercode ?? 0;
+          const icon = getWeatherIcon(code);
+          const temp = data.current?.temperature_2m ?? 0;
+          const greeting = getGreeting();
+          setWeatherInfo({ icon, temp, greeting, city: "Santiago" });
+        }
+      } catch {}
+    };
+    fetchWeather();
+  }, []);
+
+  // Check onboarding status
+  const { isLoading: authLoading } = useAuth();
+  useEffect(() => {
+    if (authLoading) return; // Wait for auth to resolve
+    if (!user) {
+      // Guest: check localStorage for onboarding done (persists across sessions)
+      const done = localStorage.getItem("genieOnboardingDone");
+      if (done === "true") { checkFeedback(); requestGeo(); }
+      else setPhase("onboarding");
+      return;
+    }
+    fetch(`/api/genie/onboarding?userId=${user.id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.onboardingDone) { checkFeedback(); requestGeo(); }
+        else setPhase("onboarding");
+      })
+      .catch(() => setPhase("onboarding"));
+  }, [user, authLoading]);
+
+  // Check for pending feedback before showing dishes
+  const checkFeedback = async () => {
+    const sid = getSessionId();
+    const params = new URLSearchParams({ sessionId: sid });
+    if (user?.id) params.set("userId", user.id);
+    try {
+      const res = await fetch(`/api/genie/pending-feedback?${params}`);
+      const data = await res.json();
+      if (data?.interactionId) {
+        setPendingFeedback(data);
+        setPhase("feedback");
+        return;
+      }
+    } catch {}
+    // Check for postres (20-60 min after last session)
+    const lastResult = localStorage.getItem("genieLastResultAt");
+    if (lastResult) {
+      const elapsed = Date.now() - Number(lastResult);
+      if (elapsed >= 20 * 60 * 1000 && elapsed <= 60 * 60 * 1000) {
+        localStorage.removeItem("genieLastResultAt");
+        sessionStorage.setItem("genieShowPostres", "true");
+      }
+    }
+    setPhase("hunger");
+  };
+
+  const submitFeedback = async (score: "LOVED" | "MEH" | "DISLIKED") => {
+    if (!pendingFeedback) return;
+    const sid = getSessionId();
+    await fetch("/api/genie/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ interactionId: pendingFeedback.interactionId, score, userId: user?.id || null, sessionId: sid }),
+    });
+    setPendingFeedback(null);
+    setPhase("hunger");
+  };
+
+  // Geolocation
+  const requestGeo = useCallback(() => {
+    if (geoRequested.current) return;
+    geoRequested.current = true;
+
+    const fallback = { lat: -33.4569, lng: -70.6483 };
+    const timeout = setTimeout(() => {
+      if (!sessionStorage.getItem("userCoords")) {
+        sessionStorage.setItem("userCoords", JSON.stringify(fallback));
+      }
+    }, 5000);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => {
+          clearTimeout(timeout);
+          sessionStorage.setItem("userCoords", JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
+        },
+        () => {
+          clearTimeout(timeout);
+          sessionStorage.setItem("userCoords", JSON.stringify(fallback));
+        },
+        { timeout: 5000, maximumAge: 300000 }
+      );
+    } else {
+      clearTimeout(timeout);
+      sessionStorage.setItem("userCoords", JSON.stringify(fallback));
+    }
+  }, []);
+
+  // Load dishes when entering dishes phase
+  useEffect(() => {
+    if (phase === "dishes") loadDishes();
+  }, [phase, activeFilter]);
+
+  const buildDishParams = useCallback(() => {
+    const sid = getSessionId();
+    const params = new URLSearchParams({ sessionId: sid, category: activeFilter });
+    if (user?.id) params.set("userId", user.id);
+    if (!user?.id) {
+      try {
+        const raw = localStorage.getItem("genieOnboardingData");
+        if (raw) {
+          const data = JSON.parse(raw);
+          const restrictions: string[] = [...(data.dietaryRestrictions ?? [])];
+          if (data.dietType && data.dietType !== "como de todo" && !restrictions.includes(data.dietType)) {
+            restrictions.push(data.dietType);
+          }
+          if (restrictions.length) params.set("diet", restrictions.join(","));
+        }
+      } catch {}
+    }
+    return params;
+  }, [activeFilter, user]);
+
+  const loadDishes = async () => {
+    setLoadingDishes(true);
+    const params = buildDishParams();
+    const exclude = seenIdsRef.current.join(",");
+    if (exclude) params.set("exclude", exclude);
+
+    try {
+      const res = await fetch(`/api/genie/dishes?${params}`);
+      const data = await res.json();
+      if (!res.ok) console.error("Dishes API error:", data);
+      if (Array.isArray(data) && data.length > 0) {
+        setDishes(data);
+        const sid = getSessionId();
+        fetch("/api/genie/interaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menuItemIds: data.map((d: Dish) => d.id),
+            action: "VIEWED",
+            userId: user?.id || null,
+            sessionId: sid,
+            visitId: getVisitId(),
+          }),
+        }).catch(() => {});
+      }
+    } catch {}
+    setLoadingDishes(false);
+  };
+
+  // Called by SwipeDishGrid when user swipes to load next set
+  const loadMoreDishes = useCallback(async (currentPageDishes: Dish[], negativeCats: string[] = []): Promise<Dish[]> => {
+    // Register IGNORED for non-selected dishes on current page
+    const sid = getSessionId();
+    const ignoredIds = currentPageDishes.filter((d: Dish) => !selected.has(d.id)).map((d: Dish) => d.id);
+    if (ignoredIds.length > 0) {
+      fetch("/api/genie/interaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItemIds: ignoredIds, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
+      }).catch(() => {});
+    }
+
+    // Add current dishes to seen list
+    seenIdsRef.current.push(...currentPageDishes.map((d: Dish) => d.id));
+
+    const params = buildDishParams();
+    const exclude = seenIdsRef.current.join(",");
+    if (exclude) params.set("exclude", exclude);
+
+    // Pass current selections for smart scoring
+    const selectedArr = [...selected];
+    if (selectedArr.length > 0) params.set("selected", selectedArr.join(","));
+
+    // Pass negative categories to deprioritize
+    if (negativeCats.length > 0) params.set("negativeCats", negativeCats.join(","));
+
+    try {
+      const res = await fetch(`/api/genie/dishes?${params}`);
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        // Register VIEWED for new dishes
+        fetch("/api/genie/interaction", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menuItemIds: data.map((d: Dish) => d.id),
+            action: "VIEWED",
+            userId: user?.id || null,
+            sessionId: sid,
+            visitId: getVisitId(),
+          }),
+        }).catch(() => {});
+        return data;
+      }
+    } catch {}
+    return [];
+  }, [selected, user, buildDishParams]);
+
+  const toggleSelect = (id: string) => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleNext = () => {
+    // Register IGNORED for non-selected visible dishes
+    const sid = getSessionId();
+    const ignored = dishes.filter(d => !selected.has(d.id)).map(d => d.id);
+    if (ignored.length > 0) {
+      fetch("/api/genie/interaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ menuItemIds: ignored, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
+      }).catch(() => {});
+    }
+
+    // Save selected + hunger context, go straight to results
+    sessionStorage.setItem("genieSelectedDishes", JSON.stringify([...selected]));
+    sessionStorage.setItem("genieContext", JSON.stringify({ ctxHunger: hungerLevel }));
+    router.push("/result");
+  };
+
+
+  const saveOnboarding = async () => {
+    setSavingOb(true);
+    const finalRestrictions = [
+      ...(dietType && dietType !== "como de todo" ? [dietType] : []),
+      ...allergies.filter(a => a !== "ninguna"),
+    ];
+    const onboardingData = { dietType, allergies, fitnessMode, dietaryRestrictions: finalRestrictions, userName: userName.trim() };
+    // Save to localStorage for guests
+    localStorage.setItem("genieOnboardingData", JSON.stringify(onboardingData));
+    if (userName.trim()) localStorage.setItem("genieUserName", userName.trim());
+
+    await fetch("/api/genie/onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: user?.id || null,
+        sessionId: getSessionId(),
+        dietaryRestrictions: finalRestrictions,
+        fitnessMode: fitnessMode === "NONE" ? null : fitnessMode,
+      }),
+    });
+    setSavingOb(false);
+    localStorage.setItem("genieOnboardingDone", "true");
+    // Check if there's a pending group redirect
+    const returnGroup = localStorage.getItem("genieReturnToGroup");
+    if (returnGroup) {
+      localStorage.removeItem("genieReturnToGroup");
+      router.push(`/grupo/${returnGroup}`);
+      return;
+    }
+    setPhase("hunger");
+    requestGeo();
+  };
+
+  // ── ONBOARDING ──
+  if (phase === "onboarding") {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+        <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>El Genio quiere conocerte</h1>
+        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 24, maxWidth: 400 }}>3 preguntas rapidas para recomendarte mejor.</p>
+
+        {/* Progress */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 24, width: "100%", maxWidth: 300 }}>
+          {[0, 1, 2, 3].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= obStep ? "#FFD600" : "#E0E0E0" }} />)}
+        </div>
+
+        {/* Step 0: Diet type */}
+        {obStep === 0 && (
+          <div style={{ width: "100%", maxWidth: 400 }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Que tipo de alimentacion tienes?</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {DIET_TYPES.map(d => {
+                const active = dietType === d.v;
+                return (
+                  <button key={d.v} onClick={() => { setDietType(d.v); setTimeout(() => setObStep(d.v === "vegano" ? 2 : 1), 200); }} style={{ padding: "16px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
+                    <span style={{ fontSize: 22 }}>{d.emoji}</span>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: active ? "#0D0D0D" : "#0D0D0D" }}>{d.l}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Step 1: Allergies (filtered by diet) */}
+        {obStep === 1 && (
+          <div style={{ width: "100%", maxWidth: 400 }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restricción?</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {ALLERGIES.filter(a => {
+                if (dietType === "vegetariano") return a.v !== "sin cerdo"; // ya no come carne
+                return true;
+              }).map(a => {
+                const active = allergies.includes(a.v);
+                return (
+                  <button key={a.v} onClick={() => {
+                    if (a.v === "ninguna") setAllergies(["ninguna"]);
+                    else setAllergies(prev => prev.filter(x => x !== "ninguna").includes(a.v) ? prev.filter(x => x !== a.v) : [...prev.filter(x => x !== "ninguna"), a.v]);
+                  }} style={{ padding: "14px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, fontFamily: "var(--font-body)", fontSize: "0.92rem", color: active ? "#FFD600" : "#666666", cursor: "pointer", textAlign: "left" }}>
+                    {active ? "✓ " : ""}{a.l}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+              <button onClick={() => setObStep(0)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atras</button>
+              <button onClick={() => { if (allergies.length > 0) setObStep(2); }} disabled={allergies.length === 0} style={{ flex: 2, padding: 14, background: allergies.length > 0 ? "#FFD600" : "#E0E0E0", color: allergies.length > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: allergies.length > 0 ? "pointer" : "default" }}>Siguiente</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 2: Fitness mode */}
+        {obStep === 2 && (
+          <div style={{ width: "100%", maxWidth: 400 }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>En que modo estas?</h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {FITNESS_OPTIONS.map(f => {
+                const active = fitnessMode === f.v;
+                return (
+                  <button key={f.v} onClick={() => setFitnessMode(f.v)} style={{ padding: "14px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
+                    <span style={{ fontSize: 22 }}>{f.emoji}</span>
+                    <div>
+                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: active ? "#0D0D0D" : "#0D0D0D", margin: 0 }}>{f.l}</p>
+                      {f.sub && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: 0 }}>{f.sub}</p>}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
+              <button onClick={() => setObStep(dietType === "vegano" ? 0 : 1)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
+              <button onClick={() => setObStep(3)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Siguiente</button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 3: Name */}
+        {obStep === 3 && (
+          <div style={{ width: "100%", maxWidth: 400 }}>
+            <h2 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 32 }}>Cómo te llamas?</h2>
+            <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "16px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "1.05rem", outline: "none", boxSizing: "border-box", textAlign: "center", marginBottom: 32 }} />
+            <div style={{ display: "flex", gap: 12 }}>
+              <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
+              <button onClick={saveOnboarding} disabled={savingOb || !userName.trim()} style={{ flex: 2, padding: 14, background: userName.trim() ? "#FFD600" : "#E0E0E0", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: userName.trim() ? "pointer" : "default" }}>{savingOb ? "..." : "Listo, recomiéndame 🧞"}</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── FEEDBACK ──
+  if (phase === "feedback" && pendingFeedback) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
+        <p style={{ fontSize: 32, marginBottom: 12 }}>🧞</p>
+        {pendingFeedback.dishImage && (
+          <img src={pendingFeedback.dishImage} alt="" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 20, marginBottom: 16 }} />
+        )}
+        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>
+          Como estuvo?
+        </h2>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#0D0D0D", textAlign: "center", marginBottom: 20 }}>{pendingFeedback.dishName}</p>
+
+        <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: 340 }}>
+          {([["LOVED", "😍", "Me encanto"], ["MEH", "😐", "Regular"], ["DISLIKED", "😕", "No era lo mio"]] as const).map(([score, emoji, label]) => (
+            <button key={score} onClick={() => submitFeedback(score)} style={{ flex: 1, padding: "18px 8px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 16, cursor: "pointer", textAlign: "center" }}>
+              <span style={{ fontSize: 32, display: "block", marginBottom: 6 }}>{emoji}</span>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#666666" }}>{label}</span>
+            </button>
+          ))}
+        </div>
+
+        <button onClick={() => { setPendingFeedback(null); setPhase("hunger"); }} style={{ marginTop: 16, padding: 10, background: "transparent", border: "none", fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666", cursor: "pointer" }}>
+          Saltar
+        </button>
+      </div>
+    );
+  }
+
+  // ── HUNGER ──
+  if (phase === "hunger") {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
+        <div style={{ width: "100%", maxWidth: 420 }}>
+          <p style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🧞</p>
+          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>¿Cuánta hambre tienes?</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {[
+              { v: "LIGHT", emoji: "🥗", l: "Poca", sub: "algo liviano" },
+              { v: "MEDIUM", emoji: "🍽️", l: "Normal", sub: "un plato está bien" },
+              { v: "HEAVY", emoji: "🍔", l: "Mucha", sub: "entrada + plato o más" },
+            ].map(o => {
+              const active = hungerLevel === o.v;
+              return (
+                <button key={o.v} onClick={() => { setHungerLevel(o.v); setTimeout(() => setPhase("dishes"), 200); }} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
+                  <span style={{ fontSize: 28 }}>{o.emoji}</span>
+                  <div>
+                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: "#0D0D0D", display: "block" }}>{o.l}</span>
+                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666" }}>{o.sub}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── LOADING ──
+  if (phase === "loading" || (loadingDishes && dishes.length === 0)) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#666666" }}>Buscando platos...</p>
+      </div>
+    );
+  }
+
+  // ── DISHES GRID ──
+  return (
+    <div style={{ background: "#FFFFFF", padding: "16px clamp(16px,3vw,24px) 20px" }}>
+      <div style={{ maxWidth: 500, margin: "0 auto" }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 10 }}>
+          <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
+          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
+          <p className="font-body" style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{subtitle}</p>
+        </div>
+
+        {/* Category filters */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, justifyContent: "center" }}>
+          {([
+            { v: "PLATOS" as const, emoji: "🍽", label: "Platos" },
+            { v: "DULCE" as const, emoji: "🍰", label: "Dulce" },
+            { v: "BEBESTIBLE" as const, emoji: "☕", label: "Bebestible" },
+          ]).map(f => (
+            <button key={f.v} onClick={() => { setActiveFilter(f.v); setDishes([]); seenIdsRef.current = []; }} style={{ padding: "8px 16px", background: activeFilter === f.v ? "#0D0D0D" : "#F5F5F5", color: activeFilter === f.v ? "#FFF" : "#0D0D0D", border: activeFilter === f.v ? "1px solid #0D0D0D" : "1px solid #E0E0E0", borderRadius: 99, fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+              {f.emoji} {f.label}
+            </button>
+          ))}
+        </div>
+
+        <SwipeDishGrid
+          initialDishes={dishes}
+          selected={selected}
+          onToggleSelect={toggleSelect}
+          onLoadMore={loadMoreDishes}
+          onProceed={selected.size > 0 ? handleNext : undefined}
+          loading={loadingDishes}
+        />
+
+        {dishes.length > 0 && (
+          <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 15, background: selected.size > 0 ? "#FFD600" : "#F0F0F0", color: selected.size > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: selected.size > 0 ? 700 : 500, fontSize: 15, cursor: selected.size > 0 ? "pointer" : "not-allowed", marginTop: 6 }}>
+            {selected.size > 0 ? "Estos me llaman la atención →" : "Selecciona al menos 1"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

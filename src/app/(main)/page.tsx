@@ -1,629 +1,272 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import SwipeDishGrid from "@/components/SwipeDishGrid";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Dish = any;
+import { useState } from "react";
+import Link from "next/link";
 
-const DIET_TYPES = [
-  { v: "como de todo", emoji: "🍽️", l: "Como de todo" },
-  { v: "vegetariano", emoji: "🌱", l: "Vegetariano" },
-  { v: "vegano", emoji: "🌿", l: "Vegano" },
-];
-
-const ALLERGIES = [
-  { v: "sin gluten", l: "Sin gluten" },
-  { v: "sin mariscos", l: "Sin mariscos" },
-  { v: "sin frutos secos", l: "Sin frutos secos" },
-  { v: "sin lácteos", l: "Sin lacteos" },
-  { v: "sin cerdo", l: "Sin cerdo" },
-  { v: "ninguna", l: "Ninguna" },
-];
-
-const FITNESS_OPTIONS = [
-  { v: "NONE", emoji: "🍔", l: "En modo chancho", sub: "como lo que sea" },
-  { v: "GAINING", emoji: "💪", l: "Subiendo masa", sub: "busco calorias y proteina" },
-  { v: "CUTTING", emoji: "🥗", l: "Cuidandome", sub: "proteinas, bajo carbo" },
-  { v: "MAINTAINING", emoji: "😐", l: "Sin preferencia", sub: "" },
-];
-
-function getWeatherIcon(code: number): string {
-  // Rain/snow always win regardless of time
-  if ([51,53,55,61,63,65].includes(code)) return "🌧";
-  if ([56,57,66,67].includes(code)) return "🌨";
-  if ([71,73,75,77].includes(code)) return "❄️";
-  // Clear/cloudy depends on time of day
-  const h = new Date().getHours();
-  const isNight = h >= 20 || h < 6;
-  if (code === 0) return isNight ? "🌙" : (h < 12 ? "🌅" : "☀️");
-  // Cloudy (1,2,3)
-  return isNight ? "☁️" : "⛅";
-}
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h >= 6 && h < 12) return "Buenos días";
-  if (h >= 12 && h < 20) return "Buena tarde";
-  return "Buenas noches";
-}
-
-function getSubtitle(): string {
-  const hour = new Date().getHours();
-  const minutes = new Date().getMinutes();
-  const timeDecimal = hour + minutes / 60;
-
-  const franja =
-    timeDecimal >= 6    && timeDecimal < 10   ? 'morning' :
-    timeDecimal >= 10   && timeDecimal < 12.5 ? 'brunch' :
-    timeDecimal >= 12.5 && timeDecimal < 17   ? 'lunch' :
-    timeDecimal >= 17   && timeDecimal < 19   ? 'once' :
-    timeDecimal >= 19   && timeDecimal < 23   ? 'dinner' :
-    'latenight';
-
-  const mensajes: Record<string, string[]> = {
-    morning: [
-      "Buen momento para un desayuno",
-      "El día recién empieza, hay que cargarlo bien",
-      "¿Con qué arrancamos hoy?",
-      "Mañana de esas que piden algo rico",
-      "El Genio ya sabe que buscas desayunar",
-    ],
-    brunch: [
-      "Hora del brunch, el mejor momento",
-      "¿Un brunch para arrancar bien el día?",
-      "El Genio tiene ideas para el brunch",
-      "Mañana perfecta para un brunch",
-      "Brunch, porque el desayuno se quedó corto",
-    ],
-    lunch: [
-      "¿Qué se te antoja para almorzar?",
-      "Almuerzo, la hora más importante del día",
-      "El estómago ya está hablando",
-      "Algo bueno para el almuerzo, vamos",
-      "El Genio tiene ideas para el almuerzo",
-    ],
-    once: [
-      "Algo para la once quizás",
-      "Esa hora entre el almuerzo y la cena",
-      "¿Un café con algo dulce?",
-      "La once no se negocia",
-      "Hora de algo rico para la tarde",
-    ],
-    dinner: [
-      "Una buena noche para cenar bien",
-      "¿Qué se te antoja para la cena?",
-      "El Genio tiene algo bueno para la noche",
-      "Noche de esas que piden algo especial",
-      "Termina bien el día con algo rico",
-    ],
-    latenight: [
-      "¿Antojo de noche?",
-      "El Genio no duerme, tú tampoco",
-      "Noche larga, hay que comer algo",
-      "¿Qué se come a esta hora?",
-      "Antojo nocturno, el Genio entiende",
-    ],
-  };
-
-  const msgs = mensajes[franja];
-  return msgs[Math.floor(Math.random() * msgs.length)];
-}
-
-function getSessionId(): string {
-  return localStorage.getItem("genie_session_id") ?? "";
-}
-function getVisitId(): string {
-  return sessionStorage.getItem("genieVisitId") ?? "";
-}
-
-export default function GeniePage() {
-  const router = useRouter();
-  const { user } = useAuth();
-  const [phase, setPhase] = useState<"loading" | "onboarding" | "feedback" | "hunger" | "dishes">("loading");
-  const [activeFilter, setActiveFilter] = useState<"PLATOS" | "DULCE" | "BEBESTIBLE">("PLATOS");
-  const [pendingFeedback, setPendingFeedback] = useState<{ interactionId: string; dishName: string; dishImage: string | null } | null>(null);
-  const [hungerLevel, setHungerLevel] = useState("");
-  const [subtitle] = useState(() => getSubtitle()); // Stable per session, no re-roll on re-render
-
-  // Onboarding state
-  const [obStep, setObStep] = useState(0);
-  const [dietType, setDietType] = useState("");
-  const [allergies, setAllergies] = useState<string[]>([]);
-  const [fitnessMode, setFitnessMode] = useState("NONE");
-  const [userName, setUserName] = useState("");
-  const [savingOb, setSavingOb] = useState(false);
-
-  // Dishes state
-  const [dishes, setDishes] = useState<Dish[]>([]);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [loadingDishes, setLoadingDishes] = useState(false);
-  const seenIdsRef = useRef<string[]>([]);
-  const geoRequested = useRef(false);
-  const [previewDish, setPreviewDish] = useState<Dish | null>(null);
-
-  // Weather state
-  const [weatherInfo, setWeatherInfo] = useState<{icon: string, temp: number, greeting: string, city: string} | null>(null);
-
-  // Fetch weather
-  useEffect(() => {
-    const fetchWeather = async () => {
-      try {
-        const raw = sessionStorage.getItem("userCoords");
-        const coords = raw ? JSON.parse(raw) : { lat: -33.4569, lng: -70.6483 };
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lng}&current=temperature_2m,weathercode`);
-        if (res.ok) {
-          const data = await res.json();
-          const code = data.current?.weathercode ?? 0;
-          const icon = getWeatherIcon(code);
-          const temp = data.current?.temperature_2m ?? 0;
-          const greeting = getGreeting();
-          setWeatherInfo({ icon, temp, greeting, city: "Santiago" });
-        }
-      } catch {}
-    };
-    fetchWeather();
-  }, []);
-
-  // Check onboarding status
-  const { isLoading: authLoading } = useAuth();
-  useEffect(() => {
-    if (authLoading) return; // Wait for auth to resolve
-    if (!user) {
-      // Guest: check localStorage for onboarding done (persists across sessions)
-      const done = localStorage.getItem("genieOnboardingDone");
-      if (done === "true") { checkFeedback(); requestGeo(); }
-      else setPhase("onboarding");
-      return;
-    }
-    fetch(`/api/genie/onboarding?userId=${user.id}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d.onboardingDone) { checkFeedback(); requestGeo(); }
-        else setPhase("onboarding");
-      })
-      .catch(() => setPhase("onboarding"));
-  }, [user, authLoading]);
-
-  // Check for pending feedback before showing dishes
-  const checkFeedback = async () => {
-    const sid = getSessionId();
-    const params = new URLSearchParams({ sessionId: sid });
-    if (user?.id) params.set("userId", user.id);
-    try {
-      const res = await fetch(`/api/genie/pending-feedback?${params}`);
-      const data = await res.json();
-      if (data?.interactionId) {
-        setPendingFeedback(data);
-        setPhase("feedback");
-        return;
-      }
-    } catch {}
-    // Check for postres (20-60 min after last session)
-    const lastResult = localStorage.getItem("genieLastResultAt");
-    if (lastResult) {
-      const elapsed = Date.now() - Number(lastResult);
-      if (elapsed >= 20 * 60 * 1000 && elapsed <= 60 * 60 * 1000) {
-        localStorage.removeItem("genieLastResultAt");
-        sessionStorage.setItem("genieShowPostres", "true");
-      }
-    }
-    setPhase("hunger");
-  };
-
-  const submitFeedback = async (score: "LOVED" | "MEH" | "DISLIKED") => {
-    if (!pendingFeedback) return;
-    const sid = getSessionId();
-    await fetch("/api/genie/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interactionId: pendingFeedback.interactionId, score, userId: user?.id || null, sessionId: sid }),
-    });
-    setPendingFeedback(null);
-    setPhase("hunger");
-  };
-
-  // Geolocation
-  const requestGeo = useCallback(() => {
-    if (geoRequested.current) return;
-    geoRequested.current = true;
-
-    const fallback = { lat: -33.4569, lng: -70.6483 };
-    const timeout = setTimeout(() => {
-      if (!sessionStorage.getItem("userCoords")) {
-        sessionStorage.setItem("userCoords", JSON.stringify(fallback));
-      }
-    }, 5000);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        pos => {
-          clearTimeout(timeout);
-          sessionStorage.setItem("userCoords", JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude }));
-        },
-        () => {
-          clearTimeout(timeout);
-          sessionStorage.setItem("userCoords", JSON.stringify(fallback));
-        },
-        { timeout: 5000, maximumAge: 300000 }
-      );
-    } else {
-      clearTimeout(timeout);
-      sessionStorage.setItem("userCoords", JSON.stringify(fallback));
-    }
-  }, []);
-
-  // Load dishes when entering dishes phase
-  useEffect(() => {
-    if (phase === "dishes") loadDishes();
-  }, [phase, activeFilter]);
-
-  const buildDishParams = useCallback(() => {
-    const sid = getSessionId();
-    const params = new URLSearchParams({ sessionId: sid, category: activeFilter });
-    if (user?.id) params.set("userId", user.id);
-    if (!user?.id) {
-      try {
-        const raw = localStorage.getItem("genieOnboardingData");
-        if (raw) {
-          const data = JSON.parse(raw);
-          const restrictions: string[] = [...(data.dietaryRestrictions ?? [])];
-          if (data.dietType && data.dietType !== "como de todo" && !restrictions.includes(data.dietType)) {
-            restrictions.push(data.dietType);
-          }
-          if (restrictions.length) params.set("diet", restrictions.join(","));
-        }
-      } catch {}
-    }
-    return params;
-  }, [activeFilter, user]);
-
-  const loadDishes = async () => {
-    setLoadingDishes(true);
-    const params = buildDishParams();
-    const exclude = seenIdsRef.current.join(",");
-    if (exclude) params.set("exclude", exclude);
-
-    try {
-      const res = await fetch(`/api/genie/dishes?${params}`);
-      const data = await res.json();
-      if (!res.ok) console.error("Dishes API error:", data);
-      if (Array.isArray(data) && data.length > 0) {
-        setDishes(data);
-        const sid = getSessionId();
-        fetch("/api/genie/interaction", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            menuItemIds: data.map((d: Dish) => d.id),
-            action: "VIEWED",
-            userId: user?.id || null,
-            sessionId: sid,
-            visitId: getVisitId(),
-          }),
-        }).catch(() => {});
-      }
-    } catch {}
-    setLoadingDishes(false);
-  };
-
-  // Called by SwipeDishGrid when user swipes to load next set
-  const loadMoreDishes = useCallback(async (currentPageDishes: Dish[], negativeCats: string[] = []): Promise<Dish[]> => {
-    // Register IGNORED for non-selected dishes on current page
-    const sid = getSessionId();
-    const ignoredIds = currentPageDishes.filter((d: Dish) => !selected.has(d.id)).map((d: Dish) => d.id);
-    if (ignoredIds.length > 0) {
-      fetch("/api/genie/interaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuItemIds: ignoredIds, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
-      }).catch(() => {});
-    }
-
-    // Add current dishes to seen list
-    seenIdsRef.current.push(...currentPageDishes.map((d: Dish) => d.id));
-
-    const params = buildDishParams();
-    const exclude = seenIdsRef.current.join(",");
-    if (exclude) params.set("exclude", exclude);
-
-    // Pass current selections for smart scoring
-    const selectedArr = [...selected];
-    if (selectedArr.length > 0) params.set("selected", selectedArr.join(","));
-
-    // Pass negative categories to deprioritize
-    if (negativeCats.length > 0) params.set("negativeCats", negativeCats.join(","));
-
-    try {
-      const res = await fetch(`/api/genie/dishes?${params}`);
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        // Register VIEWED for new dishes
-        fetch("/api/genie/interaction", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            menuItemIds: data.map((d: Dish) => d.id),
-            action: "VIEWED",
-            userId: user?.id || null,
-            sessionId: sid,
-            visitId: getVisitId(),
-          }),
-        }).catch(() => {});
-        return data;
-      }
-    } catch {}
-    return [];
-  }, [selected, user, buildDishParams]);
-
-  const toggleSelect = (id: string) => {
-    setSelected(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  };
-
-  const handleNext = () => {
-    // Register IGNORED for non-selected visible dishes
-    const sid = getSessionId();
-    const ignored = dishes.filter(d => !selected.has(d.id)).map(d => d.id);
-    if (ignored.length > 0) {
-      fetch("/api/genie/interaction", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ menuItemIds: ignored, action: "IGNORED", userId: user?.id || null, sessionId: sid }),
-      }).catch(() => {});
-    }
-
-    // Save selected + hunger context, go straight to results
-    sessionStorage.setItem("genieSelectedDishes", JSON.stringify([...selected]));
-    sessionStorage.setItem("genieContext", JSON.stringify({ ctxHunger: hungerLevel }));
-    router.push("/result");
-  };
-
-
-  const saveOnboarding = async () => {
-    setSavingOb(true);
-    const finalRestrictions = [
-      ...(dietType && dietType !== "como de todo" ? [dietType] : []),
-      ...allergies.filter(a => a !== "ninguna"),
-    ];
-    const onboardingData = { dietType, allergies, fitnessMode, dietaryRestrictions: finalRestrictions, userName: userName.trim() };
-    // Save to localStorage for guests
-    localStorage.setItem("genieOnboardingData", JSON.stringify(onboardingData));
-    if (userName.trim()) localStorage.setItem("genieUserName", userName.trim());
-
-    await fetch("/api/genie/onboarding", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: user?.id || null,
-        sessionId: getSessionId(),
-        dietaryRestrictions: finalRestrictions,
-        fitnessMode: fitnessMode === "NONE" ? null : fitnessMode,
-      }),
-    });
-    setSavingOb(false);
-    localStorage.setItem("genieOnboardingDone", "true");
-    // Check if there's a pending group redirect
-    const returnGroup = localStorage.getItem("genieReturnToGroup");
-    if (returnGroup) {
-      localStorage.removeItem("genieReturnToGroup");
-      router.push(`/grupo/${returnGroup}`);
-      return;
-    }
-    setPhase("hunger");
-    requestGeo();
-  };
-
-  // ── ONBOARDING ──
-  if (phase === "onboarding") {
-    return (
-      <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
-        <p style={{ fontSize: 40, marginBottom: 8 }}>🧞</p>
-        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.4rem,4vw,1.8rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>El Genio quiere conocerte</h1>
-        <p style={{ fontFamily: "var(--font-body)", fontSize: "0.9rem", color: "#666666", textAlign: "center", marginBottom: 24, maxWidth: 400 }}>3 preguntas rapidas para recomendarte mejor.</p>
-
-        {/* Progress */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 24, width: "100%", maxWidth: 300 }}>
-          {[0, 1, 2, 3].map(i => <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= obStep ? "#FFD600" : "#E0E0E0" }} />)}
-        </div>
-
-        {/* Step 0: Diet type */}
-        {obStep === 0 && (
-          <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Que tipo de alimentacion tienes?</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {DIET_TYPES.map(d => {
-                const active = dietType === d.v;
-                return (
-                  <button key={d.v} onClick={() => { setDietType(d.v); setTimeout(() => setObStep(d.v === "vegano" ? 2 : 1), 200); }} style={{ padding: "16px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 12, textAlign: "left" }}>
-                    <span style={{ fontSize: 22 }}>{d.emoji}</span>
-                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: active ? "#0D0D0D" : "#0D0D0D" }}>{d.l}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Step 1: Allergies (filtered by diet) */}
-        {obStep === 1 && (
-          <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>Tienes alguna alergia o restricción?</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {ALLERGIES.filter(a => {
-                if (dietType === "vegetariano") return a.v !== "sin cerdo"; // ya no come carne
-                return true;
-              }).map(a => {
-                const active = allergies.includes(a.v);
-                return (
-                  <button key={a.v} onClick={() => {
-                    if (a.v === "ninguna") setAllergies(["ninguna"]);
-                    else setAllergies(prev => prev.filter(x => x !== "ninguna").includes(a.v) ? prev.filter(x => x !== a.v) : [...prev.filter(x => x !== "ninguna"), a.v]);
-                  }} style={{ padding: "14px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, fontFamily: "var(--font-body)", fontSize: "0.92rem", color: active ? "#FFD600" : "#666666", cursor: "pointer", textAlign: "left" }}>
-                    {active ? "✓ " : ""}{a.l}
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button onClick={() => setObStep(0)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atras</button>
-              <button onClick={() => { if (allergies.length > 0) setObStep(2); }} disabled={allergies.length === 0} style={{ flex: 2, padding: 14, background: allergies.length > 0 ? "#FFD600" : "#E0E0E0", color: allergies.length > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.9rem", fontWeight: 700, cursor: allergies.length > 0 ? "pointer" : "default" }}>Siguiente</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 2: Fitness mode */}
-        {obStep === 2 && (
-          <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 16 }}>En que modo estas?</h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {FITNESS_OPTIONS.map(f => {
-                const active = fitnessMode === f.v;
-                return (
-                  <button key={f.v} onClick={() => setFitnessMode(f.v)} style={{ padding: "14px 18px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 12, cursor: "pointer", textAlign: "left", display: "flex", alignItems: "center", gap: 12 }}>
-                    <span style={{ fontSize: 22 }}>{f.emoji}</span>
-                    <div>
-                      <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: active ? "#0D0D0D" : "#0D0D0D", margin: 0 }}>{f.l}</p>
-                      {f.sub && <p style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666", margin: 0 }}>{f.sub}</p>}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            <div style={{ display: "flex", gap: 12, marginTop: 20 }}>
-              <button onClick={() => setObStep(dietType === "vegano" ? 0 : 1)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
-              <button onClick={() => setObStep(3)} style={{ flex: 2, padding: 14, background: "#FFD600", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}>Siguiente</button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Name */}
-        {obStep === 3 && (
-          <div style={{ width: "100%", maxWidth: 400 }}>
-            <h2 className="font-display" style={{ fontSize: "1.1rem", color: "#0D0D0D", textAlign: "center", marginBottom: 32 }}>Cómo te llamas?</h2>
-            <input value={userName} onChange={e => setUserName(e.target.value)} placeholder="Tu nombre" style={{ width: "100%", padding: "16px 16px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 12, color: "#0D0D0D", fontSize: "1.05rem", outline: "none", boxSizing: "border-box", textAlign: "center", marginBottom: 32 }} />
-            <div style={{ display: "flex", gap: 12 }}>
-              <button onClick={() => setObStep(2)} style={{ flex: 1, padding: 14, background: "#0D0D0D", color: "#FFFFFF", border: "none", borderRadius: 99, fontSize: "0.85rem", fontWeight: 500, cursor: "pointer" }}>Atrás</button>
-              <button onClick={saveOnboarding} disabled={savingOb || !userName.trim()} style={{ flex: 2, padding: 14, background: userName.trim() ? "#FFD600" : "#E0E0E0", color: "#0D0D0D", border: "none", borderRadius: 99, fontWeight: 700, fontSize: "0.9rem", cursor: userName.trim() ? "pointer" : "default" }}>{savingOb ? "..." : "Listo, recomiéndame 🧞"}</button>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // ── FEEDBACK ──
-  if (phase === "feedback" && pendingFeedback) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24 }}>
-        <p style={{ fontSize: 32, marginBottom: 12 }}>🧞</p>
-        {pendingFeedback.dishImage && (
-          <img src={pendingFeedback.dishImage} alt="" style={{ width: 160, height: 160, objectFit: "cover", borderRadius: 20, marginBottom: 16 }} />
-        )}
-        <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.1rem,3vw,1.4rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 6 }}>
-          Como estuvo?
-        </h2>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.92rem", color: "#0D0D0D", textAlign: "center", marginBottom: 20 }}>{pendingFeedback.dishName}</p>
-
-        <div style={{ display: "flex", gap: 12, width: "100%", maxWidth: 340 }}>
-          {([["LOVED", "😍", "Me encanto"], ["MEH", "😐", "Regular"], ["DISLIKED", "😕", "No era lo mio"]] as const).map(([score, emoji, label]) => (
-            <button key={score} onClick={() => submitFeedback(score)} style={{ flex: 1, padding: "18px 8px", background: "#F5F5F5", border: "1px solid #E0E0E0", borderRadius: 16, cursor: "pointer", textAlign: "center" }}>
-              <span style={{ fontSize: 32, display: "block", marginBottom: 6 }}>{emoji}</span>
-              <span style={{ fontFamily: "var(--font-display)", fontSize: "0.7rem", color: "#666666" }}>{label}</span>
-            </button>
-          ))}
-        </div>
-
-        <button onClick={() => { setPendingFeedback(null); setPhase("hunger"); }} style={{ marginTop: 16, padding: 10, background: "transparent", border: "none", fontFamily: "var(--font-body)", fontSize: "0.78rem", color: "#666666", cursor: "pointer" }}>
-          Saltar
-        </button>
-      </div>
-    );
-  }
-
-  // ── HUNGER ──
-  if (phase === "hunger") {
-    return (
-      <div style={{ minHeight: "100dvh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px" }}>
-        <div style={{ width: "100%", maxWidth: 420 }}>
-          <p style={{ fontSize: 32, textAlign: "center", marginBottom: 12 }}>🧞</p>
-          <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(1.3rem,3.5vw,1.6rem)", color: "#0D0D0D", textAlign: "center", marginBottom: 24 }}>¿Cuánta hambre tienes?</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {[
-              { v: "LIGHT", emoji: "🥗", l: "Poca", sub: "algo liviano" },
-              { v: "MEDIUM", emoji: "🍽️", l: "Normal", sub: "un plato está bien" },
-              { v: "HEAVY", emoji: "🍔", l: "Mucha", sub: "entrada + plato o más" },
-            ].map(o => {
-              const active = hungerLevel === o.v;
-              return (
-                <button key={o.v} onClick={() => { setHungerLevel(o.v); setTimeout(() => setPhase("dishes"), 200); }} style={{ padding: "18px 20px", background: active ? "rgba(255,214,0,0.12)" : "#F5F5F5", border: active ? "1px solid #FFD600" : "1px solid #E0E0E0", borderRadius: 14, cursor: "pointer", display: "flex", alignItems: "center", gap: 14, textAlign: "left" }}>
-                  <span style={{ fontSize: 28 }}>{o.emoji}</span>
-                  <div>
-                    <span style={{ fontFamily: "var(--font-display)", fontSize: "0.95rem", color: "#0D0D0D", display: "block" }}>{o.l}</span>
-                    <span style={{ fontFamily: "var(--font-body)", fontSize: "0.75rem", color: "#666666" }}>{o.sub}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── LOADING ──
-  if (phase === "loading" || (loadingDishes && dishes.length === 0)) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#FFFFFF", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-        <p style={{ fontSize: 40, marginBottom: 12 }}>🧞</p>
-        <p style={{ fontFamily: "var(--font-display)", fontSize: "0.9rem", color: "#666666" }}>Buscando platos...</p>
-      </div>
-    );
-  }
-
-  // ── DISHES GRID ──
+function OasisHero() {
   return (
-    <div style={{ background: "#FFFFFF", padding: "16px clamp(16px,3vw,24px) 20px" }}>
-      <div style={{ maxWidth: 500, margin: "0 auto" }}>
-        {/* Header */}
-        <div style={{ textAlign: "center", marginBottom: 10 }}>
-          <p style={{ fontSize: 28, lineHeight: 1, marginBottom: 6 }}>🧞</p>
-          <h1 className="font-display" style={{ fontSize: 22, fontWeight: 700, color: "#0D0D0D" }}>{(() => { const n = typeof window !== "undefined" ? (user?.nombre?.split(" ")[0] || localStorage.getItem("genieUserName")) : null; return n ? `${n}, ¿qué te llama la atención?` : "¿Qué te llama la atención?"; })()}</h1>
-          <p className="font-body" style={{ fontSize: 15, color: "#999", marginTop: 4 }}>{subtitle}</p>
-        </div>
+    <svg aria-hidden="true" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 0 }}>
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#A8DEEF" />
+          <stop offset="50%" stopColor="#C8E8D8" />
+          <stop offset="100%" stopColor="#F2C571" />
+        </linearGradient>
+      </defs>
+      <rect width="1440" height="600" fill="url(#sky)" />
+      {/* Sun */}
+      <circle cx="1150" cy="100" r="50" fill="#FFD86B" opacity="0.9" />
+      {/* Clouds */}
+      <g opacity="0.85">
+        <ellipse cx="200" cy="120" rx="50" ry="16" fill="white" />
+        <ellipse cx="240" cy="112" rx="40" ry="20" fill="white" />
+        <ellipse cx="270" cy="120" rx="30" ry="12" fill="white" />
+      </g>
+      <g opacity="0.7">
+        <ellipse cx="900" cy="80" rx="40" ry="14" fill="white" />
+        <ellipse cx="935" cy="72" rx="32" ry="16" fill="white" />
+        <ellipse cx="960" cy="80" rx="24" ry="10" fill="white" />
+      </g>
+      <g opacity="0.5">
+        <ellipse cx="600" cy="150" rx="35" ry="12" fill="white" />
+        <ellipse cx="630" cy="144" rx="28" ry="14" fill="white" />
+      </g>
+      {/* Sand dunes */}
+      <path d="M0 380 Q360 300 720 350 Q1080 300 1440 370 L1440 480 L0 480Z" fill="#F2C571" />
+      <path d="M0 430 Q480 350 800 410 Q1120 370 1440 420 L1440 540 L0 540Z" fill="#E8A942" />
+      <path d="M0 480 Q400 430 720 470 Q1040 430 1440 475 L1440 600 L0 600Z" fill="#C78A2E" />
+      {/* Palm trees */}
+      <rect x="120" y="400" width="6" height="80" rx="3" fill="#5A3718" />
+      <g transform="translate(123,400)">
+        <path d="M0 0 Q-30 -20 -45 -8" stroke="#2E5010" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-25 -30 -35 -20" stroke="#3D6B1C" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q22 -28 38 -10" stroke="#2E5010" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q18 -32 30 -22" stroke="#4A7C1C" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-4 -35 0 -38" stroke="#3D6B1C" strokeWidth="3" fill="none" strokeLinecap="round" />
+      </g>
+      <rect x="160" y="410" width="7" height="90" rx="3" fill="#6B4423" />
+      <g transform="translate(163,410)">
+        <path d="M0 0 Q-35 -22 -50 -8" stroke="#3D6B1C" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-28 -32 -42 -20" stroke="#4A7C1C" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q28 -28 45 -10" stroke="#3D6B1C" strokeWidth="5" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q22 -35 35 -22" stroke="#5A8E2A" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-5 -40 -2 -44" stroke="#4A7C1C" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+      </g>
+      <rect x="1260" y="420" width="6" height="75" rx="3" fill="#6B4423" />
+      <g transform="translate(1263,420)">
+        <path d="M0 0 Q-28 -18 -40 -6" stroke="#3D6B1C" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-22 -28 -32 -18" stroke="#5A8E2A" strokeWidth="3.5" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q24 -22 38 -8" stroke="#4A7C1C" strokeWidth="4" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-3 -32 0 -36" stroke="#3D6B1C" strokeWidth="3" fill="none" strokeLinecap="round" />
+      </g>
+      <rect x="1310" y="405" width="5" height="65" rx="2" fill="#5A3718" />
+      <g transform="translate(1312,405)">
+        <path d="M0 0 Q-20 -16 -30 -5" stroke="#2E5010" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q15 -20 26 -8" stroke="#4A7C1C" strokeWidth="3" fill="none" strokeLinecap="round" />
+        <path d="M0 0 Q-3 -26 0 -28" stroke="#2E5010" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+      </g>
+      {/* Water/oasis */}
+      <ellipse cx="720" cy="560" rx="320" ry="35" fill="#3A9AB0" />
+      <ellipse cx="720" cy="557" rx="310" ry="32" fill="#5BB5C8" />
+      <path d="M550 552 Q600 548 650 552" stroke="white" strokeWidth="1.5" fill="none" opacity="0.35" />
+      <path d="M700 558 Q750 554 800 558" stroke="white" strokeWidth="1.8" fill="none" opacity="0.3" />
+      <path d="M620 564 Q670 560 720 564" stroke="white" strokeWidth="1.2" fill="none" opacity="0.25" />
+      {/* Ground */}
+      <rect x="0" y="580" width="1440" height="20" fill="#A06818" />
+    </svg>
+  );
+}
 
-        {/* Category filters */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16, justifyContent: "center" }}>
-          {([
-            { v: "PLATOS" as const, emoji: "🍽", label: "Platos" },
-            { v: "DULCE" as const, emoji: "🍰", label: "Dulce" },
-            { v: "BEBESTIBLE" as const, emoji: "☕", label: "Bebestible" },
-          ]).map(f => (
-            <button key={f.v} onClick={() => { setActiveFilter(f.v); setDishes([]); seenIdsRef.current = []; }} style={{ padding: "8px 16px", background: activeFilter === f.v ? "#0D0D0D" : "#F5F5F5", color: activeFilter === f.v ? "#FFF" : "#0D0D0D", border: activeFilter === f.v ? "1px solid #0D0D0D" : "1px solid #E0E0E0", borderRadius: 99, fontSize: 13, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-              {f.emoji} {f.label}
-            </button>
+const F = "var(--font-display)";
+const B = "var(--font-body)";
+
+const FEATURES_FREE = [
+  "Menu digital con QR",
+  "Vista simple de carta",
+  "Genio recomendador con IA",
+  "Experiencias interactivas",
+];
+
+const FEATURES_PREMIUM = [
+  "3 vistas de carta (Clasica, Lista, Espacial)",
+  "Estadisticas avanzadas de clientes",
+  "Llamar al garzon desde la mesa",
+  "Mailmarketing automatizado",
+  "Multilenguaje (ES / EN / PT)",
+  "Ofertas y etiquetas (Nuevo, Recomendado)",
+  "Campanas automaticas (cumpleanos, promos)",
+  "Recomendaciones inteligentes por gustos",
+  "Banners y promos dinamicas",
+  "Banner con cinta de anuncios",
+  "Integracion con Toteat y Justo",
+  "Automatizaciones por comportamiento",
+];
+
+const HIGHLIGHTS = [
+  {
+    icon: "🧞",
+    title: "Genio con IA",
+    desc: "Recomienda platos segun gustos, restricciones y preferencias de cada cliente. Aprende con cada visita.",
+  },
+  {
+    icon: "📊",
+    title: "Conoce a tu cliente",
+    desc: "Cada sesion queda registrada: que vio, cuanto tiempo, que le gusto. Datos reales, no suposiciones.",
+  },
+  {
+    icon: "🔔",
+    title: "Llamar al garzon",
+    desc: "Tu cliente aprieta un boton y el garzon recibe una notificacion al instante. Sin esperar.",
+  },
+  {
+    icon: "📩",
+    title: "Marketing que se envia solo",
+    desc: "Emails automaticos por cumpleanos, inactividad o gustos. El sistema hace el trabajo por ti.",
+  },
+];
+
+export default function LandingPage() {
+  const [billingCycle] = useState<"monthly">("monthly");
+
+  return (
+    <div style={{ fontFamily: B, color: "#1a1a1a", background: "#FEFCF8" }}>
+
+      {/* ── HERO ── */}
+      <section style={{ position: "relative", minHeight: "min(600px, 85vh)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <OasisHero />
+        <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "60px 24px 80px", maxWidth: 700 }}>
+          <p style={{ fontSize: "3.2rem", marginBottom: 8, filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.15))" }}>🧞</p>
+          <h1 style={{ fontFamily: F, fontSize: "clamp(2rem, 5vw, 3rem)", fontWeight: 900, color: "#1a1a1a", lineHeight: 1.15, marginBottom: 16, textShadow: "0 1px 2px rgba(255,255,255,0.5)" }}>
+            La carta digital que<br />entiende a tu cliente
+          </h1>
+          <p style={{ fontFamily: B, fontSize: "clamp(1rem, 2.5vw, 1.2rem)", color: "#4a4a4a", maxWidth: 500, margin: "0 auto 28px", lineHeight: 1.6, textShadow: "0 1px 2px rgba(255,255,255,0.4)" }}>
+            Menu QR con inteligencia artificial, estadisticas de cada visita y marketing automatizado. Todo en un solo lugar.
+          </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <Link href="/panel/login" style={{ display: "inline-block", padding: "14px 32px", background: "#F4A623", color: "#1a1a1a", borderRadius: 50, fontFamily: F, fontWeight: 700, fontSize: "0.95rem", textDecoration: "none", boxShadow: "0 4px 16px rgba(244,166,35,0.3)", transition: "transform 0.2s" }}>
+              Empezar gratis
+            </Link>
+            <a href="#planes" style={{ display: "inline-block", padding: "14px 32px", background: "rgba(255,255,255,0.85)", color: "#1a1a1a", borderRadius: 50, fontFamily: F, fontWeight: 600, fontSize: "0.95rem", textDecoration: "none", border: "1px solid rgba(0,0,0,0.1)", backdropFilter: "blur(8px)" }}>
+              Ver planes
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── HIGHLIGHTS ── */}
+      <section style={{ padding: "80px 24px", maxWidth: 1000, margin: "0 auto" }}>
+        <h2 style={{ fontFamily: F, fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, textAlign: "center", marginBottom: 12, color: "#1a1a1a" }}>
+          No es solo un menu, es un asistente
+        </h2>
+        <p style={{ textAlign: "center", color: "#888", fontSize: "1rem", marginBottom: 48, maxWidth: 500, margin: "0 auto 48px" }}>
+          Tu carta trabaja por ti mientras tu te enfocas en la cocina.
+        </p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 }}>
+          {HIGHLIGHTS.map((h) => (
+            <div key={h.title} style={{ padding: "28px 24px", background: "white", borderRadius: 16, border: "1px solid #f0e8d8", boxShadow: "0 1px 4px rgba(180,140,60,0.06)" }}>
+              <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>{h.icon}</span>
+              <h3 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, marginBottom: 8, color: "#1a1a1a" }}>{h.title}</h3>
+              <p style={{ fontSize: "0.88rem", color: "#777", lineHeight: 1.55, margin: 0 }}>{h.desc}</p>
+            </div>
           ))}
         </div>
+      </section>
 
-        <SwipeDishGrid
-          initialDishes={dishes}
-          selected={selected}
-          onToggleSelect={toggleSelect}
-          onLoadMore={loadMoreDishes}
-          onProceed={selected.size > 0 ? handleNext : undefined}
-          loading={loadingDishes}
-        />
+      {/* ── DEMO VISUAL ── */}
+      <section style={{ padding: "60px 24px 80px", background: "white" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
+          <h2 style={{ fontFamily: F, fontSize: "clamp(1.3rem, 3vw, 1.8rem)", fontWeight: 800, marginBottom: 12, color: "#1a1a1a" }}>
+            Asi se ve tu carta
+          </h2>
+          <p style={{ color: "#888", fontSize: "0.95rem", marginBottom: 32 }}>
+            3 vistas para que cada cliente elija como explorar tu menu.
+          </p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
+            {[
+              { name: "Clasica", desc: "Fotos grandes, scroll immersivo", emoji: "📸" },
+              { name: "Lista", desc: "Compacta, rapida, por categorias", emoji: "📋" },
+              { name: "Espacial", desc: "Experiencia 3D por categorias", emoji: "🚀" },
+            ].map((v) => (
+              <div key={v.name} style={{ flex: "1 1 200px", maxWidth: 240, padding: "32px 20px", background: "#FEFCF8", borderRadius: 16, border: "1px solid #f0e8d8" }}>
+                <span style={{ fontSize: "2.2rem", display: "block", marginBottom: 12 }}>{v.emoji}</span>
+                <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, marginBottom: 6 }}>{v.name}</h3>
+                <p style={{ fontSize: "0.82rem", color: "#999", margin: 0 }}>{v.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-        {dishes.length > 0 && (
-          <button onClick={handleNext} disabled={selected.size === 0} style={{ width: "100%", padding: 15, background: selected.size > 0 ? "#FFD600" : "#F0F0F0", color: selected.size > 0 ? "#0D0D0D" : "#AAAAAA", border: "none", borderRadius: 99, fontFamily: "var(--font-display)", fontWeight: selected.size > 0 ? 700 : 500, fontSize: 15, cursor: selected.size > 0 ? "pointer" : "not-allowed", marginTop: 6 }}>
-            {selected.size > 0 ? "Estos me llaman la atención →" : "Selecciona al menos 1"}
-          </button>
-        )}
-      </div>
+      {/* ── PLANES ── */}
+      <section id="planes" style={{ padding: "80px 24px", maxWidth: 900, margin: "0 auto" }}>
+        <h2 style={{ fontFamily: F, fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 800, textAlign: "center", marginBottom: 8, color: "#1a1a1a" }}>
+          Planes simples, sin letra chica
+        </h2>
+        <p style={{ textAlign: "center", color: "#888", fontSize: "0.95rem", marginBottom: 48 }}>
+          Empieza gratis. Paga solo si quieres mas.
+        </p>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 20, alignItems: "start" }}>
+          {/* FREE */}
+          <div style={{ padding: "32px 28px", background: "white", borderRadius: 20, border: "1px solid #e8e0d0" }}>
+            <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#888", display: "block", marginBottom: 8 }}>Plan Gratis</span>
+            <div style={{ fontFamily: F, fontSize: "2.4rem", fontWeight: 900, color: "#1a1a1a", marginBottom: 4 }}>$0</div>
+            <p style={{ fontSize: "0.85rem", color: "#aaa", marginBottom: 24 }}>Para siempre</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px" }}>
+              {FEATURES_FREE.map((f) => (
+                <li key={f} style={{ padding: "8px 0", fontSize: "0.9rem", color: "#555", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid #f5f0e8" }}>
+                  <span style={{ color: "#4ade80", fontSize: "0.8rem", flexShrink: 0 }}>&#10003;</span> {f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/panel/login" style={{ display: "block", textAlign: "center", padding: "13px 0", background: "#f5f0e8", color: "#1a1a1a", borderRadius: 50, fontFamily: F, fontWeight: 700, fontSize: "0.88rem", textDecoration: "none" }}>
+              Empezar gratis
+            </Link>
+          </div>
+
+          {/* PREMIUM */}
+          <div style={{ padding: "32px 28px", background: "linear-gradient(135deg, #FFF9ED 0%, #FFFBF5 100%)", borderRadius: 20, border: "2px solid #F4A623", position: "relative", boxShadow: "0 4px 20px rgba(244,166,35,0.12)" }}>
+            <span style={{ position: "absolute", top: -12, right: 20, background: "#F4A623", color: "#1a1a1a", fontFamily: F, fontSize: "0.68rem", fontWeight: 800, padding: "4px 14px", borderRadius: 50, textTransform: "uppercase", letterSpacing: "0.08em" }}>Popular</span>
+            <span style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", color: "#F4A623", display: "block", marginBottom: 8 }}>Plan Premium</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+              <span style={{ fontFamily: F, fontSize: "2.4rem", fontWeight: 900, color: "#1a1a1a" }}>1 UF</span>
+              <span style={{ fontSize: "0.85rem", color: "#aaa" }}>/ mes</span>
+            </div>
+            <p style={{ fontSize: "0.82rem", color: "#aaa", marginBottom: 24 }}>~$39.000 CLP · ~$45 USD</p>
+            <ul style={{ listStyle: "none", padding: 0, margin: "0 0 28px" }}>
+              {FEATURES_PREMIUM.map((f) => (
+                <li key={f} style={{ padding: "8px 0", fontSize: "0.9rem", color: "#555", display: "flex", alignItems: "center", gap: 10, borderBottom: "1px solid rgba(244,166,35,0.12)" }}>
+                  <span style={{ color: "#F4A623", fontSize: "0.8rem", flexShrink: 0 }}>&#10003;</span> {f}
+                </li>
+              ))}
+            </ul>
+            <Link href="/panel/login" style={{ display: "block", textAlign: "center", padding: "13px 0", background: "#F4A623", color: "#1a1a1a", borderRadius: 50, fontFamily: F, fontWeight: 700, fontSize: "0.88rem", textDecoration: "none", boxShadow: "0 2px 8px rgba(244,166,35,0.25)" }}>
+              Activar Premium
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ── */}
+      <section style={{ padding: "60px 24px 80px", textAlign: "center", background: "white" }}>
+        <p style={{ fontSize: "2.8rem", marginBottom: 12 }}>🧞</p>
+        <h2 style={{ fontFamily: F, fontSize: "clamp(1.3rem, 3vw, 1.8rem)", fontWeight: 800, marginBottom: 12, color: "#1a1a1a" }}>
+          Tu carta puede ser mucho mas
+        </h2>
+        <p style={{ color: "#888", fontSize: "0.95rem", marginBottom: 28, maxWidth: 400, margin: "0 auto 28px" }}>
+          Empieza gratis hoy. Sin tarjeta, sin compromiso.
+        </p>
+        <Link href="/panel/login" style={{ display: "inline-block", padding: "14px 36px", background: "#F4A623", color: "#1a1a1a", borderRadius: 50, fontFamily: F, fontWeight: 700, fontSize: "0.95rem", textDecoration: "none", boxShadow: "0 4px 16px rgba(244,166,35,0.3)" }}>
+          Crear mi carta gratis
+        </Link>
+      </section>
+
+      {/* ── FOOTER ── */}
+      <footer style={{ padding: "32px 24px", borderTop: "1px solid #f0e8d8", textAlign: "center" }}>
+        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#bbb" }}>
+          QuieroComer &copy; {new Date().getFullYear()} &middot; Hecho en Chile
+        </p>
+      </footer>
     </div>
   );
 }
