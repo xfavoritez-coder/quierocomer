@@ -6,9 +6,10 @@ import BirthdayModal from "./BirthdayModal";
 
 interface Props {
   restaurantId: string;
+  restaurantName?: string;
 }
 
-export default function BirthdayBanner({ restaurantId }: Props) {
+export default function BirthdayBanner({ restaurantId, restaurantName }: Props) {
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -121,6 +122,7 @@ export default function BirthdayBanner({ restaurantId }: Props) {
       {modalOpen && (
         <BirthdayModal
           restaurantId={restaurantId}
+          restaurantName={restaurantName}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           onClose={() => setModalOpen(false)}

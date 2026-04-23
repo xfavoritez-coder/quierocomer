@@ -96,7 +96,8 @@ export default function CartaPremium({
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      setGenioExpanded(y < lastScrollY.current && y > 100);
+      const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
+      setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
       lastScrollY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -334,7 +335,7 @@ export default function CartaPremium({
           return (
             <div key={cat.id}>
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
-            {index === Math.max(4, Math.floor(categories.length * 0.75)) && <BirthdayBanner restaurantId={restaurant.id} />}
+            {index === Math.max(4, Math.floor(categories.length * 0.75)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 12 }}>
@@ -411,7 +412,7 @@ export default function CartaPremium({
         <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
           🧞
         </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir en {restaurant.name}?</h3>
         <p style={{ fontSize: "12.5px", color: "#8a5a2c", margin: "0 0 18px" }}>El Genio conoce cada plato y puede ayudarte</p>
         <button
           onClick={() => setGenioOpen(true)}

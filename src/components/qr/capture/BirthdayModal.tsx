@@ -6,6 +6,7 @@ import { getGuestId, getSessionId } from "@/lib/guestId";
 
 interface Props {
   restaurantId: string;
+  restaurantName?: string;
   /** If user is already logged in, pass their data to update instead of register */
   existingUser?: { name: string | null; email: string } | null;
   bannerVariantId?: string;
@@ -13,7 +14,7 @@ interface Props {
   onSuccess?: () => void;
 }
 
-export default function BirthdayModal({ restaurantId, existingUser, bannerVariantId, onClose, onSuccess }: Props) {
+export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, onClose, onSuccess }: Props) {
   const [name, setName] = useState(existingUser?.name || "");
   const [email, setEmail] = useState(existingUser?.email || "");
   const [birthDate, setBirthDate] = useState("");
@@ -104,7 +105,7 @@ export default function BirthdayModal({ restaurantId, existingUser, bannerVarian
             className="font-[family-name:var(--font-playfair)]"
             style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
           >
-            ¡Queremos celebrar contigo!
+            {restaurantName ? `En ${restaurantName} queremos celebrar contigo` : "¡Queremos celebrar contigo!"}
           </h3>
           <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
             Déjanos tu cumpleaños y te tendremos una sorpresa especial

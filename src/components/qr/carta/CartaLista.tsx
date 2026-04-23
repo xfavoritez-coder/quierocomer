@@ -79,7 +79,8 @@ export default function CartaLista({
   useEffect(() => {
     const onScroll = () => {
       const y = window.scrollY;
-      setGenioExpanded(y < lastScrollY.current && y > 100);
+      const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
+      setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
       lastScrollY.current = y;
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -334,7 +335,7 @@ export default function CartaLista({
       {grouped.map(({ category, dishes: catDishes }, index) => (
         <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 -4px 12px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
-          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-16px -12px 13px" }}><BirthdayBanner restaurantId={restaurant.id} /></div>}
+          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-16px -12px 13px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} /></div>}
           <div style={{ padding: "0 8px", marginBottom: 8 }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
@@ -368,7 +369,7 @@ export default function CartaLista({
         <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
           🧞
         </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir?</h3>
+        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>¿No sabes qué pedir en {restaurant.name}?</h3>
         <p style={{ fontSize: "12px", color: "#8a5a2c", margin: "0 0 16px" }}>El Genio conoce cada plato y puede ayudarte</p>
         <button
           onClick={() => setGenioOpen(true)}
