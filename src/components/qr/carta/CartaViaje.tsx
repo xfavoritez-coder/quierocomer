@@ -36,8 +36,8 @@ type Palette = "ocean" | "earth" | "fire" | "cream";
 
 function getVariant(dish: Dish, idx: number): SlideVariant {
   if (isGeniePick(dish)) return "spotlight";
-  const rotation: SlideVariant[] = ["hero", "split", "light"];
-  return rotation[idx % 3];
+  const rotation: SlideVariant[] = ["hero", "light"];
+  return rotation[idx % 2];
 }
 
 function getPalette(_name: string): Palette {
