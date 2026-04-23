@@ -384,6 +384,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       if (likedCats.has(d.categoryId)) { score += 20; why.push("categoría similar"); }
       const matchedIngr: string[] = [];
       dishIngr.forEach((i) => { if (likedIngredients.has(i)) { score += 5; matchedIngr.push(i); } });
+      // Normalize ingredient score: avoid dishes with many common ingredients dominating
+      if (dishIngr.length > 0 && matchedIngr.length > 0) {
+        const overlapRatio = matchedIngr.length / dishIngr.length;
+        // Reward uniqueness: dishes that are mostly unique ingredients but still match get a bonus
+        score += Math.round((1 - overlapRatio) * 8);
+      }
       if (matchedIngr.length > 0) why.push(matchedIngr.slice(0, 3).join(", "));
       if (d.tags?.includes("RECOMMENDED")) { score += 10; why.push("recomendado del chef"); }
       if (d.photos?.length > 0) score += 2;
@@ -394,7 +400,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       // Penalize dislikes
       const dishDesc = ((d.description || "") + " " + (d.ingredients || "") + " " + d.name).toLowerCase();
       dislikes.forEach((dl) => { if (dishDesc.includes(dl)) score -= 8; });
-      score += Math.random() * 3;
+      score += Math.random() * 5;
 
       reasons[d.id] = why;
       return { dish: d, score };
@@ -402,16 +408,18 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
     scored.sort((a, b) => b.score - a.score);
 
-    // Pick top 3 from different categories when possible
+    // Pick top 3: prefer diversity but allow same category for 2nd/3rd pick
     const picks: Dish[] = [];
     const pickCats = new Set<string>();
+    // Pass 1: pick best from each unique category
     for (const { dish } of scored) {
       if (picks.length >= 3) break;
-      if (picks.length === 0 || !pickCats.has(dish.categoryId)) {
+      if (!pickCats.has(dish.categoryId)) {
         picks.push(dish);
         pickCats.add(dish.categoryId);
       }
     }
+    // Pass 2: fill remaining from top scores regardless of category
     if (picks.length < 3) {
       for (const { dish } of scored) {
         if (picks.length >= 3) break;
@@ -585,8 +593,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   const dislikeText = dislikeList.length > 0
                     ? dislikeList.length === 1 ? dislikeList[0] : dislikeList.slice(0, 3).join(", ") + (dislikeList.length > 3 ? "..." : "")
                     : "";
-                  if (dietText && resText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span> y que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> Además no te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
-                  if (dietText) return <>Recuerdo que <span style={{ color: "#F4A623" }}>{dietText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
+                  if (dietText && resText) return <>Recuerdo que eres <span style={{ color: "#F4A623" }}>{dietText}</span> y que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> Además no te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
+                  if (dietText) return <>Recuerdo que eres <span style={{ color: "#F4A623" }}>{dietText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
                   if (resText) return <>Recuerdo que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
                   return "Dime qué se te antoja.";
                 })()}
@@ -691,8 +699,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 8 }}>
             ¿Algo que prefieras evitar?
           </h2>
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 20 }}>
-            No lo filtraremos, pero el Genio lo tendrá en cuenta
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.5 }}>
+            <span style={{ color: "#F4A623", textDecoration: "underline", textDecorationColor: "rgba(244,166,35,0.4)", textUnderlineOffset: "3px" }}>No lo eliminaremos de tus opciones</span>, solo lo mostrará menos
           </p>
 
           {/* Selected dislikes */}
