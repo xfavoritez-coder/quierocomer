@@ -42,19 +42,32 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
           border-radius: 0;
         }
 
-        /* Dish list cards: 2-column grid */
+        /* CartaPremium: convert horizontal scroll to wrapping grid */
+        .qr-desktop-wrap [data-scroll-container] {
+          flex-wrap: wrap !important;
+          overflow-x: visible !important;
+          scroll-snap-type: none !important;
+          padding: 0 20px 8px !important;
+          gap: 12px;
+        }
+        .qr-desktop-wrap [data-scroll-container] > div {
+          scroll-snap-align: unset !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
+        }
+        /* Hide scroll fade arrows on desktop */
+        .qr-desktop-wrap [data-scroll-container] + div {
+          display: none !important;
+        }
+
+        /* CartaLista: 2-column grid for dish cards */
         .qr-desktop-wrap section > div[style*="flex-direction: column"] {
           display: grid !important;
           grid-template-columns: 1fr 1fr;
           gap: 10px;
         }
 
-        /* Make dish cards taller photos */
-        .qr-desktop-wrap section > div[style*="flex-direction: column"] > button {
-          border-radius: 14px;
-        }
-
-        /* Genio nudge: full width */
+        /* Genio nudge: centered */
         .qr-desktop-wrap div[style*="margin: 55px"] {
           max-width: 600px;
           margin-left: auto !important;
@@ -67,7 +80,7 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
           right: calc(50% - 450px + 12px);
         }
 
-        /* Footer: wider padding */
+        /* Footer */
         .qr-desktop-wrap footer {
           padding-bottom: 40px !important;
         }
