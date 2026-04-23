@@ -11,6 +11,8 @@ import { processAutomations } from "@/lib/automations/processor";
  * 3. Clean up expired magic tokens (older than 7 days)
  * 4. Log execution in CronLog
  */
+export const maxDuration = 120;
+
 export async function GET(req: NextRequest) {
   const start = Date.now();
 

@@ -95,6 +95,7 @@ Return ONLY the JSON object, nothing else.`,
         max_tokens: 500,
         messages: [{ role: "user", content: contentParts }],
       }),
+      signal: AbortSignal.timeout(30000),
     });
 
     if (!res.ok) {

@@ -43,6 +43,7 @@ export async function POST(request: Request) {
             </div>
           `,
         }),
+        signal: AbortSignal.timeout(10000),
       });
       const emailData = await emailRes.json();
       if (!emailRes.ok) console.error("Resend error:", emailData);

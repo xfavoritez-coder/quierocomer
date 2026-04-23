@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
  * Cron: process pending experience submissions.
  * Runs every 5 minutes. Generates personalized message with Claude and sends email.
  */
+export const maxDuration = 120;
+
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
   if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -72,6 +74,7 @@ Tono: místico, cálido, personal. Usa su nombre. NO uses markdown, solo texto p
           method: "POST",
           headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
           body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 1000, messages: [{ role: "user", content: prompt }] }),
+          signal: AbortSignal.timeout(30000),
         });
 
         const claudeData = await claudeRes.json();
@@ -107,6 +110,7 @@ Tono: místico, cálido, personal. Usa su nombre. NO uses markdown, solo texto p
             subject: `${sub.userName}, eres ${result.name} ${template.iconEmoji}`,
             html: emailHtml,
           }),
+          signal: AbortSignal.timeout(10000),
         });
 
         await prisma.experienceSubmission.update({

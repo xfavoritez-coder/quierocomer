@@ -22,7 +22,7 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
     prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true } }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, include: { category: { select: { name: true } } } }),
     prisma.category.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true } }),
-    prisma.session.findMany({ where: { restaurantId, startedAt: { gte: thirtyDaysAgo } }, select: { durationMs: true, viewUsed: true, isAbandoned: true, dishesViewed: true } }),
+    prisma.session.findMany({ where: { restaurantId, startedAt: { gte: thirtyDaysAgo } }, select: { durationMs: true, viewUsed: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
     prisma.qRUser.groupBy({ by: ["dietType"], where: { dietType: { not: null }, guestProfiles: { some: { sessions: { some: { restaurantId } } } } }, _count: { id: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: thirtyDaysAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "GENIO_COMPLETE", dishId: { not: null }, createdAt: { gte: thirtyDaysAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
@@ -77,6 +77,7 @@ Responde SOLO con un JSON array, sin markdown:
     method: "POST",
     headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
     body: JSON.stringify({ model: "claude-haiku-4-5-20251001", max_tokens: 1500, messages: [{ role: "user", content: prompt }] }),
+    signal: AbortSignal.timeout(30000),
   });
 
   if (!response.ok) throw new Error(`Claude API error: ${response.status}`);

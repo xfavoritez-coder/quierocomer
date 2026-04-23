@@ -13,6 +13,7 @@ export async function GET() {
     where: qrUserId ? { qrUserId } : { guestId: guestId! },
     include: { dish: { select: { id: true, name: true, price: true, photos: true, restaurantId: true } } },
     orderBy: { createdAt: "desc" },
+    take: 200,
   });
 
   return NextResponse.json({

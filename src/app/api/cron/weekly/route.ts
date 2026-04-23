@@ -6,6 +6,8 @@ import { buildWeeklyDigest } from "@/lib/email/templates/weeklyDigest";
  * Weekly cron — runs Mondays 9 AM (configured in vercel.json)
  * Sends digest email to each owner with active restaurants.
  */
+export const maxDuration = 120;
+
 export async function GET(req: NextRequest) {
   const start = Date.now();
 
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
               subject,
               html: fullHtml,
             }),
+            signal: AbortSignal.timeout(10000),
           });
 
           sent++;

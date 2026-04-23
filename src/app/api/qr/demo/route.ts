@@ -20,6 +20,7 @@ export async function POST(request: Request) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${resendKey}`,
           },
+          signal: AbortSignal.timeout(10000),
           body: JSON.stringify({
             from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
             to: "favoritez@gmail.com",

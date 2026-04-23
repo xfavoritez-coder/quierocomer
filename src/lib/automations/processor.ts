@@ -72,6 +72,7 @@ export async function processAutomations(): Promise<ProcessResult[]> {
               subject,
               html: fullHtml,
             }),
+            signal: AbortSignal.timeout(10000),
           });
 
           // Update lastEmailAt + trigger history
@@ -84,6 +85,8 @@ export async function processAutomations(): Promise<ProcessResult[]> {
             },
           });
           queued++;
+
+          await new Promise(r => setTimeout(r, 500)); // Rate limit protection
         } catch {
           skipped++;
         }

@@ -27,6 +27,7 @@ export async function POST(request: Request) {
           subject: `Nuevo vendedor registrado: ${nombre}`,
           html: `<h2>Nuevo vendedor</h2><p><strong>Nombre:</strong> ${nombre}</p><p><strong>Teléfono:</strong> ${telefono}</p><p><strong>Email:</strong> ${email}</p>`,
         }),
+        signal: AbortSignal.timeout(10000),
       });
     }
 

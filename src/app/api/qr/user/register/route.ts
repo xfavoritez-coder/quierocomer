@@ -88,6 +88,7 @@ export async function POST(request: Request) {
 </div>
 <p style="color:#5a4028;font-size:12px;text-align:center;margin-bottom:0">Este link expira en 7 días</p>`),
           }),
+          signal: AbortSignal.timeout(10000),
         });
       } catch (e) {
         console.error("Email send error:", e);

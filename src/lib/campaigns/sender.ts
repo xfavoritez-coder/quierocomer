@@ -101,6 +101,7 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
             subject: campaign.subject.replace(/\{\{name\}\}/g, user.name || "").replace(/\{\{restaurant\}\}/g, campaign.restaurant.name),
             html: personalizedHtml,
           }),
+          signal: AbortSignal.timeout(10000),
         });
 
         // Update recipient status
@@ -122,6 +123,8 @@ export async function sendCampaign(campaignId: string): Promise<SendResult> {
         failed++;
       }
     }
+
+    await new Promise(r => setTimeout(r, 1000)); // Rate limit protection
   }
 
   // Update campaign

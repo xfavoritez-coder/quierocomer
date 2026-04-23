@@ -28,6 +28,7 @@ export async function GET(req: NextRequest) {
     const calls = await prisma.waiterCall.findMany({
       where: { ...where, calledAt: { gte: monthStart } },
       orderBy: { calledAt: "desc" },
+      take: 5000,
       select: {
         id: true,
         tableName: true,

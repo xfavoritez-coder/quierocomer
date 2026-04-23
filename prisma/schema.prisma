@@ -596,6 +596,7 @@ model WaiterCall {
   @@index([restaurantId])
   @@index([tableId])
   @@index([sessionId])
+  @@index([calledAt])
 }
 
 model Customer {
@@ -902,6 +903,7 @@ model QRUserInteraction {
 
   @@index([restaurantId])
   @@index([userId])
+  @@index([createdAt])
 }
 
 model Referrer {
@@ -1215,6 +1217,7 @@ model DishFavorite {
   @@unique([qrUserId, dishId], name: "user_dish_unique")
   @@index([dishId])
   @@index([restaurantId])
+  @@index([restaurantId, createdAt])
   @@index([qrUserId])
   @@index([guestId])
 }

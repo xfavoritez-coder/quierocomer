@@ -11,6 +11,7 @@ export async function GET() {
     where: { userId },
     include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     orderBy: { createdAt: "desc" },
+    take: 100,
   });
 
   // Deduplicate by restaurant

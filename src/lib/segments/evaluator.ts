@@ -23,6 +23,7 @@ export async function evaluateSegment(restaurantId: string, rules: Rule[]): Prom
     where: {
       sessions: { some: { restaurantId } },
     },
+    take: 10000,
     select: {
       id: true,
       visitCount: true,
