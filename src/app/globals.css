@@ -66,6 +66,20 @@ h1, h2, h3, .font-display {
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
+/* Panel input placeholders — lighter so they don't look filled */
+.theme-dark input::placeholder,
+.theme-dark textarea::placeholder,
+.theme-dark select:invalid {
+  color: #555 !important;
+  opacity: 1;
+}
+.theme-light input::placeholder,
+.theme-light textarea::placeholder,
+.theme-light select:invalid {
+  color: #c4b494 !important;
+  opacity: 1;
+}
+
 ::selection {
   background: #FFD600;
   color: #0D0D0D;
