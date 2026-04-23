@@ -127,7 +127,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
   const B = "var(--font-body)";
 
   return (
-    <div style={{ fontFamily: B, color: "#111", background: "#ffffff", overflowX: "hidden" }}>
+    <div style={{ fontFamily: B, color: "#111", background: "linear-gradient(180deg, #ffffff 85%, #f97316 100%)", overflowX: "hidden" }}>
 
       {/* ══════ NAVBAR ══════ */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.95)" : "transparent", borderBottom: scrolled ? "1px solid #eeeae0" : "1px solid transparent", backdropFilter: scrolled ? "blur(12px)" : undefined, transition: "all 0.25s" }}>
@@ -283,8 +283,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   <path d="M193 46 L197 50 L193 54" stroke="#d4a015" strokeWidth={1.5} fill="none" strokeLinecap="round" opacity={0.5} />
                 </svg>
               </div>
-              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Diseño premium</h4>
-              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Scroll horizontal por sección, swipe entre fotos, hero con tu plato estrella.</p>
+              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Diseño premium</h4>
+              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Scroll horizontal por sección, swipe entre fotos, hero con tu plato estrella.</p>
             </div>
 
             {/* Card 2: Carta viva */}
@@ -320,8 +320,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   </g>
                 </svg>
               </div>
-              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Carta viva</h4>
-              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Al mediodía sube el almuerzo. Cuando llueve, platos calientes primero.</p>
+              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Carta viva</h4>
+              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Al mediodía sube el almuerzo. Cuando llueve, platos calientes primero.</p>
             </div>
 
             {/* Card 3: Llamada al garzón */}
@@ -353,8 +353,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   </g>
                 </svg>
               </div>
-              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Llamada al garzón</h4>
-              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al toque.</p>
+              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Llamada al garzón</h4>
+              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al toque.</p>
             </div>
 
             {/* Card 4: Estadísticas avanzadas */}
@@ -375,8 +375,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   <path d="M35 70 Q75 50 97 30 Q125 45 155 60" stroke="#7c3aed" strokeWidth={2} strokeDasharray="3,2" fill="none" />
                 </svg>
               </div>
-              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Estadísticas avanzadas</h4>
-              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Qué platos ven más vs cuáles piden. Qué funciona los viernes de lluvia.</p>
+              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Estadísticas avanzadas</h4>
+              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Qué platos ven más vs cuáles piden. Qué funciona los viernes de lluvia.</p>
             </div>
           </div>
         </div>
@@ -403,7 +403,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "El Genio incluido 🧞", tip: "Tu garzon con IA que recomienda platos en lenguaje natural" },
                   { t: "Experiencias virales", tip: "Juegos tipo 'que pizza eres' que tus clientes comparten en redes, haciendo viral tu restaurante" },
                 ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
@@ -418,7 +418,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>$39.000 CLP · $45 USD</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#fbbf24", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
                 {[
                   { t: "3 vistas personalizables", tip: "Elige entre 3 estilos visuales de carta segun el tipo de restaurante" },
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
@@ -430,7 +430,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Banners y promos dinamicas", tip: "Cintas de anuncios y promociones que rotan segun horario y temporada" },
                   { t: "Campanas de clientes", tip: "Reconecta con clientes que no vuelven, felicita cumpleaneros, y fideliza en automatico" },
                 ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
               </div>
             </div>
@@ -498,9 +498,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </div>
           </div>
           {/* Bottom */}
-          <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, flexWrap: "wrap", gap: 8 }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>&copy; 2026 QuieroComer.cl</span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile con 💛 y mucha hambre</span>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, textAlign: "center" }}>
+            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile con 💛 y mucha hambre</span>
           </div>
         </div>
       </footer>
