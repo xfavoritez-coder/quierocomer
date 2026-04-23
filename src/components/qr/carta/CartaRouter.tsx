@@ -76,29 +76,38 @@ export default function CartaRouter(props: Props) {
     }).catch(() => {});
   }, []);
 
+  // Persist QR scan flag in sessionStorage so it survives view changes
+  const isQrScan = (() => {
+    if (typeof window === "undefined") return props.isQrScan || false;
+    const key = `qr_scan_${props.restaurant.id}`;
+    if (props.isQrScan) {
+      sessionStorage.setItem(key, "1");
+      return true;
+    }
+    return sessionStorage.getItem(key) === "1";
+  })();
+
   // Set mesa token if arriving from table QR or general QR with token
   const [showWaiter, setShowWaiter] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const mesa = params.get("mesa");
-    const hasToken = !!params.get("t");
     const isDemo = params.get("demo") === "true";
     if (mesa) {
       setMesaToken(props.restaurant.id, mesa, isDemo);
       setShowWaiter(true);
-    } else if (hasToken) {
-      // QR general con token — mostrar garzón (el cliente indica su mesa al llamar)
+    } else if (isQrScan) {
       setShowWaiter(true);
     } else {
       setShowWaiter(hasMesaToken(props.restaurant.id));
     }
-  }, [props.restaurant.id]);
+  }, [props.restaurant.id, isQrScan]);
 
   // Start session tracking
   useEffect(() => {
-    startSession(props.restaurant.id, props.tableId, props.isQrScan);
-  }, [props.restaurant.id, props.tableId, props.isQrScan]);
+    startSession(props.restaurant.id, props.tableId, isQrScan);
+  }, [props.restaurant.id, props.tableId, isQrScan]);
 
   // Track view changes
   useEffect(() => {

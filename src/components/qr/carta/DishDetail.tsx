@@ -68,11 +68,13 @@ export default function DishDetail({
 
   // Track dish view stat on mount
   useEffect(() => {
+    trackDishEnter(dish.id);
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ eventType: "DISH_VIEW", dishId: dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
     }).catch(() => {});
+    return () => { trackDishLeave(); };
   }, [dish.id, restaurantId]);
 
   // Observe which slide is active
