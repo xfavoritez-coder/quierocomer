@@ -54,6 +54,21 @@ function DesertSVG() {
         <rect x="1039" y="200" width="4" height="16" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(-25 1039 200)" />
         <rect x="1053" y="196" width="4" height="20" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(18 1053 196)" />
         <rect x="0" y="235" width="1440" height="25" fill="#92400e" opacity="0.25" />
+        {/* Distant walking figure */}
+        <g className="lnd-walker" opacity="0.55" fill="#3a2010" transform="scale(1.6)">
+          {/* Head */}
+          <circle r="3" />
+          {/* Body */}
+          <line x1="0" y1="3" x2="0" y2="12" stroke="#5a3718" strokeWidth="1.8" strokeLinecap="round" />
+          {/* Legs — slight walk pose */}
+          <line x1="0" y1="12" x2="-2.5" y2="18" stroke="#5a3718" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="0" y1="12" x2="2" y2="18" stroke="#5a3718" strokeWidth="1.5" strokeLinecap="round" />
+          {/* Arms */}
+          <line x1="0" y1="6" x2="-3" y2="10" stroke="#5a3718" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="0" y1="6" x2="2.5" y2="9" stroke="#5a3718" strokeWidth="1.2" strokeLinecap="round" />
+          {/* Hat brim */}
+          <ellipse cx="0" cy="-2" rx="4.5" ry="1" />
+        </g>
       </svg>
     </div>
   );
@@ -132,17 +147,15 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </svg>
           </button>
         </div>
-        {/* Mobile slide-in menu */}
-        {mobileMenu && <div onClick={() => setMobileMenu(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 98 }} />}
-        <div className="lnd-nav-mobile lnd-slide-menu" style={{ display: "none", position: "fixed", top: 0, right: 0, bottom: 0, width: 260, background: "#fff", zIndex: 99, flexDirection: "column", padding: "24px 24px 40px", boxShadow: "-4px 0 20px rgba(0,0,0,0.08)", transform: mobileMenu ? "translateX(0)" : "translateX(100%)", transition: "transform 0.3s ease" }}>
-          <button onClick={() => setMobileMenu(false)} style={{ alignSelf: "flex-end", background: "none", border: "none", cursor: "pointer", marginBottom: 24, padding: 4 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round"><line x1="6" y1="6" x2="18" y2="18" /><line x1="6" y1="18" x2="18" y2="6" /></svg>
-          </button>
-          <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
-          <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
-          <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesion</Link>
-          <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 20, textAlign: "center", padding: "12px 0", background: "#111", color: "#fff", borderRadius: 10, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Agendar demo</a>
-        </div>
+        {/* Mobile dropdown menu */}
+        {mobileMenu && (
+          <div className="lnd-nav-mobile" style={{ display: "none", flexDirection: "column", background: "#fff", borderBottom: "1px solid #eeeae0", padding: "4px 24px 16px" }}>
+            <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
+            <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
+            <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesion</Link>
+            <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 12, textAlign: "center", padding: "12px 0", background: "#111", color: "#fff", borderRadius: 10, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Agendar demo</a>
+          </div>
+        )}
       </nav>
 
       {/* ══════ HERO ══════ */}
@@ -168,8 +181,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           Restaurantes que ya confian en QuieroComer
         </p>
         <div className="lnd-logos-track" style={{ position: "relative" }}>
-          <div className="lnd-logos-scroll" style={{ overflowX: "auto", scrollSnapType: "x mandatory", padding: "6px 24px", WebkitOverflowScrolling: "touch" as any, scrollbarWidth: "none" as any }}>
-            <div className="lnd-logos-row" style={{ display: "inline-flex", gap: 10, paddingRight: 40 }}>
+          <div className="lnd-logos-scroll" style={{ overflowX: "auto", padding: "6px 0", scrollbarWidth: "none" as any }}>
+            <div className="lnd-logos-row" style={{ display: "flex", gap: 10, width: "max-content", paddingLeft: 24, paddingRight: 24 }}>
               {logos.map((l) => (
                 <a key={l.slug} href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer"
                   className="lnd-logo-chip"
@@ -202,14 +215,13 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           {/* Genio Card */}
           <div className="lnd-genio-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, background: "#faf3e3", border: "1px solid #f5e6c8", borderRadius: 16, padding: "clamp(24px, 4vw, 32px)", marginBottom: 14 }}>
             <div>
-              <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 16 }}>
-                <div style={{ width: 42, height: 42, borderRadius: "50%", background: "linear-gradient(135deg, #fbbf24, #f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, boxShadow: "0 2px 8px rgba(245,158,11,0.3)" }}>🧞</div>
-                <h3 style={{ fontFamily: F, fontSize: "clamp(20px, 3vw, 22px)", fontWeight: 700, color: "#111", margin: 0 }}>El Genio, tu garzon 24/7</h3>
+              <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <span style={{ fontSize: 32, display: "block", marginBottom: 10 }}>🧞</span>
+                <h3 style={{ fontFamily: F, fontSize: "clamp(22px, 3vw, 25px)", fontWeight: 700, color: "#111", margin: 0 }}>El Genio, tu garzón 24/7</h3>
               </div>
-              <p style={{ fontSize: 16, color: "#333", lineHeight: 1.55, marginBottom: 16, fontWeight: 400 }}>
-                Preguntale en lenguaje natural. <strong style={{ color: "#111", fontWeight: 600 }}>Recomienda los platos que te convienen</strong>, aprende de cada cliente, y sube tu ticket.
+              <p style={{ fontSize: 16, color: "#333", lineHeight: 1.55, marginBottom: 16, fontWeight: 400, textAlign: "center" }}>
+                Tus clientes le preguntan qué comer y el Genio les recomienda según sus gustos, restricciones y lo que tengas disponible. <strong style={{ color: "#111", fontWeight: 600 }}>Cada visita, mejores recomendaciones.</strong>
               </p>
-              <span style={{ display: "inline-block", background: "#fff", color: "#d4a015", border: "0.5px solid #f5e6c8", padding: "4px 10px", borderRadius: 6, fontSize: 12, fontWeight: 600, fontFamily: F }}>+18% ticket promedio</span>
             </div>
             {/* Chat mock */}
             <div style={{ background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
@@ -221,30 +233,151 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg, #fbbf24, #f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>🧞</div>
                 <div>
                   <div style={{ background: "#fff8e7", color: "#78350f", padding: "10px 14px", borderRadius: "10px 10px 10px 3px", fontSize: "13.5px", lineHeight: 1.45, border: "0.5px solid #f5e6c8" }}>Te recomiendo el tiradito o el ceviche del dia.</div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
-                    {["🥗 Tiradito Manglar", "🐟 Ceviche del dia"].map((p) => (
-                      <span key={p} style={{ background: "#fff", color: "#78350f", padding: "3px 9px", borderRadius: 6, fontSize: "11.5px", fontWeight: 600, border: "0.5px solid #f5e6c8" }}>{p}</span>
-                    ))}
+                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
+                    {/* Tiradito Manglar */}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "0.5px solid #f5e6c8", padding: "6px 10px 6px 6px", borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 4, background: "linear-gradient(135deg, #fef3c7, #fbbf24)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#fff" stroke="#d4a015" strokeWidth="1" /><path d="M5 6 Q8 5 11 6 Q11 9 8 10 Q5 9 5 6Z" fill="#fca5a5" /><circle cx="7" cy="7" r="0.8" fill="#d4a015" /></svg>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#78350f", lineHeight: 1.1 }}>Tiradito Manglar</span>
+                        <span style={{ fontSize: 9, color: "#999", fontWeight: 600, lineHeight: 1.1, marginTop: 1 }}>$12.899</span>
+                      </div>
+                    </div>
+                    {/* Ceviche del día */}
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "0.5px solid #f5e6c8", padding: "6px 10px 6px 6px", borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 4, background: "linear-gradient(135deg, #dbeafe, #60a5fa)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#fff" stroke="#2563eb" strokeWidth="1" /><path d="M4 9 Q8 6 12 9 Q11 11 8 11 Q5 11 4 9Z" fill="#60a5fa" /><circle cx="8" cy="7" r="0.6" fill="#fff" /></svg>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: "#78350f", lineHeight: 1.1 }}>Ceviche del día</span>
+                        <span style={{ fontSize: 9, color: "#999", fontWeight: 600, lineHeight: 1.1, marginTop: 1 }}>$14.500</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
+          {/* Separator */}
+          <div style={{ maxWidth: 520, margin: "clamp(40px, 6vw, 60px) auto 28px", textAlign: "center", padding: "0 20px" }}>
+            <h3 style={{ fontFamily: F, fontSize: "clamp(22px, 3vw, 26px)", fontWeight: 700, color: "#111", letterSpacing: "-0.6px", lineHeight: 1.15, margin: "0 0 8px" }}>No es solo el Genio</h3>
+            <p style={{ fontSize: "clamp(14px, 2vw, 15px)", color: "#666", lineHeight: 1.5, margin: 0 }}>Estas son otras cosas que tu carta hace por ti.</p>
+          </div>
+
           {/* 4 Feature Cards */}
-          <div className="lnd-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12 }}>
-            {[
-              { icon: "✨", title: "Diseño premium", desc: "Scroll horizontal por seccion, swipe entre fotos, hero con tu plato estrella.", grad: "linear-gradient(135deg, #fef3c7, #fbbf24)" },
-              { icon: "⚡", title: "Carta viva", desc: "Al mediodia sube el almuerzo. Cuando llueve, platos calientes primero.", grad: "linear-gradient(135deg, #fee2e2, #f87171)" },
-              { icon: "🔔", title: "Llamada al garzon", desc: "El cliente toca un boton y el garzon recibe notificacion al toque.", grad: "linear-gradient(135deg, #dbeafe, #60a5fa)" },
-              { icon: "📊", title: "Estadisticas avanzadas", desc: "Que platos ven mas vs cuales piden. Que funciona los viernes de lluvia.", grad: "linear-gradient(135deg, #ddd6fe, #a78bfa)" },
-            ].map((f) => (
-              <div key={f.title} className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: "22px 18px", transition: "all 0.25s" }}>
-                <div style={{ width: 44, height: 44, borderRadius: 12, background: f.grad, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22, marginBottom: 14 }}>{f.icon}</div>
-                <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>{f.title}</h4>
-                <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>{f.desc}</p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
+            {/* Card 1: Diseño premium */}
+            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
+              <div style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                <svg viewBox="0 0 200 100" width="180" height="80">
+                  {[{ x: 10, c: "#f59e0b" }, { x: 72, c: "#dc2626" }, { x: 134, c: "#1a5f3f" }].map((card, i) => (
+                    <g key={i}>
+                      <rect x={card.x} y={15} width={55} height={70} rx={8} fill="#fff" stroke="#fbbf24" strokeWidth={1.5} />
+                      <circle cx={card.x + 27} cy={40} r={12} fill={card.c} opacity={0.55} />
+                      <rect x={card.x + 10} y={58} width={35} height={3} rx={1.5} fill="#d4a015" opacity={0.5} />
+                      <rect x={card.x + 14} y={65} width={25} height={2} rx={1} fill="#d4a015" opacity={0.3} />
+                    </g>
+                  ))}
+                  <path d="M193 46 L197 50 L193 54" stroke="#d4a015" strokeWidth={1.5} fill="none" strokeLinecap="round" opacity={0.5} />
+                </svg>
               </div>
-            ))}
+              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Diseño premium</h4>
+              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Scroll horizontal por sección, swipe entre fotos, hero con tu plato estrella.</p>
+            </div>
+
+            {/* Card 2: Carta viva */}
+            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
+              <div style={{ background: "linear-gradient(135deg, #fef2f2, #fecaca)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                <svg viewBox="0 0 200 110" width="180" height="100">
+                  {/* Morning card */}
+                  <g transform="translate(20,20) rotate(-8)">
+                    <rect width={45} height={65} rx={6} fill="#fff" stroke="#fca5a5" strokeWidth={1.5} />
+                    <circle cx={22} cy={15} r={6} fill="#fbbf24" /><line x1={28} y1={13} x2={32} y2={11} stroke="#f59e0b" strokeWidth={1} /><line x1={28} y1={17} x2={32} y2={19} stroke="#f59e0b" strokeWidth={1} />
+                    <rect x={8} y={28} width={28} height={2.5} rx={1} fill="#fca5a5" opacity={0.5} />
+                    <rect x={8} y={34} width={20} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
+                    <rect x={8} y={40} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
+                  </g>
+                  {/* Active card (center) */}
+                  <g transform="translate(78,13)">
+                    <rect width={48} height={78} rx={7} fill="#fff" stroke="#dc2626" strokeWidth={2.5} />
+                    <circle cx={24} cy={18} r={8} fill="#fbbf24" />
+                    <text x={24} y={42} textAnchor="middle" fontSize={6} fontWeight={700} fill="#991b1b">ALMUERZO</text>
+                    <rect x={8} y={50} width={32} height={2.5} rx={1} fill="#dc2626" opacity={0.4} />
+                    <rect x={8} y={56} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.4} />
+                    <rect x={8} y={62} width={28} height={2} rx={1} fill="#fca5a5" opacity={0.3} />
+                    {/* Sparkle */}
+                    <path d="M44 5 L45.5 0 L47 5 L52 6.5 L47 8 L45.5 13 L44 8 L39 6.5 Z" fill="#fbbf24" />
+                  </g>
+                  {/* Night card */}
+                  <g transform="translate(138,20) rotate(8)">
+                    <rect width={45} height={65} rx={6} fill="#fff" stroke="#fca5a5" strokeWidth={1.5} />
+                    <path d="M18 11 Q12 11 12 17 Q12 23 18 23 Q15 17 18 11 Z" fill="#7c3aed" />
+                    <rect x={8} y={30} width={28} height={2.5} rx={1} fill="#fca5a5" opacity={0.5} />
+                    <rect x={8} y={36} width={20} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
+                    <rect x={8} y={42} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
+                  </g>
+                </svg>
+              </div>
+              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Carta viva</h4>
+              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Al mediodía sube el almuerzo. Cuando llueve, platos calientes primero.</p>
+            </div>
+
+            {/* Card 3: Llamada al garzón */}
+            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
+              <div style={{ background: "linear-gradient(135deg, #eff6ff, #bfdbfe)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                <svg viewBox="0 0 200 100" width="180" height="80">
+                  {/* Phone */}
+                  <rect x={30} y={15} width={50} height={70} rx={8} fill="#1e3a8a" />
+                  <rect x={34} y={21} width={42} height={52} rx={3} fill="#dbeafe" />
+                  <circle cx={55} cy={79} r={3} fill="#60a5fa" />
+                  {/* Button on screen */}
+                  <rect x={40} y={39} width={30} height={16} rx={3} fill="#3b82f6" />
+                  <text x={55} y={50} textAnchor="middle" fontSize={5} fill="#fff" fontWeight={600}>LLAMAR</text>
+                  {/* Finger */}
+                  <circle cx={55} cy={47} r={5} fill="#fcd9b0" stroke="#1e3a8a" strokeWidth={1.5} />
+                  {/* Signal waves */}
+                  <path d="M95 47 Q102 47 102 52 Q102 57 95 57" stroke="#3b82f6" strokeWidth={2} fill="none" opacity={0.9} />
+                  <path d="M95 40 Q112 40 112 52 Q112 64 95 64" stroke="#3b82f6" strokeWidth={1.8} fill="none" opacity={0.6} />
+                  <path d="M95 33 Q122 33 122 52 Q122 71 95 71" stroke="#3b82f6" strokeWidth={1.5} fill="none" opacity={0.3} />
+                  {/* Bell */}
+                  <g transform="translate(155,45)">
+                    <path d="M-10 0 Q-10 -12 0 -12 Q10 -12 10 0 L12 5 L-12 5 Z" fill="#fbbf24" />
+                    <rect x={-2} y={-18} width={4} height={6} rx={1} fill="#fbbf24" />
+                    <circle cx={0} cy={9} r={2.5} fill="#dc2626" />
+                    <line x1={-16} y1={-2} x2={-13} y2={-2} stroke="#fbbf24" strokeWidth={1.5} strokeLinecap="round" />
+                    <line x1={13} y1={-2} x2={16} y2={-2} stroke="#fbbf24" strokeWidth={1.5} strokeLinecap="round" />
+                    <line x1={-15} y1={3} x2={-12} y2={3} stroke="#fbbf24" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
+                    <line x1={12} y1={3} x2={15} y2={3} stroke="#fbbf24" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
+                  </g>
+                </svg>
+              </div>
+              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Llamada al garzón</h4>
+              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al toque.</p>
+            </div>
+
+            {/* Card 4: Estadísticas avanzadas */}
+            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
+              <div style={{ background: "linear-gradient(135deg, #faf5ff, #e9d5ff)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
+                <svg viewBox="0 0 200 100" width="180" height="80">
+                  <line x1={20} y1={80} x2={180} y2={80} stroke="#a78bfa" strokeWidth={1.5} opacity={0.4} />
+                  {[
+                    { x: 30, h: 25, c: "#c4b5fd" }, { x: 58, h: 40, c: "#a78bfa" },
+                    { x: 86, h: 55, c: "#7c3aed" }, { x: 114, h: 35, c: "#a78bfa" },
+                    { x: 142, h: 20, c: "#c4b5fd" },
+                  ].map((b, i) => (
+                    <rect key={i} x={b.x} y={80 - b.h} width={22} height={b.h} rx={3} fill={b.c} />
+                  ))}
+                  {/* Star on tallest */}
+                  <path d="M97 18 L98.5 13 L100 18 L105 19.5 L100 21 L98.5 26 L97 21 L92 19.5 Z" fill="#fbbf24" />
+                  {/* Trend line */}
+                  <path d="M35 70 Q75 50 97 30 Q125 45 155 60" stroke="#7c3aed" strokeWidth={2} strokeDasharray="3,2" fill="none" />
+                </svg>
+              </div>
+              <h4 style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", marginBottom: 6 }}>Estadísticas avanzadas</h4>
+              <p style={{ fontSize: "12.5px", color: "#666", lineHeight: 1.5, margin: 0 }}>Qué platos ven más vs cuáles piden. Qué funciona los viernes de lluvia.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -324,17 +457,14 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <form onSubmit={handleSubmit} className="lnd-cta-form" style={{ display: "flex", gap: 8, maxWidth: 440, margin: "0 auto" }}>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@restaurante.cl" required
                 style={{ flex: 1, padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none", minWidth: 0 }} />
-              <button type="submit" disabled={sending} style={{ padding: "12px 20px", background: "#111", color: "#fff", borderRadius: 10, border: "none", fontFamily: F, fontWeight: 600, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap" }}>
+              <button type="submit" disabled={sending} style={{ padding: "12px 20px", background: "#fbbf24", color: "#111", borderRadius: 10, border: "none", fontFamily: F, fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(251,191,36,0.3)" }}>
                 {sending ? "..." : "Quiero probar →"}
               </button>
             </form>
           )}
-          <p style={{ fontSize: 12, color: "#999", marginTop: 14 }}>Sin tarjeta. Sin compromiso. Respuesta en menos de un dia.</p>
+          <p style={{ fontSize: 12, color: "#999", marginTop: 14 }}>Sin tarjeta. Sin compromiso.</p>
         </div>
       </section>
-
-      {/* ══════ TRANSITION TO NIGHT ══════ */}
-      <div style={{ height: 120, background: "linear-gradient(180deg, #ffffff 0%, #f5f0e8 20%, #e8d5b8 45%, #c9a87c 65%, #8b6b3d 80%, #4a3520 90%, #1e1b4b 100%)" }} />
 
       {/* ══════ FOOTER NOCHE ══════ */}
       <footer style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #4c1d95 40%, #7e22ce 70%, #be185d 90%, #f97316 100%)", color: "#fff", padding: "60px 24px 24px", position: "relative", overflow: "hidden" }}>
@@ -374,7 +504,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           {/* Bottom */}
           <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.15)", paddingTop: 20, flexWrap: "wrap", gap: 8 }}>
             <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>&copy; 2026 QuieroComer.cl</span>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile 🇨🇱</span>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile con 💛 y mucha hambre</span>
           </div>
         </div>
       </footer>
@@ -382,28 +512,24 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       {/* ══════ CSS ══════ */}
       <style>{`
         @keyframes lndFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes lndWalk { 0% { transform: scale(1.6) translate(660px, 122px); } 100% { transform: scale(1.6) translate(220px, 128px); } }
+        .lnd-walker { animation: lndWalk 40s linear infinite; }
         .lnd-logos-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, #faf6ee); pointer-events: none; z-index: 2; }
         .lnd-logos-scroll::-webkit-scrollbar { display: none; }
         @media (min-width: 769px) {
-          .lnd-logos-scroll { display: flex !important; justify-content: center; }
-          .lnd-logos-row { padding-right: 0 !important; }
           .lnd-logos-track::after { display: none; }
+          .lnd-logos-scroll { display: flex !important; justify-content: center; }
         }
-        @media (max-width: 768px) { .lnd-slide-menu { display: flex !important; } }
         .lnd-logo-chip:hover { border-color: #d4a015 !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(212,160,21,0.12); }
         .lnd-feature-card:hover { border-color: #d4a015 !important; transform: translateY(-3px); box-shadow: 0 4px 16px rgba(212,160,21,0.1); }
         @media (max-width: 768px) {
           .lnd-nav-desktop { display: none !important; }
           .lnd-nav-mobile { display: flex !important; }
           .lnd-genio-grid { grid-template-columns: 1fr !important; }
-          .lnd-features-grid { grid-template-columns: 1fr 1fr !important; }
           .lnd-plans-grid { grid-template-columns: 1fr !important; }
           .lnd-cta-form { flex-direction: column !important; }
           .lnd-footer-top { flex-direction: column !important; }
           .lnd-footer-links { gap: 32px !important; }
-        }
-        @media (max-width: 480px) {
-          .lnd-features-grid { grid-template-columns: 1fr !important; }
         }
         @media (min-width: 769px) {
           .lnd-nav-mobile { display: none !important; }
