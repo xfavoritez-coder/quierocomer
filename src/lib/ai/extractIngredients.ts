@@ -16,18 +16,22 @@ export async function extractIngredientsForDish(
   dishName: string,
   description: string | null,
   photoUrl: string | null,
+  /** Pre-fetched ingredients list (avoids DB query per dish in bulk mode) */
+  prefetchedIngredients?: { id: string; name: string; aliases: string[] }[],
+  /** Pre-fetched ignored list */
+  prefetchedIgnored?: { name: string }[],
 ): Promise<ExtractionResult> {
   if (!ANTHROPIC_API_KEY) {
     return { dishId, dishName, matched: [], suggested: [], linkedCount: 0 };
   }
 
-  // Get existing master ingredient list with aliases + ignored list
-  const existing = await prisma.ingredient.findMany({
+  // Use pre-fetched data or query DB
+  const existing = prefetchedIngredients ?? await prisma.ingredient.findMany({
     select: { id: true, name: true, aliases: true },
     orderBy: { name: "asc" },
   });
   const existingNames = existing.map(i => i.name);
-  const ignored = await prisma.ignoredIngredient.findMany({ select: { name: true } });
+  const ignored = prefetchedIgnored ?? await prisma.ignoredIngredient.findMany({ select: { name: true } });
   const ignoredNames = new Set(ignored.map(i => i.name.toLowerCase()));
 
   // Build prompt

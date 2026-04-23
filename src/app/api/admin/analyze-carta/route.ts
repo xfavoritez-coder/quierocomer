@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
-export const maxDuration = 300; // 5 min timeout for bulk analysis
+export const maxDuration = 300;
 
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -15,38 +15,64 @@ export async function POST(req: NextRequest) {
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
     const dishes = await prisma.dish.findMany({
-      where: { restaurantId, isActive: true },
+      where: { restaurantId, isActive: true, deletedAt: null },
       select: { id: true, name: true, description: true, photos: true },
     });
 
-    const results = [];
-    let totalMatched = 0;
-    let totalSuggested = 0;
+    // Pre-fetch ingredients and ignored list once (not per-dish)
+    const existing = await prisma.ingredient.findMany({
+      select: { id: true, name: true, aliases: true },
+      orderBy: { name: "asc" },
+    });
+    const ignored = await prisma.ignoredIngredient.findMany({ select: { name: true } });
 
-    for (const dish of dishes) {
-      // Skip photo in bulk analysis — text only is faster and avoids timeouts
-      const result = await extractIngredientsForDish(
-        dish.id,
-        dish.name,
-        dish.description,
-        null,
-      );
-      results.push(result);
-      // Small delay to avoid rate limiting
-      await new Promise(r => setTimeout(r, 500));
-      totalMatched += result.matched.length;
-      totalSuggested += result.suggested.length;
-    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const results: any[] = [];
+        let totalMatched = 0;
+        let totalSuggested = 0;
 
-    // Collect all unique suggestions
-    const allSuggestions = [...new Set(results.flatMap(r => r.suggested))].sort();
+        // Process in batches of 5 for speed
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < dishes.length; i += BATCH_SIZE) {
+          const batch = dishes.slice(i, i + BATCH_SIZE);
+          const batchResults = await Promise.all(
+            batch.map(dish =>
+              extractIngredientsForDish(dish.id, dish.name, dish.description, null, existing, ignored)
+            )
+          );
 
-    return NextResponse.json({
-      dishesProcessed: dishes.length,
-      totalMatched,
-      totalSuggested,
-      allSuggestions,
-      results,
+          for (const result of batchResults) {
+            results.push(result);
+            totalMatched += result.matched.length;
+            totalSuggested += result.suggested.length;
+
+            // Send progress
+            controller.enqueue(encoder.encode(
+              JSON.stringify({ type: "progress", done: results.length, total: dishes.length, dish: result.dishName }) + "\n"
+            ));
+          }
+        }
+
+        // Send final result
+        const allSuggestions = [...new Set(results.flatMap(r => r.suggested))].sort();
+        controller.enqueue(encoder.encode(
+          JSON.stringify({
+            type: "done",
+            dishesProcessed: dishes.length,
+            totalMatched,
+            totalSuggested,
+            allSuggestions,
+            results,
+          }) + "\n"
+        ));
+        controller.close();
+      },
+    });
+
+    return new Response(stream, {
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Transfer-Encoding": "chunked" },
     });
   } catch (e) {
     console.error("[Analyze carta]", e);

@@ -256,6 +256,7 @@ export default function IngredientesPage() {
   // Analyze carta
   const [analyzeLocal, setAnalyzeLocal] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeProgress, setAnalyzeProgress] = useState<{ done: number; total: number; dish: string } | null>(null);
   const [analysisResults, setAnalysisResults] = useState<{ dishesProcessed: number; totalMatched: number; totalSuggested: number; allSuggestions: string[]; results: AnalysisResult[] } | null>(null);
 
   // Review
@@ -401,22 +402,51 @@ export default function IngredientesPage() {
             if (!analyzeLocal || analyzing) return;
             setAnalyzing(true);
             setAnalysisResults(null);
-            const res = await fetch("/api/admin/analyze-carta", {
-              method: "POST", headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ restaurantId: analyzeLocal }),
-            });
-            const data = await res.json();
-            if (!data.error) {
-              setAnalysisResults(data);
-              // Reload ingredients
-              fetch("/api/admin/ingredients").then(r => r.json()).then(d => setIngredients(d.ingredients || []));
-            }
+            setAnalyzeProgress(null);
+            try {
+              const res = await fetch("/api/admin/analyze-carta", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ restaurantId: analyzeLocal }),
+              });
+              if (!res.ok) { setAnalyzing(false); return; }
+              const reader = res.body?.getReader();
+              if (!reader) { setAnalyzing(false); return; }
+              const decoder = new TextDecoder();
+              let buffer = "";
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split("\n");
+                buffer = lines.pop() || "";
+                for (const line of lines) {
+                  if (!line.trim()) continue;
+                  try {
+                    const msg = JSON.parse(line);
+                    if (msg.type === "progress") setAnalyzeProgress({ done: msg.done, total: msg.total, dish: msg.dish });
+                    if (msg.type === "done") {
+                      setAnalysisResults(msg);
+                      fetch("/api/admin/ingredients").then(r => r.json()).then(d => setIngredients(d.ingredients || []));
+                    }
+                  } catch {}
+                }
+              }
+            } catch { alert("Error de conexión al analizar"); }
             setAnalyzing(false);
+            setAnalyzeProgress(null);
           }} disabled={!analyzeLocal || analyzing}
             style={{ padding: "8px 18px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !analyzeLocal || analyzing ? 0.5 : 1, whiteSpace: "nowrap" }}>
-            {analyzing ? "Analizando..." : "Analizar"}
+            {analyzing && analyzeProgress ? `${analyzeProgress.done}/${analyzeProgress.total}` : analyzing ? "Iniciando..." : "Analizar"}
           </button>
         </div>
+        {analyzing && analyzeProgress && (
+          <div style={{ marginTop: 10 }}>
+            <div style={{ height: 4, background: "var(--adm-card-border)", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{ height: "100%", background: GOLD, borderRadius: 4, width: `${(analyzeProgress.done / analyzeProgress.total) * 100}%`, transition: "width 0.3s ease" }} />
+            </div>
+            <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{analyzeProgress.dish}...</p>
+          </div>
+        )}
 
         {/* Results */}
         {analysisResults && (
