@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { resend } from "@/lib/resend";
+
+const NOTIFY_TO = "favoritez@gmail.com";
 
 export async function POST(request: Request) {
   try {
@@ -8,14 +11,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }
 
-    await prisma.emailLog.create({
-      data: {
-        to: email,
-        subject: "Landing — Solicitud de demo",
-        purpose: "landing_lead",
-        status: "pending",
-      },
-    });
+    await Promise.all([
+      resend.emails.send({
+        from: process.env.FROM_EMAIL || "noreply@quierocomer.cl",
+        to: NOTIFY_TO,
+        subject: `Nueva solicitud de demo — ${email}`,
+        html: `<p>Alguien pidió una demo desde la landing.</p><p><strong>Email:</strong> ${email}</p><p><strong>Fecha:</strong> ${new Date().toLocaleString("es-CL", { timeZone: "America/Santiago" })}</p>`,
+      }),
+      prisma.emailLog.create({
+        data: {
+          to: NOTIFY_TO,
+          subject: `Nueva solicitud de demo — ${email}`,
+          purpose: "landing_lead",
+          status: "sent",
+        },
+      }),
+    ]);
 
     return NextResponse.json({ ok: true });
   } catch (error) {

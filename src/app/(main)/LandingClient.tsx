@@ -354,7 +354,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </svg>
               </div>
               <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Llamada al garzón</h4>
-              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al toque.</p>
+              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al instante.</p>
             </div>
 
             {/* Card 4: Estadísticas avanzadas */}
@@ -415,7 +415,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>1 UF</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
               </div>
-              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>$39.000 CLP · $45 USD</p>
+              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>$39.000 CLP · IVA inc.</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#fbbf24", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
@@ -442,7 +442,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <section id="contacto" style={{ background: "#fff", padding: "80px 24px", textAlign: "center" }}>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <h2 style={{ fontFamily: F, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05, marginBottom: 14, color: "#111" }}>
-            ¿Listo para probar<br />la carta que sube tu ticket?
+            ¿Listo para probar<br />la carta que vende por ti?
           </h2>
           <p style={{ fontSize: 16, color: "#666", maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.5 }}>
             Déjanos tu correo y te contactamos en 24 horas para mostrarte una demo.
