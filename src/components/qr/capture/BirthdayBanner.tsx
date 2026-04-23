@@ -52,16 +52,20 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
         className="font-[family-name:var(--font-dm)]"
         style={{
           margin: "8px 20px 20px",
-          padding: "14px 18px",
-          background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
-          border: "1px solid rgba(22,163,74,0.15)",
+          padding: "18px 20px",
+          background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+          border: "1px solid rgba(244,166,35,0.22)",
           borderRadius: 14,
           textAlign: "center",
         }}
       >
-        <span style={{ color: "#16a34a", fontSize: "0.88rem", fontWeight: 600 }}>
-          ¡Listo! Guardamos tu cumpleaños 🎂
-        </span>
+        <span style={{ fontSize: "1.4rem", display: "block", marginBottom: 6 }}>📩</span>
+        <p style={{ color: "#92400e", fontSize: "0.88rem", fontWeight: 700, margin: "0 0 4px" }}>
+          ¡Ya casi! Revisa tu correo
+        </p>
+        <p style={{ color: "#b45309", fontSize: "0.78rem", margin: 0, opacity: 0.8 }}>
+          Confirma para recibir tu regalo de cumpleaños
+        </p>
       </div>
     );
   }

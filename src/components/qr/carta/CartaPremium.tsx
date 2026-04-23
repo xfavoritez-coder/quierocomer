@@ -125,6 +125,33 @@ export default function CartaPremium({
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
+  const [showVerifiedModal, setShowVerifiedModal] = useState(false);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("verified") === "1") {
+      setShowVerifiedModal(true);
+      // Clean URL without reload
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+
+  const [birthdayCountdown, setBirthdayCountdown] = useState<number | null>(null);
+  useEffect(() => {
+    fetch("/api/qr/user/me")
+      .then(r => r.json())
+      .then(d => {
+        if (d.user?.birthDate) {
+          const today = new Date();
+          const birth = new Date(d.user.birthDate);
+          const thisYear = new Date(today.getFullYear(), birth.getMonth(), birth.getDate());
+          if (thisYear < today) thisYear.setFullYear(today.getFullYear() + 1);
+          const days = Math.ceil((thisYear.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (days <= 30) setBirthdayCountdown(days);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -400,6 +427,23 @@ export default function CartaPremium({
         })}
       </main>
 
+      {birthdayCountdown !== null && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            margin: "0 20px 12px", padding: "12px 16px",
+            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 12,
+            display: "flex", alignItems: "center", gap: 10,
+          }}
+        >
+          <span style={{ fontSize: "1.2rem" }}>🎁</span>
+          <span style={{ fontSize: "0.82rem", color: "#92400e", fontWeight: 600 }}>
+            {birthdayCountdown === 0 ? "¡Hoy es tu cumpleaños! 🎉" : `Tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`}
+          </span>
+        </div>
+      )}
+
       {/* Genio nudge */}
       <div
         className="font-[family-name:var(--font-dm)]"
@@ -551,6 +595,48 @@ export default function CartaPremium({
       )}
 
       {/* Second visit toast moved inside floating buttons container above */}
+
+      {/* Verified celebration modal */}
+      {showVerifiedModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center font-[family-name:var(--font-dm)]"
+          style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)" }}
+          onClick={() => setShowVerifiedModal(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "white", borderRadius: 20, padding: "36px 28px",
+              maxWidth: 340, width: "90%", textAlign: "center",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+              animation: "bdaySlideIn 0.4s cubic-bezier(0.16,1,0.3,1)",
+            }}
+          >
+            <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>🎉</span>
+            <h3
+              className="font-[family-name:var(--font-playfair)]"
+              style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.3, margin: "0 0 8px" }}
+            >
+              ¡Listo, ya estás registrado!
+            </h3>
+            <p style={{ fontSize: "0.88rem", color: "#666", lineHeight: 1.5, margin: "0 0 20px" }}>
+              Recibirás un regalo especial en tu cumpleaños. El Genio ahora te conoce y te recomendará mejor.
+            </p>
+            <button
+              onClick={() => setShowVerifiedModal(false)}
+              className="active:scale-[0.97] transition-transform"
+              style={{
+                background: "#F4A623", color: "white", border: "none",
+                borderRadius: 50, padding: "12px 28px", fontSize: "0.92rem",
+                fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
+                boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
+              }}
+            >
+              ¡Genial! 🧞
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Email capture modal */}
       {showEmailModal && (

@@ -405,6 +405,50 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
   return null;
 }
 
+/* =============== EXPANDABLE PITCH =============== */
+function VjPitch({ text, className, style, isLight }: { text: string; className?: string; style?: React.CSSProperties; isLight?: boolean }) {
+  const [expanded, setExpanded] = useState(false);
+  const isLong = text.length > 90;
+  return (
+    <div style={{ position: "relative" }}>
+      <p
+        className={`vj-pitch font-[family-name:var(--font-fraunces)] ${className || ""}`}
+        style={{ ...style, WebkitLineClamp: expanded ? 999 : 3 }}
+      >
+        {text}
+      </p>
+      {isLong && !expanded && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(true); }}
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)",
+            fontSize: "13px", fontWeight: 600, padding: "4px 0", marginTop: -8,
+            fontStyle: "normal",
+          }}
+        >
+          ver más
+        </button>
+      )}
+      {isLong && expanded && (
+        <button
+          onClick={(e) => { e.stopPropagation(); setExpanded(false); }}
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: isLight ? "#8a5a2c" : "rgba(255,255,255,0.6)",
+            fontSize: "13px", fontWeight: 600, padding: "4px 0", marginTop: -8,
+            fontStyle: "normal",
+          }}
+        >
+          ver menos
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* =============== DISH SLIDE =============== */
 function DishSlide({ dish, variant, palette, index }: {
   dish: Dish; variant: SlideVariant; palette: Palette; index: number;
@@ -414,15 +458,16 @@ function DishSlide({ dish, variant, palette, index }: {
   const isNew = dish.tags?.includes("NEW");
   const d = dish as any;
   const isRec = dish.tags?.includes("RECOMMENDED");
-  const vjBadges = (
-    <>
-      {isRec && <span style={{ display: "inline-flex", alignItems: "center", marginLeft: 8, fontSize: "14px", verticalAlign: "middle" }}>⭐</span>}
+  const hasBadges = isRec || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
+  const vjBadges = hasBadges ? (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0, verticalAlign: "middle" }}>
+      {isRec && <span style={{ fontSize: "14px" }}>⭐</span>}
       {isNew && <VjNewBadge inline />}
-      {d.dishDiet === "VEGAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌿</span>}
-      {d.dishDiet === "VEGETARIAN" && <span style={{ display: "inline-flex", marginLeft: 6, fontSize: "12px", verticalAlign: "middle" }}>🌱</span>}
-      {d.isSpicy && <span style={{ display: "inline-flex", marginLeft: 4, fontSize: "12px", verticalAlign: "middle" }}>🌶️</span>}
-    </>
-  );
+      {d.dishDiet === "VEGAN" && <span style={{ fontSize: "12px" }}>🌿</span>}
+      {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px" }}>🌱</span>}
+      {d.isSpicy && <span style={{ fontSize: "12px" }}>🌶️</span>}
+    </span>
+  ) : null;
   const accentColor = "#F4A623";
 
   if (variant === "hero") {
@@ -436,9 +481,9 @@ function DishSlide({ dish, variant, palette, index }: {
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
         <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-          <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
+          <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
         </h3>
-        {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+        {pitch && <VjPitch text={pitch} />}
         <div className="vj-meta">
           <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
         </div>
@@ -461,9 +506,9 @@ function DishSlide({ dish, variant, palette, index }: {
         <div className="vj-split-info">
           <div className="vj-split-divider" />
           <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-            <span className="vj-ln"><span>{firstWord}{restWords ? <><br /><em>{restWords}</em></> : null}{vjBadges}</span></span>
+            <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap" }}><span>{firstWord}{restWords ? <><br /><em>{restWords}</em></> : null}</span>{vjBadges}</span></span>
           </h3>
-          {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+          {pitch && <VjPitch text={pitch} />}
           <div className="vj-split-price font-[family-name:var(--font-fraunces)]">
             <span className="vj-split-price-dot" />${dish.price?.toLocaleString("es-CL")}
           </div>
@@ -481,9 +526,9 @@ function DishSlide({ dish, variant, palette, index }: {
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
       <h3 className="vj-title font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
+        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
       </h3>
-      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]" style={{ fontSize: "24px" }}>{pitch}</p>}
+      {pitch && <VjPitch text={pitch} isLight />}
       <div className="vj-meta">
         <span className="vj-price font-[family-name:var(--font-fraunces)]">
           ${dish.price?.toLocaleString("es-CL")}
@@ -500,9 +545,9 @@ function DishSlide({ dish, variant, palette, index }: {
       </div>
       <span className="vj-eyebrow" style={{ color: "#F4A623" }}>{dish.ingredients?.split(/[,;]/)[0]?.trim() || ""}</span>
       <h3 className="vj-title vj-title-gradient font-[family-name:var(--font-fraunces)]">
-        <span className="vj-ln"><span>{dish.name}{vjBadges}</span></span>
+        <span className="vj-ln"><span style={{ display: "flex", alignItems: "baseline" }}><span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>{vjBadges}</span></span>
       </h3>
-      {pitch && <p className="vj-pitch font-[family-name:var(--font-fraunces)]">{pitch}</p>}
+      {pitch && <VjPitch text={pitch} />}
       <div className="vj-meta">
         <span className="vj-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
       </div>
@@ -689,14 +734,14 @@ const CSS = `
   .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; }
   .vj-eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; margin-bottom: 12px; font-weight: 500; display: inline-block; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-dish.in-view .vj-eyebrow { opacity: 0.7; transform: translateY(0); }
-  .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; }
   .vj-title em { font-style: italic; font-weight: 300; }
   .vj-title-gradient em { background: linear-gradient(135deg, #f5d4a0 0%, #e8a06a 50%, #c9785a 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
   .vj-ln { display: block; overflow: hidden; }
   .vj-ln span { display: inline-block; transform: translateY(110%); transition: transform 1.1s var(--vj-ease); }
   .vj-dish.in-view .vj-ln span { transform: translateY(0); }
   .vj-dish.in-view .vj-ln:nth-child(2) span { transition-delay: 0.15s; }
-  .vj-pitch { font-weight: 300; font-style: italic; font-size: 21px; line-height: 1.45; opacity: 0; max-width: 32ch; margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .vj-pitch { font-weight: 300; font-style: italic; font-size: 18px; line-height: 1.45; opacity: 0; max-width: min(32ch, calc(100vw - 80px)); margin-bottom: 24px; transform: translateY(20px); transition: all 1.1s var(--vj-ease) 0.5s; text-shadow: 0 1px 3px rgba(0,0,0,0.4); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   .vj-dish.in-view .vj-pitch { opacity: 0.9; transform: translateY(0); }
   .vj-v-light .vj-pitch { margin-left: auto; margin-right: auto; color: #1a0e08; }
   .vj-v-spotlight .vj-pitch { margin-left: auto; margin-right: auto; }
@@ -711,7 +756,7 @@ const CSS = `
   .vj-hero-photo img { object-fit: cover; }
   .vj-v-hero.in-view .vj-hero-photo { transform: scale(1); }
   .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.75) 100%); }
-  .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; }
+  .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; max-width: calc(100% - 70px); }
 
   /* SPLIT */
   .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }

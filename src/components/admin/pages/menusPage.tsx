@@ -406,6 +406,7 @@ export default function AdminMenus() {
       body: JSON.stringify(updates),
     });
     const saved = await res.json();
+    if (!res.ok) { alert(saved.error || "Error al guardar"); setSaving(false); return; }
     const newCat = categories.find(c => c.id === eCategoryId) || selectedDish.category;
     // Merge server response with local data for immediate update
     const updated = {
@@ -421,7 +422,12 @@ export default function AdminMenus() {
     setSaving(false);
   };
 
-  const toggleTag = (t: string) => setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  const MAX_RECOMMENDED = 5;
+  const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
+  const toggleTag = (t: string) => {
+    if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
+    setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
 
   if (selectedDish && editMode) return (
     <div style={{ maxWidth: 500 }}>
@@ -758,18 +764,22 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Tags</label>
+                <label style={LBL}>Tags <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.68rem" }}>({recCount + (eTags.includes("RECOMMENDED") ? 1 : 0)}/{MAX_RECOMMENDED} recomendados)</span></label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
                     const active = eTags.includes(t.value);
+                    const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
                     return (
-                      <button key={t.value} onClick={() => toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: active ? TAG_COLORS[t.value] : "var(--adm-text3)", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <button key={t.value} onClick={() => toggleTag(t.value)} disabled={atLimit} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: active ? TAG_COLORS[t.value] : "var(--adm-text3)", display: "inline-flex", alignItems: "center", gap: 4, opacity: atLimit ? 0.4 : 1 }}>
                         {t.value === "RECOMMENDED" && <span style={{ fontSize: "0.7rem", opacity: active ? 1 : 0.4 }}>★</span>}
                         {t.label}
                       </button>
                     );
                   })}
                 </div>
+                {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
+                )}
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>

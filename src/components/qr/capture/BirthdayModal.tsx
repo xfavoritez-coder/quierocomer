@@ -88,6 +88,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           padding: "32px 24px 28px",
           maxWidth: 360,
           width: "90%",
+          maxHeight: "90dvh",
+          overflowY: "auto",
           boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
           position: "relative",
         }}
@@ -139,7 +141,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
               />
             </>
           )}
-          <div style={{ position: "relative" }}>
+          <div style={{ position: "relative", overflow: "hidden" }}>
             <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Fecha de cumpleaños</label>
             <input
               type="date"

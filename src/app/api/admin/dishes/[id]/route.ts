@@ -15,6 +15,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!existing) return NextResponse.json({ error: "Plato no encontrado" }, { status: 404 });
     await assertOwnsRestaurant(req, existing.restaurantId);
 
+    // Enforce max 5 RECOMMENDED per restaurant
+    if (body.tags !== undefined && body.tags.includes("RECOMMENDED")) {
+      const currentTags = await prisma.dish.findFirst({ where: { id }, select: { tags: true } });
+      const alreadyRec = currentTags?.tags?.includes("RECOMMENDED");
+      if (!alreadyRec) {
+        const recCount = await prisma.dish.count({
+          where: { restaurantId: existing.restaurantId, tags: { has: "RECOMMENDED" }, isActive: true, deletedAt: null, id: { not: id } },
+        });
+        if (recCount >= 5) {
+          return NextResponse.json({ error: "Máximo 5 productos recomendados por restaurante" }, { status: 400 });
+        }
+      }
+    }
+
     const dish = await prisma.dish.update({
       where: { id },
       data: {

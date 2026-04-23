@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { trackUserRegistration } from "@/lib/qr/userRegistration";
+import { adminEmailTemplate } from "@/lib/email/sendAdminEmail";
 
 export async function POST(request: Request) {
   try {
@@ -72,17 +73,20 @@ export async function POST(request: Request) {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
           body: JSON.stringify({
-            from: process.env.FROM_EMAIL || "QuieroComer <noreply@quierocomer.cl>",
+            from: process.env.FROM_EMAIL ? `QuieroComer <${process.env.FROM_EMAIL}>` : "QuieroComer <onboarding@resend.dev>",
             to: email,
-            subject: `Confirma tu registro en ${restaurant?.name || "QuieroComer"}`,
-            html: `
-              <div style="font-family:sans-serif;max-width:420px;margin:0 auto;padding:32px 20px">
-                <h2 style="color:#0e0e0e;font-size:1.4rem;margin-bottom:8px">${restaurant?.name || "QuieroComer"}</h2>
-                <p style="color:#666;font-size:0.95rem;line-height:1.6">Hola ${name || ""}! Confirma tu cuenta tocando el botón:</p>
-                <a href="${verifyUrl}" style="display:inline-block;background:#F4A623;color:#0e0e0e;text-decoration:none;padding:14px 28px;border-radius:50px;font-weight:700;font-size:0.95rem;margin:20px 0">Confirmar mi cuenta</a>
-                <p style="color:#999;font-size:0.8rem">Este link expira en 7 días.</p>
-              </div>
-            `,
+            subject: `${name || ""}, confirma para recibir tu regalo 🎂`,
+            html: adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">¡Último paso, ${name || ""}! 🎂</h2>
+<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px;text-align:center">
+  Confirma tu correo para recibir tu regalo de cumpleaños en <strong style="color:#FFD600">${restaurant?.name || "tu restaurante favorito"}</strong>
+</p>
+<div style="text-align:center;margin-bottom:20px">
+  <a href="${verifyUrl}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
+    Confirmar mi correo
+  </a>
+</div>
+<p style="color:#5a4028;font-size:12px;text-align:center;margin-bottom:0">Este link expira en 7 días</p>`),
           }),
         });
       } catch (e) {

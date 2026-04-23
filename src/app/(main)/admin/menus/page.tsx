@@ -151,7 +151,12 @@ export default function AdminMenus() {
     setSaving(false);
   };
 
-  const toggleTag = (t: string) => setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  const MAX_RECOMMENDED = 5;
+  const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
+  const toggleTag = (t: string) => {
+    if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
+    setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+  };
 
   if (selectedDish) return (
     <div style={{ maxWidth: 500 }}>
@@ -308,17 +313,21 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Tags</label>
+                <label style={LBL}>Tags <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.68rem" }}>({recCount + (eTags.includes("RECOMMENDED") ? 1 : 0)}/{MAX_RECOMMENDED} recomendados)</span></label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
                     const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
+                    const atLimit = t.value === "RECOMMENDED" && !eTags.includes(t.value) && recCount >= MAX_RECOMMENDED;
                     return (
-                      <button key={t.value} onClick={() => !disabled && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled ? "var(--adm-text3)" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled ? 0.5 : 1 }}>
+                      <button key={t.value} onClick={() => !disabled && !atLimit && toggleTag(t.value)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", cursor: disabled || atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: eTags.includes(t.value) ? `${TAG_COLORS[t.value]}20` : "var(--adm-hover)", color: disabled || atLimit ? "var(--adm-text3)" : eTags.includes(t.value) ? TAG_COLORS[t.value] : "var(--adm-text2)", opacity: disabled || atLimit ? 0.5 : 1 }}>
                         {t.label}{disabled ? " (pronto)" : ""}
                       </button>
                     );
                   })}
                 </div>
+                {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
+                )}
               </div>
 
               <div style={{ display: "flex", gap: 8 }}>

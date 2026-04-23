@@ -23,22 +23,35 @@ export async function GET(request: Request) {
   }
 
   if (magicToken.usedAt) {
-    return new NextResponse("Ya verificado. Puedes cerrar esta página.", { status: 200 });
+    // Already verified — still redirect gracefully
+  } else {
+    // Mark as used + verify user
+    await prisma.qRMagicToken.update({
+      where: { id: magicToken.id },
+      data: { usedAt: new Date() },
+    });
+    await prisma.qRUser.update({
+      where: { id: magicToken.userId },
+      data: { verifiedAt: new Date() },
+    });
   }
 
-  // Mark as used
-  await prisma.qRMagicToken.update({
-    where: { id: magicToken.id },
-    data: { usedAt: new Date() },
+  // Find the restaurant slug from user's latest interaction
+  const lastInteraction = await prisma.qRUserInteraction.findFirst({
+    where: { userId: magicToken.userId },
+    orderBy: { createdAt: "desc" },
+    include: { restaurant: { select: { slug: true } } },
   });
 
-  // Set cookie and redirect
-  const response = NextResponse.redirect(new URL("/qr?verified=true", request.url));
+  const slug = lastInteraction?.restaurant?.slug || null;
+  const redirectUrl = slug ? `/qr/${slug}?verified=1` : "/qr?verified=1";
+
+  const response = NextResponse.redirect(new URL(redirectUrl, request.url));
   response.cookies.set("qr_user_id", magicToken.userId, {
-    httpOnly: true,
+    httpOnly: false,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 365 * 24 * 60 * 60, // 1 year
   });
 
   return response;
