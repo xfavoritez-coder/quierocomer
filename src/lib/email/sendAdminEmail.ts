@@ -79,18 +79,13 @@ export function resetPasswordEmailHtml(name: string, resetLink: string): string 
 /** Welcome email for new owners */
 export function welcomeOwnerEmailHtml(name: string, email: string, password: string, qrLink: string | null, panelLink: string): string {
   const step = (n: number, title: string, body: string) => `
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:18px">
-  <tr>
-    <td width="40" valign="top" style="padding-top:2px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">${n}</td>
-      </tr></table>
-    </td>
-    <td valign="top">
-      <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0"><strong style="color:#FFD600">${title}</strong><br>${body}</p>
-    </td>
-  </tr>
-</table>`;
+<div style="margin-bottom:20px">
+  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
+    <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">${n}</td>
+    <td style="padding-left:10px;color:#FFD600;font-size:15px;font-weight:bold">${title}</td>
+  </tr></table>
+  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0">${body}</p>
+</div>`;
 
   return adminEmailTemplate(`
 <h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Todo listo, ${name}! 🎉</h2>
@@ -100,30 +95,26 @@ export function welcomeOwnerEmailHtml(name: string, email: string, password: str
 
 ${step(1, "Revisa tu carta", `Mira cómo se ve tu menú y que esté todo bien en${qrLink ? ` <a href="${qrLink}" style="color:#FFD600;text-decoration:underline">${qrLink.replace("https://", "")}</a>` : " tu link QR"}.`)}
 
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:18px">
-  <tr>
-    <td width="40" valign="top" style="padding-top:2px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr>
-        <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">2</td>
-      </tr></table>
-    </td>
-    <td valign="top">
-      <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 12px"><strong style="color:#FFD600">Ajusta lo que necesites</strong><br>Entra a tu panel con los siguientes accesos y corrige lo que haga falta.</p>
-      <div style="background:rgba(244,166,35,0.1);border:1px solid rgba(244,166,35,0.2);border-radius:12px;padding:16px 18px">
-        <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px">Tus datos de acceso</p>
-        <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
-        <p style="color:#c0a060;font-size:15px;margin:0"><strong>Contraseña:</strong> ${password}</p>
-      </div>
-    </td>
-  </tr>
-</table>
+<div style="margin-bottom:20px">
+  <table cellpadding="0" cellspacing="0" border="0" style="margin-bottom:6px"><tr>
+    <td width="28" height="28" style="background:#F4A623;color:#0D0D0D;font-size:14px;font-weight:bold;text-align:center;border-radius:50%;line-height:28px">2</td>
+    <td style="padding-left:10px;color:#FFD600;font-size:15px;font-weight:bold">Ajusta lo que necesites</td>
+  </tr></table>
+  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 12px">Entra a tu panel con los siguientes accesos y corrige lo que haga falta.</p>
+  <div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:16px 18px">
+    <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 8px">Tus datos de acceso</p>
+    <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
+    <p style="color:#c0a060;font-size:15px;margin:0"><strong>Contraseña:</strong> ${password}</p>
+  </div>
+</div>
 
 ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e imprimir el código QR. Ponlo en cada mesa y listo.")}
 
 <div style="text-align:center">
-  <!--[if mso]><v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${panelLink}" style="height:48px;v-text-anchor:middle;width:220px" arcsize="21%" fillcolor="#F4A623" stroke="f"><v:textbox inset="0,0,0,0"><center style="color:#ffffff;font-size:16px;font-weight:bold">Entrar a mi panel →</center></v:textbox></v:roundrect><![endif]-->
-  <a href="${panelLink}" style="display:inline-block;background-color:#F4A623;color:#ffffff!important;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;mso-hide:all">
-    <span style="color:#ffffff">Entrar a mi panel →</span>
-  </a>
+  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td align="center" bgcolor="#F4A623" style="border-radius:10px">
+      <a href="${panelLink}" target="_blank" style="display:inline-block;padding:14px 32px;font-size:16px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:10px;letter-spacing:0.5px">Entrar a mi panel →</a>
+    </td>
+  </tr></table>
 </div>`);
 }
