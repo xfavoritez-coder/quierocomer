@@ -669,21 +669,21 @@ function DishListCard({
             className="font-[family-name:var(--font-playfair)] flex items-center gap-1"
             style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
           >
-            {isRec && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.58rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
-                ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
-              </span>
-            )}
-            {hasAutoLabel && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.58rem", fontWeight: 600, color: isExploration ? "#6366f1" : "#d97706", background: isExploration ? "rgba(99,102,241,0.1)" : "rgba(244,166,35,0.12)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>
-                {isExploration ? "🔍 Descubre" : "✨ Para ti"}
-              </span>
-            )}
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
             {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
             {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
             {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
             {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
+            {hasAutoLabel && (
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+                ✨ Para ti
+              </span>
+            )}
+            {isRec && !hasAutoLabel && (
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+                ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+              </span>
+            )}
           </h3>
         </div>
         {dish.description && (
