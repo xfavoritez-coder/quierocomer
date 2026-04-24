@@ -217,75 +217,118 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         {/* STEP 0 — Welcome or Welcome Back */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", gap: 16 }}>
           {hasSaved ? (
-            <>
-              <span style={{ fontSize: "2.8rem", marginBottom: 8 }}>🧞</span>
-              <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white" }}>
-                {userName ? `Hola ${userName}` : "Tu perfil de gustos"}
-              </h1>
+            <div style={{ width: "100%", maxWidth: 320, overflowY: "auto", maxHeight: "calc(100dvh - 120px)", padding: "80px 0 40px" }}>
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <span style={{ fontSize: "2.4rem" }}>🧞</span>
+                <h1 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 900, color: "white", margin: "8px 0 0" }}>
+                  {userName ? `Hola ${userName}` : "Tu perfil de gustos"}
+                </h1>
+              </div>
 
-              {/* Preferences summary */}
-              <div style={{ width: "100%", maxWidth: 300, marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                {savedDiet && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>Dieta</span>
-                    <span style={{ color: "#F4A623", fontSize: "0.88rem", fontWeight: 600 }}>{t(lang, DIET_KEYS[savedDiet as DietType])}</span>
+              {/* Sorpréndeme */}
+              <button onClick={() => {
+                const pool = dishes.filter(d => d.photos?.length > 0);
+                if (pool.length === 0) { close(); return; }
+                const pick = pool[Math.floor(Math.random() * Math.min(3, pool.length))];
+                trackStat(restaurantId, "GENIO_COMPLETE", pick.id, genioSessionId);
+                setVisible(false);
+                setTimeout(() => onResult(pick), 200);
+              }} className="active:scale-95 transition-transform" style={{ width: "100%", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 0", borderRadius: 50, border: "none", marginBottom: 24 }}>
+                🎲 Sorpréndeme
+              </button>
+
+              {/* Inline diet editor */}
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Dieta</span>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {DIET_OPTIONS.map((opt) => {
+                    const sel = dietType === opt.value;
+                    return (
+                      <button key={opt.value} onClick={() => {
+                        setDietType(opt.value); localStorage.setItem("qr_diet", opt.value);
+                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: opt.value }) }).catch(() => {}); }
+                      }} style={{ flex: 1, padding: "10px 6px", borderRadius: 10, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(244,166,35,0.1)" : "transparent", color: sel ? "#F4A623" : "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+                        <opt.icon size={16} style={{ display: "block", margin: "0 auto 4px" }} color={sel ? "#F4A623" : "rgba(255,255,255,0.4)"} />
+                        {t(lang, opt.labelKey)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Inline restrictions editor */}
+              <div style={{ marginBottom: 16 }}>
+                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Restricciones</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {restrictionOptions.filter(r => r.value !== "ninguna").filter(r => {
+                    const animalRestrictions = ["mariscos", "cerdo", "pescado"];
+                    const dairyEggRestrictions = ["lactosa", "huevo"];
+                    if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
+                    if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
+                    return true;
+                  }).map((r) => {
+                    const sel = restrictions.includes(r.value);
+                    const Icon = r.icon;
+                    return (
+                      <button key={r.value} onClick={() => {
+                        const updated = sel ? restrictions.filter(x => x !== r.value) : [...restrictions.filter(x => x !== "ninguna"), r.value];
+                        setRestrictions(updated); localStorage.setItem("qr_restrictions", JSON.stringify(updated));
+                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restrictions: updated.filter(x => x !== "ninguna") }) }).catch(() => {}); }
+                      }} style={{ padding: "7px 12px", borderRadius: 50, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.12)"}`, background: sel ? "rgba(244,166,35,0.1)" : "transparent", color: sel ? "#F4A623" : "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                        <Icon size={12} />
+                        {r.labelKey ? t(lang, r.labelKey as any) : r.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Inline dislikes editor */}
+              <div style={{ marginBottom: 20 }}>
+                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>No me gusta</span>
+                {dislikes.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+                    {dislikes.map(d => (
+                      <button key={d} onClick={() => {
+                        const updated = dislikes.filter(x => x !== d);
+                        setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
+                      }} style={{ padding: "5px 10px", borderRadius: 50, border: "1px solid #F4A623", background: "rgba(244,166,35,0.1)", color: "#F4A623", fontSize: "0.75rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                        {d} <span style={{ opacity: 0.6 }}>✕</span>
+                      </button>
+                    ))}
                   </div>
                 )}
-                {savedRestrictions && JSON.parse(savedRestrictions).filter((r: string) => r !== "ninguna").length > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>Evito</span>
-                    <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.82rem", fontWeight: 500, textAlign: "right", maxWidth: 180 }}>
-                      {JSON.parse(savedRestrictions).filter((r: string) => r !== "ninguna").map((r: string) => {
-                        const opt = restrictionOptions.find(o => o.value === r);
-                        return opt?.labelKey ? t(lang, opt.labelKey as any) : opt?.label || r;
-                      }).join(", ")}
-                    </span>
-                  </div>
-                )}
-                {savedDislikes && JSON.parse(savedDislikes).length > 0 && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                    <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem" }}>No me gusta</span>
-                    <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.82rem", fontWeight: 500, textAlign: "right", maxWidth: 180 }}>
-                      {JSON.parse(savedDislikes).slice(0, 4).join(", ")}{JSON.parse(savedDislikes).length > 4 ? "..." : ""}
-                    </span>
+                <input
+                  value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
+                  placeholder="Buscar ingrediente..."
+                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "white", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" }}
+                />
+                {dislikeResults.length > 0 && (
+                  <div style={{ marginTop: 4, background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, overflow: "hidden", maxHeight: 140, overflowY: "auto" }}>
+                    {dislikeResults.map(r => (
+                      <button key={r} onClick={() => {
+                        const updated = [...dislikes, r]; setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
+                        setDislikeSearch(""); setDislikeResults([]);
+                      }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "left", color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", cursor: "pointer" }}>
+                        {r}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Action buttons */}
-              <div className="flex flex-col items-center" style={{ gap: 10, marginTop: 20, width: "100%", maxWidth: 300 }}>
-                <button onClick={() => {
-                  // Sorpréndeme: pick best dish from scoring
-                  const pool = dishes.filter(d => d.photos?.length > 0);
-                  if (pool.length === 0) { close(); return; }
-                  const pick = pool[Math.floor(Math.random() * Math.min(3, pool.length))];
-                  trackStat(restaurantId, "GENIO_COMPLETE", pick.id, genioSessionId);
-                  setVisible(false);
-                  setTimeout(() => onResult(pick), 200);
-                }} className="active:scale-95 transition-transform" style={{ width: "100%", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 0", borderRadius: 50, border: "none" }}>
-                  🎲 Sorpréndeme
-                </button>
-                <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes"); setDietType(null); setRestrictions([]); setDislikes([]); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ width: "100%", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: "0.88rem", fontWeight: 600, padding: "12px 0", borderRadius: 50, border: "1px solid rgba(255,255,255,0.12)" }}>
-                  Cambiar preferencias
-                </button>
-              </div>
-
-              {/* Login CTA — only if not logged in */}
-              {!document.cookie.includes("qr_user_id") && (
-                <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.78rem", marginTop: 16, textAlign: "center", lineHeight: 1.5 }}>
-                  Tus preferencias se guardan en este dispositivo.{" "}
-                  <button onClick={() => { close(); setTimeout(() => { const el = document.querySelector("[data-profile-open]") as HTMLElement; if (el) el.click(); }, 300); }} style={{ background: "none", border: "none", color: "#F4A623", fontSize: "0.78rem", cursor: "pointer", textDecoration: "underline", textUnderlineOffset: "2px", fontFamily: "inherit" }}>
-                    Registrarse
-                  </button>
-                  {" "}para guardarlas permanentemente.
-                </p>
-              )}
-              {document.cookie.includes("qr_user_id") && (
-                <p style={{ color: "rgba(74,222,128,0.6)", fontSize: "0.75rem", marginTop: 12 }}>
-                  ✓ Preferencias guardadas en tu cuenta
-                </p>
-              )}
-            </>
+              {/* Reset all */}
+              <button onClick={() => {
+                localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
+                setDietType(null); setRestrictions([]); setDislikes([]);
+                if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}); }
+                close();
+              }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", fontSize: "0.72rem", cursor: "pointer", display: "block", margin: "0 auto", fontFamily: "inherit" }}>
+                Borrar mis preferencias
+              </button>
+            </div>
           ) : (
             <>
               <span style={{ fontSize: "3rem", animation: "genioPulse 2s ease-in-out infinite" }}>🧞</span>
@@ -457,20 +500,38 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         </div>
 
         {/* STEP 4 — Done: carta personalizada */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", gap: 16 }}>
-          <span style={{ fontSize: "3rem", marginBottom: 4, animation: "genioPulse 2s ease-in-out infinite" }}>✨</span>
-          <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.8rem", fontWeight: 900, color: "white", lineHeight: 1.2 }}>
-            Tu carta está personalizada
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 28px 44px" }}>
+          {/* Sparkles icon */}
+          <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style={{ marginBottom: 24 }}>
+            <path d="M26 4L28.5 16.5L41 14L31 26L41 38L28.5 35.5L26 48L23.5 35.5L11 38L21 26L11 14L23.5 16.5L26 4Z" fill="#F4A623" fillOpacity="1" />
+            <path d="M8 8L9.5 13.5L15 12L11 16L15 20L9.5 18.5L8 24L6.5 18.5L1 20L5 16L1 12L6.5 13.5L8 8Z" fill="#F4A623" fillOpacity="0.9" />
+            <path d="M42 32L43 35.5L46.5 35L44 37L46.5 39L43 38.5L42 42L41 38.5L37.5 39L40 37L37.5 35L41 35.5L42 32Z" fill="#F4A623" fillOpacity="0.6" />
+          </svg>
+
+          {/* Title */}
+          <h1 style={{ fontFamily: "Georgia, serif", fontSize: "26px", fontWeight: 700, color: "white", lineHeight: 1.15, letterSpacing: "-0.5px", textAlign: "center", marginBottom: 10 }}>
+            Tu carta está personalizada.
           </h1>
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.6 }}>
-            Ordenamos los platos según tus gustos. Mientras más uses la carta, mejores serán las recomendaciones.
+
+          {/* Subtitle */}
+          <p style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", lineHeight: 1.65, textAlign: "center", maxWidth: 220, marginBottom: 32 }}>
+            Ordenamos los platos según tus gustos.
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8, padding: "10px 16px", borderRadius: 12, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)" }}>
-            <span style={{ fontSize: "1.2rem" }}>👍</span>
-            <span style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", lineHeight: 1.4 }}>
-              Toca 👍 en los platos que te gusten para mejorar tus recomendaciones
-            </span>
+
+          {/* Tip card */}
+          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", textAlign: "left", padding: "16px 18px", borderRadius: 16, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", marginBottom: 28, width: "100%", maxWidth: 320 }}>
+            <span style={{ fontSize: "20px", flexShrink: 0, marginTop: 1 }}>👍</span>
+            <div>
+              <p style={{ margin: "0 0 4px", fontSize: "13px", fontWeight: 600, color: "rgba(255,255,255,0.85)", lineHeight: 1.3 }}>
+                Toca el pulgar en los platos que te gusten
+              </p>
+              <p style={{ margin: 0, fontSize: "12px", color: "rgba(255,255,255,0.35)", lineHeight: 1.5 }}>
+                El Genio aprende y afina tu carta cada vez mejor para ti.
+              </p>
+            </div>
           </div>
+
+          {/* Button */}
           <button
             onClick={() => {
               trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
@@ -478,7 +539,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               setTimeout(onClose, 200);
             }}
             className="active:scale-95 transition-transform"
-            style={{ marginTop: 16, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "16px 36px", borderRadius: 50, border: "none", cursor: "pointer" }}
+            style={{ width: "100%", maxWidth: 320, background: "#F4A623", color: "#0e0e0e", fontSize: "15px", fontWeight: 700, padding: "16px", borderRadius: 50, border: "none", cursor: "pointer" }}
           >
             Ver mi carta
           </button>
