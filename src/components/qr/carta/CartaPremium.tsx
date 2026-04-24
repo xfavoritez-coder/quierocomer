@@ -296,15 +296,19 @@ export default function CartaPremium({
         .sort((a, b) => {
           if (pMap) {
             // Auto-recommended ("Para ti") first
+            // 1. Para ti first
             const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
             const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
             if (aAuto !== bAuto) return bAuto - aAuto;
-            // Then by score
+            // 2. Destacados del local second
+            const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+            const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+            if (aRec !== bRec) return bRec - aRec;
+            // 3. Then by score
             const aScore = pMap.get(a.id)?.score ?? 0;
             const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
           } else {
-            // No personalization: RECOMMENDED first
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
@@ -496,6 +500,9 @@ export default function CartaPremium({
                 const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
                 const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
                 if (aAuto !== bAuto) return bAuto - aAuto;
+                const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+                const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+                if (aRec !== bRec) return bRec - aRec;
                 const aScore = pMap.get(a.id)?.score ?? 0;
                 const bScore = pMap.get(b.id)?.score ?? 0;
                 if (aScore !== bScore) return bScore - aScore;
