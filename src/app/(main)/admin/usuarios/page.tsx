@@ -34,6 +34,10 @@ interface UserDetail {
 }
 
 const DIET_LABELS: Record<string, string> = { VEGAN: "🌿 Vegano", VEGETARIAN: "🌱 Vegetariano", OMNIVORE: "🍖 Carnívoro" };
+const SOURCE_LABELS: Record<string, string> = {
+  post_genio_CONVERTED: "Genio", cta_post_genio_CONVERTED: "CTA Genio", cta_repeat_dish_CONVERTED: "CTA Plato",
+  cta_promo_unlock_CONVERTED: "CTA Promo", birthday_banner_CONVERTED: "Cumpleaños", favorites_CONVERTED: "Favoritos", unknown_CONVERTED: "Directo",
+};
 
 function timeAgo(date: string): string {
   const diff = Date.now() - new Date(date).getTime();
@@ -129,9 +133,23 @@ export default function UsuariosPage() {
             </div>
           )}
 
+          {u.dislikes?.length > 0 && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 4px", textTransform: "uppercase" }}>No le gusta</p>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>{u.dislikes.map((d: string) => <span key={d} style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 50, background: "rgba(255,100,100,0.06)", color: "#ff6b6b", fontFamily: FB }}>🚫 {d}</span>)}</div>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
-            {u.verifiedAt && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(22,163,74,0.08)", color: "#16a34a", fontFamily: F, fontWeight: 600 }}>Verificado</span>}
+            {u.verifiedAt && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(22,163,74,0.08)", color: "#16a34a", fontFamily: F, fontWeight: 600 }}>✓ Verificado {new Date(u.verifiedAt).toLocaleDateString("es-CL")}</span>}
+            {!u.verifiedAt && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F, fontWeight: 600 }}>No verificado</span>}
             {u.unsubscribedAt && <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600 }}>Desuscrito</span>}
+            {(() => {
+              const regInteraction = selectedUser.interactions.find((i: any) => i.type.endsWith("_CONVERTED"));
+              if (!regInteraction) return null;
+              const label = SOURCE_LABELS[regInteraction.type] || regInteraction.type.replace("_CONVERTED", "");
+              return <span style={{ fontSize: "0.68rem", padding: "3px 10px", borderRadius: 50, background: "rgba(127,191,220,0.08)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>Registrado vía {label}{regInteraction.restaurant ? ` en ${regInteraction.restaurant.name}` : ""}</span>;
+            })()}
           </div>
         </div>
 
@@ -184,6 +202,23 @@ export default function UsuariosPage() {
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{new Date(s.startedAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })} {new Date(s.startedAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}</span>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Interactions */}
+        {selectedUser.interactions.length > 0 && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", marginBottom: 16 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Interacciones</h3>
+            {selectedUser.interactions.map((i: any) => {
+              const label = SOURCE_LABELS[i.type] || i.type;
+              return (
+                <div key={i.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+                  <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{i.restaurant?.name}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{new Date(i.createdAt).toLocaleDateString("es-CL", { day: "numeric", month: "short" })}</span>
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -272,8 +307,11 @@ export default function UsuariosPage() {
                   <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: 0 }}>{u.email}</p>
                 </div>
                 <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>{u._count.sessions} ses</p>
-                  <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: 0 }}>{timeAgo(u.createdAt)}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>{u._count.sessions} ses · {u._count.dishFavorites} ❤️</p>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: 0 }}>
+                    {timeAgo(u.createdAt)}
+                    {u.birthDate ? " · 🎂" : ""}
+                  </p>
                 </div>
               </button>
             );
@@ -292,8 +330,8 @@ export default function UsuariosPage() {
       )}
 
       {detailLoading && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.3)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "white", borderRadius: 16, padding: 32 }}><SkeletonLoading type="form" /></div>
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "var(--adm-bg, #0e0e0e)", borderRadius: 16, padding: 32, border: "1px solid var(--adm-card-border)" }}><SkeletonLoading type="form" /></div>
         </div>
       )}
     </div>
