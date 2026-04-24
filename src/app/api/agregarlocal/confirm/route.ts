@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
 function slugify(name: string): string {
   return name
@@ -35,6 +36,7 @@ export async function POST(request: Request) {
 
     // Create categories and dishes
     let totalDishes = 0;
+    const createdDishes: { id: string; name: string; description: string | null }[] = [];
     for (let i = 0; i < categories.length; i++) {
       const cat = categories[i];
       if (!cat.dishes?.length) continue;
@@ -53,7 +55,7 @@ export async function POST(request: Request) {
         const dish = cat.dishes[j];
         if (!dish.name?.trim()) continue;
 
-        await prisma.dish.create({
+        const created = await prisma.dish.create({
           data: {
             restaurantId: restaurant.id,
             categoryId: category.id,
@@ -66,8 +68,21 @@ export async function POST(request: Request) {
             isActive: true,
           },
         });
+        createdDishes.push({ id: created.id, name: created.name, description: created.description });
         totalDishes++;
       }
+    }
+
+    // Extract ingredients from descriptions in background (non-blocking)
+    const prefetchedIngredients = await prisma.ingredient.findMany({ select: { id: true, name: true, aliases: true }, orderBy: { name: "asc" } });
+    const prefetchedIgnored = await prisma.ignoredIngredient.findMany({ select: { name: true } });
+
+    // Process in parallel batches of 5
+    for (let i = 0; i < createdDishes.length; i += 5) {
+      const batch = createdDishes.slice(i, i + 5);
+      await Promise.allSettled(
+        batch.map(d => extractIngredientsForDish(d.id, d.name, d.description, null, prefetchedIngredients, prefetchedIgnored))
+      );
     }
 
     return NextResponse.json({
