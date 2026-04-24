@@ -294,13 +294,20 @@ export default function CartaPremium({
       const catDishes = dishes
         .filter((d) => d.categoryId === cat.id && d.isActive)
         .sort((a, b) => {
-          const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-          const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
-          if (aRec !== bRec) return bRec - aRec;
           if (pMap) {
+            // Auto-recommended ("Para ti") first
+            const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
+            const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+            if (aAuto !== bAuto) return bAuto - aAuto;
+            // Then by score
             const aScore = pMap.get(a.id)?.score ?? 0;
             const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
+          } else {
+            // No personalization: RECOMMENDED first
+            const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+            const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+            if (aRec !== bRec) return bRec - aRec;
           }
           return a.position - b.position;
         });
@@ -486,13 +493,17 @@ export default function CartaPremium({
               return norm(d.name || "").includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q);
             })
             .sort((a, b) => {
-              const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-              const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
-              if (aRec !== bRec) return bRec - aRec;
               if (pMap) {
+                const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
+                const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+                if (aAuto !== bAuto) return bAuto - aAuto;
                 const aScore = pMap.get(a.id)?.score ?? 0;
                 const bScore = pMap.get(b.id)?.score ?? 0;
                 if (aScore !== bScore) return bScore - aScore;
+              } else {
+                const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+                const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+                if (aRec !== bRec) return bRec - aRec;
               }
               return a.position - b.position;
             });

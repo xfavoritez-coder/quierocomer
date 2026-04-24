@@ -134,17 +134,24 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 }
 
 /* ── PREMIUM NORMAL ── */
-function PremiumNormalCard({ dish, onClick }: Omit<DishCardProps, "variant">) {
+function PremiumNormalCard({ dish, onClick, hasPersonalization, restaurantName }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
+  const isRec = dish.tags?.includes("RECOMMENDED");
+  const showRecBadge = isRec && hasPersonalization;
   return (
     <button onClick={onClick} className="flex flex-col text-left w-full" style={{ background: "transparent" }}>
-      <div className="relative w-full bg-neutral-900 overflow-hidden" style={{ aspectRatio: "3/4", borderRadius: 10 }}>
+      <div className="relative w-full bg-neutral-900 overflow-hidden" style={{ aspectRatio: "3/4", borderRadius: 10, ...(showRecBadge ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.3)" } : {}) }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="205px" style={{ transform: "scale(1.08)" }} />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
         )}
-        {dish.tags?.includes("NEW") && (
+        {showRecBadge && (
+          <div className="absolute" style={{ top: 7, right: 7, zIndex: 2 }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}</span>
+          </div>
+        )}
+        {!showRecBadge && dish.tags?.includes("NEW") && (
           <span className="absolute font-[family-name:var(--font-dm)]" style={{ top: 7, left: 7, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
         )}
       </div>
