@@ -1,6 +1,34 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+
+const LOADING_MESSAGES = [
+  "Leyendo la carta...",
+  "Detectando categorías...",
+  "Extrayendo platos y precios...",
+  "Identificando tipos de comida...",
+  "Casi listo, afinando detalles...",
+];
+
+function LoadingAnalysis({ name }: { name: string }) {
+  const [msgIdx, setMsgIdx] = useState(0);
+  const [progress, setProgress] = useState(0);
+  useEffect(() => {
+    const msgTimer = setInterval(() => setMsgIdx(i => Math.min(i + 1, LOADING_MESSAGES.length - 1)), 4000);
+    const progTimer = setInterval(() => setProgress(p => Math.min(p + 2, 90)), 500);
+    return () => { clearInterval(msgTimer); clearInterval(progTimer); };
+  }, []);
+  return (
+    <div style={{ textAlign: "center", padding: "60px 0" }}>
+      <span style={{ fontSize: "2.5rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>🧞</span>
+      <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600, marginBottom: 4 }}>Analizando la carta de {name}</p>
+      <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.88rem", marginBottom: 20, transition: "opacity 0.3s" }}>{LOADING_MESSAGES[msgIdx]}</p>
+      <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "0 auto", overflow: "hidden" }}>
+        <div style={{ width: `${progress}%`, height: "100%", background: "#F4A623", borderRadius: 2, transition: "width 0.5s ease" }} />
+      </div>
+    </div>
+  );
+}
 
 interface Dish {
   name: string;
@@ -202,13 +230,7 @@ export default function AgregarLocalPage() {
         )}
 
         {/* STEP: Loading */}
-        {step === "loading" && (
-          <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <span style={{ fontSize: "2.5rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>🧞</span>
-            <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>Analizando la carta de {name}...</p>
-            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", marginTop: 8 }}>Esto puede tomar unos segundos</p>
-          </div>
-        )}
+        {step === "loading" && <LoadingAnalysis name={name} />}
 
         {/* STEP: Preview */}
         {step === "preview" && (
