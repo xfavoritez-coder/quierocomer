@@ -74,6 +74,8 @@ export default function AdminMenus() {
     </div>
   );
 
+  const [photoModal, setPhotoModal] = useState<string | null>(null);
+
   // Edit state (must be at top level, not inside conditional)
   const [editMode, setEditMode] = useState(false);
   const [eName, setEName] = useState("");
@@ -171,7 +173,7 @@ export default function AdminMenus() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
-            <img src={selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={selectedDish.photos[0]} alt="" onClick={() => setPhotoModal(selectedDish.photos[0])} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
             {selectedDish.isHero && <span style={{ position: "absolute", top: 10, right: 10, background: "#F4A623", color: "#0a0a0a", fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>HERO</span>}
           </div>
         )}
@@ -423,7 +425,7 @@ export default function AdminMenus() {
               onMouseOut={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
             >
               {d.photos?.[0] ? (
-                <img src={d.photos[0]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                <img src={d.photos[0]} alt="" onClick={(e) => { e.stopPropagation(); setPhotoModal(d.photos[0]); }} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "pointer" }} />
               ) : (
                 <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--adm-card-border)", flexShrink: 0 }} />
               )}
@@ -455,6 +457,12 @@ export default function AdminMenus() {
           <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page <= 1 ? "transparent" : "var(--adm-hover)", color: page <= 1 ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page <= 1 ? "default" : "pointer" }}>Anterior</button>
           <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", padding: "8px 12px" }}>{page} / {totalPages}</span>
           <button disabled={page >= totalPages} onClick={() => setPage(p => p + 1)} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid var(--adm-card-border)", background: page >= totalPages ? "transparent" : "var(--adm-hover)", color: page >= totalPages ? "var(--adm-text3)" : "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", cursor: page >= totalPages ? "default" : "pointer" }}>Siguiente</button>
+        </div>
+      )}
+      {/* Photo modal */}
+      {photoModal && (
+        <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>
+          <img src={photoModal} alt="" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
         </div>
       )}
     </div>
