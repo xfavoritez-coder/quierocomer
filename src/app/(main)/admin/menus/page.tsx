@@ -218,15 +218,19 @@ export default function AdminMenus() {
                     const updated = { ...selectedDish, tags: newTags };
                     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
                     setSelectedDish(updated);
-                  }} style={{ flex: 1, padding: "14px", borderRadius: 10, border: "none", cursor: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, background: selectedDish.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: selectedDish.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text2)", opacity: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? 0.5 : 1 }}>
+                  }} style={{ flex: 1, padding: "16px", borderRadius: 12, border: "none", cursor: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: selectedDish.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text2)", opacity: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? 0.5 : 1 }}>
                     ⭐ {selectedDish.tags?.includes("RECOMMENDED") ? "Destacado" : "Destacar"}
                   </button>
-                  <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "14px", background: "#DBEAFE", border: "none", borderRadius: 10, color: "#1E40AF", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, cursor: "pointer" }}>
-                    Editar
+                  <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "16px", background: "#DBEAFE", border: "none", borderRadius: 12, color: "#1E40AF", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, cursor: "pointer" }}>
+                    ✏️ Editar
                   </button>
                 </div>
-                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ padding: "14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
-                  {selectedDish.isActive ? "🚫 Ocultar" : "👁 Mostrar"}
+                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  {selectedDish.isActive ? (
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
+                  ) : (
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostrar</>
+                  )}
                 </button>
               </div>
             </>
@@ -415,7 +419,7 @@ export default function AdminMenus() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {paginated.map(d => (
-            <button key={d.id} onClick={() => setSelectedDish(d)} style={{
+            <div key={d.id} onClick={() => setSelectedDish(d)} style={{
               display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
               background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12,
               cursor: "pointer", width: "100%", textAlign: "left", opacity: d.isActive ? 1 : 0.5,
@@ -425,7 +429,7 @@ export default function AdminMenus() {
               onMouseOut={e => (e.currentTarget.style.borderColor = "var(--adm-card-border)")}
             >
               {d.photos?.[0] ? (
-                <img src={d.photos[0]} alt="" onClick={(e) => { e.stopPropagation(); setPhotoModal(d.photos[0]); }} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "pointer" }} />
+                <img src={d.photos[0]} alt="" onClick={(e) => { e.stopPropagation(); setPhotoModal(d.photos[0]); }} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
               ) : (
                 <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--adm-card-border)", flexShrink: 0 }} />
               )}
@@ -442,7 +446,7 @@ export default function AdminMenus() {
                 <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
                 {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Inactivo</p>}
               </div>
-            </button>
+            </div>
           ))}
           {filtered.length === 0 && (
             <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", textAlign: "center", padding: 40 }}>
