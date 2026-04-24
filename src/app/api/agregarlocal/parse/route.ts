@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = "claude-sonnet-4-6";
@@ -20,23 +21,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sube al menos una foto de la carta" }, { status: 400 });
     }
 
-    // Convert images to base64 — normalize media types for Anthropic API
-    const VALID_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
-    const normalizeType = (t: string) => {
-      if (VALID_TYPES.has(t)) return t;
-      if (t === "image/jpg") return "image/jpeg";
-      if (t.startsWith("image/heic") || t.startsWith("image/heif")) return "image/jpeg";
-      return "image/jpeg"; // fallback
-    };
-
-    const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
+    // Convert all images to JPEG via sharp (handles HEIC, HEIF, WebP, etc.)
+    const images: { type: "image"; source: { type: "base64"; media_type: "image/jpeg"; data: string } }[] = [];
     for (const file of files.slice(0, 5)) {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const base64 = buffer.toString("base64");
-      const mediaType = normalizeType(file.type);
+      const inputBuffer = Buffer.from(await file.arrayBuffer());
+      const jpegBuffer = await sharp(inputBuffer)
+        .jpeg({ quality: 85 })
+        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+        .toBuffer();
       images.push({
         type: "image",
-        source: { type: "base64", media_type: mediaType, data: base64 },
+        source: { type: "base64", media_type: "image/jpeg", data: jpegBuffer.toString("base64") },
       });
     }
 
@@ -95,7 +90,7 @@ Reglas:
     if (!res.ok) {
       const err = await res.text();
       console.error("[agregarlocal] Claude API error:", res.status, err);
-      return NextResponse.json({ error: `Error API (${res.status}): ${err.slice(0, 200)}` }, { status: 500 });
+      return NextResponse.json({ error: `Error al analizar: ${JSON.parse(err)?.error?.message || err.slice(0, 150)}` }, { status: 500 });
     }
 
     const data = await res.json();
