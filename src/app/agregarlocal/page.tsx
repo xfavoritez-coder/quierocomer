@@ -150,15 +150,33 @@ export default function AgregarLocalPage() {
     setStep("saving");
     setSavingProgress("Creando restaurante y platos...");
     try {
+      // Step 1: Create restaurant + dishes
       const res = await fetch("/api/agregarlocal/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim(), categories, logo }),
       });
-      setSavingProgress("Extrayendo ingredientes...");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
+
       setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
+
+      // Step 2: Extract ingredients with real progress
+      const allDishes = categories.flatMap((c: any) => c.dishes || []);
+      // Get dish IDs from DB
+      const dishesRes = await fetch(`/api/admin/dishes?restaurantId=${data.restaurant.id}`);
+      const dishesData = await dishesRes.json();
+      const dbDishes: { id: string }[] = dishesData.dishes || [];
+
+      for (let i = 0; i < dbDishes.length; i++) {
+        setSavingProgress(`Extrayendo ingredientes (${i + 1}/${dbDishes.length})...`);
+        await fetch("/api/agregarlocal/ingredients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ dishId: dbDishes[i].id }),
+        }).catch(() => {});
+      }
+
       setSavingProgress("");
       setStep("done");
     } catch (e: any) {

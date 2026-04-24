@@ -115,17 +115,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Extract ingredients from descriptions
-    const prefetchedIngredients = await prisma.ingredient.findMany({ select: { id: true, name: true, aliases: true }, orderBy: { name: "asc" } });
-    const prefetchedIgnored = await prisma.ignoredIngredient.findMany({ select: { name: true } });
-
-    for (let i = 0; i < createdDishes.length; i += 5) {
-      const batch = createdDishes.slice(i, i + 5);
-      await Promise.allSettled(
-        batch.map(d => extractIngredientsForDish(d.id, d.name, d.description, null, prefetchedIngredients, prefetchedIgnored))
-      );
-    }
-
     return NextResponse.json({
       ok: true,
       restaurant: {

@@ -67,8 +67,10 @@ Rules:
 1. If an ingredient matches one from the existing list, use the EXACT name from the list (e.g., if "cebollín" exists, don't say "cebollino" or "cebolleta")
 2. If an ingredient is NOT in the existing list, still include it but I'll handle it separately
 3. Use simple, common names in Spanish (e.g., "salmón" not "salmón atlántico fresco")
-4. Don't include generic terms like "salsa estilo ceviche" — break it down into actual ingredients if possible, or use a simple name like "leche de tigre"
+4. Don't include generic terms like "salsa estilo ceviche" — use a simple name like "leche de tigre"
 5. Don't include cooking methods or preparations as ingredients
+6. ONLY include ingredients that are EXPLICITLY mentioned in the dish name or description. Do NOT infer or guess ingredients that aren't stated. If the description says "salmón con palta" only return salmón and palta, nothing else.
+7. Do NOT invent ingredients like "sal de naranja", "aceite de trufa", etc. unless they are written in the description
 
 Return a JSON object:
 {
