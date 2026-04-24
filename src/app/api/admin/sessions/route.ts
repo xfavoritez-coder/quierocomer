@@ -193,13 +193,13 @@ export async function GET(req: NextRequest) {
       );
       if (matching.length === 0) continue;
 
-      const data = { shown: 0, tapped: 0, dishes: [] as { name: string; score: number; tapped: boolean }[] };
       const seenDishes = new Set<string>();
       const tappedDishes = new Set<string>();
       for (const e of matching) {
-        if (e.eventType === "RECOMMENDATION_SHOWN") { data.shown++; if (e.dishId) seenDishes.add(e.dishId); }
-        if (e.eventType === "RECOMMENDATION_TAPPED") { data.tapped++; if (e.dishId) tappedDishes.add(e.dishId); }
+        if (e.eventType === "RECOMMENDATION_SHOWN" && e.dishId) seenDishes.add(e.dishId);
+        if (e.eventType === "RECOMMENDATION_TAPPED" && e.dishId) tappedDishes.add(e.dishId);
       }
+      const data = { shown: seenDishes.size, tapped: tappedDishes.size, dishes: [] as { name: string; score: number; tapped: boolean }[] };
       // Resolve dish names
       const allRecDishIds = [...new Set([...seenDishes, ...tappedDishes])];
       for (const dishId of allRecDishIds) {

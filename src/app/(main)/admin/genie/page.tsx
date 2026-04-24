@@ -366,8 +366,8 @@ export default function AdminSessions() {
                     {s.personalizationData && (
                       <div style={{ marginBottom: 12 }}>
                         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
-                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>✨ {s.personalizationData.shown} "Para ti" mostradas</span>
-                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: s.personalizationData.tapped > 0 ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: s.personalizationData.tapped > 0 ? "#4ade80" : "var(--adm-text3)", fontWeight: 600 }}>{s.personalizationData.tapped} tocadas ({s.personalizationData.shown > 0 ? Math.round(s.personalizationData.tapped / s.personalizationData.shown * 100) : 0}% CTR)</span>
+                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>✨ {s.personalizationData.shown} plato{s.personalizationData.shown !== 1 ? "s" : ""} sugerido{s.personalizationData.shown !== 1 ? "s" : ""}</span>
+                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: s.personalizationData.tapped > 0 ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: s.personalizationData.tapped > 0 ? "#4ade80" : "var(--adm-text3)", fontWeight: 600 }}>{s.personalizationData.tapped} abierto{s.personalizationData.tapped !== 1 ? "s" : ""}</span>
                         </div>
                         {s.personalizationData.dishes.length > 0 && (
                           <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
