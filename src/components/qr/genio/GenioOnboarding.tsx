@@ -319,6 +319,18 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 )}
               </div>
 
+              {/* Register CTA — only if not logged in */}
+              {typeof document !== "undefined" && !document.cookie.includes("qr_user_id") && (
+                <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.12)", marginBottom: 16, textAlign: "center" }}>
+                  <p style={{ margin: "0 0 10px", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
+                    Tus gustos se guardan solo en este dispositivo. Regístrate en 1 paso para que tu carta siempre esté personalizada, en cualquier visita.
+                  </p>
+                  <button onClick={() => { close(); setTimeout(() => { const el = document.querySelector("[data-profile-open]") as HTMLElement; if (el) el.click(); }, 300); }} className="active:scale-95 transition-transform" style={{ background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.3)", color: "#F4A623", fontSize: "0.82rem", fontWeight: 600, padding: "10px 20px", borderRadius: 50, cursor: "pointer", fontFamily: "inherit" }}>
+                    Registrarme
+                  </button>
+                </div>
+              )}
+
               {/* Reset all */}
               <button onClick={() => {
                 localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
