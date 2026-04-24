@@ -16,6 +16,7 @@ const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: st
   food: { label: "Plato", emoji: "🍽️", color: GOLD },
   drink: { label: "Bebestible", emoji: "🥤", color: "#7fbfdc" },
   dessert: { label: "Postre", emoji: "🍰", color: "#c084fc" },
+  extra: { label: "Extra", emoji: "➕", color: "#888" },
 };
 
 interface Props {
@@ -83,7 +84,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
 
   const hiddenCount = dishes.filter(d => d.isActive === false).length;
   const isEmpty = dishes.length === 0;
-  const dt = DISH_TYPE_LABELS[category.dishType || "food"];
+  const dt = DISH_TYPE_LABELS[category.dishType || "food"] || DISH_TYPE_LABELS.food;
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
@@ -111,7 +112,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   onChange={e => { e.stopPropagation(); onTypeChange(category.id, e.target.value); }}
                   style={{ padding: "2px 6px", borderRadius: 4, border: "none", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: `${dt.color}15`, color: dt.color, outline: "none", appearance: "none", WebkitAppearance: "none", textAlign: "center", minWidth: 70 }}
                 >
-                  {(["food", "drink", "dessert"] as const).map(k => <option key={k} value={k}>{DISH_TYPE_LABELS[k].emoji} {DISH_TYPE_LABELS[k].label}</option>)}
+                  {(["food", "drink", "dessert", "extra"] as const).map(k => <option key={k} value={k}>{DISH_TYPE_LABELS[k].emoji} {DISH_TYPE_LABELS[k].label}</option>)}
                 </select>
                 <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto", lineHeight: 1 }}>▾</span>
               </button>

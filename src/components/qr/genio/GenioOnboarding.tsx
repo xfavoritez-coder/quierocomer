@@ -46,7 +46,7 @@ type RestrictionOption = { icon: typeof Ban; label?: string; labelKey?: string; 
 
 const FOOD_KEYWORDS = ["fondo", "principal", "pizza", "hamburguesa", "plato", "sushi", "roll", "gohan", "chirashi", "para compartir", "compartir", "street", "entrada", "aperitivo", "caliente", "clasica", "premium", "tabla"];
 const SWEET_KEYWORDS = ["postre", "dulce", "kuchen", "torta", "helado"];
-const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "extra", "sour", "schop", "café", "cafe", "coffee", "té", "te", "infusion", "agua"];
+const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "te", "infusion", "agua"];
 
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";

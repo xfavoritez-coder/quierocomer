@@ -1063,34 +1063,6 @@ export default function AdminMenus() {
                     </div>
                   )}
 
-                  {/* Actions */}
-                  <div style={{ display: "flex", gap: 8, marginTop: 16, alignItems: "stretch" }}>
-                    <button onClick={() => { setSelectedDish(d); startEditDish(d); }} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                    <button onClick={() => toggleDishActive(d)} style={{ padding: "10px 12px", borderRadius: 8, border: "1px solid #e5e0d3", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", fontWeight: 500, background: "transparent", color: "#6b6b65", display: "flex", alignItems: "center", gap: 4 }}>
-                      {d.isActive ? (
-                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
-                      ) : (
-                        <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostrar</>
-                      )}
-                    </button>
-                    <div style={{ position: "relative" }}>
-                      <button onClick={() => setKebabOpenId(kebabOpenId === d.id ? null : d.id)} style={{ width: 38, borderRadius: 8, border: "1px solid #e5e0d3", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", color: "#6b6b65" }}>⋯</button>
-                      {kebabOpenId === d.id && (
-                        <div style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, boxShadow: "0 4px 16px rgba(0,0,0,0.1)", zIndex: 10, overflow: "hidden", minWidth: 120 }}>
-                          <button onClick={async () => {
-                            if (!confirm(`¿Eliminar "${d.name}"? El producto dejará de aparecer en la carta y el panel.`)) { setKebabOpenId(null); return; }
-                            await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
-                            setDishes(prev => prev.filter(x => x.id !== d.id));
-                            setExpandedDishId(null);
-                            setKebabOpenId(null);
-                          }} style={{ display: "flex", alignItems: "center", gap: 6, width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.78rem", color: "#ef4444", textAlign: "left" }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
-                            Eliminar
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
                 </div>
               )}
             </div>

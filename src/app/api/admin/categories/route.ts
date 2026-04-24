@@ -5,9 +5,11 @@ import { translateCategory } from "@/lib/ai/translateContent";
 
 const DRINK_KW = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
 const SWEET_KW = ["postre", "dulce", "kuchen", "torta", "helado", "dessert"];
+const EXTRA_KW = ["extra", "adicional", "agregado", "complemento", "topping", "salsa"];
 
-function inferDishType(name: string): "food" | "drink" | "dessert" {
+function inferDishType(name: string): "food" | "drink" | "dessert" | "extra" {
   const n = name.toLowerCase();
+  if (EXTRA_KW.some(kw => n.includes(kw))) return "extra";
   if (DRINK_KW.some(kw => n.includes(kw))) return "drink";
   if (SWEET_KW.some(kw => n.includes(kw))) return "dessert";
   return "food";
