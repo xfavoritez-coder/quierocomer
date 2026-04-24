@@ -20,7 +20,11 @@ function LoadingAnalysis({ name }: { name: string }) {
   }, []);
   return (
     <div style={{ textAlign: "center", padding: "60px 0" }}>
-      <span style={{ fontSize: "2.5rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>🧞</span>
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+        <span style={{ fontSize: "1.5rem", animation: "sparkle1 1.5s ease-in-out infinite" }}>✨</span>
+        <span style={{ fontSize: "2rem", animation: "sparkle2 1.5s ease-in-out infinite 0.3s" }}>⭐</span>
+        <span style={{ fontSize: "1.5rem", animation: "sparkle1 1.5s ease-in-out infinite 0.6s" }}>✨</span>
+      </div>
       <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600, marginBottom: 4 }}>Analizando la carta de {name}</p>
       <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.88rem", marginBottom: 20, transition: "opacity 0.3s" }}>{LOADING_MESSAGES[msgIdx]}</p>
       <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "0 auto", overflow: "hidden" }}>
@@ -191,7 +195,7 @@ export default function AgregarLocalPage() {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <span style={{ fontSize: "2rem" }}>🧞</span>
+          <span style={{ fontSize: "2rem" }}>✨</span>
           <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "#F4A623", margin: "8px 0 4px" }}>Agregar Local</h1>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem" }}>Sube fotos de la carta y creamos tu menú digital al instante</p>
         </div>
@@ -308,9 +312,6 @@ export default function AgregarLocalPage() {
               <div key={catIdx} style={{ marginBottom: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 16 }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 4, background: cat.type === "drink" ? "rgba(96,165,250,0.15)" : cat.type === "dessert" ? "rgba(244,114,182,0.15)" : "rgba(244,166,35,0.15)", color: cat.type === "drink" ? "#60a5fa" : cat.type === "dessert" ? "#f472b6" : "#F4A623" }}>
-                      {cat.type === "drink" ? "🍺 Bebida" : cat.type === "dessert" ? "🍰 Postre" : "🍽 Comida"}
-                    </span>
                     <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: 0 }}>{cat.name}</h3>
                     <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>({cat.dishes.length})</span>
                   </div>
@@ -379,7 +380,11 @@ export default function AgregarLocalPage() {
         {/* STEP: Saving */}
         {step === "saving" && (
           <div style={{ textAlign: "center", padding: "60px 0" }}>
-            <span style={{ fontSize: "2rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>✨</span>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+              <span style={{ fontSize: "1.3rem", animation: "sparkle1 1.5s ease-in-out infinite" }}>✨</span>
+              <span style={{ fontSize: "1.8rem", animation: "sparkle2 1.5s ease-in-out infinite 0.3s" }}>⭐</span>
+              <span style={{ fontSize: "1.3rem", animation: "sparkle1 1.5s ease-in-out infinite 0.6s" }}>✨</span>
+            </div>
             <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>Creando {name}...</p>
             <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: 8 }}>{savingProgress || "Procesando platos..."}</p>
             <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "16px auto 0", overflow: "hidden" }}>
@@ -539,6 +544,14 @@ export default function AgregarLocalPage() {
       </div>
 
       <style>{`
+        @keyframes sparkle1 {
+          0%, 100% { opacity: 0.4; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+        @keyframes sparkle2 {
+          0%, 100% { opacity: 0.6; transform: scale(1) rotate(0deg); }
+          50% { opacity: 1; transform: scale(1.15) rotate(15deg); }
+        }
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
