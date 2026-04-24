@@ -10,6 +10,8 @@ import {
   Check, Ban, Wheat, Milk, Flame,
   Sparkles, ChevronLeft,
 } from "lucide-react";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface GenioProps {
   restaurantId: string;
@@ -22,10 +24,15 @@ interface GenioProps {
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
 
+const DIET_KEYS = {
+  omnivore: "gCarnivore" as const,
+  vegan: "gVegan" as const,
+  vegetarian: "gVegetarian" as const,
+};
 const DIET_OPTIONS = [
-  { icon: UtensilsCrossed, label: "Carnívoro", value: "omnivore" as DietType },
-  { icon: Sprout, label: "Vegano", value: "vegan" as DietType },
-  { icon: Leaf, label: "Vegetariano", value: "vegetarian" as DietType },
+  { icon: UtensilsCrossed, labelKey: "gCarnivore" as const, value: "omnivore" as DietType },
+  { icon: Sprout, labelKey: "gVegan" as const, value: "vegan" as DietType },
+  { icon: Leaf, labelKey: "gVegetarian" as const, value: "vegetarian" as DietType },
 ];
 
 // Icon map for known restriction/allergen names
@@ -33,7 +40,7 @@ const RESTRICTION_ICON_MAP: Record<string, typeof Ban> = {
   lactosa: Milk, gluten: Wheat, mariscos: Fish,
 };
 
-type RestrictionOption = { icon: typeof Ban; label: string; value: string };
+type RestrictionOption = { icon: typeof Ban; label?: string; labelKey?: string; value: string };
 
 // Dislikes: loaded dynamically from DB
 
@@ -61,6 +68,7 @@ function saveIngredients(dishIds: string[], source: "genio_liked" | "genio_resul
 }
 
 export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp }: GenioProps) {
+  const lang = useLang();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
   const genioSessionId = useRef(crypto.randomUUID()).current;
@@ -82,11 +90,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Load restrictions/allergens dynamically from DB
   const [restrictionOptions, setRestrictionOptions] = useState<RestrictionOption[]>([
-    { icon: Check, label: "Ninguna", value: "ninguna" },
+    { icon: Check, labelKey: "gNone" as const, value: "ninguna" },
   ]);
   useEffect(() => {
     fetch("/api/qr/restrictions").then(r => r.json()).then((items: { name: string; type: string }[]) => {
-      const opts: RestrictionOption[] = [{ icon: Check, label: "Ninguna", value: "ninguna" }];
+      const opts: RestrictionOption[] = [{ icon: Check, labelKey: "gNone" as const, value: "ninguna" }];
       for (const item of items) {
         opts.push({
           icon: RESTRICTION_ICON_MAP[item.name] || Ban,
@@ -95,7 +103,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         });
       }
       // Fixed option: spicy (uses dish.isSpicy, not ingredient chain)
-      opts.push({ icon: Flame, label: "Sin picante", value: "_spicy" });
+      opts.push({ icon: Flame, labelKey: "gWithoutSpicy" as const, value: "_spicy" });
       setRestrictionOptions(opts);
     }).catch(() => {});
   }, []);
@@ -559,10 +567,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [phraseIdx] = useState(() => Math.floor(Math.random() * 5));
 
   // Feedback messages
-  const feedbackMsg = liked.size === 0 ? "Toca los platos que te llaman 👆"
-    : liked.size === 1 ? "Sigue seleccionando..."
-    : liked.size === 2 ? "Vas bien, un poco más..."
-    : liked.size === 3 ? "Ya casi lo tengo... 🤔"
+  const feedbackMsg = liked.size === 0 ? t(lang, "gFeedbackTap")
+    : liked.size === 1 ? t(lang, "gFeedbackKeep")
+    : liked.size === 2 ? t(lang, "gFeedbackWell")
+    : liked.size === 3 ? t(lang, "gFeedbackAlmost")
     : null;
 
   const displayStep = Math.min(step, 4); // Clamp for slide animation
@@ -586,7 +594,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ width: 34 }} />
         )}
         <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", fontWeight: 500 }}>
-          {step === 0 ? "" : step <= 4 ? `Paso ${step} de 4` : "✨ Resultado"}
+          {step === 0 ? "" : step <= 4 ? t(lang, "gStepOf").replace("{step}", String(step)) : t(lang, "gResult")}
         </span>
         <button onClick={close} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.1)", border: "none" }}>
           <X size={16} color="white" />
@@ -611,13 +619,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <>
               <span style={{ fontSize: "2.8rem", marginBottom: 8 }}>🧞</span>
               <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.8rem", fontWeight: 900, color: "white" }}>
-                {userName ? `Hola ${userName}` : "Bienvenido de nuevo"}
+                {userName ? `${t(lang, "gHelloName")} ${userName}` : t(lang, "gWelcomeBack")}
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.7 }}>
                 {(() => {
                   const resLabels: Record<string, string> = Object.fromEntries(restrictionOptions.filter(r => r.value !== "ninguna").map(r => [r.value, r.value]));
-                  const dietLabels: Record<string, string> = { omnivore: "carnívoro", vegetarian: "vegetariano", vegan: "vegano" };
-                  const dietText = savedDiet ? dietLabels[savedDiet] || "" : "";
+                  const dietText = savedDiet ? t(lang, DIET_KEYS[savedDiet as DietType]) : "";
                   const resList: string[] = savedRestrictions ? JSON.parse(savedRestrictions) : [];
                   const filtered = resList.filter((r: string) => r !== "ninguna").map((r: string) => resLabels[r] || r);
                   const resText = filtered.length > 0
@@ -627,18 +634,20 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   const dislikeText = dislikeList.length > 0
                     ? dislikeList.length === 1 ? dislikeList[0] : dislikeList.slice(0, 3).join(", ") + (dislikeList.length > 3 ? "..." : "")
                     : "";
-                  if (dietText && resText) return <>Recuerdo que eres <span style={{ color: "#F4A623" }}>{dietText}</span> y que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> Además no te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
-                  if (dietText) return <>Recuerdo que eres <span style={{ color: "#F4A623" }}>{dietText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
-                  if (resText) return <>Recuerdo que evitas <span style={{ color: "#F4A623" }}>{resText}</span>.{dislikeText && <> No te gusta mucho <span style={{ color: "#F4A623" }}>{dislikeText}</span>.</>}</>;
-                  return "Dime qué se te antoja.";
+                  const hl = (s: string) => <span style={{ color: "#F4A623" }}>{s}</span>;
+                  const dislikeNode = dislikeText ? <> {t(lang, dietText ? "gAlsoDislikes" : "gDislikes").split("{dislikes}")[0]}{hl(dislikeText)}{t(lang, dietText ? "gAlsoDislikes" : "gDislikes").split("{dislikes}")[1]}</> : null;
+                  if (dietText && resText) return <>{t(lang, "gRememberDietAndRes").split("{diet}")[0]}{hl(dietText)}{t(lang, "gRememberDietAndRes").split("{diet}")[1].split("{res}")[0]}{hl(resText)}{t(lang, "gRememberDietAndRes").split("{diet}")[1].split("{res}")[1]}{dislikeNode}</>;
+                  if (dietText) return <>{t(lang, "gRememberDiet").split("{diet}")[0]}{hl(dietText)}{t(lang, "gRememberDiet").split("{diet}")[1]}{dislikeNode}</>;
+                  if (resText) return <>{t(lang, "gRememberRes").split("{res}")[0]}{hl(resText)}{t(lang, "gRememberRes").split("{res}")[1]}{dislikeNode}</>;
+                  return t(lang, "gTellMeWhat");
                 })()}
               </p>
               <div className="flex flex-col items-center" style={{ gap: 12, marginTop: 16 }}>
                 <button onClick={() => { setSkipTransition(true); trackStat(restaurantId, "GENIO_STEP_GRID", undefined, genioSessionId); setStep(4); requestAnimationFrame(() => requestAnimationFrame(() => setSkipTransition(false))); initGrid(photoFilter); }} className="active:scale-95 transition-transform" style={{ background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
-                  Continuar →
+                  {t(lang, "gContinueBtn")}
                 </button>
                 <button onClick={() => { localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); setDietType(null); setRestrictions([]); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.85rem" }}>
-                  Cambiar preferencias
+                  {t(lang, "gChangePrefs")}
                 </button>
               </div>
             </>
@@ -646,16 +655,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <>
               <span style={{ fontSize: "3rem", animation: "genioPulse 2s ease-in-out infinite" }}>🧞</span>
               <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: "white" }}>
-                Hola, soy el Genio
+                {t(lang, "gHelloGenius")}
               </h1>
               <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "1rem", maxWidth: 280, lineHeight: 1.5 }}>
-                Dime qué se te antoja y te recomiendo el plato perfecto
+                {t(lang, "gTellMeRecommend")}
               </p>
               <button onClick={() => { trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}>
-                Empezar →
+                {t(lang, "gStartBtn")}
               </button>
               <button onClick={surpriseMe} className="active:scale-95 transition-transform" style={{ marginTop: 8, background: "transparent", border: "1px solid rgba(255,255,255,0.25)", color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", fontWeight: 500, padding: "12px 28px", borderRadius: 50 }}>
-                🎲 Sorpréndeme
+                {t(lang, "gSurpriseMe")}
               </button>
             </>
           )}
@@ -664,7 +673,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         {/* STEP 1 — Diet type */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 40px" }}>
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28 }}>
-            ¿Qué tipo de alimentación tienes?
+            {t(lang, "gDietQuestion")}
           </h2>
           <div className="flex flex-col" style={{ gap: 12 }}>
             {DIET_OPTIONS.map((opt) => {
@@ -679,7 +688,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   className="flex items-center gap-4 transition-all duration-200"
                   style={{ padding: "16px 20px", borderRadius: 14, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.12)"}`, background: sel ? "rgba(244,166,35,0.08)" : "rgba(255,255,255,0.05)" }}>
                   <Icon size={20} color="#F4A623" />
-                  <span style={{ color: "white", fontSize: "1.1rem", fontWeight: 600 }}>{opt.label}</span>
+                  <span style={{ color: "white", fontSize: "1.1rem", fontWeight: 600 }}>{t(lang, opt.labelKey)}</span>
                 </button>
               );
             })}
@@ -689,7 +698,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         {/* STEP 2 — Restrictions */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 120px", position: "relative" }}>
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28 }}>
-            ¿Tienes alguna restricción?
+            {t(lang, "gResQuestion")}
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {restrictionOptions.filter(r => {
@@ -708,7 +717,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   className="flex items-center gap-3 transition-all duration-200"
                   style={{ padding: "12px 16px", borderRadius: 50, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.15)"}`, background: sel ? "rgba(244,166,35,0.1)" : "transparent", color: sel ? "#F4A623" : "rgba(255,255,255,0.7)", fontSize: "1.05rem", fontWeight: 500 }}>
                   <Icon size={16} />
-                  {r.label}
+                  {r.labelKey ? t(lang, r.labelKey as any) : r.label}
                 </button>
               );
             })}
@@ -723,7 +732,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               className="active:scale-95 transition-transform"
               style={{ marginTop: 24, alignSelf: "center", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}
             >
-              Continuar →
+              {t(lang, "gContinueBtn")}
             </button>
           )}
         </div>
@@ -731,10 +740,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         {/* STEP 3 — Dislikes */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 120px", position: "relative" }}>
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 8 }}>
-            ¿Algo que prefieras evitar?
+            {t(lang, "gDislikesQuestion")}
           </h2>
           <p className="text-center" style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 20, lineHeight: 1.5 }}>
-            <span style={{ color: "#F4A623", textDecoration: "underline", textDecorationColor: "rgba(244,166,35,0.4)", textUnderlineOffset: "3px" }}>No lo eliminaremos de tus opciones</span>, solo lo mostrará menos
+            <span style={{ color: "#F4A623", textDecoration: "underline", textDecorationColor: "rgba(244,166,35,0.4)", textUnderlineOffset: "3px" }}>{t(lang, "gDislikesHint")}</span>
           </p>
 
           {/* Selected dislikes */}
@@ -754,7 +763,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ position: "relative", marginBottom: 16 }}>
             <input
               value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
-              placeholder="Buscar ingrediente..."
+              placeholder={t(lang, "gSearchIngredient")}
               style={{ width: "100%", padding: "12px 16px", borderRadius: 14, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" }}
             />
             {dislikeResults.length > 0 && (
@@ -772,7 +781,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </div>
 
           {/* Flavor dislikes */}
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Sabores</p>
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gFlavors")}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16 }}>
             {[
               { value: "dulce", icon: "🍯" },
@@ -789,7 +798,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </div>
 
           {/* Popular ingredient picks */}
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>Ingredientes comunes</p>
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gCommonIngredients")}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
             {popularDislikes.filter(p => !dislikes.includes(p)).map(item => (
               <button key={item} onClick={() => {
@@ -811,7 +820,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             className="active:scale-95 transition-transform"
             style={{ marginTop: 24, alignSelf: "center", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 32px", borderRadius: 50, border: "none" }}
           >
-            {dislikes.length === 0 ? "Nada, me gusta todo →" : "Continuar →"}
+            {dislikes.length === 0 ? t(lang, "gNothingDisliked") : t(lang, "gContinueBtn")}
           </button>
         </div>
 
@@ -824,7 +833,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               return (
                 <button key={f} onClick={() => setPhotoFilter(f)}
                   style={{ padding: "6px 16px", borderRadius: 50, fontSize: "0.88rem", fontWeight: 500, border: active ? "none" : "1px solid rgba(255,255,255,0.2)", background: active ? "white" : "transparent", color: active ? "#0e0e0e" : "rgba(255,255,255,0.5)" }}>
-                  {f === "platos" ? "Platos" : f === "dulce" ? "Postre" : "Bebestible"}
+                  {f === "platos" ? t(lang, "gDishFilter") : f === "dulce" ? t(lang, "gDessertFilter") : t(lang, "gDrinkFilter")}
                 </button>
               );
             })}
@@ -838,16 +847,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   {liked.size}
                 </div>
                 <span style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.88rem" }}>
-                  {liked.size === 1 ? "plato seleccionado" : "platos seleccionados"}
+                  {liked.size === 1 ? t(lang, "gSelected") : t(lang, "gSelectedPlural")}
                 </span>
                 {!showOverlay && liked.size < 4 && (
                   <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.86rem", marginLeft: 4 }}>
-                    {liked.size === 1 ? "· sigue seleccionando" : liked.size === 2 ? "· un poco más" : "· ya casi 🤔"}
+                    {liked.size === 1 ? `· ${t(lang, "gKeepSelecting")}` : liked.size === 2 ? `· ${t(lang, "gABitMore")}` : `· ${t(lang, "gAlmostThere")}`}
                   </span>
                 )}
               </>
             ) : (
-              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.01rem", margin: 0 }}>Selecciona los platos que te llaman 👇</p>
+              <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.01rem", margin: 0 }}>{t(lang, "gSelectDishes")}</p>
             )}
           </div>
 
@@ -895,7 +904,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {/* Round indicator */}
           {round > 0 && (
             <p className="text-center" style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.95rem", marginTop: 10 }}>
-              🧞 El Genio está aprendiendo...
+              {t(lang, "gLearning")}
             </p>
           )}
 
@@ -907,24 +916,24 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <h3 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.3rem", color: "white", fontWeight: 800, lineHeight: 1.3 }}>
                 {dominantCategory
                   ? [
-                      `Creo que tengo el plato perfecto para ti`,
-                      `Listo, ya te conozco`,
-                      `Déjame sorprenderte`,
-                      `Tengo algo para ti`,
-                      `Creo saber qué quieres`,
+                      t(lang, "gOverlay1"),
+                      t(lang, "gOverlay2"),
+                      t(lang, "gOverlay3"),
+                      t(lang, "gOverlay4"),
+                      t(lang, "gOverlay5"),
                     ][phraseIdx]
-                  : "Creo que tengo algo para ti"}
+                  : t(lang, "gOverlayFallback")}
               </h3>
               <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem" }}>
-                {liked.size} platos seleccionados
+                {liked.size} {t(lang, "gSelectedPlural")}
               </span>
               <button onClick={recommend} className="active:scale-95 transition-transform"
                 style={{ marginTop: 8, background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, padding: "15px 28px", borderRadius: 50, border: "none" }}>
-                Ver sugerencias del Genio →
+                {t(lang, "gSeeSuggestions")}
               </button>
               <button onClick={() => { setShowOverlay(false); setOverlayDismissed(true); setDismissedAt(liked.size); }}
                 style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: 4 }}>
-                Quiero seguir viendo platos
+                {t(lang, "gKeepBrowsing")}
               </button>
             </div>
           )}
@@ -946,7 +955,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {/* Genio header */}
           <span style={{ fontSize: "2rem", marginBottom: 0 }}>🧞</span>
           <span style={{ color: "#F4A623", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>
-            El Genio recomienda
+            {t(lang, "gRecommends")}
           </span>
 
           {/* Main recommendation */}
@@ -968,7 +977,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </div>
             </button>
             <div className="absolute" style={{ top: 12, left: 12, background: "#F4A623", color: "white", fontSize: "0.68rem", fontWeight: 700, padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>
-              ⭐ MEJOR MATCH
+              {t(lang, "gBestMatch")}
             </div>
           </div>
 
@@ -976,7 +985,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {altResults.length > 0 && (
             <>
               <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.75rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.1em", margin: "8px 0 4px" }}>
-                También te podría gustar
+                {t(lang, "gAlsoLike")}
               </p>
               <div style={{ display: "flex", gap: 10, width: "100%", maxWidth: 320 }}>
                 {altResults.map((alt) => (
@@ -1001,13 +1010,13 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {/* Feedback */}
           {genioFeedback === "none" ? (
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0 4px" }}>
-              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>¿Acerté?</span>
-              <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_like"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👍 Sí</button>
-              <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_dislike"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>👎 No tanto</button>
+              <span style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem" }}>{t(lang, "gDidIGetIt")}</span>
+              <button onClick={() => { setGenioFeedback("like"); trackStat(restaurantId, "GENIO_FEEDBACK_LIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_like"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>{t(lang, "gYes")}</button>
+              <button onClick={() => { setGenioFeedback("dislike"); trackStat(restaurantId, "GENIO_FEEDBACK_DISLIKE", mainResult.id, genioSessionId); saveIngredients([mainResult.id], "feedback_dislike"); }} className="active:scale-90 transition-transform" style={{ padding: "6px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "none", color: "white", fontSize: "0.82rem", cursor: "pointer" }}>{t(lang, "gNotSoMuch")}</button>
             </div>
           ) : (
             <p style={{ color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", margin: "16px 0 4px" }}>
-              {genioFeedback === "like" ? "¡Genial! Gracias 🙌" : "Gracias, lo mejoraré 🧞"}
+              {genioFeedback === "like" ? t(lang, "gGreatThanks") : t(lang, "gThanksImprove")}
             </p>
           )}
 
@@ -1077,7 +1086,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                     background: liked.has(previewDish.id) ? "rgba(255,255,255,0.1)" : "#F4A623",
                     color: liked.has(previewDish.id) ? "rgba(255,255,255,0.5)" : "white",
                   }}>
-                  {liked.has(previewDish.id) ? "Quitar selección" : "Me gusta 👆"}
+                  {liked.has(previewDish.id) ? t(lang, "gRemoveSelection") : t(lang, "gLikeBtn")}
                 </button>
               </div>
             </div>
