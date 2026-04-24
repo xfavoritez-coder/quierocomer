@@ -56,6 +56,10 @@ export default function AgregarLocalPage() {
   const [result, setResult] = useState<{ slug: string; restaurantId: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
   const [photoResults, setPhotoResults] = useState<{ dishId: string; dishName: string; query: string; photoUrl: string | null; selected: boolean }[]>([]);
   const [photoProgress, setPhotoProgress] = useState("");
+  const [mode, setMode] = useState<"photos" | "url">("photos");
+  const [urlInput, setUrlInput] = useState("");
+  const [logo, setLogo] = useState<string | null>(null);
+  const [savingProgress, setSavingProgress] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Compress image client-side to max 1200px and ~200KB JPEG
@@ -113,17 +117,45 @@ export default function AgregarLocalPage() {
     }
   };
 
+  const analyzeUrl = async () => {
+    if (!urlInput.trim()) return;
+    setStep("loading");
+    setError("");
+    try {
+      const res = await fetch("/api/agregarlocal/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: urlInput.trim(), name: name.trim() || undefined }),
+      });
+      const rawText = await res.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 200)}`); }
+      if (!res.ok) throw new Error(`[${res.status}] ${data.error || "Error"}`);
+      if (!data.categories?.length) throw new Error("No se encontraron platos en esa URL.");
+      if (!name.trim() && data.restaurantName) setName(data.restaurantName);
+      if (data.logo) setLogo(data.logo);
+      setCategories(data.categories);
+      setStep("preview");
+    } catch (e: any) {
+      setError(e.message || String(e));
+      setStep("upload");
+    }
+  };
+
   const confirm = async () => {
     setStep("saving");
+    setSavingProgress("Creando restaurante y platos...");
     try {
       const res = await fetch("/api/agregarlocal/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), categories }),
+        body: JSON.stringify({ name: name.trim(), categories, logo }),
       });
+      setSavingProgress("Extrayendo ingredientes...");
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
       setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
+      setSavingProgress("");
       setStep("done");
     } catch (e: any) {
       setError(e.message);
@@ -167,66 +199,87 @@ export default function AgregarLocalPage() {
         {/* STEP: Upload */}
         {step === "upload" && (
           <>
-            {/* Name input */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Nombre del local</label>
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ej: La Parrilla de Nico"
-                style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "1rem", outline: "none", boxSizing: "border-box" }}
-              />
-            </div>
-
-            {/* Photo upload */}
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Fotos de la carta (máx 5)</label>
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handlePhotos(e.target.files)}
-                style={{ display: "none" }}
-              />
-              <button
-                onClick={() => inputRef.current?.click()}
-                style={{
-                  width: "100%", padding: "40px 20px", borderRadius: 14,
-                  border: "2px dashed rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.04)",
-                  color: "#F4A623", fontSize: "0.95rem", fontWeight: 600, cursor: "pointer",
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-                }}
-              >
-                <span style={{ fontSize: "2rem" }}>📸</span>
-                {photos.length > 0 ? `${photos.length} foto${photos.length > 1 ? "s" : ""} seleccionada${photos.length > 1 ? "s" : ""}` : "Toca para subir fotos"}
+            {/* Mode toggle */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: 4 }}>
+              <button onClick={() => setMode("photos")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, background: mode === "photos" ? "#F4A623" : "transparent", color: mode === "photos" ? "#0e0e0e" : "rgba(255,255,255,0.5)" }}>
+                📸 Subir fotos
               </button>
-
-              {/* Previews */}
-              {previews.length > 0 && (
-                <div style={{ display: "flex", gap: 8, marginTop: 12, overflowX: "auto" }}>
-                  {previews.map((src, i) => (
-                    <img key={i} src={src} alt={`Foto ${i + 1}`} style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                  ))}
-                </div>
-              )}
+              <button onClick={() => setMode("url")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: "0.85rem", fontWeight: 600, background: mode === "url" ? "#F4A623" : "transparent", color: mode === "url" ? "#0e0e0e" : "rgba(255,255,255,0.5)" }}>
+                🔗 Desde URL
+              </button>
             </div>
+
+            {/* Name input — only for photo mode, URL mode auto-detects */}
+            {mode === "photos" && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Nombre del local</label>
+                <input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej: La Parrilla de Nico"
+                  style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "1rem", outline: "none", boxSizing: "border-box" }}
+                />
+              </div>
+            )}
+
+            {mode === "photos" ? (
+              <>
+                {/* Photo upload */}
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Fotos de la carta (máx 5)</label>
+                  <input ref={inputRef} type="file" accept="image/*" multiple onChange={(e) => handlePhotos(e.target.files)} style={{ display: "none" }} />
+                  <button onClick={() => inputRef.current?.click()} style={{ width: "100%", padding: "40px 20px", borderRadius: 14, border: "2px dashed rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.04)", color: "#F4A623", fontSize: "0.95rem", fontWeight: 600, cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: "2rem" }}>📸</span>
+                    {photos.length > 0 ? `${photos.length} foto${photos.length > 1 ? "s" : ""} seleccionada${photos.length > 1 ? "s" : ""}` : "Toca para subir fotos"}
+                  </button>
+                  {previews.length > 0 && (
+                    <div style={{ display: "flex", gap: 8, marginTop: 12, overflowX: "auto" }}>
+                      {previews.map((src, i) => (
+                        <img key={i} src={src} alt={`Foto ${i + 1}`} style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                {/* URL input */}
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>URL de la carta del local</label>
+                  <input
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    placeholder="https://www.ejemplo.com/menu"
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }}
+                  />
+                </div>
+                <div style={{ marginBottom: 24 }}>
+                  <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Nombre del local (opcional, se detecta automáticamente)</label>
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Se detecta de la página"
+                    style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }}
+                  />
+                </div>
+              </>
+            )}
 
             {error && (
               <pre style={{ color: "#ef4444", fontSize: "0.75rem", marginBottom: 16, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-all", background: "rgba(239,68,68,0.08)", padding: 12, borderRadius: 10 }}>{error}</pre>
             )}
 
             <button
-              onClick={analyze}
-              disabled={!name.trim() || photos.length === 0}
+              onClick={mode === "photos" ? analyze : analyzeUrl}
+              disabled={mode === "photos" ? (!name.trim() || photos.length === 0) : !urlInput.trim()}
               style={{
                 width: "100%", padding: "16px", borderRadius: 50, border: "none",
-                background: name.trim() && photos.length > 0 ? "#F4A623" : "rgba(255,255,255,0.1)",
-                color: name.trim() && photos.length > 0 ? "#0e0e0e" : "rgba(255,255,255,0.3)",
-                fontSize: "1rem", fontWeight: 700, cursor: name.trim() && photos.length > 0 ? "pointer" : "not-allowed",
+                background: (mode === "photos" ? (name.trim() && photos.length > 0) : urlInput.trim()) ? "#F4A623" : "rgba(255,255,255,0.1)",
+                color: (mode === "photos" ? (name.trim() && photos.length > 0) : urlInput.trim()) ? "#0e0e0e" : "rgba(255,255,255,0.3)",
+                fontSize: "1rem", fontWeight: 700, cursor: (mode === "photos" ? (name.trim() && photos.length > 0) : urlInput.trim()) ? "pointer" : "not-allowed",
               }}
             >
-              Analizar carta
+              {mode === "photos" ? "Analizar carta" : "Importar desde URL"}
             </button>
           </>
         )}
@@ -264,8 +317,15 @@ export default function AgregarLocalPage() {
                   <button onClick={() => removeCategory(catIdx)} style={{ background: "none", border: "none", color: "rgba(255,100,100,0.5)", fontSize: "0.72rem", cursor: "pointer" }}>Quitar</button>
                 </div>
 
-                {cat.dishes.map((dish, dishIdx) => (
+                {cat.dishes.map((dish: any, dishIdx: number) => (
                   <div key={dishIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: dishIdx > 0 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                    {/* Photo thumbnail */}
+                    {dish.photo && (
+                      <div style={{ position: "relative", flexShrink: 0 }}>
+                        <img src={dish.photo} alt="" style={{ width: 40, height: 40, borderRadius: 6, objectFit: "cover" }} />
+                        <span style={{ position: "absolute", bottom: -2, right: -2, fontSize: "8px", background: "#0e0e0e", borderRadius: 4, padding: "0 3px" }}>{dish._unsplash ? "🔍" : "📷"}</span>
+                      </div>
+                    )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <input
                         value={dish.name}
@@ -286,6 +346,7 @@ export default function AgregarLocalPage() {
                           </span>
                         )}
                         {dish.isSpicy && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️</span>}
+                        {dish.modifiers?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc" }}>⚙️ {dish.modifiers.length} opciones</span>}
                       </div>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
@@ -320,6 +381,10 @@ export default function AgregarLocalPage() {
           <div style={{ textAlign: "center", padding: "60px 0" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>✨</span>
             <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>Creando {name}...</p>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", marginTop: 8 }}>{savingProgress || "Procesando platos..."}</p>
+            <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "16px auto 0", overflow: "hidden" }}>
+              <div style={{ width: "70%", height: "100%", background: "#F4A623", borderRadius: 2, animation: "progressIndeterminate 1.5s ease-in-out infinite" }} />
+            </div>
           </div>
         )}
 
