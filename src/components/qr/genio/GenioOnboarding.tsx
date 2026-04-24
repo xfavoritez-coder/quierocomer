@@ -1050,7 +1050,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
       {/* Grid dish preview — lightweight modal with "Me gusta" */}
       {previewDish && step === 4 && (
-        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, padding: "20px" }}>
+        <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 200, padding: "20px", paddingBottom: "10%" }}>
           <div onClick={() => setPreviewDish(null)} className="absolute inset-0" style={{ background: "rgba(0,0,0,0.7)" }} />
           <div style={{ position: "relative", zIndex: 1, width: "100%", maxWidth: 400, background: "#111", borderRadius: 24, maxHeight: "85dvh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             {/* Photo — fixed */}
@@ -1069,14 +1069,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 {previewDish.discountPrice && <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.82rem", textDecoration: "line-through", marginLeft: 6 }}>${previewDish.price?.toLocaleString("es-CL")}</span>}
               </div>
               {previewDish.description && (
-                <>
-                  <p style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", display: previewDescExpanded ? "block" : "-webkit-box", WebkitLineClamp: previewDescExpanded ? undefined : 3, WebkitBoxOrient: "vertical" as any, overflow: previewDescExpanded ? "visible" : "hidden" }}>{previewDish.description}</p>
-                  {previewDish.description.length > 100 && (
-                    <button onClick={() => setPreviewDescExpanded(!previewDescExpanded)} style={{ display: "block", background: "none", border: "none", color: "rgba(255,255,255,0.35)", fontSize: "0.82rem", padding: 0, marginBottom: 8, marginRight: "auto", cursor: "pointer" }}>
-                      {previewDescExpanded ? "ver menos" : "ver más"}
-                    </button>
-                  )}
-                </>
+                <p style={{ fontSize: "0.92rem", color: "rgba(255,255,255,0.5)", lineHeight: 1.5, margin: "0 0 4px", maxHeight: 120, overflowY: "auto" }}>{previewDish.description}</p>
               )}
               {/* Action buttons */}
               <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
