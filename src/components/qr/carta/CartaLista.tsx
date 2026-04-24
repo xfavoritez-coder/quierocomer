@@ -105,6 +105,19 @@ export default function CartaLista({
     }
     catStartRef.current = { id: activeCategory, start: Date.now() };
   }, [activeCategory]);
+
+  useEffect(() => {
+    const flush = () => {
+      const cur = catStartRef.current;
+      if (cur.id) {
+        const dwellMs = Date.now() - cur.start;
+        if (dwellMs > 1000) trackCategoryDwell(cur.id, dwellMs);
+        catStartRef.current = { id: cur.id, start: Date.now() };
+      }
+    };
+    document.addEventListener("visibilitychange", flush);
+    return () => { flush(); document.removeEventListener("visibilitychange", flush); };
+  }, []);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
 
   const [genioOpen, setGenioOpen] = useState(false);
