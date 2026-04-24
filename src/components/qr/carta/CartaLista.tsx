@@ -5,6 +5,10 @@ import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
+import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
+import { getGuestId } from "@/lib/guestId";
 import PromoCarousel from "../capture/PromoCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
@@ -42,6 +46,8 @@ interface Props {
   readyKey?: number;
   showWaiter?: boolean;
   marketingPromos?: any[];
+  timeOfDay?: string;
+  weather?: string;
 }
 
 
@@ -59,9 +65,13 @@ export default function CartaLista({
   readyKey,
   showWaiter,
   marketingPromos,
+  timeOfDay: timeOfDayProp,
+  weather: weatherProp,
 }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
+  const { hasNewLikes, clearNewLikes } = useFavorites();
+  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -75,6 +85,33 @@ export default function CartaLista({
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [query, dishes, restaurant.id]);
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
+  const [profileTrigger, setProfileTrigger] = useState(0);
+  const [personalizing, setPersonalizing] = useState(false);
+
+  // Fetch personalized profile and apply scoring
+  useEffect(() => {
+    const guestId = getGuestId();
+    if (!guestId && !qrUser?.id) return;
+    setPersonalizing(true);
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.profile) { setPersonalizing(false); return; }
+        const catNames: Record<string, string> = {};
+        for (const c of categories) catNames[c.id] = c.name;
+        const result = getPersonalizedDishes(
+          dishes as unknown as ScoringDish[],
+          categories,
+          d.profile,
+          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
+        );
+        if (result.hasPersonalization) setPMap(result.map);
+        setPersonalizing(false);
+      })
+      .catch(() => setPersonalizing(false));
+  }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
+
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [genioExpanded, setGenioExpanded] = useState(false);
@@ -164,12 +201,17 @@ export default function CartaLista({
           const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
           const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
           if (aRec !== bRec) return bRec - aRec;
+          if (pMap) {
+            const aScore = pMap.get(a.id)?.score ?? 0;
+            const bScore = pMap.get(b.id)?.score ?? 0;
+            if (aScore !== bScore) return bScore - aScore;
+          }
           return a.position - b.position;
         });
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes]);
+  }, [categories, dishes, pMap]);
 
   const filtered = useMemo(() => {
     return dishes.filter((d) => {
@@ -181,10 +223,22 @@ export default function CartaLista({
     });
   }, [dishes, query]);
 
-  const grouped = useMemo(
-    () => groupDishesByCategory(filtered, categories),
-    [filtered, categories],
-  );
+  const grouped = useMemo(() => {
+    const base = groupDishesByCategory(filtered, categories);
+    if (!pMap) return base;
+    return base.map((g) => ({
+      ...g,
+      dishes: [...g.dishes].sort((a, b) => {
+        const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+        const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+        if (aRec !== bRec) return bRec - aRec;
+        const aScore = pMap.get(a.id)?.score ?? 0;
+        const bScore = pMap.get(b.id)?.score ?? 0;
+        if (aScore !== bScore) return bScore - aScore;
+        return a.position - b.position;
+      }),
+    }));
+  }, [filtered, categories, pMap]);
 
   const handleDishClick = (dish: Dish) => {
     setSelectedDish(dish);
@@ -352,9 +406,24 @@ export default function CartaLista({
         </section>
       )}
 
+      {personalizing && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            padding: "10px 20px",
+            background: "linear-gradient(90deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.04) 100%)",
+            borderBottom: "1px solid rgba(244,166,35,0.1)",
+          }}
+        >
+          <span style={{ fontSize: "14px", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+        </div>
+      )}
+
       {/* CATEGORIES */}
       {grouped.map(({ category, dishes: catDishes }, index) => (
-        <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0" }}>
+        <section key={category.id} id={`lista-cat-${category.id}`} style={{ padding: "20px 12px 0", opacity: personalizing ? 0.4 : 1, transition: "opacity 0.3s ease" }}>
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 -4px 12px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
           {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-16px -12px 13px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} /></div>}
           <div style={{ padding: "0 8px", marginBottom: 8 }}>
@@ -366,47 +435,87 @@ export default function CartaLista({
             </h2>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            {catDishes.map((dish) => (
-              <DishListCard
-                key={dish.id}
-                dish={dish}
-                rating={ratingMap?.[dish.id]}
-                onClick={() => handleDishClick(dish)}
-              />
-            ))}
+            {catDishes.map((dish) => {
+              const entry = pMap?.get(dish.id);
+              return (
+                <DishListCard
+                  key={dish.id}
+                  dish={dish}
+                  rating={ratingMap?.[dish.id]}
+                  autoRecommended={entry?.autoRecommended}
+                  isExploration={entry?.isExploration}
+                  restaurantName={restaurant.name}
+                  onClick={() => {
+                    if (entry?.autoRecommended) {
+                      fetch("/api/qr/stats", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          eventType: "RECOMMENDATION_TAPPED",
+                          dishId: dish.id,
+                          restaurantId: restaurant.id,
+                          guestId: getGuestId(),
+                          metadata: { score: entry.score, wasAutomatic: true },
+                        }),
+                      }).catch(() => {});
+                    }
+                    handleDishClick(dish);
+                  }}
+                />
+              );
+            })}
           </div>
         </section>
       ))}
 
-      {/* Genio nudge */}
-      <div
-        className="font-[family-name:var(--font-dm)]"
-        style={{
-          margin: "55px 20px 0", padding: "24px 20px", textAlign: "center",
-          background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
-        }}
-      >
-        <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
-          🧞
-        </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
-        <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "genieKnows")}</p>
+      {/* Genio nudge — compact if completed */}
+      {hasCompletedGenio ? (
         <button
           onClick={() => setGenioOpen(true)}
-          className="active:scale-[0.97] transition-transform"
+          className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
           style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "#F4A623",
-            color: "white", padding: "11px 22px", borderRadius: 100,
-            fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer",
-            boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+            margin: "32px 20px 0", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
+            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
           }}
         >
-          {t(lang, "askGenieShort")}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <span style={{ fontSize: "1.3rem" }}>🧞</span>
+          <div style={{ flex: 1, textAlign: "left" }}>
+            <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
+            <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
-      </div>
+      ) : (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            margin: "55px 20px 0", padding: "24px 20px", textAlign: "center",
+            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
+          }}
+        >
+          <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
+            🧞
+          </div>
+          <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
+          <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "genieKnows")}</p>
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="active:scale-[0.97] transition-transform"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "#F4A623",
+              color: "white", padding: "11px 22px", borderRadius: 100,
+              fontSize: "13px", fontWeight: 600, border: "none", cursor: "pointer",
+              boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+            }}
+          >
+            {t(lang, "askGenieShort")}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      )}
 
       {/* Powered by footer */}
       <footer
@@ -456,9 +565,10 @@ export default function CartaLista({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => setGenioOpen(false)}
+          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
+            setProfileTrigger((n) => n + 1);
             setTimeout(() => setSelectedDish(dish), 250);
           }}
         />
@@ -473,8 +583,10 @@ export default function CartaLista({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => setSelectedDish(null)}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
+          personalizationMap={pMap}
+          restaurantName={restaurant.name}
         />
       )}
     </div>
@@ -487,16 +599,34 @@ function DishListCard({
   dish,
   rating,
   onClick,
+  autoRecommended,
+  isExploration,
+  restaurantName,
 }: {
   dish: Dish;
   rating?: { avg: number; count: number };
   onClick: () => void;
+  autoRecommended?: boolean;
+  isExploration?: boolean;
+  restaurantName?: string;
 }) {
   const photo = getDishPhoto(dish);
   const geniePick = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const isPromo = dish.tags?.includes("PROMOTION");
   const isRec = dish.tags?.includes("RECOMMENDED");
+
+  const hasAutoLabel = autoRecommended && !isRec;
+  const cardBg = isRec
+    ? "rgba(244,166,35,0.04)"
+    : hasAutoLabel
+    ? (isExploration ? "rgba(99,102,241,0.04)" : "rgba(244,166,35,0.06)")
+    : "white";
+  const cardBorder = isRec
+    ? "2px solid rgba(244,166,35,0.3)"
+    : hasAutoLabel
+    ? `1.5px solid ${isExploration ? "rgba(99,102,241,0.2)" : "rgba(244,166,35,0.2)"}`
+    : "1px solid rgba(0,0,0,0.04)";
 
   return (
     <button
@@ -507,9 +637,9 @@ function DishListCard({
         display: "flex",
         gap: 12,
         padding: 10,
-        background: isRec ? "rgba(244,166,35,0.04)" : "white",
+        background: cardBg,
         borderRadius: 14,
-        border: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.04)",
+        border: cardBorder,
         textAlign: "left",
         cursor: "pointer",
         fontFamily: "inherit",
@@ -530,7 +660,16 @@ function DishListCard({
             className="font-[family-name:var(--font-playfair)] flex items-center gap-1"
             style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
           >
-            {dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "11px", flexShrink: 0 }}>⭐</span>}
+            {isRec && (
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.58rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+                ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+              </span>
+            )}
+            {hasAutoLabel && (
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.58rem", fontWeight: 600, color: isExploration ? "#6366f1" : "#d97706", background: isExploration ? "rgba(99,102,241,0.1)" : "rgba(244,166,35,0.12)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>
+                {isExploration ? "🔍 Descubre" : "✨ Para ti"}
+              </span>
+            )}
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
             {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
             {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}

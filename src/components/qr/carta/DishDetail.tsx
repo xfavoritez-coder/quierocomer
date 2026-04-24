@@ -8,6 +8,13 @@ import { getGuestId, getSessionId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
 
+interface PersonalizationEntry {
+  score: number;
+  autoRecommended: boolean;
+  reason: string | null;
+  isExploration: boolean;
+}
+
 interface DishDetailProps {
   dish: Dish;
   allDishes: Dish[];
@@ -17,6 +24,8 @@ interface DishDetailProps {
   ratingMap: Record<string, { avg: number; count: number }>;
   onClose: () => void;
   onChangeDish: (dish: Dish) => void;
+  personalizationMap?: Map<string, PersonalizationEntry> | null;
+  restaurantName?: string;
 }
 
 export default function DishDetail({
@@ -27,6 +36,8 @@ export default function DishDetail({
   ratingMap,
   onClose,
   onChangeDish,
+  personalizationMap,
+  restaurantName,
 }: DishDetailProps) {
   const [visible, setVisible] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
@@ -170,12 +181,15 @@ export default function DishDetail({
             showInfo={showInfo && idx === activeIdx}
             setShowInfo={setShowInfo}
             onClose={close}
+            personalizationEntry={personalizationMap?.get(d.id)}
+            restaurantName={restaurantName}
           />
         ))}
       </div>
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeToast { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         div::-webkit-scrollbar { display: none; }
       `}</style>
     </div>
@@ -186,6 +200,7 @@ export default function DishDetail({
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
+  personalizationEntry, restaurantName,
 }: {
   dish: Dish; index: number; total: number;
   categories: Category[]; restaurantId: string;
@@ -194,7 +209,27 @@ function DishSlide({
   expandedDescs: Set<string>; setExpandedDescs: (fn: (s: Set<string>) => Set<string>) => void;
   showInfo: boolean; setShowInfo: (v: boolean) => void;
   onClose: () => void;
+  personalizationEntry?: PersonalizationEntry;
+  restaurantName?: string;
 }) {
+  const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
+  const [showRecTooltip, setShowRecTooltip] = useState(false);
+  const isRec = dish.tags?.includes("RECOMMENDED");
+
+  // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
+  const [showLikeNudge, setShowLikeNudge] = useState(false);
+  useEffect(() => {
+    if (!isActive) return;
+    const visited = localStorage.getItem(`qr_visited_${restaurantId}`);
+    const nudgeShown = localStorage.getItem("qc_like_nudge_shown");
+    const hasFavs = sessionStorage.getItem("qc_favorites_tip_seen");
+    // Show on second+ visit, if never shown before and user hasn't given any likes yet
+    if (visited && !nudgeShown && !hasFavs) {
+      const timer = setTimeout(() => { setShowLikeNudge(true); localStorage.setItem("qc_like_nudge_shown", "1"); }, 1500);
+      const hide = setTimeout(() => setShowLikeNudge(false), 6000);
+      return () => { clearTimeout(timer); clearTimeout(hide); };
+    }
+  }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
   const averageRating = ratingMap[dish.id];
@@ -257,13 +292,54 @@ function DishSlide({
       {/* Content overlay */}
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>
 
+        {/* "Para ti" explanation toggle */}
+        {showParaTiTooltip && personalizationEntry?.autoRecommended && (
+          <div
+            onClick={() => setShowParaTiTooltip(false)}
+            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
+          >
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
+              ✨ {personalizationEntry.reason
+                ? `${personalizationEntry.reason}. Seleccionado para ti según tus gustos.`
+                : "Seleccionado especialmente para ti, según tus gustos y preferencias."}
+            </p>
+          </div>
+        )}
+
+        {/* "Recomendado por" explanation toggle */}
+        {showRecTooltip && isRec && (
+          <div
+            onClick={() => setShowRecTooltip(false)}
+            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
+          >
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
+              ⭐ {restaurantName || "El local"} recomienda especialmente este plato.
+            </p>
+          </div>
+        )}
+
         {/* BLOQUE 1: Header — info left + heart right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {categoryName && <span style={{ color: "#999", fontSize: "10.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
-            <h2 style={{ fontSize: "28px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
-              {dish.tags?.includes("RECOMMENDED") && <span style={{ color: "#fbbf24", marginRight: 8 }}>★</span>}
+            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
+            <h2 style={{ fontSize: "29px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
+              {personalizationEntry?.autoRecommended && (
+                <button
+                  onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 4000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
+                >
+                  ✨ Para ti
+                </button>
+              )}
+              {isRec && !personalizationEntry?.autoRecommended && (
+                <button
+                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 4000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
+                >
+                  ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+                </button>
+              )}
             </h2>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
@@ -276,7 +352,17 @@ function DishSlide({
               )}
             </div>
           </div>
-          <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 20 }} />
+          <div style={{ position: "relative", flexShrink: 0, marginTop: 20 }}>
+            <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }} />
+            {showLikeNudge && (
+              <div onClick={() => setShowLikeNudge(false)} className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", top: -52, right: 0, background: "#FFF4E6", borderRadius: 10, padding: "7px 11px", boxShadow: "0 4px 12px rgba(180,130,50,0.25)", width: 180, animation: "fadeToast 0.3s ease-out", cursor: "pointer", zIndex: 10 }}>
+                <p style={{ fontSize: "11px", color: "#5c3d1e", margin: 0, lineHeight: 1.4 }}>
+                  👍 Dale me gusta para mejorar tus recomendaciones
+                </p>
+                <div style={{ position: "absolute", bottom: -5, right: 14, width: 10, height: 10, background: "#FFF4E6", transform: "rotate(45deg)" }} />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Rating + Stock */}
@@ -286,6 +372,7 @@ function DishSlide({
             {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(255,255,255,0.1)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
           </div>
         )}
+
 
         {/* BLOQUE 2: Description — full width */}
         {desc && (

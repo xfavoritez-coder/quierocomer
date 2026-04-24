@@ -494,6 +494,8 @@ model Dish {
   allergens      String?      // legacy text field
   dishDiet       DishDietType @default(OMNIVORE)
   isSpicy        Boolean      @default(false)
+  isHighMargin   Boolean      @default(false)
+  isFeaturedAuto Boolean      @default(false)
   flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
   position       Int
   createdAt      DateTime     @default(now())
@@ -737,6 +739,8 @@ enum StatEventType {
   USER_REGISTERED
   DISH_FAVORITED
   DISH_UNFAVORITED
+  RECOMMENDATION_SHOWN
+  RECOMMENDATION_TAPPED
 }
 
 enum TimeOfDay {

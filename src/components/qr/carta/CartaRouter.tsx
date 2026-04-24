@@ -39,6 +39,8 @@ interface Props {
   initialView?: string;
   lang?: Lang;
   happyHours?: any[];
+  timeOfDay?: string;
+  weather?: string;
 }
 
 export default function CartaRouter(props: Props) {

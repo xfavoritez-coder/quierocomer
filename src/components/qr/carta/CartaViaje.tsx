@@ -1,11 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useMemo, useRef, useState, useEffect, useCallback, type CSSProperties } from "react";
 import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
+import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
+import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
+import { getGuestId } from "@/lib/guestId";
 import { Sparkles, User } from "lucide-react";
+import FavoriteHeart from "./FavoriteHeart";
 import ViewSelector from "./ViewSelector";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -28,6 +32,8 @@ interface Props {
   onReady?: () => void;
   readyKey?: number;
   showWaiter?: boolean;
+  timeOfDay?: string;
+  weather?: string;
 }
 
 type SlideVariant = "hero" | "split" | "light" | "spotlight";
@@ -60,10 +66,50 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
-export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter }: Props) {
+export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
-  const grouped = useMemo(() => groupDishesByCategory(dishes, categories), [dishes, categories]);
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
+  const [profileTrigger, setProfileTrigger] = useState(0);
+  const [personalizing, setPersonalizing] = useState(false);
+
+  // Fetch personalized profile and apply scoring
+  useEffect(() => {
+    const guestId = getGuestId();
+    if (!guestId && !qrUser?.id) return;
+    setPersonalizing(true);
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.profile) { setPersonalizing(false); return; }
+        const catNames: Record<string, string> = {};
+        for (const c of categories) catNames[c.id] = c.name;
+        const result = getPersonalizedDishes(
+          dishes as unknown as ScoringDish[],
+          categories,
+          d.profile,
+          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
+        );
+        if (result.hasPersonalization) setPMap(result.map);
+        setPersonalizing(false);
+      })
+      .catch(() => setPersonalizing(false));
+  }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
+
+  const grouped = useMemo(() => {
+    const base = groupDishesByCategory(dishes, categories);
+    if (!pMap) return base;
+    // Sort dishes within each group by personalization score
+    return base.map((g) => ({
+      ...g,
+      dishes: [...g.dishes].sort((a, b) => {
+        const aScore = pMap.get(a.id)?.score ?? 0;
+        const bScore = pMap.get(b.id)?.score ?? 0;
+        return bScore - aScore;
+      }),
+    }));
+  }, [dishes, categories, pMap]);
+
   const [genioOpen, setGenioOpen] = useState(false);
   const [activeRail, setActiveRail] = useState(-1);
   const [railLight, setRailLight] = useState(false);
@@ -80,6 +126,12 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     <>
       <style>{CSS}</style>
       <div className="vj-root">
+        {personalizing && (
+          <div className="fixed font-[family-name:var(--font-dm)]" style={{ bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 60, background: "rgba(244,166,35,0.15)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 50, padding: "8px 20px", display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+            <span style={{ fontSize: "14px", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+            <span style={{ fontSize: "0.82rem", color: "#fbbf24", fontWeight: 500 }}>Personalizando la carta...</span>
+          </div>
+        )}
         {/* Top left: logo + restaurant name */}
         <button
           onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}
@@ -98,7 +150,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               {restaurant.name.charAt(0).toUpperCase()}
             </div>
           )}
-          <span style={{ fontSize: "1rem", fontWeight: 400, color: "rgba(255,255,255,0.7)", letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "1rem", fontWeight: 400, color: "rgba(255,255,255,0.85)", letterSpacing: "0.02em" }}>
             {restaurant.name}
           </span>
         </button>
@@ -172,6 +224,9 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 categoryName={group.category.name}
                 lang={lang}
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
+                restaurantNameProp={restaurant.name}
+                pMapProp={pMap}
+                restaurantId={restaurant.id}
               />
             );
           })}
@@ -187,9 +242,10 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             dishes={dishes}
             categories={categories}
             qrUser={qrUser}
-            onClose={() => setGenioOpen(false)}
+            onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
             onResult={() => {
               setGenioOpen(false);
+              setProfileTrigger((n) => n + 1);
             }}
           />
         )}
@@ -274,12 +330,12 @@ function ChapterOpening({
 
 /* =============== CATEGORY TRACK (chapter title + dishes in horizontal) =============== */
 function CategoryTrack({
-  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, lang, onActive,
+  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, lang, onActive, restaurantNameProp, pMapProp, restaurantId,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
   index: number; palette: Palette;
   poetic: { prefix: string; accent: string };
-  totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string;
+  totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string; restaurantNameProp?: string; pMapProp?: PersonalizationMap | null; restaurantId: string;
   lang: Lang; onActive: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -337,7 +393,7 @@ function CategoryTrack({
           <button
             onClick={() => trackRef.current?.scrollTo({ left: 0, behavior: "smooth" })}
             className="vj-category-label-plain"
-            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto", color: "white", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
+            style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "inherit", pointerEvents: "auto", color: "rgba(255,255,255,0.6)", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}
           >
             <strong className="font-[family-name:var(--font-fraunces)]">{poetic.prefix} {poetic.accent}</strong>
           </button>
@@ -386,6 +442,9 @@ function CategoryTrack({
             variant={getVariant(dish, i)}
             palette={palette}
             index={i + 1}
+            restaurantName={restaurantNameProp}
+            autoRecommended={pMapProp?.get(dish.id)?.autoRecommended}
+            restaurantId={restaurantId}
           />
         ))}
       </div>
@@ -425,25 +484,40 @@ function VjPitch({ text, className, style }: { text: string; className?: string;
 }
 
 /* =============== DISH SLIDE =============== */
-function DishSlide({ dish, variant, palette, index }: {
-  dish: Dish; variant: SlideVariant; palette: Palette; index: number;
+function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommended, restaurantId }: {
+  dish: Dish; variant: SlideVariant; palette: Palette; index: number; restaurantName?: string; autoRecommended?: boolean; restaurantId: string;
 }) {
+  const [showToast, setShowToast] = useState(false);
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const d = dish as any;
   const isRec = dish.tags?.includes("RECOMMENDED");
-  const hasBadges = isRec || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
+  const hasParaTi = autoRecommended && !isRec;
+  const handleBadgeClick = () => { setShowToast(true); setTimeout(() => setShowToast(false), 4000); };
+  const hasBadges = isRec || hasParaTi || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
   const vjBadges = hasBadges ? (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 8, flexShrink: 0, verticalAlign: "middle" }}>
-      {isRec && <span style={{ fontSize: "14px" }}>⭐</span>}
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 8, flexShrink: 0, verticalAlign: "middle" }}>
       {isNew && <VjNewBadge inline />}
-      {d.dishDiet === "VEGAN" && <span style={{ fontSize: "12px" }}>🌿</span>}
-      {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px" }}>🌱</span>}
-      {d.isSpicy && <span style={{ fontSize: "12px" }}>🌶️</span>}
+      {d.dishDiet === "VEGAN" && <span style={{ fontSize: "15px" }}>🌿</span>}
+      {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "15px" }}>🌱</span>}
+      {d.isSpicy && <span style={{ fontSize: "15px" }}>🌶️</span>}
+      {hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
+      {isRec && !hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}</span>}
     </span>
   ) : null;
   const accentColor = "#F4A623";
+
+
+  const toastEl = showToast ? (
+    <div onClick={() => setShowToast(false)} style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px + 36px)", left: 16, right: 16, zIndex: 30, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", cursor: "pointer", animation: "fadeToastVj 0.2s ease-out" }}>
+      <p style={{ margin: 0, fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4, fontFamily: "var(--font-dm)" }}>
+        {hasParaTi
+          ? "✨ Seleccionado especialmente para ti, según tus gustos y preferencias."
+          : `⭐ ${restaurantName || "El local"} recomienda especialmente este plato.`}
+      </p>
+    </div>
+  ) : null;
 
   if (variant === "hero") {
     const longDesc = pitch.length > 60;
@@ -452,6 +526,7 @@ function DishSlide({ dish, variant, palette, index }: {
       : undefined;
     return (
     <div className="vj-slide-item vj-dish vj-v-hero" data-slide-idx={index}>
+      {toastEl}
       <div className="vj-hero-photo"><PhotoBg dish={dish} /></div>
       <div className="vj-hero-overlay" style={heroGradient ? { background: heroGradient } : undefined} />
       <div className="vj-hero-info">
@@ -497,6 +572,7 @@ function DishSlide({ dish, variant, palette, index }: {
       className="vj-slide-item vj-dish vj-v-light"
       data-slide-idx={index}
     >
+      {toastEl}
       <div className="vj-photo-wrap">
         <div className="vj-photo-circle"><PhotoBg dish={dish} /></div>
       </div>
@@ -515,6 +591,7 @@ function DishSlide({ dish, variant, palette, index }: {
   // SPOTLIGHT (Genio)
   return (
     <div className="vj-slide-item vj-dish vj-v-spotlight" data-slide-idx={index} style={{ background: "radial-gradient(ellipse at center, #1a0a04 0%, #000 80%)" }}>
+      {toastEl}
       <div className="vj-spot-wrap">
         <div className="vj-spot-photo"><PhotoBg dish={dish} /></div>
       </div>
@@ -566,16 +643,16 @@ function useInView(ref: React.RefObject<HTMLElement | null>, cb: (inView: boolea
 /* =============== ALL CSS =============== */
 const CSS = `
   :root { --vj-ease: cubic-bezier(0.16,1,0.3,1); }
-  .vj-root { background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; }
+  .vj-root { background: #000; color: #fff; overflow: hidden; user-select: none; -webkit-font-smoothing: antialiased; width: 100%; max-width: 100vw; }
 
 
   /* Reel */
-  .vj-reel { height: 100vh; height: 100dvh; overflow-y: scroll; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .vj-reel { height: 100vh; height: 100dvh; overflow-y: scroll; overflow-x: hidden; scroll-snap-type: y mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .vj-reel::-webkit-scrollbar { display: none; }
 
   /* Rail */
   .vj-rail { position: fixed; right: 8px; top: 50%; transform: translateY(-50%); z-index: 50; display: flex; flex-direction: column; gap: 6px; pointer-events: none; }
-  .vj-rail-dot { width: 3px; height: 10px; background: rgba(255,255,255,0.22); border-radius: 2px; transition: all 0.5s ease; }
+  .vj-rail-dot { width: 3px; height: 10px; background: rgba(255,255,255,0.12); border-radius: 2px; transition: all 0.5s ease; }
   .vj-rail-dot.active { background: #F4A623; height: 22px; }
   .vj-rail.light .vj-rail-dot { background: rgba(0,0,0,0.2); }
   .vj-rail.light .vj-rail-dot.active { background: #c93010; }
@@ -584,6 +661,7 @@ const CSS = `
   .vj-cover { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; }
   .vj-cover-bg { position: absolute; inset: -5%; background: radial-gradient(ellipse 80% 50% at 50% 30%, rgba(244,166,35,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 40% at 30% 70%, rgba(200,80,40,0.15) 0%, transparent 50%), radial-gradient(ellipse at center, #1a0a04 0%, #000 80%); animation: vj-cover-drift 20s ease-in-out infinite alternate; }
   @keyframes vj-cover-drift { 0% { transform: scale(1) translate(0,0); } 100% { transform: scale(1.1) translate(-2%,-1%); } }
+  @keyframes fadeToastVj { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
   .vj-cover-grain { position: absolute; inset: 0; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/></svg>"); opacity: 0.08; mix-blend-mode: overlay; pointer-events: none; z-index: 2; }
   .vj-cover-center { position: relative; z-index: 5; text-align: center; padding: 0 24px; }
   .vj-cover-kicker { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; letter-spacing: 0.4em; text-transform: uppercase; color: #F4A623; font-weight: 500; margin-bottom: 24px; opacity: 0; animation: vj-kicker-in 1s var(--vj-ease) 0.5s forwards; }
@@ -689,7 +767,7 @@ const CSS = `
 
   /* ===== CATEGORY TRACK ===== */
   .vj-track-wrap { height: 100vh; height: 100dvh; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
-  .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: scroll; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+  .vj-category-track { display: flex; height: 100%; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; scrollbar-gutter: auto; }
   .vj-category-track::-webkit-scrollbar { display: none; }
   .vj-category-header { position: absolute; top: calc(max(12px, env(safe-area-inset-top)) + 58px); left: 16px; right: 16px; z-index: 20; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
   .vj-category-header.light { color: #2a1810; }
@@ -708,7 +786,7 @@ const CSS = `
   .vj-category-header.light .vj-bullet.active { background: #c93010; }
 
   /* ===== DISH (shared) ===== */
-  .vj-dish { flex: 0 0 100%; width: 100vw; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; }
+  .vj-dish { flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; display: flex; }
   .vj-eyebrow { font-size: 10px; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0; margin-bottom: 12px; font-weight: 500; display: inline-block; transform: translateY(20px); transition: all 1s var(--vj-ease) 0.3s; }
   .vj-dish.in-view .vj-eyebrow { opacity: 0.7; transform: translateY(0); }
   .vj-title { font-weight: 200; font-size: clamp(36px, 10vw, 52px); line-height: 0.95; letter-spacing: -0.025em; margin-bottom: 16px; }

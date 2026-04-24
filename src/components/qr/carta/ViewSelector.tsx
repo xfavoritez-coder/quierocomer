@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Layers, List, BookOpen, Rocket, Globe } from "lucide-react";
+import { Layers, List, BookOpen, Rocket } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
@@ -138,7 +138,7 @@ export default function ViewSelector({ restaurantId }: Props) {
 
           {/* Language selector row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
-            <Globe size={12} style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
+            <span style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
             {SUPPORTED_LANGS.map((l) => {
               const isActive = lang === l;
               return (

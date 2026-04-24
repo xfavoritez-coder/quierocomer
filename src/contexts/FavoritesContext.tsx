@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { getGuestId } from "@/lib/guestId";
 
 interface FavoritesContextType {
   favoriteIds: Set<string>;
@@ -10,6 +11,8 @@ interface FavoritesContextType {
   isFirstFavorite: boolean;
   showConversionPrompt: boolean;
   dismissConversion: () => void;
+  hasNewLikes: boolean;
+  clearNewLikes: () => void;
 }
 
 const FavoritesContext = createContext<FavoritesContextType>({
@@ -20,6 +23,8 @@ const FavoritesContext = createContext<FavoritesContextType>({
   isFirstFavorite: false,
   showConversionPrompt: false,
   dismissConversion: () => {},
+  hasNewLikes: false,
+  clearNewLikes: () => {},
 });
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
@@ -42,6 +47,9 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 
   const isFavorite = useCallback((dishId: string) => favoriteIds.has(dishId), [favoriteIds]);
 
+  const [hasNewLikes, setHasNewLikes] = useState(false);
+  const clearNewLikes = useCallback(() => setHasNewLikes(false), []);
+
   const toggleFavorite = useCallback(async (dishId: string, restaurantId: string) => {
     const wasFavorite = favoriteIds.has(dishId);
 
@@ -63,6 +71,14 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({ dishId, restaurantId }),
         });
         const data = await res.json();
+
+        // Feed ingredient preferences from this dish
+        setHasNewLikes(true);
+        fetch("/api/qr/ingredients", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ guestId: getGuestId(), dishIds: [dishId], source: "favorite" }),
+        }).catch(() => {});
 
         // First favorite in session — show educational toast
         if (!wasFavorite && !sessionStorage.getItem("qc_favorites_tip_seen")) {
@@ -99,6 +115,8 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       isFirstFavorite,
       showConversionPrompt,
       dismissConversion,
+      hasNewLikes,
+      clearNewLikes,
     }}>
       {children}
     </FavoritesContext.Provider>

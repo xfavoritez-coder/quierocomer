@@ -89,10 +89,12 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [eHighMargin, setEHighMargin] = useState(false);
+  const [eFeaturedAuto, setEFeaturedAuto] = useState(false);
   const [saving, setSaving] = useState(false);
 
   const TAG_OPTIONS: { value: string; label: string }[] = [
-    { value: "RECOMMENDED", label: "Recomendado" },
+    { value: "RECOMMENDED", label: "Destacado" },
     { value: "NEW", label: "Nuevo" },
     { value: "MOST_ORDERED", label: "Más pedido" },
     { value: "PROMOTION", label: "Promoción" },
@@ -115,6 +117,8 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setEHighMargin((d as any).isHighMargin || false);
+    setEFeaturedAuto((d as any).isFeaturedAuto || false);
     setIngSearch("");
     // Load ingredients master list + linked
     fetch(`/api/admin/ingredients?dishId=${d.id}`)
@@ -138,13 +142,16 @@ export default function AdminMenus() {
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
+      isHighMargin: eHighMargin,
+      isFeaturedAuto: eFeaturedAuto,
       ingredientIds: eIngredientIds,
     };
-    await fetch(`/api/admin/dishes/${selectedDish.id}`, {
+    const res = await fetch(`/api/admin/dishes/${selectedDish.id}`, {
       method: "PUT", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    const updated = { ...selectedDish, ...updates, tags: eTags as any };
+    const serverDish = await res.json();
+    const updated = { ...selectedDish, ...updates, ...serverDish, tags: eTags as any };
     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
     setSelectedDish(updated);
     setEditMode(false);
@@ -199,10 +206,25 @@ export default function AdminMenus() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                <button onClick={() => startEditDish(selectedDish)} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ flex: 1, padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
-                  {selectedDish.isActive ? "Desactivar" : "Activar"}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={async () => {
+                    const isRec = selectedDish.tags?.includes("RECOMMENDED");
+                    if (!isRec && recCount >= MAX_RECOMMENDED) return;
+                    const newTags = isRec ? selectedDish.tags.filter((t: string) => t !== "RECOMMENDED") : [...(selectedDish.tags || []), "RECOMMENDED"];
+                    await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
+                    const updated = { ...selectedDish, tags: newTags };
+                    setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
+                    setSelectedDish(updated);
+                  }} style={{ flex: 1, padding: "14px", borderRadius: 10, border: "none", cursor: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, background: selectedDish.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: selectedDish.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text2)", opacity: (!selectedDish.tags?.includes("RECOMMENDED") && recCount >= MAX_RECOMMENDED) ? 0.5 : 1 }}>
+                    ⭐ {selectedDish.tags?.includes("RECOMMENDED") ? "Destacado" : "Destacar"}
+                  </button>
+                  <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "14px", background: "#DBEAFE", border: "none", borderRadius: 10, color: "#1E40AF", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, cursor: "pointer" }}>
+                    Editar
+                  </button>
+                </div>
+                <button onClick={() => { toggleDishActive(selectedDish); setSelectedDish({ ...selectedDish, isActive: !selectedDish.isActive }); }} style={{ padding: "14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.88rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
+                  {selectedDish.isActive ? "🚫 Ocultar" : "👁 Mostrar"}
                 </button>
               </div>
             </>
@@ -246,6 +268,21 @@ export default function AdminMenus() {
                     🌶️ Picante
                   </button>
                 </div>
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={LBL}>Recomendación automática</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  <button onClick={() => setEHighMargin(!eHighMargin)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eHighMargin ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: eHighMargin ? "#F4A623" : "var(--adm-text2)" }}>
+                    💰 Margen alto
+                  </button>
+                  <button onClick={() => setEFeaturedAuto(!eFeaturedAuto)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eFeaturedAuto ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: eFeaturedAuto ? "#F4A623" : "var(--adm-text2)" }}>
+                    ⭐ Priorizar en recomendaciones
+                  </button>
+                </div>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 4, lineHeight: 1.4 }}>
+                  Estos platos tendrán mayor peso en las recomendaciones automáticas &ldquo;Para ti&rdquo; que ven tus clientes.
+                </p>
               </div>
 
               <div style={{ marginBottom: 14 }}>
@@ -313,7 +350,7 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Tags <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.68rem" }}>({recCount + (eTags.includes("RECOMMENDED") ? 1 : 0)}/{MAX_RECOMMENDED} recomendados)</span></label>
+                <label style={LBL}>Tags <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.68rem" }}>({recCount + (eTags.includes("RECOMMENDED") ? 1 : 0)}/{MAX_RECOMMENDED} destacados)</span></label>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {TAG_OPTIONS.map(t => {
                     const disabled = t.value === "MOST_ORDERED" || t.value === "PROMOTION";
@@ -325,8 +362,11 @@ export default function AdminMenus() {
                     );
                   })}
                 </div>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 4, lineHeight: 1.4 }}>
+                  Los platos destacados tienen mayor peso en el algoritmo que personaliza la carta para cada cliente. Aparecerán con mayor prioridad y con la etiqueta &ldquo;Recomendado por {activeRestaurant?.name || "tu local"}&rdquo; en la carta.
+                </p>
                 {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
-                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} destacados. Quita uno de otro plato para agregar aquí.</p>
                 )}
               </div>
 

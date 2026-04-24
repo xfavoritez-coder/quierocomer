@@ -17,6 +17,9 @@ import GenioTip from "../genio/GenioTip";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
+import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
+import { useFavorites } from "@/contexts/FavoritesContext";
+import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import PromoCarousel from "../capture/PromoCarousel";
 import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
@@ -45,6 +48,8 @@ interface CartaProps {
   readyKey?: number;
   showWaiter?: boolean;
   marketingPromos?: any[];
+  timeOfDay?: string;
+  weather?: string;
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -91,8 +96,12 @@ export default function CartaPremium({
   readyKey,
   showWaiter,
   marketingPromos,
+  timeOfDay: timeOfDayProp,
+  weather: weatherProp,
 }: CartaProps) {
   const lang = useLang();
+  const { hasNewLikes, clearNewLikes } = useFavorites();
+  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [genioExpanded, setGenioExpanded] = useState(false);
@@ -169,6 +178,10 @@ export default function CartaPremium({
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
+  const [profileTrigger, setProfileTrigger] = useState(0);
+  const [personalizing, setPersonalizing] = useState(false);
+  const recShownRef = useRef(new Set<string>());
 
   // Track search with debounce
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -232,15 +245,49 @@ export default function CartaPremium({
       .catch(() => {});
   }, [restaurant.id, qrUserProp]);
 
-  const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
-  const heroDishes = recommended.length > 0
-    ? recommended
-    : [...dishes]
-        .filter(d => d.photos?.[0])
-        .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
-        .slice(0, 3);
+  // Fetch personalized profile and apply scoring
+  useEffect(() => {
+    const guestId = getGuestId();
+    if (!guestId && !qrUser?.id) return;
+    setPersonalizing(true);
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (!d.profile) { setPersonalizing(false); return; }
+        const catNames: Record<string, string> = {};
+        for (const c of categories) catNames[c.id] = c.name;
+        const result = getPersonalizedDishes(
+          dishes as unknown as ScoringDish[],
+          categories,
+          d.profile,
+          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
+        );
+        if (result.hasPersonalization) setPMap(result.map);
+        setPersonalizing(false);
+      })
+      .catch(() => setPersonalizing(false));
+  }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
 
-  // Build sorted dish list matching carta visual order (category by category, recommended first)
+  const heroDishes = useMemo(() => {
+    // When personalized, show top-scored dishes with photos as heroes
+    if (pMap) {
+      const topByScore = [...dishes]
+        .filter(d => d.photos?.[0])
+        .sort((a, b) => (pMap.get(b.id)?.score ?? 0) - (pMap.get(a.id)?.score ?? 0))
+        .slice(0, 3);
+      if (topByScore.length > 0) return topByScore;
+    }
+    // Fallback: manual RECOMMENDED or top-rated
+    const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
+    return recommended.length > 0
+      ? recommended
+      : [...dishes]
+          .filter(d => d.photos?.[0])
+          .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
+          .slice(0, 3);
+  }, [dishes, pMap, ratingMap]);
+
+  // Build sorted dish list matching carta visual order (category by category, recommended first, then by score)
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
     for (const cat of categories) {
@@ -250,12 +297,62 @@ export default function CartaPremium({
           const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
           const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
           if (aRec !== bRec) return bRec - aRec;
+          if (pMap) {
+            const aScore = pMap.get(a.id)?.score ?? 0;
+            const bScore = pMap.get(b.id)?.score ?? 0;
+            if (aScore !== bScore) return bScore - aScore;
+          }
           return a.position - b.position;
         });
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes]);
+  }, [categories, dishes, pMap]);
+
+  // Reset horizontal scroll containers when personalization order changes
+  useEffect(() => {
+    if (!pMap) return;
+    // Small delay to let React re-render with new order before resetting scroll
+    requestAnimationFrame(() => {
+      const containers = document.querySelectorAll("[data-scroll-container]");
+      containers.forEach((el) => { (el as HTMLElement).scrollLeft = 0; });
+      // Only scroll to top after Genio, not on initial page load
+      if (profileTrigger > 0) window.scrollTo({ top: 0 });
+    });
+  }, [pMap, profileTrigger]);
+
+  // Track RECOMMENDATION_SHOWN when auto-recommended dishes enter viewport
+  useEffect(() => {
+    if (!pMap) return;
+    const observers: IntersectionObserver[] = [];
+    for (const [dishId, entry] of pMap) {
+      if (!entry.autoRecommended) continue;
+      const el = document.querySelector(`[data-dish-id="${dishId}"]`);
+      if (!el) continue;
+      const obs = new IntersectionObserver(
+        ([e]) => {
+          if (e.isIntersecting && !recShownRef.current.has(dishId)) {
+            recShownRef.current.add(dishId);
+            fetch("/api/qr/stats", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                eventType: "RECOMMENDATION_SHOWN",
+                dishId,
+                restaurantId: restaurant.id,
+                guestId: getGuestId(),
+                metadata: { score: entry.score, reason: entry.reason, wasAutomatic: true },
+              }),
+            }).catch(() => {});
+          }
+        },
+        { threshold: 0.5 }
+      );
+      obs.observe(el);
+      observers.push(obs);
+    }
+    return () => observers.forEach((o) => o.disconnect());
+  }, [pMap, restaurant.id]);
 
   // IntersectionObserver-based active category detection
   useEffect(() => {
@@ -339,6 +436,21 @@ export default function CartaPremium({
         />
       )}
 
+      {personalizing && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+            padding: "10px 20px",
+            background: "linear-gradient(90deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.04) 100%)",
+            borderBottom: "1px solid rgba(244,166,35,0.1)",
+          }}
+        >
+          <span style={{ fontSize: "14px", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+        </div>
+      )}
+
       <main style={{ paddingBottom: 55 }}>
         {/* Ofertas section — inside main as first "category" */}
         {hasPromos && (
@@ -377,7 +489,12 @@ export default function CartaPremium({
               const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
               const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
               if (aRec !== bRec) return bRec - aRec;
-              return 0;
+              if (pMap) {
+                const aScore = pMap.get(a.id)?.score ?? 0;
+                const bScore = pMap.get(b.id)?.score ?? 0;
+                if (aScore !== bScore) return bScore - aScore;
+              }
+              return a.position - b.position;
             });
           if (!catDishes.length) return null;
 
@@ -405,7 +522,7 @@ export default function CartaPremium({
               </div>
 
               {/* Scroll with fade */}
-              <div className="relative">
+              <div className="relative" style={{ opacity: personalizing ? 0.4 : 1, transition: "opacity 0.3s ease" }}>
                 <div
                   data-scroll-container
                   className="flex overflow-x-auto snap-x snap-mandatory items-start"
@@ -423,8 +540,8 @@ export default function CartaPremium({
                       key={dish.id}
                       data-dish-id={dish.id}
                       style={{
-                        width: dish.tags?.includes("RECOMMENDED") ? 185 : 165,
-                        minWidth: dish.tags?.includes("RECOMMENDED") ? 185 : 165,
+                        width: ((!pMap && dish.tags?.includes("RECOMMENDED")) || pMap?.get(dish.id)?.autoRecommended) ? 217 : 205,
+                        minWidth: ((!pMap && dish.tags?.includes("RECOMMENDED")) || pMap?.get(dish.id)?.autoRecommended) ? 217 : 205,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
                         marginLeft: i === 0 ? 20 : 16,
@@ -434,8 +551,29 @@ export default function CartaPremium({
                       <DishCard
                         dish={dish}
                         variant="premium"
-                        onClick={() => setSelectedDish(dish)}
+                        onClick={() => {
+                          const entry = pMap?.get(dish.id);
+                          if (entry?.autoRecommended) {
+                            fetch("/api/qr/stats", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({
+                                eventType: "RECOMMENDATION_TAPPED",
+                                dishId: dish.id,
+                                restaurantId: restaurant.id,
+                                guestId: getGuestId(),
+                                metadata: { score: entry.score, wasAutomatic: true },
+                              }),
+                            }).catch(() => {});
+                          }
+                          setSelectedDish(dish);
+                        }}
                         averageRating={ratingMap[dish.id]}
+                        autoRecommended={pMap?.get(dish.id)?.autoRecommended}
+                        recommendationReason={pMap?.get(dish.id)?.reason}
+                        isExploration={pMap?.get(dish.id)?.isExploration}
+                        hasPersonalization={!!pMap}
+                        restaurantName={restaurant.name}
                       />
                     </div>
                     );
@@ -466,35 +604,54 @@ export default function CartaPremium({
         </div>
       )}
 
-      {/* Genio nudge */}
-      <div
-        className="font-[family-name:var(--font-dm)]"
-        style={{
-          margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
-          background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
-        }}
-      >
-        <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
-          🧞
-        </div>
-        <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
-        <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
+      {/* Genio nudge — compact if already completed onboarding */}
+      {hasCompletedGenio ? (
         <button
           onClick={() => setGenioOpen(true)}
-          className="active:scale-[0.97] transition-transform"
+          className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
           style={{
-            display: "inline-flex", alignItems: "center", gap: 6,
-            background: "#F4A623",
-            color: "white", padding: "12px 24px", borderRadius: 100,
-            fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
-            boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+            margin: "12px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
+            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
           }}
         >
-          {t(lang, "askGenieShort")}
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          <span style={{ fontSize: "1.3rem" }}>🧞</span>
+          <div style={{ flex: 1, textAlign: "left" }}>
+            <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
+            <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
-      </div>
+      ) : (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
+            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
+          }}
+        >
+          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
+            🧞
+          </div>
+          <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
+          <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="active:scale-[0.97] transition-transform"
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              background: "#F4A623",
+              color: "white", padding: "12px 24px", borderRadius: 100,
+              fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
+              boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+            }}
+          >
+            {t(lang, "askGenieShort")}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      )}
 
       {/* Powered by footer */}
       <footer
@@ -551,10 +708,10 @@ export default function CartaPremium({
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 60, width: genioExpanded ? "auto" : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: genioExpanded ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
+          style={{ height: 60, width: (!hasCompletedGenio && genioExpanded) ? "auto" : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: (!hasCompletedGenio && genioExpanded) ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
         >
           <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-          {genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
+          {!hasCompletedGenio && genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         <ViewSelector restaurantId={restaurant.id} />
@@ -569,8 +726,10 @@ export default function CartaPremium({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => setSelectedDish(null)}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
+          personalizationMap={pMap}
+          restaurantName={restaurant.name}
         />
       )}
 
@@ -580,9 +739,10 @@ export default function CartaPremium({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => setGenioOpen(false)}
+          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
+            setProfileTrigger((n) => n + 1);
             // Scroll to dish then open detail
             setTimeout(() => {
               const el = document.querySelector(`[data-dish-id="${dish.id}"]`);
