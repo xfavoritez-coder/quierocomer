@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
         include: {
           restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } },
           guest: { select: { id: true, visitCount: true, totalSessions: true, linkedQrUserId: true, preferences: true, favoriteIngredients: true } },
-          qrUser: { select: { id: true, name: true, email: true, dietType: true } },
+          qrUser: { select: { id: true, name: true, email: true, dietType: true, createdAt: true, interactions: { where: { type: { endsWith: "_CONVERTED" } }, select: { type: true, createdAt: true, restaurant: { select: { name: true } } }, orderBy: { createdAt: "asc" }, take: 1 } } },
         },
       }),
       prisma.session.count({ where }),

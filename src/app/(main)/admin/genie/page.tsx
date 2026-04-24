@@ -6,6 +6,15 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
 const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", OMNIVORE: "Carnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
+const SOURCE_LABELS: Record<string, string> = {
+  post_genio_CONVERTED: "Genio",
+  cta_post_genio_CONVERTED: "CTA Genio",
+  cta_repeat_dish_CONVERTED: "CTA Plato",
+  cta_promo_unlock_CONVERTED: "CTA Promo",
+  birthday_banner_CONVERTED: "Cumpleaños",
+  favorites_CONVERTED: "Favoritos",
+  unknown_CONVERTED: "Directo",
+};
 
 function formatLanguage(lang: string): string {
   const LANG_MAP: Record<string, string> = {
@@ -95,7 +104,7 @@ interface SessionData {
   pickedDish: { id: string; name: string; price: number; photos: string[] } | null;
   restaurant: { id: string; name: string; slug: string; logoUrl: string | null };
   guest: { id: string; visitCount: number; totalSessions: number; linkedQrUserId: string | null; preferences: any };
-  qrUser: { id: string; name: string | null; email: string; dietType: string | null } | null;
+  qrUser: { id: string; name: string | null; email: string; dietType: string | null; createdAt: string; interactions: { type: string; createdAt: string; restaurant: { name: string } }[] } | null;
   tableId: string | null;
   isQrScan: boolean;
   usedGenio: boolean;
@@ -258,7 +267,11 @@ export default function AdminSessions() {
                         : <span style={{ fontSize: "0.6rem", background: "rgba(255,255,255,0.06)", color: "#888", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Link directo</span>}
                       {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>🔔 Garzón</span>}
                       {s.isBot && <span style={{ fontSize: "0.6rem", background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Bot</span>}
-                      {s.qrUser && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado</span>}
+                      {s.qrUser && (() => {
+                        const src = s.qrUser.interactions?.[0]?.type;
+                        const label = src ? SOURCE_LABELS[src] || src.replace("_CONVERTED", "") : null;
+                        return <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado{label ? ` vía ${label}` : ""}</span>;
+                      })()}
                       {!s.qrUser && !s.isBot && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
                     </div>
                     <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
@@ -300,6 +313,14 @@ export default function AdminSessions() {
                       {s.referer && <div><span style={{ color: "#999" }}>Página: </span>{(() => { try { const u = new URL(s.referer); return u.pathname === "/" ? "/" : u.pathname; } catch { return s.referer; } })()}</div>}
                       {s.externalReferer && <div><span style={{ color: "#999" }}>Fuente: </span>{(() => { try { return new URL(s.externalReferer).hostname; } catch { return s.externalReferer; } })()}</div>}
                       {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}</div>}
+                      {s.qrUser && (() => {
+                        const src = s.qrUser.interactions?.[0];
+                        const label = src ? SOURCE_LABELS[src.type] || src.type.replace("_CONVERTED", "") : null;
+                        return <>
+                          <div><span style={{ color: "#999" }}>Registro: </span><span style={{ color: "#4ade80" }}>{label || "Desconocido"}{src?.restaurant ? ` en ${src.restaurant.name}` : ""}</span></div>
+                          <div><span style={{ color: "#999" }}>Registrado el: </span>{formatDate(s.qrUser.createdAt)}</div>
+                        </>;
+                      })()}
                     </div>
 
                     {/* User preferences (always shown if present) */}
