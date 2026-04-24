@@ -121,7 +121,7 @@ export default function AgregarLocalPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
-      setResult(data);
+      setResult({ slug: data.restaurant.slug, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
       setStep("done");
     } catch (e: any) {
       setError(e.message);
@@ -280,7 +280,7 @@ export default function AgregarLocalPage() {
                       <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
                         {dish.diet !== "OMNIVORE" && (
                           <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>
-                            {dish.diet === "VEGAN" ? "🌿 Vegano" : dish.diet === "VEGETARIAN" ? "🌱 Vegetariano" : "🐟 Pescetariano"}
+                            {dish.diet === "VEGAN" ? "🌿 Vegano" : "🌱 Vegetariano"}
                           </span>
                         )}
                         {dish.isSpicy && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️</span>}
@@ -331,15 +331,28 @@ export default function AgregarLocalPage() {
             </p>
 
             <a
-              href={`/qr/${result.slug}`}
+              href={`/qr/${result.slug}?mesa=demo&t=demo`}
               target="_blank"
               style={{
                 display: "block", width: "100%", padding: "16px", borderRadius: 50,
                 background: "#F4A623", color: "#0e0e0e", textDecoration: "none",
-                fontSize: "1rem", fontWeight: 700, textAlign: "center", marginBottom: 12,
+                fontSize: "1rem", fontWeight: 700, textAlign: "center", marginBottom: 10,
               }}
             >
               Ver carta QR →
+            </a>
+
+            <a
+              href={`/qr/${result.slug}/garzon`}
+              target="_blank"
+              style={{
+                display: "block", width: "100%", padding: "14px", borderRadius: 50,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.7)", textDecoration: "none",
+                fontSize: "0.92rem", fontWeight: 600, textAlign: "center", marginBottom: 16,
+              }}
+            >
+              🔔 Panel Garzón
             </a>
 
             <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 16 }}>
@@ -347,19 +360,21 @@ export default function AgregarLocalPage() {
               <p style={{ fontSize: "0.88rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>{result.url}</p>
             </div>
 
-            <button
-              onClick={() => { navigator.clipboard.writeText(result.url); }}
-              style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer", marginRight: 8 }}
-            >
-              Copiar link
-            </button>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+              <button
+                onClick={() => { navigator.clipboard.writeText(result.url); }}
+                style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
+              >
+                Copiar link
+              </button>
 
-            <button
-              onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); }}
-              style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
-            >
-              Agregar otro
-            </button>
+              <button
+                onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); }}
+                style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
+              >
+                Agregar otro
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -107,14 +107,6 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   {dishes.length} producto{dishes.length !== 1 ? "s" : ""}{hiddenCount > 0 ? ` (${hiddenCount} oculto${hiddenCount !== 1 ? "s" : ""})` : ""}
                 </span>
                 <span style={{ marginLeft: "auto" }} />
-                <select
-                  value={category.dishType || "food"}
-                  onClick={e => e.stopPropagation()}
-                  onChange={e => { e.stopPropagation(); onTypeChange(category.id, e.target.value); }}
-                  style={{ padding: "2px 6px", borderRadius: 4, border: "none", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: `${dt.color}15`, color: dt.color, outline: "none", appearance: "none", WebkitAppearance: "none", textAlign: "center", minWidth: 70 }}
-                >
-                  {(["food", "drink", "dessert", "extra"] as const).map(k => <option key={k} value={k}>{DISH_TYPE_LABELS[k].emoji} {DISH_TYPE_LABELS[k].label}</option>)}
-                </select>
               </button>
               <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: category.isActive ? "var(--adm-text3)" : "#4ade80" }}>
                 {category.isActive ? "Ocultar" : "Mostrar"}

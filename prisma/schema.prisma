@@ -103,7 +103,6 @@ enum HungerLevel {
 enum DietType {
   VEGAN
   VEGETARIAN
-  PESCETARIAN
   OMNIVORE
 }
 
@@ -576,7 +575,6 @@ model ModifierTemplateOption {
 enum DishDietType {
   VEGAN
   VEGETARIAN
-  PESCETARIAN
   OMNIVORE
 }
 

@@ -60,7 +60,7 @@ Responde SOLO con un JSON válido con esta estructura exacta:
           "name": "Nombre del plato",
           "description": "Descripción si la tiene, null si no",
           "price": 8990,
-          "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN" | "PESCETARIAN",
+          "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
           "isSpicy": false
         }
       ]
