@@ -133,6 +133,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     const timer = setTimeout(() => {
       fetch(`/api/qr/dislikes?q=${encodeURIComponent(dislikeSearch)}`).then(r => r.json()).then(d => {
         if (d.results) setDislikeResults(d.results.filter((r: string) => !dislikes.includes(r)));
+        // Track search
+        trackStat(restaurantId, "GENIO_STEP_DISLIKES", undefined, genioSessionId);
+        fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventType: "SEARCH_PERFORMED", restaurantId, guestId: getGuestId(), query: dislikeSearch, resultsCount: d.results?.length || 0, metadata: JSON.stringify({ context: "dislike_search" }) }),
+        }).catch(() => {});
       }).catch(() => {});
     }, 300);
     return () => clearTimeout(timer);

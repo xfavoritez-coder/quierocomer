@@ -250,7 +250,9 @@ export default function IngredientesPage() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"ingredientes" | "alergenos" | "restricciones" | "ignorados">("ingredientes");
+  const [tab, setTab] = useState<"ingredientes" | "alergenos" | "restricciones" | "ignorados" | "busquedas">("ingredientes");
+  const [dislikeSearches, setDislikeSearches] = useState<{ query: string; count: number; hasResult: boolean }[]>([]);
+  const [searchesLoading, setSearchesLoading] = useState(false);
   const [catFilter, setCatFilter] = useState("all");
 
   // Analyze carta
@@ -375,6 +377,7 @@ export default function IngredientesPage() {
           { key: "alergenos" as const, label: "Alérgenos" },
           { key: "restricciones" as const, label: "Restricciones" },
           { key: "ignorados" as const, label: `Ignorados (${ignoredList.length})` },
+          { key: "busquedas" as const, label: "Búsquedas" },
         ]).map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -681,6 +684,42 @@ export default function IngredientesPage() {
               <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 32 }}>{search ? "Sin resultados" : "No hay ingredientes ignorados"}</p>
             );
           })()}
+        </div>
+      )}
+
+      {/* Búsquedas tab */}
+      {tab === "busquedas" && (
+        <div>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", marginBottom: 16 }}>
+            Búsquedas que los clientes hacen en el paso de dislikes del Genio.
+          </p>
+          {!searchesLoading && dislikeSearches.length === 0 && (
+            <button onClick={async () => {
+              setSearchesLoading(true);
+              const res = await fetch("/api/admin/dislike-searches");
+              const data = await res.json();
+              if (data.searches) setDislikeSearches(data.searches);
+              setSearchesLoading(false);
+            }} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+              Cargar búsquedas
+            </button>
+          )}
+          {searchesLoading && <p style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, padding: 20 }}>Cargando...</p>}
+          {dislikeSearches.length > 0 && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {dislikeSearches.map((s, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", flex: 1 }}>{s.query}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{s.count}x</span>
+                  {s.hasResult ? (
+                    <span style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 4, background: "rgba(74,222,128,0.08)", color: "#4ade80", fontFamily: F, fontWeight: 600 }}>Encontrado</span>
+                  ) : (
+                    <span style={{ fontSize: "0.62rem", padding: "2px 8px", borderRadius: 4, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F, fontWeight: 600 }}>Sin resultado</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
