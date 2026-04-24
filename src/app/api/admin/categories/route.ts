@@ -3,6 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { translateCategory } from "@/lib/ai/translateContent";
 
+const DRINK_KW = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
+const SWEET_KW = ["postre", "dulce", "kuchen", "torta", "helado", "dessert"];
+
+function inferDishType(name: string): "food" | "drink" | "dessert" {
+  const n = name.toLowerCase();
+  if (DRINK_KW.some(kw => n.includes(kw))) return "drink";
+  if (SWEET_KW.some(kw => n.includes(kw))) return "dessert";
+  return "food";
+}
+
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
@@ -29,7 +39,7 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { restaurantId, name, description } = await req.json();
+    const { restaurantId, name, description, dishType } = await req.json();
     if (!restaurantId || !name) {
       return NextResponse.json({ error: "restaurantId y name requeridos" }, { status: 400 });
     }
@@ -47,6 +57,7 @@ export async function POST(req: NextRequest) {
         restaurantId,
         name,
         description: description || null,
+        dishType: dishType || inferDishType(name),
         position: (maxPos?.position ?? -1) + 1,
       },
     });
@@ -67,7 +78,7 @@ export async function PUT(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { id, name, description, position, isActive } = await req.json();
+    const { id, name, description, position, isActive, dishType } = await req.json();
     if (!id) return NextResponse.json({ error: "id requerido" }, { status: 400 });
 
     const existing = await prisma.category.findUnique({ where: { id }, select: { restaurantId: true } });
@@ -80,6 +91,7 @@ export async function PUT(req: NextRequest) {
     if (description !== undefined) data.description = description || null;
     if (position !== undefined) data.position = position;
     if (isActive !== undefined) data.isActive = isActive;
+    if (dishType !== undefined) data.dishType = dishType;
 
     const updated = await prisma.category.update({ where: { id }, data });
 

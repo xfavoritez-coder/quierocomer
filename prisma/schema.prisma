@@ -448,6 +448,7 @@ model Category {
   description  String?
   position     Int
   isActive     Boolean  @default(true)
+  dishType     String   @default("food") // "food" | "drink" | "dessert"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

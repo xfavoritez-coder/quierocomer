@@ -164,16 +164,26 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   const TOTAL_STEPS = 5;
   const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name.toLowerCase()])), [categories]);
+  const catTypeMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const c of categories) {
+      if ((c as any).dishType) { m.set(c.id, (c as any).dishType); }
+      else {
+        const n = c.name.toLowerCase();
+        if (DRINK_KEYWORDS.some(kw => n.includes(kw))) m.set(c.id, "drink");
+        else if (SWEET_KEYWORDS.some(kw => n.includes(kw))) m.set(c.id, "dessert");
+        else m.set(c.id, "food");
+      }
+    }
+    return m;
+  }, [categories]);
 
   // Get dish pool filtered by type
   const getDishPool = useCallback((filter: string) => {
-    const kws = filter === "dulce" ? SWEET_KEYWORDS : filter === "bebida" ? DRINK_KEYWORDS : FOOD_KEYWORDS;
-    const filtered = dishes.filter((d) => {
-      const cn = catMap.get(d.categoryId) || "";
-      return kws.some((kw) => cn.includes(kw));
-    });
+    const targetType = filter === "dulce" ? "dessert" : filter === "bebida" ? "drink" : "food";
+    const filtered = dishes.filter((d) => catTypeMap.get(d.categoryId) === targetType);
     return (filtered.length > 0 ? filtered : dishes).filter((d) => d.photos?.length > 0);
-  }, [dishes, catMap]);
+  }, [dishes, catTypeMap]);
 
   // Score a dish by affinity to liked dishes
   const scoreDish = useCallback((d: Dish) => {
@@ -344,11 +354,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   // Helper: check if dish is food (not drink/sweet) based on category
   const isFoodCategory = useCallback((d: Dish) => {
-    const cn = catMap.get(d.categoryId) || "";
-    const isDrink = DRINK_KEYWORDS.some((kw) => cn.includes(kw));
-    const isSweet = SWEET_KEYWORDS.some((kw) => cn.includes(kw));
-    return !isDrink && !isSweet;
-  }, [catMap]);
+    return catTypeMap.get(d.categoryId) === "food";
+  }, [catTypeMap]);
 
   // Scoring algorithm — returns top 3, same food type as photoFilter, different categories
   const recommend = () => {
@@ -358,22 +365,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     likedDishes.forEach((d) => getDishIngr(d).forEach((i) => likedIngredients.add(i)));
 
     // Filter candidates: same food type as what user was browsing
-    const filterKws = photoFilter === "dulce" ? SWEET_KEYWORDS : photoFilter === "bebida" ? DRINK_KEYWORDS : FOOD_KEYWORDS;
+    const targetType = photoFilter === "dulce" ? "dessert" : photoFilter === "bebida" ? "drink" : "food";
     let candidates = dishes.filter((d) => {
       if (liked.has(d.id) || usedIds.has(d.id)) return false;
-      const cn = catMap.get(d.categoryId) || "";
-      return filterKws.some((kw) => cn.includes(kw));
+      return catTypeMap.get(d.categoryId) === targetType;
     });
     // Fallback: if too few candidates, expand pool but keep same food type
     if (candidates.length < 6) {
       candidates = dishes.filter((d) => {
         if (liked.has(d.id) || usedIds.has(d.id)) return false;
-        const cn = catMap.get(d.categoryId) || "";
-        // At least exclude wrong types: don't recommend drinks when looking for food
-        if (photoFilter === "platos") return !DRINK_KEYWORDS.some((kw) => cn.includes(kw)) && !SWEET_KEYWORDS.some((kw) => cn.includes(kw));
-        if (photoFilter === "bebida") return DRINK_KEYWORDS.some((kw) => cn.includes(kw));
-        if (photoFilter === "dulce") return SWEET_KEYWORDS.some((kw) => cn.includes(kw));
-        return true;
+        return catTypeMap.get(d.categoryId) === targetType;
       });
       // Ultimate fallback if still too few
       if (candidates.length < 3) {

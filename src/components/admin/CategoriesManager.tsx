@@ -11,7 +11,12 @@ const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
 interface Dish { id: string; name: string; photos: string[]; price: number; position: number; }
-interface Category { id: string; name: string; position: number; isActive: boolean; _count?: { dishes: number }; }
+interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
+const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+  food: { label: "Plato", emoji: "🍽️", color: GOLD },
+  drink: { label: "Bebestible", emoji: "🥤", color: "#7fbfdc" },
+  dessert: { label: "Postre", emoji: "🍰", color: "#c084fc" },
+};
 
 interface Props {
   restaurantId: string;
@@ -49,7 +54,7 @@ function SortableDish({ dish, onMove, categories, currentCatId }: { dish: Dish; 
   );
 }
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onRename, onToggle, onDelete }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
@@ -58,6 +63,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   onRename: (id: string, name: string) => void;
   onToggle: (id: string, isActive: boolean) => void;
   onDelete: (id: string) => void;
+  onTypeChange: (id: string, dishType: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: category.id });
   const [expanded, setExpanded] = useState(false);
@@ -92,6 +98,18 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <button onClick={() => setExpanded(!expanded)} style={{ flex: 1, background: "none", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
                 <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: category.isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{category.name}</span>
                 <span onClick={(e) => { e.stopPropagation(); setEditing(true); setEditName(category.name); }} style={{ fontSize: "0.6rem", cursor: "pointer", opacity: 0.4 }}>✏️</span>
+                {(() => {
+                  const t = DISH_TYPE_LABELS[category.dishType || "food"];
+                  const types = ["food", "drink", "dessert"] as const;
+                  return <select
+                    value={category.dishType || "food"}
+                    onClick={e => e.stopPropagation()}
+                    onChange={e => { e.stopPropagation(); onTypeChange(category.id, e.target.value); }}
+                    style={{ padding: "2px 4px", borderRadius: 4, border: "none", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: `${t.color}15`, color: t.color, outline: "none", appearance: "none", WebkitAppearance: "none", textAlign: "center", minWidth: 70 }}
+                  >
+                    {types.map(k => <option key={k} value={k}>{DISH_TYPE_LABELS[k].emoji} {DISH_TYPE_LABELS[k].label}</option>)}
+                  </select>;
+                })()}
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length}</span>
                 <span style={{ fontSize: "0.7rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto" }}>▾</span>
               </button>
@@ -167,6 +185,11 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
   const toggleCategory = async (id: string, isActive: boolean) => {
     await fetch("/api/admin/categories", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, isActive }) });
     setCategories(prev => prev.map(c => c.id === id ? { ...c, isActive } : c));
+  };
+
+  const changeDishType = async (id: string, dishType: string) => {
+    await fetch("/api/admin/categories", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, dishType }) });
+    setCategories(prev => prev.map(c => c.id === id ? { ...c, dishType } : c));
   };
 
   const deleteCategory = async (id: string) => {
@@ -250,6 +273,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}
+              onTypeChange={changeDishType}
             />
           ))}
         </SortableContext>
