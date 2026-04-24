@@ -39,7 +39,7 @@ type RestrictionOption = { icon: typeof Ban; label: string; value: string };
 
 const FOOD_KEYWORDS = ["fondo", "principal", "pizza", "hamburguesa", "plato", "sushi", "roll", "gohan", "chirashi", "para compartir", "compartir", "street", "entrada", "aperitivo", "caliente", "clasica", "premium", "tabla"];
 const SWEET_KEYWORDS = ["postre", "dulce", "kuchen", "torta", "helado"];
-const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "extra", "sour", "schop"];
+const DRINK_KEYWORDS = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "extra", "sour", "schop", "café", "cafe", "coffee", "té", "te", "infusion", "agua"];
 
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
@@ -364,9 +364,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       const cn = catMap.get(d.categoryId) || "";
       return filterKws.some((kw) => cn.includes(kw));
     });
-    // Fallback: if too few candidates, use all food dishes
+    // Fallback: if too few candidates, expand pool but keep same food type
     if (candidates.length < 6) {
-      candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
+      candidates = dishes.filter((d) => {
+        if (liked.has(d.id) || usedIds.has(d.id)) return false;
+        const cn = catMap.get(d.categoryId) || "";
+        // At least exclude wrong types: don't recommend drinks when looking for food
+        if (photoFilter === "platos") return !DRINK_KEYWORDS.some((kw) => cn.includes(kw)) && !SWEET_KEYWORDS.some((kw) => cn.includes(kw));
+        if (photoFilter === "bebida") return DRINK_KEYWORDS.some((kw) => cn.includes(kw));
+        if (photoFilter === "dulce") return SWEET_KEYWORDS.some((kw) => cn.includes(kw));
+        return true;
+      });
+      // Ultimate fallback if still too few
+      if (candidates.length < 3) {
+        candidates = dishes.filter((d) => !liked.has(d.id) && !usedIds.has(d.id));
+      }
     }
 
     // Filter by restrictions using structured allergen/restriction data
