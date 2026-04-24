@@ -86,7 +86,7 @@ Reglas:
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 4096,
+        max_tokens: 8192,
         messages: [{
           role: "user",
           content: [
@@ -106,13 +106,33 @@ Reglas:
     const data = await res.json();
     const text: string = data.content?.[0]?.text || "";
 
-    // Extract JSON from response
+    // Extract JSON from response — handle truncated output
     const match = text.match(/\{[\s\S]*\}/);
     if (!match) {
       return NextResponse.json({ error: "No se pudo extraer datos de las fotos" }, { status: 500 });
     }
 
-    const parsed = JSON.parse(match[0]);
+    let jsonStr = match[0];
+    // Try to fix truncated JSON by closing open arrays/objects
+    try {
+      JSON.parse(jsonStr);
+    } catch {
+      // Count unclosed brackets and close them
+      let opens = 0, closes = 0;
+      for (const c of jsonStr) { if (c === "[") opens++; if (c === "]") closes++; }
+      const missingBrackets = opens - closes;
+      // Remove trailing incomplete object/element
+      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, "");
+      jsonStr = jsonStr.replace(/,\s*"[^"]*$/, "");
+      jsonStr = jsonStr.replace(/,\s*$/, "");
+      for (let i = 0; i < missingBrackets; i++) jsonStr += "]";
+      // Close any open objects
+      let openObj = 0, closeObj = 0;
+      for (const c of jsonStr) { if (c === "{") openObj++; if (c === "}") closeObj++; }
+      for (let i = 0; i < openObj - closeObj; i++) jsonStr += "}";
+    }
+
+    const parsed = JSON.parse(jsonStr);
     return NextResponse.json(parsed);
   } catch (e: any) {
     console.error("[agregarlocal parse]", e);
