@@ -1,0 +1,326 @@
+"use client";
+
+import { useState, useRef } from "react";
+
+interface Dish {
+  name: string;
+  description: string | null;
+  price: number;
+  diet: string;
+  isSpicy: boolean;
+}
+
+interface Category {
+  name: string;
+  type: string;
+  dishes: Dish[];
+}
+
+const F = "var(--font-display)";
+
+export default function AgregarLocalPage() {
+  const [step, setStep] = useState<"upload" | "loading" | "preview" | "saving" | "done">("upload");
+  const [name, setName] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [error, setError] = useState("");
+  const [result, setResult] = useState<{ slug: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handlePhotos = (files: FileList | null) => {
+    if (!files) return;
+    const arr = Array.from(files).slice(0, 5);
+    setPhotos(arr);
+    setPreviews(arr.map((f) => URL.createObjectURL(f)));
+  };
+
+  const analyze = async () => {
+    if (!name.trim() || photos.length === 0) return;
+    setStep("loading");
+    setError("");
+
+    const formData = new FormData();
+    formData.set("name", name.trim());
+    photos.forEach((p) => formData.append("photos", p));
+
+    try {
+      const res = await fetch("/api/agregarlocal/parse", { method: "POST", body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      setCategories(data.categories || []);
+      setStep("preview");
+    } catch (e: any) {
+      setError(e.message);
+      setStep("upload");
+    }
+  };
+
+  const confirm = async () => {
+    setStep("saving");
+    try {
+      const res = await fetch("/api/agregarlocal/confirm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), categories }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      setResult(data);
+      setStep("done");
+    } catch (e: any) {
+      setError(e.message);
+      setStep("preview");
+    }
+  };
+
+  const updateDish = (catIdx: number, dishIdx: number, field: string, value: any) => {
+    setCategories((prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[catIdx].dishes[dishIdx][field] = value;
+      return next;
+    });
+  };
+
+  const removeDish = (catIdx: number, dishIdx: number) => {
+    setCategories((prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      next[catIdx].dishes.splice(dishIdx, 1);
+      return next;
+    });
+  };
+
+  const removeCategory = (catIdx: number) => {
+    setCategories((prev) => prev.filter((_, i) => i !== catIdx));
+  };
+
+  const totalDishes = categories.reduce((sum, c) => sum + c.dishes.length, 0);
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#0e0e0e", color: "white", fontFamily: "var(--font-dm)" }}>
+      <div style={{ maxWidth: 500, margin: "0 auto", padding: "40px 20px 80px" }}>
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <span style={{ fontSize: "2rem" }}>🧞</span>
+          <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "#F4A623", margin: "8px 0 4px" }}>Agregar Local</h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem" }}>Sube fotos de la carta y creamos tu menú digital al instante</p>
+        </div>
+
+        {/* STEP: Upload */}
+        {step === "upload" && (
+          <>
+            {/* Name input */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Nombre del local</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej: La Parrilla de Nico"
+                style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "1rem", outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+
+            {/* Photo upload */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Fotos de la carta (máx 5)</label>
+              <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handlePhotos(e.target.files)}
+                style={{ display: "none" }}
+              />
+              <button
+                onClick={() => inputRef.current?.click()}
+                style={{
+                  width: "100%", padding: "40px 20px", borderRadius: 14,
+                  border: "2px dashed rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.04)",
+                  color: "#F4A623", fontSize: "0.95rem", fontWeight: 600, cursor: "pointer",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+                }}
+              >
+                <span style={{ fontSize: "2rem" }}>📸</span>
+                {photos.length > 0 ? `${photos.length} foto${photos.length > 1 ? "s" : ""} seleccionada${photos.length > 1 ? "s" : ""}` : "Toca para subir fotos"}
+              </button>
+
+              {/* Previews */}
+              {previews.length > 0 && (
+                <div style={{ display: "flex", gap: 8, marginTop: 12, overflowX: "auto" }}>
+                  {previews.map((src, i) => (
+                    <img key={i} src={src} alt={`Foto ${i + 1}`} style={{ width: 80, height: 80, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {error && (
+              <p style={{ color: "#ef4444", fontSize: "0.85rem", marginBottom: 16, textAlign: "center" }}>{error}</p>
+            )}
+
+            <button
+              onClick={analyze}
+              disabled={!name.trim() || photos.length === 0}
+              style={{
+                width: "100%", padding: "16px", borderRadius: 50, border: "none",
+                background: name.trim() && photos.length > 0 ? "#F4A623" : "rgba(255,255,255,0.1)",
+                color: name.trim() && photos.length > 0 ? "#0e0e0e" : "rgba(255,255,255,0.3)",
+                fontSize: "1rem", fontWeight: 700, cursor: name.trim() && photos.length > 0 ? "pointer" : "not-allowed",
+              }}
+            >
+              Analizar carta
+            </button>
+          </>
+        )}
+
+        {/* STEP: Loading */}
+        {step === "loading" && (
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <span style={{ fontSize: "2.5rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>🧞</span>
+            <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>Analizando la carta de {name}...</p>
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.85rem", marginTop: 8 }}>Esto puede tomar unos segundos</p>
+          </div>
+        )}
+
+        {/* STEP: Preview */}
+        {step === "preview" && (
+          <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div>
+                <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>{name}</h2>
+                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", margin: "2px 0 0" }}>{categories.length} categorías · {totalDishes} platos</p>
+              </div>
+              <button onClick={() => setStep("upload")} style={{ padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", cursor: "pointer" }}>
+                ← Volver
+              </button>
+            </div>
+
+            {error && (
+              <p style={{ color: "#ef4444", fontSize: "0.85rem", marginBottom: 12 }}>{error}</p>
+            )}
+
+            {categories.map((cat, catIdx) => (
+              <div key={catIdx} style={{ marginBottom: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ fontSize: "0.72rem", padding: "2px 8px", borderRadius: 4, background: cat.type === "drink" ? "rgba(96,165,250,0.15)" : cat.type === "dessert" ? "rgba(244,114,182,0.15)" : "rgba(244,166,35,0.15)", color: cat.type === "drink" ? "#60a5fa" : cat.type === "dessert" ? "#f472b6" : "#F4A623" }}>
+                      {cat.type === "drink" ? "🍺 Bebida" : cat.type === "dessert" ? "🍰 Postre" : "🍽 Comida"}
+                    </span>
+                    <h3 style={{ fontSize: "1rem", fontWeight: 700, margin: 0 }}>{cat.name}</h3>
+                    <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>({cat.dishes.length})</span>
+                  </div>
+                  <button onClick={() => removeCategory(catIdx)} style={{ background: "none", border: "none", color: "rgba(255,100,100,0.5)", fontSize: "0.72rem", cursor: "pointer" }}>Quitar</button>
+                </div>
+
+                {cat.dishes.map((dish, dishIdx) => (
+                  <div key={dishIdx} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderTop: dishIdx > 0 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <input
+                        value={dish.name}
+                        onChange={(e) => updateDish(catIdx, dishIdx, "name", e.target.value)}
+                        style={{ width: "100%", background: "transparent", border: "none", color: "white", fontSize: "0.88rem", fontWeight: 600, outline: "none", padding: 0 }}
+                      />
+                      {dish.description && (
+                        <input
+                          value={dish.description}
+                          onChange={(e) => updateDish(catIdx, dishIdx, "description", e.target.value)}
+                          style={{ width: "100%", background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", outline: "none", padding: "2px 0 0", fontFamily: "inherit" }}
+                        />
+                      )}
+                      <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
+                        {dish.diet !== "OMNIVORE" && (
+                          <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>
+                            {dish.diet === "VEGAN" ? "🌿 Vegano" : dish.diet === "VEGETARIAN" ? "🌱 Vegetariano" : "🐟 Pescetariano"}
+                          </span>
+                        )}
+                        {dish.isSpicy && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️</span>}
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 2, flexShrink: 0 }}>
+                      <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.82rem" }}>$</span>
+                      <input
+                        value={dish.price || ""}
+                        onChange={(e) => updateDish(catIdx, dishIdx, "price", Number(e.target.value.replace(/\D/g, "")))}
+                        style={{ width: 60, background: "transparent", border: "none", color: "#F4A623", fontSize: "0.88rem", fontWeight: 600, outline: "none", textAlign: "right", padding: 0 }}
+                      />
+                    </div>
+                    <button onClick={() => removeDish(catIdx, dishIdx)} style={{ background: "none", border: "none", color: "rgba(255,100,100,0.4)", fontSize: "1rem", cursor: "pointer", flexShrink: 0, padding: "0 4px" }}>×</button>
+                  </div>
+                ))}
+              </div>
+            ))}
+
+            <button
+              onClick={confirm}
+              style={{
+                width: "100%", padding: "16px", borderRadius: 50, border: "none",
+                background: "#F4A623", color: "#0e0e0e",
+                fontSize: "1rem", fontWeight: 700, cursor: "pointer",
+              }}
+            >
+              Crear local con {totalDishes} platos
+            </button>
+          </>
+        )}
+
+        {/* STEP: Saving */}
+        {step === "saving" && (
+          <div style={{ textAlign: "center", padding: "60px 0" }}>
+            <span style={{ fontSize: "2rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>✨</span>
+            <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>Creando {name}...</p>
+          </div>
+        )}
+
+        {/* STEP: Done */}
+        {step === "done" && result && (
+          <div style={{ textAlign: "center", padding: "40px 0" }}>
+            <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>🎉</span>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "white", marginBottom: 4 }}>{name}</h2>
+            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem", marginBottom: 24 }}>
+              {result.totalCategories} categorías · {result.totalDishes} platos
+            </p>
+
+            <a
+              href={`/qr/${result.slug}`}
+              target="_blank"
+              style={{
+                display: "block", width: "100%", padding: "16px", borderRadius: 50,
+                background: "#F4A623", color: "#0e0e0e", textDecoration: "none",
+                fontSize: "1rem", fontWeight: 700, textAlign: "center", marginBottom: 12,
+              }}
+            >
+              Ver carta QR →
+            </a>
+
+            <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 16 }}>
+              <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Link de la carta</p>
+              <p style={{ fontSize: "0.88rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>{result.url}</p>
+            </div>
+
+            <button
+              onClick={() => { navigator.clipboard.writeText(result.url); }}
+              style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer", marginRight: 8 }}
+            >
+              Copiar link
+            </button>
+
+            <button
+              onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); }}
+              style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
+            >
+              Agregar otro
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  );
+}
