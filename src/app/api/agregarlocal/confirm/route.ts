@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const maxDuration = 120;
 import { prisma } from "@/lib/prisma";
 import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
 
