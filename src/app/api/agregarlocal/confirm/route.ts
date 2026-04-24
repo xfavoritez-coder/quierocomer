@@ -23,7 +23,8 @@ export async function POST(request: Request) {
     const existing = await prisma.restaurant.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
 
-    // Create restaurant
+    // Create restaurant with QR token
+    const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const restaurant = await prisma.restaurant.create({
       data: {
         name: name.trim(),
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
         cartaTheme: "PREMIUM",
         defaultView: "premium",
         isActive: true,
+        qrToken,
+        qrActivatedAt: new Date(),
       },
     });
 
@@ -131,7 +134,7 @@ export async function POST(request: Request) {
       },
       totalCategories: categories.filter((c: any) => c.dishes?.length > 0).length,
       totalDishes,
-      url: `https://quierocomer.cl/qr/${restaurant.slug}`,
+      url: `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`,
     });
   } catch (e: any) {
     console.error("[agregarlocal confirm]", e);

@@ -408,18 +408,23 @@ export default function AgregarLocalPage() {
               onClick={async () => {
                 setStep("photos" as any);
                 setPhotoProgress("Generando búsquedas con IA...");
+                setError("");
                 try {
                   const res = await fetch("/api/agregarlocal/photos", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ restaurantId: result.restaurantId }),
                   });
-                  const data = await res.json();
-                  if (!res.ok) throw new Error(data.error);
-                  setPhotoResults((data.results || []).map((r: any) => ({ ...r, selected: !!r.photoUrl })));
+                  const rawText = await res.text();
+                  let data;
+                  try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 200)}`); }
+                  if (!res.ok) throw new Error(data.error || "Error buscando fotos");
+                  if (!data.results?.length) throw new Error(data.message || "No se encontraron platos sin fotos");
+                  setPhotoProgress("Buscando fotos en Unsplash...");
+                  setPhotoResults(data.results.map((r: any) => ({ ...r, selected: !!r.photoUrl })));
                   setPhotoProgress("");
                 } catch (e: any) {
-                  setError(e.message);
+                  setError(e.message || String(e));
                   setStep("done");
                 }
               }}
@@ -433,7 +438,7 @@ export default function AgregarLocalPage() {
             </button>
 
             <a
-              href={`/qr/${result.slug}?mesa=demo&t=demo`}
+              href={result.url.replace("https://quierocomer.cl", "")}
               target="_blank"
               style={{
                 display: "block", width: "100%", padding: "14px", borderRadius: 50,
