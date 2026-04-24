@@ -147,7 +147,7 @@ export default function CartaLista({
         ([entry]) => {
           if (entry.isIntersecting) setActiveCategory(cat.id);
         },
-        { rootMargin: "-80px 0px -80% 0px", threshold: 0 }
+        { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
       );
       obs.observe(el);
       observers.push(obs);
