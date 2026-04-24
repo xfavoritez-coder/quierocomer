@@ -42,18 +42,18 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
         <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
-          {isRec && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.58rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
-              ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
-            </span>
-          )}
+          {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
+          <DishBadges dish={dish} />
           {!isRec && autoRecommended && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.68rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.7rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               ✨ Para ti
             </span>
           )}
-          {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
-          <DishBadges dish={dish} />
+          {isRec && (
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.7rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+            </span>
+          )}
         </h3>
         {dish.description && (
           <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.9rem", color: "#999", lineHeight: 1.4 }}>
@@ -131,7 +131,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName }: Omit<Di
         <span>{dish.name}</span>
         <DishBadges dish={dish} />
       </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
+      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 500, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
       </span>
     </button>

@@ -625,6 +625,7 @@ model WaiterCall {
   guestId      String?
   dietType     String?
   restrictions String?
+  dislikes     String?
   calledAt     DateTime
   answeredAt   DateTime?
   createdAt    DateTime  @default(now())

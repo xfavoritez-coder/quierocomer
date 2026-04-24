@@ -57,6 +57,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           guestId: getGuestId(),
           dietType: typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null,
           restrictions: typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null,
+          dislikes: typeof window !== "undefined" ? localStorage.getItem("qr_dislikes") : null,
         }),
       });
       const data = await res.json().catch(() => null);

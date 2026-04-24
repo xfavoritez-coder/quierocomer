@@ -9,6 +9,7 @@ interface WaiterCallData {
   tableName: string | null;
   dietType: string | null;
   restrictions: string | null;
+  dislikes: string | null;
   calledAt: string;
   answeredAt: string | null;
   table: { name: string; tableNumber: number } | null;
@@ -199,34 +200,26 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#0e0e0e", color: "white" }}>
       {/* Header */}
-      <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div className="flex items-center" style={{ gap: 8 }}>
-          <Bell size={20} color="#F4A623" />
-          <div>
-            <span style={{ fontSize: "1rem", fontWeight: 700, display: "block" }}>Panel Garzón</span>
-            <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>{restaurantName}</span>
-          </div>
-        </div>
-        <div className="flex items-center" style={{ gap: 12 }}>
-          <div className="flex items-center" style={{ gap: 6 }}>
-            {subscribed ? <Wifi size={16} color="#16a34a" /> : <WifiOff size={16} color="#dc2626" />}
-            <div>
-              <span style={{ fontSize: "0.75rem", color: subscribed ? "#16a34a" : "#dc2626", display: "block" }}>
-                {subscribed ? "Conectado" : "Desconectado"}
-              </span>
-              {subscribed && (
-                <span style={{ fontSize: "0.6rem", color: pushActive ? "#16a34a" : "rgba(255,255,255,0.3)", display: "block" }}>
-                  {pushActive ? "Push activo" : "Solo polling"}
-                </span>
-              )}
-            </div>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div className="flex items-center" style={{ gap: 8 }}>
+            <Bell size={18} color="#F4A623" />
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Panel Garzón ·</span>
+            <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "white" }}>{restaurantName}</span>
           </div>
           <button
             onClick={endShift}
-            style={{ padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+            style={{ padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
           >
-            Salir de turno
+            Salir
           </button>
+        </div>
+        <div className="flex items-center justify-center" style={{ gap: 6 }}>
+          {subscribed ? <Wifi size={12} color="#16a34a" /> : <WifiOff size={12} color="#dc2626" />}
+          <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626" }}>
+            {subscribed ? "Conectado" : "Desconectado"}
+            {subscribed && <span style={{ color: pushActive ? "#16a34a" : "rgba(255,255,255,0.3)", marginLeft: 4 }}>· {pushActive ? "Push activo" : "Solo polling"}</span>}
+          </span>
         </div>
       </div>
 
@@ -283,8 +276,11 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
               const name = call.table?.name || call.tableName || "Cliente";
               const dl: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano" };
               const dietText = call.dietType ? dl[call.dietType] || null : null;
+              const resLabels: Record<string, string> = { "_spicy": "Sin picante", "gluten": "Sin gluten", "lactosa": "Sin lactosa", "mariscos": "Sin mariscos", "huevo": "Sin huevo", "cerdo": "Sin cerdo", "almendras": "Sin almendras", "soja": "Sin soja" };
               let resList: string[] = [];
-              try { resList = call.restrictions ? JSON.parse(call.restrictions).filter((r: string) => r !== "ninguna") : []; } catch {}
+              try { resList = call.restrictions ? JSON.parse(call.restrictions).filter((r: string) => r !== "ninguna").map((r: string) => resLabels[r] || `Sin ${r}`) : []; } catch {}
+              let dislikeList: string[] = [];
+              try { dislikeList = call.dislikes ? JSON.parse(call.dislikes) : []; } catch {}
 
               return (
                 <div key={call.id} style={{ borderRadius: 14, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(244,166,35,0.3)", overflow: "hidden", animation: "callPulse 2s ease-in-out infinite" }}>
@@ -306,21 +302,26 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
                   {isExpanded && (
                     <div style={{ padding: "0 16px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                       {/* Diet info */}
-                      {(dietText || resList.length > 0) && (
+                      {(dietText || resList.length > 0 || dislikeList.length > 0) && (
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 12, marginBottom: 12 }}>
                           {dietText && (
                             <span style={{ background: "rgba(244,166,35,0.12)", color: "#F4A623", fontSize: "0.78rem", fontWeight: 600, padding: "4px 10px", borderRadius: 50 }}>
                               {dietText}
                             </span>
                           )}
-                          {resList.map((r: string) => (
-                            <span key={r} style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, padding: "4px 10px", borderRadius: 50 }}>
-                              Sin {r}
+                          {resList.map((r: string, i: number) => (
+                            <span key={`r-${i}`} style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: "0.78rem", fontWeight: 500, padding: "4px 10px", borderRadius: 50 }}>
+                              {r}
+                            </span>
+                          ))}
+                          {dislikeList.map((d: string) => (
+                            <span key={d} style={{ background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, padding: "4px 10px", borderRadius: 50 }}>
+                              No {d}
                             </span>
                           ))}
                         </div>
                       )}
-                      {!dietText && resList.length === 0 && (
+                      {!dietText && resList.length === 0 && dislikeList.length === 0 && (
                         <p style={{ color: "rgba(255,255,255,0.2)", fontSize: "0.82rem", marginTop: 12, marginBottom: 12 }}>Sin preferencias registradas</p>
                       )}
                       {/* Atender button */}

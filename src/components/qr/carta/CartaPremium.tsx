@@ -515,7 +515,7 @@ export default function CartaPremium({
             {index === Math.max(4, Math.floor(categories.length * 0.75)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
-              <div style={{ padding: "0 20px", marginBottom: 12 }}>
+              <div style={{ padding: "0 20px", marginBottom: 10 }}>
                 <h2
                   className="font-[family-name:var(--font-playfair)]"
                   style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0e0e0e" }}

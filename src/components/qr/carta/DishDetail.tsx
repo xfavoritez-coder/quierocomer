@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
@@ -39,6 +39,20 @@ export default function DishDetail({
   personalizationMap,
   restaurantName,
 }: DishDetailProps) {
+  // Compute allergens that exist across the restaurant (for "Libre de" section)
+  const restaurantAllergens = useMemo(() => {
+    const allergens = new Set<string>();
+    for (const d of allDishes) {
+      const ings = (d as any).dishIngredients || [];
+      for (const di of ings) {
+        for (const a of (di.ingredient?.allergens || [])) {
+          if (a.type === "ALLERGEN") allergens.add(a.name.toLowerCase());
+        }
+      }
+    }
+    return allergens;
+  }, [allDishes]);
+
   const [visible, setVisible] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
@@ -183,6 +197,7 @@ export default function DishDetail({
             onClose={close}
             personalizationEntry={personalizationMap?.get(d.id)}
             restaurantName={restaurantName}
+            restaurantAllergens={restaurantAllergens}
           />
         ))}
       </div>
@@ -200,7 +215,7 @@ export default function DishDetail({
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
-  personalizationEntry, restaurantName,
+  personalizationEntry, restaurantName, restaurantAllergens,
 }: {
   dish: Dish; index: number; total: number;
   categories: Category[]; restaurantId: string;
@@ -211,6 +226,7 @@ function DishSlide({
   onClose: () => void;
   personalizationEntry?: PersonalizationEntry;
   restaurantName?: string;
+  restaurantAllergens?: Set<string>;
 }) {
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
@@ -300,8 +316,8 @@ function DishSlide({
           >
             <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
               ✨ {personalizationEntry.reason
-                ? `${personalizationEntry.reason}. Seleccionado para ti según tus gustos.`
-                : "Seleccionado especialmente para ti, según tus gustos y preferencias."}
+                ? `${personalizationEntry.reason}. Por eso lo seleccionamos para ti.`
+                : "Seleccionado para ti porque coincide con tus gustos, dieta y preferencias."}
             </p>
           </div>
         )}
@@ -457,6 +473,41 @@ function DishSlide({
                 </div>
               </div>
             )}
+            {(() => {
+              const d = dish as any;
+              const traits: { label: string; positive: boolean }[] = [];
+              // Allergen-free traits — only show for allergens that exist in other dishes of this restaurant
+              const allergenLower = derivedAllergens.map(a => a.toLowerCase());
+              if (restaurantAllergens) {
+                for (const a of restaurantAllergens) {
+                  if (!allergenLower.includes(a)) traits.push({ label: `Sin ${a}`, positive: true });
+                }
+              }
+              // Diet
+              if (d.dishDiet === "VEGAN") traits.push({ label: "Vegano", positive: true });
+              else if (d.dishDiet === "VEGETARIAN") traits.push({ label: "Vegetariano", positive: true });
+              // Spicy
+              if (d.isSpicy) traits.push({ label: "Picante", positive: false });
+              else traits.push({ label: "No picante", positive: true });
+              // Flavor tags
+              const flavorLabels: Record<string, string> = { dulce: "Dulce", agridulce: "Agridulce", umami: "Umami", "ácido": "Ácido", ahumado: "Ahumado", picante: "Picante" };
+              (d.flavorTags || []).forEach((f: string) => {
+                if (f !== "picante" && flavorLabels[f]) traits.push({ label: flavorLabels[f], positive: false });
+              });
+              if (traits.length === 0) return null;
+              return (
+                <div style={{ marginTop: 16 }}>
+                  <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Características</p>
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    {traits.map(t => (
+                      <span key={t.label} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: t.positive ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.07)", color: t.positive ? "#4ade80" : "#d4d4d4" }}>
+                        {t.positive ? "✓ " : ""}{t.label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </>
       )}

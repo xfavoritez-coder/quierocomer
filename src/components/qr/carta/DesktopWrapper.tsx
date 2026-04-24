@@ -139,7 +139,7 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
             width: "100%",
             height: "100%",
             borderRadius: 38,
-            overflow: "hidden",
+            overflowX: "hidden",
             overflowY: "auto",
             background: "#f7f7f5",
             scrollbarWidth: "none",

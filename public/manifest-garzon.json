@@ -1,13 +1,12 @@
 {
-  "name": "Garzón - QuieroComer",
-  "short_name": "Garzón",
-  "description": "Panel de garzón para recibir llamadas de clientes",
+  "name": "Garzón · QuieroComer",
+  "short_name": "🔔 Garzón",
+  "description": "Recibe llamadas de clientes en tiempo real",
   "start_url": "/qr/admin/garzon",
   "display": "standalone",
   "background_color": "#0e0e0e",
   "theme_color": "#F4A623",
   "orientation": "portrait",
-  "permissions": ["notifications"],
   "icons": [
     {
       "src": "/icon-192.png",
