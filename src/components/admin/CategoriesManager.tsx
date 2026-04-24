@@ -13,10 +13,10 @@ const GOLD = "#F4A623";
 interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; }
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  food: { label: "Plato", emoji: "🍽️", color: GOLD },
-  drink: { label: "Bebestible", emoji: "🥤", color: "#7fbfdc" },
-  dessert: { label: "Postre", emoji: "🍰", color: "#c084fc" },
-  extra: { label: "Extra", emoji: "➕", color: "#888" },
+  food: { label: "Platos", emoji: "🍽️", color: GOLD },
+  drink: { label: "Bebestibles", emoji: "🥤", color: "#7fbfdc" },
+  dessert: { label: "Postres", emoji: "🍰", color: "#c084fc" },
+  extra: { label: "Extras", emoji: "🔧", color: "#888" },
 };
 
 interface Props {
@@ -106,6 +106,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
                   {dishes.length} producto{dishes.length !== 1 ? "s" : ""}{hiddenCount > 0 ? ` (${hiddenCount} oculto${hiddenCount !== 1 ? "s" : ""})` : ""}
                 </span>
+                <span style={{ marginLeft: "auto" }} />
                 <select
                   value={category.dishType || "food"}
                   onClick={e => e.stopPropagation()}
@@ -114,7 +115,6 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 >
                   {(["food", "drink", "dessert", "extra"] as const).map(k => <option key={k} value={k}>{DISH_TYPE_LABELS[k].emoji} {DISH_TYPE_LABELS[k].label}</option>)}
                 </select>
-                <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", marginLeft: "auto", lineHeight: 1 }}>▾</span>
               </button>
               <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: category.isActive ? "var(--adm-text3)" : "#4ade80" }}>
                 {category.isActive ? "Ocultar" : "Mostrar"}
@@ -128,6 +128,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   onDelete(category.id);
                 }
               }} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "#ef4444", cursor: "pointer" }}>Eliminar</button>
+              <span onClick={() => setExpanded(!expanded)} style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>▾</span>
             </>
           )}
         </div>

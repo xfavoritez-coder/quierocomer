@@ -113,6 +113,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [restrictions, setRestrictions] = useState<string[]>(savedRestrictions ? JSON.parse(savedRestrictions) : []);
   const [dislikes, setDislikes] = useState<string[]>(savedDislikes ? JSON.parse(savedDislikes) : []);
   const [popularDislikes, setPopularDislikes] = useState<string[]>([]);
+  const [dislikeI18n, setDislikeI18n] = useState<Record<string, { en?: string; pt?: string }>>({});
   const [dislikeSearch, setDislikeSearch] = useState("");
   const [dislikeResults, setDislikeResults] = useState<string[]>([]);
   const [liked, setLiked] = useState<Set<string>>(new Set());
@@ -122,6 +123,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   useEffect(() => {
     fetch("/api/qr/dislikes").then(r => r.json()).then(d => {
       if (d.popular) setPopularDislikes(d.popular);
+      if (d.i18nMap) setDislikeI18n(d.i18nMap);
     }).catch(() => {});
   }, []);
 
@@ -786,7 +788,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <button key={item} onClick={() => {
                 setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
               }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
-                {item}
+                {lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item}
               </button>
             ))}
           </div>

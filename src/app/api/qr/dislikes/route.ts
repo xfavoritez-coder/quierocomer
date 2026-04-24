@@ -10,11 +10,11 @@ export async function GET(req: NextRequest) {
     if (q && q.length >= 2) {
       const ingredients = await prisma.ingredient.findMany({
         where: { name: { contains: q.toLowerCase(), mode: "insensitive" } },
-        select: { name: true },
+        select: { name: true, nameEn: true, namePt: true },
         orderBy: { name: "asc" },
         take: 10,
       });
-      return NextResponse.json({ results: ingredients.map(i => i.name) });
+      return NextResponse.json({ results: ingredients.map(i => i.name), ingredientsI18n: ingredients });
     }
 
     // Default mode: return top 10 most common dislikes
@@ -41,7 +41,17 @@ export async function GET(req: NextRequest) {
     const defaults = ["palta", "cebolla", "tomate", "cilantro", "ajo", "pepino", "aceitunas", "champiñones", "soya", "jengibre"];
     const popular = sorted.length >= 5 ? sorted : defaults;
 
-    return NextResponse.json({ popular });
+    // Fetch translations for popular ingredients
+    const ingTranslations = await prisma.ingredient.findMany({
+      where: { name: { in: popular, mode: "insensitive" } },
+      select: { name: true, nameEn: true, namePt: true },
+    });
+    const i18nMap: Record<string, { en?: string; pt?: string }> = {};
+    for (const i of ingTranslations) {
+      i18nMap[i.name.toLowerCase()] = { en: i.nameEn || undefined, pt: i.namePt || undefined };
+    }
+
+    return NextResponse.json({ popular, i18nMap });
   } catch (error) {
     console.error("Dislikes error:", error);
     return NextResponse.json({ error: "Error al obtener dislikes" }, { status: 500 });

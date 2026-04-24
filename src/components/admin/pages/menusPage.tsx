@@ -833,8 +833,8 @@ export default function AdminMenus() {
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--adm-hover)", borderRadius: 10, padding: 3 }}>
         {([
           { key: "productos" as const, label: "Productos" },
-          { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
+          { key: "categorias" as const, label: "Categorías" },
           { key: "horarios" as const, label: "Horarios" },
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{

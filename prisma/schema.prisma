@@ -112,6 +112,8 @@ enum DietType {
 model Ingredient {
   id              String             @id @default(cuid())
   name            String             @unique
+  nameEn          String?
+  namePt          String?
   aliases         String[]
   category        IngredientCategory
   createdAt       DateTime           @default(now())

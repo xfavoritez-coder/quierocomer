@@ -6,6 +6,7 @@ import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, getDbSessionId } from "@/lib/sessionTracker";
+import { useLang } from "@/contexts/LangContext";
 
 interface DishDetailProps {
   dish: Dish;
@@ -211,7 +212,14 @@ function DishSlide({
       if (a.type === "ALLERGEN" && !seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
     }
   }
-  const ingredientNames = dishIngs.map((di: any) => di.ingredient?.name).filter(Boolean);
+  const lang = useLang();
+  const ingredientNames = dishIngs.map((di: any) => {
+    const ing = di.ingredient;
+    if (!ing) return null;
+    if (lang === "en" && ing.nameEn) return ing.nameEn;
+    if (lang === "pt" && ing.namePt) return ing.namePt;
+    return ing.name;
+  }).filter(Boolean);
   const hasInfo = ingredientNames.length > 0 || derivedAllergens.length > 0;
 
   return (
