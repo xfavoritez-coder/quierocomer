@@ -43,18 +43,38 @@ function getDatePresets() {
 
 export default function PersonalizationPage() {
   const { restaurants } = useAdminSession();
-  const [restaurantId, setRestaurantId] = useState("");
+  const presets = getDatePresets();
+
+  // Init from URL params
+  const urlParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const [restaurantId, setRestaurantId] = useState(urlParams?.get("restaurantId") || "");
+  const [from, setFrom] = useState(urlParams?.get("from") || presets.week.from);
+  const [to, setTo] = useState(urlParams?.get("to") || presets.week.to);
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const presets = getDatePresets();
-  const [from, setFrom] = useState(presets.week.from);
-  const [to, setTo] = useState(presets.week.to);
-  const [activePreset, setActivePreset] = useState("week");
+  const [activePreset, setActivePreset] = useState(urlParams?.get("from") ? "" : "week");
+
+  // Sync state to URL
+  const pushUrl = (rid: string, f: string, t: string) => {
+    const p = new URLSearchParams();
+    if (rid) p.set("restaurantId", rid);
+    p.set("from", f); p.set("to", t);
+    window.history.replaceState({}, "", `?${p}`);
+  };
 
   const applyPreset = (key: string) => {
     const p = (presets as any)[key];
     setFrom(p.from); setTo(p.to); setActivePreset(key);
+    pushUrl(restaurantId, p.from, p.to);
   };
+
+  const handleRestaurant = (rid: string) => {
+    setRestaurantId(rid);
+    pushUrl(rid, from, to);
+  };
+
+  const handleFrom = (f: string) => { setFrom(f); setActivePreset(""); pushUrl(restaurantId, f, to); };
+  const handleTo = (t: string) => { setTo(t); setActivePreset(""); pushUrl(restaurantId, from, t); };
 
   useEffect(() => {
     setLoading(true);
@@ -71,7 +91,7 @@ export default function PersonalizationPage() {
           <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>✨ Personalización</h1>
         </div>
-        <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
+        <select value={restaurantId} onChange={(e) => handleRestaurant(e.target.value)} style={{ padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
           <option value="" style={{ background: "#1A1A1A" }}>Todos</option>
           {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "#1A1A1A" }}>{r.name}</option>)}
         </select>
@@ -90,9 +110,9 @@ export default function PersonalizationPage() {
           </button>
         ))}
         <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4 }}>
-          <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setActivePreset(""); }} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
+          <input type="date" value={from} onChange={(e) => handleFrom(e.target.value)} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
           <span style={{ color: "#666", fontSize: "0.72rem" }}>–</span>
-          <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setActivePreset(""); }} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
+          <input type="date" value={to} onChange={(e) => handleTo(e.target.value)} style={{ padding: "5px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.72rem" }} />
         </div>
       </div>
 
