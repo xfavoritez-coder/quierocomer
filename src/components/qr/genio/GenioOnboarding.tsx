@@ -127,6 +127,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }, 300);
     return () => clearTimeout(timer);
   }, [dislikeSearch, dislikes]);
+  // Sync all preferences to QRUser when Genio completes (step 5)
+  useEffect(() => {
+    if (step !== 5) return;
+    if (!document.cookie.includes("qr_user_id")) return;
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = localStorage.getItem("qr_restrictions");
+    const dislikesStr = localStorage.getItem("qr_dislikes");
+    if (!diet && !restrictions && !dislikesStr) return;
+    const body: Record<string, unknown> = {};
+    if (diet) body.dietType = diet;
+    if (restrictions) try { body.restrictions = JSON.parse(restrictions).filter((r: string) => r !== "ninguna"); } catch {}
+    if (dislikesStr) try { body.dislikes = JSON.parse(dislikesStr); } catch {}
+    fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
+  }, [step]);
+
   const [photoFilter, setPhotoFilter] = useState<"platos" | "dulce" | "bebida">("platos");
 
   // Akinator grid: 9 dishes that evolve as you select
