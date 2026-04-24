@@ -28,6 +28,26 @@ export default function AgregarLocalPage() {
   const [result, setResult] = useState<{ slug: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Compress image client-side to max 1200px and ~200KB JPEG
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX = 1200;
+        let w = img.width, h = img.height;
+        if (w > MAX || h > MAX) {
+          if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+          else { w = Math.round(w * MAX / h); h = MAX; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+        canvas.toBlob((blob) => resolve(blob || file), "image/jpeg", 0.7);
+      };
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handlePhotos = (files: FileList | null) => {
     if (!files) return;
     const arr = Array.from(files).slice(0, 5);
@@ -40,9 +60,12 @@ export default function AgregarLocalPage() {
     setStep("loading");
     setError("");
 
+    // Compress photos before uploading
+    const compressed = await Promise.all(photos.map(compressImage));
+
     const formData = new FormData();
     formData.set("name", name.trim());
-    photos.forEach((p) => formData.append("photos", p));
+    compressed.forEach((blob, i) => formData.append("photos", blob, `photo-${i}.jpg`));
 
     const debugInfo = photos.map(p => `${p.name} (${p.type || "sin tipo"}, ${Math.round(p.size/1024)}KB)`).join(", ");
     try {
