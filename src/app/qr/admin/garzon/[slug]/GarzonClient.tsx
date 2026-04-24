@@ -200,27 +200,29 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#0e0e0e", color: "white" }}>
       {/* Header */}
-      <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <div className="flex items-center" style={{ gap: 8 }}>
-            <Bell size={18} color="#F4A623" />
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "rgba(255,255,255,0.5)" }}>Panel Garzón ·</span>
-            <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "white" }}>{restaurantName}</span>
+      <div style={{ padding: "14px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", gap: 12 }}>
+        {/* Left: bell + name + panel garzón */}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
+          <Bell size={22} color="#F4A623" style={{ flexShrink: 0 }} />
+          <div>
+            <span style={{ fontSize: "1rem", fontWeight: 700, color: "white", display: "block", lineHeight: 1.2 }}>{restaurantName}</span>
+            <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)" }}>Panel Garzón</span>
           </div>
-          <button
-            onClick={endShift}
-            style={{ padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
-          >
-            Salir
-          </button>
         </div>
-        <div className="flex items-center" style={{ gap: 6, paddingLeft: 26 }}>
-          {subscribed ? <Wifi size={12} color="#16a34a" /> : <WifiOff size={12} color="#dc2626" />}
-          <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626" }}>
-            {subscribed ? "Conectado" : "Desconectado"}
-            {subscribed && <span style={{ color: pushActive ? "#16a34a" : "rgba(255,255,255,0.3)", marginLeft: 4 }}>· {pushActive ? "Push activo" : "Solo polling"}</span>}
+        {/* Center: status */}
+        <div className="flex items-center" style={{ gap: 5, flexShrink: 0 }}>
+          {subscribed ? <Wifi size={13} color="#16a34a" /> : <WifiOff size={13} color="#dc2626" />}
+          <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626", whiteSpace: "nowrap" }}>
+            {subscribed ? (pushActive ? "Push" : "Polling") : "Off"}
           </span>
         </div>
+        {/* Right: salir */}
+        <button
+          onClick={endShift}
+          style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+        >
+          Salir
+        </button>
       </div>
 
       {/* Permission banner */}
