@@ -551,11 +551,11 @@ export default function CartaPremium({
                       key={dish.id}
                       data-dish-id={dish.id}
                       style={{
-                        width: ((!pMap && dish.tags?.includes("RECOMMENDED")) || pMap?.get(dish.id)?.autoRecommended) ? 217 : 205,
-                        minWidth: ((!pMap && dish.tags?.includes("RECOMMENDED")) || pMap?.get(dish.id)?.autoRecommended) ? 217 : 205,
+                        width: 205,
+                        minWidth: 205,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
-                        marginLeft: i === 0 ? 20 : 16,
+                        marginLeft: i === 0 ? 20 : 10,
                         marginRight: i === catDishes.length - 1 ? 20 : 0,
                       }}
                     >

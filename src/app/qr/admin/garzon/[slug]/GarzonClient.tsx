@@ -74,6 +74,12 @@ function timeAgo(date: string) {
 }
 
 export default function GarzonPanel({ restaurantId, restaurantName }: { restaurantId: string; restaurantName: string }) {
+  // Save slug for auto-redirect on next PWA open
+  useEffect(() => {
+    const slug = window.location.pathname.split("/").pop();
+    if (slug) localStorage.setItem("garzon_slug", slug);
+  }, []);
+
   const [subscribed, setSubscribed] = useState(false);
   const [pushActive, setPushActive] = useState(false);
   const [calls, setCalls] = useState<WaiterCallData[]>([]);

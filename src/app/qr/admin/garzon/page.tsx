@@ -1,15 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 
 export default function GarzonSetup() {
   const [slug, setSlug] = useState("");
+  const [checking, setChecking] = useState(true);
+
+  // Auto-redirect if we have a saved slug from a previous session
+  useEffect(() => {
+    const saved = localStorage.getItem("garzon_slug");
+    if (saved) {
+      window.location.href = `/qr/admin/garzon/${saved}`;
+    } else {
+      setChecking(false);
+    }
+  }, []);
 
   const connect = () => {
     if (!slug.trim()) return;
-    window.location.href = `/qr/admin/garzon/${slug.trim().toLowerCase()}`;
+    const s = slug.trim().toLowerCase();
+    localStorage.setItem("garzon_slug", s);
+    window.location.href = `/qr/admin/garzon/${s}`;
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: "#0e0e0e" }}>
+        <Bell size={32} color="#F4A623" style={{ animation: "pulse 1.5s ease-in-out infinite" }} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center font-[family-name:var(--font-dm)]" style={{ background: "#0e0e0e", color: "white", padding: 32 }}>

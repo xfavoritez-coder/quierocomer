@@ -98,6 +98,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [dislikeI18n, setDislikeI18n] = useState<Record<string, { en?: string; pt?: string }>>({});
   const [dislikeSearch, setDislikeSearch] = useState("");
   const [dislikeResults, setDislikeResults] = useState<string[]>([]);
+  const [showAddRestriction, setShowAddRestriction] = useState(false);
+  const [showAddDislike, setShowAddDislike] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   // Load popular dislikes
   useEffect(() => {
@@ -215,40 +218,33 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       <div style={{ position: "absolute", inset: 0, display: "flex", transform: `translateX(${-displayStep * 100}%)`, transition: skipTransition ? "none" : "transform 0.3s ease-out" }}>
 
         {/* STEP 0 — Welcome or Welcome Back */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 32px", gap: 16 }}>
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", gap: 16 }}>
           {hasSaved ? (
-            <div style={{ width: "100%", maxWidth: 320, overflowY: "auto", maxHeight: "calc(100dvh - 120px)", padding: "80px 0 40px" }}>
-              <div style={{ textAlign: "center", marginBottom: 20 }}>
-                <span style={{ fontSize: "2.4rem" }}>🧞</span>
-                <h1 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.4rem", fontWeight: 900, color: "white", margin: "8px 0 0" }}>
-                  {userName ? `Hola ${userName}` : "Tu perfil de gustos"}
-                </h1>
+            <div style={{ width: "100%", background: "#0e0e0e", borderRadius: 32, overflowY: "auto", maxHeight: "calc(100dvh - 80px)", padding: "32px 24px 40px" }}>
+              {/* Header */}
+              <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", marginBottom: 28 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 2L13.5 8.5L20 7L15 12L20 17L13.5 15.5L12 22L10.5 15.5L4 17L9 12L4 7L10.5 8.5L12 2Z" fill="#F4A623"/></svg>
+                  <span style={{ fontFamily: "Georgia, serif", fontSize: "17px", fontWeight: 700, color: "white" }}>
+                    {userName ? `${userName}, tu perfil` : "Tu perfil"}
+                  </span>
+                </div>
+                <button onClick={close} style={{ position: "absolute", right: 0, width: 30, height: 30, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                </button>
               </div>
 
-              {/* Sorpréndeme */}
-              <button onClick={() => {
-                const pool = dishes.filter(d => d.photos?.length > 0);
-                if (pool.length === 0) { close(); return; }
-                const pick = pool[Math.floor(Math.random() * Math.min(3, pool.length))];
-                trackStat(restaurantId, "GENIO_COMPLETE", pick.id, genioSessionId);
-                setVisible(false);
-                setTimeout(() => onResult(pick), 200);
-              }} className="active:scale-95 transition-transform" style={{ width: "100%", background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, padding: "14px 0", borderRadius: 50, border: "none", marginBottom: 24 }}>
-                🎲 Sorpréndeme
-              </button>
-
-              {/* Inline diet editor */}
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Dieta</span>
-                <div style={{ display: "flex", gap: 6 }}>
+              {/* Diet section */}
+              <div style={{ marginBottom: 20, textAlign: "center" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>DIETA</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
                   {DIET_OPTIONS.map((opt) => {
                     const sel = dietType === opt.value;
                     return (
                       <button key={opt.value} onClick={() => {
                         setDietType(opt.value); localStorage.setItem("qr_diet", opt.value);
                         if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: opt.value }) }).catch(() => {}); }
-                      }} style={{ flex: 1, padding: "10px 6px", borderRadius: 10, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(244,166,35,0.1)" : "transparent", color: sel ? "#F4A623" : "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-                        <opt.icon size={16} style={{ display: "block", margin: "0 auto 4px" }} color={sel ? "#F4A623" : "rgba(255,255,255,0.4)"} />
+                      }} style={{ padding: "8px 14px", borderRadius: 50, border: `1px solid ${sel ? "rgba(244,166,35,0.4)" : "rgba(255,255,255,0.1)"}`, background: sel ? "rgba(244,166,35,0.12)" : "rgba(255,255,255,0.06)", color: sel ? "#F4A623" : "rgba(255,255,255,0.45)", fontSize: "13px", fontWeight: sel ? 600 : 400, cursor: "pointer" }}>
                         {t(lang, opt.labelKey)}
                       </button>
                     );
@@ -256,90 +252,125 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 </div>
               </div>
 
-              {/* Inline restrictions editor */}
-              <div style={{ marginBottom: 16 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>Restricciones</span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {restrictionOptions.filter(r => r.value !== "ninguna").filter(r => {
-                    const animalRestrictions = ["mariscos", "cerdo", "pescado"];
-                    const dairyEggRestrictions = ["lactosa", "huevo"];
-                    if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
-                    if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
-                    return true;
-                  }).map((r) => {
-                    const sel = restrictions.includes(r.value);
-                    const Icon = r.icon;
+              {/* Restrictions section */}
+              <div style={{ marginBottom: 20, textAlign: "center" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>EVITO</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
+                  {restrictions.filter(r => r !== "ninguna").map(r => {
+                    const opt = restrictionOptions.find(o => o.value === r);
                     return (
-                      <button key={r.value} onClick={() => {
-                        const updated = sel ? restrictions.filter(x => x !== r.value) : [...restrictions.filter(x => x !== "ninguna"), r.value];
+                      <button key={r} onClick={() => {
+                        const updated = restrictions.filter(x => x !== r);
                         setRestrictions(updated); localStorage.setItem("qr_restrictions", JSON.stringify(updated));
                         if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restrictions: updated.filter(x => x !== "ninguna") }) }).catch(() => {}); }
-                      }} style={{ padding: "7px 12px", borderRadius: 50, border: `1px solid ${sel ? "#F4A623" : "rgba(255,255,255,0.12)"}`, background: sel ? "rgba(244,166,35,0.1)" : "transparent", color: sel ? "#F4A623" : "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                        <Icon size={12} />
-                        {r.labelKey ? t(lang, r.labelKey as any) : r.label}
+                      }} style={{ padding: "7px 12px", borderRadius: 50, border: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.1)", color: "#F4A623", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                        {opt?.labelKey ? t(lang, opt.labelKey as any) : opt?.label || r}
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
                       </button>
                     );
                   })}
-                </div>
-              </div>
-
-              {/* Inline dislikes editor */}
-              <div style={{ marginBottom: 20 }}>
-                <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 8 }}>No me gusta</span>
-                {dislikes.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
-                    {dislikes.map(d => (
-                      <button key={d} onClick={() => {
-                        const updated = dislikes.filter(x => x !== d);
-                        setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
-                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
-                      }} style={{ padding: "5px 10px", borderRadius: 50, border: "1px solid #F4A623", background: "rgba(244,166,35,0.1)", color: "#F4A623", fontSize: "0.75rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                        {d} <span style={{ opacity: 0.6 }}>✕</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <input
-                  value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
-                  placeholder="Buscar ingrediente..."
-                  style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "white", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" }}
-                />
-                {dislikeResults.length > 0 && (
-                  <div style={{ marginTop: 4, background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, overflow: "hidden", maxHeight: 140, overflowY: "auto" }}>
-                    {dislikeResults.map(r => (
-                      <button key={r} onClick={() => {
-                        const updated = [...dislikes, r]; setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
-                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
-                        setDislikeSearch(""); setDislikeResults([]);
-                      }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "left", color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", cursor: "pointer" }}>
-                        {r}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Register CTA — only if not logged in */}
-              {typeof document !== "undefined" && !document.cookie.includes("qr_user_id") && (
-                <div style={{ padding: "14px 16px", borderRadius: 14, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.12)", marginBottom: 16, textAlign: "center" }}>
-                  <p style={{ margin: "0 0 10px", fontSize: "0.78rem", color: "rgba(255,255,255,0.45)", lineHeight: 1.5 }}>
-                    Tus gustos se guardan solo en este dispositivo. Regístrate en 1 paso para que tu carta siempre esté personalizada, en cualquier visita.
-                  </p>
-                  <button onClick={() => { close(); setTimeout(() => { const el = document.querySelector("[data-profile-open]") as HTMLElement; if (el) el.click(); }, 300); }} className="active:scale-95 transition-transform" style={{ background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.3)", color: "#F4A623", fontSize: "0.82rem", fontWeight: 600, padding: "10px 20px", borderRadius: 50, cursor: "pointer", fontFamily: "inherit" }}>
-                    Registrarme
+                  <button onClick={() => setShowAddRestriction(prev => !prev)} style={{ padding: "7px 12px", borderRadius: 50, border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", fontSize: "12px", cursor: "pointer" }}>
+                    + Agregar
                   </button>
                 </div>
-              )}
+                {showAddRestriction && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", marginTop: 8 }}>
+                    {restrictionOptions.filter(r => r.value !== "ninguna" && !restrictions.includes(r.value)).filter(r => {
+                      const animalRestrictions = ["mariscos", "cerdo", "pescado"];
+                      const dairyEggRestrictions = ["lactosa", "huevo"];
+                      if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
+                      if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
+                      return true;
+                    }).map(r => (
+                      <button key={r.value} onClick={() => {
+                        const updated = [...restrictions.filter(x => x !== "ninguna"), r.value];
+                        setRestrictions(updated); localStorage.setItem("qr_restrictions", JSON.stringify(updated));
+                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restrictions: updated.filter(x => x !== "ninguna") }) }).catch(() => {}); }
+                        setShowAddRestriction(false);
+                      }} style={{ padding: "7px 12px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.45)", fontSize: "12px", cursor: "pointer" }}>
+                        {r.labelKey ? t(lang, r.labelKey as any) : r.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-              {/* Reset all */}
+              {/* Dislikes section */}
+              <div style={{ marginBottom: 24, textAlign: "center" }}>
+                <span style={{ fontSize: "11px", fontWeight: 600, color: "rgba(255,255,255,0.3)", letterSpacing: "0.1em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>NO ME GUSTA</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center", marginBottom: 8 }}>
+                  {dislikes.map(d => (
+                    <button key={d} onClick={() => {
+                      const updated = dislikes.filter(x => x !== d);
+                      setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                      if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
+                    }} style={{ padding: "7px 12px", borderRadius: 50, border: "1px solid rgba(244,166,35,0.3)", background: "rgba(244,166,35,0.1)", color: "#F4A623", fontSize: "12px", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                      {d}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+                    </button>
+                  ))}
+                  <button onClick={() => setShowAddDislike(prev => !prev)} style={{ padding: "7px 12px", borderRadius: 50, border: "1px dashed rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.3)", fontSize: "12px", cursor: "pointer" }}>
+                    + Agregar
+                  </button>
+                </div>
+                {showAddDislike && (
+                  <div style={{ position: "relative" }}>
+                    <input
+                      value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
+                      placeholder="Buscar ingrediente..."
+                      autoFocus
+                      style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.04)", color: "white", fontSize: "13px", outline: "none", boxSizing: "border-box" as const, fontFamily: "inherit" }}
+                    />
+                    {dislikeResults.length > 0 && (
+                      <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 10, overflow: "hidden", maxHeight: 140, overflowY: "auto", zIndex: 10 }}>
+                        {dislikeResults.map(r => (
+                          <button key={r} onClick={() => {
+                            const updated = [...dislikes, r]; setDislikes(updated); localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                            if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: updated }) }).catch(() => {}); }
+                            setDislikeSearch(""); setDislikeResults([]); setShowAddDislike(false);
+                          }} style={{ display: "block", width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid rgba(255,255,255,0.06)", textAlign: "left", color: "rgba(255,255,255,0.7)", fontSize: "13px", cursor: "pointer" }}>
+                            {r}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Save button */}
               <button onClick={() => {
-                localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
-                setDietType(null); setRestrictions([]); setDislikes([]);
-                if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}); }
-                close();
-              }} style={{ background: "none", border: "none", color: "rgba(255,255,255,0.2)", fontSize: "0.72rem", cursor: "pointer", display: "block", margin: "0 auto", fontFamily: "inherit" }}>
-                Borrar mis preferencias
+                localStorage.setItem("qr_diet", dietType || ""); localStorage.setItem("qr_restrictions", JSON.stringify(restrictions)); localStorage.setItem("qr_dislikes", JSON.stringify(dislikes));
+                if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType, restrictions: restrictions.filter(x => x !== "ninguna"), dislikes }) }).catch(() => {}); }
+                trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
+                setVisible(false); setTimeout(onClose, 200);
+              }} className="active:scale-95 transition-transform" style={{ width: "100%", background: "#F4A623", color: "#0e0e0e", border: "none", borderRadius: 50, padding: "15px", fontSize: "14px", fontWeight: 700, cursor: "pointer", marginBottom: 14 }}>
+                Guardar cambios
               </button>
+
+              {/* Delete preferences */}
+              {!confirmDelete ? (
+                <button onClick={() => setConfirmDelete(true)} style={{ width: "100%", background: "transparent", border: "none", color: "rgba(255,255,255,0.2)", fontSize: "13px", cursor: "pointer", fontFamily: "inherit", padding: "8px 0" }}>
+                  Borrar mis preferencias
+                </button>
+              ) : (
+                <div style={{ textAlign: "center", padding: "12px 0" }}>
+                  <p style={{ fontSize: "12px", color: "rgba(255,255,255,0.5)", margin: "0 0 10px" }}>¿Seguro? Esto borrará todo tu perfil.</p>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                    <button onClick={() => {
+                      localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
+                      setDietType(null); setRestrictions([]); setDislikes([]);
+                      if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}); }
+                      close();
+                    }} style={{ padding: "8px 16px", borderRadius: 50, border: "none", background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
+                      Sí, borrar
+                    </button>
+                    <button onClick={() => setConfirmDelete(false)} style={{ padding: "8px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.1)", background: "transparent", color: "rgba(255,255,255,0.4)", fontSize: "12px", cursor: "pointer" }}>
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <>

@@ -25,39 +25,6 @@ function DishBadges({ dish }: { dish: Dish }) {
   return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "12px", flexShrink: 0 }} title={b.title}>{b.icon}</span>)}</>;
 }
 
-/* ── "Para ti" featured card (same layout as Recomendado) ── */
-function PremiumParaTiCard({ dish, onClick, recommendationReason }: Omit<DishCardProps, "variant">) {
-  const photo = dish.photos?.[0];
-  return (
-    <button
-      onClick={onClick}
-      className="relative text-left overflow-hidden w-full bg-neutral-900"
-      style={{ height: "calc(205px * 4 / 3 + 45px)", borderRadius: 10, boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" }}
-    >
-      {photo ? (
-        <Image src={photo} alt={dish.name} fill className="object-cover" sizes="205px" style={{ transform: "scale(1.08)" }} />
-      ) : (
-        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
-      )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
-      <div className="absolute" style={{ top: 7, right: 7, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, zIndex: 2 }}>
-        <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.92rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8 }}>✨ Para ti</span>
-        {recommendationReason && (
-          <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "rgba(255,255,255,0.85)", fontSize: "0.58rem", fontWeight: 500, padding: "2px 8px", borderRadius: 5 }}>{recommendationReason}</span>
-        )}
-        {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>}
-      </div>
-      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 28, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
-        <span>{dish.name}</span>
-        <DishBadges dish={dish} />
-      </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 10, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
-        {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
-      </span>
-    </button>
-  );
-}
-
 /* ── BASIC ── */
 function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendationReason, isExploration, restaurantName }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
@@ -133,57 +100,20 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
   );
 }
 
-/* ── PREMIUM NORMAL ── */
-function PremiumNormalCard({ dish, onClick, hasPersonalization, restaurantName }: Omit<DishCardProps, "variant">) {
+/* ── PREMIUM CARD (unified — all cards use featured layout) ── */
+function PremiumCard({ dish, onClick, autoRecommended, restaurantName }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
-  const showRecBadge = isRec && hasPersonalization;
-  return (
-    <button onClick={onClick} className="flex flex-col text-left w-full" style={{ background: "transparent" }}>
-      <div className="relative w-full bg-neutral-900 overflow-hidden" style={{ aspectRatio: "3/4", borderRadius: 10, ...(showRecBadge ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.3)" } : {}) }}>
-        {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="205px" style={{ transform: "scale(1.08)" }} />
-        ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
-        )}
-        {showRecBadge && (
-          <div className="absolute" style={{ top: 7, right: 7, zIndex: 2 }}>
-            <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.68rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}</span>
-          </div>
-        )}
-        {!showRecBadge && dish.tags?.includes("NEW") && (
-          <span className="absolute font-[family-name:var(--font-dm)]" style={{ top: 7, left: 7, background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>
-        )}
-      </div>
-      <div style={{ padding: "8px 2px 0" }}>
-        <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
-          <span className="truncate">{dish.name}</span>
-          <DishBadges dish={dish} />
-        </h3>
-        <div style={{ marginTop: -3 }}>
-          {dish.discountPrice ? (
-            <span className="font-[family-name:var(--font-dm)]">
-              <span className="line-through" style={{ color: "#ccc", fontSize: "0.72rem", marginRight: 4 }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span style={{ color: "#666", fontSize: "0.9rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
-            </span>
-          ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ color: "#666", fontSize: "0.9rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-          )}
-        </div>
-      </div>
-    </button>
-  );
-}
 
-/* ── PREMIUM FEATURED (RECOMMENDED) ── */
-function PremiumFeaturedCard({ dish, onClick, restaurantName }: Omit<DishCardProps, "variant">) {
-  const photo = dish.photos?.[0];
-  // Match total height of normal card: photo (155 * 4/3 = 207) + text area (~52) = ~259px
+  let badge: string | null = null;
+  if (autoRecommended) badge = "✨ Para ti";
+  else if (isRec) badge = `⭐ ${restaurantName ? `Por ${restaurantName}` : "Recomendado"}`;
+
   return (
     <button
       onClick={onClick}
       className="relative text-left overflow-hidden w-full bg-neutral-900"
-      style={{ height: "calc(205px * 4 / 3 + 45px)", borderRadius: 10, boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" }}
+      style={{ height: "calc(205px * 4 / 3 + 45px)", borderRadius: 10, ...(autoRecommended ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" } : {}) }}
     >
       {photo ? (
         <Image src={photo} alt={dish.name} fill className="object-cover" sizes="205px" style={{ transform: "scale(1.08)" }} />
@@ -192,14 +122,16 @@ function PremiumFeaturedCard({ dish, onClick, restaurantName }: Omit<DishCardPro
       )}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
       <div className="absolute" style={{ top: 7, right: 7, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, zIndex: 2 }}>
-        <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.82rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8 }}>⭐ Recomendado{restaurantName ? ` por ${restaurantName}` : ""}</span>
+        {badge && (
+          <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.82rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8 }}>{badge}</span>
+        )}
         {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>}
       </div>
-      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 28, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
+      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 27, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
         <span>{dish.name}</span>
         <DishBadges dish={dish} />
       </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 10, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
+      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
       </span>
     </button>
@@ -208,10 +140,5 @@ function PremiumFeaturedCard({ dish, onClick, restaurantName }: Omit<DishCardPro
 
 export default function DishCard(props: DishCardProps) {
   if (props.variant === "basic") return <BasicCard {...props} />;
-  const isRecommended = props.dish.tags?.includes("RECOMMENDED");
-  // "Para ti" gets the featured card treatment (same design as Recomendado)
-  if (props.autoRecommended) return <PremiumParaTiCard {...props} />;
-  // When personalization is active, RECOMMENDED renders as normal card
-  if (isRecommended && props.hasPersonalization) return <PremiumNormalCard {...props} />;
-  return isRecommended ? <PremiumFeaturedCard {...props} /> : <PremiumNormalCard {...props} />;
+  return <PremiumCard {...props} />;
 }
