@@ -214,7 +214,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
             Salir
           </button>
         </div>
-        <div className="flex items-center justify-center" style={{ gap: 6 }}>
+        <div className="flex items-center" style={{ gap: 6, paddingLeft: 26 }}>
           {subscribed ? <Wifi size={12} color="#16a34a" /> : <WifiOff size={12} color="#dc2626" />}
           <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626" }}>
             {subscribed ? "Conectado" : "Desconectado"}
