@@ -160,6 +160,26 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     return () => clearInterval(t);
   }, []);
 
+  const endShift = useCallback(async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+          await fetch("/api/qr/waiter/subscribe", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: sub.endpoint }),
+          });
+        }
+      }
+    } catch {}
+    setPushActive(false);
+    setSubscribed(false);
+    setCalls([]);
+    window.location.href = "/qr/admin/garzon";
+  }, []);
+
   const answerCall = async (callId: string) => {
     unlockAudio();
     await fetch("/api/qr/waiter/answer", {
@@ -181,18 +201,26 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
             <span style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)" }}>{restaurantName}</span>
           </div>
         </div>
-        <div className="flex items-center" style={{ gap: 6 }}>
-          {subscribed ? <Wifi size={16} color="#16a34a" /> : <WifiOff size={16} color="#dc2626" />}
-          <div>
-            <span style={{ fontSize: "0.75rem", color: subscribed ? "#16a34a" : "#dc2626", display: "block" }}>
-              {subscribed ? "Conectado" : "Desconectado"}
-            </span>
-            {subscribed && (
-              <span style={{ fontSize: "0.6rem", color: pushActive ? "#16a34a" : "rgba(255,255,255,0.3)", display: "block" }}>
-                {pushActive ? "Push activo" : "Solo polling"}
+        <div className="flex items-center" style={{ gap: 12 }}>
+          <div className="flex items-center" style={{ gap: 6 }}>
+            {subscribed ? <Wifi size={16} color="#16a34a" /> : <WifiOff size={16} color="#dc2626" />}
+            <div>
+              <span style={{ fontSize: "0.75rem", color: subscribed ? "#16a34a" : "#dc2626", display: "block" }}>
+                {subscribed ? "Conectado" : "Desconectado"}
               </span>
-            )}
+              {subscribed && (
+                <span style={{ fontSize: "0.6rem", color: pushActive ? "#16a34a" : "rgba(255,255,255,0.3)", display: "block" }}>
+                  {pushActive ? "Push activo" : "Solo polling"}
+                </span>
+              )}
+            </div>
           </div>
+          <button
+            onClick={endShift}
+            style={{ padding: "6px 12px", borderRadius: 8, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+          >
+            Salir de turno
+          </button>
         </div>
       </div>
 

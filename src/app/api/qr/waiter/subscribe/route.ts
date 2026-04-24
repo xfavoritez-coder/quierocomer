@@ -47,3 +47,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Failed to subscribe" }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { endpoint } = await request.json();
+    if (!endpoint) return NextResponse.json({ error: "Missing endpoint" }, { status: 400 });
+
+    await prisma.waiterPushSubscription.updateMany({
+      where: { endpoint },
+      data: { isActive: false },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("Unsubscribe error:", error);
+    return NextResponse.json({ error: "Failed" }, { status: 500 });
+  }
+}
