@@ -20,12 +20,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sube al menos una foto de la carta" }, { status: 400 });
     }
 
-    // Convert images to base64
+    // Convert images to base64 — normalize media types for Anthropic API
+    const VALID_TYPES = new Set(["image/jpeg", "image/png", "image/gif", "image/webp"]);
+    const normalizeType = (t: string) => {
+      if (VALID_TYPES.has(t)) return t;
+      if (t === "image/jpg") return "image/jpeg";
+      if (t.startsWith("image/heic") || t.startsWith("image/heif")) return "image/jpeg";
+      return "image/jpeg"; // fallback
+    };
+
     const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
     for (const file of files.slice(0, 5)) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const base64 = buffer.toString("base64");
-      const mediaType = file.type || "image/jpeg";
+      const mediaType = normalizeType(file.type);
       images.push({
         type: "image",
         source: { type: "base64", media_type: mediaType, data: base64 },
