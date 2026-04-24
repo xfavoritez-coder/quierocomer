@@ -414,10 +414,10 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ position: "absolute", top: -10, right: 20, background: "#fbbf24", color: "#111", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
               <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>1 UF</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$25.000</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
               </div>
-              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>$39.000 CLP · IVA inc.</p>
+              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Neto · Sin contratos</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#fbbf24", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
@@ -436,6 +436,32 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ IMPLEMENTACIÓN GRATIS ══════ */}
+      <section style={{ background: "#f9f6ee", padding: "60px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 600, margin: "0 auto" }}>
+          <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Implementación</p>
+          <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 16 }}>
+            Nosotros nos encargamos de todo
+          </h2>
+          <p style={{ fontSize: 16, color: "#666", lineHeight: 1.6, maxWidth: 480, margin: "0 auto 32px" }}>
+            Pasamos tu carta actual con fotos, precios y descripciones. Tú no tienes que hacer nada — la implementación es 100% gratis.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 500, margin: "0 auto" }}>
+            {[
+              { emoji: "📸", title: "Tu carta con fotos", desc: "Subimos todos tus platos con sus fotos y descripciones" },
+              { emoji: "⚡", title: "En 24 horas", desc: "Tu carta digital lista para usar en un día" },
+              { emoji: "💰", title: "Sin costo", desc: "La implementación es completamente gratis" },
+            ].map(item => (
+              <div key={item.title} style={{ padding: "20px 12px" }}>
+                <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>{item.emoji}</span>
+                <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 4 }}>{item.title}</p>
+                <p style={{ fontSize: 13, color: "#888", lineHeight: 1.4 }}>{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
