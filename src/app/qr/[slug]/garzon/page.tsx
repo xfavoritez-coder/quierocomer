@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const restaurant = await prisma.restaurant.findUnique({ where: { slug }, select: { name: true } });
   return {
-    title: restaurant ? `🔔 Garzón · ${restaurant.name}` : "Garzón",
+    title: restaurant ? `Garzón · ${restaurant.name}` : "Garzón",
     other: {
       "apple-mobile-web-app-capable": "yes",
       "apple-mobile-web-app-status-bar-style": "black-translucent",
@@ -30,7 +30,7 @@ export default async function GarzonPage({ params }: { params: Promise<{ slug: s
     <>
       <link rel="manifest" href="/manifest-garzon.json" />
       <link rel="apple-touch-icon" href="/icon-192.png" />
-      <meta name="apple-mobile-web-app-title" content={`🔔 Garzón · ${restaurant.name}`} />
+      <meta name="apple-mobile-web-app-title" content={`Garzón · ${restaurant.name}`} />
       <GarzonPanel restaurantId={restaurant.id} restaurantName={restaurant.name} />
     </>
   );
