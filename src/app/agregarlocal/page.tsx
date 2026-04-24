@@ -195,7 +195,7 @@ export default function AgregarLocalPage() {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <span style={{ fontSize: "2rem" }}>✨</span>
+          <span style={{ fontSize: "2rem" }}>🧞</span>
           <h1 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "#F4A623", margin: "8px 0 4px" }}>Agregar Local</h1>
           <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.88rem" }}>Sube fotos de la carta y creamos tu menú digital al instante</p>
         </div>
@@ -407,7 +407,7 @@ export default function AgregarLocalPage() {
             <button
               onClick={async () => {
                 setStep("photos" as any);
-                setPhotoProgress("Generando búsquedas con IA...");
+                setPhotoProgress("Buscando fotos (0%)...");
                 setError("");
                 try {
                   const res = await fetch("/api/agregarlocal/photos", {
@@ -420,7 +420,6 @@ export default function AgregarLocalPage() {
                   try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 200)}`); }
                   if (!res.ok) throw new Error(data.error || "Error buscando fotos");
                   if (!data.results?.length) throw new Error(data.message || "No se encontraron platos sin fotos");
-                  setPhotoProgress("Buscando fotos en Unsplash...");
                   setPhotoResults(data.results.map((r: any) => ({ ...r, selected: !!r.photoUrl })));
                   setPhotoProgress("");
                 } catch (e: any) {
@@ -516,14 +515,16 @@ export default function AgregarLocalPage() {
                   onClick={async () => {
                     const selected = photoResults.filter(r => r.selected && r.photoUrl);
                     if (selected.length === 0) { setStep("done"); return; }
-                    setPhotoProgress(`Aplicando ${selected.length} fotos...`);
                     try {
-                      const res = await fetch("/api/agregarlocal/photos", {
-                        method: "PUT",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ photos: selected.map(r => ({ dishId: r.dishId, photoUrl: r.photoUrl })) }),
-                      });
-                      if (!res.ok) throw new Error("Error aplicando fotos");
+                      for (let pi = 0; pi < selected.length; pi++) {
+                        setPhotoProgress(`Aplicando foto ${pi + 1} de ${selected.length}...`);
+                        const r = selected[pi];
+                        await fetch("/api/agregarlocal/photos", {
+                          method: "PUT",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ photos: [{ dishId: r.dishId, photoUrl: r.photoUrl }] }),
+                        });
+                      }
                       setStep("done");
                       setPhotoProgress("");
                     } catch (e: any) {

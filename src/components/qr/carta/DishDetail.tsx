@@ -489,14 +489,8 @@ function DishSlide({
               // Diet
               if (d.dishDiet === "VEGAN") traits.push({ label: "Vegano", positive: true });
               else if (d.dishDiet === "VEGETARIAN") traits.push({ label: "Vegetariano", positive: true });
-              // Spicy
-              if (d.isSpicy) traits.push({ label: "Picante", positive: false });
-              else traits.push({ label: "No picante", positive: true });
-              // Flavor tags
-              const flavorLabels: Record<string, string> = { dulce: "Dulce", agridulce: "Agridulce", umami: "Umami", "ácido": "Ácido", ahumado: "Ahumado", picante: "Picante" };
-              (d.flavorTags || []).forEach((f: string) => {
-                if (f !== "picante" && flavorLabels[f]) traits.push({ label: flavorLabels[f], positive: false });
-              });
+              // Spicy — only show when it IS spicy
+              if (d.isSpicy) traits.push({ label: "Picante 🌶️", positive: false });
               if (traits.length === 0) return null;
               return (
                 <div style={{ marginTop: 16 }}>
