@@ -18,7 +18,8 @@ export async function sendWaiterNotification(
   subscription: webpush.PushSubscription,
   tableId: string,
   tableName: string,
-  restaurantId: string
+  restaurantId: string,
+  slug?: string | null
 ) {
   ensureConfigured();
   const payload = JSON.stringify({
@@ -27,6 +28,7 @@ export async function sendWaiterNotification(
     tableId,
     tableName,
     restaurantId,
+    slug,
     calledAt: new Date().toISOString(),
   });
   await webpush.sendNotification(subscription, payload);

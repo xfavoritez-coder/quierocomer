@@ -29,9 +29,10 @@ export async function POST(request: Request) {
     try {
       const { sendWaiterNotification } = await import("@/lib/qr/utils/webpush");
 
-      const subs = await prisma.waiterPushSubscription.findMany({
-        where: { restaurantId, isActive: true },
-      });
+      const [subs, restaurant] = await Promise.all([
+        prisma.waiterPushSubscription.findMany({ where: { restaurantId, isActive: true } }),
+        prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { slug: true } }),
+      ]);
 
       for (const sub of subs) {
         try {
@@ -39,7 +40,8 @@ export async function POST(request: Request) {
             { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
             waiterCall.id,
             tableName || "Cliente",
-            restaurantId
+            restaurantId,
+            restaurant?.slug
           );
           pushSent++;
         } catch (e: any) {
