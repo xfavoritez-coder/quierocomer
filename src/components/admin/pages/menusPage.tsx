@@ -587,20 +587,6 @@ export default function AdminMenus() {
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
                   </button>
-                  {[
-                    { value: "dulce", icon: "🍯", color: "#f59e0b" },
-                    { value: "agridulce", icon: "🍊", color: "#fb923c" },
-                    { value: "ácido", icon: "🍋", color: "#a3e635" },
-                    { value: "umami", icon: "🍄", color: "#c084fc" },
-                    { value: "ahumado", icon: "🔥", color: "#a78bfa" },
-                  ].map(f => {
-                    const active = eFlavorTags.includes(f.value);
-                    return (
-                      <button key={f.value} onClick={() => setEFlavorTags(prev => active ? prev.filter(t => t !== f.value) : [...prev, f.value])} style={{ padding: "6px 12px", borderRadius: 8, border: active ? `1.5px solid ${f.color}33` : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: active ? `${f.color}1a` : "transparent", color: active ? f.color : "var(--adm-text3)" }}>
-                        {f.icon} {f.value.charAt(0).toUpperCase() + f.value.slice(1)}
-                      </button>
-                    );
-                  })}
                 </div>
               </div>
 
