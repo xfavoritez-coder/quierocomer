@@ -208,6 +208,21 @@ export function scoreDish(
     }
   }
 
+  // Build composite reason if no strong single reason
+  if (!topReason || topReason.weight < 5) {
+    const reasons: string[] = [];
+    if (!hasRestrictionHit && profile.restrictions.length > 0) reasons.push("cumple con tus restricciones");
+    if (dislikeHits === 0 && profile.dislikedIngredients.length > 0) reasons.push("no tiene ingredientes que evitas");
+    if (profile.dietType && (
+      (profile.dietType === "vegan" && dish.dishDiet === "VEGAN") ||
+      (profile.dietType === "vegetarian" && (dish.dishDiet === "VEGAN" || dish.dishDiet === "VEGETARIAN"))
+    )) reasons.push(`es ${dish.dishDiet === "VEGAN" ? "vegano" : "vegetariano"}`);
+    if (isNew) reasons.push("es nuevo en la carta");
+    if (reasons.length > 0) {
+      topReason = { text: reasons.slice(0, 2).join(" y ").charAt(0).toUpperCase() + reasons.slice(0, 2).join(" y ").slice(1), weight: 5 };
+    }
+  }
+
   // Clamp 0-100
   score = Math.max(0, Math.min(100, score));
 

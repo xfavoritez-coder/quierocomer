@@ -283,7 +283,11 @@ export default function AdminSessions() {
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
-                      {s.personalizationData && s.personalizationData.shown > 0 && <span style={{ color: "#F4A623" }}>· ✨ {s.personalizationData.tapped}/{s.personalizationData.shown}</span>}
+                      {s.personalizationData && s.personalizationData.shown > 0 && (
+                        <span style={{ color: "#F4A623" }} title={s.personalizationData.dishes.map(d => `${d.name} (${d.score}pts)${d.tapped ? " ✓" : ""}`).join(", ")}>
+                          · ✨ {s.personalizationData.tapped} de {s.personalizationData.shown} Para ti
+                        </span>
+                      )}
                       {s.waiterCalls?.length > 0 && <span style={{ color: "#16a34a" }}>· 🔔 Garzón ({s.waiterCalls.length})</span>}
                       {s.dishFavorites?.length > 0 && <span style={{ color: "#ef4444" }}>· ❤️ {s.dishFavorites.length}</span>}
                       {s.experienceSubmissions.length > 0 && <span style={{ color: "#c084fc" }}>· {s.experienceSubmissions[0].templateEmoji} Experiencia</span>}

@@ -414,9 +414,9 @@ export default function CartaLista({
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 30,
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "rgba(247,247,245,0.85)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           }}
         >
           <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>

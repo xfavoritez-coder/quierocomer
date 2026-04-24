@@ -329,7 +329,7 @@ function DishSlide({
             style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
             <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
-              ⭐ {restaurantName || "El local"} recomienda especialmente este plato.
+              ⭐ {restaurantName || "El local"} recomienda este plato.
             </p>
           </div>
         )}
