@@ -249,10 +249,12 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
           </div>
         </div>
       ) : (
-        <button onClick={() => setCreating(true)} style={{
-          padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10,
-          fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", marginBottom: 20,
-        }}>+ Nuevo horario especial</button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+          <button onClick={() => setCreating(true)} style={{
+            padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10,
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
+          }}>+ Nuevo horario especial</button>
+        </div>
       )}
 
       {/* List */}

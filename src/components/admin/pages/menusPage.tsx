@@ -991,7 +991,19 @@ export default function AdminMenus() {
                 </div>
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
-                  {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Inactivo</p>}
+                  {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Oculto</p>}
+                </div>
+                <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: "rgba(127,191,220,0.08)", color: "#7fbfdc" }}>Editar</button>
+                  <button onClick={() => toggleDishActive(d)} style={{ padding: "3px 8px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: d.isActive ? "var(--adm-text3)" : "#4ade80" }}>
+                    {d.isActive ? "Ocultar" : "Mostrar"}
+                  </button>
+                  <button onClick={async () => {
+                    if (!confirm(`¿Eliminar "${d.name}"?`)) return;
+                    await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
+                    setDishes(prev => prev.filter(x => x.id !== d.id));
+                    setExpandedDishId(null);
+                  }} style={{ padding: "3px 8px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", background: "rgba(239,68,68,0.06)", color: "#ef4444" }}>Eliminar</button>
                 </div>
                 <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
               </button>
