@@ -95,7 +95,7 @@ Reglas:
     if (!res.ok) {
       const err = await res.text();
       console.error("[agregarlocal] Claude API error:", res.status, err);
-      return NextResponse.json({ error: "Error al analizar las fotos" }, { status: 500 });
+      return NextResponse.json({ error: `Error API (${res.status}): ${err.slice(0, 200)}` }, { status: 500 });
     }
 
     const data = await res.json();
