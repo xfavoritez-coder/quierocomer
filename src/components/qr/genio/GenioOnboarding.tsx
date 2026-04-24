@@ -826,7 +826,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         {/* STEP 4 — Akinator photo grid */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "78px 8px 20px", position: "relative" }}>
           {/* Category filter pills */}
-          <div className="flex" style={{ gap: 8, marginBottom: 16, justifyContent: "center" }}>
+          <div className="flex" style={{ gap: 8, marginTop: 12, marginBottom: 16, justifyContent: "center" }}>
             {(["platos", "bebida", "dulce"] as const).map((f) => {
               const active = photoFilter === f;
               return (
