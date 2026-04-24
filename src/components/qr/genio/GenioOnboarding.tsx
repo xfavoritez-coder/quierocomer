@@ -290,7 +290,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [overlayDismissed, setOverlayDismissed] = useState(false);
   const [dismissedAt, setDismissedAt] = useState(0);
   useEffect(() => {
-    if (liked.size >= 4 && !overlayDismissed) {
+    if (liked.size >= 3 && !overlayDismissed) {
       setShowOverlay(true);
     } else if (overlayDismissed && liked.size > dismissedAt) {
       // Check category concentration of ALL selections
@@ -569,8 +569,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   // Feedback messages
   const feedbackMsg = liked.size === 0 ? t(lang, "gFeedbackTap")
     : liked.size === 1 ? t(lang, "gFeedbackKeep")
-    : liked.size === 2 ? t(lang, "gFeedbackWell")
-    : liked.size === 3 ? t(lang, "gFeedbackAlmost")
+    : liked.size === 2 ? t(lang, "gFeedbackAlmost")
     : null;
 
   const displayStep = Math.min(step, 4); // Clamp for slide animation
@@ -780,9 +779,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             )}
           </div>
 
-          {/* Flavor dislikes */}
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gFlavors")}</p>
+          {/* Popular ingredient picks — shown first */}
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gCommonIngredients")}</p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16 }}>
+            {popularDislikes.filter(p => !dislikes.includes(p)).map(item => (
+              <button key={item} onClick={() => {
+                setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+              }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
+                {item}
+              </button>
+            ))}
+          </div>
+
+          {/* Flavor dislikes — shown after ingredients */}
+          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gFlavors")}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
             {[
               { value: "dulce", icon: "🍯" },
               { value: "agridulce", icon: "🍊" },
@@ -793,18 +804,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 setDislikes(prev => { const updated = [...prev, f.value]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
               }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
                 {f.icon} {f.value}
-              </button>
-            ))}
-          </div>
-
-          {/* Popular ingredient picks */}
-          <p className="text-center" style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.75rem", marginBottom: 10 }}>{t(lang, "gCommonIngredients")}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center" }}>
-            {popularDislikes.filter(p => !dislikes.includes(p)).map(item => (
-              <button key={item} onClick={() => {
-                setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-              }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.88rem", fontWeight: 500 }}>
-                {item}
               </button>
             ))}
           </div>
@@ -910,7 +909,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
 
           {/* 4+ overlay */}
-          {showOverlay && liked.size >= 4 && (
+          {showOverlay && liked.size >= 3 && (
             <div className="absolute flex flex-col items-center justify-center" style={{ inset: 0, background: "rgba(14,14,14,0.92)", zIndex: 30, padding: 32, gap: 12 }}>
               <span style={{ fontSize: "2.5rem", animation: "genioPulse 2s ease-in-out infinite" }}>🧞</span>
               <h3 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.3rem", color: "white", fontWeight: 800, lineHeight: 1.3 }}>

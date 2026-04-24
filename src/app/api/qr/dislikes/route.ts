@@ -34,7 +34,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name]) => name);
+    const EXCLUDE = ["picante", "_spicy", "spicy"];
+    const sorted = Object.entries(counts).filter(([name]) => !EXCLUDE.includes(name)).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name]) => name);
 
     // Fallback defaults if not enough data
     const defaults = ["palta", "cebolla", "tomate", "cilantro", "ajo", "pepino", "aceitunas", "champiñones", "soya", "jengibre"];
