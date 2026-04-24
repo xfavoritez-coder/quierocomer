@@ -137,11 +137,10 @@ export async function GET(req: NextRequest) {
     }) : [];
     const genioDishMap = Object.fromEntries(genioDishes.map((d) => [d.id, d.name]));
 
-    const genioDataByDbSession: Record<string, { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[]; lastStep: string }> = {};
+    const genioDataByDbSession: Record<string, { timesUsed: number; completed: boolean; lastStep: string }> = {};
     const dbSessionsWithGenio = new Set<string>();
 
     for (const s of sessions) {
-      // Match events: prefer dbSessionId, fall back to guestId + time window
       const start = s.startedAt.getTime();
       const end = s.endedAt ? s.endedAt.getTime() : Date.now();
       const matching = genioEvents.filter((e) =>
@@ -151,21 +150,64 @@ export async function GET(req: NextRequest) {
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
-      const data = { timesUsed: 0, recommendations: [] as { name: string; isBestMatch: boolean }[], lastStep: "" };
-      let completesAfterLastStart = 0;
-      const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS"];
-      const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos", GENIO_STEP_GRID: "Grilla", GENIO_STEP_RESULTS: "Resultados" };
+      const data = { timesUsed: 0, completed: false, lastStep: "" };
+      const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES"];
+      const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos" };
       let maxStep = -1;
       for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
-        if (e.eventType === "GENIO_START") { data.timesUsed++; completesAfterLastStart = 0; }
-        if (e.eventType === "GENIO_COMPLETE" && e.dishId) {
-          const name = genioDishMap[e.dishId];
-          if (name) { data.recommendations.push({ name, isBestMatch: completesAfterLastStart === 0 }); completesAfterLastStart++; }
-        }
+        if (e.eventType === "GENIO_START") { data.timesUsed++; }
+        if (e.eventType === "GENIO_COMPLETE") { data.completed = true; }
         const stepIdx = stepOrder.indexOf(e.eventType);
         if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
       }
       genioDataByDbSession[s.id] = data;
+    }
+
+    // ── Personalization events (RECOMMENDATION_SHOWN/TAPPED) ──
+    const recEventTypes: any[] = ["RECOMMENDATION_SHOWN", "RECOMMENDATION_TAPPED"];
+    const recEvents = sessionIds.length ? await prisma.statEvent.findMany({
+      where: {
+        eventType: { in: recEventTypes },
+        OR: [
+          { dbSessionId: { in: sessionIds } },
+          ...(sessionGuestIds.length ? [{
+            guestId: { in: sessionGuestIds },
+            dbSessionId: null,
+            createdAt: {
+              gte: new Date(Math.min(...sessions.map(s => s.startedAt.getTime())) - 60_000),
+              lte: new Date(Math.max(...sessions.map(s => (s.endedAt?.getTime() || Date.now()))) + 60_000),
+            },
+          }] : []),
+        ],
+      },
+      select: { guestId: true, dbSessionId: true, eventType: true, dishId: true, metadata: true, createdAt: true },
+    }) : [];
+
+    const recDataBySession: Record<string, { shown: number; tapped: number; dishes: { name: string; score: number; tapped: boolean }[] }> = {};
+    for (const s of sessions) {
+      const start = s.startedAt.getTime();
+      const end = s.endedAt ? s.endedAt.getTime() : Date.now();
+      const matching = recEvents.filter((e) =>
+        e.dbSessionId === s.id ||
+        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
+      );
+      if (matching.length === 0) continue;
+
+      const data = { shown: 0, tapped: 0, dishes: [] as { name: string; score: number; tapped: boolean }[] };
+      const seenDishes = new Set<string>();
+      const tappedDishes = new Set<string>();
+      for (const e of matching) {
+        if (e.eventType === "RECOMMENDATION_SHOWN") { data.shown++; if (e.dishId) seenDishes.add(e.dishId); }
+        if (e.eventType === "RECOMMENDATION_TAPPED") { data.tapped++; if (e.dishId) tappedDishes.add(e.dishId); }
+      }
+      // Resolve dish names
+      const allRecDishIds = [...new Set([...seenDishes, ...tappedDishes])];
+      for (const dishId of allRecDishIds) {
+        const dish = dishMap[dishId];
+        const meta = matching.find(e => e.dishId === dishId && e.metadata)?.metadata as any;
+        data.dishes.push({ name: dish?.name || dishId, score: meta?.score || 0, tapped: tappedDishes.has(dishId) });
+      }
+      recDataBySession[s.id] = data;
     }
 
     // ── Experience submissions: scoped to session time range ──
@@ -246,6 +288,7 @@ export async function GET(req: NextRequest) {
         pickedDish: s.pickedDishId ? dishMap[s.pickedDishId] || null : null,
         usedGenio: dbSessionsWithGenio.has(s.id),
         genioData: genioDataByDbSession[s.id] || null,
+        personalizationData: recDataBySession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
         dishFavorites: sessionFavs.map(f => ({
           id: f.id,

@@ -38,7 +38,7 @@ export default function AnalyticsDashboard() {
     { label: "Tickets", href: "/admin/analytics/tickets", icon: "🧾" },
     { label: "Ticket Trend", href: "/admin/analytics/ticket-trend", icon: "📊" },
     { label: "Búsquedas", href: "/admin/analytics/searches", icon: "🔍" },
-    { label: "Genio", href: "/admin/analytics/genio", icon: "🧞" },
+    { label: "Personalización", href: "/admin/analytics/genio", icon: "✨" },
   ];
 
   return (

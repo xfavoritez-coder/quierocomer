@@ -108,7 +108,8 @@ interface SessionData {
   tableId: string | null;
   isQrScan: boolean;
   usedGenio: boolean;
-  genioData: { timesUsed: number; recommendations: { name: string; isBestMatch: boolean }[]; lastStep?: string } | null;
+  genioData: { timesUsed: number; completed: boolean; lastStep?: string } | null;
+  personalizationData: { shown: number; tapped: number; dishes: { name: string; score: number; tapped: boolean }[] } | null;
   visitDays: number;
   ipAddress: string | null;
   userAgent: string | null;
@@ -282,6 +283,7 @@ export default function AdminSessions() {
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
+                      {s.personalizationData && s.personalizationData.shown > 0 && <span style={{ color: "#F4A623" }}>· ✨ {s.personalizationData.tapped}/{s.personalizationData.shown}</span>}
                       {s.waiterCalls?.length > 0 && <span style={{ color: "#16a34a" }}>· 🔔 Garzón ({s.waiterCalls.length})</span>}
                       {s.dishFavorites?.length > 0 && <span style={{ color: "#ef4444" }}>· ❤️ {s.dishFavorites.length}</span>}
                       {s.experienceSubmissions.length > 0 && <span style={{ color: "#c084fc" }}>· {s.experienceSubmissions[0].templateEmoji} Experiencia</span>}
@@ -343,24 +345,35 @@ export default function AdminSessions() {
                       ) : null;
                     })()}
 
-                    {/* Genio data */}
+                    {/* Genio onboarding data */}
                     {s.usedGenio && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-                        {(() => {
-                          const completed = (s.genioData?.recommendations?.length ?? 0) > 0;
-                          const step = s.genioData?.lastStep;
-                          return completed
-                            ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Genio completado{s.genioData?.timesUsed && s.genioData.timesUsed > 1 ? ` (${s.genioData.timesUsed}x)` : ""}</span>
-                            : <>
-                                <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
-                                {step && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {step}</span>}
-                              </>;
-                        })()}
-                        {s.genioData?.recommendations?.map((rec, i) => (
-                          <span key={i} style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: rec.isBestMatch ? "rgba(244,166,35,0.1)" : "rgba(74,222,128,0.1)", color: rec.isBestMatch ? "#F4A623" : "#4ade80", fontWeight: rec.isBestMatch ? 600 : 400 }}>
-                            {rec.isBestMatch ? "⭐ " : ""}Recomendó: {rec.name}
-                          </span>
-                        ))}
+                        {s.genioData?.completed
+                          ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Preferencias guardadas{s.genioData.timesUsed > 1 ? ` (${s.genioData.timesUsed}x)` : ""}</span>
+                          : <>
+                              <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
+                              {s.genioData?.lastStep && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {s.genioData.lastStep}</span>}
+                            </>
+                        }
+                      </div>
+                    )}
+
+                    {/* Personalization data */}
+                    {s.personalizationData && (
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 6 }}>
+                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 600 }}>✨ {s.personalizationData.shown} "Para ti" mostradas</span>
+                          <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: s.personalizationData.tapped > 0 ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.05)", color: s.personalizationData.tapped > 0 ? "#4ade80" : "var(--adm-text3)", fontWeight: 600 }}>{s.personalizationData.tapped} tocadas ({s.personalizationData.shown > 0 ? Math.round(s.personalizationData.tapped / s.personalizationData.shown * 100) : 0}% CTR)</span>
+                        </div>
+                        {s.personalizationData.dishes.length > 0 && (
+                          <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                            {s.personalizationData.dishes.map((d, i) => (
+                              <span key={i} style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: d.tapped ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.04)", color: d.tapped ? "#4ade80" : "var(--adm-text3)" }}>
+                                {d.tapped ? "✓ " : ""}{d.name} <span style={{ opacity: 0.5 }}>({d.score}pts)</span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 

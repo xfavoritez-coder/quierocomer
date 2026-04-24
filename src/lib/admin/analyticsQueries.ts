@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import type { VisitorMetrics, FunnelData, TicketTrend, FailedSearch, GenioImpactComparison } from "@/types/analytics";
 
 function restaurantFilter(restaurantId: string | null) {
@@ -205,4 +206,90 @@ export async function getGenioImpact(restaurantId: string | null, from: Date, to
   }
 
   return { withGenio: computeMetrics(withGenio), withoutGenio: computeMetrics(withoutGenio) };
+}
+
+export async function getPersonalizationMetrics(restaurantId: string | null, from: Date, to: Date) {
+  const rf = restaurantFilter(restaurantId);
+
+  // Recommendation events
+  const recEvents = await prisma.statEvent.findMany({
+    where: { ...rf, eventType: { in: ["RECOMMENDATION_SHOWN", "RECOMMENDATION_TAPPED"] }, createdAt: { gte: from, lte: to } },
+    select: { eventType: true, dishId: true, metadata: true },
+    take: 10000,
+  });
+  const shown = recEvents.filter(e => e.eventType === "RECOMMENDATION_SHOWN").length;
+  const tapped = recEvents.filter(e => e.eventType === "RECOMMENDATION_TAPPED").length;
+
+  // Top recommended dishes
+  const dishCounts: Record<string, { shown: number; tapped: number }> = {};
+  for (const e of recEvents) {
+    if (!e.dishId) continue;
+    if (!dishCounts[e.dishId]) dishCounts[e.dishId] = { shown: 0, tapped: 0 };
+    if (e.eventType === "RECOMMENDATION_SHOWN") dishCounts[e.dishId].shown++;
+    if (e.eventType === "RECOMMENDATION_TAPPED") dishCounts[e.dishId].tapped++;
+  }
+  const topDishIds = Object.entries(dishCounts).sort((a, b) => b[1].shown - a[1].shown).slice(0, 10).map(([id]) => id);
+  const topDishes = topDishIds.length ? await prisma.dish.findMany({ where: { id: { in: topDishIds } }, select: { id: true, name: true } }) : [];
+  const dishNameMap = Object.fromEntries(topDishes.map(d => [d.id, d.name]));
+
+  // Genio onboarding funnel
+  const genioStarts = await prisma.statEvent.count({ where: { ...rf, eventType: "GENIO_START", createdAt: { gte: from, lte: to } } });
+  const genioCompletes = await prisma.statEvent.count({ where: { ...rf, eventType: "GENIO_COMPLETE", createdAt: { gte: from, lte: to } } });
+
+  // Diet distribution from guest profiles
+  const guests = await prisma.guestProfile.findMany({
+    where: { preferences: { not: Prisma.JsonNull }, lastSeenAt: { gte: from, lte: to } },
+    select: { preferences: true },
+    take: 5000,
+  });
+  const dietCounts: Record<string, number> = {};
+  const restrictionCounts: Record<string, number> = {};
+  for (const g of guests) {
+    const prefs = g.preferences as any;
+    if (prefs?.dietType) dietCounts[prefs.dietType] = (dietCounts[prefs.dietType] || 0) + 1;
+    for (const r of (prefs?.restrictions || [])) {
+      if (r !== "ninguna") restrictionCounts[r] = (restrictionCounts[r] || 0) + 1;
+    }
+  }
+
+  // Favorite ingredients aggregated
+  const guestsWithFavs = await prisma.guestProfile.findMany({
+    where: { favoriteIngredients: { not: Prisma.JsonNull }, lastSeenAt: { gte: from, lte: to } },
+    select: { favoriteIngredients: true },
+    take: 2000,
+  });
+  const ingredientTotals: Record<string, number> = {};
+  for (const g of guestsWithFavs) {
+    const favs = g.favoriteIngredients as Record<string, number>;
+    for (const [name, score] of Object.entries(favs)) {
+      ingredientTotals[name] = (ingredientTotals[name] || 0) + score;
+    }
+  }
+  const topIngredients = Object.entries(ingredientTotals).sort((a, b) => b[1] - a[1]).slice(0, 15).map(([name, score]) => ({ name, score }));
+
+  // Favorites (thumbs up) count
+  const favoritesCount = await prisma.dishFavorite.count({
+    where: { ...(restaurantId ? { restaurantId } : {}), createdAt: { gte: from, lte: to } },
+  });
+
+  return {
+    recommendations: {
+      shown,
+      tapped,
+      ctr: shown > 0 ? Math.round((tapped / shown) * 100) : 0,
+      topDishes: topDishIds.map(id => ({ name: dishNameMap[id] || id, ...dishCounts[id] })),
+    },
+    onboarding: {
+      started: genioStarts,
+      completed: genioCompletes,
+      completionRate: genioStarts > 0 ? Math.round((genioCompletes / genioStarts) * 100) : 0,
+    },
+    audience: {
+      totalProfiles: guests.length,
+      diets: Object.entries(dietCounts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count, pct: Math.round((count / guests.length) * 100) })),
+      restrictions: Object.entries(restrictionCounts).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([name, count]) => ({ name, count })),
+      topIngredients,
+    },
+    favorites: { total: favoritesCount },
+  };
 }
