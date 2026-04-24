@@ -476,11 +476,14 @@ function DishSlide({
             {(() => {
               const d = dish as any;
               const traits: { label: string; positive: boolean }[] = [];
-              // Allergen-free traits — only show for allergens that exist in other dishes of this restaurant
+              // Allergen-free traits — only show for allergens the user has as restrictions
               const allergenLower = derivedAllergens.map(a => a.toLowerCase());
-              if (restaurantAllergens) {
-                for (const a of restaurantAllergens) {
-                  if (!allergenLower.includes(a)) traits.push({ label: `Sin ${a}`, positive: true });
+              // Get user restrictions from localStorage
+              let userRestrictions: string[] = [];
+              try { userRestrictions = JSON.parse(localStorage.getItem("qr_restrictions") || "[]").filter((r: string) => r !== "ninguna" && r !== "_spicy"); } catch {}
+              for (const r of userRestrictions) {
+                if (!allergenLower.includes(r.toLowerCase())) {
+                  traits.push({ label: `Sin ${r}`, positive: true });
                 }
               }
               // Diet

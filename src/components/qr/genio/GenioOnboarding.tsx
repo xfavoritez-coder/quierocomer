@@ -227,7 +227,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               {/* Header */}
               <div style={{ textAlign: "center", marginBottom: 28 }}>
                 <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🧞</span>
-                <span style={{ fontFamily: "Georgia, serif", fontSize: "17px", fontWeight: 700, color: "white" }}>
+                <span style={{ fontFamily: "Georgia, serif", fontSize: "19px", fontWeight: 700, color: "white" }}>
                   {userName ? `${userName}, tu perfil` : "Tu perfil"}
                 </span>
               </div>
