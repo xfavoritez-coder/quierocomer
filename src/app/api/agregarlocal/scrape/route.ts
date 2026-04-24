@@ -45,16 +45,37 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `No se pudo acceder a la URL: ${e.message}` }, { status: 400 });
     }
 
-    // Trim to avoid token limits
-    const trimmedHtml = pageContent.slice(0, 80000);
+    // Clean content: remove redundant whitespace, keep menu-relevant text
+    let cleaned = pageContent
+      .replace(/<script[\s\S]*?<\/script>/gi, "")
+      .replace(/<style[\s\S]*?<\/style>/gi, "")
+      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .replace(/ {2,}/g, " ")
+      .trim();
 
-    const prompt = `Analiza el HTML de esta página web de un restaurante y extrae toda la información del menú/carta.
+    // If still too long, split into chunks and process each
+    const MAX_CONTENT = 40000;
+    const chunks: string[] = [];
+    if (cleaned.length > MAX_CONTENT) {
+      // Split into roughly equal chunks
+      const numChunks = Math.ceil(cleaned.length / MAX_CONTENT);
+      const chunkSize = Math.ceil(cleaned.length / numChunks);
+      for (let i = 0; i < cleaned.length; i += chunkSize) {
+        chunks.push(cleaned.slice(i, i + chunkSize));
+      }
+    } else {
+      chunks.push(cleaned);
+    }
+
+    const prompt = `Analiza el contenido de esta página web de un restaurante y extrae toda la información del menú/carta.
 
 URL: ${url}
 ${providedName ? `Nombre del local: ${providedName}` : ""}
 
-HTML:
-${trimmedHtml}
+Contenido${chunks.length > 1 ? " (parte 1 de " + chunks.length + ")" : ""}:
+${chunks[0]}
 
 Extrae TODA la información y responde con un JSON válido con esta estructura:
 {
@@ -95,7 +116,7 @@ Reglas:
 - Modificadores: detecta opciones, extras, tamaños, adiciones. Solo si existen en el HTML
 - El precio de los modificadores es el precio ADICIONAL (0 si no tiene costo extra)
 - Logo: busca en meta tags (og:image, apple-touch-icon), favicon, o imgs con class/alt que indiquen logo
-- No inventes datos, solo extrae lo que está en el HTML
+- No inventes datos, solo extrae lo que está en el contenido
 - Responde SOLO el JSON`;
 
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -105,7 +126,7 @@ Reglas:
         "anthropic-version": "2023-06-01",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ model: MODEL, max_tokens: 8192, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model: MODEL, max_tokens: 16000, messages: [{ role: "user", content: prompt }] }),
     });
 
     if (!res.ok) {
@@ -131,7 +152,56 @@ Reglas:
       for (let i = 0; i < o - c; i++) jsonStr += "}";
     }
 
-    const parsed = JSON.parse(jsonStr);
+    let parsed = JSON.parse(jsonStr);
+
+    // Process additional chunks if content was split
+    if (chunks.length > 1) {
+      for (let ci = 1; ci < chunks.length; ci++) {
+        const chunkPrompt = `Continúa extrayendo platos del menú de "${parsed.restaurantName || providedName || "restaurante"}".
+
+Contenido (parte ${ci + 1} de ${chunks.length}):
+${chunks[ci]}
+
+Responde SOLO con un JSON con esta estructura:
+{ "categories": [{ "name": "...", "type": "food"|"drink"|"dessert", "dishes": [{ "name": "...", "description": "...", "price": 0, "photo": null, "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }] }] }
+
+Solo extrae lo que ves. Responde SOLO el JSON.`;
+
+        try {
+          const chunkRes = await fetch("https://api.anthropic.com/v1/messages", {
+            method: "POST",
+            headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+            body: JSON.stringify({ model: MODEL, max_tokens: 16000, messages: [{ role: "user", content: chunkPrompt }] }),
+          });
+          if (chunkRes.ok) {
+            const chunkData = await chunkRes.json();
+            const chunkText = chunkData.content?.[0]?.text || "";
+            const chunkMatch = chunkText.match(/\{[\s\S]*\}/);
+            if (chunkMatch) {
+              let cJson = chunkMatch[0];
+              try { JSON.parse(cJson); } catch {
+                cJson = cJson.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
+                let oo = 0, cc = 0; for (const ch of cJson) { if (ch === "[") oo++; if (ch === "]") cc++; } for (let i = 0; i < oo - cc; i++) cJson += "]";
+                oo = 0; cc = 0; for (const ch of cJson) { if (ch === "{") oo++; if (ch === "}") cc++; } for (let i = 0; i < oo - cc; i++) cJson += "}";
+              }
+              const chunkParsed = JSON.parse(cJson);
+              // Merge categories
+              for (const newCat of (chunkParsed.categories || [])) {
+                const existing = parsed.categories.find((c: any) => c.name === newCat.name);
+                if (existing) {
+                  existing.dishes = [...(existing.dishes || []), ...(newCat.dishes || [])];
+                } else {
+                  parsed.categories.push(newCat);
+                }
+              }
+            }
+          }
+        } catch { /* continue with what we have */ }
+      }
+    }
+
+    // Remove empty categories
+    parsed.categories = (parsed.categories || []).filter((c: any) => c.dishes?.length > 0);
 
     // Count dishes with and without photos
     let withPhoto = 0, withoutPhoto = 0;
