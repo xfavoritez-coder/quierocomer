@@ -53,7 +53,9 @@ export default function AgregarLocalPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<{ slug: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
+  const [result, setResult] = useState<{ slug: string; restaurantId: string; totalDishes: number; totalCategories: number; url: string } | null>(null);
+  const [photoResults, setPhotoResults] = useState<{ dishId: string; dishName: string; query: string; photoUrl: string | null; selected: boolean }[]>([]);
+  const [photoProgress, setPhotoProgress] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Compress image client-side to max 1200px and ~200KB JPEG
@@ -121,7 +123,7 @@ export default function AgregarLocalPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
-      setResult({ slug: data.restaurant.slug, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
+      setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
       setStep("done");
     } catch (e: any) {
       setError(e.message);
@@ -322,6 +324,7 @@ export default function AgregarLocalPage() {
         )}
 
         {/* STEP: Done */}
+        {/* STEP: Done */}
         {step === "done" && result && (
           <div style={{ textAlign: "center", padding: "40px 0" }}>
             <span style={{ fontSize: "3rem", display: "block", marginBottom: 16 }}>🎉</span>
@@ -330,13 +333,43 @@ export default function AgregarLocalPage() {
               {result.totalCategories} categorías · {result.totalDishes} platos
             </p>
 
+            {/* Auto photos button */}
+            <button
+              onClick={async () => {
+                setStep("photos" as any);
+                setPhotoProgress("Generando búsquedas con IA...");
+                try {
+                  const res = await fetch("/api/agregarlocal/photos", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ restaurantId: result.restaurantId }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error);
+                  setPhotoResults((data.results || []).map((r: any) => ({ ...r, selected: !!r.photoUrl })));
+                  setPhotoProgress("");
+                } catch (e: any) {
+                  setError(e.message);
+                  setStep("done");
+                }
+              }}
+              style={{
+                display: "block", width: "100%", padding: "16px", borderRadius: 50,
+                background: "#F4A623", color: "#0e0e0e",
+                fontSize: "1rem", fontWeight: 700, cursor: "pointer", border: "none", marginBottom: 10,
+              }}
+            >
+              📸 Agregar fotos automáticas
+            </button>
+
             <a
               href={`/qr/${result.slug}?mesa=demo&t=demo`}
               target="_blank"
               style={{
-                display: "block", width: "100%", padding: "16px", borderRadius: 50,
-                background: "#F4A623", color: "#0e0e0e", textDecoration: "none",
-                fontSize: "1rem", fontWeight: 700, textAlign: "center", marginBottom: 10,
+                display: "block", width: "100%", padding: "14px", borderRadius: 50,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.7)", textDecoration: "none",
+                fontSize: "0.92rem", fontWeight: 600, textAlign: "center", marginBottom: 10,
               }}
             >
               Ver carta QR →
@@ -361,20 +394,81 @@ export default function AgregarLocalPage() {
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-              <button
-                onClick={() => { navigator.clipboard.writeText(result.url); }}
-                style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
-              >
-                Copiar link
-              </button>
-
-              <button
-                onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); }}
-                style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}
-              >
-                Agregar otro
-              </button>
+              <button onClick={() => { navigator.clipboard.writeText(result.url); }} style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}>Copiar link</button>
+              <button onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); setPhotoResults([]); }} style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}>Agregar otro</button>
             </div>
+          </div>
+        )}
+
+        {/* STEP: Photos search/preview */}
+        {(step as string) === "photos" && result && (
+          <div style={{ padding: "20px 0" }}>
+            {photoProgress ? (
+              <div style={{ textAlign: "center", padding: "60px 0" }}>
+                <span style={{ fontSize: "2rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>📸</span>
+                <p style={{ color: "#F4A623", fontSize: "1rem", fontWeight: 600 }}>{photoProgress}</p>
+                <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "16px auto 0", overflow: "hidden" }}>
+                  <div style={{ width: "60%", height: "100%", background: "#F4A623", borderRadius: 2, animation: "progressIndeterminate 1.5s ease-in-out infinite" }} />
+                </div>
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h2 style={{ fontSize: "1.1rem", fontWeight: 700, margin: 0 }}>Fotos encontradas</h2>
+                  <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem" }}>
+                    {photoResults.filter(r => r.selected && r.photoUrl).length} de {photoResults.length} seleccionadas
+                  </span>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+                  {photoResults.map((r, i) => (
+                    <div key={r.dishId} onClick={() => setPhotoResults(prev => prev.map((p, j) => j === i ? { ...p, selected: !p.selected } : p))}
+                      style={{ borderRadius: 12, overflow: "hidden", border: `2px solid ${r.selected ? "#F4A623" : "rgba(255,255,255,0.08)"}`, cursor: "pointer", opacity: r.selected ? 1 : 0.5, transition: "all 0.2s" }}>
+                      {r.photoUrl ? (
+                        <img src={r.photoUrl} alt={r.dishName} style={{ width: "100%", aspectRatio: "4/3", objectFit: "cover", display: "block" }} />
+                      ) : (
+                        <div style={{ width: "100%", aspectRatio: "4/3", background: "#222", display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.2)" }}>Sin foto</div>
+                      )}
+                      <div style={{ padding: "8px 10px", background: "#111" }}>
+                        <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.dishName}</p>
+                        <p style={{ fontSize: "0.65rem", color: "rgba(255,255,255,0.3)", margin: "2px 0 0" }}>{r.query}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={async () => {
+                    const selected = photoResults.filter(r => r.selected && r.photoUrl);
+                    if (selected.length === 0) { setStep("done"); return; }
+                    setPhotoProgress(`Aplicando ${selected.length} fotos...`);
+                    try {
+                      const res = await fetch("/api/agregarlocal/photos", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ photos: selected.map(r => ({ dishId: r.dishId, photoUrl: r.photoUrl })) }),
+                      });
+                      if (!res.ok) throw new Error("Error aplicando fotos");
+                      setStep("done");
+                      setPhotoProgress("");
+                    } catch (e: any) {
+                      setError(e.message);
+                      setPhotoProgress("");
+                    }
+                  }}
+                  style={{ width: "100%", padding: "16px", borderRadius: 50, border: "none", background: "#F4A623", color: "#0e0e0e", fontSize: "1rem", fontWeight: 700, cursor: "pointer", marginBottom: 10 }}
+                >
+                  Aplicar {photoResults.filter(r => r.selected && r.photoUrl).length} fotos
+                </button>
+
+                <button
+                  onClick={() => setStep("done")}
+                  style={{ width: "100%", padding: "12px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.5)", fontSize: "0.88rem", cursor: "pointer" }}
+                >
+                  Omitir fotos
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -383,6 +477,11 @@ export default function AgregarLocalPage() {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes progressIndeterminate {
+          0% { width: 20%; margin-left: 0; }
+          50% { width: 40%; margin-left: 30%; }
+          100% { width: 20%; margin-left: 80%; }
         }
       `}</style>
     </div>
