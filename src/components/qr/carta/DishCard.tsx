@@ -44,13 +44,13 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           <span className="truncate">{dish.name}</span>
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
           <DishBadges dish={dish} />
-          {!isRec && autoRecommended && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.7rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+          {autoRecommended && (
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               ✨ Para ti
             </span>
           )}
-          {isRec && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.7rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+          {isRec && !autoRecommended && (
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
             </span>
           )}
