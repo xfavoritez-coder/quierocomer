@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import EmailTypoHint from "./EmailTypoHint";
 import { getDbSessionId } from "@/lib/sessionTracker";
 
 interface Props {
@@ -139,6 +140,7 @@ export default function ConversionCTA({ restaurantId, type, dishName, onRegister
           <input placeholder="Tu nombre" value={name} onChange={e => setName(e.target.value)} style={{ flex: 1, padding: "9px 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", fontSize: "0.82rem", outline: "none", fontFamily: "inherit" }} />
           <input placeholder="tu@email.com" type="email" value={email} onChange={e => setEmail(e.target.value)} style={{ flex: 1, padding: "9px 12px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", fontSize: "0.82rem", outline: "none", fontFamily: "inherit" }} />
         </div>
+        <EmailTypoHint email={email} onAccept={setEmail} />
 
         <button onClick={handleSubmit} disabled={!email || !name || status === "loading"} style={{
           width: "100%", padding: "10px", background: "#F4A623", color: "#0a0a0a", border: "none", borderRadius: 50,

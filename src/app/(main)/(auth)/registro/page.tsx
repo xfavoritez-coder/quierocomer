@@ -3,6 +3,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { checkEmailTypo } from "@/lib/emailTypo";
 
 function OjoIcon({ visible }: { visible: boolean }) {
   return (
@@ -60,40 +61,7 @@ function RegistroContent() {
   }, []);
   useEffect(() => { fetch("/api/categorias").then(r => r.json()).then(data => { if (Array.isArray(data)) setCategoriasDB(data); }).catch(() => {}); }, []);
 
-  function checkEmailTypo(email: string): string {
-    const lower = email.toLowerCase().trim();
-    if (!lower.includes("@") || !lower.includes(".")) return "";
-    const corrections: [RegExp, string][] = [
-      [/@gmial\.com$/i, "@gmail.com"],
-      [/@gmal\.com$/i, "@gmail.com"],
-      [/@gamil\.com$/i, "@gmail.com"],
-      [/@gmaill\.com$/i, "@gmail.com"],
-      [/@gmail\.co$/i, "@gmail.com"],
-      [/@gmail\.cm$/i, "@gmail.com"],
-      [/@gmail\.cmo$/i, "@gmail.com"],
-      [/@gmaik\.com$/i, "@gmail.com"],
-      [/@hotmal\.com$/i, "@hotmail.com"],
-      [/@homail\.com$/i, "@hotmail.com"],
-      [/@hotmial\.com$/i, "@hotmail.com"],
-      [/@hotmail\.co$/i, "@hotmail.com"],
-      [/@outlok\.com$/i, "@outlook.com"],
-      [/@outook\.com$/i, "@outlook.com"],
-      [/@yaho\.com$/i, "@yahoo.com"],
-      [/@yahooo\.com$/i, "@yahoo.com"],
-      [/\.ccom$/i, ".com"],
-      [/\.comm$/i, ".com"],
-      [/\.ocm$/i, ".com"],
-      [/\.coml$/i, ".com"],
-    ];
-    for (const [pattern, fix] of corrections) {
-      if (pattern.test(lower)) {
-        const suggested = lower.replace(pattern, fix);
-        if (suggested === lower) return "";
-        return suggested;
-      }
-    }
-    return "";
-  }
+  // checkEmailTypo imported at top level
 
   const handleEmailBlur = () => {
     const suggested = checkEmailTypo(form.email);

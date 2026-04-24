@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Sparkles, Check } from "lucide-react";
+import EmailTypoHint from "../capture/EmailTypoHint";
 
 interface Props {
   onClose: () => void;
@@ -58,6 +59,7 @@ export default function LoginDrawer({ onClose }: Props) {
               style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #eee", background: "#f8f8f8", fontSize: "1rem", color: "#0e0e0e", outline: "none", fontFamily: "inherit", marginBottom: 10 }} />
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
               style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid #eee", background: "#f8f8f8", fontSize: "1rem", color: "#0e0e0e", outline: "none", fontFamily: "inherit" }} />
+            <EmailTypoHint email={email} onAccept={setEmail} />
             <p style={{ color: "#bbb", fontSize: "0.75rem", marginTop: 6, textAlign: "center" }}>Si no tienes cuenta, te crearemos una automáticamente</p>
             <button onClick={handleSubmit} disabled={!name.trim() || !email}
               style={{ width: "100%", marginTop: 8, padding: 14, borderRadius: 50, background: "#0e0e0e", color: "white", fontSize: "0.95rem", fontWeight: 700, border: "none", fontFamily: "inherit", opacity: (!name.trim() || !email || status === "loading") ? 0.5 : 1 }}>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import EmailTypoHint from "./EmailTypoHint";
 
 interface Props {
   restaurantId: string;
@@ -139,6 +140,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                   outline: "none", fontFamily: "inherit",
                 }}
               />
+              <EmailTypoHint email={email} onAccept={setEmail} />
             </>
           )}
           <div style={{ position: "relative", overflow: "hidden" }}>

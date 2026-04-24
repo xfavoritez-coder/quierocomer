@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import EmailTypoHint from "./EmailTypoHint";
 import { TIP_BG } from "../genio/GenioTip";
 
 interface Props {
@@ -144,6 +145,7 @@ export default function PostGenioCapture({ restaurantId }: Props) {
                     onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
                     style={inputStyle}
                   />
+                  <EmailTypoHint email={email} onAccept={setEmail} />
                   <button
                     onClick={handleSubmit}
                     className="active:scale-[0.98] transition-transform"

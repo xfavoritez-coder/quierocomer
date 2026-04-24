@@ -18,6 +18,7 @@ import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import PromoCarousel from "../capture/PromoCarousel";
+import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
@@ -725,6 +726,7 @@ export default function CartaPremium({
                       outline: "none", fontFamily: "inherit",
                     }}
                   />
+                  <EmailTypoHint email={captureEmail} onAccept={setCaptureEmail} />
                   <button
                     className="active:scale-[0.98] transition-transform"
                     onClick={async () => {
