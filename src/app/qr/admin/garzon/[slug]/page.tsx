@@ -30,6 +30,7 @@ export default async function GarzonPage({ params }: { params: Promise<{ slug: s
     <>
       <link rel="manifest" href="/manifest-garzon.json" />
       <link rel="apple-touch-icon" href="/icon-192.png" />
+      <meta name="apple-mobile-web-app-title" content={`🔔 Garzón · ${restaurant.name}`} />
       <GarzonPanel restaurantId={restaurant.id} restaurantName={restaurant.name} />
     </>
   );
