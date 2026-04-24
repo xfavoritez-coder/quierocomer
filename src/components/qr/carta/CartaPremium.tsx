@@ -447,13 +447,12 @@ export default function CartaPremium({
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-            padding: "10px 20px",
-            background: "linear-gradient(90deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.04) 100%)",
-            borderBottom: "1px solid rgba(244,166,35,0.1)",
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 30,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+            background: "rgba(247,247,245,0.85)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
           }}
         >
-          <span style={{ fontSize: "14px", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
           <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
         </div>
       )}
@@ -533,7 +532,7 @@ export default function CartaPremium({
               </div>
 
               {/* Scroll with fade */}
-              <div className="relative" style={{ opacity: personalizing ? 0.4 : 1, transition: "opacity 0.3s ease" }}>
+              <div className="relative">
                 <div
                   data-scroll-container
                   className="flex overflow-x-auto snap-x snap-mandatory items-start"

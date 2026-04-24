@@ -47,11 +47,12 @@ export default function ViewSelector({ restaurantId }: Props) {
     };
   }, [open]);
 
-  // First-time tooltip with attention pulse
+  // First-time tooltip: show once, auto-dismiss after 5s
   useEffect(() => {
     if (!localStorage.getItem(TOOLTIP_KEY)) {
-      const timer = setTimeout(() => setShowTooltip(true), 1800);
-      return () => clearTimeout(timer);
+      const show = setTimeout(() => setShowTooltip(true), 1800);
+      const hide = setTimeout(() => { setShowTooltip(false); localStorage.setItem(TOOLTIP_KEY, "1"); }, 6800);
+      return () => { clearTimeout(show); clearTimeout(hide); };
     }
   }, []);
 
@@ -138,7 +139,7 @@ export default function ViewSelector({ restaurantId }: Props) {
 
           {/* Language selector row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
-            <span style={{ marginLeft: 8, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
+            <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
             {SUPPORTED_LANGS.map((l) => {
               const isActive = lang === l;
               return (
@@ -208,9 +209,7 @@ export default function ViewSelector({ restaurantId }: Props) {
       {showTooltip && !open && (
         <GenioTip
           id="genio-tip-container"
-          onClose={dismissTooltip}
           arrow="right"
-
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
           Cambia de vista o idioma.

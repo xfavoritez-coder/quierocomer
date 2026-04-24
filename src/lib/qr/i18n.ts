@@ -56,8 +56,8 @@ const dict = {
     gDietQuestion: "¿Qué tipo de alimentación tienes?",
     gCarnivore: "Carnívoro", gVegan: "Vegano", gVegetarian: "Vegetariano",
     gResQuestion: "¿Tienes alguna restricción?", gNone: "Ninguna", gWithoutSpicy: "Sin picante",
-    gDislikesQuestion: "¿Algo que prefieras evitar?",
-    gDislikesHint: "No lo eliminaremos de tus opciones, solo lo mostrará menos",
+    gDislikesQuestion: "¿Ingrediente que quieras ver menos?",
+    gDislikesHint: "No lo eliminaremos de la carta, solo lo mostraremos menos",
     gSearchIngredient: "Buscar ingrediente...", gFlavors: "Sabores que prefieres ver menos",
     gSweet: "dulce", gSweetSour: "agridulce", gAcid: "ácido", gSmoky: "ahumado",
     gCommonIngredients: "Ingredientes comunes",
@@ -76,7 +76,7 @@ const dict = {
     gRecommends: "El Genio recomienda", gBestMatch: "⭐ MEJOR MATCH", gAlsoLike: "También te podría gustar",
     gDidIGetIt: "¿Acerté?", gYes: "👍 Sí", gNotSoMuch: "👎 No tanto",
     gGreatThanks: "¡Genial! Gracias 🙌", gThanksImprove: "Gracias, lo mejoraré 🧞",
-    gStepOf: "Paso {step} de 4", gResult: "✨ Resultado",
+    gStepOf: "Paso {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Quitar selección", gLikeBtn: "Me gusta 👆",
   },
   en: {
@@ -138,7 +138,7 @@ const dict = {
     gRecommends: "The Genie recommends", gBestMatch: "⭐ BEST MATCH", gAlsoLike: "You might also like",
     gDidIGetIt: "Did I get it right?", gYes: "👍 Yes", gNotSoMuch: "👎 Not quite",
     gGreatThanks: "Awesome! Thanks 🙌", gThanksImprove: "Thanks, I'll improve 🧞",
-    gStepOf: "Step {step} of 4", gResult: "✨ Result",
+    gStepOf: "Step {step} of 3", gResult: "✨ Result",
     gRemoveSelection: "Remove selection", gLikeBtn: "I like this 👆",
   },
   pt: {
@@ -200,7 +200,7 @@ const dict = {
     gRecommends: "O Gênio recomenda", gBestMatch: "⭐ MELHOR MATCH", gAlsoLike: "Você também pode gostar",
     gDidIGetIt: "Acertei?", gYes: "👍 Sim", gNotSoMuch: "👎 Não muito",
     gGreatThanks: "Ótimo! Obrigado 🙌", gThanksImprove: "Obrigado, vou melhorar 🧞",
-    gStepOf: "Passo {step} de 4", gResult: "✨ Resultado",
+    gStepOf: "Passo {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Remover seleção", gLikeBtn: "Gostei 👆",
   },
 } as const;
