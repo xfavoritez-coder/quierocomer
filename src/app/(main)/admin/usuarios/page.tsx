@@ -79,6 +79,7 @@ export default function UsuariosPage() {
   useEffect(() => { fetchUsers(); }, [page, search]);
 
   const openDetail = async (id: string) => {
+    setSelectedUser(null);
     setDetailLoading(true);
     const res = await fetch(`/api/admin/users/${id}`);
     const data = await res.json();
@@ -99,6 +100,15 @@ export default function UsuariosPage() {
   const birthdayCount = users.filter(u => u.birthDate).length;
   const dietCounts: Record<string, number> = {};
   users.forEach(u => { if (u.dietType) dietCounts[u.dietType] = (dietCounts[u.dietType] || 0) + 1; });
+
+  if (detailLoading) {
+    return (
+      <div style={{ maxWidth: 700 }}>
+        <button onClick={() => { setDetailLoading(false); }} style={{ background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 16 }}>&larr; Volver a usuarios</button>
+        <p style={{ color: GOLD, fontFamily: F, padding: 40, textAlign: "center" }}>Cargando perfil...</p>
+      </div>
+    );
+  }
 
   if (selectedUser) {
     const u = selectedUser.user;
@@ -329,11 +339,6 @@ export default function UsuariosPage() {
         </div>
       )}
 
-      {detailLoading && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "var(--adm-bg, #0e0e0e)", borderRadius: 16, padding: 32, border: "1px solid var(--adm-card-border)" }}><SkeletonLoading type="form" /></div>
-        </div>
-      )}
     </div>
   );
 }
