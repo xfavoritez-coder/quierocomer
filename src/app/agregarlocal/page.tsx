@@ -44,14 +44,18 @@ export default function AgregarLocalPage() {
     formData.set("name", name.trim());
     photos.forEach((p) => formData.append("photos", p));
 
+    const debugInfo = photos.map(p => `${p.name} (${p.type || "sin tipo"}, ${Math.round(p.size/1024)}KB)`).join(", ");
     try {
       const res = await fetch("/api/agregarlocal/parse", { method: "POST", body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Error");
-      setCategories(data.categories || []);
+      const rawText = await res.text();
+      let data;
+      try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no JSON: ${rawText.slice(0, 200)}`); }
+      if (!res.ok) throw new Error(`[${res.status}] ${data.error || JSON.stringify(data).slice(0, 200)}`);
+      if (!data.categories?.length) throw new Error("No se encontraron platos. Intenta con fotos más claras.");
+      setCategories(data.categories);
       setStep("preview");
     } catch (e: any) {
-      setError(e.message);
+      setError(`${e.message || String(e)}\n\nArchivos: ${debugInfo}`);
       setStep("upload");
     }
   };
@@ -156,7 +160,7 @@ export default function AgregarLocalPage() {
             </div>
 
             {error && (
-              <p style={{ color: "#ef4444", fontSize: "0.85rem", marginBottom: 16, textAlign: "center" }}>{error}</p>
+              <pre style={{ color: "#ef4444", fontSize: "0.75rem", marginBottom: 16, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-all", background: "rgba(239,68,68,0.08)", padding: 12, borderRadius: 10 }}>{error}</pre>
             )}
 
             <button

@@ -21,17 +21,27 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Sube al menos una foto de la carta" }, { status: 400 });
     }
 
-    // Convert all images to JPEG via sharp (handles HEIC, HEIF, WebP, etc.)
-    const images: { type: "image"; source: { type: "base64"; media_type: "image/jpeg"; data: string } }[] = [];
+    // Convert all images to JPEG via sharp, with fallback for unsupported formats
+    const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
     for (const file of files.slice(0, 5)) {
       const inputBuffer = Buffer.from(await file.arrayBuffer());
-      const jpegBuffer = await sharp(inputBuffer)
-        .jpeg({ quality: 85 })
-        .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-        .toBuffer();
+      let base64: string;
+      let mediaType: string = "image/jpeg";
+      try {
+        const jpegBuffer = await sharp(inputBuffer)
+          .jpeg({ quality: 85 })
+          .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+          .toBuffer();
+        base64 = jpegBuffer.toString("base64");
+      } catch {
+        // Fallback: send original bytes — works for JPEG/PNG/WebP/GIF
+        base64 = inputBuffer.toString("base64");
+        const ft = file.type;
+        if (ft === "image/png" || ft === "image/webp" || ft === "image/gif") mediaType = ft;
+      }
       images.push({
         type: "image",
-        source: { type: "base64", media_type: "image/jpeg", data: jpegBuffer.toString("base64") },
+        source: { type: "base64", media_type: mediaType, data: base64 },
       });
     }
 
