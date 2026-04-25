@@ -45,7 +45,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          name: name || null,
+          name: name ? name.trim().split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ") : null,
           birthDate,
           dietType: savedDiet,
           restrictions,
