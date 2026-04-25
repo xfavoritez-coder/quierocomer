@@ -49,6 +49,18 @@ export default function AdminLocales() {
     return list;
   }, [restaurants, search, filter]);
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  const deleteRestaurant = async (r: Restaurant) => {
+    if (!confirm(`¿Estás seguro de eliminar "${r.name}"? Esto borrará TODOS sus platos, categorías, sesiones y datos. Esta acción no se puede deshacer.`)) return;
+    try {
+      const res = await fetch(`/api/admin/locales/${r.id}`, { method: "DELETE" });
+      if (!res.ok) { const d = await res.json(); alert(d.error || "Error"); return; }
+      setRestaurants(prev => prev.filter(x => x.id !== r.id));
+      setSelected(null as any);
+    } catch { alert("Error al eliminar"); }
+  };
+
   const toggleActive = async (r: Restaurant) => {
     await fetch(`/api/admin/locales/${r.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive: !r.isActive }) });
     setRestaurants(prev => prev.map(x => x.id === r.id ? { ...x, isActive: !x.isActive } : x));
@@ -133,6 +145,9 @@ export default function AdminLocales() {
           <a href={`/qr/admin/garzon/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>📱 Panel Garzón</a>
           <button onClick={() => { toggleActive(selected); setSelected({ ...selected, isActive: !selected.isActive }); }} style={{ flex: 1, padding: "10px", background: selected.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${selected.isActive ? "rgba(255,100,100,0.2)" : "rgba(74,222,128,0.2)"}`, borderRadius: 10, color: selected.isActive ? "#ff6b6b" : "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
             {selected.isActive ? "Desactivar" : "Activar"}
+          </button>
+          <button onClick={() => deleteRestaurant(selected)} style={{ flex: 1, padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+            🗑 Eliminar local
           </button>
         </div>
       </div>

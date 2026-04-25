@@ -92,12 +92,31 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   const { id } = await params;
 
   try {
-    // Only superadmin can deactivate
     if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
-    await prisma.restaurant.update({ where: { id }, data: { isActive: false } });
+
+    // Delete all related data in order
+    await prisma.dishImpression.deleteMany({ where: { session: { restaurantId: id } } });
+    await prisma.dishFavorite.deleteMany({ where: { restaurantId: id } });
+    await prisma.review.deleteMany({ where: { dish: { restaurantId: id } } });
+    await prisma.dishIngredient.deleteMany({ where: { dish: { restaurantId: id } } });
+    await prisma.dishTranslation.deleteMany({ where: { dish: { restaurantId: id } } });
+    await prisma.modifierTemplateOption.deleteMany({ where: { group: { template: { restaurantId: id } } } });
+    await prisma.modifierTemplateGroup.deleteMany({ where: { template: { restaurantId: id } } });
+    await prisma.modifierTemplate.deleteMany({ where: { restaurantId: id } });
+    await prisma.dish.deleteMany({ where: { restaurantId: id } });
+    await prisma.category.deleteMany({ where: { restaurantId: id } });
+    await prisma.waiterCall.deleteMany({ where: { restaurantId: id } });
+    await prisma.waiterPushSubscription.deleteMany({ where: { restaurantId: id } });
+    await prisma.statEvent.deleteMany({ where: { restaurantId: id } });
+    await prisma.session.deleteMany({ where: { restaurantId: id } });
+    await prisma.promotion.deleteMany({ where: { restaurantId: id } });
+    await prisma.restaurantScheduleRule.deleteMany({ where: { restaurantId: id } });
+    await prisma.restaurantTable.deleteMany({ where: { restaurantId: id } });
+    await prisma.restaurant.delete({ where: { id } });
+
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch (e: any) {
     console.error("[Admin restaurant DELETE]", e);
-    return NextResponse.json({ error: "Error al desactivar" }, { status: 500 });
+    return NextResponse.json({ error: e.message || "Error al eliminar" }, { status: 500 });
   }
 }
