@@ -506,7 +506,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   localStorage.setItem("qr_diet", dietType || ""); localStorage.setItem("qr_restrictions", JSON.stringify(restrictions)); localStorage.setItem("qr_dislikes", JSON.stringify(dislikes));
                   if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType, restrictions: restrictions.filter(x => x !== "ninguna"), dislikes }) }).catch(() => {}); }
                   const changed = dietType !== initialDiet.current || JSON.stringify(restrictions) !== initialRestrictions.current || JSON.stringify(dislikes) !== initialDislikes.current;
-                  if (changed) { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId); }
+                  if (changed) { trackStat(restaurantId, "GENIO_PROFILE_SAVED", undefined, genioSessionId); }
                   setVisible(false); setTimeout(onClose, 200);
                 }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, display: "block", margin: "0 auto 14px", maxWidth: 280 }}>
                   Guardar cambios

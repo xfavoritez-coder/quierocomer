@@ -108,7 +108,7 @@ interface SessionData {
   tableId: string | null;
   isQrScan: boolean;
   usedGenio: boolean;
-  genioData: { timesUsed: number; completed: boolean; lastStep?: string; birthdayClicked?: boolean; birthdaySaved?: boolean } | null;
+  genioData: { timesUsed: number; completed: boolean; profileEdits?: number; lastStep?: string; birthdayClicked?: boolean; birthdaySaved?: boolean } | null;
   personalizationData: { shown: number; tapped: number; dishes: { name: string; score: number; tapped: boolean }[] } | null;
   visitDays: number;
   ipAddress: string | null;
@@ -387,12 +387,13 @@ export default function AdminSessions() {
                     {s.usedGenio && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
                         {s.genioData?.completed
-                          ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Preferencias guardadas{s.genioData.timesUsed > 1 ? ` (${s.genioData.timesUsed}x)` : ""}</span>
+                          ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Configuró preferencias</span>
                           : <>
                               <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
                               {s.genioData?.lastStep && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {s.genioData.lastStep}</span>}
                             </>
                         }
+                        {(s.genioData?.profileEdits ?? 0) > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 500 }}>Editó perfil {s.genioData!.profileEdits}x</span>}
                         {s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🎂 Cumpleaños guardado</span>}
                         {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>}
                       </div>
