@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -7,6 +8,7 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 const F = "var(--font-display)";
 
 export default function SearchesPage() {
+  const pathname = usePathname();
   const { restaurants } = useAdminSession();
   const [restaurantId, setRestaurantId] = useState("");
   const [data, setData] = useState<any[]>([]);
@@ -32,7 +34,7 @@ export default function SearchesPage() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
+          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Búsquedas fallidas</h1>
         </div>
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>

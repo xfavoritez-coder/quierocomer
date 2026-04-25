@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import Link from "next/link";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -24,6 +25,7 @@ function FunnelStep({ label, value, pctRelative, pctAbsolute, color, isFirst }: 
 }
 
 export default function FunnelPage() {
+  const pathname = usePathname();
   const { restaurants } = useAdminSession();
   const [restaurantId, setRestaurantId] = useState("");
   const [data, setData] = useState<any>(null);
@@ -40,7 +42,7 @@ export default function FunnelPage() {
     <div style={{ maxWidth: 600 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
         <div>
-          <Link href="/admin/analytics" style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
+          <Link href={pathname.startsWith("/panel") ? "/panel/analytics" : "/admin/analytics"} style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textDecoration: "none" }}>← Analytics</Link>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: "8px 0 0" }}>Funnel de conversión</h1>
         </div>
         <select value={restaurantId} onChange={(e) => setRestaurantId(e.target.value)} style={{ padding: "8px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}>
