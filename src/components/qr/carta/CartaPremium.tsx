@@ -104,7 +104,8 @@ export default function CartaPremium({
   const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
-  const [genioExpanded, setGenioExpanded] = useState(false);
+  const [showGenioNudge, setShowGenioNudge] = useState(false);
+  const [showLikeGenioTip, setShowLikeGenioTip] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
     let ticking = false;
@@ -112,16 +113,16 @@ export default function CartaPremium({
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
-        setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
-        lastScrollY.current = y;
+        lastScrollY.current = window.scrollY;
+        // Dismiss nudge tooltips on scroll
+        if (showGenioNudge) setShowGenioNudge(false);
+        if (showLikeGenioTip) setShowLikeGenioTip(false);
         ticking = false;
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [showGenioNudge, showLikeGenioTip]);
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   // Track category dwell time when active category changes
@@ -194,8 +195,6 @@ export default function CartaPremium({
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [showGenioNudge, setShowGenioNudge] = useState(false);
-  const [showLikeGenioTip, setShowLikeGenioTip] = useState(false);
   const [captureName, setCaptureName] = useState("");
   const [captureEmail, setCaptureEmail] = useState("");
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
@@ -772,10 +771,9 @@ export default function CartaPremium({
           <button
             onClick={() => { setShowGenioNudge(false); setGenioOpen(true); }}
             className="flex items-center justify-center rounded-full active:scale-95"
-            style={{ height: 60, width: (!hasCompletedGenio && genioExpanded) ? "auto" : 60, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", padding: (!hasCompletedGenio && genioExpanded) ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease", overflow: "hidden" }}
+            style={{ height: 60, width: 60, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease" }}
           >
             <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: (showGenioNudge || showLikeGenioTip) ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-            {!hasCompletedGenio && genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
           </button>
         </div>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
