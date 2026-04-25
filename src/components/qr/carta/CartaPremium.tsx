@@ -669,8 +669,8 @@ export default function CartaPremium({
           >
             <span style={{ fontSize: "1.3rem" }}>🧞</span>
             <div style={{ flex: 1, textAlign: "left" }}>
-              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
-              <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
+              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Tu carta está personalizada ✓</span>
+              <span style={{ fontSize: "0.72rem", color: "#8a5a2c", marginLeft: 8 }}>Editar gustos</span>
             </div>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
