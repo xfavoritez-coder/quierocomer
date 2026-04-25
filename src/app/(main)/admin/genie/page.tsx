@@ -116,7 +116,7 @@ interface SessionData {
   referer: string | null;
   externalReferer: string | null;
   language: string | null;
-  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
+  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
@@ -140,6 +140,7 @@ export default function AdminSessions() {
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [dishSort, setDishSort] = useState<"time" | "order">("order");
 
   const toDateStr = (d: Date) => d.toISOString().split("T")[0];
   const today = () => toDateStr(new Date());
@@ -522,9 +523,15 @@ export default function AdminSessions() {
                     {/* Dishes viewed */}
                     {s.dishesViewed.length > 0 && (
                       <div style={{ marginBottom: 12 }}>
-                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Platos vistos ({s.dishesViewed.length})</p>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                          <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>Platos vistos ({s.dishesViewed.length})</p>
+                          <div style={{ display: "flex", gap: 2 }}>
+                            <button onClick={() => setDishSort("order")} style={{ padding: "2px 8px", borderRadius: 4, border: "none", background: dishSort === "order" ? "rgba(244,166,35,0.15)" : "transparent", color: dishSort === "order" ? "#F4A623" : "#555", fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", fontFamily: F }}>Recorrido</button>
+                            <button onClick={() => setDishSort("time")} style={{ padding: "2px 8px", borderRadius: 4, border: "none", background: dishSort === "time" ? "rgba(244,166,35,0.15)" : "transparent", color: dishSort === "time" ? "#F4A623" : "#555", fontSize: "0.62rem", fontWeight: 600, cursor: "pointer", fontFamily: F }}>Más tiempo</button>
+                          </div>
+                        </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          {s.dishesViewed.map((d, i) => (
+                          {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8 }}>
                               {d.dish?.photos?.[0] ? (
                                 <img src={d.dish.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />

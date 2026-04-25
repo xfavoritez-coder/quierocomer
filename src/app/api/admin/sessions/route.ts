@@ -319,10 +319,11 @@ export async function GET(req: NextRequest) {
 
       return {
         ...s,
-        dishesViewed: viewed.map((d: any) => ({
+        dishesViewed: viewed.map((d: any, idx: number) => ({
           ...d,
+          order: idx,
           dish: dishMap[d.dishId] || null,
-        })).sort((a: any, b: any) => (b.dwellMs || 0) - (a.dwellMs || 0)),
+        })),
         categoriesViewed: cats.map((c: any) => ({
           ...c,
           name: catMap[c.categoryId] || c.categoryId,
