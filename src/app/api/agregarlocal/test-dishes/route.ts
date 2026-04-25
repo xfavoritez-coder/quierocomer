@@ -13,8 +13,8 @@ export async function GET(request: Request) {
 
   const dishes = await prisma.dish.findMany({
     where: { restaurantId: restaurant.id, isActive: true },
-    select: { id: true, name: true, photos: true },
-    orderBy: { position: "asc" },
+    select: { id: true, name: true, photos: true, category: { select: { position: true } } },
+    orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
   });
 
   return NextResponse.json({ restaurantId: restaurant.id, name: restaurant.name, dishes });

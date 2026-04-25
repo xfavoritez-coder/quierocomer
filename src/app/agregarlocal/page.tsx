@@ -455,7 +455,7 @@ export default function AgregarLocalPage() {
                   const dishesRes = await fetch(`/api/agregarlocal/test-dishes?slug=${result.slug}`);
                   const dishesData = await dishesRes.json();
                   const dbDishes: { id: string; name: string; photos: string[] }[] = dishesData.dishes || [];
-                  const needsPhotos = dbDishes.filter(d => !d.photos?.length);
+                  const needsPhotos = dbDishes.filter(d => !d.photos?.length).slice(0, 50);
                   if (needsPhotos.length === 0) {
                     setError("Todos los platos ya tienen fotos");
                     setStep("done");
