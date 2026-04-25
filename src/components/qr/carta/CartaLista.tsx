@@ -114,7 +114,6 @@ export default function CartaLista({
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
-  const [genioExpanded, setGenioExpanded] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
     let ticking = false;
@@ -122,10 +121,7 @@ export default function CartaLista({
       if (ticking) return;
       ticking = true;
       requestAnimationFrame(() => {
-        const y = window.scrollY;
-        const nearBottom = y + window.innerHeight >= document.documentElement.scrollHeight - 200;
-        setGenioExpanded(y < lastScrollY.current && y > 100 && !nearBottom);
-        lastScrollY.current = y;
+        lastScrollY.current = window.scrollY;
         ticking = false;
       });
     };
@@ -490,8 +486,8 @@ export default function CartaLista({
         >
           <span style={{ fontSize: "1.3rem" }}>🧞</span>
           <div style={{ flex: 1, textAlign: "left" }}>
-            <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
-            <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
+            <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Tu carta está personalizada ✓</span>
+            <span style={{ fontSize: "0.72rem", color: "#8a5a2c", marginLeft: 8 }}>Editar gustos</span>
           </div>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
@@ -504,9 +500,6 @@ export default function CartaLista({
             border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
           }}
         >
-          <div style={{ display: "inline-flex", width: 48, height: 48, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 12, fontSize: "1.4rem" }}>
-            🧞
-          </div>
           <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
           <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "genieKnows")}</p>
           <button
@@ -557,10 +550,9 @@ export default function CartaLista({
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 60, width: (!hasCompletedGenio && genioExpanded) ? "auto" : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: (!hasCompletedGenio && genioExpanded) ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
+          style={{ height: 60, width: 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease" }}
         >
           <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-          {!hasCompletedGenio && genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         <ViewSelector restaurantId={restaurant.id} />
