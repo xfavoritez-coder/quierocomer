@@ -554,7 +554,7 @@ export default function CartaPremium({
               </button>
             )}
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
-            {index === Math.max(3, Math.floor(categories.length * 0.5)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
+            {index === Math.max(4, Math.floor(categories.length * 0.8)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
@@ -678,14 +678,11 @@ export default function CartaPremium({
           <div
             className="font-[family-name:var(--font-dm)]"
             style={{
-              margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
+              margin: "32px 20px 16px", padding: "24px 20px", textAlign: "center",
               background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
               border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
             }}
           >
-            <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
-              🧞
-            </div>
             <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
             <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
             <button
