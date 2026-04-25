@@ -183,30 +183,8 @@ export function scoreDish(
     }
   }
 
-  // ── CONTEXTUAL: TIME OF DAY (+8) ──
-  const catName = norm(context.categoryNames[dish.categoryId] || "");
-  const timeKeywords = TIME_CATEGORY_KEYWORDS[context.timeOfDay] || [];
-  if (timeKeywords.some((kw) => catName.includes(kw))) {
-    score += 8;
-    if (!topReason || topReason.weight < 8) {
-      topReason = { text: "Popular a esta hora", weight: 8 };
-    }
-  }
-
-  // ── CONTEXTUAL: WEATHER (+5) ──
-  const dishNameNorm = norm(dish.name);
-  const dishFlavorNorm = dish.flavorTags.map(norm);
-  const allTerms = [dishNameNorm, ...dishIngNames, ...dishFlavorNorm];
-
-  if (context.weather === "COLD" || context.weather === "RAIN") {
-    if (WARM_DISH_SIGNALS.some((s) => allTerms.some((t) => t.includes(s)))) {
-      score += 5;
-    }
-  } else if (context.weather === "HOT") {
-    if (COLD_DISH_SIGNALS.some((s) => allTerms.some((t) => t.includes(s)))) {
-      score += 5;
-    }
-  }
+  // Time of day and weather scoring removed — heuristic keyword matching
+  // was unreliable (most category/dish names don't contain time/weather keywords)
 
   // Build composite reason if no strong single reason
   if (!topReason || topReason.weight < 5) {
