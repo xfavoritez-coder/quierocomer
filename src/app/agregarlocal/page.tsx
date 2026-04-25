@@ -162,18 +162,13 @@ export default function AgregarLocalPage() {
       setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
 
       // Step 2: Extract ingredients with real progress
-      const allDishes = categories.flatMap((c: any) => c.dishes || []);
-      // Get dish IDs from DB
-      const dishesRes = await fetch(`/api/admin/dishes?restaurantId=${data.restaurant.id}`);
-      const dishesData = await dishesRes.json();
-      const dbDishes: { id: string }[] = dishesData.dishes || [];
-
-      for (let i = 0; i < dbDishes.length; i++) {
-        setSavingProgress(`Extrayendo ingredientes (${i + 1}/${dbDishes.length})...`);
+      const dishIds: string[] = data.dishIds || [];
+      for (let i = 0; i < dishIds.length; i++) {
+        setSavingProgress(`Extrayendo ingredientes (${i + 1}/${dishIds.length})...`);
         await fetch("/api/agregarlocal/ingredients", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dishId: dbDishes[i].id }),
+          body: JSON.stringify({ dishId: dishIds[i] }),
         }).catch(() => {});
       }
 
@@ -425,18 +420,23 @@ export default function AgregarLocalPage() {
             <button
               onClick={async () => {
                 setStep("photos" as any);
-                setPhotoProgress("Buscando fotos (0%)...");
+                setPhotoProgress("Buscando fotos...");
                 setError("");
                 try {
+                  const controller = new AbortController();
+                  const timeout = setTimeout(() => controller.abort(), 110000);
                   const res = await fetch("/api/agregarlocal/photos", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ restaurantId: result.restaurantId }),
-                  });
+                    signal: controller.signal,
+                  }).catch((e) => { throw new Error(e.name === "AbortError" ? "Timeout: la búsqueda tardó demasiado. Intenta de nuevo." : e.message); });
+                  clearTimeout(timeout);
                   const rawText = await res.text();
+                  if (!rawText) throw new Error("El servidor no devolvió respuesta. Puede haber un timeout.");
                   let data;
-                  try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 200)}`); }
-                  if (!res.ok) throw new Error(data.error || "Error buscando fotos");
+                  try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 300)}`); }
+                  if (!res.ok) throw new Error(data.error || `Error ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
                   if (!data.results?.length) throw new Error(data.message || "No se encontraron platos sin fotos");
                   setPhotoResults(data.results.map((r: any) => ({ ...r, selected: !!r.photoUrl })));
                   setPhotoProgress("");
@@ -495,6 +495,9 @@ export default function AgregarLocalPage() {
         {/* STEP: Photos search/preview */}
         {(step as string) === "photos" && result && (
           <div style={{ padding: "20px 0" }}>
+            {error && (
+              <pre style={{ color: "#ef4444", fontSize: "0.75rem", marginBottom: 16, textAlign: "left", whiteSpace: "pre-wrap", wordBreak: "break-all", background: "rgba(239,68,68,0.08)", padding: 12, borderRadius: 10 }}>{error}</pre>
+            )}
             {photoProgress ? (
               <div style={{ textAlign: "center", padding: "60px 0" }}>
                 <span style={{ fontSize: "2rem", display: "block", marginBottom: 16, animation: "spin 2s linear infinite" }}>📸</span>
