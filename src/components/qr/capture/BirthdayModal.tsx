@@ -23,7 +23,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
 
   const handleSubmit = async () => {
     if (status !== "idle") return;
-    if (!existingUser && (!email || !name)) return;
+    if (!existingUser && !email) return;
     if (!birthDate) return;
     setStatus("loading");
 
@@ -126,24 +126,13 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           {!existingUser && (
             <>
               <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Tu nombre"
-                style={{
-                  background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                  padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
-                  outline: "none", fontFamily: "inherit",
-                }}
-              />
-              <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="tu@email.com"
                 style={{
                   background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                  padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                  padding: "14px 16px", color: "#0e0e0e", fontSize: "1rem",
                   outline: "none", fontFamily: "inherit",
                 }}
               />
@@ -183,9 +172,11 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           </button>
         </div>
 
-        <p style={{ textAlign: "center", fontSize: "0.8rem", color: "#888", marginTop: 12 }}>
-          🔒 Solo usaremos tu email para avisarte en tu cumpleaños
-        </p>
+        {!existingUser && (
+          <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#aaa", marginTop: 12 }}>
+            🔒 Solo te avisaremos en tu cumpleaños
+          </p>
+        )}
       </div>
     </div>
   );

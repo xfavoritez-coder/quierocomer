@@ -192,7 +192,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }).catch(() => {});
   }, []);
 
-  // Wizard state
+  // Wizard state — save initial values to detect changes in profile mode
+  const initialDiet = useRef(savedDiet);
+  const initialRestrictions = useRef(savedRestrictions);
+  const initialDislikes = useRef(savedDislikes);
   const [dietType, setDietType] = useState<DietType | null>(savedDiet as DietType | null);
   const [restrictions, setRestrictions] = useState<string[]>(savedRestrictions ? JSON.parse(savedRestrictions) : []);
   const [dislikes, setDislikes] = useState<string[]>(savedDislikes ? JSON.parse(savedDislikes) : []);
@@ -251,7 +254,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     document.body.style.overflow = "hidden";
-    trackStat(restaurantId, "GENIO_START", undefined, genioSessionId);
+    // GENIO_START only fires when user advances to step 1 (new) or modifies profile (returning)
+    // — not on mount, to avoid false "abandoned" stats from users who just peek
     return () => { document.body.style.overflow = ""; };
   }, [restaurantId]);
 
@@ -501,7 +505,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <button onClick={() => {
                   localStorage.setItem("qr_diet", dietType || ""); localStorage.setItem("qr_restrictions", JSON.stringify(restrictions)); localStorage.setItem("qr_dislikes", JSON.stringify(dislikes));
                   if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType, restrictions: restrictions.filter(x => x !== "ninguna"), dislikes }) }).catch(() => {}); }
-                  trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
+                  const changed = dietType !== initialDiet.current || JSON.stringify(restrictions) !== initialRestrictions.current || JSON.stringify(dislikes) !== initialDislikes.current;
+                  if (changed) { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId); }
                   setVisible(false); setTimeout(onClose, 200);
                 }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, display: "block", margin: "0 auto 14px", maxWidth: 280 }}>
                   Guardar cambios
@@ -548,7 +553,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <p className="text-center" style={{ color: G.textSecondary, fontSize: "1rem", maxWidth: 280, lineHeight: 1.5 }}>
                   {t(lang, "gTellMeRecommend")}
                 </p>
-                <button onClick={() => { trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, marginTop: 8, maxWidth: 260 }}>
+                <button onClick={() => { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, marginTop: 8, maxWidth: 260 }}>
                   {t(lang, "gStartBtn")} →
                 </button>
               </div>
