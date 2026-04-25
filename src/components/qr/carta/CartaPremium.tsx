@@ -760,7 +760,7 @@ export default function CartaPremium({
         )}
         <div style={{ position: "relative" }}>
           {(showGenioNudge || showLikeGenioTip) && (
-            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "0.82rem", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
+            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
               {showLikeGenioTip ? "¿Ordeno la carta según tus gustos?" : "¿Te recomiendo algo?"} 🧞
               <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
             </div>
