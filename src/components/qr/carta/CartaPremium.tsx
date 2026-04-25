@@ -541,7 +541,7 @@ export default function CartaPremium({
                 onClick={() => setGenioOpen(true)}
                 className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, width: "calc(100% - 40px)", margin: "8px 20px 4px",
+                  display: "flex", alignItems: "center", gap: 10, width: "calc(100% - 40px)", margin: "20px 20px 4px",
                   padding: "12px 16px", borderRadius: 12, cursor: "pointer", border: "1px solid rgba(244,166,35,0.2)",
                   background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
                 }}
