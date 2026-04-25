@@ -101,10 +101,26 @@ Reglas:
   }
 }
 
-// Apply selected photos to dishes
+// Apply selected photos to dishes — supports both dishId and name-based matching
 export async function PUT(request: Request) {
   try {
-    const { photos } = await request.json(); // [{ dishId, photoUrl }]
+    const body = await request.json();
+    const { photos, photosByName, restaurantId } = body;
+
+    // Name-based matching
+    if (photosByName?.length && restaurantId) {
+      let applied = 0;
+      for (const p of photosByName) {
+        if (!p.name || !p.url) continue;
+        const dish = await prisma.dish.findFirst({ where: { restaurantId, name: p.name } });
+        if (dish) {
+          await prisma.dish.update({ where: { id: dish.id }, data: { photos: [p.url] } });
+          applied++;
+        }
+      }
+      return NextResponse.json({ ok: true, applied });
+    }
+
     if (!photos?.length) return NextResponse.json({ error: "No photos" }, { status: 400 });
 
     let applied = 0;

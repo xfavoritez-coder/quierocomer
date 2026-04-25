@@ -420,25 +420,29 @@ export default function AgregarLocalPage() {
             <button
               onClick={async () => {
                 setStep("photos" as any);
-                setPhotoProgress("Buscando fotos...");
                 setError("");
                 try {
-                  const controller = new AbortController();
-                  const timeout = setTimeout(() => controller.abort(), 110000);
-                  const res = await fetch("/api/agregarlocal/photos", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ restaurantId: result.restaurantId }),
-                    signal: controller.signal,
-                  }).catch((e) => { throw new Error(e.name === "AbortError" ? "Timeout: la búsqueda tardó demasiado. Intenta de nuevo." : e.message); });
-                  clearTimeout(timeout);
-                  const rawText = await res.text();
-                  if (!rawText) throw new Error("El servidor no devolvió respuesta. Puede haber un timeout.");
-                  let data;
-                  try { data = JSON.parse(rawText); } catch { throw new Error(`Respuesta no válida: ${rawText.slice(0, 300)}`); }
-                  if (!res.ok) throw new Error(data.error || `Error ${res.status}: ${JSON.stringify(data).slice(0, 200)}`);
-                  if (!data.results?.length) throw new Error(data.message || "No se encontraron platos sin fotos");
-                  setPhotoResults(data.results.map((r: any) => ({ ...r, selected: !!r.photoUrl })));
+                  // Get all dishes without photos
+                  const allDishes = categories.flatMap((c: any) =>
+                    (c.dishes || []).filter((d: any) => !d.photo).map((d: any) => ({ name: d.name, catName: c.name }))
+                  );
+                  if (allDishes.length === 0) { setError("Todos los platos ya tienen fotos"); setStep("done"); return; }
+
+                  const results: typeof photoResults = [];
+                  for (let i = 0; i < allDishes.length; i++) {
+                    const d = allDishes[i];
+                    setPhotoProgress(`Buscando foto ${i + 1} de ${allDishes.length}: ${d.name}`);
+                    // Simple English query from dish name
+                    const query = d.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z\s]/g, "").trim();
+                    try {
+                      const res = await fetch(`/api/agregarlocal/search-photo?q=${encodeURIComponent(query)}`);
+                      const data = await res.json();
+                      results.push({ dishId: "", dishName: d.name, query, photoUrl: data.url, selected: !!data.url });
+                    } catch {
+                      results.push({ dishId: "", dishName: d.name, query, photoUrl: null, selected: false });
+                    }
+                  }
+                  setPhotoResults(results);
                   setPhotoProgress("");
                 } catch (e: any) {
                   setError(e.message || String(e));
@@ -537,15 +541,16 @@ export default function AgregarLocalPage() {
                     const selected = photoResults.filter(r => r.selected && r.photoUrl);
                     if (selected.length === 0) { setStep("done"); return; }
                     try {
-                      for (let pi = 0; pi < selected.length; pi++) {
-                        setPhotoProgress(`Aplicando foto ${pi + 1} de ${selected.length}...`);
-                        const r = selected[pi];
-                        await fetch("/api/agregarlocal/photos", {
-                          method: "PUT",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ photos: [{ dishId: r.dishId, photoUrl: r.photoUrl }] }),
-                        });
-                      }
+                      // Apply all photos in one call by dish name
+                      setPhotoProgress(`Aplicando ${selected.length} fotos...`);
+                      await fetch("/api/agregarlocal/photos", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          restaurantId: result.restaurantId,
+                          photosByName: selected.map(r => ({ name: r.dishName, url: r.photoUrl })),
+                        }),
+                      });
                       setStep("done");
                       setPhotoProgress("");
                     } catch (e: any) {
