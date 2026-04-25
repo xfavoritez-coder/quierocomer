@@ -33,6 +33,14 @@ export default function AnalyticsDashboard() {
     return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
   };
 
+  const [attention, setAttention] = useState<any>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams({ type: "attention" });
+    if (restaurantId) params.set("restaurantId", restaurantId);
+    fetch(`/api/admin/analytics?${params}`).then(r => r.json()).then(setAttention).catch(() => {});
+  }, [restaurantId]);
+
   const SUB_PAGES = [
     { label: "Funnel", href: "/admin/analytics/funnel", icon: "🔻" },
     { label: "Tickets", href: "/admin/analytics/tickets", icon: "🧾" },
@@ -73,6 +81,37 @@ export default function AnalyticsDashboard() {
         </div>
       ) : (
         <p style={{ color: "#666", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>
+      )}
+
+      {/* Top Attention Dishes */}
+      {attention?.dishes?.length > 0 && (
+        <div style={{ marginTop: 28 }}>
+          <h2 style={{ fontFamily: F, fontSize: "1rem", color: "#888", margin: "0 0 14px" }}>Platos que más llaman la atención</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            {attention.dishes.map((d: any, i: number) => (
+              <div key={i} style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12, padding: "12px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+                {d.photo ? (
+                  <img src={d.photo} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: 8, background: "#2A2A2A", flexShrink: 0 }} />
+                )}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "white", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                    <span style={{ fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{d.category}</span>
+                  </div>
+                  <div style={{ display: "flex", gap: 12, marginTop: 2 }}>
+                    <span style={{ fontSize: "0.72rem", color: "#888" }}>{d.viewPct}% de sesiones</span>
+                    <span style={{ fontSize: "0.72rem", color: "#888" }}>{d.uniqueSessions} vistas</span>
+                    <span style={{ fontSize: "0.72rem", color: "#F4A623" }}>{Math.round(d.avgDwellMs / 1000)}s promedio</span>
+                  </div>
+                </div>
+                <span style={{ fontFamily: F, fontSize: "0.82rem", color: "#555", flexShrink: 0 }}>${d.price?.toLocaleString("es-CL")}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: "0.68rem", color: "#444", marginTop: 8, fontFamily: F }}>Basado en {attention.totalSessions} sesiones de los últimos 28 días</p>
+        </div>
       )}
     </div>
   );

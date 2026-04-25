@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -40,6 +40,10 @@ export async function GET(req: NextRequest) {
     }
     if (type === "personalization") {
       const data = await getPersonalizationMetrics(restaurantId, from, to);
+      return NextResponse.json(data);
+    }
+    if (type === "attention") {
+      const data = await getTopAttentionDishes(restaurantId, from, to);
       return NextResponse.json(data);
     }
     if (type === "ticket-trend" && restaurantId) {

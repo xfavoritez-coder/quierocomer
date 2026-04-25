@@ -293,3 +293,59 @@ export async function getPersonalizationMetrics(restaurantId: string | null, fro
     favorites: { total: favoritesCount },
   };
 }
+
+export async function getTopAttentionDishes(restaurantId: string | null, from: Date, to: Date) {
+  const rf = restaurantFilter(restaurantId);
+  const sessions = await prisma.session.findMany({
+    where: { ...rf, startedAt: { gte: from, lte: to } },
+    select: { dishesViewed: true },
+    take: 5000,
+  });
+
+  // Aggregate dwell time per dish
+  const dwells: Record<string, { totalMs: number; views: number; uniqueSessions: number }> = {};
+  for (const s of sessions) {
+    const viewed = s.dishesViewed as any[];
+    if (!Array.isArray(viewed)) continue;
+    const seenInSession = new Set<string>();
+    for (const d of viewed) {
+      if (!d.dishId) continue;
+      if (!dwells[d.dishId]) dwells[d.dishId] = { totalMs: 0, views: 0, uniqueSessions: 0 };
+      dwells[d.dishId].totalMs += d.dwellMs || 0;
+      dwells[d.dishId].views++;
+      if (!seenInSession.has(d.dishId)) { dwells[d.dishId].uniqueSessions++; seenInSession.add(d.dishId); }
+    }
+  }
+
+  const topIds = Object.entries(dwells)
+    .sort((a, b) => b[1].uniqueSessions - a[1].uniqueSessions)
+    .slice(0, 15)
+    .map(([id]) => id);
+
+  if (topIds.length === 0) return { dishes: [], totalSessions: sessions.length };
+
+  const dishes = await prisma.dish.findMany({
+    where: { id: { in: topIds } },
+    select: { id: true, name: true, price: true, photos: true, category: { select: { name: true } } },
+  });
+  const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
+
+  return {
+    totalSessions: sessions.length,
+    dishes: topIds.map(id => {
+      const dish = dishMap[id];
+      const data = dwells[id];
+      return {
+        name: dish?.name || id,
+        price: dish?.price || 0,
+        photo: dish?.photos?.[0] || null,
+        category: dish?.category?.name || "",
+        views: data.views,
+        uniqueSessions: data.uniqueSessions,
+        avgDwellMs: Math.round(data.totalMs / data.views),
+        totalDwellMs: data.totalMs,
+        viewPct: sessions.length > 0 ? Math.round((data.uniqueSessions / sessions.length) * 100) : 0,
+      };
+    }),
+  };
+}
