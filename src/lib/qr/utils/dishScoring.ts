@@ -177,7 +177,6 @@ export function scoreDish(
       (profile.dietType === "vegan" && dish.dishDiet === "VEGAN") ||
       (profile.dietType === "vegetarian" && (dish.dishDiet === "VEGAN" || dish.dishDiet === "VEGETARIAN"))
     )) reasons.push(`es ${dish.dishDiet === "VEGAN" ? "vegano" : "vegetariano"}`);
-    if (isNew) reasons.push("es nuevo en la carta");
     if (reasons.length > 0) {
       topReason = { text: reasons.slice(0, 2).join(" y ").charAt(0).toUpperCase() + reasons.slice(0, 2).join(" y ").slice(1), weight: 5 };
     }
