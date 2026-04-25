@@ -88,17 +88,33 @@ function bindActivityListeners() {
   window.addEventListener("touchstart", () => { markInteraction(); reset(); }, { passive: true });
   window.addEventListener("scroll", reset, { passive: true });
   window.addEventListener("click", () => { markInteraction(); reset(); }, { passive: true });
+  let hiddenAt: number | null = null;
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
-      closeSession("pagehide");
+      hiddenAt = Date.now();
+      // Send heartbeat but don't close — just pause
+      if (session?.dbSessionId) sendHeartbeat(false);
+      if (inactivityTimer) clearTimeout(inactivityTimer);
+      if (heartbeatTimer) clearInterval(heartbeatTimer);
     } else if (document.visibilityState === "visible") {
-      // User returned (unlocked phone, switched back to tab) — start fresh session
       if (!lastRestaurantId) return;
-      const tryResume = () => {
-        if (startingSession) { setTimeout(tryResume, 200); return; }
-        if (!session || session.closed) startSession(lastRestaurantId!, lastTableId, lastIsQrScan);
-      };
-      tryResume();
+      const awayMs = hiddenAt ? Date.now() - hiddenAt : 0;
+      hiddenAt = null;
+
+      if (awayMs > 5 * 60_000) {
+        // Away > 5 min — close old session, start fresh
+        if (session && !session.closed) closeSession("pagehide");
+        const tryStart = () => {
+          if (startingSession) { setTimeout(tryStart, 200); return; }
+          startSession(lastRestaurantId!, lastTableId, lastIsQrScan);
+        };
+        tryStart();
+      } else if (session && !session.closed && session.dbSessionId) {
+        // Away < 5 min — resume: restart heartbeat and inactivity timer
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+        resetInactivityTimer();
+      }
     }
   });
   window.addEventListener("beforeunload", () => closeSession("beforeunload"));
