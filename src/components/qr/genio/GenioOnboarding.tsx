@@ -525,6 +525,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                         localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
                         setDietType(null); setRestrictions([]); setDislikes([]);
                         if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}); }
+                        // Clear guest profile preferences so they don't get restored from DB
+                        fetch("/api/qr/profile/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guestId: getGuestId() }) }).catch(() => {});
                         close();
                       }} style={{ padding: "8px 16px", borderRadius: 50, border: "none", background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
                         Sí, borrar
