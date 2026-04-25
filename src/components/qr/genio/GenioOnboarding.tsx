@@ -620,7 +620,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <span style={{ width: 16, height: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
                     <Icon size={13} />
                   </span>
-                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "0.92rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
+                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "1rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
                     {r.labelKey ? t(lang, r.labelKey as any) : r.label}
                   </span>
                   {sel && r.value !== "ninguna" && <Check size={12} color={G.gold} style={{ flexShrink: 0 }} />}
