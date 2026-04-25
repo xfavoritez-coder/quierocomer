@@ -116,7 +116,7 @@ interface SessionData {
   referer: string | null;
   externalReferer: string | null;
   language: string | null;
-  dishesViewed: { dishId: string; dwellMs: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
+  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
@@ -525,7 +525,8 @@ export default function AdminSessions() {
                                 <div style={{ width: 28, height: 28, borderRadius: 5, background: "#2A2A2A", flexShrink: 0 }} />
                               )}
                               <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId.slice(0, 8)}</span>
-                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555", fontWeight: d.dwellMs > 5000 ? 600 : 400 }}>{formatDuration(d.dwellMs)}</span>
+                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555", fontWeight: d.dwellMs > 5000 ? 600 : 400 }}>{formatDuration(d.dwellMs)} en carta</span>
+                              {(d.detailMs ?? 0) > 0 && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#4ade80", fontWeight: 600 }}>{formatDuration(d.detailMs!)} en detalle</span>}
                             </div>
                           ))}
                         </div>

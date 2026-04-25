@@ -5,7 +5,7 @@ import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
-import { trackDishEnter, trackDishLeave, getDbSessionId } from "@/lib/sessionTracker";
+import { trackDetailOpen, trackDetailClose, getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
 
 interface PersonalizationEntry {
@@ -94,13 +94,13 @@ export default function DishDetail({
 
   // Track dish view stat on mount
   useEffect(() => {
-    trackDishEnter(dish.id);
+    trackDetailOpen(dish.id);
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ eventType: "DISH_VIEW", dishId: dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
     }).catch(() => {});
-    return () => { trackDishLeave(); };
+    return () => { trackDetailClose(); };
   }, [dish.id, restaurantId]);
 
   // Observe which slide is active
@@ -115,8 +115,8 @@ export default function DishDetail({
           setActiveIdx(idx);
           const d = allDishes[idx];
           if (d && d.id !== dish.id) {
-            trackDishLeave();
-            trackDishEnter(d.id);
+            trackDetailClose();
+            trackDetailOpen(d.id);
             onChangeDish(d);
           }
         }

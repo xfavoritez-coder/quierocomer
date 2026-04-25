@@ -18,6 +18,7 @@ const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 interface DishDwell {
   dishId: string;
   dwellMs: number;
+  detailMs?: number;
 }
 
 interface CategoryDwell {
@@ -50,6 +51,8 @@ let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let currentDishId: string | null = null;
 let currentDishStart: number | null = null;
+let detailDishId: string | null = null;
+let detailStart: number | null = null;
 let lastRestaurantId: string | undefined;
 let lastTableId: string | undefined;
 let lastIsQrScan: boolean | undefined;
@@ -104,6 +107,7 @@ function bindActivityListeners() {
 function getPayload(isFinal: boolean) {
   if (!session) return null;
   flushCurrentDish();
+  flushDetail();
 
   // Flush current view time into history
   const history = [...session.viewHistory];
@@ -330,6 +334,31 @@ export function trackDishPicked(dishId: string) {
   if (!session) return;
   ensureDbSession();
   session.pickedDishId = dishId;
+}
+
+/** Track when user opens dish detail modal */
+export function trackDetailOpen(dishId: string) {
+  flushDetail();
+  detailDishId = dishId;
+  detailStart = Date.now();
+}
+
+/** Track when user closes dish detail modal */
+export function trackDetailClose() {
+  flushDetail();
+}
+
+function flushDetail() {
+  if (!session || !detailDishId || !detailStart) return;
+  const elapsed = Date.now() - detailStart;
+  const existing = session.dishDwells.get(detailDishId);
+  if (existing) {
+    existing.detailMs = (existing.detailMs || 0) + elapsed;
+  } else {
+    session.dishDwells.set(detailDishId, { dishId: detailDishId, dwellMs: 0, detailMs: elapsed });
+  }
+  detailDishId = null;
+  detailStart = null;
 }
 
 /** Close session — final heartbeat */
