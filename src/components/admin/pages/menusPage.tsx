@@ -76,6 +76,7 @@ export default function AdminMenus() {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [photoModal, setPhotoModal] = useState<string | null>(null);
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -442,7 +443,7 @@ export default function AdminMenus() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
-            <img src={selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            <img src={selectedDish.photos[0]} alt="" onClick={() => setPhotoModal(selectedDish.photos[0])} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
             {selectedDish.isHero && <span style={{ position: "absolute", top: 10, right: 10, background: "#F4A623", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>HERO</span>}
           </div>
         )}
@@ -503,18 +504,26 @@ export default function AdminMenus() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-                <button onClick={() => startEditDish(selectedDish)} onMouseOver={e => (e.currentTarget.style.background = "#BFDBFE")} onMouseOut={e => (e.currentTarget.style.background = "#DBEAFE")} style={{ flex: 1, padding: "10px 28px", background: "#DBEAFE", border: "none", borderRadius: 8, color: "#1E40AF", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>Editar</button>
-                <button onClick={() => toggleDishActive(selectedDish)} style={{ flex: 1, padding: "10px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80" }}>
-                  {selectedDish.isActive ? "Desactivar" : "Activar"}
-                </button>
-                <button onClick={async () => {
-                  if (!confirm(`¿Eliminar "${selectedDish.name}"? El producto dejará de aparecer en la carta y el panel.`)) return;
-                  await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "DELETE" });
-                  setDishes(prev => prev.filter(d => d.id !== selectedDish.id));
-                  setSelectedDish(null);
-                }} style={{ padding: "10px 14px", borderRadius: 10, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
-                  Eliminar
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => startEditDish(selectedDish)} style={{ flex: 1, padding: "16px", background: "#DBEAFE", border: "none", borderRadius: 12, color: "#1E40AF", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, cursor: "pointer" }}>
+                    ✏️ Editar
+                  </button>
+                  <button onClick={async () => {
+                    if (!confirm(`¿Eliminar "${selectedDish.name}"?`)) return;
+                    await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "DELETE" });
+                    setDishes(prev => prev.filter(d => d.id !== selectedDish.id));
+                    setSelectedDish(null);
+                  }} style={{ padding: "16px 20px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+                    🗑
+                  </button>
+                </div>
+                <button onClick={() => toggleDishActive(selectedDish)} style={{ padding: "16px", borderRadius: 12, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.92rem", fontWeight: 600, background: selectedDish.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", color: selectedDish.isActive ? "#ff6b6b" : "#4ade80", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                  {selectedDish.isActive ? (
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg> Ocultar</>
+                  ) : (
+                    <><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Mostrar</>
+                  )}
                 </button>
               </div>
 
@@ -954,7 +963,7 @@ export default function AdminMenus() {
                 cursor: "pointer", width: "100%", textAlign: "left",
               }}>
                 {d.photos?.[0] ? (
-                  <img src={d.photos[0]} alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                  <img src={d.photos[0]} alt="" onClick={(e) => { e.stopPropagation(); setPhotoModal(d.photos[0]); }} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
                 ) : (
                   <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--adm-card-border)", flexShrink: 0 }} />
                 )}
@@ -1084,6 +1093,11 @@ export default function AdminMenus() {
       {/* ── Horarios tab ── */}
       {menuTab === "horarios" && selectedRestaurantId && (
         <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
+      )}
+      {photoModal && (
+        <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>
+          <img src={photoModal} alt="" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
+        </div>
       )}
     </div>
   );
