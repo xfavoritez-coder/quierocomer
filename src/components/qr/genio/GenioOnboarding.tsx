@@ -579,7 +579,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <span style={{ width: 18, height: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
                     <Icon size={14} />
                   </span>
-                  <span style={{ flex: 1, color: "white", fontSize: "0.88rem", fontWeight: 600, lineHeight: 1.3, textAlign: "left" }}>{t(lang, opt.labelKey)}</span>
+                  <span style={{ flex: 1, color: "white", fontSize: "1rem", fontWeight: 600, lineHeight: 1.3, textAlign: "left" }}>{t(lang, opt.labelKey)}</span>
                   {sel && <Check size={13} color={G.gold} style={{ flexShrink: 0 }} />}
                 </button>
               );
@@ -612,7 +612,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <span style={{ width: 16, height: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
                     <Icon size={13} />
                   </span>
-                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "0.82rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
+                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "0.92rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
                     {r.labelKey ? t(lang, r.labelKey as any) : r.label}
                   </span>
                   {sel && r.value !== "ninguna" && <Check size={12} color={G.gold} style={{ flexShrink: 0 }} />}
