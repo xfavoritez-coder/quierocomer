@@ -648,12 +648,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <AmbientHaze bottom />
           <AmbientSparks count={5} />
 
-          {/* Wand icon with glow */}
-          <div style={{ position: "relative", width: 64, height: 64, marginBottom: 16, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2 }}>
-            <div style={{ position: "absolute", inset: -16, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.35) 0%, transparent 70%)", animation: "genioPulse 3s ease-in-out infinite" }} />
-            <span style={{ fontSize: 36, position: "relative", filter: "drop-shadow(0 0 10px rgba(245,158,11,0.7))" }}>🪄</span>
-          </div>
-
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", marginBottom: 8, position: "relative", zIndex: 2 }}>
             {t(lang, "gDislikesQuestion")}
           </h2>
@@ -661,24 +655,35 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             {t(lang, "gDislikesHint")}
           </p>
 
-          {/* Popular dislikes as tappable pills */}
+          {/* Popular dislikes — unified render, toggle in place */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-            {popularDislikes.filter(p => !dislikes.includes(p) && !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 5).map(item => (
-              <button key={item} onClick={() => {
-                setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-              }} className="transition-all duration-200" style={{ padding: "8px 16px", borderRadius: 50, border: `0.5px solid ${G.border}`, background: G.surface, color: G.textSecondary, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer" }}>
-                {lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item}
-              </button>
-            ))}
+            {popularDislikes.filter(p => !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 5).map(item => {
+              const sel = dislikes.includes(item);
+              const label = lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item;
+              return (
+                <button key={item} onClick={() => {
+                  setDislikes(prev => {
+                    const updated = sel ? prev.filter(x => x !== item) : [...prev, item];
+                    localStorage.setItem("qr_dislikes", JSON.stringify(updated));
+                    return updated;
+                  });
+                }} className="transition-all duration-200" style={sel
+                  ? { padding: "8px 16px", borderRadius: 50, border: `1px solid ${G.selectedBorder}`, background: G.selectedBg, color: G.goldText, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }
+                  : { padding: "8px 16px", borderRadius: 50, border: `0.5px solid ${G.border}`, background: G.surface, color: G.textSecondary, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer" }
+                }>
+                  {label}{sel && <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>✕</span>}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Selected dislikes */}
-          {dislikes.length > 0 && (
+          {/* Extra dislikes added via search (not in popular list) */}
+          {dislikes.filter(d => !popularDislikes.includes(d)).length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-              {dislikes.map(d => (
+              {dislikes.filter(d => !popularDislikes.includes(d)).map(d => (
                 <button key={d} onClick={() => {
                   setDislikes(prev => { const updated = prev.filter(x => x !== d); localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                }} className="transition-all duration-200" style={{ padding: "7px 16px", borderRadius: 50, border: `1px solid ${G.selectedBorder}`, background: G.selectedBg, color: G.goldText, fontSize: "0.88rem", fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                }} className="transition-all duration-200" style={{ padding: "8px 16px", borderRadius: 50, border: `1px solid ${G.selectedBorder}`, background: G.selectedBg, color: G.goldText, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                   {d} <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>✕</span>
                 </button>
               ))}
@@ -695,7 +700,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               className="genio-input"
               style={inputStyle}
             />
-            {/* Search results */}
             {dislikeResults.length > 0 && (
               <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, maxHeight: 180, overflowY: "auto" }}>
                 {dislikeResults.map(r => (
@@ -721,7 +725,21 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             className="active:scale-95 transition-transform"
             style={{ ...CTA_STYLE, marginTop: 24, position: "relative", zIndex: 2 }}
           >
-            {dislikes.length === 0 ? t(lang, "gNothingDisliked") : t(lang, "gContinueBtn")}
+            {t(lang, "gContinueBtn")}
+          </button>
+          <button
+            onClick={() => {
+              setDislikes([]);
+              localStorage.setItem("qr_dislikes", JSON.stringify([]));
+              if (document.cookie.includes("qr_user_id")) {
+                fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: [] }) }).catch(() => {});
+              }
+              // TODO: track skip event
+              next();
+            }}
+            style={{ marginTop: 12, background: "none", border: "none", color: G.textTertiary, fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3, position: "relative", zIndex: 2 }}
+          >
+            {t(lang, "gSkipStep")}
           </button>
         </div>
 
