@@ -170,7 +170,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             La carta inteligente que <span style={{ color: "#d4a015" }}>recomienda</span> por ti
           </h1>
           <p style={{ fontFamily: B, fontSize: "clamp(15px, 2.5vw, 16px)", color: "#555", lineHeight: 1.5, maxWidth: 520, margin: "0 auto 28px" }}>
-            Se adapta a los gustos de cada cliente y le muestra justo lo que quiere pedir. Más satisfacción, mejores resultados.
+            Se adapta a los gustos de cada cliente y le muestra justo lo que quiere pedir. Aumenta el ticket promedio de cada mesa.
           </p>
           <a href="#contacto" style={{ display: "inline-block", padding: "12px 22px", background: "#111", color: "#fff", borderRadius: 10, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Agenda tu demo →</a>
         </div>

@@ -568,7 +568,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28, position: "relative", zIndex: 2 }}>
             {t(lang, "gDietQuestion")}
           </h2>
-          <div className="flex flex-col" style={{ gap: 12, position: "relative", zIndex: 2 }}>
+          <div className="flex flex-col items-center" style={{ gap: 12, position: "relative", zIndex: 2, maxWidth: 280, alignSelf: "center", width: "100%" }}>
             {DIET_OPTIONS.map((opt) => {
               const sel = dietType === opt.value;
               const dc = getDietColors(opt.value, sel);
@@ -658,6 +658,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             {t(lang, "gDislikesHint")}
           </p>
 
+          {/* Popular dislikes as tappable pills */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
+            {popularDislikes.filter(p => !dislikes.includes(p)).slice(0, 5).map(item => (
+              <button key={item} onClick={() => {
+                setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+              }} className="transition-all duration-200" style={{ padding: "8px 16px", borderRadius: 50, border: `0.5px solid ${G.border}`, background: G.surface, color: G.textSecondary, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer" }}>
+                {lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item}
+              </button>
+            ))}
+          </div>
+
           {/* Selected dislikes */}
           {dislikes.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
@@ -671,7 +682,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </div>
           )}
 
-          {/* Search input */}
+          {/* Search input for more */}
           <div style={{ position: "relative", marginBottom: 16, width: "100%", zIndex: 2 }}>
             <input
               value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
@@ -690,19 +701,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                     setDislikeSearch(""); setDislikeResults([]);
                   }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", borderBottom: `1px solid ${G.border}`, textAlign: "left", color: G.textSecondary, fontSize: "0.88rem", cursor: "pointer" }}>
                     {r}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* Popular suggestions */}
-            {dislikeInputFocused && !dislikeSearch && dislikeResults.length === 0 && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "rgba(234,88,12,0.04)", border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10 }}>
-                <p style={{ padding: "8px 14px 6px", margin: 0, fontSize: "9.5px", color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.08em" }}>Más comunes</p>
-                {popularDislikes.filter(p => !dislikes.includes(p)).slice(0, 4).map(item => (
-                  <button key={item} onClick={() => {
-                    setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                  }} style={{ display: "block", width: "100%", padding: "10px 16px", background: "none", border: "none", borderBottom: `1px solid ${G.border}`, textAlign: "left", color: G.textSecondary, fontSize: "0.88rem", cursor: "pointer" }}>
-                    {lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item}
                   </button>
                 ))}
               </div>
@@ -758,32 +756,10 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </div>
           </div>
 
-          {/* Birthday — optional */}
-          <div style={{ width: "100%", maxWidth: 320, marginBottom: 20, textAlign: "left", position: "relative", zIndex: 2 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "14px", color: G.textSecondary, marginBottom: 8 }}>
-              <span>🎂</span> ¿Cuándo es tu cumpleaños?
-            </label>
-            <input
-              type="date"
-              value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
-              className="genio-input"
-              style={inputStyle}
-            />
-            <p style={{ margin: "4px 0 0", fontSize: "12px", color: G.textDisabled }}>Te tendremos un regalo especial 🎁</p>
-          </div>
-
           {/* Button */}
           <button
             onClick={() => {
               trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
-              if (birthday && document.cookie.includes("qr_user_id")) {
-                fetch("/api/qr/user/update", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ birthDate: birthday }),
-                }).catch(() => {});
-              }
               setVisible(false);
               setTimeout(onClose, 200);
             }}
