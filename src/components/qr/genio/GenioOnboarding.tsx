@@ -100,6 +100,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const [dislikeResults, setDislikeResults] = useState<string[]>([]);
   const [showAddRestriction, setShowAddRestriction] = useState(false);
   const [showAddDislike, setShowAddDislike] = useState(false);
+  const [birthday, setBirthday] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showDislikeInfo, setShowDislikeInfo] = useState(false);
   const [dislikeInputFocused, setDislikeInputFocused] = useState(false);
@@ -586,10 +587,33 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             </div>
           </div>
 
+          {/* Birthday — optional */}
+          <div style={{ width: "100%", maxWidth: 320, marginBottom: 20, textAlign: "left" }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "14px", color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>
+              <span>🎂</span> ¿Cuándo es tu cumpleaños?
+            </label>
+            <input
+              type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+              className="genio-input"
+              style={{ width: "100%", padding: "12px 14px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "15px", outline: "none", boxSizing: "border-box" }}
+            />
+            <p style={{ margin: "4px 0 0", fontSize: "12px", color: "rgba(255,255,255,0.25)" }}>Te tendremos un regalo especial 🎁</p>
+          </div>
+
           {/* Button */}
           <button
             onClick={() => {
               trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
+              // Save birthday if provided
+              if (birthday && document.cookie.includes("qr_user_id")) {
+                fetch("/api/qr/user/update", {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ birthDate: birthday }),
+                }).catch(() => {});
+              }
               setVisible(false);
               setTimeout(onClose, 200);
             }}

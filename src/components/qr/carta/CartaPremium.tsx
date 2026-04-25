@@ -148,6 +148,18 @@ export default function CartaPremium({
     return () => { flush(); document.removeEventListener("visibilitychange", flush); };
   }, []);
 
+  // Genio nudge — pulse the floating button after 20s (once per session)
+  useEffect(() => {
+    if (hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("qc_genio_nudge_shown", "1");
+      setShowGenioNudge(true);
+      setTimeout(() => setShowGenioNudge(false), 5000);
+    }, 20_000);
+    return () => clearTimeout(timer);
+  }, [hasCompletedGenio]);
+
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const [qrUserLocal, setQrUserLocal] = useState<any>(null);
@@ -157,6 +169,15 @@ export default function CartaPremium({
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
   useEffect(() => { onReady?.(); }, [readyKey]);
+
+  // After first like, nudge to use Genio (once per session)
+  useEffect(() => {
+    if (!hasNewLikes || hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_like_genio_tip")) return;
+    sessionStorage.setItem("qc_like_genio_tip", "1");
+    setShowLikeGenioTip(true);
+    setTimeout(() => setShowLikeGenioTip(false), 6000);
+  }, [hasNewLikes, hasCompletedGenio]);
 
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
   useEffect(() => {
@@ -173,6 +194,8 @@ export default function CartaPremium({
   const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showGenioNudge, setShowGenioNudge] = useState(false);
+  const [showLikeGenioTip, setShowLikeGenioTip] = useState(false);
   const [captureName, setCaptureName] = useState("");
   const [captureEmail, setCaptureEmail] = useState("");
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
@@ -517,8 +540,25 @@ export default function CartaPremium({
 
           return (
             <div key={cat.id}>
+            {index === Math.max(2, Math.floor(categories.length * 0.3)) && !hasCompletedGenio && (
+              <button
+                onClick={() => setGenioOpen(true)}
+                className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, width: "calc(100% - 40px)", margin: "8px 20px 4px",
+                  padding: "12px 16px", borderRadius: 12, cursor: "pointer", border: "1px solid rgba(244,166,35,0.2)",
+                  background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+                }}
+              >
+                <span style={{ fontSize: "1.1rem" }}>🧞</span>
+                <span style={{ flex: 1, fontSize: "0.84rem", fontWeight: 600, color: "#0e0e0e", textAlign: "left" }}>
+                  {t(lang, "genieKnows")}
+                </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+              </button>
+            )}
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
-            {index === Math.max(4, Math.floor(categories.length * 0.75)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
+            {index === Math.max(3, Math.floor(categories.length * 0.5)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
@@ -602,73 +642,73 @@ export default function CartaPremium({
             </div>
           );
         })}
-      </main>
 
-      {birthdayCountdown !== null && (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            margin: "0 20px 12px", padding: "12px 16px",
-            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
-            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 12,
-            display: "flex", alignItems: "center", gap: 10,
-          }}
-        >
-          <span style={{ fontSize: "1.2rem" }}>🎁</span>
-          <span style={{ fontSize: "0.82rem", color: "#92400e", fontWeight: 600 }}>
-            {birthdayCountdown === 0 ? "¡Hoy es tu cumpleaños! 🎉" : `Tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`}
-          </span>
-        </div>
-      )}
-
-      {/* Genio nudge — compact if already completed onboarding */}
-      {hasCompletedGenio ? (
-        <button
-          onClick={() => setGenioOpen(true)}
-          className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
-          style={{
-            margin: "12px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
-            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
-          }}
-        >
-          <span style={{ fontSize: "1.3rem" }}>🧞</span>
-          <div style={{ flex: 1, textAlign: "left" }}>
-            <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
-            <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-        </button>
-      ) : (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
-            background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-            border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
-          }}
-        >
-          <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
-            🧞
-          </div>
-          <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
-          <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
-          <button
-            onClick={() => setGenioOpen(true)}
-            className="active:scale-[0.97] transition-transform"
+        {/* Genio nudge — inside main, after categories */}
+        {birthdayCountdown !== null && (
+          <div
+            className="font-[family-name:var(--font-dm)]"
             style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              background: "#F4A623",
-              color: "white", padding: "12px 24px", borderRadius: 100,
-              fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
-              boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+              margin: "20px 20px 12px", padding: "12px 16px",
+              background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 12,
+              display: "flex", alignItems: "center", gap: 10,
             }}
           >
-            {t(lang, "askGenieShort")}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            <span style={{ fontSize: "1.2rem" }}>🎁</span>
+            <span style={{ fontSize: "0.82rem", color: "#92400e", fontWeight: 600 }}>
+              {birthdayCountdown === 0 ? "¡Hoy es tu cumpleaños! 🎉" : `Tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`}
+            </span>
+          </div>
+        )}
+
+        {hasCompletedGenio ? (
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
+            style={{
+              margin: "12px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
+              background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
+            }}
+          >
+            <span style={{ fontSize: "1.3rem" }}>🧞</span>
+            <div style={{ flex: 1, textAlign: "left" }}>
+              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Ajustar mis gustos</span>
+              <span style={{ fontSize: "0.78rem", color: "#8a5a2c", marginLeft: 8 }}>o sorpréndeme</span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
           </button>
-        </div>
-      )}
+        ) : (
+          <div
+            className="font-[family-name:var(--font-dm)]"
+            style={{
+              margin: "12px 20px 16px", padding: "24px 20px", textAlign: "center",
+              background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
+            }}
+          >
+            <div style={{ display: "inline-flex", width: 52, height: 52, borderRadius: "50%", background: "#F4A623", boxShadow: "0 4px 12px rgba(244,166,35,0.3)", alignItems: "center", justifyContent: "center", marginBottom: 14, fontSize: "1.5rem" }}>
+              🧞
+            </div>
+            <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
+            <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
+            <button
+              onClick={() => setGenioOpen(true)}
+              className="active:scale-[0.97] transition-transform"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                background: "#F4A623",
+                color: "white", padding: "12px 24px", borderRadius: 100,
+                fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
+                boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
+              }}
+            >
+              {t(lang, "askGenieShort")}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        )}
+      </main>
 
       {/* Powered by footer */}
       <footer
@@ -722,18 +762,29 @@ export default function CartaPremium({
             </GenioTip>
           </div>
         )}
-        <button
-          onClick={() => setGenioOpen(true)}
-          className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 60, width: (!hasCompletedGenio && genioExpanded) ? "auto" : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", padding: (!hasCompletedGenio && genioExpanded) ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease", overflow: "hidden" }}
-        >
-          <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-          {!hasCompletedGenio && genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
-        </button>
+        <div style={{ position: "relative" }}>
+          {(showGenioNudge || showLikeGenioTip) && (
+            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "0.82rem", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
+              {showLikeGenioTip ? "¿Ordeno la carta según tus gustos?" : "¿Te recomiendo algo?"} 🧞
+              <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
+            </div>
+          )}
+          <button
+            onClick={() => { setShowGenioNudge(false); setGenioOpen(true); }}
+            className="flex items-center justify-center rounded-full active:scale-95"
+            style={{ height: 60, width: (!hasCompletedGenio && genioExpanded) ? "auto" : 60, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", padding: (!hasCompletedGenio && genioExpanded) ? "0 20px 0 16px" : "0", borderRadius: 50, gap: 6, transition: "width 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease", overflow: "hidden" }}
+          >
+            <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: (showGenioNudge || showLikeGenioTip) ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
+            {!hasCompletedGenio && genioExpanded && <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", position: "relative", top: -1 }}>¿Qué comer?</span>}
+          </button>
+        </div>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         <ViewSelector restaurantId={restaurant.id} />
       </div>
-      <style>{`@keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }`}</style>
+      <style>{`
+        @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes genioNudgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+      `}</style>
 
       {selectedDish && (
         <DishDetail

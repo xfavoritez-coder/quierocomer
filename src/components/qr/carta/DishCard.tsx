@@ -123,7 +123,10 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName }: Omit<Di
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
       <div className="absolute" style={{ top: 7, right: 7, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, zIndex: 2 }}>
         {badge && (
-          <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.82rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8 }}>{badge}</span>
+          <span className="font-[family-name:var(--font-dm)]" style={autoRecommended
+            ? { background: "rgba(244,166,35,0.2)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "4px 10px", borderRadius: 50 }
+            : { background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.82rem", fontWeight: 600, padding: "4px 10px", borderRadius: 8 }
+          }>{badge}</span>
         )}
         {dish.tags?.includes("NEW") && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#e85530", color: "white", fontSize: "0.52rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6, letterSpacing: "0.05em" }}>NUEVO</span>}
       </div>
