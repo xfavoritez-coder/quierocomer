@@ -61,12 +61,12 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
           textAlign: "center",
         }}
       >
-        <span style={{ fontSize: "1.4rem", display: "block", marginBottom: 6 }}>📩</span>
+        <span style={{ fontSize: "1.4rem", display: "block", marginBottom: 6 }}>🎉</span>
         <p style={{ color: "#92400e", fontSize: "0.88rem", fontWeight: 700, margin: "0 0 4px" }}>
-          ¡Ya casi! Revisa tu correo
+          ¡Listo, guardado!
         </p>
         <p style={{ color: "#b45309", fontSize: "0.78rem", margin: 0, opacity: 0.8 }}>
-          Confirma para recibir tu regalo de cumpleaños
+          Te avisaremos en tu cumpleaños con una sorpresa
         </p>
       </div>
     );
@@ -139,7 +139,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           onClose={() => setModalOpen(false)}
-          onSuccess={() => setStatus("success")}
+          onSuccess={() => { setStatus("success"); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
         />
       )}
     </>

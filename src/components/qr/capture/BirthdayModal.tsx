@@ -125,17 +125,34 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {!existingUser && (
             <>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
-                style={{
-                  background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                  padding: "14px 16px", color: "#0e0e0e", fontSize: "1rem",
-                  outline: "none", fontFamily: "inherit",
-                }}
-              />
+              <div>
+                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Tu nombre</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ej: María"
+                  style={{
+                    width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                    padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                    outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Tu email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="tu@email.com"
+                  style={{
+                    width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                    padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                    outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                  }}
+                />
+              </div>
               <EmailTypoHint email={email} onAccept={setEmail} />
             </>
           )}
