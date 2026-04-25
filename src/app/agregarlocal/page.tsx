@@ -491,6 +491,38 @@ export default function AgregarLocalPage() {
               📸 Agregar fotos automáticas
             </button>
 
+            {/* Translate button */}
+            <button
+              onClick={async () => {
+                setError("");
+                setSavingProgress("Traduciendo carta a inglés y portugués...");
+                setStep("saving");
+                try {
+                  const res = await fetch("/api/agregarlocal/translate", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ restaurantId: result.restaurantId }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "Error");
+                  setSavingProgress("");
+                  setStep("done");
+                } catch (e: any) {
+                  setError(e.message || String(e));
+                  setSavingProgress("");
+                  setStep("done");
+                }
+              }}
+              style={{
+                display: "block", width: "100%", padding: "16px", borderRadius: 50,
+                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.7)",
+                fontSize: "1rem", fontWeight: 700, cursor: "pointer", marginBottom: 10,
+              }}
+            >
+              🌐 Traducir carta (EN · PT)
+            </button>
+
             <a
               href={result.url.replace("https://quierocomer.cl", "")}
               target="_blank"
