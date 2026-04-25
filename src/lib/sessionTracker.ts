@@ -78,7 +78,10 @@ function resetInactivityTimer() {
 function markInteraction() {
   if (!hadUserInteraction) {
     hadUserInteraction = true;
-    ensureDbSession();
+    // Start heartbeat timer — DB session created on first tick (15s)
+    if (!heartbeatTimer) {
+      heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+    }
   }
 }
 
@@ -166,6 +169,11 @@ function getPayload(isFinal: boolean) {
 }
 
 function sendHeartbeat(isFinal = false, closeReason?: string) {
+  // Create DB session on first heartbeat if user interacted
+  if (hadUserInteraction && session && !session.dbSessionId && !creatingDbSession) {
+    ensureDbSession();
+    return; // dbSessionId not available yet, will send on next tick
+  }
   const payload = getPayload(isFinal);
   if (!payload || !payload.sessionId) return;
   if (closeReason) (payload as any).closeReason = closeReason;
