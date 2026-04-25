@@ -261,6 +261,12 @@ export default function AdminSessions() {
             >{f.label}</button>
           );
         })}
+        {filterActivity && (
+          <button
+            onClick={() => updateParams({ activity: null, page: null })}
+            style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600, background: "none", border: "1px solid #2A2A2A", color: "#888" }}
+          >✕</button>
+        )}
       </div>
 
       {sessions.length === 0 ? (
