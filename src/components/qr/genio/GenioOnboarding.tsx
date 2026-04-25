@@ -520,12 +520,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <div style={{ textAlign: "center", padding: "12px 0" }}>
                     <p style={{ fontSize: "12px", color: G.textSecondary, margin: "0 0 10px" }}>¿Seguro? Esto borrará todo tu perfil.</p>
                     <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-                      <button onClick={() => {
+                      <button onClick={async () => {
                         localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
                         setDietType(null); setRestrictions([]); setDislikes([]);
-                        if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}); }
-                        // Clear guest profile preferences so they don't get restored from DB
-                        fetch("/api/qr/profile/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guestId: getGuestId() }) }).catch(() => {});
+                        // Wait for DB clear before closing, so profile fetch doesn't restore them
+                        await Promise.all([
+                          document.cookie.includes("qr_user_id") ? fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}) : Promise.resolve(),
+                          fetch("/api/qr/profile/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guestId: getGuestId() }) }).catch(() => {}),
+                        ]);
                         close();
                       }} style={{ padding: "8px 16px", borderRadius: 50, border: "none", background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
                         Sí, borrar
@@ -563,7 +565,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         </div>
 
         {/* ═══ STEP 1 — Diet type ═══ */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 40px", position: "relative" }}>
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 36px 40px", position: "relative" }}>
           <AmbientHaze />
           <AmbientSparks count={3} />
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28, position: "relative", zIndex: 2 }}>
@@ -594,7 +596,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         </div>
 
         {/* ═══ STEP 2 — Restrictions ═══ */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 24px 120px", position: "relative" }}>
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 36px 120px", position: "relative" }}>
           <AmbientHaze />
           <AmbientSparks count={3} />
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28, position: "relative", zIndex: 2 }}>
@@ -642,7 +644,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         </div>
 
         {/* ═══ STEP 3 — Dislikes ═══ */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 28px 120px", position: "relative" }}>
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 36px 120px", position: "relative" }}>
           <AmbientHaze bottom />
           <AmbientSparks count={5} />
 
@@ -661,7 +663,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
           {/* Popular dislikes as tappable pills */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-            {popularDislikes.filter(p => !dislikes.includes(p)).slice(0, 5).map(item => (
+            {popularDislikes.filter(p => !dislikes.includes(p) && !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 5).map(item => (
               <button key={item} onClick={() => {
                 setDislikes(prev => { const updated = [...prev, item]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
               }} className="transition-all duration-200" style={{ padding: "8px 16px", borderRadius: 50, border: `0.5px solid ${G.border}`, background: G.surface, color: G.textSecondary, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer" }}>
@@ -724,7 +726,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         </div>
 
         {/* ═══ STEP 4 — Done ═══ */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 28px 44px", position: "relative" }}>
+        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 36px 44px", position: "relative" }}>
           <AmbientHaze bottom />
           <AmbientSparks count={5} />
 

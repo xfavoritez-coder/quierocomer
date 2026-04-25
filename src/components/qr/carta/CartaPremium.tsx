@@ -553,8 +553,9 @@ export default function CartaPremium({
                 }}
               >
                 <span style={{ fontSize: "1.1rem" }}>🧞</span>
-                <span style={{ flex: 1, fontSize: "0.84rem", fontWeight: 600, color: "#0e0e0e", textAlign: "left" }}>
-                  {t(lang, "genieKnows")}
+                <span style={{ flex: 1, textAlign: "left" }}>
+                  <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "#0e0e0e", display: "block" }}>¿No sabes qué pedir?</span>
+                  <span style={{ fontSize: "0.75rem", color: "#8a5a2c" }}>Deja que el Genio te recomiende</span>
                 </span>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
               </button>
@@ -684,13 +685,15 @@ export default function CartaPremium({
           <div
             className="font-[family-name:var(--font-dm)]"
             style={{
-              margin: "32px 20px 16px", padding: "24px 20px", textAlign: "center",
+              margin: "32px 20px 16px", padding: "20px", textAlign: "center",
               background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
               border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
             }}
           >
-            <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
-            <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 18px" }}>{t(lang, "genieKnows")}</p>
+            <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <span>🧞</span> {t(lang, "dontKnowWhat")} {restaurant.name}?
+            </h3>
+            <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>Deja que el Genio te recomiende</p>
             <button
               onClick={() => setGenioOpen(true)}
               className="active:scale-[0.97] transition-transform"
