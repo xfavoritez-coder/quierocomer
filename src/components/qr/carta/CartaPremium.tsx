@@ -273,6 +273,12 @@ export default function CartaPremium({
       .then((r) => r.json())
       .then((d) => {
         if (!d.profile) { setPersonalizing(false); return; }
+        // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
+        if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
+          localStorage.setItem("qr_diet", d.profile.dietType);
+          localStorage.setItem("qr_restrictions", JSON.stringify(d.profile.restrictions?.length ? d.profile.restrictions : ["ninguna"]));
+          if (d.profile.dislikedIngredients?.length) localStorage.setItem("qr_dislikes", JSON.stringify(d.profile.dislikedIngredients));
+        }
         const catNames: Record<string, string> = {};
         for (const c of categories) catNames[c.id] = c.name;
         const result = getPersonalizedDishes(
