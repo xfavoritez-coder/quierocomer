@@ -155,15 +155,8 @@ export function scoreDish(
     topReason = { text: `Tiene ${ingredientMatches[0].name} que te gusta`, weight: likedTotal };
   }
 
-  // ── VIEW HISTORY (+10 or +5) ──
-  const viewed = profile.viewHistory.find((v) => v.dishId === dish.id);
-  if (viewed) {
-    if (viewed.dwellMs > 5000) {
-      score += 10;
-    } else {
-      score += 5;
-    }
-  }
+  // View history and new dish bonuses removed — not reliable signals
+  // for auto-recommendation without explicit user preference
 
   // ── BUSINESS VALUE (capped at +15 combined) ──
   let bizBoost = 0;
@@ -171,17 +164,6 @@ export function scoreDish(
   if (dish.isHighMargin) bizBoost += 8;
   if (dish.isFeaturedAuto) bizBoost += 7;
   score += Math.min(bizBoost, 15);
-
-  // ── NEW DISH (+5 if < 7 days old) ──
-  const createdAt = new Date(dish.createdAt);
-  const daysSinceCreated = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24);
-  const isNew = daysSinceCreated < 7;
-  if (isNew) {
-    score += 5;
-    if (score > 65 && (!topReason || topReason.weight < 10)) {
-      topReason = { text: "Nuevo y afín a tus gustos", weight: 10 };
-    }
-  }
 
   // Time of day and weather scoring removed — heuristic keyword matching
   // was unreliable (most category/dish names don't contain time/weather keywords)
