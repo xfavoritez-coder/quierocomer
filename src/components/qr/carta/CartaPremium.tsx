@@ -269,9 +269,11 @@ export default function CartaPremium({
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
+    const _t0 = Date.now();
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
       .then((r) => r.json())
       .then((d) => {
+        console.log(`[QC] Profile fetch: ${Date.now() - _t0}ms`);
         if (!d.profile) { setPersonalizing(false); return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
@@ -287,6 +289,7 @@ export default function CartaPremium({
           d.profile,
           { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
         );
+        console.log(`[QC] Scoring: ${Date.now() - _t0}ms total`);
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
