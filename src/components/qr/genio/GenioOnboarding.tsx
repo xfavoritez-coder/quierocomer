@@ -364,7 +364,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           {hasSaved ? (
             <>
               <AmbientHaze />
-              <AmbientSparks count={3} />
               <div style={{ position: "relative", zIndex: 2, width: "100%", overflowY: "auto", maxHeight: viewportH ? viewportH - 80 : "calc(100dvh - 80px)", padding: "32px 24px 40px" }}>
                 {/* Header */}
                 <div style={{ textAlign: "center", marginBottom: 28 }}>
