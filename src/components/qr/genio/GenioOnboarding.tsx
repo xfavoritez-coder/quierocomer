@@ -181,14 +181,22 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   };
 
 
-  // Lock body scroll to prevent Chrome iOS address bar gap
+  // Lock body scroll + measure real viewport for Chrome iOS
+  const [viewportH, setViewportH] = useState(() => typeof window !== "undefined" ? window.innerHeight : 0);
   useEffect(() => {
     const scrollY = window.scrollY;
     document.body.style.overflow = "hidden";
     document.body.style.position = "fixed";
     document.body.style.width = "100%";
     document.body.style.top = `-${scrollY}px`;
+
+    // Use real viewport height (window.innerHeight) to avoid Chrome iOS address bar gap
+    setViewportH(window.innerHeight);
+    const onResize = () => setViewportH(window.innerHeight);
+    window.addEventListener("resize", onResize);
+
     return () => {
+      window.removeEventListener("resize", onResize);
       document.body.style.overflow = "";
       document.body.style.position = "";
       document.body.style.width = "";
@@ -205,7 +213,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 110, background: "#0e0e0e",
+        position: "fixed", top: 0, left: 0, width: "100%", height: viewportH || "100dvh",
+        zIndex: 110, background: "#0e0e0e",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out", overflow: "hidden",
       }}
     >
@@ -236,12 +245,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       )}
 
       {/* Steps container */}
-      <div style={{ position: "absolute", inset: 0, display: "flex", transform: `translateX(${-displayStep * 100}%)`, transition: skipTransition ? "none" : "transform 0.3s ease-out" }}>
+      <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", transform: `translateX(${-displayStep * 100}%)`, transition: skipTransition ? "none" : "transform 0.3s ease-out" }}>
 
         {/* STEP 0 — Welcome or Welcome Back */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 20px", gap: 16 }}>
           {hasSaved ? (
-            <div style={{ width: "100%", background: "#0e0e0e", borderRadius: 32, overflowY: "auto", maxHeight: "calc(100dvh - 80px)", padding: "32px 24px 40px" }}>
+            <div style={{ width: "100%", background: "#0e0e0e", borderRadius: 32, overflowY: "auto", maxHeight: viewportH ? viewportH - 80 : "calc(100dvh - 80px)", padding: "32px 24px 40px" }}>
               {/* Header */}
               <div style={{ textAlign: "center", marginBottom: 28 }}>
                 <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🧞</span>
