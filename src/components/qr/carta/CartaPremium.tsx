@@ -114,15 +114,12 @@ export default function CartaPremium({
       ticking = true;
       requestAnimationFrame(() => {
         lastScrollY.current = window.scrollY;
-        // Dismiss nudge tooltips on scroll
-        if (showGenioNudge) setShowGenioNudge(false);
-        if (showLikeGenioTip) setShowLikeGenioTip(false);
         ticking = false;
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, [showGenioNudge, showLikeGenioTip]);
+  }, []);
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   // Track category dwell time when active category changes
