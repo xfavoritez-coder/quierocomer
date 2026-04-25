@@ -101,7 +101,10 @@ export default function CartaPremium({
 }: CartaProps) {
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
-  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
+  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
+  useEffect(() => {
+    setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+  }, []);
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const [showGenioNudge, setShowGenioNudge] = useState(false);
@@ -269,11 +272,9 @@ export default function CartaPremium({
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
-    const _t0 = Date.now();
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
       .then((r) => r.json())
       .then((d) => {
-        console.log(`[QC] Profile fetch: ${Date.now() - _t0}ms`);
         if (!d.profile) { setPersonalizing(false); return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
@@ -289,7 +290,6 @@ export default function CartaPremium({
           d.profile,
           { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
         );
-        console.log(`[QC] Scoring: ${Date.now() - _t0}ms total`);
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
