@@ -167,7 +167,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
           </span>
           <h1 style={{ fontFamily: F, fontSize: "clamp(30px, 5vw, 42px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
-            La carta inteligente que <span style={{ color: "#d4a015" }}>recomienda</span> por ti
+            La carta que <span style={{ color: "#d4a015" }}>recomienda por ti</span> y sube tu ticket por mesa
           </h1>
           <p style={{ fontFamily: B, fontSize: "clamp(15px, 2.5vw, 16px)", color: "#555", lineHeight: 1.5, maxWidth: 520, margin: "0 auto 28px" }}>
             Se adapta a los gustos de cada cliente y le muestra justo lo que quiere pedir. Aumenta el ticket promedio de cada mesa.
