@@ -421,26 +421,35 @@ export default function AgregarLocalPage() {
               onClick={async () => {
                 setStep("photos" as any);
                 setError("");
+                setPhotoProgress("Preparando búsqueda...");
                 try {
-                  // Get all dishes without photos
-                  const allDishes = categories.flatMap((c: any) =>
-                    (c.dishes || []).filter((d: any) => !d.photo).map((d: any) => ({ name: d.name, catName: c.name }))
-                  );
-                  if (allDishes.length === 0) { setError("Todos los platos ya tienen fotos"); setStep("done"); return; }
+                  // Get dish names — try categories first, fall back to result
+                  const dishNames: string[] = [];
+                  if (categories.length > 0) {
+                    for (const c of categories) {
+                      for (const d of (c.dishes || []) as any[]) {
+                        if (d.name) dishNames.push(d.name);
+                      }
+                    }
+                  }
+                  if (dishNames.length === 0) {
+                    setError(`No se encontraron platos. Categorías: ${categories.length}`);
+                    setStep("done");
+                    return;
+                  }
 
                   const results: typeof photoResults = [];
-                  for (let i = 0; i < allDishes.length; i++) {
-                    const d = allDishes[i];
-                    setPhotoProgress(`Buscando foto ${i + 1} de ${allDishes.length}: ${d.name}`);
-                    // Simple English query from dish name
-                    const query = d.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z\s]/g, "").trim();
+                  for (let i = 0; i < dishNames.length; i++) {
+                    const name = dishNames[i];
+                    setPhotoProgress(`Buscando foto ${i + 1} de ${dishNames.length}: ${name}`);
+                    const query = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z\s]/g, "").trim() || name;
+                    let photoUrl: string | null = null;
                     try {
                       const res = await fetch(`/api/agregarlocal/search-photo?q=${encodeURIComponent(query)}`);
                       const data = await res.json();
-                      results.push({ dishId: "", dishName: d.name, query, photoUrl: data.url, selected: !!data.url });
-                    } catch {
-                      results.push({ dishId: "", dishName: d.name, query, photoUrl: null, selected: false });
-                    }
+                      photoUrl = data.url || null;
+                    } catch {}
+                    results.push({ dishId: "", dishName: name, query, photoUrl, selected: !!photoUrl });
                   }
                   setPhotoResults(results);
                   setPhotoProgress("");
