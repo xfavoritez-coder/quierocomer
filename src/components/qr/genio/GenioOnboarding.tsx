@@ -568,7 +568,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28, position: "relative", zIndex: 2 }}>
             {t(lang, "gDietQuestion")}
           </h2>
-          <div className="flex flex-col items-center" style={{ gap: 12, position: "relative", zIndex: 2, maxWidth: 280, alignSelf: "center", width: "100%" }}>
+          <div className="flex flex-col items-center" style={{ gap: 12, position: "relative", zIndex: 2, width: "100%", maxWidth: 320, alignSelf: "center" }}>
             {DIET_OPTIONS.map((opt) => {
               const sel = dietType === opt.value;
               const dc = getDietColors(opt.value, sel);
@@ -580,12 +580,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   setTimeout(next, 400);
                 }}
                   className="flex items-center transition-all duration-200"
-                  style={{ padding: "12px 14px", borderRadius: 12, border: dc.border, background: dc.bg, gap: 11 }}>
-                  <span style={{ width: 18, height: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
-                    <Icon size={14} />
+                  style={{ padding: "16px 20px", borderRadius: 14, border: dc.border, background: dc.bg, gap: 14, width: "100%" }}>
+                  <span style={{ width: 22, height: 22, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
+                    <Icon size={18} />
                   </span>
-                  <span style={{ flex: 1, color: "white", fontSize: "1rem", fontWeight: 600, lineHeight: 1.3, textAlign: "left" }}>{t(lang, opt.labelKey)}</span>
-                  {sel && <Check size={13} color={G.gold} style={{ flexShrink: 0 }} />}
+                  <span style={{ flex: 1, color: "white", fontSize: "1.1rem", fontWeight: 600, lineHeight: 1.3, textAlign: "left" }}>{t(lang, opt.labelKey)}</span>
+                  {sel && <Check size={16} color={G.gold} style={{ flexShrink: 0 }} />}
                 </button>
               );
             })}
