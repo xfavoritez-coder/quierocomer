@@ -13,7 +13,6 @@ import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./Hap
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { LangProvider } from "@/contexts/LangContext";
-import FavoritesToasts from "./FavoritesToasts";
 import NameModal from "../auth/NameModal";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import type { Lang } from "@/lib/qr/i18n";
@@ -188,7 +187,6 @@ export default function CartaRouter(props: Props) {
           />
         )}
 
-        <FavoritesToasts />
 
         {showNameModal && (
           <NameModal onSave={(name) => { setShowNameModal(false); setQrUser((prev: any) => prev ? { ...prev, name } : prev); }} />

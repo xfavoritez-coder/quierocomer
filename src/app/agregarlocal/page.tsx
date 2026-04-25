@@ -64,6 +64,8 @@ export default function AgregarLocalPage() {
   const [urlInput, setUrlInput] = useState("");
   const [logo, setLogo] = useState<string | null>(null);
   const [savingProgress, setSavingProgress] = useState("");
+  const [aiModel, setAiModel] = useState<"sonnet" | "haiku">("sonnet");
+  const skipIngredientsRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Compress image client-side to max 1200px and ~200KB JPEG
@@ -103,6 +105,7 @@ export default function AgregarLocalPage() {
 
     const formData = new FormData();
     formData.set("name", name.trim());
+    formData.set("model", aiModel);
     compressed.forEach((blob, i) => formData.append("photos", blob, `photo-${i}.jpg`));
 
     const debugInfo = photos.map(p => `${p.name} (${p.type || "sin tipo"}, ${Math.round(p.size/1024)}KB)`).join(", ");
@@ -148,6 +151,7 @@ export default function AgregarLocalPage() {
 
   const confirm = async () => {
     setStep("saving");
+    skipIngredientsRef.current = false;
     setSavingProgress("Creando restaurante y platos...");
     try {
       // Step 1: Create restaurant + dishes
@@ -161,9 +165,10 @@ export default function AgregarLocalPage() {
 
       setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
 
-      // Step 2: Extract ingredients with real progress
+      // Step 2: Extract ingredients with real progress (skippable)
       const dishIds: string[] = data.dishIds || [];
       for (let i = 0; i < dishIds.length; i++) {
+        if (skipIngredientsRef.current) break;
         setSavingProgress(`Extrayendo ingredientes (${i + 1}/${dishIds.length})...`);
         await fetch("/api/agregarlocal/ingredients", {
           method: "POST",
@@ -280,6 +285,21 @@ export default function AgregarLocalPage() {
                   />
                 </div>
               </>
+            )}
+
+            {/* AI model selector — only for photo mode */}
+            {mode === "photos" && (
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Modelo de lectura</label>
+                <div style={{ display: "flex", gap: 4, background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: 4 }}>
+                  <button onClick={() => setAiModel("haiku")} style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, background: aiModel === "haiku" ? "#F4A623" : "transparent", color: aiModel === "haiku" ? "#0e0e0e" : "rgba(255,255,255,0.5)", lineHeight: 1.3 }}>
+                    ⚡ Rápido<br /><span style={{ fontSize: "0.68rem", fontWeight: 400, opacity: 0.7 }}>~10 seg</span>
+                  </button>
+                  <button onClick={() => setAiModel("sonnet")} style={{ flex: 1, padding: "10px 8px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: "0.8rem", fontWeight: 600, background: aiModel === "sonnet" ? "#F4A623" : "transparent", color: aiModel === "sonnet" ? "#0e0e0e" : "rgba(255,255,255,0.5)", lineHeight: 1.3 }}>
+                    🔍 Preciso<br /><span style={{ fontSize: "0.68rem", fontWeight: 400, opacity: 0.7 }}>~30 seg</span>
+                  </button>
+                </div>
+              </div>
             )}
 
             {error && (
@@ -403,6 +423,14 @@ export default function AgregarLocalPage() {
             <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "16px auto 0", overflow: "hidden" }}>
               <div style={{ width: "70%", height: "100%", background: "#F4A623", borderRadius: 2, animation: "progressIndeterminate 1.5s ease-in-out infinite" }} />
             </div>
+            {savingProgress.includes("ingredientes") && (
+              <button
+                onClick={() => { skipIngredientsRef.current = true; }}
+                style={{ marginTop: 20, background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", borderRadius: 50, padding: "8px 24px", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Saltar este paso
+              </button>
+            )}
           </div>
         )}
 
@@ -435,21 +463,18 @@ export default function AgregarLocalPage() {
                   }
                   const dishNames = needsPhotos.map(d => d.name);
 
-                  const results: typeof photoResults = [];
-                  for (let i = 0; i < dishNames.length; i++) {
-                    const name = dishNames[i];
-                    setPhotoProgress(`Buscando foto ${i + 1} de ${dishNames.length}: ${name}`);
-                    const query = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z\s]/g, "").trim() || name;
-                    let photoUrl: string | null = null;
-                    try {
-                      const res = await fetch(`/api/agregarlocal/search-photo?q=${encodeURIComponent(query)}`);
-                      const data = await res.json();
-                      photoUrl = data.url || null;
-                    } catch {}
-                    results.push({ dishId: "", dishName: name, query, photoUrl, selected: !!photoUrl });
-                    // Delay to respect Unsplash rate limit
-                    if (i < dishNames.length - 1) await new Promise(ok => setTimeout(ok, 1500));
-                  }
+                  setPhotoProgress(`Buscando ${dishNames.length} fotos...`);
+                  let urls: string[] = [];
+                  try {
+                    const res = await fetch(`/api/agregarlocal/search-photo?count=${dishNames.length}`);
+                    const data = await res.json();
+                    urls = data.urls || [];
+                  } catch {}
+                  const results: typeof photoResults = dishNames.map((name, i) => ({
+                    dishId: "", dishName: name, query: name,
+                    photoUrl: urls[i] || null,
+                    selected: !!urls[i],
+                  }));
                   setPhotoResults(results);
                   setPhotoProgress("");
                 } catch (e: any) {

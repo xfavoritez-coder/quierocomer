@@ -1,12 +1,13 @@
 /**
- * Session Tracker v2 — Create on enter, heartbeat every 15s, close on exit.
+ * Session Tracker v3 — Deferred creation, heartbeat every 15s, close on exit.
  *
  * Flow:
- * 1. User enters carta → POST /sessions/start → creates Session in DB immediately
- * 2. Every 15s of activity → PATCH /sessions/heartbeat → updates accumulated data
- * 3. On exit (tab close, inactivity) → final PATCH with endedAt
+ * 1. User enters carta → in-memory session created (no DB call yet)
+ * 2. First real interaction (touch/click) → POST /sessions/start → creates Session in DB
+ * 3. Every 15s of activity → PATCH /sessions/heartbeat → updates accumulated data
+ * 4. On exit (tab close, inactivity) → final PATCH with endedAt
  *
- * Even if the final PATCH never arrives, we have data from the last heartbeat.
+ * Bots and zero-interaction visits never create a DB session.
  */
 import { getGuestId, getSessionId } from "./guestId";
 
@@ -55,6 +56,8 @@ let lastIsQrScan: boolean | undefined;
 let deviceType: string | null = null;
 let activityBound = false;
 let startingSession = false; // prevent duplicate start calls
+let creatingDbSession = false; // prevent duplicate DB session creation
+let hadUserInteraction = false; // true after real touch/click
 
 function getDeviceType(): string {
   if (typeof window === "undefined") return "unknown";
@@ -69,12 +72,19 @@ function resetInactivityTimer() {
   inactivityTimer = setTimeout(() => closeSession("inactivity"), INACTIVITY_TIMEOUT);
 }
 
+function markInteraction() {
+  if (!hadUserInteraction) {
+    hadUserInteraction = true;
+    ensureDbSession();
+  }
+}
+
 function bindActivityListeners() {
   if (typeof window === "undefined") return;
   const reset = () => resetInactivityTimer();
-  window.addEventListener("touchstart", reset, { passive: true });
+  window.addEventListener("touchstart", () => { markInteraction(); reset(); }, { passive: true });
   window.addEventListener("scroll", reset, { passive: true });
-  window.addEventListener("click", reset, { passive: true });
+  window.addEventListener("click", () => { markInteraction(); reset(); }, { passive: true });
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       closeSession("pagehide");
@@ -155,6 +165,41 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
   }
 }
 
+/** Create the DB session on first real interaction (deferred from startSession) */
+function ensureDbSession() {
+  if (!session || session.dbSessionId || session.closed || creatingDbSession) return;
+  creatingDbSession = true;
+
+  const currentSession = session;
+  fetch("/api/qr/sessions/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      guestId: getGuestId(),
+      restaurantId: currentSession.restaurantId,
+      tableId: currentSession.tableId || null,
+      deviceType,
+      externalReferer: document.referrer || null,
+      isQrScan: lastIsQrScan || false,
+    }),
+  })
+    .then(r => {
+      if (!r.ok) throw new Error(`Session start failed: ${r.status}`);
+      return r.json();
+    })
+    .then(data => {
+      creatingDbSession = false;
+      if (!data.sessionId) return;
+      const target = currentSession === session ? currentSession : session;
+      if (target && !target.dbSessionId) {
+        target.dbSessionId = data.sessionId;
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+      }
+    })
+    .catch(err => { creatingDbSession = false; console.error("[QC] Session start error:", err); });
+}
+
 /** Start tracking a session for a restaurant */
 const SESSION_MAX_AGE = 30 * 60_000; // 30 minutes — after this, create a fresh session
 export function startSession(restaurantId: string, tableId?: string, isQrScan?: boolean) {
@@ -164,20 +209,20 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
   if (session && session.restaurantId === restaurantId && !session.closed) {
     const age = Date.now() - session.startedAt;
     if (age < SESSION_MAX_AGE) return; // still fresh, skip
-    // Stale session — close it and create new one
     closeSession("stale");
   }
-  if (startingSession) return; // prevent double-call from React StrictMode
+  if (startingSession) return;
 
-  // Close previous session if switching restaurants
   if (session && !session.closed) {
     closeSession("new_session");
   }
 
   startingSession = true;
   deviceType = getDeviceType();
+  creatingDbSession = false;
+  hadUserInteraction = false;
 
-  const newSession: SessionData = {
+  session = {
     restaurantId,
     tableId,
     dbSessionId: null,
@@ -190,51 +235,9 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     pickedDishId: null,
     closed: false,
   };
-  session = newSession;
+  startingSession = false;
 
-  // Create session in DB immediately, THEN start heartbeat
-  fetch("/api/qr/sessions/start", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      guestId: getGuestId(),
-      restaurantId,
-      tableId: tableId || null,
-      deviceType,
-      externalReferer: document.referrer || null,
-      isQrScan: isQrScan || false,
-    }),
-  })
-    .then(r => {
-      if (!r.ok) throw new Error(`Session start failed: ${r.status}`);
-      return r.json();
-    })
-    .then(data => {
-      startingSession = false;
-      if (!data.sessionId) return;
-      // Assign dbSessionId to whichever session is current
-      const target = newSession === session ? newSession : session;
-      if (target && !target.dbSessionId) {
-        target.dbSessionId = data.sessionId;
-        // Start heartbeat
-        if (heartbeatTimer) clearInterval(heartbeatTimer);
-        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
-      }
-    })
-    .catch(err => { startingSession = false; console.error("[QC] Session start error:", err); });
-
-  // Fire SESSION_START stat event (dbSessionId not yet available, will be null)
-  fetch("/api/qr/stats", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      eventType: "SESSION_START",
-      restaurantId,
-      guestId: getGuestId(),
-      sessionId: getSessionId(),
-      dbSessionId: null,
-    }),
-  }).catch(err => console.error("[QC] Stat event error:", err));
+  // DB session creation deferred to first real interaction (ensureDbSession)
 
   if (!activityBound) {
     bindActivityListeners();
@@ -325,6 +328,7 @@ export function getDbSessionId(): string | null {
 /** Track when user picks a dish */
 export function trackDishPicked(dishId: string) {
   if (!session) return;
+  ensureDbSession();
   session.pickedDishId = dishId;
 }
 

@@ -8,9 +8,6 @@ interface FavoritesContextType {
   count: number;
   isFavorite: (dishId: string) => boolean;
   toggleFavorite: (dishId: string, restaurantId: string) => Promise<void>;
-  isFirstFavorite: boolean;
-  showConversionPrompt: boolean;
-  dismissConversion: () => void;
   hasNewLikes: boolean;
   clearNewLikes: () => void;
 }
@@ -20,17 +17,12 @@ const FavoritesContext = createContext<FavoritesContextType>({
   count: 0,
   isFavorite: () => false,
   toggleFavorite: async () => {},
-  isFirstFavorite: false,
-  showConversionPrompt: false,
-  dismissConversion: () => {},
   hasNewLikes: false,
   clearNewLikes: () => {},
 });
 
 export function FavoritesProvider({ children }: { children: React.ReactNode }) {
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
-  const [isFirstFavorite, setIsFirstFavorite] = useState(false);
-  const [showConversionPrompt, setShowConversionPrompt] = useState(false);
   const hasFetchedRef = useRef(false);
 
   // Load favorites on mount
@@ -65,12 +57,11 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
       if (wasFavorite) {
         await fetch(`/api/qr/favorites?dishId=${dishId}`, { method: "DELETE" });
       } else {
-        const res = await fetch("/api/qr/favorites", {
+        await fetch("/api/qr/favorites", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ dishId, restaurantId }),
         });
-        const data = await res.json();
 
         // Feed ingredient preferences from this dish
         setHasNewLikes(true);
@@ -80,18 +71,6 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           body: JSON.stringify({ guestId: getGuestId(), dishIds: [dishId], source: "favorite" }),
         }).catch(() => {});
 
-        // First favorite in session — show educational toast
-        if (!wasFavorite && !sessionStorage.getItem("qc_favorites_tip_seen")) {
-          setIsFirstFavorite(true);
-          sessionStorage.setItem("qc_favorites_tip_seen", "1");
-          setTimeout(() => setIsFirstFavorite(false), 6000);
-        }
-
-        // At 3 favorites and not logged in — show conversion prompt
-        if (data.totalFavorites === 3 && !document.cookie.includes("qr_user_id") && !localStorage.getItem("qc_favorites_conversion_shown")) {
-          localStorage.setItem("qc_favorites_conversion_shown", "1");
-          setShowConversionPrompt(true);
-        }
       }
     } catch {
       // Revert optimistic update on error
@@ -104,17 +83,12 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     }
   }, [favoriteIds]);
 
-  const dismissConversion = useCallback(() => setShowConversionPrompt(false), []);
-
   return (
     <FavoritesContext.Provider value={{
       favoriteIds,
       count: favoriteIds.size,
       isFavorite,
       toggleFavorite,
-      isFirstFavorite,
-      showConversionPrompt,
-      dismissConversion,
       hasNewLikes,
       clearNewLikes,
     }}>

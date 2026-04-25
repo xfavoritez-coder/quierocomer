@@ -3,7 +3,10 @@ export const maxDuration = 120;
 import sharp from "sharp";
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const MODEL = "claude-sonnet-4-6";
+const MODELS: Record<string, string> = {
+  sonnet: "claude-sonnet-4-6",
+  haiku: "claude-haiku-4-5-20251001",
+};
 
 export async function POST(request: Request) {
   try {
@@ -13,6 +16,8 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const name = formData.get("name") as string;
+    const modelKey = (formData.get("model") as string) || "sonnet";
+    const MODEL = MODELS[modelKey] || MODELS.sonnet;
     const files = formData.getAll("photos") as File[];
 
     if (!name?.trim()) {
