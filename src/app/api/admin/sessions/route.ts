@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
     const dateFrom = url.searchParams.get("from"); // YYYY-MM-DD
     const dateTo = url.searchParams.get("to"); // YYYY-MM-DD
     const page = parseInt(url.searchParams.get("page") || "1");
+    const activity = url.searchParams.get("activity"); // genio | garzon | cumple | favoritos
     const limit = 30;
     const skip = (page - 1) * limit;
 
@@ -45,6 +46,44 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ sessions: [], total: 0, page: 1, totalPages: 0 });
       }
       where.restaurantId = { in: ownedIds };
+    }
+
+    // Activity filters — pre-filter session IDs
+    if (activity === "genio") {
+      const genioSessionIds = await prisma.statEvent.findMany({
+        where: { eventType: "GENIO_START", ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
+        select: { dbSessionId: true },
+        distinct: ["dbSessionId"],
+      });
+      const ids = genioSessionIds.map(e => e.dbSessionId).filter(Boolean) as string[];
+      where.id = { in: ids };
+    } else if (activity === "garzon") {
+      const waiterSessionIds = await prisma.waiterCall.findMany({
+        where: { sessionId: { not: null }, ...(where.startedAt ? { calledAt: where.startedAt } : {}) },
+        select: { sessionId: true },
+        distinct: ["sessionId"],
+      });
+      const ids = waiterSessionIds.map(w => w.sessionId).filter(Boolean) as string[];
+      where.id = { in: ids };
+    } else if (activity === "cumple") {
+      const birthdaySessionIds = await prisma.statEvent.findMany({
+        where: { eventType: { in: ["BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"] }, ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
+        select: { dbSessionId: true },
+        distinct: ["dbSessionId"],
+      });
+      const ids = birthdaySessionIds.map(e => e.dbSessionId).filter(Boolean) as string[];
+      where.id = { in: ids };
+    } else if (activity === "favoritos") {
+      where.qrUserId = { not: null };
+      // Actually filter by sessions that have favorites — use dishFavorites scoped to session time
+      const favGuestIds = await prisma.dishFavorite.findMany({
+        where: { ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
+        select: { guestId: true },
+        distinct: ["guestId"],
+      });
+      delete where.qrUserId;
+      const ids = favGuestIds.map(f => f.guestId);
+      where.guestId = { in: ids };
     }
 
     const [sessions, total] = await Promise.all([

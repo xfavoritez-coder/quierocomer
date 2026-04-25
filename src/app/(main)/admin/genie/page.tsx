@@ -131,6 +131,7 @@ export default function AdminSessions() {
   const filterRestaurant = searchParams.get("restaurantId") || "";
   const filterDate = searchParams.get("date") || "";
   const filterPreset = searchParams.get("preset") || "";
+  const filterActivity = searchParams.get("activity") || "";
   const page = parseInt(searchParams.get("page") || "1");
 
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -165,6 +166,7 @@ export default function AdminSessions() {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page) });
     if (filterRestaurant) params.set("restaurantId", filterRestaurant);
+    if (filterActivity) params.set("activity", filterActivity);
     if (filterDate) {
       params.set("date", filterDate);
     } else if (filterPreset === "hoy") {
@@ -182,7 +184,7 @@ export default function AdminSessions() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [filterRestaurant, filterDate, filterPreset, sessionLoading, page, refreshKey]);
+  }, [filterRestaurant, filterDate, filterPreset, filterActivity, sessionLoading, page, refreshKey]);
 
   if (loading) return <p style={{ color: "#F4A623", fontFamily: F, padding: 40 }}>Cargando sesiones...</p>;
 
@@ -235,6 +237,30 @@ export default function AdminSessions() {
           </select>
           <button onClick={() => setRefreshKey(k => k + 1)} title="Actualizar" style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid #2A2A2A", background: "rgba(255,255,255,0.04)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", color: "#888" }}>↻</button>
         </div>
+      </div>
+
+      {/* Activity filters */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap" }}>
+        {[
+          { key: "genio", label: "🧞 Genio" },
+          { key: "garzon", label: "🔔 Garzón" },
+          { key: "cumple", label: "🎂 Cumpleaños" },
+          { key: "favoritos", label: "❤️ Favoritos" },
+        ].map(f => {
+          const active = filterActivity === f.key;
+          return (
+            <button
+              key={f.key}
+              onClick={() => updateParams({ activity: active ? null : f.key, page: null })}
+              style={{
+                padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600,
+                background: active ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)",
+                border: active ? "1px solid rgba(244,166,35,0.4)" : "1px solid #2A2A2A",
+                color: active ? "#F4A623" : "#666",
+              }}
+            >{f.label}</button>
+          );
+        })}
       </div>
 
       {sessions.length === 0 ? (
