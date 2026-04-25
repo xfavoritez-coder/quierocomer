@@ -32,9 +32,9 @@ const G = {
   borderActive: "rgba(234,88,12,0.6)",
 
   // CTA
-  ctaGradient: "linear-gradient(135deg, #fb923c 0%, #ea580c 100%)",
-  ctaText: "#1a0805",
-  ctaShadow: "0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.25)",
+  ctaBg: "#F4A623",
+  ctaText: "#0e0e0e",
+  ctaShadow: "0 4px 14px rgba(244,166,35,0.35)",
 
   // Accents
   gold: "#fbbf24",
@@ -70,14 +70,10 @@ const G = {
 // CTA button style (reusable object, not a component — avoids prop drilling)
 const CTA_STYLE: React.CSSProperties = {
   width: "100%", maxWidth: 320,
-  background: G.ctaGradient, color: G.ctaText,
-  fontSize: "0.84rem", fontWeight: 600,
+  background: G.ctaBg, color: G.ctaText,
+  fontSize: "0.88rem", fontWeight: 700,
   padding: "14px 24px", borderRadius: 999, border: "none", cursor: "pointer",
   boxShadow: G.ctaShadow,
-};
-const CTA_DISABLED: React.CSSProperties = {
-  ...CTA_STYLE,
-  background: G.surface, color: G.textDisabled, boxShadow: "none", cursor: "default",
 };
 
 // ═══════════════════════════════════════════════════════
