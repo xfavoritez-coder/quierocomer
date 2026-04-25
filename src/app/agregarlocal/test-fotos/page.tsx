@@ -43,6 +43,8 @@ export default function TestFotos() {
         console.log(`Fetch error for ${d.name}:`, e.message);
       }
       r.push({ name: d.name, photoUrl, selected: !!photoUrl });
+      // Delay to respect Unsplash rate limit (50 req/hour on free plan)
+      if (i < needsPhotos.length - 1) await new Promise(ok => setTimeout(ok, 1500));
     }
     setResults(r);
     setStep("preview");

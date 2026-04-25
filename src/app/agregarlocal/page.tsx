@@ -421,22 +421,19 @@ export default function AgregarLocalPage() {
               onClick={async () => {
                 setStep("photos" as any);
                 setError("");
-                setPhotoProgress("Preparando búsqueda...");
+                setPhotoProgress("Cargando platos...");
                 try {
-                  // Get dish names — try categories first, fall back to result
-                  const dishNames: string[] = [];
-                  if (categories.length > 0) {
-                    for (const c of categories) {
-                      for (const d of (c.dishes || []) as any[]) {
-                        if (d.name) dishNames.push(d.name);
-                      }
-                    }
-                  }
-                  if (dishNames.length === 0) {
-                    setError(`No se encontraron platos. Categorías: ${categories.length}`);
+                  // Get dishes from DB using the restaurant slug
+                  const dishesRes = await fetch(`/api/agregarlocal/test-dishes?slug=${result.slug}`);
+                  const dishesData = await dishesRes.json();
+                  const dbDishes: { id: string; name: string; photos: string[] }[] = dishesData.dishes || [];
+                  const needsPhotos = dbDishes.filter(d => !d.photos?.length);
+                  if (needsPhotos.length === 0) {
+                    setError("Todos los platos ya tienen fotos");
                     setStep("done");
                     return;
                   }
+                  const dishNames = needsPhotos.map(d => d.name);
 
                   const results: typeof photoResults = [];
                   for (let i = 0; i < dishNames.length; i++) {
@@ -450,6 +447,8 @@ export default function AgregarLocalPage() {
                       photoUrl = data.url || null;
                     } catch {}
                     results.push({ dishId: "", dishName: name, query, photoUrl, selected: !!photoUrl });
+                    // Delay to respect Unsplash rate limit
+                    if (i < dishNames.length - 1) await new Promise(ok => setTimeout(ok, 1500));
                   }
                   setPhotoResults(results);
                   setPhotoProgress("");
