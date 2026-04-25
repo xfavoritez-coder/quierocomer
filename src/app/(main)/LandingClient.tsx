@@ -167,10 +167,10 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
           </span>
           <h1 style={{ fontFamily: F, fontSize: "clamp(30px, 5vw, 42px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
-            Carta inteligente que <span style={{ color: "#d4a015" }}>sube tu ticket</span> por mesa
+            La carta inteligente que <span style={{ color: "#d4a015" }}>conoce</span> a cada cliente
           </h1>
           <p style={{ fontFamily: B, fontSize: "clamp(15px, 2.5vw, 16px)", color: "#555", lineHeight: 1.5, maxWidth: 520, margin: "0 auto 28px" }}>
-            Ordena la carta según los gustos del cliente y empuja platos de mayor valor para aumentar la venta por mesa.
+            Se adapta a los gustos de quien la lee y muestra primero lo que más le va a gustar.
           </p>
           <a href="#contacto" style={{ display: "inline-block", padding: "12px 22px", background: "#111", color: "#fff", borderRadius: 10, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Agenda tu demo →</a>
         </div>
@@ -222,7 +222,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <h3 style={{ fontFamily: F, fontSize: "clamp(22px, 3vw, 25px)", fontWeight: 700, color: "#111", margin: 0 }}>El Genio, tu vendedor silencioso</h3>
               </div>
               <p style={{ fontSize: 16, color: "#333", lineHeight: 1.55, marginBottom: 16, fontWeight: 400, textAlign: "center" }}>
-                Aprende los gustos de cada cliente y reordena la carta para mostrar primero los platos de mayor ticket que quiere pedir. <strong style={{ color: "#111", fontWeight: 600 }}>Cada visita, venta más alta.</strong>
+                Aprende los gustos de cada cliente y reordena la carta para mostrar primero lo que más le va a gustar. <strong style={{ color: "#111", fontWeight: 600 }}>Cada visita, mejores recomendaciones.</strong>
               </p>
             </div>
             {/* Chat mock */}
@@ -402,7 +402,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 {[
                   { t: "Carta inteligente con QR", tip: "Tu carta accesible desde la mesa, con personalización automática" },
                   { t: "Vista simple", tip: "Layout clásico: fotos, nombre, precio y descripción" },
-                  { t: "El Genio incluido 🧞", tip: "Reordena la carta según gustos del cliente para empujar platos de mayor ticket" },
+                  { t: "El Genio incluido 🧞", tip: "Personaliza la carta según los gustos de cada cliente con inteligencia artificial" },
                   { t: "Experiencias virales", tip: "Juegos tipo 'que pizza eres' que tus clientes comparten en redes, haciendo viral tu restaurante" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
@@ -470,7 +470,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <section id="contacto" style={{ background: "#fff", padding: "80px 24px", textAlign: "center" }}>
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <h2 style={{ fontFamily: F, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05, marginBottom: 14, color: "#111" }}>
-            ¿Listo para subir<br />tu ticket por mesa?
+            ¿Listo para probar<br />la carta que vende por ti?
           </h2>
           <p style={{ fontSize: 16, color: "#666", maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.5 }}>
             Déjanos tu correo y te contactamos en 24 horas para mostrarte una demo.
@@ -511,7 +511,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <p style={{ fontFamily: F, fontSize: 22, fontWeight: 800, marginBottom: 10 }}>
                 <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: "#fbbf24" }}>Comer</span>
               </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", maxWidth: 260, lineHeight: 1.5, margin: 0 }}>La carta inteligente que sube tu ticket por mesa.</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", maxWidth: 260, lineHeight: 1.5, margin: 0 }}>La carta inteligente que conoce a cada cliente.</p>
             </div>
             <div className="lnd-footer-links" style={{ display: "flex", gap: 48 }}>
               <div>
