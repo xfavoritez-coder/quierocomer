@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import BirthdayModal from "./BirthdayModal";
+import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 
 interface Props {
   restaurantId: string;
@@ -87,7 +89,14 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
         }
       `}</style>
       <button
-        onClick={() => setModalOpen(true)}
+        onClick={() => {
+          setModalOpen(true);
+          fetch("/api/qr/stats", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventType: "BIRTHDAY_BANNER_CLICKED", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
+          }).catch(() => {});
+        }}
         className="font-[family-name:var(--font-dm)] active:scale-[0.97] active:brightness-95 transition-all duration-100"
         style={{
           margin: "28px 20px 20px",

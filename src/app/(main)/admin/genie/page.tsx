@@ -108,7 +108,7 @@ interface SessionData {
   tableId: string | null;
   isQrScan: boolean;
   usedGenio: boolean;
-  genioData: { timesUsed: number; completed: boolean; lastStep?: string } | null;
+  genioData: { timesUsed: number; completed: boolean; lastStep?: string; birthdayClicked?: boolean; birthdaySaved?: boolean } | null;
   personalizationData: { shown: number; tapped: number; dishes: { name: string; score: number; tapped: boolean }[] } | null;
   visitDays: number;
   ipAddress: string | null;
@@ -283,6 +283,8 @@ export default function AdminSessions() {
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
+                      {s.genioData?.birthdaySaved && <span style={{ color: "#4ade80" }}>· 🎂 Cumple</span>}
+                      {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ color: "#f59e0b" }}>· 🎂 Abrió</span>}
                       {s.personalizationData && s.personalizationData.shown > 0 && (
                         <span style={{ color: "#F4A623" }} title={s.personalizationData.dishes.map(d => `${d.name} (${d.score}pts)${d.tapped ? " ✓" : ""}`).join(", ")}>
                           · ✨ {s.personalizationData.tapped} de {s.personalizationData.shown} Para ti
@@ -358,6 +360,18 @@ export default function AdminSessions() {
                               <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
                               {s.genioData?.lastStep && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {s.genioData.lastStep}</span>}
                             </>
+                        }
+                        {s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🎂 Cumpleaños guardado</span>}
+                        {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>}
+                      </div>
+                    )}
+
+                    {/* Birthday banner (without Genio) */}
+                    {!s.usedGenio && (s.genioData?.birthdayClicked || s.genioData?.birthdaySaved) && (
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
+                        {s.genioData?.birthdaySaved
+                          ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🎂 Cumpleaños guardado</span>
+                          : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>
                         }
                       </div>
                     )}

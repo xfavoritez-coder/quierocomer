@@ -109,7 +109,7 @@ export async function GET(req: NextRequest) {
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
 
     // Try dbSessionId first (new events), fall back to time range (legacy events)
-    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED"];
+    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"];
 
     const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
       where: {
@@ -150,13 +150,15 @@ export async function GET(req: NextRequest) {
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
-      const data = { timesUsed: 0, completed: false, lastStep: "" };
+      const data = { timesUsed: 0, completed: false, lastStep: "", birthdayClicked: false, birthdaySaved: false };
       const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES"];
       const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos" };
       let maxStep = -1;
       for (const e of matching.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())) {
         if (e.eventType === "GENIO_START") { data.timesUsed++; }
         if (e.eventType === "GENIO_COMPLETE") { data.completed = true; }
+        if (e.eventType === "BIRTHDAY_BANNER_CLICKED") { data.birthdayClicked = true; }
+        if (e.eventType === "BIRTHDAY_SAVED") { data.birthdaySaved = true; }
         const stepIdx = stepOrder.indexOf(e.eventType);
         if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
       }

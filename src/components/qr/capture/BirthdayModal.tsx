@@ -71,6 +71,13 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
       }
     }
 
+    // Track birthday saved
+    fetch("/api/qr/stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventType: "BIRTHDAY_SAVED", restaurantId, guestId: getGuestId(), sessionId: getSessionId() }),
+    }).catch(() => {});
+
     setStatus("success");
     onSuccess?.();
     onClose();
