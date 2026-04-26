@@ -895,6 +895,7 @@ model Session {
   referer        String?
   externalReferer String?
   language       String?
+  cartaLang      String?   // "es" | "en" | "pt" — language the menu was displayed in
   closeReason    String?   // 'inactivity' | 'pagehide' | 'beforeunload'
   weather        String?
   timeOfDay      TimeOfDay?

@@ -116,6 +116,7 @@ interface SessionData {
   referer: string | null;
   externalReferer: string | null;
   language: string | null;
+  cartaLang: string | null;
   dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
@@ -353,7 +354,7 @@ export default function AdminSessions() {
                       {s.userAgent && <div><span style={{ color: "#999" }}>Navegador: </span>{parseUA(s.userAgent)}</div>}
                       {s.referer && <div><span style={{ color: "#999" }}>Página: </span>{(() => { try { const u = new URL(s.referer); return u.pathname === "/" ? "/" : u.pathname; } catch { return s.referer; } })()}</div>}
                       {s.externalReferer && <div><span style={{ color: "#999" }}>Fuente: </span>{(() => { try { return new URL(s.externalReferer).hostname; } catch { return s.externalReferer; } })()}</div>}
-                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}</div>}
+                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}{s.cartaLang && s.cartaLang !== "es" && <span style={{ color: "#F4A623", marginLeft: 6 }}>Carta en {s.cartaLang.toUpperCase()}</span>}</div>}
                       {s.qrUser && (() => {
                         const src = s.qrUser.interactions?.[0];
                         const label = src ? SOURCE_LABELS[src.type] || src.type.replace("_CONVERTED", "") : null;

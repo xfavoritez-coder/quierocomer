@@ -15,7 +15,7 @@ async function handleHeartbeat(request: Request) {
       body = JSON.parse(await request.text());
     }
 
-    const { sessionId, durationMs, viewUsed, viewHistory, dishesViewed, categoriesViewed, pickedDishId, preferences, isFinal } = body;
+    const { sessionId, durationMs, viewUsed, viewHistory, dishesViewed, categoriesViewed, pickedDishId, cartaLang, preferences, isFinal } = body;
 
     if (!sessionId) {
       return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
@@ -31,6 +31,7 @@ async function handleHeartbeat(request: Request) {
         dishesViewed: dishesViewed || undefined,
         categoriesViewed: categoriesViewed || undefined,
         pickedDishId: pickedDishId || undefined,
+        cartaLang: cartaLang || undefined,
         endedAt: new Date(),
         ...(isFinal ? { isAbandoned: false, closeReason: body.closeReason || "normal" } : {}),
       },

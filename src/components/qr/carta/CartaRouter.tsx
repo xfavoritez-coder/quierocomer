@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Sparkles, List, BookOpen, Rocket } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
-import { startSession, trackViewSelected } from "@/lib/sessionTracker";
+import { startSession, trackViewSelected, setCartaLang } from "@/lib/sessionTracker";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
@@ -44,6 +44,7 @@ interface Props {
 
 export default function CartaRouter(props: Props) {
   const lang = props.lang || "es";
+  useEffect(() => { setCartaLang(lang); }, [lang]);
   const { view, isReady } = useCartaView((props.restaurant as any).defaultView, props.initialView);
   const trackedRef = useRef<string | null>(null);
   // Check cookie instantly to avoid flash of "not logged in"

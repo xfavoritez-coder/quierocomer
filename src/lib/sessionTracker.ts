@@ -43,6 +43,7 @@ interface SessionData {
   dishDwells: Map<string, DishDwell>;
   categoryDwells: Map<string, CategoryDwell>;
   pickedDishId: string | null;
+  cartaLang: string | null;
   closed: boolean;
 }
 
@@ -164,6 +165,7 @@ function getPayload(isFinal: boolean) {
     dishesViewed: Array.from(session.dishDwells.values()),
     categoriesViewed: Array.from(session.categoryDwells.values()),
     pickedDishId: session.pickedDishId,
+    cartaLang: session.cartaLang,
     isFinal,
   };
 }
@@ -261,6 +263,7 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     dishDwells: new Map(),
     categoryDwells: new Map(),
     pickedDishId: null,
+    cartaLang: null,
     closed: false,
   };
   startingSession = false;
@@ -351,6 +354,11 @@ export function trackCategoryDwell(categoryId: string, dwellMs: number) {
 /** Get the DB session ID (available after session start completes) */
 export function getDbSessionId(): string | null {
   return session?.dbSessionId ?? null;
+}
+
+/** Set the language the carta was displayed in */
+export function setCartaLang(lang: string) {
+  if (session) session.cartaLang = lang;
 }
 
 /** Track when user picks a dish */
