@@ -263,7 +263,7 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     dishDwells: new Map(),
     categoryDwells: new Map(),
     pickedDishId: null,
-    cartaLang: null,
+    cartaLang: pendingLang,
     closed: false,
   };
   startingSession = false;
@@ -357,7 +357,9 @@ export function getDbSessionId(): string | null {
 }
 
 /** Set the language the carta was displayed in */
+let pendingLang: string | null = null;
 export function setCartaLang(lang: string) {
+  pendingLang = lang;
   if (session) session.cartaLang = lang;
 }
 

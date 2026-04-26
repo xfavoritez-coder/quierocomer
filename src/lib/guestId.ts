@@ -1,11 +1,11 @@
 /**
  * Persistent guest identity — survives tab closes and browser restarts.
- * Uses localStorage as primary store + cookie as backup (365 days).
+ * Uses localStorage as primary store + cookie as backup (10 years).
  * Name: quierocomer_guest_id
  */
 
 const GUEST_KEY = "quierocomer_guest_id";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+const COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 10; // 10 years
 
 let _cached: string | null = null;
 
