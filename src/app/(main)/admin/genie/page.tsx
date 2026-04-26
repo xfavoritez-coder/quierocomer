@@ -476,9 +476,7 @@ export default function AdminSessions() {
                     if (res.ok) { setSessions(prev => prev.filter(x => x.id !== s.id)); setTotal(prev => prev - 1); }
                   }}
                   title="Eliminar sesión"
-                  style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(239,68,68,0.08)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: "#ef4444", opacity: 0.4, zIndex: 2 }}
-                  onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-                  onMouseLeave={e => (e.currentTarget.style.opacity = "0.4")}
+                  style={{ position: "absolute", top: 8, right: 8, width: 24, height: 24, borderRadius: "50%", background: "rgba(239,68,68,0.12)", border: "1px solid rgba(239,68,68,0.2)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "13px", color: "#ef4444", fontWeight: 600, zIndex: 2 }}
                 >×</button>
 
                 {/* Expanded detail */}
