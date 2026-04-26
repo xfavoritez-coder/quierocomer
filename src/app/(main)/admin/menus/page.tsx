@@ -324,19 +324,33 @@ export default function AdminMenus() {
                           <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
                         </button>
                       ))}
-                    {allIngredients.filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id)).length === 0 && (
-                      <button onClick={async () => {
-                        const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
-                        const data = await res.json();
-                        if (data.ingredient) {
-                          setAllIngredients(prev => [...prev, data.ingredient]);
-                          setEIngredientIds(prev => [...prev, data.ingredient.id]);
-                          setIngSearch("");
-                        }
-                      }} style={{ padding: "8px 10px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                        <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623" }}>+ Crear "{ingSearch}"</span>
-                      </button>
-                    )}
+                    {(() => {
+                      const noResults = allIngredients.filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id)).length === 0;
+                      if (!noResults) return null;
+                      // Check if already added to this dish
+                      const alreadyAdded = allIngredients.find(i => norm(i.name).includes(norm(ingSearch)) && eIngredientIds.includes(i.id));
+                      if (alreadyAdded) return (
+                        <div style={{ padding: "8px 10px" }}>
+                          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>"{alreadyAdded.name}" ya está agregado</span>
+                        </div>
+                      );
+                      return (
+                        <button onClick={async () => {
+                          const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
+                          const data = await res.json();
+                          if (data.ingredient) {
+                            // Avoid duplicating if ingredient already existed (upsert)
+                            if (!eIngredientIds.includes(data.ingredient.id)) {
+                              setAllIngredients(prev => prev.some(i => i.id === data.ingredient.id) ? prev : [...prev, data.ingredient]);
+                              setEIngredientIds(prev => [...prev, data.ingredient.id]);
+                            }
+                            setIngSearch("");
+                          }
+                        }} style={{ padding: "8px 10px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+                          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623" }}>+ Crear "{ingSearch}"</span>
+                        </button>
+                      );
+                    })()}
                   </div>
                 )}
               </div>
