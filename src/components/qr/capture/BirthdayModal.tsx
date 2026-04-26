@@ -65,10 +65,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         });
       }
 
-      const data = await res.json();
-      if (data.userId) {
-        document.cookie = `qr_user_id=${data.userId};path=/;max-age=${60 * 60 * 24 * 365}`;
-      }
+      await res.json();
     }
 
     // Track birthday saved

@@ -412,7 +412,7 @@ export default function CartaLista({
         </section>
       )}
 
-      {personalizing && (
+      {personalizing && typeof window !== "undefined" && window.innerWidth < 768 && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{

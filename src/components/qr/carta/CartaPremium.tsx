@@ -475,7 +475,7 @@ export default function CartaPremium({
         />
       )}
 
-      {personalizing && (
+      {personalizing && typeof window !== "undefined" && window.innerWidth < 768 && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
@@ -811,16 +811,6 @@ export default function CartaPremium({
               setTimeout(() => setSelectedDish(dish), 500);
             }, 250);
           }}
-        />
-      )}
-
-      {/* Profile drawer */}
-      {profileOpen && (
-        <ProfileDrawer
-          qrUser={qrUser}
-          restaurantId={restaurant.id}
-          onClose={() => setProfileOpenLocal(false)}
-          onLogout={() => { setQrUserLocal(null); setProfileOpenLocal(false); }}
         />
       )}
 
