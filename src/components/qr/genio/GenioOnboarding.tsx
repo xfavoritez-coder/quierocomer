@@ -487,7 +487,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                             </button>
                           ))}
                         </div>
-                      ) : profileDislikeFocused && !dislikeSearch && (
+                      ) : profileDislikeFocused && !dislikeSearch ? (
                         <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `1px solid ${G.dropdownBorder}`, borderRadius: 10, overflow: "hidden", zIndex: 10 }}>
                           <p style={{ padding: "8px 14px 4px", margin: 0, fontSize: "9.5px", color: "#fb923c", textTransform: "uppercase", letterSpacing: "0.08em" }}>Más comunes</p>
                           {popularDislikes.filter(p => !dislikes.includes(p)).slice(0, 4).map(item => (
@@ -500,7 +500,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                             </button>
                           ))}
                         </div>
-                      )}
+                      ) : profileDislikeFocused && dislikeSearch.length >= 2 && dislikeResults.length === 0 ? (
+                        <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: "0.5px solid rgba(234,88,12,0.15)", borderRadius: 10, overflow: "hidden", zIndex: 10, padding: "11px 14px" }}>
+                          <span style={{ color: G.textTertiary, fontSize: "0.82rem" }}>No encontramos &quot;{dislikeSearch.trim()}&quot;</span>
+                        </div>
+                      ) : null}
                     </div>
                   )}
                 </div>
@@ -700,7 +704,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
             <input
               value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
               onFocus={() => setDislikeInputFocused(true)}
-              onBlur={() => setTimeout(() => setDislikeInputFocused(false), 200)}
+              onBlur={() => setTimeout(() => { setDislikeInputFocused(false); setDislikeResults([]); setDislikeNoResults(false); }, 200)}
               placeholder={t(lang, "gSearchIngredient")}
               className="genio-input"
               style={inputStyle}

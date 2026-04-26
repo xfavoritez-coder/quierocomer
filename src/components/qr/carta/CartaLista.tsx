@@ -90,34 +90,28 @@ export default function CartaLista({
   const [personalizing, setPersonalizing] = useState(false);
   const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    fetch(`/api/qr/popular?restaurantId=${restaurant.id}`)
-      .then((r) => r.json())
-      .then((d) => { if (d.popular?.length) setPopularDishIds(new Set(d.popular.map((p: any) => p.dishId))); })
-      .catch(() => {});
-  }, [restaurant.id]);
-
-  // Fetch personalized profile and apply scoring
+  // Fetch personalized profile and popular dishes together
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
-    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (!d.profile) { setPersonalizing(false); return; }
-        const catNames: Record<string, string> = {};
-        for (const c of categories) catNames[c.id] = c.name;
-        const result = getPersonalizedDishes(
-          dishes as unknown as ScoringDish[],
-          categories,
-          d.profile,
-          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
-        );
-        if (result.hasPersonalization) setPMap(result.map);
-        setPersonalizing(false);
-      })
-      .catch(() => setPersonalizing(false));
+    Promise.all([
+      fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json()),
+      fetch(`/api/qr/popular?restaurantId=${restaurant.id}`).then((r) => r.json()).catch(() => ({ popular: [] })),
+    ]).then(([d, pop]) => {
+      if (pop.popular?.length) setPopularDishIds(new Set(pop.popular.map((p: any) => p.dishId)));
+      if (!d.profile) { setPersonalizing(false); return; }
+      const catNames: Record<string, string> = {};
+      for (const c of categories) catNames[c.id] = c.name;
+      const result = getPersonalizedDishes(
+        dishes as unknown as ScoringDish[],
+        categories,
+        d.profile,
+        { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
+      );
+      if (result.hasPersonalization) setPMap(result.map);
+      setPersonalizing(false);
+    }).catch(() => setPersonalizing(false));
   }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
@@ -666,10 +660,10 @@ function DishListCard({
             style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
           >
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
-            {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
             {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
             {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
             {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
+            {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
             {hasAutoLabel && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
                 ✨ Para ti
