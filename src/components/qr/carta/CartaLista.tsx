@@ -197,14 +197,14 @@ export default function CartaLista({
         .filter((d) => d.categoryId === cat.id)
         .sort((a, b) => {
           if (pMap) {
-            const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
-            const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+            const aScore = pMap.get(a.id)?.score ?? 50;
+            const bScore = pMap.get(b.id)?.score ?? 50;
+            const aAuto = pMap.get(a.id)?.autoRecommended && aScore > 10 ? 1 : 0;
+            const bAuto = pMap.get(b.id)?.autoRecommended && bScore > 10 ? 1 : 0;
             if (aAuto !== bAuto) return bAuto - aAuto;
-            const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-            const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+            const aRec = a.tags?.includes("RECOMMENDED") && aScore > 10 ? 1 : 0;
+            const bRec = b.tags?.includes("RECOMMENDED") && bScore > 10 ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
-            const aScore = pMap.get(a.id)?.score ?? 0;
-            const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
           } else {
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
@@ -234,14 +234,14 @@ export default function CartaLista({
     return base.map((g) => ({
       ...g,
       dishes: [...g.dishes].sort((a, b) => {
-        const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
-        const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+        const aScore = pMap.get(a.id)?.score ?? 50;
+        const bScore = pMap.get(b.id)?.score ?? 50;
+        const aAuto = pMap.get(a.id)?.autoRecommended && aScore > 10 ? 1 : 0;
+        const bAuto = pMap.get(b.id)?.autoRecommended && bScore > 10 ? 1 : 0;
         if (aAuto !== bAuto) return bAuto - aAuto;
-        const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-        const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+        const aRec = a.tags?.includes("RECOMMENDED") && aScore > 10 ? 1 : 0;
+        const bRec = b.tags?.includes("RECOMMENDED") && bScore > 10 ? 1 : 0;
         if (aRec !== bRec) return bRec - aRec;
-        const aScore = pMap.get(a.id)?.score ?? 0;
-        const bScore = pMap.get(b.id)?.score ?? 0;
         if (aScore !== bScore) return bScore - aScore;
         return a.position - b.position;
       }),
@@ -644,15 +644,14 @@ function DishListCard({
         fontFamily: "inherit",
       }}
     >
-      {photo ? (
-        <div style={{ width: 120, height: 120, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: "#f0f0f0" }}>
+      <div style={{ width: 120, height: 120, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+        {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="76px" />
-        </div>
-      ) : (
-        <div style={{ width: 120, height: 120, borderRadius: 10, flexShrink: 0, background: "linear-gradient(135deg, #f7f7f5, #e8e4d8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>
-          🍽
-        </div>
-      )}
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
+        )}
+        {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "#e85530", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
+      </div>
       <div style={{ flex: 1, minWidth: 0, paddingRight: 4 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 2 }}>
           <h3
@@ -663,7 +662,6 @@ function DishListCard({
             {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
             {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
             {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
-            {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em", fontFamily: "var(--font-dm)", position: "relative", top: -1 }}>NUEVO</span>}
             {hasAutoLabel && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
                 ✨ Para ti

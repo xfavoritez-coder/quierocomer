@@ -192,7 +192,6 @@ export default function CartaPremium({
 
   const [birthdayCountdown, setBirthdayCountdown] = useState<number | null>(null);
 
-  const [showSecondVisitToast, setShowSecondVisitToast] = useState(false);
   const [showVerifiedToast, setShowVerifiedToast] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [captureName, setCaptureName] = useState("");
@@ -262,7 +261,6 @@ export default function CartaPremium({
 
         // Second visit detection
         if (needsSecondVisitCheck && !d.user) {
-          setTimeout(() => setShowSecondVisitToast(true), 3000);
           sessionStorage.setItem("qr_capture_shown", "true");
         }
       })
@@ -329,17 +327,17 @@ export default function CartaPremium({
         .filter((d) => d.categoryId === cat.id && d.isActive)
         .sort((a, b) => {
           if (pMap) {
-            // 1. Para ti first
-            const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
-            const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+            const aScore = pMap.get(a.id)?.score ?? 50;
+            const bScore = pMap.get(b.id)?.score ?? 50;
+            // 1. Para ti first (only if score is healthy)
+            const aAuto = pMap.get(a.id)?.autoRecommended && aScore > 10 ? 1 : 0;
+            const bAuto = pMap.get(b.id)?.autoRecommended && bScore > 10 ? 1 : 0;
             if (aAuto !== bAuto) return bAuto - aAuto;
-            // 2. Destacados del local second
-            const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-            const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+            // 2. Destacados del local (only if no restriction penalty)
+            const aRec = a.tags?.includes("RECOMMENDED") && aScore > 10 ? 1 : 0;
+            const bRec = b.tags?.includes("RECOMMENDED") && bScore > 10 ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
             // 3. Then by score
-            const aScore = pMap.get(a.id)?.score ?? 0;
-            const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
           } else {
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
@@ -530,14 +528,14 @@ export default function CartaPremium({
             })
             .sort((a, b) => {
               if (pMap) {
-                const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
-                const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
+                const aScore = pMap.get(a.id)?.score ?? 50;
+                const bScore = pMap.get(b.id)?.score ?? 50;
+                const aAuto = pMap.get(a.id)?.autoRecommended && aScore > 10 ? 1 : 0;
+                const bAuto = pMap.get(b.id)?.autoRecommended && bScore > 10 ? 1 : 0;
                 if (aAuto !== bAuto) return bAuto - aAuto;
-                const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-                const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+                const aRec = a.tags?.includes("RECOMMENDED") && aScore > 10 ? 1 : 0;
+                const bRec = b.tags?.includes("RECOMMENDED") && bScore > 10 ? 1 : 0;
                 if (aRec !== bRec) return bRec - aRec;
-                const aScore = pMap.get(a.id)?.score ?? 0;
-                const bScore = pMap.get(b.id)?.score ?? 0;
                 if (aScore !== bScore) return bScore - aScore;
               } else {
                 const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
@@ -723,21 +721,6 @@ export default function CartaPremium({
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
-        {/* Second visit toast positioned above all floating buttons */}
-        {showSecondVisitToast && (
-          <div style={{ width: 240, marginBottom: 4 }}>
-            <GenioTip
-              arrow="bottom-right"
-              onClose={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }}
-            >
-              <span>¿Guardamos tus gustos? Así te recomiendo mejor cada vez.</span>
-              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button onClick={() => { setShowSecondVisitToast(false); setShowEmailModal(true); }} style={{ flex: 1, background: "#F4A623", color: "white", borderRadius: 50, padding: "8px 0", fontSize: "0.82rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Sí →</button>
-                <button onClick={() => { setShowSecondVisitToast(false); localStorage.setItem(`qr_toast_dismissed_${restaurant.id}`, String(Date.now())); }} style={{ background: "none", border: "1px solid #e8e0d6", borderRadius: 50, padding: "8px 12px", color: "#999", fontSize: "0.78rem", cursor: "pointer", fontFamily: "inherit" }}>No</button>
-              </div>
-            </GenioTip>
-          </div>
-        )}
         <div style={{ position: "relative" }}>
           {(showGenioNudge || showLikeGenioTip) && (
             <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>

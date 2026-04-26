@@ -104,13 +104,17 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     return base.map((g) => ({
       ...g,
       dishes: [...g.dishes].sort((a, b) => {
-        const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
-        const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
-        if (aRec !== bRec) return bRec - aRec;
         if (pMap) {
-          const aScore = pMap.get(a.id)?.score ?? 0;
-          const bScore = pMap.get(b.id)?.score ?? 0;
+          const aScore = pMap.get(a.id)?.score ?? 50;
+          const bScore = pMap.get(b.id)?.score ?? 50;
+          const aRec = a.tags?.includes("RECOMMENDED") && aScore > 10 ? 1 : 0;
+          const bRec = b.tags?.includes("RECOMMENDED") && bScore > 10 ? 1 : 0;
+          if (aRec !== bRec) return bRec - aRec;
           if (aScore !== bScore) return bScore - aScore;
+        } else {
+          const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+          const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+          if (aRec !== bRec) return bRec - aRec;
         }
         return a.position - b.position;
       }),
