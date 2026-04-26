@@ -61,12 +61,16 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
           textAlign: "center",
         }}
       >
-        <span style={{ fontSize: "1.4rem", display: "block", marginBottom: 6 }}>🎉</span>
-        <p style={{ color: "#92400e", fontSize: "0.88rem", fontWeight: 700, margin: "0 0 4px" }}>
+        <div style={{ fontSize: "1.2rem", display: "flex", justifyContent: "center", gap: 4, marginBottom: 8 }}>
+          <span style={{ animation: "bdayBounce 1.5s ease-in-out infinite" }}>🎊</span>
+          <span style={{ animation: "bdayBounce 1.5s ease-in-out 0.2s infinite" }}>🎉</span>
+          <span style={{ animation: "bdayBounce 1.5s ease-in-out 0.4s infinite" }}>🎊</span>
+        </div>
+        <p style={{ color: "#92400e", fontSize: "0.92rem", fontWeight: 700, margin: "0 0 4px" }}>
           ¡Listo, guardado!
         </p>
         <p style={{ color: "#b45309", fontSize: "0.78rem", margin: 0, opacity: 0.8 }}>
-          Te avisaremos en tu cumpleaños con una sorpresa
+          Te avisaremos en tu cumple con una sorpresa 🎁
         </p>
       </div>
     );
