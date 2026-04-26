@@ -5,13 +5,28 @@ export interface PopularDish {
   score: number;
 }
 
-export async function getPopularDishes(restaurantId: string): Promise<PopularDish[]> {
+export interface PopularResult {
+  global: PopularDish[];
+  byCategory: PopularDish[]; // top 1 per category, min 2 sessions
+}
+
+export async function getPopularDishes(restaurantId: string): Promise<PopularResult> {
   const since = new Date(Date.now() - 48 * 60 * 60 * 1000);
-  const sessions = await prisma.session.findMany({
-    where: { restaurantId, startedAt: { gte: since } },
-    orderBy: { startedAt: "desc" },
-    select: { dishesViewed: true },
-  });
+
+  const [sessions, dishes] = await Promise.all([
+    prisma.session.findMany({
+      where: { restaurantId, startedAt: { gte: since } },
+      orderBy: { startedAt: "desc" },
+      select: { dishesViewed: true },
+    }),
+    prisma.dish.findMany({
+      where: { restaurantId, isActive: true },
+      select: { id: true, price: true, categoryId: true },
+    }),
+  ]);
+
+  const priceMap = new Map(dishes.map(d => [d.id, d.price]));
+  const categoryMap = new Map(dishes.map(d => [d.id, d.categoryId]));
 
   const sessionCounts = new Map<string, number>();
   const dwellBonus = new Map<string, number>();
@@ -34,9 +49,38 @@ export async function getPopularDishes(restaurantId: string): Promise<PopularDis
     }
   }
 
-  return [...sessionCounts.entries()]
-    .filter(([, count]) => count >= 3)
-    .map(([dishId, count]) => ({ dishId, score: count + (dwellBonus.get(dishId) ?? 0) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 5);
+  // Score = sessions + dwell bonus. At equal scores, higher price wins.
+  const scored = [...sessionCounts.entries()]
+    .map(([dishId, count]) => ({
+      dishId,
+      score: count + (dwellBonus.get(dishId) ?? 0),
+      sessions: count,
+      price: priceMap.get(dishId) ?? 0,
+      categoryId: categoryMap.get(dishId) ?? "",
+    }))
+    .sort((a, b) => b.score - a.score || b.price - a.price);
+
+  // Global top 5 (min 3 sessions)
+  const global = scored
+    .filter(d => d.sessions >= 3)
+    .slice(0, 5)
+    .map(d => ({ dishId: d.dishId, score: d.score }));
+
+  // Per category: top 1 per category, min 2 sessions, exclude already in global
+  const globalIds = new Set(global.map(d => d.dishId));
+  const byCategory: PopularDish[] = [];
+  const seenCategories = new Set<string>();
+
+  for (const d of scored) {
+    if (d.sessions < 2 || !d.categoryId || seenCategories.has(d.categoryId)) continue;
+    if (globalIds.has(d.dishId)) {
+      // Category already covered by global popular — mark as seen
+      seenCategories.add(d.categoryId);
+      continue;
+    }
+    seenCategories.add(d.categoryId);
+    byCategory.push({ dishId: d.dishId, score: d.score });
+  }
+
+  return { global, byCategory };
 }

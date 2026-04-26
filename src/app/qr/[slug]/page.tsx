@@ -88,7 +88,7 @@ export default async function CartaPage({
 
   // Fetch popular dishes and marketing promos in parallel
   const [popularDishes, activePromos] = await Promise.all([
-    getPopularDishes(restaurant.id).catch(() => []),
+    getPopularDishes(restaurant.id).catch(() => ({ global: [], byCategory: [] })),
     prisma.promotion.findMany({
     where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
     orderBy: { createdAt: "desc" },
@@ -128,7 +128,7 @@ export default async function CartaPage({
     happyHours: (restaurant as any).happyHours || [],
     timeOfDay,
     weather,
-    popularDishIds: popularDishes.map(p => p.dishId),
+    popularDishIds: [...(popularDishes.global || []), ...(popularDishes.byCategory || [])].map(p => p.dishId),
   };
 
   return (
