@@ -232,7 +232,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         setDislikeNoResults(filtered.length === 0);
         trackStat(restaurantId, "GENIO_STEP_DISLIKES", undefined, genioSessionId);
         fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ eventType: "SEARCH_PERFORMED", restaurantId, guestId: getGuestId(), query: dislikeSearch, resultsCount: d.results?.length || 0, metadata: JSON.stringify({ context: "dislike_search" }) }),
+          body: JSON.stringify({ eventType: "SEARCH_PERFORMED", restaurantId, guestId: getGuestId(), query: dislikeSearch, resultsCount: d.results?.length || 0, metadata: { context: "dislike_search" } }),
         }).catch(() => {});
       }).catch(() => {});
     }, 300);

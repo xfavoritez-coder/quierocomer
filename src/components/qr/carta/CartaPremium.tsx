@@ -509,16 +509,21 @@ export default function CartaPremium({
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 100,
-            background: "rgba(244,166,35,0.12)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-            border: "1px solid rgba(244,166,35,0.25)", borderRadius: 50,
-            padding: "10px 22px", display: "flex", alignItems: "center", gap: 8,
-            animation: "fadeToast 0.3s ease-out",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            pointerEvents: "none",
           }}
         >
-          <span style={{ fontSize: "0.9rem" }}>✨</span>
-          <span style={{ fontSize: "0.85rem", color: "#92400e", fontWeight: 600 }}>Carta actualizada</span>
+          <div style={{
+            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 16, padding: "20px 32px",
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
+            animation: "fadeToast 0.3s ease-out",
+            boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
+          }}>
+            <span style={{ fontSize: "1.5rem" }}>✨</span>
+            <span style={{ fontSize: "0.95rem", color: "white", fontWeight: 600 }}>Carta actualizada</span>
+          </div>
         </div>
       )}
 

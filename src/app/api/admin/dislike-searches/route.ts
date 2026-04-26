@@ -17,10 +17,13 @@ export async function GET(req: NextRequest) {
       select: { query: true, resultsCount: true, metadata: true },
     });
 
-    // Filter for dislike_search context
+    // Filter for dislike_search context (handles both string and object metadata)
     const filtered = events.filter(e => {
       if (!e.metadata) return false;
-      try { return String(e.metadata).includes("dislike_search"); } catch { return false; }
+      try {
+        const m = typeof e.metadata === "string" ? e.metadata : JSON.stringify(e.metadata);
+        return m.includes("dislike_search");
+      } catch { return false; }
     });
 
     // Aggregate by query
