@@ -317,7 +317,8 @@ export default function AdminMenus() {
                   const q = norm(ingSearch);
                   const ingMatch = (i: { id: string; name: string }) => { const n = norm(i.name); return n.includes(q) || q.includes(n); };
                   const available = allIngredients.filter(i => ingMatch(i) && !eIngredientIds.includes(i.id));
-                  const alreadyAdded = available.length === 0 ? allIngredients.find(i => ingMatch(i) && eIngredientIds.includes(i.id)) : null;
+                  const alreadyAdded = allIngredients.find(i => norm(i.name) === q && eIngredientIds.includes(i.id)) || null;
+                  const exactExists = allIngredients.some(i => norm(i.name) === q);
                   return (
                     <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
                       {available.slice(0, 15).map(i => (
@@ -326,12 +327,12 @@ export default function AdminMenus() {
                           <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{(i as any).category}</span>
                         </button>
                       ))}
-                      {available.length === 0 && alreadyAdded && (
+                      {alreadyAdded && (
                         <div style={{ padding: "8px 10px" }}>
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>"{alreadyAdded.name}" ya está agregado</span>
                         </div>
                       )}
-                      {available.length === 0 && !alreadyAdded && (
+                      {!exactExists && !alreadyAdded && (
                         <button onClick={async () => {
                           const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch, restaurantId: selectedRestaurantId }) });
                           const data = await res.json();
