@@ -1037,13 +1037,17 @@ export default function AdminMenus() {
                   <p
                     contentEditable
                     suppressContentEditableWarning
+                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); } }}
                     onBlur={async (e) => {
                       const newDesc = e.currentTarget.textContent?.trim() || "";
                       if (newDesc === (d.description || "")) return;
+                      e.currentTarget.style.opacity = "0.5";
                       await fetch(`/api/admin/dishes/${d.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ description: newDesc || null }) });
                       setDishes(prev => prev.map(x => x.id === d.id ? { ...x, description: newDesc || null } : x));
+                      e.currentTarget.style.opacity = "1";
                     }}
-                    style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "6px 0 10px", cursor: "text", outline: "none", borderBottom: "1px dashed var(--adm-card-border)", paddingBottom: 4, minHeight: 20 }}
+                    onFocus={(e) => { e.currentTarget.style.borderBottomColor = "#F4A623"; }}
+                    style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: "6px 0 10px", cursor: "text", outline: "none", borderBottom: "1px dashed var(--adm-card-border)", paddingBottom: 4, minHeight: 20, transition: "border-color 0.2s" }}
                   >{d.description || ""}</p>
 
                   {/* Ingredients */}
