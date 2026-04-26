@@ -41,7 +41,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-        <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
+        <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1 flex-wrap" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
           <span className="truncate">{dish.name}</span>
           <DishBadges dish={dish} />
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
@@ -56,7 +56,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
             </span>
           )}
           {isPopular && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               🔥 Popular hoy
             </span>
           )}

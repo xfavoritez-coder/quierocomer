@@ -101,15 +101,13 @@ export default function CartaLista({
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
     return result.hasPersonalization ? result.map : null;
   });
-  const hadLocalPrefs = useRef(pMap !== null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
-  // Background fetch: skip if had local prefs on mount (unless Genio just completed via profileTrigger)
+  // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {
-    if (hadLocalPrefs.current && profileTrigger === 0) return;
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
@@ -671,7 +669,7 @@ function DishListCard({
               </span>
             )}
             {isPopular && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
                 🔥 Popular hoy
               </span>
             )}

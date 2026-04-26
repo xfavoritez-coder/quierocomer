@@ -86,13 +86,11 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
     return result.hasPersonalization ? result.map : null;
   });
-  const hadLocalPrefs = useRef(pMap !== null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
 
-  // Background fetch: skip if had local prefs on mount (unless Genio just completed via profileTrigger)
+  // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {
-    if (hadLocalPrefs.current && profileTrigger === 0) return;
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
