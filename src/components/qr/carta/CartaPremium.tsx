@@ -203,8 +203,7 @@ export default function CartaPremium({
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
-  const [showPersonalizedToast, setShowPersonalizedToast] = useState(false);
-  const hadPersonalizationBefore = useRef(false);
+  const mountedAt = useRef(Date.now());
   const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
   const recShownRef = useRef(new Set<string>());
 
@@ -280,7 +279,7 @@ export default function CartaPremium({
       fetch(`/api/qr/popular?restaurantId=${restaurant.id}`).then(r => r.json()).catch(() => ({ popular: [] })),
     ]).then(([d, pop]) => {
         if (pop.popular?.length) setPopularDishIds(new Set(pop.popular.map((p: any) => p.dishId)));
-        if (!d.profile) { setPersonalizing(false); hadPersonalizationBefore.current = true; return; }
+        if (!d.profile) { setPersonalizing(false); return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
@@ -295,15 +294,7 @@ export default function CartaPremium({
           d.profile,
           { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
         );
-        if (result.hasPersonalization) {
-          setPMap(result.map);
-          // Show toast only when user triggered it (Genio, like), not on first load
-          if (hadPersonalizationBefore.current) {
-            setShowPersonalizedToast(true);
-            setTimeout(() => setShowPersonalizedToast(false), 2000);
-          }
-          hadPersonalizationBefore.current = true;
-        }
+        if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
       .catch(() => setPersonalizing(false));
@@ -489,25 +480,17 @@ export default function CartaPremium({
         />
       )}
 
-      {showPersonalizedToast && (
+      {personalizing && Date.now() - mountedAt.current > 500 && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            pointerEvents: "none",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           }}
         >
-          <div style={{
-            background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-            borderRadius: 16, padding: "20px 32px",
-            display: "flex", flexDirection: "column", alignItems: "center", gap: 8,
-            animation: "fadeToast 0.3s ease-out",
-            boxShadow: "0 8px 40px rgba(0,0,0,0.3)",
-          }}>
-            <span style={{ fontSize: "1.5rem" }}>✨</span>
-            <span style={{ fontSize: "0.95rem", color: "white", fontWeight: 600 }}>Carta actualizada</span>
-          </div>
+          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
         </div>
       )}
 
