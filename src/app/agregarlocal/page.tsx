@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { QRCodeCanvas } from "qrcode.react";
 
 const LOADING_MESSAGES = [
   "Leyendo la carta...",
@@ -548,6 +549,11 @@ export default function AgregarLocalPage() {
             >
               🔔 Panel Garzón
             </a>
+
+            {/* QR Code */}
+            <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <QRCodeCanvas value={result.url} size={148} level="H" />
+            </div>
 
             <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 16 }}>
               <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.3)", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Link de la carta</p>
