@@ -197,6 +197,29 @@ Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Respond
       }
     }
 
+    // Fetch photos from product sub-pages for dishes missing photos (no Claude needed)
+    const dishesNeedingPhotos: { dish: any; url: string }[] = [];
+    for (const cat of (parsed.categories || [])) {
+      for (const dish of (cat.dishes || [])) {
+        if (!dish.photo && dish.productUrl) {
+          const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
+          dishesNeedingPhotos.push({ dish, url: absUrl });
+        }
+      }
+    }
+    if (dishesNeedingPhotos.length > 0) {
+      // Fetch all product pages in parallel, extract image URL with regex
+      const photoResults = await Promise.allSettled(dishesNeedingPhotos.map(async ({ dish, url }) => {
+        const html = await fetchWithTimeout(`https://r.jina.ai/${url}`, 8000);
+        // Extract first real image URL (cloudfront, cdn, or common image hosts)
+        const imgMatch = html.match(/!\[.*?\]\((https?:\/\/[^\s)]+\.(?:webp|jpg|jpeg|png))/i)
+          || html.match(/(https?:\/\/[^\s"']+\.(?:webp|jpg|jpeg|png))/i);
+        if (imgMatch?.[1] && !imgMatch[1].includes("favicon") && !imgMatch[1].includes("logo")) {
+          dish.photo = imgMatch[1];
+        }
+      }));
+    }
+
     // Remove empty categories
     parsed.categories = (parsed.categories || []).filter((c: any) => c.dishes?.length > 0);
 
