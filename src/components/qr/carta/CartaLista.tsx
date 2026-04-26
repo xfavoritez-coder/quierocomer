@@ -280,16 +280,6 @@ export default function CartaLista({
               {restaurant.name}
             </span>
           </button>
-          {/* Right: profile */}
-          <div onClick={onProfileOpen} className="flex items-center justify-center cursor-pointer" style={{ width: 35, height: 35, borderRadius: "50%", background: qrUser?.name ? "#F4A623" : "rgba(255,255,255,0.08)", flexShrink: 0, position: "relative" }}>
-            {qrUser?.name ? (
-              <span style={{ color: "white", fontSize: "15px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
-                {qrUser.name.charAt(0).toUpperCase()}
-              </span>
-            ) : (
-              <User size={20} color="rgba(255,255,255,0.5)" />
-            )}
-          </div>
         </div>
         {/* Bottom accent line */}
         <div style={{ position: "relative", zIndex: 1, height: 2, background: "linear-gradient(90deg, #F4A623, rgba(244,166,35,0.2), transparent)" }} />

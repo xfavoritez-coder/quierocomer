@@ -160,26 +160,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           </span>
         </button>
 
-        {/* Top right: user profile */}
-        <button
-          onClick={onProfileOpen}
-          className="fixed z-50 flex items-center justify-center"
-          style={{
-            top: 18, right: 18, width: 35, height: 35, borderRadius: "50%",
-            ...(qrUser?.name
-              ? { background: "#F4A623", border: "none" }
-              : { background: "rgba(0,0,0,0.35)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.08)" }),
-            color: "rgba(255,255,255,0.6)",
-          }}
-        >
-          {qrUser?.name ? (
-            <span style={{ color: "white", fontSize: "15px", fontWeight: 700, fontFamily: "var(--font-dm)" }}>
-              {qrUser.name.charAt(0).toUpperCase()}
-            </span>
-          ) : (
-            <User size={16} />
-          )}
-        </button>
 
         {/* Floating buttons — cinematic style */}
         <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
