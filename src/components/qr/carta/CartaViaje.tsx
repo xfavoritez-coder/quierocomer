@@ -89,8 +89,9 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
 
-  // Background fetch: enrich with likedIngredients from DB profile
+  // Background fetch: only update pMap if we had no local prefs (restores from DB for new device)
   useEffect(() => {
+    if (localPMap) return;
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
@@ -102,7 +103,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         setPersonalizing(false);
       })
       .catch(() => setPersonalizing(false));
-  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
+  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger, localPMap]);
 
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(dishes, categories);

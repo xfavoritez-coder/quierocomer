@@ -107,8 +107,9 @@ export default function CartaLista({
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
-  // Background fetch: enrich with likedIngredients from DB profile
+  // Background fetch: only update pMap if we had no local prefs (restores from DB for new device)
   useEffect(() => {
+    if (localPMap) return; // already have local prefs — skip to avoid visible reorder
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
@@ -118,7 +119,7 @@ export default function CartaLista({
         if (result.hasPersonalization) setPMap(result.map);
       })
       .catch(() => {});
-  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
+  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger, localPMap]);
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));

@@ -283,10 +283,14 @@ export default function CartaPremium({
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
-  // Background fetch: enrich with likedIngredients from DB profile + restore localStorage if lost
+  // Background fetch: restore localStorage if lost + only update pMap if no local prefs
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
+    if (localPMap) {
+      // Have local prefs — only fetch to restore localStorage if needed, don't update pMap (avoids reorder)
+      return;
+    }
     setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
       .then((d) => {
@@ -302,7 +306,7 @@ export default function CartaPremium({
         setPersonalizing(false);
       })
       .catch(() => setPersonalizing(false));
-  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
+  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger, localPMap]);
 
   const heroDishes = useMemo(() => {
     // 1. RECOMMENDED dishes with photos
