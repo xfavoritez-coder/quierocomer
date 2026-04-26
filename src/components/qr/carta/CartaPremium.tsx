@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -217,6 +217,17 @@ export default function CartaPremium({
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
   const mountedAt = useRef(Date.now());
+
+  // Instant local pMap refresh (no network) — call after Genio/likes
+  const refreshLocalPMap = useCallback(() => {
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
+    const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
+    if (result.hasPersonalization) setPMap(result.map);
+  }, [dishes, categories, scoringCtx]);
   const recShownRef = useRef(new Set<string>());
 
   // Track search with debounce
@@ -775,7 +786,7 @@ export default function CartaPremium({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); refreshLocalPMap(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
@@ -789,9 +800,10 @@ export default function CartaPremium({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
+          onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
+            refreshLocalPMap();
             setProfileTrigger((n) => n + 1);
             // Scroll to dish then open detail
             setTimeout(() => {

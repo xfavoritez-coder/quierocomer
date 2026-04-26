@@ -89,6 +89,16 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
 
+  const refreshLocalPMap = useCallback(() => {
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
+    const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
+    if (result.hasPersonalization) setPMap(result.map);
+  }, [dishes, categories, scoringCtx]);
+
   // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {
     const guestId = getGuestId();
@@ -236,7 +246,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             dishes={dishes}
             categories={categories}
             qrUser={qrUser}
-            onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
+            onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
             onResult={() => {
               setGenioOpen(false);
               setProfileTrigger((n) => n + 1);

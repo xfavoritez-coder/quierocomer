@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -102,6 +102,16 @@ export default function CartaLista({
     return result.hasPersonalization ? result.map : null;
   });
   const [profileTrigger, setProfileTrigger] = useState(0);
+
+  const refreshLocalPMap = useCallback(() => {
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
+    const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
+    if (result.hasPersonalization) setPMap(result.map);
+  }, [dishes, categories, scoringCtx]);
   const [personalizing, setPersonalizing] = useState(false);
 
   useEffect(() => { onReady?.(); }, [readyKey]);
@@ -557,7 +567,7 @@ export default function CartaLista({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
+          onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
             setProfileTrigger((n) => n + 1);
@@ -575,7 +585,7 @@ export default function CartaLista({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); refreshLocalPMap(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}

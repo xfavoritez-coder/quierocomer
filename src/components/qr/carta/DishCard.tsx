@@ -49,17 +49,17 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         {(autoRecommended || (isRec && !autoRecommended) || isPopular) && (
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
             {autoRecommended && (
-              <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ✨ Para ti
               </span>
             )}
             {isRec && !autoRecommended && (
-              <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>
             )}
             {isPopular && (
-              <span style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 🔥 Popular hoy
               </span>
             )}
@@ -134,7 +134,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
       <div className="absolute" style={{ top: 7, right: 7, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, zIndex: 2 }}>
         {badges.map((b, i) => (
-          <span key={i} className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.72rem", fontWeight: 600, padding: "3px 9px", borderRadius: 8 }}>{b}</span>
+          <span key={i} className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.78rem", fontWeight: 600, padding: "3px 9px", borderRadius: 8 }}>{b}</span>
         ))}
       </div>
       <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 27, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
