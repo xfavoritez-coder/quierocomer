@@ -484,15 +484,15 @@ function VjPitch({ text, className, style }: { text: string; className?: string;
 function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommended, isPopular, restaurantId }: {
   dish: Dish; variant: SlideVariant; palette: Palette; index: number; restaurantName?: string; autoRecommended?: boolean; isPopular?: boolean; restaurantId: string;
 }) {
-  const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState<"parati" | "rec" | "popular" | null>(null);
   const pitch = dish.description || "";
   const genie = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const d = dish as any;
   const isRec = dish.tags?.includes("RECOMMENDED");
   const hasParaTi = autoRecommended && !isRec;
-  const hasPopularBadge = isPopular && !hasParaTi && !isRec;
-  const handleBadgeClick = () => { setShowToast(true); setTimeout(() => setShowToast(false), 2000); };
+  const hasPopularBadge = !!isPopular;
+  const handleBadgeClick = (type: "parati" | "rec" | "popular") => { setToastType(type); setTimeout(() => setToastType(null), 2000); };
   const hasBadges = isRec || hasParaTi || hasPopularBadge || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
   const vjBadges = hasBadges ? (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 8, flexShrink: 0, verticalAlign: "middle" }}>
@@ -500,20 +500,20 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
       {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "15px" }}>🌱</span>}
       {d.isSpicy && <span style={{ fontSize: "15px" }}>🌶️</span>}
       {isNew && <VjNewBadge inline />}
-      {hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
-      {isRec && !hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
-      {hasPopularBadge && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Popular hoy</span>}
+      {hasParaTi && <span onClick={() => handleBadgeClick("parati")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
+      {isRec && !hasParaTi && <span onClick={() => handleBadgeClick("rec")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
+      {hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Popular hoy</span>}
     </span>
   ) : null;
   const accentColor = "#F4A623";
 
 
-  const toastEl = showToast ? (
-    <div onClick={() => setShowToast(false)} style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px + 36px)", left: 16, right: 16, zIndex: 30, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", cursor: "pointer", animation: "fadeToastVj 0.2s ease-out" }}>
+  const toastEl = toastType ? (
+    <div onClick={() => setToastType(null)} style={{ position: "absolute", top: "calc(max(12px, env(safe-area-inset-top)) + 58px + 36px)", left: 16, right: 16, zIndex: 30, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", cursor: "pointer", animation: "fadeToastVj 0.2s ease-out" }}>
       <p style={{ margin: 0, fontSize: "0.85rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4, fontFamily: "var(--font-dm)" }}>
-        {hasParaTi
+        {toastType === "parati"
           ? "✨ Seleccionado especialmente para ti, según tus gustos y preferencias."
-          : hasPopularBadge
+          : toastType === "popular"
           ? "🔥 Muy pedido hoy por los clientes."
           : `⭐ ${restaurantName || "El local"} recomienda especialmente este plato.`}
       </p>

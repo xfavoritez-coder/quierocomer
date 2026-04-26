@@ -234,6 +234,7 @@ function DishSlide({
 }) {
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
+  const [showPopularTooltip, setShowPopularTooltip] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
@@ -326,16 +327,26 @@ function DishSlide({
           </div>
         )}
 
-        {/* "Recomendado por" explanation toggle */}
-        {showRecTooltip && (isRec || popularDishIds?.has(dish.id)) && (
+        {/* "Recomendado" explanation toggle */}
+        {showRecTooltip && isRec && (
           <div
             onClick={() => setShowRecTooltip(false)}
             style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
             <p style={{ margin: 0, fontSize: "0.88rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
-              {isRec
-                ? `⭐ ${restaurantName || "El local"} recomienda este plato.`
-                : "🔥 Muy pedido hoy por los clientes."}
+              ⭐ {restaurantName || "El local"} recomienda este plato.
+            </p>
+          </div>
+        )}
+
+        {/* "Popular" explanation toggle */}
+        {showPopularTooltip && popularDishIds?.has(dish.id) && (
+          <div
+            onClick={() => setShowPopularTooltip(false)}
+            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
+          >
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
+              🔥 Muy pedido hoy por los clientes.
             </p>
           </div>
         )}
@@ -362,9 +373,9 @@ function DishSlide({
                   ⭐ Recomendado
                 </button>
               )}
-              {popularDishIds?.has(dish.id) && !personalizationEntry?.autoRecommended && !isRec && (
+              {popularDishIds?.has(dish.id) && (
                 <button
-                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
+                  onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
                 >
                   🔥 Popular hoy

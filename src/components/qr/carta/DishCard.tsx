@@ -55,7 +55,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
               ⭐ Recomendado
             </span>
           )}
-          {isPopular && !autoRecommended && !isRec && (
+          {isPopular && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               🔥 Popular hoy
             </span>
