@@ -219,12 +219,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }).catch(() => {});
   }, []);
 
+  const [dislikeNoResults, setDislikeNoResults] = useState(false);
+
   // Search dislikes with debounce
   useEffect(() => {
-    if (!dislikeSearch || dislikeSearch.length < 2) { setDislikeResults([]); return; }
+    if (!dislikeSearch || dislikeSearch.length < 2) { setDislikeResults([]); setDislikeNoResults(false); return; }
+    setDislikeNoResults(false);
     const timer = setTimeout(() => {
       fetch(`/api/qr/dislikes?q=${encodeURIComponent(dislikeSearch)}`).then(r => r.json()).then(d => {
-        if (d.results) setDislikeResults(d.results.filter((r: string) => !dislikes.includes(r)));
+        const filtered = (d.results || []).filter((r: string) => !dislikes.includes(r));
+        setDislikeResults(filtered);
+        setDislikeNoResults(filtered.length === 0);
         trackStat(restaurantId, "GENIO_STEP_DISLIKES", undefined, genioSessionId);
         fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ eventType: "SEARCH_PERFORMED", restaurantId, guestId: getGuestId(), query: dislikeSearch, resultsCount: d.results?.length || 0, metadata: JSON.stringify({ context: "dislike_search" }) }),
@@ -705,11 +710,24 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 {dislikeResults.map(r => (
                   <button key={r} onClick={() => {
                     setDislikes(prev => { const updated = [...prev, r]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                    setDislikeSearch(""); setDislikeResults([]);
+                    setDislikeSearch(""); setDislikeResults([]); setDislikeNoResults(false);
                   }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", borderBottom: `1px solid ${G.border}`, textAlign: "left", color: G.textSecondary, fontSize: "0.88rem", cursor: "pointer" }}>
                     {r}
                   </button>
                 ))}
+              </div>
+            )}
+            {dislikeNoResults && dislikeSearch.length >= 2 && (
+              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10 }}>
+                <button onClick={() => {
+                  const val = dislikeSearch.trim().toLowerCase();
+                  if (val && !dislikes.includes(val)) {
+                    setDislikes(prev => { const updated = [...prev, val]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
+                  }
+                  setDislikeSearch(""); setDislikeResults([]); setDislikeNoResults(false);
+                }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", textAlign: "left", color: G.gold, fontSize: "0.88rem", cursor: "pointer" }}>
+                  + Agregar &quot;{dislikeSearch.trim()}&quot;
+                </button>
               </div>
             )}
           </div>
@@ -737,7 +755,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               // TODO: track skip event
               next();
             }}
-            style={{ marginTop: 12, background: "none", border: "none", color: G.textTertiary, fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3, position: "relative", zIndex: 2 }}
+            style={{ marginTop: 12, background: "none", border: "none", color: G.textTertiary, fontSize: "0.95rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3, position: "relative", zIndex: 2 }}
           >
             {t(lang, "gSkipStep")}
           </button>
