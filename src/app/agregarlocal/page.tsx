@@ -63,6 +63,7 @@ export default function AgregarLocalPage() {
   const [photoProgress, setPhotoProgress] = useState("");
   const [mode, setMode] = useState<"photos" | "url">("photos");
   const [urlInput, setUrlInput] = useState("");
+  const [includePhotos, setIncludePhotos] = useState(true);
   const [logo, setLogo] = useState<string | null>(null);
   const [savingProgress, setSavingProgress] = useState("");
   const [aiModel, setAiModel] = useState<"sonnet" | "haiku">("sonnet");
@@ -156,10 +157,14 @@ export default function AgregarLocalPage() {
     setSavingProgress("Creando restaurante y platos...");
     try {
       // Step 1: Create restaurant + dishes
+      const catsToSend = includePhotos ? categories : categories.map(c => ({
+        ...c,
+        dishes: c.dishes.map((d: any) => ({ ...d, photo: null })),
+      }));
       const res = await fetch("/api/agregarlocal/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), categories, logo }),
+        body: JSON.stringify({ name: name.trim(), categories: catsToSend, logo }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error");
@@ -276,7 +281,7 @@ export default function AgregarLocalPage() {
                     style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }}
                   />
                 </div>
-                <div style={{ marginBottom: 24 }}>
+                <div style={{ marginBottom: 16 }}>
                   <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Nombre del local (opcional, se detecta automáticamente)</label>
                   <input
                     value={name}
@@ -285,6 +290,18 @@ export default function AgregarLocalPage() {
                     style={{ width: "100%", padding: "14px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }}
                   />
                 </div>
+                <label
+                  onClick={() => setIncludePhotos(p => !p)}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", borderRadius: 12, border: `1px solid ${includePhotos ? "rgba(244,166,35,0.4)" : "rgba(255,255,255,0.15)"}`, background: includePhotos ? "rgba(244,166,35,0.08)" : "rgba(255,255,255,0.03)", cursor: "pointer", marginBottom: 24 }}
+                >
+                  <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${includePhotos ? "#F4A623" : "rgba(255,255,255,0.3)"}`, background: includePhotos ? "#F4A623" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {includePhotos && <span style={{ color: "#0e0e0e", fontSize: "12px", fontWeight: 700 }}>✓</span>}
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.88rem", color: "white", fontWeight: 500 }}>Importar con fotos originales</span>
+                    <span style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", display: "block", marginTop: 2 }}>Usa las fotos de la página web del local</span>
+                  </div>
+                </label>
               </>
             )}
 
