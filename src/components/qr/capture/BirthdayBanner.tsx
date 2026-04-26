@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import BirthdayModal from "./BirthdayModal";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface Props {
   restaurantId: string;
@@ -12,6 +14,7 @@ interface Props {
 }
 
 export default function BirthdayBanner({ restaurantId, restaurantName }: Props) {
+  const lang = useLang();
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
@@ -67,10 +70,10 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
           <span style={{ animation: "bdayBounce 1.5s ease-in-out 0.4s infinite" }}>🎊</span>
         </div>
         <p style={{ color: "#92400e", fontSize: "0.92rem", fontWeight: 700, margin: "0 0 4px" }}>
-          ¡Listo, guardado!
+          {t(lang, "bdaySuccessTitle")}
         </p>
         <p style={{ color: "#b45309", fontSize: "0.78rem", margin: 0, opacity: 0.8 }}>
-          Te avisaremos en tu cumple con una sorpresa 🎁
+          {t(lang, "bdaySuccessSub")}
         </p>
       </div>
     );
@@ -125,10 +128,10 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
         {/* Text */}
         <div style={{ flex: 1, minWidth: 0 }}>
           <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {existingUser?.name ? `${existingUser.name}, ¿cuándo es tu cumple?` : "¿Cuándo es tu cumple?"}
+            {existingUser?.name ? t(lang, "bdayQuestionName").replace("{name}", existingUser.name) : t(lang, "bdayQuestion")}
           </p>
           <p style={{ fontSize: "0.85rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
-            {existingUser ? "Guárdalo y recibe una sorpresa 🎁" : "Dinos tu fecha y recibe una sorpresa 🎁"}
+            {existingUser ? t(lang, "bdayHintExisting") : t(lang, "bdayHintNew")}
           </p>
         </div>
 

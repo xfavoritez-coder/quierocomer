@@ -4,6 +4,8 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import EmailTypoHint from "./EmailTypoHint";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface Props {
   restaurantId: string;
@@ -16,6 +18,7 @@ interface Props {
 }
 
 export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, onClose, onSuccess }: Props) {
+  const lang = useLang();
   const [name, setName] = useState(existingUser?.name || "");
   const [email, setEmail] = useState(existingUser?.email || "");
   const [birthDate, setBirthDate] = useState("");
@@ -112,10 +115,10 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
             className="font-[family-name:var(--font-playfair)]"
             style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
           >
-            {restaurantName ? `En ${restaurantName} queremos celebrar contigo` : "¡Queremos celebrar contigo!"}
+            {restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle")}
           </h3>
           <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
-            Déjanos tu cumpleaños y te tendremos una sorpresa especial
+            {t(lang, "bdayModalSub")}
           </p>
         </div>
 
@@ -123,7 +126,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           {!existingUser && (
             <>
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Tu nombre</label>
+                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelName")}</label>
                 <input
                   type="text"
                   value={name}
@@ -137,7 +140,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                 />
               </div>
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Tu email</label>
+                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelEmail")}</label>
                 <input
                   type="email"
                   value={email}
@@ -154,7 +157,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
             </>
           )}
           <div style={{ position: "relative", overflow: "hidden" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>Fecha de cumpleaños</label>
+            <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelDate")}</label>
             <input
               type="date"
               value={birthDate}
@@ -182,13 +185,13 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
               opacity: status === "loading" ? 0.6 : 1,
             }}
           >
-            {status === "loading" ? "Guardando..." : "Quiero mi regalo 🎁"}
+            {status === "loading" ? t(lang, "bdaySaving") : t(lang, "bdayButton")}
           </button>
         </div>
 
         {!existingUser && (
           <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#aaa", marginTop: 12 }}>
-            🔒 Solo te avisaremos en tu cumpleaños
+            🔒 {t(lang, "bdayPrivacy")}
           </p>
         )}
       </div>
