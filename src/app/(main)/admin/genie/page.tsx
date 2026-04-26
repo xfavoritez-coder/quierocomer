@@ -451,7 +451,7 @@ export default function AdminSessions() {
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
                       {(() => {
                         const badged = s.dishesViewed.filter(d => d.isPopular || d.isRecommended || d.isNew);
-                        return badged.length > 0 ? <span style={{ color: "#f87171" }}>· {badged.length} con badge</span> : null;
+                        return badged.length > 0 ? <span style={{ color: "#F4A623" }}>· 🏷️ {badged.length} con badge</span> : null;
                       })()}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
                       {s.genioData?.birthdaySaved && <span style={{ color: "#4ade80" }}>· 🎂 Cumple</span>}
