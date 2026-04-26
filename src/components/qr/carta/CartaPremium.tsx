@@ -203,8 +203,9 @@ export default function CartaPremium({
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
-  // Instant pMap from localStorage prefs (no network needed)
-  const localPMap = useMemo(() => {
+  // pMap from localStorage prefs — computed once on client mount (SSR-safe)
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(() => {
+    if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
@@ -212,9 +213,8 @@ export default function CartaPremium({
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
     return result.hasPersonalization ? result.map : null;
-  }, [dishes, categories, scoringCtx]);
-
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(localPMap);
+  });
+  const hadLocalPrefs = useRef(pMap !== null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
   const mountedAt = useRef(Date.now());
@@ -283,14 +283,11 @@ export default function CartaPremium({
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
-  // Background fetch: restore localStorage if lost + only update pMap if no local prefs
+  // Background fetch: skip if had local prefs on mount (unless Genio just completed via profileTrigger)
   useEffect(() => {
+    if (hadLocalPrefs.current && profileTrigger === 0) return;
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
-    if (localPMap) {
-      // Have local prefs — only fetch to restore localStorage if needed, don't update pMap (avoids reorder)
-      return;
-    }
     setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
       .then((d) => {
@@ -306,7 +303,7 @@ export default function CartaPremium({
         setPersonalizing(false);
       })
       .catch(() => setPersonalizing(false));
-  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger, localPMap]);
+  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
     // 1. RECOMMENDED dishes with photos
