@@ -335,7 +335,7 @@ function DishSlide({
             <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
               {isRec
                 ? `⭐ ${restaurantName || "El local"} recomienda este plato.`
-                : "🔥 Muy popular entre los clientes."}
+                : "🔥 Muy pedido hoy por los clientes."}
             </p>
           </div>
         )}
@@ -367,7 +367,7 @@ function DishSlide({
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 4000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
                 >
-                  🔥 Popular
+                  🔥 Popular hoy
                 </button>
               )}
             </h2>
