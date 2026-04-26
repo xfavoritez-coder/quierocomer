@@ -25,32 +25,39 @@ export async function GET(req: NextRequest) {
       select: { dishesViewed: true },
     });
 
-    const scores = new Map<string, number>();
+    // Count unique sessions per dish + dwell bonus (capped per session)
+    const sessionCounts = new Map<string, number>();
+    const dwellBonus = new Map<string, number>();
 
     for (const session of sessions) {
       const viewed = session.dishesViewed as any[] | null;
       if (!Array.isArray(viewed)) continue;
 
+      const seenInSession = new Set<string>();
       for (const entry of viewed) {
         if (!entry?.dishId) continue;
         const detailMs = entry.detailMs ?? 0;
         if (detailMs <= 0) continue;
 
-        let points = 1; // opened detail
-        if (detailMs >= 10000) {
-          points += 3;
-        } else if (detailMs >= 5000) {
-          points += 2;
-        }
+        // Count each dish only once per session
+        if (!seenInSession.has(entry.dishId)) {
+          seenInSession.add(entry.dishId);
+          sessionCounts.set(entry.dishId, (sessionCounts.get(entry.dishId) ?? 0) + 1);
 
-        scores.set(entry.dishId, (scores.get(entry.dishId) ?? 0) + points);
+          // Small dwell bonus (max +1 per session, not +3)
+          if (detailMs >= 5000) {
+            dwellBonus.set(entry.dishId, (dwellBonus.get(entry.dishId) ?? 0) + 1);
+          }
+        }
       }
     }
 
-    const popular = [...scores.entries()]
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([dishId, score]) => ({ dishId, score }));
+    // Score = unique sessions (primary) + small dwell bonus
+    const popular = [...sessionCounts.entries()]
+      .filter(([, count]) => count >= 3) // minimum 3 unique sessions
+      .map(([dishId, count]) => ({ dishId, score: count + (dwellBonus.get(dishId) ?? 0), sessions: count }))
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
 
     // Store in cache
     cache.set(restaurantId, { data: popular, timestamp: Date.now() });
