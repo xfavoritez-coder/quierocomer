@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-export const maxDuration = 300;
+export const maxDuration = 120;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
@@ -17,20 +17,21 @@ async function searchUnsplash(query: string): Promise<string | null> {
   } catch { return null; }
 }
 
-async function fetchPage(url: string): Promise<string> {
-  // Try Jina Reader first (renders JS), fallback to direct fetch
+async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const jinaRes = await fetch(`https://r.jina.ai/${url}`, {
-      headers: { "Accept": "text/plain", "X-No-Cache": "true" },
-    });
-    if (jinaRes.ok) return await jinaRes.text();
+    const res = await fetch(url, { signal: controller.signal, headers: { "Accept": "text/plain", "X-No-Cache": "true" } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } finally { clearTimeout(timer); }
+}
+
+async function fetchPage(url: string): Promise<string> {
+  try {
+    return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000);
   } catch {}
-  const directRes = await fetch(url, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
-    redirect: "follow",
-  });
-  if (!directRes.ok) throw new Error(`HTTP ${directRes.status}`);
-  return await directRes.text();
+  return await fetchWithTimeout(url, 8000);
 }
 
 function cleanContent(html: string): string {
@@ -60,30 +61,12 @@ function parseJSON(text: string): any {
   if (!match) throw new Error("No JSON found");
   let jsonStr = match[0];
   try { return JSON.parse(jsonStr); } catch {}
-  // Fix truncated JSON
   jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
   let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
   for (let i = 0; i < o - c; i++) jsonStr += "]";
   o = 0; c = 0; for (const ch of jsonStr) { if (ch === "{") o++; if (ch === "}") c++; }
   for (let i = 0; i < o - c; i++) jsonStr += "}";
   return JSON.parse(jsonStr);
-}
-
-/** Fetch product sub-pages in parallel batches */
-async function fetchProductPages(links: { url: string; category: string }[], baseUrl: string): Promise<{ category: string; content: string }[]> {
-  const results: { category: string; content: string }[] = [];
-  const BATCH = 8;
-  for (let i = 0; i < links.length; i += BATCH) {
-    const batch = links.slice(i, i + BATCH);
-    const fetched = await Promise.allSettled(batch.map(async (link) => {
-      const content = await fetchPage(link.url);
-      return { category: link.category, content: cleanContent(content) };
-    }));
-    for (const r of fetched) {
-      if (r.status === "fulfilled") results.push(r.value);
-    }
-  }
-  return results;
 }
 
 export async function POST(request: Request) {
@@ -106,7 +89,7 @@ export async function POST(request: Request) {
     const cleaned = cleanContent(pageContent);
     const content = cleaned.length > 40000 ? cleaned.slice(0, 40000) : cleaned;
 
-    // Step 2: Ask Claude to extract categories + product links (or full dishes if inline)
+    // Step 2: Claude extracts categories + detects inline vs catalog
     const step1Prompt = `Analiza esta página de menú de restaurante y extrae la información.
 
 URL: ${url}
@@ -116,8 +99,8 @@ Contenido:
 ${content}
 
 IMPORTANTE: Hay dos tipos de páginas de menú:
-1. Menú completo inline: todos los platos con precio/descripción están en esta página
-2. Menú tipo catálogo: solo muestra categorías con links a cada producto individual
+1. "inline": todos los platos con precio y descripción están en esta página
+2. "catalog": solo muestra categorías con links a páginas individuales de cada producto
 
 Responde con un JSON:
 {
@@ -145,53 +128,66 @@ Responde con un JSON:
 }
 
 Reglas:
-- type "catalog": cuando las categorías solo tienen nombres/links de productos sin descripciones completas. Incluye productUrl para cada plato
-- type "inline": cuando los platos tienen toda su info (precio, descripción) visible en esta página. productUrl debe ser null
-- Precios: enteros sin puntos ni símbolos. $8.990 → 8990. Si no hay precio visible, pon 0
-- Fotos: URL completa. URLs relativas → absolutas usando ${baseUrl}
-- Logo: busca en meta tags, favicon, imgs con logo/brand
+- type "catalog": categorías con links de productos sin descripciones completas. Incluye productUrl
+- type "inline": platos con toda su info visible. productUrl = null
+- Precios: enteros sin puntos ni símbolos. $8.990 → 8990
+- Fotos: URL completa. Relativas → absolutas con ${baseUrl}
 - No inventes datos. Responde SOLO el JSON`;
 
     const step1Text = await callClaude(step1Prompt);
     let parsed = parseJSON(step1Text);
 
-    // Step 3: If catalog type, fetch product sub-pages for details
+    // Step 3: For catalog sites, fetch product sub-pages
     const isCatalog = parsed.type === "catalog";
-    const productLinks: { url: string; category: string }[] = [];
 
     if (isCatalog) {
+      const productLinks: { url: string; category: string; name: string }[] = [];
       for (const cat of (parsed.categories || [])) {
         for (const dish of (cat.dishes || [])) {
           if (dish.productUrl) {
-            // Make absolute URL
             const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
-            productLinks.push({ url: absUrl, category: cat.name });
+            productLinks.push({ url: absUrl, category: cat.name, name: dish.name });
           }
         }
       }
-    }
 
-    if (productLinks.length > 0) {
-      // Fetch all product pages
-      const productPages = await fetchProductPages(productLinks, baseUrl);
+      // Cap at 60 products to stay within timeout
+      const linksToFetch = productLinks.slice(0, 60);
 
-      // Batch product pages and send to Claude for extraction (groups of 10)
-      const EXTRACT_BATCH = 10;
-      const allDishes: { category: string; dish: any }[] = [];
+      if (linksToFetch.length > 0) {
+        // Fetch sub-pages in parallel batches of 10
+        const productPages: { category: string; content: string }[] = [];
+        const BATCH = 10;
+        for (let i = 0; i < linksToFetch.length; i += BATCH) {
+          const batch = linksToFetch.slice(i, i + BATCH);
+          const results = await Promise.allSettled(batch.map(async (link) => {
+            const pg = await fetchPage(link.url);
+            return { category: link.category, content: cleanContent(pg).slice(0, 3000) };
+          }));
+          for (const r of results) {
+            if (r.status === "fulfilled") productPages.push(r.value);
+          }
+        }
 
-      for (let i = 0; i < productPages.length; i += EXTRACT_BATCH) {
-        const batch = productPages.slice(i, i + EXTRACT_BATCH);
-        const batchContent = batch.map((p, idx) => `--- PRODUCTO ${idx + 1} (Categoría: ${p.category}) ---\n${p.content.slice(0, 3000)}`).join("\n\n");
+        if (productPages.length > 0) {
+          // Extract dish data from product pages — batches of 12 to Claude
+          const EXTRACT_BATCH = 12;
+          const allDishes: { category: string; dish: any }[] = [];
 
-        const extractPrompt = `Extrae la información de estos ${batch.length} productos de restaurante.
+          for (let i = 0; i < productPages.length; i += EXTRACT_BATCH) {
+            const batch = productPages.slice(i, i + EXTRACT_BATCH);
+            const batchContent = batch.map((p, idx) => `--- PRODUCTO ${idx + 1} (Categoría: ${p.category}) ---\n${p.content}`).join("\n\n");
+
+            try {
+              const extractText = await callClaude(`Extrae la información de estos ${batch.length} productos de restaurante.
 
 ${batchContent}
 
-Para cada producto responde con un JSON:
+Responde con un JSON:
 {
   "dishes": [
     {
-      "category": "Nombre de la categoría original",
+      "category": "Categoría original",
       "name": "Nombre del plato",
       "description": "Descripción completa, null si no tiene",
       "price": 8990,
@@ -199,45 +195,37 @@ Para cada producto responde con un JSON:
       "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
       "isSpicy": false,
       "modifiers": [
-        {
-          "name": "Nombre del grupo (ej: Cocción, Tamaño, Extras)",
-          "required": true,
-          "options": [{ "name": "Opción", "price": 0 }]
-        }
+        { "name": "Grupo de opciones", "required": true, "options": [{ "name": "Opción", "price": 0 }] }
       ]
     }
   ]
 }
 
-Reglas:
-- Precios enteros: $8.990 → 8990
-- Fotos: URL completa, no placeholders
-- Modificadores: solo si hay opciones/extras reales en el contenido
-- Precio de modificadores es el ADICIONAL (0 si no tiene costo extra)
-- No inventes datos. Responde SOLO el JSON`;
-
-        try {
-          const extractText = await callClaude(extractPrompt);
-          const extractParsed = parseJSON(extractText);
-          for (const dish of (extractParsed.dishes || [])) {
-            allDishes.push({ category: dish.category, dish });
+Precios enteros ($8.990 → 8990). No inventes datos. Responde SOLO el JSON`);
+              const extractParsed = parseJSON(extractText);
+              for (const dish of (extractParsed.dishes || [])) {
+                allDishes.push({ category: dish.category, dish });
+              }
+            } catch { /* continue */ }
           }
-        } catch { /* continue with what we have */ }
-      }
 
-      // Rebuild categories from extracted dishes
-      const catMap = new Map<string, any>();
-      // Keep original category order and type
-      for (const cat of (parsed.categories || [])) {
-        catMap.set(cat.name, { name: cat.name, type: cat.type || "food", dishes: [] });
+          // Rebuild categories if we got sub-page data
+          if (allDishes.length > 0) {
+            const catMap = new Map<string, any>();
+            for (const cat of (parsed.categories || [])) {
+              catMap.set(cat.name, { name: cat.name, type: cat.type || "food", dishes: [] });
+            }
+            for (const { category, dish } of allDishes) {
+              const cat = catMap.get(category) || { name: category, type: "food", dishes: [] };
+              const { category: _, ...dishData } = dish;
+              cat.dishes.push(dishData);
+              catMap.set(category, cat);
+            }
+            parsed.categories = Array.from(catMap.values());
+          }
+          // If allDishes is empty, keep the original parsed categories (partial data is better than nothing)
+        }
       }
-      for (const { category, dish } of allDishes) {
-        const cat = catMap.get(category) || { name: category, type: "food", dishes: [] };
-        const { category: _, ...dishData } = dish;
-        cat.dishes.push(dishData);
-        catMap.set(category, cat);
-      }
-      parsed.categories = Array.from(catMap.values());
     }
 
     // Remove empty categories
@@ -273,17 +261,15 @@ Reglas:
       ...parsed,
       restaurantName: parsed.restaurantName || providedName || "Sin nombre",
       stats: {
-        withPhoto,
-        withoutPhoto,
-        totalDishes,
+        withPhoto, withoutPhoto, totalDishes,
         totalCategories: (parsed.categories || []).length,
         type: isCatalog ? "catalog" : "inline",
-        productPagesFetched: productLinks.length,
+        productPagesFetched: isCatalog ? Math.min((parsed.categories || []).flatMap((c: any) => c.dishes || []).length, 60) : 0,
         filledWithUnsplash: (parsed.categories || []).flatMap((c: any) => c.dishes || []).filter((d: any) => d._unsplash).length,
       },
     });
   } catch (e: any) {
     console.error("[scrape]", e);
-    return NextResponse.json({ error: e.message || "Error" }, { status: 500 });
+    return NextResponse.json({ error: e.message || "Error al procesar la página" }, { status: 500 });
   }
 }
