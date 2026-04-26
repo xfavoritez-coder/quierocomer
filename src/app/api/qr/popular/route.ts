@@ -18,10 +18,10 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    const since = new Date(Date.now() - 48 * 60 * 60 * 1000); // last 48 hours
     const sessions = await prisma.session.findMany({
-      where: { restaurantId },
+      where: { restaurantId, startedAt: { gte: since } },
       orderBy: { startedAt: "desc" },
-      take: 500,
       select: { dishesViewed: true },
     });
 
