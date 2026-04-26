@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
-const VIEW_LABELS: Record<string, string> = { premium: "Clasica", lista: "Lista", viaje: "Espacial" };
+const VIEW_LABELS: Record<string, string> = { premium: "Galería", lista: "Lista", viaje: "Espacial" };
 const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", OMNIVORE: "Carnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
 const SOURCE_LABELS: Record<string, string> = {
   post_genio_CONVERTED: "Genio",
@@ -339,7 +339,7 @@ export default function AdminSessions() {
                                 <span style={{ fontFamily: F, fontSize: "0.78rem", color: "white" }}>{time}</span>
                                 <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", marginLeft: 8 }}>
                                   {formatDuration(s.durationMs)} · {s.dishesViewed?.length || 0} platos
-                                  {s.viewUsed && ` · ${s.viewUsed === "premium" ? "Clásica" : s.viewUsed === "lista" ? "Lista" : "Espacial"}`}
+                                  {s.viewUsed && ` · ${s.viewUsed === "premium" ? "Galería" : s.viewUsed === "lista" ? "Lista" : "Espacial"}`}
                                 </span>
                               </div>
                               <span style={{ fontSize: "0.8rem", color: "#555", transform: sOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
@@ -347,7 +347,7 @@ export default function AdminSessions() {
                             {sOpen && (
                               <div style={{ padding: "0 12px 12px", borderTop: "1px solid #2A2A2A" }}>
                                 <div style={{ padding: "10px 0", fontSize: "0.75rem", fontFamily: F, color: "#aaa", display: "flex", gap: 12, flexWrap: "wrap" }}>
-                                  {s.viewUsed && <span>Vista: {s.viewUsed === "premium" ? "Clásica" : s.viewUsed === "lista" ? "Lista" : "Espacial"}</span>}
+                                  {s.viewUsed && <span>Vista: {s.viewUsed === "premium" ? "Galería" : s.viewUsed === "lista" ? "Lista" : "Espacial"}</span>}
                                   {s.deviceType && <span>{s.deviceType}</span>}
                                   {s.cartaLang && <span>Carta: {s.cartaLang.toUpperCase()}</span>}
                                 </div>

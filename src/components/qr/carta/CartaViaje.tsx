@@ -113,9 +113,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
         const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
         if (aRec !== bRec) return bRec - aRec;
-        const aPop = popularDishIds.has(a.id) ? 1 : 0;
-        const bPop = popularDishIds.has(b.id) ? 1 : 0;
-        if (aPop !== bPop) return bPop - aPop;
         if (pMap) {
           const aScore = pMap.get(a.id)?.score ?? 0;
           const bScore = pMap.get(b.id)?.score ?? 0;

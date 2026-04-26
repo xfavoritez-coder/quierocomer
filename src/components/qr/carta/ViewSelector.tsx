@@ -15,7 +15,7 @@ const LANG_STORAGE_KEY = "qc_lang";
 
 const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
   { value: "lista", label: "Lista", Icon: List },
-  { value: "premium", label: "Clásica", Icon: BookOpen },
+  { value: "premium", label: "Galería", Icon: BookOpen },
   { value: "viaje", label: "Espacial", Icon: Rocket },
 ];
 

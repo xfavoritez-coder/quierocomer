@@ -320,23 +320,25 @@ export default function CartaPremium({
   }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
 
   const heroDishes = useMemo(() => {
-    // When personalized, show top-scored dishes with photos as heroes
-    if (pMap) {
-      const topByScore = [...dishes]
-        .filter(d => d.photos?.[0])
-        .sort((a, b) => (pMap.get(b.id)?.score ?? 0) - (pMap.get(a.id)?.score ?? 0))
-        .slice(0, 3);
-      if (topByScore.length > 0) return topByScore;
-    }
-    // Fallback: manual RECOMMENDED or top-rated
-    const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
-    return recommended.length > 0
-      ? recommended
-      : [...dishes]
-          .filter(d => d.photos?.[0])
-          .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
-          .slice(0, 3);
-  }, [dishes, pMap, ratingMap]);
+    // 1. RECOMMENDED dishes with photos
+    const recommendedWithPhotos = dishes.filter(
+      (d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]
+    );
+    if (recommendedWithPhotos.length > 0) return recommendedWithPhotos;
+
+    // 2. Popular dishes with photos (up to 3)
+    const popularWithPhotos = dishes.filter(
+      (d) => popularDishIds.has(d.id) && d.photos?.[0]
+    ).slice(0, 3);
+    if (popularWithPhotos.length > 0) return popularWithPhotos;
+
+    // 3. Fallback: 3 random dishes with photos
+    const withPhotos = dishes.filter((d) => d.photos?.[0]);
+    if (withPhotos.length <= 3) return withPhotos;
+    // Shuffle and pick 3
+    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  }, [dishes, popularDishIds]);
 
   // Build sorted dish list matching carta visual order (category by category, recommended first, then by score)
   const sortedDishes = useMemo(() => {
@@ -354,11 +356,7 @@ export default function CartaPremium({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
-            // 3. Popular dishes third
-            const aPop = popularDishIds.has(a.id) ? 1 : 0;
-            const bPop = popularDishIds.has(b.id) ? 1 : 0;
-            if (aPop !== bPop) return bPop - aPop;
-            // 4. Then by score
+            // 3. Then by score
             const aScore = pMap.get(a.id)?.score ?? 0;
             const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
@@ -366,17 +364,13 @@ export default function CartaPremium({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
-            // Popular dishes after RECOMMENDED
-            const aPop = popularDishIds.has(a.id) ? 1 : 0;
-            const bPop = popularDishIds.has(b.id) ? 1 : 0;
-            if (aPop !== bPop) return bPop - aPop;
           }
           return a.position - b.position;
         });
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap, popularDishIds]);
+  }, [categories, dishes, pMap]);
 
   // Reset horizontal scroll containers when personalization order changes
   useEffect(() => {
@@ -569,9 +563,6 @@ export default function CartaPremium({
                 const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
                 const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
                 if (aRec !== bRec) return bRec - aRec;
-                const aPop = popularDishIds.has(a.id) ? 1 : 0;
-                const bPop = popularDishIds.has(b.id) ? 1 : 0;
-                if (aPop !== bPop) return bPop - aPop;
                 const aScore = pMap.get(a.id)?.score ?? 0;
                 const bScore = pMap.get(b.id)?.score ?? 0;
                 if (aScore !== bScore) return bScore - aScore;
@@ -579,9 +570,6 @@ export default function CartaPremium({
                 const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
                 const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
                 if (aRec !== bRec) return bRec - aRec;
-                const aPop = popularDishIds.has(a.id) ? 1 : 0;
-                const bPop = popularDishIds.has(b.id) ? 1 : 0;
-                if (aPop !== bPop) return bPop - aPop;
               }
               return a.position - b.position;
             });
