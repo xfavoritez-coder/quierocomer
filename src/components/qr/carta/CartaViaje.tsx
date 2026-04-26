@@ -228,7 +228,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           })}
 
           {/* ===== OUTRO ===== */}
-          <OutroSlide onGenio={() => setGenioOpen(true)} onSwitchView={() => setView("lista")} lang={lang} />
+          {!hasCompletedGenio && <OutroSlide onGenio={() => setGenioOpen(true)} onSwitchView={() => setView("lista")} lang={lang} />}
         </div>
 
         {/* Genio */}

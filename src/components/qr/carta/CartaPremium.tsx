@@ -660,7 +660,24 @@ export default function CartaPremium({
           </div>
         )}
 
-        {hasCompletedGenio ? null : (
+        {hasCompletedGenio ? (
+          <button
+            onClick={() => setGenioOpen(true)}
+            className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
+            style={{
+              margin: "32px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
+              background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
+            }}
+          >
+            <span style={{ fontSize: "1.3rem" }}>🧞</span>
+            <div style={{ flex: 1, textAlign: "left" }}>
+              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Tu carta está personalizada ✓</span>
+              <span style={{ fontSize: "0.72rem", color: "#8a5a2c", marginLeft: 8 }}>Editar gustos</span>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        ) : (
           <div
             className="font-[family-name:var(--font-dm)]"
             style={{
