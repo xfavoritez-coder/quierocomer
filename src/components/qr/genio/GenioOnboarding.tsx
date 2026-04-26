@@ -706,7 +706,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               style={inputStyle}
             />
             {dislikeResults.length > 0 && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, maxHeight: 180, overflowY: "auto" }}>
+              <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, marginBottom: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, maxHeight: 180, overflowY: "auto" }}>
                 {dislikeResults.map(r => (
                   <button key={r} onClick={() => {
                     setDislikes(prev => { const updated = [...prev, r]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
@@ -718,7 +718,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </div>
             )}
             {dislikeNoResults && dislikeSearch.length >= 2 && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, padding: "11px 16px" }}>
+              <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, marginBottom: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, padding: "11px 16px" }}>
                 <span style={{ color: G.textTertiary, fontSize: "0.82rem" }}>No encontramos &quot;{dislikeSearch.trim()}&quot;</span>
               </div>
             )}
