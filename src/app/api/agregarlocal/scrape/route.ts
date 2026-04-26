@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
@@ -17,6 +17,75 @@ async function searchUnsplash(query: string): Promise<string | null> {
   } catch { return null; }
 }
 
+async function fetchPage(url: string): Promise<string> {
+  // Try Jina Reader first (renders JS), fallback to direct fetch
+  try {
+    const jinaRes = await fetch(`https://r.jina.ai/${url}`, {
+      headers: { "Accept": "text/plain", "X-No-Cache": "true" },
+    });
+    if (jinaRes.ok) return await jinaRes.text();
+  } catch {}
+  const directRes = await fetch(url, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+    redirect: "follow",
+  });
+  if (!directRes.ok) throw new Error(`HTTP ${directRes.status}`);
+  return await directRes.text();
+}
+
+function cleanContent(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<nav[\s\S]*?<\/nav>/gi, "")
+    .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/ {2,}/g, " ")
+    .trim();
+}
+
+async function callClaude(prompt: string, maxTokens = 16000): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": ANTHROPIC_API_KEY!, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] }),
+  });
+  if (!res.ok) throw new Error(`Claude error: ${res.status}`);
+  const data = await res.json();
+  return data.content?.[0]?.text || "";
+}
+
+function parseJSON(text: string): any {
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("No JSON found");
+  let jsonStr = match[0];
+  try { return JSON.parse(jsonStr); } catch {}
+  // Fix truncated JSON
+  jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
+  let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
+  for (let i = 0; i < o - c; i++) jsonStr += "]";
+  o = 0; c = 0; for (const ch of jsonStr) { if (ch === "{") o++; if (ch === "}") c++; }
+  for (let i = 0; i < o - c; i++) jsonStr += "}";
+  return JSON.parse(jsonStr);
+}
+
+/** Fetch product sub-pages in parallel batches */
+async function fetchProductPages(links: { url: string; category: string }[], baseUrl: string): Promise<{ category: string; content: string }[]> {
+  const results: { category: string; content: string }[] = [];
+  const BATCH = 8;
+  for (let i = 0; i < links.length; i += BATCH) {
+    const batch = links.slice(i, i + BATCH);
+    const fetched = await Promise.allSettled(batch.map(async (link) => {
+      const content = await fetchPage(link.url);
+      return { category: link.category, content: cleanContent(content) };
+    }));
+    for (const r of fetched) {
+      if (r.status === "fulfilled") results.push(r.value);
+    }
+  }
+  return results;
+}
+
 export async function POST(request: Request) {
   try {
     if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "API not configured" }, { status: 500 });
@@ -24,64 +93,37 @@ export async function POST(request: Request) {
     const { url, name: providedName } = await request.json();
     if (!url?.trim()) return NextResponse.json({ error: "URL requerida" }, { status: 400 });
 
-    // Fetch the webpage content — use Jina Reader to handle SPAs/JS-rendered pages
+    const baseUrl = new URL(url).origin;
+
+    // Step 1: Fetch main page
     let pageContent: string;
     try {
-      // Try Jina Reader first (renders JS, extracts readable content)
-      const jinaRes = await fetch(`https://r.jina.ai/${url}`, {
-        headers: { "Accept": "text/plain", "X-No-Cache": "true" },
-      });
-      if (jinaRes.ok) {
-        pageContent = await jinaRes.text();
-      } else {
-        // Fallback to direct fetch
-        const directRes = await fetch(url, {
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
-          redirect: "follow",
-        });
-        if (!directRes.ok) throw new Error(`HTTP ${directRes.status}`);
-        pageContent = await directRes.text();
-      }
+      pageContent = await fetchPage(url);
     } catch (e: any) {
       return NextResponse.json({ error: `No se pudo acceder a la URL: ${e.message}` }, { status: 400 });
     }
 
-    // Clean content: remove redundant whitespace, keep menu-relevant text
-    let cleaned = pageContent
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<nav[\s\S]*?<\/nav>/gi, "")
-      .replace(/<footer[\s\S]*?<\/footer>/gi, "")
-      .replace(/\n{3,}/g, "\n\n")
-      .replace(/ {2,}/g, " ")
-      .trim();
+    const cleaned = cleanContent(pageContent);
+    const content = cleaned.length > 40000 ? cleaned.slice(0, 40000) : cleaned;
 
-    // If still too long, split into chunks and process each
-    const MAX_CONTENT = 40000;
-    const chunks: string[] = [];
-    if (cleaned.length > MAX_CONTENT) {
-      // Split into roughly equal chunks
-      const numChunks = Math.ceil(cleaned.length / MAX_CONTENT);
-      const chunkSize = Math.ceil(cleaned.length / numChunks);
-      for (let i = 0; i < cleaned.length; i += chunkSize) {
-        chunks.push(cleaned.slice(i, i + chunkSize));
-      }
-    } else {
-      chunks.push(cleaned);
-    }
-
-    const prompt = `Analiza el contenido de esta página web de un restaurante y extrae toda la información del menú/carta.
+    // Step 2: Ask Claude to extract categories + product links (or full dishes if inline)
+    const step1Prompt = `Analiza esta página de menú de restaurante y extrae la información.
 
 URL: ${url}
 ${providedName ? `Nombre del local: ${providedName}` : ""}
 
-Contenido${chunks.length > 1 ? " (parte 1 de " + chunks.length + ")" : ""}:
-${chunks[0]}
+Contenido:
+${content}
 
-Extrae TODA la información y responde con un JSON válido con esta estructura:
+IMPORTANTE: Hay dos tipos de páginas de menú:
+1. Menú completo inline: todos los platos con precio/descripción están en esta página
+2. Menú tipo catálogo: solo muestra categorías con links a cada producto individual
+
+Responde con un JSON:
 {
-  "restaurantName": "Nombre del restaurante (extráelo del HTML si no se proporcionó)",
-  "logo": "URL del logo si lo encuentras en el HTML (busca en favicon, og:image, img con logo/brand en el alt/class)",
+  "restaurantName": "Nombre del restaurante",
+  "logo": "URL del logo si lo encuentras, null si no",
+  "type": "inline" | "catalog",
   "categories": [
     {
       "name": "Nombre de la categoría",
@@ -89,20 +131,13 @@ Extrae TODA la información y responde con un JSON válido con esta estructura:
       "dishes": [
         {
           "name": "Nombre del plato",
-          "description": "Descripción completa si la tiene, null si no",
+          "description": "Descripción si la tiene, null si no",
           "price": 8990,
-          "photo": "URL completa de la foto del plato si existe en el HTML, null si no tiene",
+          "photo": "URL completa de la foto, null si no tiene",
           "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
           "isSpicy": false,
-          "modifiers": [
-            {
-              "name": "Nombre del grupo de opciones (ej: Elige proteína, Tamaño, Extras)",
-              "required": true,
-              "options": [
-                { "name": "Opción", "price": 0 }
-              ]
-            }
-          ]
+          "modifiers": [],
+          "productUrl": "URL de la página individual del producto si es catálogo, null si es inline"
         }
       ]
     }
@@ -110,101 +145,105 @@ Extrae TODA la información y responde con un JSON válido con esta estructura:
 }
 
 Reglas:
-- Precios: números enteros sin puntos ni símbolos. $8.990 → 8990
-- Si no hay precio visible, pon 0
-- Fotos: extrae la URL completa del src de las imágenes. Si son URLs relativas, conviértelas a absolutas usando el dominio base
-- Si una foto parece ser un placeholder genérico (ej: "no-image.png", "default.jpg"), pon null
-- Modificadores: detecta opciones, extras, tamaños, adiciones. Solo si existen en el HTML
-- El precio de los modificadores es el precio ADICIONAL (0 si no tiene costo extra)
-- Logo: busca en meta tags (og:image, apple-touch-icon), favicon, o imgs con class/alt que indiquen logo
-- No inventes datos, solo extrae lo que está en el contenido
-- Responde SOLO el JSON`;
+- type "catalog": cuando las categorías solo tienen nombres/links de productos sin descripciones completas. Incluye productUrl para cada plato
+- type "inline": cuando los platos tienen toda su info (precio, descripción) visible en esta página. productUrl debe ser null
+- Precios: enteros sin puntos ni símbolos. $8.990 → 8990. Si no hay precio visible, pon 0
+- Fotos: URL completa. URLs relativas → absolutas usando ${baseUrl}
+- Logo: busca en meta tags, favicon, imgs con logo/brand
+- No inventes datos. Responde SOLO el JSON`;
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({ model: MODEL, max_tokens: 16000, messages: [{ role: "user", content: prompt }] }),
-    });
+    const step1Text = await callClaude(step1Prompt);
+    let parsed = parseJSON(step1Text);
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error("[scrape] Claude error:", res.status, err);
-      return NextResponse.json({ error: "Error al analizar la página" }, { status: 500 });
+    // Step 3: If catalog type, fetch product sub-pages for details
+    const isCatalog = parsed.type === "catalog";
+    const productLinks: { url: string; category: string }[] = [];
+
+    if (isCatalog) {
+      for (const cat of (parsed.categories || [])) {
+        for (const dish of (cat.dishes || [])) {
+          if (dish.productUrl) {
+            // Make absolute URL
+            const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
+            productLinks.push({ url: absUrl, category: cat.name });
+          }
+        }
+      }
     }
 
-    const data = await res.json();
-    const text: string = data.content?.[0]?.text || "";
+    if (productLinks.length > 0) {
+      // Fetch all product pages
+      const productPages = await fetchProductPages(productLinks, baseUrl);
 
-    // Parse JSON — handle truncated output
-    const match = text.match(/\{[\s\S]*\}/);
-    if (!match) return NextResponse.json({ error: "No se pudo extraer datos" }, { status: 500 });
+      // Batch product pages and send to Claude for extraction (groups of 10)
+      const EXTRACT_BATCH = 10;
+      const allDishes: { category: string; dish: any }[] = [];
 
-    let jsonStr = match[0];
-    try { JSON.parse(jsonStr); } catch {
-      // Fix truncated JSON
-      jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
-      let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
-      for (let i = 0; i < o - c; i++) jsonStr += "]";
-      o = 0; c = 0; for (const ch of jsonStr) { if (ch === "{") o++; if (ch === "}") c++; }
-      for (let i = 0; i < o - c; i++) jsonStr += "}";
+      for (let i = 0; i < productPages.length; i += EXTRACT_BATCH) {
+        const batch = productPages.slice(i, i + EXTRACT_BATCH);
+        const batchContent = batch.map((p, idx) => `--- PRODUCTO ${idx + 1} (Categoría: ${p.category}) ---\n${p.content.slice(0, 3000)}`).join("\n\n");
+
+        const extractPrompt = `Extrae la información de estos ${batch.length} productos de restaurante.
+
+${batchContent}
+
+Para cada producto responde con un JSON:
+{
+  "dishes": [
+    {
+      "category": "Nombre de la categoría original",
+      "name": "Nombre del plato",
+      "description": "Descripción completa, null si no tiene",
+      "price": 8990,
+      "photo": "URL completa de la foto principal, null si no tiene",
+      "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
+      "isSpicy": false,
+      "modifiers": [
+        {
+          "name": "Nombre del grupo (ej: Cocción, Tamaño, Extras)",
+          "required": true,
+          "options": [{ "name": "Opción", "price": 0 }]
+        }
+      ]
     }
+  ]
+}
 
-    let parsed = JSON.parse(jsonStr);
-
-    // Process additional chunks if content was split
-    if (chunks.length > 1) {
-      for (let ci = 1; ci < chunks.length; ci++) {
-        const chunkPrompt = `Continúa extrayendo platos del menú de "${parsed.restaurantName || providedName || "restaurante"}".
-
-Contenido (parte ${ci + 1} de ${chunks.length}):
-${chunks[ci]}
-
-Responde SOLO con un JSON con esta estructura:
-{ "categories": [{ "name": "...", "type": "food"|"drink"|"dessert", "dishes": [{ "name": "...", "description": "...", "price": 0, "photo": null, "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }] }] }
-
-Solo extrae lo que ves. Responde SOLO el JSON.`;
+Reglas:
+- Precios enteros: $8.990 → 8990
+- Fotos: URL completa, no placeholders
+- Modificadores: solo si hay opciones/extras reales en el contenido
+- Precio de modificadores es el ADICIONAL (0 si no tiene costo extra)
+- No inventes datos. Responde SOLO el JSON`;
 
         try {
-          const chunkRes = await fetch("https://api.anthropic.com/v1/messages", {
-            method: "POST",
-            headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-            body: JSON.stringify({ model: MODEL, max_tokens: 16000, messages: [{ role: "user", content: chunkPrompt }] }),
-          });
-          if (chunkRes.ok) {
-            const chunkData = await chunkRes.json();
-            const chunkText = chunkData.content?.[0]?.text || "";
-            const chunkMatch = chunkText.match(/\{[\s\S]*\}/);
-            if (chunkMatch) {
-              let cJson = chunkMatch[0];
-              try { JSON.parse(cJson); } catch {
-                cJson = cJson.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
-                let oo = 0, cc = 0; for (const ch of cJson) { if (ch === "[") oo++; if (ch === "]") cc++; } for (let i = 0; i < oo - cc; i++) cJson += "]";
-                oo = 0; cc = 0; for (const ch of cJson) { if (ch === "{") oo++; if (ch === "}") cc++; } for (let i = 0; i < oo - cc; i++) cJson += "}";
-              }
-              const chunkParsed = JSON.parse(cJson);
-              // Merge categories
-              for (const newCat of (chunkParsed.categories || [])) {
-                const existing = parsed.categories.find((c: any) => c.name === newCat.name);
-                if (existing) {
-                  existing.dishes = [...(existing.dishes || []), ...(newCat.dishes || [])];
-                } else {
-                  parsed.categories.push(newCat);
-                }
-              }
-            }
+          const extractText = await callClaude(extractPrompt);
+          const extractParsed = parseJSON(extractText);
+          for (const dish of (extractParsed.dishes || [])) {
+            allDishes.push({ category: dish.category, dish });
           }
         } catch { /* continue with what we have */ }
       }
+
+      // Rebuild categories from extracted dishes
+      const catMap = new Map<string, any>();
+      // Keep original category order and type
+      for (const cat of (parsed.categories || [])) {
+        catMap.set(cat.name, { name: cat.name, type: cat.type || "food", dishes: [] });
+      }
+      for (const { category, dish } of allDishes) {
+        const cat = catMap.get(category) || { name: category, type: "food", dishes: [] };
+        const { category: _, ...dishData } = dish;
+        cat.dishes.push(dishData);
+        catMap.set(category, cat);
+      }
+      parsed.categories = Array.from(catMap.values());
     }
 
     // Remove empty categories
     parsed.categories = (parsed.categories || []).filter((c: any) => c.dishes?.length > 0);
 
-    // Count dishes with and without photos
+    // Count photos
     let withPhoto = 0, withoutPhoto = 0;
     for (const cat of (parsed.categories || [])) {
       for (const dish of (cat.dishes || [])) {
@@ -212,32 +251,36 @@ Solo extrae lo que ves. Responde SOLO el JSON.`;
       }
     }
 
-    // Fill missing photos with Unsplash
+    // Fill missing photos with Unsplash (max 10)
     if (withoutPhoto > 0 && UNSPLASH_KEY) {
-      // Generate queries for dishes without photos
-      const dishesNeedingPhotos = [];
+      const needPhotos = [];
       for (const cat of (parsed.categories || [])) {
         for (const dish of (cat.dishes || [])) {
-          if (!dish.photo) dishesNeedingPhotos.push(dish);
+          if (!dish.photo) needPhotos.push(dish);
         }
       }
-
-      // Batch search — max 10 to stay within rate limits
-      for (const dish of dishesNeedingPhotos.slice(0, 10)) {
+      for (const dish of needPhotos.slice(0, 10)) {
         const query = (dish.name || "").replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, "").trim();
         if (!query) continue;
         const photo = await searchUnsplash(query);
-        if (photo) {
-          dish.photo = photo;
-          dish._unsplash = true;
-        }
+        if (photo) { dish.photo = photo; dish._unsplash = true; }
       }
     }
+
+    const totalDishes = (parsed.categories || []).reduce((a: number, c: any) => a + (c.dishes?.length || 0), 0);
 
     return NextResponse.json({
       ...parsed,
       restaurantName: parsed.restaurantName || providedName || "Sin nombre",
-      stats: { withPhoto, withoutPhoto, filledWithUnsplash: (parsed.categories || []).flatMap((c: any) => c.dishes || []).filter((d: any) => d._unsplash).length },
+      stats: {
+        withPhoto,
+        withoutPhoto,
+        totalDishes,
+        totalCategories: (parsed.categories || []).length,
+        type: isCatalog ? "catalog" : "inline",
+        productPagesFetched: productLinks.length,
+        filledWithUnsplash: (parsed.categories || []).flatMap((c: any) => c.dishes || []).filter((d: any) => d._unsplash).length,
+      },
     });
   } catch (e: any) {
     console.error("[scrape]", e);
