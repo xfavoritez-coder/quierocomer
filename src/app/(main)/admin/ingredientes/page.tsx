@@ -309,6 +309,11 @@ export default function IngredientesPage() {
     if (catFilter !== "all" && i.category !== catFilter) return false;
     if (ownerFilter && i.approved !== false) return false;
     return true;
+  }).sort((a, b) => {
+    // Pending first, then alphabetical
+    if (a.approved === false && b.approved !== false) return -1;
+    if (a.approved !== false && b.approved === false) return 1;
+    return a.name.localeCompare(b.name);
   });
 
   // Check for exact duplicate or similar names
