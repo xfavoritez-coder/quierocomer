@@ -142,6 +142,7 @@ export default function AdminSessions() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dishSort, setDishSort] = useState<"time" | "order">("order");
+  const [groupByVisitor, setGroupByVisitor] = useState(false);
 
   const toDateStr = (d: Date) => d.toISOString().split("T")[0];
   const today = () => toDateStr(new Date());
@@ -269,16 +270,95 @@ export default function AdminSessions() {
             style={{ padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600, background: "none", border: "1px solid #2A2A2A", color: "#888" }}
           >✕</button>
         )}
+        <div style={{ flex: 1 }} />
+        <button
+          onClick={() => setGroupByVisitor(g => !g)}
+          style={{
+            padding: "6px 12px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600,
+            background: groupByVisitor ? "rgba(127,191,220,0.15)" : "rgba(255,255,255,0.04)",
+            border: groupByVisitor ? "1px solid rgba(127,191,220,0.4)" : "1px solid #2A2A2A",
+            color: groupByVisitor ? "#7fbfdc" : "#666",
+          }}
+        >👤 Agrupar por visitante</button>
       </div>
 
       {sessions.length === 0 ? (
         <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#999", textAlign: "center", padding: 60 }}>No hay sesiones registradas todavia</p>
+      ) : groupByVisitor ? (
+        /* ═══ GROUPED BY VISITOR ═══ */
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {(() => {
+            const groups: Record<string, typeof sessions> = {};
+            const order: string[] = [];
+            for (const s of sessions) {
+              if (!groups[s.guest.id]) { groups[s.guest.id] = []; order.push(s.guest.id); }
+              groups[s.guest.id].push(s);
+            }
+            return order.map(guestId => {
+              const group = groups[guestId];
+              const first = group[0];
+              const isOpen = expanded === `group_${guestId}`;
+              const totalDuration = group.reduce((a, s) => a + (s.durationMs || 0), 0);
+              const totalDishes = group.reduce((a, s) => a + (s.dishesViewed?.length || 0), 0);
+              const usedGenio = group.some(s => s.usedGenio);
+              return (
+                <div key={guestId} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(127,191,220,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden" }}>
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : `group_${guestId}`)}
+                    style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
+                  >
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(127,191,220,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#7fbfdc", flexShrink: 0 }}>👤</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontFamily: F, fontSize: "0.85rem", color: "white", fontWeight: 600 }}>
+                        Fantasma #{guestId.slice(0, 8)}
+                        <span style={{ fontSize: "0.7rem", color: "#7fbfdc", marginLeft: 8, fontWeight: 600 }}>{group.length} sesiones</span>
+                      </div>
+                      <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
+                        <span>{first.restaurant.name}</span>
+                        <span>· {formatDuration(totalDuration)} total</span>
+                        {totalDishes > 0 && <span>· {totalDishes} platos</span>}
+                        {usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "1rem", color: "#555", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
+                  </button>
+                  {isOpen && (
+                    <div style={{ borderTop: "1px solid #2A2A2A", padding: "8px" }}>
+                      {group.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).map((s, idx) => {
+                        const sOpen = expanded === s.id;
+                        const time = new Date(s.startedAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
+                        return (
+                          <div key={s.id} style={{ marginBottom: idx < group.length - 1 ? 6 : 0 }}>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setExpanded(sOpen ? `group_${guestId}` : s.id); }}
+                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: sOpen ? "rgba(244,166,35,0.04)" : "rgba(255,255,255,0.02)", border: `1px solid ${sOpen ? "rgba(244,166,35,0.2)" : "#2A2A2A"}`, borderRadius: 10, cursor: "pointer", textAlign: "left" }}
+                            >
+                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", fontWeight: 600, flexShrink: 0 }}>{idx + 1}ª</span>
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <span style={{ fontFamily: F, fontSize: "0.78rem", color: "white" }}>{time}</span>
+                                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", marginLeft: 8 }}>
+                                  {formatDuration(s.durationMs)} · {s.dishesViewed?.length || 0} platos
+                                  {s.viewUsed && ` · ${s.viewUsed === "premium" ? "Clásica" : s.viewUsed === "lista" ? "Lista" : "Espacial"}`}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: "0.8rem", color: "#555", transform: sOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            });
+          })()}
+        </div>
       ) : (
+        /* ═══ FLAT LIST ═══ */
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {sessions.map(s => {
             const isOpen = expanded === s.id;
             const day = new Date(s.startedAt).toISOString().split("T")[0];
-            const dayKey = `${s.guest.id}_${day}`;
             const sameDaySessions = sessions.filter(x => x.guest.id === s.guest.id && new Date(x.startedAt).toISOString().split("T")[0] === day);
             const visitNum = sameDaySessions.length > 1 ? sameDaySessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).findIndex(x => x.id === s.id) + 1 : 0;
             const totalVisitsToday = sameDaySessions.length;
