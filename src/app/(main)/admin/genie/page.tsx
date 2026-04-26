@@ -410,7 +410,7 @@ export default function AdminSessions() {
             const visitNum = sameDaySessions.length > 1 ? sameDaySessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).findIndex(x => x.id === s.id) + 1 : 0;
             const totalVisitsToday = sameDaySessions.length;
             return (
-              <div key={s.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s" }}>
+              <div key={s.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s", position: "relative" }}>
                 {/* Header row */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : s.id)}
@@ -469,6 +469,17 @@ export default function AdminSessions() {
 
                   <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                 </button>
+                <button
+                  onClick={async (e) => {
+                    e.stopPropagation();
+                    const res = await fetch("/api/admin/sessions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionId: s.id }) });
+                    if (res.ok) { setSessions(prev => prev.filter(x => x.id !== s.id)); setTotal(prev => prev - 1); }
+                  }}
+                  title="Eliminar sesión"
+                  style={{ position: "absolute", top: 6, right: 6, width: 22, height: 22, borderRadius: "50%", background: "rgba(239,68,68,0.08)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", color: "#ef4444", opacity: 0.4, zIndex: 2 }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
+                  onMouseLeave={e => (e.currentTarget.style.opacity = "0.4")}
+                >×</button>
 
                 {/* Expanded detail */}
                 {isOpen && (
@@ -707,6 +718,7 @@ export default function AdminSessions() {
                     {s.dishesViewed.length === 0 && s.categoriesViewed.length === 0 && (
                       <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#555", fontStyle: "italic" }}>Sin actividad detallada registrada</p>
                     )}
+
                   </div>
                 )}
               </div>

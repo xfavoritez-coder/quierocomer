@@ -8,6 +8,27 @@ import {
   authErrorResponse,
 } from "@/lib/adminAuth";
 
+export async function DELETE(req: NextRequest) {
+  const authErr = checkAdminAuth(req);
+  if (authErr) return authErr;
+  if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+
+  try {
+    const { sessionId } = await req.json();
+    if (!sessionId) return NextResponse.json({ error: "sessionId requerido" }, { status: 400 });
+
+    // Delete related records first
+    await prisma.statEvent.deleteMany({ where: { dbSessionId: sessionId } });
+    await prisma.waiterCall.deleteMany({ where: { sessionId } });
+    await prisma.session.delete({ where: { id: sessionId } });
+
+    return NextResponse.json({ ok: true });
+  } catch (e: any) {
+    console.error("Session delete error:", e);
+    return NextResponse.json({ error: "Error" }, { status: 500 });
+  }
+}
+
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
   if (authErr) return authErr;
