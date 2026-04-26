@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
+import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const ingredients = await prisma.ingredient.findMany({
     where: q ? { name: { contains: q, mode: "insensitive" } } : {},
     orderBy: { name: "asc" },
-    select: { id: true, name: true, category: true, aliases: true, allergens: { select: { id: true, name: true } } },
+    select: { id: true, name: true, category: true, aliases: true, createdAt: true, createdByRestaurantId: true, createdByRestaurant: { select: { name: true } }, allergens: { select: { id: true, name: true } } },
   });
 
   let linkedIds: string[] = [];
@@ -39,10 +39,17 @@ export async function POST(req: NextRequest) {
       ? [originalName.toLowerCase().trim()]
       : [];
 
+    // Track which restaurant created this ingredient (null for superadmin)
+    let createdByRestaurantId: string | undefined;
+    if (!isSuperAdmin(req)) {
+      const ownedIds = await getOwnedRestaurantIds(req);
+      if (ownedIds?.length) createdByRestaurantId = ownedIds[0];
+    }
+
     const ingredient = await prisma.ingredient.upsert({
       where: { name: cleanName },
       update: aliases.length > 0 ? { aliases: { push: aliases[0] } } : {},
-      create: { name: cleanName, category: category || "OTHER", aliases },
+      create: { name: cleanName, category: category || "OTHER", aliases, ...(createdByRestaurantId ? { createdByRestaurantId } : {}) },
     });
     return NextResponse.json({ ingredient });
   } catch (e) {

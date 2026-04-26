@@ -15,6 +15,9 @@ interface Ingredient {
   category: string;
   allergens: { id: string; name: string }[];
   aliases?: string[];
+  createdAt?: string;
+  createdByRestaurantId?: string | null;
+  createdByRestaurant?: { name: string } | null;
 }
 
 const CATEGORIES = [
@@ -254,6 +257,7 @@ export default function IngredientesPage() {
   const [dislikeSearches, setDislikeSearches] = useState<{ query: string; count: number; hasResult: boolean }[]>([]);
   const [searchesLoading, setSearchesLoading] = useState(false);
   const [catFilter, setCatFilter] = useState("all");
+  const [ownerFilter, setOwnerFilter] = useState(false);
 
   // Analyze carta
   const [analyzeLocal, setAnalyzeLocal] = useState("");
@@ -298,9 +302,11 @@ export default function IngredientesPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const ownerCreatedCount = ingredients.filter(i => i.createdByRestaurantId).length;
   const filtered = ingredients.filter(i => {
     if (search && !norm(i.name).includes(norm(search))) return false;
     if (catFilter !== "all" && i.category !== catFilter) return false;
+    if (ownerFilter && !i.createdByRestaurantId) return false;
     return true;
   });
 
@@ -551,7 +557,17 @@ export default function IngredientesPage() {
         )}
       </div>
 
-
+      {/* Owner filter */}
+      {ownerCreatedCount > 0 && (
+        <div style={{ marginBottom: 12 }}>
+          <button onClick={() => setOwnerFilter(f => !f)} style={{
+            padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600,
+            background: ownerFilter ? "rgba(192,132,252,0.15)" : "rgba(255,255,255,0.04)",
+            border: ownerFilter ? "1px solid rgba(192,132,252,0.4)" : "1px solid var(--adm-card-border)",
+            color: ownerFilter ? "#c084fc" : "var(--adm-text3)",
+          }}>Creados por locales ({ownerCreatedCount})</button>
+        </div>
+      )}
 
       {/* Create form */}
       {creating && (
@@ -596,6 +612,9 @@ export default function IngredientesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500 }}>{i.name}</span>
+                {i.createdByRestaurant && (
+                  <span style={{ fontSize: "0.6rem", marginLeft: 6, padding: "1px 6px", borderRadius: 4, background: "rgba(192,132,252,0.1)", color: "#c084fc", fontFamily: F, fontWeight: 500, verticalAlign: "middle" }}>creado por {i.createdByRestaurant.name}</span>
+                )}
                 {i.aliases && i.aliases.length > 0 && (
                   <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 3 }}>
                     {i.aliases.map(a => (

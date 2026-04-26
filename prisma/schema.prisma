@@ -109,16 +109,18 @@ enum DietType {
 // ─── Ingredients ────────────────────────────────────────────────────────
 
 model Ingredient {
-  id              String             @id @default(cuid())
-  name            String             @unique
-  nameEn          String?
-  namePt          String?
-  aliases         String[]
-  category        IngredientCategory
-  createdAt       DateTime           @default(now())
-  dishes          IngredientTag[]
-  dishIngredients DishIngredient[]
-  allergens       Allergen[]         // many-to-many: qué alérgenos tiene este ingrediente
+  id                      String             @id @default(cuid())
+  name                    String             @unique
+  nameEn                  String?
+  namePt                  String?
+  aliases                 String[]
+  category                IngredientCategory
+  createdAt               DateTime           @default(now())
+  createdByRestaurantId   String?
+  createdByRestaurant     Restaurant?        @relation("CreatedIngredients", fields: [createdByRestaurantId], references: [id])
+  dishes                  IngredientTag[]
+  dishIngredients         DishIngredient[]
+  allergens               Allergen[]         // many-to-many: qué alérgenos tiene este ingrediente
 }
 
 model Allergen {
@@ -433,6 +435,7 @@ model Restaurant {
   tickets               RestaurantTicket[]
   dishFavorites         DishFavorite[]
   happyHours            HappyHour[]
+  createdIngredients    Ingredient[]   @relation("CreatedIngredients")
 
   @@index([ownerId])
 }
