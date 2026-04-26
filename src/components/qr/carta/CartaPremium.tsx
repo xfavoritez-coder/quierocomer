@@ -203,6 +203,8 @@ export default function CartaPremium({
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
+  const [showPersonalizedToast, setShowPersonalizedToast] = useState(false);
+  const hadPersonalizationBefore = useRef(false);
   const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
   const recShownRef = useRef(new Set<string>());
 
@@ -303,7 +305,15 @@ export default function CartaPremium({
           d.profile,
           { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
         );
-        if (result.hasPersonalization) setPMap(result.map);
+        if (result.hasPersonalization) {
+          setPMap(result.map);
+          // Show toast only when user triggered it (Genio, like), not on first load
+          if (hadPersonalizationBefore.current) {
+            setShowPersonalizedToast(true);
+            setTimeout(() => setShowPersonalizedToast(false), 2500);
+          }
+          hadPersonalizationBefore.current = true;
+        }
         setPersonalizing(false);
       })
       .catch(() => setPersonalizing(false));
@@ -495,17 +505,20 @@ export default function CartaPremium({
         />
       )}
 
-      {personalizing && typeof window !== "undefined" && window.innerWidth < 768 && (
+      {showPersonalizedToast && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", zIndex: 100,
+            background: "rgba(244,166,35,0.12)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            border: "1px solid rgba(244,166,35,0.25)", borderRadius: 50,
+            padding: "10px 22px", display: "flex", alignItems: "center", gap: 8,
+            animation: "fadeToast 0.3s ease-out",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           }}
         >
-          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+          <span style={{ fontSize: "0.9rem" }}>✨</span>
+          <span style={{ fontSize: "0.85rem", color: "#92400e", fontWeight: 600 }}>Carta actualizada</span>
         </div>
       )}
 

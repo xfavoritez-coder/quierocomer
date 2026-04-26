@@ -429,18 +429,8 @@ export default function CartaLista({
         </section>
       )}
 
-      {personalizing && typeof window !== "undefined" && window.innerWidth < 768 && (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-          }}
-        >
-          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
-        </div>
+      {false && personalizing && (
+        <div />
       )}
 
       {/* CATEGORIES */}

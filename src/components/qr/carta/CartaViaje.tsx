@@ -142,12 +142,6 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
     <>
       <style>{CSS}</style>
       <div className="vj-root">
-        {personalizing && typeof window !== "undefined" && window.innerWidth < 768 && (
-          <div className="fixed font-[family-name:var(--font-dm)]" style={{ bottom: 90, left: "50%", transform: "translateX(-50%)", zIndex: 60, background: "rgba(244,166,35,0.15)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 50, padding: "8px 20px", display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
-            <span style={{ fontSize: "14px", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-            <span style={{ fontSize: "0.82rem", color: "#fbbf24", fontWeight: 500 }}>Personalizando la carta...</span>
-          </div>
-        )}
         {/* Top left: logo + restaurant name */}
         <button
           onClick={() => document.getElementById("vj-reel")?.scrollTo({ top: 0, behavior: "smooth" })}

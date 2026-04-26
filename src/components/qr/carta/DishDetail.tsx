@@ -335,7 +335,7 @@ function DishSlide({
             <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
               {isRec
                 ? `⭐ ${restaurantName || "El local"} recomienda este plato.`
-                : "🔥 Uno de los platos más vistos por los comensales."}
+                : "🔥 De los más pedidos en este local."}
             </p>
           </div>
         )}
