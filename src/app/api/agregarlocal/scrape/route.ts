@@ -130,6 +130,7 @@ Responde con un JSON:
 Reglas:
 - type "catalog": categorías con links de productos sin descripciones completas. Incluye productUrl
 - type "inline": platos con toda su info visible. productUrl = null
+- Para categorías vacías (sin platos visibles pero que aparecen como secciones): incluye la categoría con dishes vacío y agrega un campo "categoryUrl" con la URL probable de esa sección (basándote en el patrón de URLs de la página, ej: si la URL base es example.com/products y la categoría es "California Roll", la URL podría ser example.com/california-roll)
 - Precios: enteros sin puntos ni símbolos. $8.990 → 8990
 - Fotos: URL completa. Relativas → absolutas con ${baseUrl}
 - No inventes datos. Responde SOLO el JSON`;
@@ -141,10 +142,59 @@ Reglas:
     const isCatalog = parsed.type === "catalog";
 
     if (isCatalog) {
+      // Step 3a: Fetch empty category pages to discover product links
+      const emptyCategories = (parsed.categories || []).filter((c: any) => (!c.dishes || c.dishes.length === 0) && c.categoryUrl);
+      if (emptyCategories.length > 0) {
+        const BATCH = 6;
+        for (let i = 0; i < emptyCategories.length; i += BATCH) {
+          const batch = emptyCategories.slice(i, i + BATCH);
+          const results = await Promise.allSettled(batch.map(async (cat: any) => {
+            const catUrl = cat.categoryUrl.startsWith("http") ? cat.categoryUrl : `${baseUrl}${cat.categoryUrl.startsWith("/") ? "" : "/"}${cat.categoryUrl}`;
+            const catContent = await fetchPage(catUrl);
+            const catCleaned = cleanContent(catContent).slice(0, 8000);
+            return { catName: cat.name, catType: cat.type, content: catCleaned };
+          }));
+          // Ask Claude to extract product links from these category pages
+          const fetched = results.filter(r => r.status === "fulfilled").map(r => (r as any).value);
+          if (fetched.length === 0) continue;
+          const catBatchContent = fetched.map((f: any, idx: number) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
+          try {
+            const catExtractText = await callClaude(`Extrae los productos de estas páginas de categoría de restaurante.
+
+${catBatchContent}
+
+Responde con un JSON:
+{
+  "categories": [
+    {
+      "name": "Nombre de la categoría",
+      "dishes": [
+        { "name": "Nombre del plato", "description": "Descripción si la tiene, null si no", "price": 8990, "photo": null, "productUrl": "URL de la página del producto", "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }
+      ]
+    }
+  ]
+}
+
+Precios enteros ($8.990 → 8990). URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000);
+            const catExtractParsed = parseJSON(catExtractText);
+            for (const newCat of (catExtractParsed.categories || [])) {
+              const existing = parsed.categories.find((c: any) => c.name === newCat.name);
+              if (existing) {
+                existing.dishes = [...(existing.dishes || []), ...(newCat.dishes || [])];
+              } else {
+                parsed.categories.push({ ...newCat, type: fetched.find((f: any) => f.catName === newCat.name)?.catType || "food" });
+              }
+            }
+          } catch { /* continue */ }
+        }
+      }
+
+      // Step 3b: Collect product links that still need sub-page fetching
+      // Skip dishes that already have price+description from category pages
       const productLinks: { url: string; category: string; name: string }[] = [];
       for (const cat of (parsed.categories || [])) {
         for (const dish of (cat.dishes || [])) {
-          if (dish.productUrl) {
+          if (dish.productUrl && (!dish.price || dish.price === 0) && !dish.description) {
             const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
             productLinks.push({ url: absUrl, category: cat.name, name: dish.name });
           }
