@@ -277,6 +277,11 @@ export default function AdminSessions() {
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {sessions.map(s => {
             const isOpen = expanded === s.id;
+            const day = new Date(s.startedAt).toISOString().split("T")[0];
+            const dayKey = `${s.guest.id}_${day}`;
+            const sameDaySessions = sessions.filter(x => x.guest.id === s.guest.id && new Date(x.startedAt).toISOString().split("T")[0] === day);
+            const visitNum = sameDaySessions.length > 1 ? sameDaySessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).findIndex(x => x.id === s.id) + 1 : 0;
+            const totalVisitsToday = sameDaySessions.length;
             return (
               <div key={s.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s" }}>
                 {/* Header row */}
@@ -308,6 +313,7 @@ export default function AdminSessions() {
                         return <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado{label ? ` vía ${label}` : ""}</span>;
                       })()}
                       {!s.qrUser && !s.isBot && s.visitDays > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(244,166,35,0.15)", color: "#F4A623", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Recurrente ({s.visitDays} días)</span>}
+                      {totalVisitsToday > 1 && <span style={{ fontSize: "0.6rem", background: "rgba(127,191,220,0.12)", color: "#7fbfdc", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>{visitNum}ª visita hoy</span>}
                     </div>
                     <div style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", display: "flex", gap: 8, flexWrap: "wrap", marginTop: 2 }}>
                       <span>{formatDate(s.startedAt)}</span>
@@ -354,7 +360,7 @@ export default function AdminSessions() {
                       {s.userAgent && <div><span style={{ color: "#999" }}>Navegador: </span>{parseUA(s.userAgent)}</div>}
                       {s.referer && <div><span style={{ color: "#999" }}>Página: </span>{(() => { try { const u = new URL(s.referer); return u.pathname === "/" ? "/" : u.pathname; } catch { return s.referer; } })()}</div>}
                       {s.externalReferer && <div><span style={{ color: "#999" }}>Fuente: </span>{(() => { try { return new URL(s.externalReferer).hostname; } catch { return s.externalReferer; } })()}</div>}
-                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}{s.cartaLang && s.cartaLang !== "es" && <span style={{ color: "#F4A623", marginLeft: 6 }}>Carta en {s.cartaLang.toUpperCase()}</span>}</div>}
+                      {s.language && <div><span style={{ color: "#999" }}>Idioma: </span>{formatLanguage(s.language)}{s.cartaLang && <span style={{ color: s.cartaLang === "es" ? "#888" : "#F4A623", marginLeft: 6 }}>· Carta en {s.cartaLang.toUpperCase()}</span>}</div>}
                       {s.qrUser && (() => {
                         const src = s.qrUser.interactions?.[0];
                         const label = src ? SOURCE_LABELS[src.type] || src.type.replace("_CONVERTED", "") : null;
