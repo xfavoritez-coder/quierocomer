@@ -644,12 +644,17 @@ export default function AdminMenus() {
                           )}
                           {available.length === 0 && ingSearch && !alreadyAdded && (
                             <button onClick={async () => {
-                              const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
+                              const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch, restaurantId: selectedRestaurantId }) });
                               const data = await res.json();
                               if (data.ingredient) {
+                                const newIds = eIngredientIds.includes(data.ingredient.id) ? eIngredientIds : [...eIngredientIds, data.ingredient.id];
                                 if (!eIngredientIds.includes(data.ingredient.id)) {
                                   setAllIngredients(prev => prev.some(i => i.id === data.ingredient.id) ? prev : [...prev, data.ingredient]);
-                                  setEIngredientIds(prev => [...prev, data.ingredient.id]);
+                                  setEIngredientIds(newIds);
+                                }
+                                // Auto-save ingredient link to dish
+                                if (selectedDish) {
+                                  fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ingredientIds: newIds }) }).catch(() => {});
                                 }
                                 setIngSearch("");
                               }

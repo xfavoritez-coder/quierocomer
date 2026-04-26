@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { name, category, originalName } = await req.json();
+    const { name, category, originalName, restaurantId } = await req.json();
     if (!name) return NextResponse.json({ error: "name requerido" }, { status: 400 });
 
     const cleanName = name.toLowerCase().trim();
@@ -39,9 +39,11 @@ export async function POST(req: NextRequest) {
       ? [originalName.toLowerCase().trim()]
       : [];
 
-    // Track which restaurant created this ingredient (null for superadmin)
+    // Track which restaurant created this ingredient
     let createdByRestaurantId: string | undefined;
-    if (!isSuperAdmin(req)) {
+    if (restaurantId) {
+      createdByRestaurantId = restaurantId;
+    } else if (!isSuperAdmin(req)) {
       const ownedIds = await getOwnedRestaurantIds(req);
       if (ownedIds?.length) createdByRestaurantId = ownedIds[0];
     }
