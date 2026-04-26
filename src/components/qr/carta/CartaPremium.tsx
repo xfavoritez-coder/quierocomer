@@ -221,18 +221,6 @@ export default function CartaPremium({
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [searchQuery, dishes, restaurant.id]);
 
-  // Fetch popular dishes
-  useEffect(() => {
-    fetch(`/api/qr/popular?restaurantId=${restaurant.id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.popular?.length) {
-          setPopularDishIds(new Set(d.popular.map((p: { dishId: string }) => p.dishId)));
-        }
-      })
-      .catch(() => {});
-  }, [restaurant.id]);
-
   // Single fetch for user data — used for birthday countdown, second visit detection, and local user state
   useEffect(() => {
     const cookieKey = `qr_visited_${restaurant.id}`;
@@ -287,9 +275,11 @@ export default function CartaPremium({
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
-    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
-      .then((r) => r.json())
-      .then((d) => {
+    Promise.all([
+      fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json()),
+      fetch(`/api/qr/popular?restaurantId=${restaurant.id}`).then(r => r.json()).catch(() => ({ popular: [] })),
+    ]).then(([d, pop]) => {
+        if (pop.popular?.length) setPopularDishIds(new Set(pop.popular.map((p: any) => p.dishId)));
         if (!d.profile) { setPersonalizing(false); hadPersonalizationBefore.current = true; return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
@@ -310,7 +300,7 @@ export default function CartaPremium({
           // Show toast only when user triggered it (Genio, like), not on first load
           if (hadPersonalizationBefore.current) {
             setShowPersonalizedToast(true);
-            setTimeout(() => setShowPersonalizedToast(false), 2500);
+            setTimeout(() => setShowPersonalizedToast(false), 2000);
           }
           hadPersonalizationBefore.current = true;
         }
