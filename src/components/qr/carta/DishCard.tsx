@@ -13,6 +13,7 @@ interface DishCardProps {
   isExploration?: boolean;
   hasPersonalization?: boolean;
   restaurantName?: string;
+  isPopular?: boolean;
 }
 
 function DishBadges({ dish }: { dish: Dish }) {
@@ -26,7 +27,7 @@ function DishBadges({ dish }: { dish: Dish }) {
 }
 
 /* ── BASIC ── */
-function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendationReason, isExploration, restaurantName }: Omit<DishCardProps, "variant">) {
+function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendationReason, isExploration, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
 
@@ -52,6 +53,11 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           {isRec && !autoRecommended && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
               ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+            </span>
+          )}
+          {isPopular && !autoRecommended && !isRec && (
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              🔥 Popular
             </span>
           )}
         </h3>
@@ -101,13 +107,14 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 }
 
 /* ── PREMIUM CARD (unified — all cards use featured layout) ── */
-function PremiumCard({ dish, onClick, autoRecommended, restaurantName }: Omit<DishCardProps, "variant">) {
+function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   let badge: string | null = null;
   if (autoRecommended) badge = "✨ Para ti";
   else if (isRec) badge = `⭐ ${restaurantName ? `Por ${restaurantName}` : "Recomendado"}`;
+  else if (isPopular) badge = "🔥 Popular";
 
   return (
     <button

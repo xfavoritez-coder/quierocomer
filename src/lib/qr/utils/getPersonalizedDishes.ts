@@ -54,8 +54,8 @@ export function getPersonalizedDishes(
     // Skip if top dish already has manual RECOMMENDED
     if (top.dish.tags?.includes("RECOMMENDED")) continue;
 
-    // Must have score >= 55
-    if (top.entry.score < 55) continue;
+    // Must have score >= 70
+    if (top.entry.score < 70) continue;
 
     // Must have >= 5 point lead over second (or be the only dish)
     if (second && top.entry.score - second.entry.score < 5) continue;

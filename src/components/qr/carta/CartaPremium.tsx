@@ -203,6 +203,7 @@ export default function CartaPremium({
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
+  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
   const recShownRef = useRef(new Set<string>());
 
   // Track search with debounce
@@ -217,6 +218,18 @@ export default function CartaPremium({
     }, 500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [searchQuery, dishes, restaurant.id]);
+
+  // Fetch popular dishes
+  useEffect(() => {
+    fetch(`/api/qr/popular?restaurantId=${restaurant.id}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.popular?.length) {
+          setPopularDishIds(new Set(d.popular.map((p: { dishId: string }) => p.dishId)));
+        }
+      })
+      .catch(() => {});
+  }, [restaurant.id]);
 
   // Single fetch for user data — used for birthday countdown, second visit detection, and local user state
   useEffect(() => {
@@ -323,7 +336,6 @@ export default function CartaPremium({
         .filter((d) => d.categoryId === cat.id && d.isActive)
         .sort((a, b) => {
           if (pMap) {
-            // Auto-recommended ("Para ti") first
             // 1. Para ti first
             const aAuto = pMap.get(a.id)?.autoRecommended ? 1 : 0;
             const bAuto = pMap.get(b.id)?.autoRecommended ? 1 : 0;
@@ -332,7 +344,11 @@ export default function CartaPremium({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
-            // 3. Then by score
+            // 3. Popular dishes third
+            const aPop = popularDishIds.has(a.id) ? 1 : 0;
+            const bPop = popularDishIds.has(b.id) ? 1 : 0;
+            if (aPop !== bPop) return bPop - aPop;
+            // 4. Then by score
             const aScore = pMap.get(a.id)?.score ?? 0;
             const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
@@ -340,13 +356,17 @@ export default function CartaPremium({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
+            // Popular dishes after RECOMMENDED
+            const aPop = popularDishIds.has(a.id) ? 1 : 0;
+            const bPop = popularDishIds.has(b.id) ? 1 : 0;
+            if (aPop !== bPop) return bPop - aPop;
           }
           return a.position - b.position;
         });
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap]);
+  }, [categories, dishes, pMap, popularDishIds]);
 
   // Reset horizontal scroll containers when personalization order changes
   useEffect(() => {
@@ -531,6 +551,9 @@ export default function CartaPremium({
                 const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
                 const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
                 if (aRec !== bRec) return bRec - aRec;
+                const aPop = popularDishIds.has(a.id) ? 1 : 0;
+                const bPop = popularDishIds.has(b.id) ? 1 : 0;
+                if (aPop !== bPop) return bPop - aPop;
                 const aScore = pMap.get(a.id)?.score ?? 0;
                 const bScore = pMap.get(b.id)?.score ?? 0;
                 if (aScore !== bScore) return bScore - aScore;
@@ -538,6 +561,9 @@ export default function CartaPremium({
                 const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
                 const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
                 if (aRec !== bRec) return bRec - aRec;
+                const aPop = popularDishIds.has(a.id) ? 1 : 0;
+                const bPop = popularDishIds.has(b.id) ? 1 : 0;
+                if (aPop !== bPop) return bPop - aPop;
               }
               return a.position - b.position;
             });
@@ -637,6 +663,7 @@ export default function CartaPremium({
                         isExploration={pMap?.get(dish.id)?.isExploration}
                         hasPersonalization={!!pMap}
                         restaurantName={restaurant.name}
+                        isPopular={popularDishIds.has(dish.id)}
                       />
                     </div>
                     );
