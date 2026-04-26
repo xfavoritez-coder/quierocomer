@@ -65,7 +65,7 @@ const dict = {
     gNothingDisliked: "Nada, me gusta todo →",
     // Genio banners
     gBannerTitle: "¿No sabes qué pedir?",
-    gBannerSub: "Deja que el Genio te recomiende",
+    gBannerSub: "Deja que el Genio ordene la carta para ti",
     // Birthday
     bdayQuestion: "¿Cuándo es tu cumple?",
     bdayQuestionName: "{name}, ¿cuándo es tu cumple?",
@@ -146,7 +146,7 @@ const dict = {
     gCommonIngredients: "Common ingredients",
     gNothingDisliked: "Nothing, I like everything →",
     gBannerTitle: "Don't know what to order?",
-    gBannerSub: "Let the Genie recommend for you",
+    gBannerSub: "Let the Genie sort the menu for you",
     bdayQuestion: "When's your birthday?",
     bdayQuestionName: "{name}, when's your birthday?",
     bdayHintNew: "Tell us your date and get a surprise 🎁",
@@ -226,7 +226,7 @@ const dict = {
     gCommonIngredients: "Ingredientes comuns",
     gNothingDisliked: "Nada, gosto de tudo →",
     gBannerTitle: "Não sabe o que pedir?",
-    gBannerSub: "Deixe o Gênio recomendar para você",
+    gBannerSub: "Deixe o Gênio organizar o cardápio para você",
     bdayQuestion: "Quando é seu aniversário?",
     bdayQuestionName: "{name}, quando é seu aniversário?",
     bdayHintNew: "Nos diga a data e receba uma surpresa 🎁",
