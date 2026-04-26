@@ -50,6 +50,7 @@ interface CartaProps {
   marketingPromos?: any[];
   timeOfDay?: string;
   weather?: string;
+  popularDishIds?: Set<string>;
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -98,6 +99,7 @@ export default function CartaPremium({
   marketingPromos,
   timeOfDay: timeOfDayProp,
   weather: weatherProp,
+  popularDishIds: popularDishIdsProp,
 }: CartaProps) {
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
@@ -169,8 +171,6 @@ export default function CartaPremium({
   const profileOpen = onProfileOpenProp ? false : profileOpenLocal;
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
-  useEffect(() => { onReady?.(); }, [readyKey]);
-
   // After first like, nudge to use Genio (once per session)
   useEffect(() => {
     if (!hasNewLikes || hasCompletedGenio) return;
@@ -203,7 +203,7 @@ export default function CartaPremium({
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
   const mountedAt = useRef(Date.now());
-  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
+  const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const recShownRef = useRef(new Set<string>());
 
   // Track search with debounce
@@ -267,17 +267,14 @@ export default function CartaPremium({
       .catch(() => {});
   }, [restaurant.id, qrUserProp]);
 
-  // Fetch personalized profile and apply scoring
+  // Fetch personalized profile — popular comes from parent (CartaRouter)
   useEffect(() => {
     const guestId = getGuestId();
-    if (!guestId && !qrUser?.id) return;
+    if (!guestId && !qrUser?.id) { onReady?.(); return; }
     setPersonalizing(true);
-    Promise.all([
-      fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json()),
-      fetch(`/api/qr/popular?restaurantId=${restaurant.id}`).then(r => r.json()).catch(() => ({ popular: [] })),
-    ]).then(([d, pop]) => {
-        if (pop.popular?.length) setPopularDishIds(new Set(pop.popular.map((p: any) => p.dishId)));
-        if (!d.profile) { setPersonalizing(false); return; }
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
+      .then((d) => {
+        if (!d.profile) { setPersonalizing(false); onReady?.(); return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
@@ -294,8 +291,9 @@ export default function CartaPremium({
         );
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
+        onReady?.();
       })
-      .catch(() => setPersonalizing(false));
+      .catch(() => { setPersonalizing(false); onReady?.(); });
   }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
 
   const heroDishes = useMemo(() => {

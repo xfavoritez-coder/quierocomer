@@ -117,7 +117,7 @@ interface SessionData {
   externalReferer: string | null;
   language: string | null;
   cartaLang: string | null;
-  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null }[];
+  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null; isPopular?: boolean; isRecommended?: boolean; isNew?: boolean }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
@@ -365,7 +365,12 @@ export default function AdminSessions() {
                                     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                                       {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 6, fontSize: "0.75rem", fontFamily: F }}>
-                                          <span style={{ color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId.slice(0, 8)}</span>
+                                          <span style={{ color: "#ccc", flex: 1 }}>
+                                            {d.dish?.name || d.dishId.slice(0, 8)}
+                                            {d.isRecommended && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 600 }}>REC</span>}
+                                            {d.isPopular && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(239,68,68,0.12)", color: "#f87171", fontWeight: 600 }}>POP</span>}
+                                            {d.isNew && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600 }}>NEW</span>}
+                                          </span>
                                           <span style={{ color: d.dwellMs > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.dwellMs)} carta</span>
                                           {(d.detailMs ?? 0) > 0 && <span style={{ color: "#4ade80" }}>{formatDuration(d.detailMs!)} detalle</span>}
                                         </div>
@@ -444,6 +449,10 @@ export default function AdminSessions() {
                       {s.userAgent && !s.deviceType && <span>· {parseUA(s.userAgent).split(" · ")[0]}</span>}
                       <span>· {formatDuration(s.durationMs)}</span>
                       {s.dishesViewed.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
+                      {(() => {
+                        const badged = s.dishesViewed.filter(d => d.isPopular || d.isRecommended || d.isNew);
+                        return badged.length > 0 ? <span style={{ color: "#f87171" }}>· {badged.length} con badge</span> : null;
+                      })()}
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
                       {s.genioData?.birthdaySaved && <span style={{ color: "#4ade80" }}>· 🎂 Cumple</span>}
                       {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ color: "#f59e0b" }}>· 🎂 Abrió</span>}
@@ -667,7 +676,12 @@ export default function AdminSessions() {
                               ) : (
                                 <div style={{ width: 28, height: 28, borderRadius: 5, background: "#2A2A2A", flexShrink: 0 }} />
                               )}
-                              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId.slice(0, 8)}</span>
+                              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ccc", flex: 1 }}>
+                                {d.dish?.name || d.dishId.slice(0, 8)}
+                                {d.isRecommended && <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 600, verticalAlign: "middle" }}>RECOMENDADO</span>}
+                                {d.isPopular && <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: "rgba(239,68,68,0.12)", color: "#f87171", fontWeight: 600, verticalAlign: "middle" }}>POPULAR</span>}
+                                {d.isNew && <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600, verticalAlign: "middle" }}>NUEVO</span>}
+                              </span>
                               <span style={{ fontFamily: F, fontSize: "0.72rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555", fontWeight: d.dwellMs > 5000 ? 600 : 400 }}>{formatDuration(d.dwellMs)} en carta</span>
                               {(d.detailMs ?? 0) > 0 && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#4ade80", fontWeight: 600 }}>{formatDuration(d.detailMs!)} en detalle</span>}
                             </div>

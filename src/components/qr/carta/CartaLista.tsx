@@ -48,6 +48,7 @@ interface Props {
   marketingPromos?: any[];
   timeOfDay?: string;
   weather?: string;
+  popularDishIds?: Set<string>;
 }
 
 
@@ -67,8 +68,8 @@ export default function CartaLista({
   marketingPromos,
   timeOfDay: timeOfDayProp,
   weather: weatherProp,
+  popularDishIds: popularDishIdsProp,
 }: Props) {
-  useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
@@ -88,30 +89,29 @@ export default function CartaLista({
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
-  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
+  const popularDishIds = popularDishIdsProp ?? new Set<string>();
 
-  // Fetch personalized profile and popular dishes together
+  // Fetch personalized profile — popular comes from parent (CartaRouter)
   useEffect(() => {
     const guestId = getGuestId();
-    if (!guestId && !qrUser?.id) return;
+    if (!guestId && !qrUser?.id) { onReady?.(); return; }
     setPersonalizing(true);
-    Promise.all([
-      fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json()),
-      fetch(`/api/qr/popular?restaurantId=${restaurant.id}`).then((r) => r.json()).catch(() => ({ popular: [] })),
-    ]).then(([d, pop]) => {
-      if (pop.popular?.length) setPopularDishIds(new Set(pop.popular.map((p: any) => p.dishId)));
-      if (!d.profile) { setPersonalizing(false); return; }
-      const catNames: Record<string, string> = {};
-      for (const c of categories) catNames[c.id] = c.name;
-      const result = getPersonalizedDishes(
-        dishes as unknown as ScoringDish[],
-        categories,
-        d.profile,
-        { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
-      );
-      if (result.hasPersonalization) setPMap(result.map);
-      setPersonalizing(false);
-    }).catch(() => setPersonalizing(false));
+    fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
+      .then((d) => {
+        if (!d.profile) { setPersonalizing(false); onReady?.(); return; }
+        const catNames: Record<string, string> = {};
+        for (const c of categories) catNames[c.id] = c.name;
+        const result = getPersonalizedDishes(
+          dishes as unknown as ScoringDish[],
+          categories,
+          d.profile,
+          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
+        );
+        if (result.hasPersonalization) setPMap(result.map);
+        setPersonalizing(false);
+        onReady?.();
+      })
+      .catch(() => { setPersonalizing(false); onReady?.(); });
   }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;

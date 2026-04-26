@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
     }
 
     const dishNames = allDishIds.size > 0
-      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true, ingredients: true } })
+      ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true, ingredients: true, tags: true, isFeaturedAuto: true } })
       : [];
     const dishMap = Object.fromEntries(dishNames.map((d) => [d.id, d]));
 
@@ -300,6 +300,41 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Popular dishes per restaurant (same logic as /api/qr/popular) ──
+    const restaurantIds = [...new Set(sessions.map(s => s.restaurantId))];
+    const popularByRestaurant: Record<string, Set<string>> = {};
+    if (restaurantIds.length > 0) {
+      const since48h = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      const recentSessions = await prisma.session.findMany({
+        where: { restaurantId: { in: restaurantIds }, startedAt: { gte: since48h } },
+        select: { restaurantId: true, dishesViewed: true },
+      });
+      const countsByRest: Record<string, Map<string, number>> = {};
+      for (const rs of recentSessions) {
+        if (!countsByRest[rs.restaurantId]) countsByRest[rs.restaurantId] = new Map();
+        const viewed = rs.dishesViewed as any[] | null;
+        if (!Array.isArray(viewed)) continue;
+        const seen = new Set<string>();
+        for (const entry of viewed) {
+          if (!entry?.dishId || seen.has(entry.dishId)) continue;
+          if ((entry.detailMs ?? 0) <= 0) continue;
+          seen.add(entry.dishId);
+          const m = countsByRest[rs.restaurantId];
+          m.set(entry.dishId, (m.get(entry.dishId) ?? 0) + 1);
+        }
+      }
+      for (const rid of restaurantIds) {
+        const m = countsByRest[rid];
+        if (!m) continue;
+        const top = [...m.entries()]
+          .filter(([, c]) => c >= 3)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([id]) => id);
+        popularByRestaurant[rid] = new Set(top);
+      }
+    }
+
     // ── Enrich: scope everything to each session ──
     const enriched = sessions.map((s) => {
       const viewed = (s.dishesViewed as any[]) || [];
@@ -319,11 +354,18 @@ export async function GET(req: NextRequest) {
 
       return {
         ...s,
-        dishesViewed: viewed.map((d: any, idx: number) => ({
-          ...d,
-          order: idx,
-          dish: dishMap[d.dishId] || null,
-        })),
+        dishesViewed: viewed.map((d: any, idx: number) => {
+          const dish = dishMap[d.dishId] || null;
+          const pop = popularByRestaurant[s.restaurantId];
+          return {
+            ...d,
+            order: idx,
+            dish,
+            isPopular: pop ? pop.has(d.dishId) : false,
+            isRecommended: dish?.tags?.includes("RECOMMENDED") || false,
+            isNew: dish?.tags?.includes("NEW") || false,
+          };
+        }),
         categoriesViewed: cats.map((c: any) => ({
           ...c,
           name: catMap[c.categoryId] || c.categoryId,
