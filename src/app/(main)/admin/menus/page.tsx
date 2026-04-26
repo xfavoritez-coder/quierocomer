@@ -313,33 +313,29 @@ export default function AdminMenus() {
                   style={{ ...INP, marginBottom: 4 }}
                 />
                 {/* Dropdown list */}
-                {ingSearch && (
-                  <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
-                    {allIngredients
-                      .filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id))
-                      .slice(0, 15)
-                      .map(i => (
+                {ingSearch && (() => {
+                  const q = norm(ingSearch);
+                  const ingMatch = (i: { id: string; name: string }) => { const n = norm(i.name); return n.includes(q) || q.includes(n); };
+                  const available = allIngredients.filter(i => ingMatch(i) && !eIngredientIds.includes(i.id));
+                  const alreadyAdded = available.length === 0 ? allIngredients.find(i => ingMatch(i) && eIngredientIds.includes(i.id)) : null;
+                  return (
+                    <div style={{ maxHeight: 150, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, scrollbarWidth: "none" }}>
+                      {available.slice(0, 15).map(i => (
                         <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{i.category}</span>
+                          <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{(i as any).category}</span>
                         </button>
                       ))}
-                    {(() => {
-                      const noResults = allIngredients.filter(i => norm(i.name).includes(norm(ingSearch)) && !eIngredientIds.includes(i.id)).length === 0;
-                      if (!noResults) return null;
-                      // Check if already added to this dish
-                      const alreadyAdded = allIngredients.find(i => norm(i.name).includes(norm(ingSearch)) && eIngredientIds.includes(i.id));
-                      if (alreadyAdded) return (
+                      {available.length === 0 && alreadyAdded && (
                         <div style={{ padding: "8px 10px" }}>
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>"{alreadyAdded.name}" ya está agregado</span>
                         </div>
-                      );
-                      return (
+                      )}
+                      {available.length === 0 && !alreadyAdded && (
                         <button onClick={async () => {
                           const res = await fetch("/api/admin/ingredients", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: ingSearch }) });
                           const data = await res.json();
                           if (data.ingredient) {
-                            // Avoid duplicating if ingredient already existed (upsert)
                             if (!eIngredientIds.includes(data.ingredient.id)) {
                               setAllIngredients(prev => prev.some(i => i.id === data.ingredient.id) ? prev : [...prev, data.ingredient]);
                               setEIngredientIds(prev => [...prev, data.ingredient.id]);
@@ -349,10 +345,10 @@ export default function AdminMenus() {
                         }} style={{ padding: "8px 10px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623" }}>+ Crear "{ingSearch}"</span>
                         </button>
-                      );
-                    })()}
-                  </div>
-                )}
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
 
               <div style={{ marginBottom: 14 }}>
