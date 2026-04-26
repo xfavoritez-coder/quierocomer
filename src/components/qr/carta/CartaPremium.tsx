@@ -290,7 +290,7 @@ export default function CartaPremium({
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`)
       .then((r) => r.json())
       .then((d) => {
-        if (!d.profile) { setPersonalizing(false); return; }
+        if (!d.profile) { setPersonalizing(false); hadPersonalizationBefore.current = true; return; }
         // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);

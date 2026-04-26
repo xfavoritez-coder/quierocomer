@@ -13,10 +13,10 @@ import GenioTip from "../genio/GenioTip";
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const LANG_STORAGE_KEY = "qc_lang";
 
-const OPTIONS: { value: CartaView; label: string; Icon: typeof List }[] = [
-  { value: "lista", label: "Lista", Icon: List },
-  { value: "premium", label: "Galería", Icon: BookOpen },
-  { value: "viaje", label: "Espacial", Icon: Rocket },
+const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewSpace"; Icon: typeof List }[] = [
+  { value: "lista", labelKey: "viewList", Icon: List },
+  { value: "premium", labelKey: "viewGallery", Icon: BookOpen },
+  { value: "viaje", labelKey: "viewSpace", Icon: Rocket },
 ];
 
 interface Props {
@@ -64,8 +64,8 @@ export default function ViewSelector({ restaurantId }: Props) {
   const handleSelect = (next: CartaView) => {
     setOpen(false);
     if (next === view) return;
-    const option = OPTIONS.find((o) => o.value === next);
-    showViewTransition(option?.label || "", next);
+    const option = VIEW_KEYS.find((o) => o.value === next);
+    showViewTransition(option ? t(lang, option.labelKey as any) : "", next);
     setView(next);
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);
@@ -112,7 +112,8 @@ export default function ViewSelector({ restaurantId }: Props) {
         >
           {/* View options row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
-            {OPTIONS.map(({ value, label, Icon }) => {
+            {VIEW_KEYS.map(({ value, labelKey, Icon }) => {
+              const label = t(lang, labelKey as any);
               const isActive = view === value;
               return (
                 <button

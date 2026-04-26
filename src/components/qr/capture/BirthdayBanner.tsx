@@ -127,10 +127,10 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
 
         {/* Text */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <p style={{ fontSize: "0.98rem", fontWeight: 700, color: "#92400e", lineHeight: 1.3, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {existingUser?.name ? t(lang, "bdayQuestionName").replace("{name}", existingUser.name) : t(lang, "bdayQuestion")}
           </p>
-          <p style={{ fontSize: "0.85rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
+          <p style={{ fontSize: "0.97rem", color: "#b45309", lineHeight: 1.3, margin: "2px 0 0", opacity: 0.8 }}>
             {existingUser ? t(lang, "bdayHintExisting") : t(lang, "bdayHintNew")}
           </p>
         </div>

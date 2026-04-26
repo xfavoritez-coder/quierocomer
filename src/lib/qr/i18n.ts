@@ -39,6 +39,7 @@ const dict = {
     genieKnows: "Personaliza la carta según tus gustos y preferencias",
     askGenieShort: "Personalizar mi carta",
     language: "Idioma",
+    viewGallery: "Galería", viewList: "Lista", viewSpace: "Espacial",
     // Chapter words
     chapterOne: "uno", chapterTwo: "dos", chapterThree: "tres",
     chapterFour: "cuatro", chapterFive: "cinco", chapterSix: "seis",
@@ -123,6 +124,7 @@ const dict = {
     genieKnows: "Personalize the menu based on your tastes and preferences",
     askGenieShort: "Personalize my menu",
     language: "Language",
+    viewGallery: "Gallery", viewList: "List", viewSpace: "Space",
     chapterOne: "one", chapterTwo: "two", chapterThree: "three",
     chapterFour: "four", chapterFive: "five", chapterSix: "six",
     chapterSeven: "seven", chapterEight: "eight", chapterNine: "nine",
@@ -203,6 +205,7 @@ const dict = {
     genieKnows: "Personalize o cardápio de acordo com seus gostos e preferências",
     askGenieShort: "Personalizar meu cardápio",
     language: "Idioma",
+    viewGallery: "Galeria", viewList: "Lista", viewSpace: "Espacial",
     chapterOne: "um", chapterTwo: "dois", chapterThree: "três",
     chapterFour: "quatro", chapterFive: "cinco", chapterSix: "seis",
     chapterSeven: "sete", chapterEight: "oito", chapterNine: "nove",
