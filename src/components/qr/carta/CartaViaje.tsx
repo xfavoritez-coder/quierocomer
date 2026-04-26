@@ -177,12 +177,12 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             style={{
               width: 58, height: 58, position: "relative",
               background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: hasCompletedGenio ? "1.5px solid rgba(74,222,128,0.5)" : "1px solid rgba(244,166,35,0.3)",
-              boxShadow: hasCompletedGenio ? "0 0 0 3px rgba(74,222,128,0.25), 0 0 20px rgba(244,166,35,0.15)" : "0 0 20px rgba(244,166,35,0.15)",
+              border: "1px solid rgba(244,166,35,0.3)",
+              boxShadow: "0 0 20px rgba(244,166,35,0.15)",
             }}
           >
             <span style={{ fontSize: "26px", lineHeight: 1 }}>🧞</span>
-            {hasCompletedGenio && <span style={{ position: "absolute", top: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#16a34a", border: "2px solid #0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1 }}>✓</span>}
+            {hasCompletedGenio && <span style={{ position: "absolute", top: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
           {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} size={58} waiterPanelActive={showWaiter} />}
           <ViewSelector restaurantId={restaurant.id} />
