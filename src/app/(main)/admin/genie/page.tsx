@@ -328,10 +328,10 @@ export default function AdminSessions() {
                         const sOpen = expanded === s.id;
                         const time = new Date(s.startedAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
                         return (
-                          <div key={s.id} style={{ marginBottom: idx < group.length - 1 ? 6 : 0 }}>
+                          <div key={s.id} style={{ marginBottom: idx < group.length - 1 ? 6 : 0, background: sOpen ? "rgba(244,166,35,0.04)" : "rgba(255,255,255,0.02)", border: `1px solid ${sOpen ? "rgba(244,166,35,0.2)" : "#2A2A2A"}`, borderRadius: 10, overflow: "hidden" }}>
                             <button
                               onClick={(e) => { e.stopPropagation(); setExpanded(sOpen ? `group_${guestId}` : s.id); }}
-                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: sOpen ? "rgba(244,166,35,0.04)" : "rgba(255,255,255,0.02)", border: `1px solid ${sOpen ? "rgba(244,166,35,0.2)" : "#2A2A2A"}`, borderRadius: 10, cursor: "pointer", textAlign: "left" }}
+                              style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                             >
                               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", fontWeight: 600, flexShrink: 0 }}>{idx + 1}ª</span>
                               <div style={{ flex: 1, minWidth: 0 }}>
@@ -343,6 +343,47 @@ export default function AdminSessions() {
                               </div>
                               <span style={{ fontSize: "0.8rem", color: "#555", transform: sOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
                             </button>
+                            {sOpen && (
+                              <div style={{ padding: "0 12px 12px", borderTop: "1px solid #2A2A2A" }}>
+                                <div style={{ padding: "10px 0", fontSize: "0.75rem", fontFamily: F, color: "#aaa", display: "flex", gap: 12, flexWrap: "wrap" }}>
+                                  {s.viewUsed && <span>Vista: {s.viewUsed === "premium" ? "Clásica" : s.viewUsed === "lista" ? "Lista" : "Espacial"}</span>}
+                                  {s.deviceType && <span>{s.deviceType}</span>}
+                                  {s.cartaLang && <span>Carta: {s.cartaLang.toUpperCase()}</span>}
+                                </div>
+                                {s.usedGenio && s.genioData && (
+                                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                                    {s.genioData.completed
+                                      ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Configuró preferencias</span>
+                                      : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Abandonó{s.genioData.lastStep ? ` en ${s.genioData.lastStep}` : ""}</span>
+                                    }
+                                  </div>
+                                )}
+                                {s.dishesViewed.length > 0 && (
+                                  <div style={{ marginBottom: 8 }}>
+                                    <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platos ({s.dishesViewed.length})</p>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
+                                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 6, fontSize: "0.75rem", fontFamily: F }}>
+                                          <span style={{ color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId.slice(0, 8)}</span>
+                                          <span style={{ color: d.dwellMs > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.dwellMs)} carta</span>
+                                          {(d.detailMs ?? 0) > 0 && <span style={{ color: "#4ade80" }}>{formatDuration(d.detailMs!)} detalle</span>}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {s.categoriesViewed.length > 0 && (
+                                  <div>
+                                    <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Categorías</p>
+                                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                                      {s.categoriesViewed.map((c: any, i: number) => (
+                                        <span key={i} style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: "rgba(255,255,255,0.04)", color: "#888", fontFamily: F }}>{c.name} · {formatDuration(c.dwellMs)}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         );
                       })}

@@ -52,7 +52,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           )}
           {isRec && !autoRecommended && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
-              ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+              ⭐ Recomendado
             </span>
           )}
           {isPopular && !autoRecommended && !isRec && (
@@ -113,7 +113,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
 
   let badge: string | null = null;
   if (autoRecommended) badge = "✨ Para ti";
-  else if (isRec) badge = `⭐ ${restaurantName ? `Por ${restaurantName}` : "Recomendado"}`;
+  else if (isRec) badge = "⭐ Recomendado";
   else if (isPopular) badge = "🔥 Popular";
 
   return (

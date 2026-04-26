@@ -88,6 +88,14 @@ export default function CartaLista({
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
+  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch(`/api/qr/popular?restaurantId=${restaurant.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.popular?.length) setPopularDishIds(new Set(d.popular.map((p: any) => p.dishId))); })
+      .catch(() => {});
+  }, [restaurant.id]);
 
   // Fetch personalized profile and apply scoring
   useEffect(() => {
@@ -201,6 +209,9 @@ export default function CartaLista({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
+            const aPop = popularDishIds.has(a.id) ? 1 : 0;
+            const bPop = popularDishIds.has(b.id) ? 1 : 0;
+            if (aPop !== bPop) return bPop - aPop;
             const aScore = pMap.get(a.id)?.score ?? 0;
             const bScore = pMap.get(b.id)?.score ?? 0;
             if (aScore !== bScore) return bScore - aScore;
@@ -208,6 +219,9 @@ export default function CartaLista({
             const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
             const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
             if (aRec !== bRec) return bRec - aRec;
+            const aPop = popularDishIds.has(a.id) ? 1 : 0;
+            const bPop = popularDishIds.has(b.id) ? 1 : 0;
+            if (aPop !== bPop) return bPop - aPop;
           }
           return a.position - b.position;
         });
@@ -238,6 +252,9 @@ export default function CartaLista({
         const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
         const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
         if (aRec !== bRec) return bRec - aRec;
+        const aPop = popularDishIds.has(a.id) ? 1 : 0;
+        const bPop = popularDishIds.has(b.id) ? 1 : 0;
+        if (aPop !== bPop) return bPop - aPop;
         const aScore = pMap.get(a.id)?.score ?? 0;
         const bScore = pMap.get(b.id)?.score ?? 0;
         if (aScore !== bScore) return bScore - aScore;
@@ -450,6 +467,7 @@ export default function CartaLista({
                   autoRecommended={entry?.autoRecommended}
                   isExploration={entry?.isExploration}
                   restaurantName={restaurant.name}
+                  isPopular={popularDishIds.has(dish.id)}
                   onClick={() => {
                     if (entry?.autoRecommended) {
                       fetch("/api/qr/stats", {
@@ -590,6 +608,7 @@ export default function CartaLista({
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
+          popularDishIds={popularDishIds}
         />
       )}
     </div>
@@ -605,6 +624,7 @@ function DishListCard({
   autoRecommended,
   isExploration,
   restaurantName,
+  isPopular,
 }: {
   dish: Dish;
   rating?: { avg: number; count: number };
@@ -612,6 +632,7 @@ function DishListCard({
   autoRecommended?: boolean;
   isExploration?: boolean;
   restaurantName?: string;
+  isPopular?: boolean;
 }) {
   const photo = getDishPhoto(dish);
   const geniePick = isGeniePick(dish);
@@ -675,7 +696,12 @@ function DishListCard({
             )}
             {isRec && !hasAutoLabel && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
-                ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+                ⭐ Recomendado
+              </span>
+            )}
+            {isPopular && !hasAutoLabel && !isRec && (
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+                🔥 Popular
               </span>
             )}
           </h3>

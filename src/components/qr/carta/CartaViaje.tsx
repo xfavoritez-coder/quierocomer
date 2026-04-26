@@ -72,6 +72,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
+  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    fetch(`/api/qr/popular?restaurantId=${restaurant.id}`)
+      .then((r) => r.json())
+      .then((d) => { if (d.popular?.length) setPopularDishIds(new Set(d.popular.map((p: any) => p.dishId))); })
+      .catch(() => {});
+  }, [restaurant.id]);
 
   // Fetch personalized profile and apply scoring
   useEffect(() => {
@@ -98,14 +106,22 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
 
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(dishes, categories);
-    if (!pMap) return base;
-    // Sort dishes within each group by personalization score
+    // Sort dishes within each group: recommended > popular > score > position
     return base.map((g) => ({
       ...g,
       dishes: [...g.dishes].sort((a, b) => {
-        const aScore = pMap.get(a.id)?.score ?? 0;
-        const bScore = pMap.get(b.id)?.score ?? 0;
-        return bScore - aScore;
+        const aRec = a.tags?.includes("RECOMMENDED") ? 1 : 0;
+        const bRec = b.tags?.includes("RECOMMENDED") ? 1 : 0;
+        if (aRec !== bRec) return bRec - aRec;
+        const aPop = popularDishIds.has(a.id) ? 1 : 0;
+        const bPop = popularDishIds.has(b.id) ? 1 : 0;
+        if (aPop !== bPop) return bPop - aPop;
+        if (pMap) {
+          const aScore = pMap.get(a.id)?.score ?? 0;
+          const bScore = pMap.get(b.id)?.score ?? 0;
+          if (aScore !== bScore) return bScore - aScore;
+        }
+        return a.position - b.position;
       }),
     }));
   }, [dishes, categories, pMap]);
@@ -226,6 +242,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
                 onActive={() => { setActiveRail(idx); setRailLight(palette === "cream"); trackCategoryDwell(group.category.id, 1000); }}
                 restaurantNameProp={restaurant.name}
                 pMapProp={pMap}
+                popularDishIdsProp={popularDishIds}
                 restaurantId={restaurant.id}
               />
             );
@@ -330,12 +347,12 @@ function ChapterOpening({
 
 /* =============== CATEGORY TRACK (chapter title + dishes in horizontal) =============== */
 function CategoryTrack({
-  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, lang, onActive, restaurantNameProp, pMapProp, restaurantId,
+  group, index, palette, poetic, totalChapters, dishes, hasGenie, categoryName, lang, onActive, restaurantNameProp, pMapProp, popularDishIdsProp, restaurantId,
 }: {
   group: ReturnType<typeof groupDishesByCategory>[0];
   index: number; palette: Palette;
   poetic: { prefix: string; accent: string };
-  totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string; restaurantNameProp?: string; pMapProp?: PersonalizationMap | null; restaurantId: string;
+  totalChapters: number; dishes: Dish[]; hasGenie: boolean; categoryName: string; restaurantNameProp?: string; pMapProp?: PersonalizationMap | null; popularDishIdsProp?: Set<string>; restaurantId: string;
   lang: Lang; onActive: () => void;
 }) {
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -444,6 +461,7 @@ function CategoryTrack({
             index={i + 1}
             restaurantName={restaurantNameProp}
             autoRecommended={pMapProp?.get(dish.id)?.autoRecommended}
+            isPopular={popularDishIdsProp?.has(dish.id)}
             restaurantId={restaurantId}
           />
         ))}
@@ -484,8 +502,8 @@ function VjPitch({ text, className, style }: { text: string; className?: string;
 }
 
 /* =============== DISH SLIDE =============== */
-function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommended, restaurantId }: {
-  dish: Dish; variant: SlideVariant; palette: Palette; index: number; restaurantName?: string; autoRecommended?: boolean; restaurantId: string;
+function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommended, isPopular, restaurantId }: {
+  dish: Dish; variant: SlideVariant; palette: Palette; index: number; restaurantName?: string; autoRecommended?: boolean; isPopular?: boolean; restaurantId: string;
 }) {
   const [showToast, setShowToast] = useState(false);
   const pitch = dish.description || "";
@@ -494,8 +512,9 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
   const d = dish as any;
   const isRec = dish.tags?.includes("RECOMMENDED");
   const hasParaTi = autoRecommended && !isRec;
+  const hasPopularBadge = isPopular && !hasParaTi && !isRec;
   const handleBadgeClick = () => { setShowToast(true); setTimeout(() => setShowToast(false), 4000); };
-  const hasBadges = isRec || hasParaTi || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
+  const hasBadges = isRec || hasParaTi || hasPopularBadge || isNew || d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN" || d.isSpicy;
   const vjBadges = hasBadges ? (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 6, marginLeft: 8, flexShrink: 0, verticalAlign: "middle" }}>
       {isNew && <VjNewBadge inline />}
@@ -503,7 +522,8 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
       {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "15px" }}>🌱</span>}
       {d.isSpicy && <span style={{ fontSize: "15px" }}>🌶️</span>}
       {hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
-      {isRec && !hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}</span>}
+      {isRec && !hasParaTi && <span onClick={handleBadgeClick} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
+      {hasPopularBadge && <span style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white" }}>🔥 Popular</span>}
     </span>
   ) : null;
   const accentColor = "#F4A623";

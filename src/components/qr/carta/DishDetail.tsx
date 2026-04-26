@@ -26,6 +26,7 @@ interface DishDetailProps {
   onChangeDish: (dish: Dish) => void;
   personalizationMap?: Map<string, PersonalizationEntry> | null;
   restaurantName?: string;
+  popularDishIds?: Set<string>;
 }
 
 export default function DishDetail({
@@ -38,6 +39,7 @@ export default function DishDetail({
   onChangeDish,
   personalizationMap,
   restaurantName,
+  popularDishIds,
 }: DishDetailProps) {
   // Compute allergens that exist across the restaurant (for "Libre de" section)
   const restaurantAllergens = useMemo(() => {
@@ -198,6 +200,7 @@ export default function DishDetail({
             personalizationEntry={personalizationMap?.get(d.id)}
             restaurantName={restaurantName}
             restaurantAllergens={restaurantAllergens}
+            popularDishIds={popularDishIds}
           />
         ))}
       </div>
@@ -215,7 +218,7 @@ export default function DishDetail({
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
-  personalizationEntry, restaurantName, restaurantAllergens,
+  personalizationEntry, restaurantName, restaurantAllergens, popularDishIds,
 }: {
   dish: Dish; index: number; total: number;
   categories: Category[]; restaurantId: string;
@@ -227,6 +230,7 @@ function DishSlide({
   personalizationEntry?: PersonalizationEntry;
   restaurantName?: string;
   restaurantAllergens?: Set<string>;
+  popularDishIds?: Set<string>;
 }) {
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
@@ -323,13 +327,15 @@ function DishSlide({
         )}
 
         {/* "Recomendado por" explanation toggle */}
-        {showRecTooltip && isRec && (
+        {showRecTooltip && (isRec || popularDishIds?.has(dish.id)) && (
           <div
             onClick={() => setShowRecTooltip(false)}
             style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
             <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
-              ⭐ {restaurantName || "El local"} recomienda este plato.
+              {isRec
+                ? `⭐ ${restaurantName || "El local"} recomienda este plato.`
+                : "🔥 Uno de los platos más vistos por los comensales."}
             </p>
           </div>
         )}
@@ -353,7 +359,15 @@ function DishSlide({
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 4000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
                 >
-                  ⭐ {restaurantName ? `Por ${restaurantName}` : "Recomendado"}
+                  ⭐ Recomendado
+                </button>
+              )}
+              {popularDishIds?.has(dish.id) && !personalizationEntry?.autoRecommended && !isRec && (
+                <button
+                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 4000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
+                >
+                  🔥 Popular
                 </button>
               )}
             </h2>

@@ -794,6 +794,7 @@ export default function CartaPremium({
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
+          popularDishIds={popularDishIds}
         />
       )}
 
