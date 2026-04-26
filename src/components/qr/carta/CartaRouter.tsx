@@ -148,6 +148,23 @@ export default function CartaRouter(props: Props) {
   // Popular dishes come from server (QR page), convert once to Set
   const popularSet = useRef(new Set(props.popularDishIds || []));
 
+  // "Carta personalizada" toast — once per session if user has prefs
+  const [showPersonalizedToast, setShowPersonalizedToast] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const hasPrefs = !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
+    if (!hasPrefs) return;
+    if (sessionStorage.getItem("qc_personalized_toast")) return;
+    sessionStorage.setItem("qc_personalized_toast", "1");
+    const t = setTimeout(() => setShowPersonalizedToast(true), 800);
+    return () => clearTimeout(t);
+  }, []);
+  useEffect(() => {
+    if (!showPersonalizedToast) return;
+    const t = setTimeout(() => setShowPersonalizedToast(false), 3500);
+    return () => clearTimeout(t);
+  }, [showPersonalizedToast]);
+
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
   const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
@@ -160,6 +177,25 @@ export default function CartaRouter(props: Props) {
         {view === "premium" && <CartaPremium {...sharedProps} />}
         {view === "lista" && <CartaLista {...sharedProps} />}
         {view === "viaje" && <CartaViaje {...sharedProps} />}
+
+        {showPersonalizedToast && (
+          <div
+            className="font-[family-name:var(--font-dm)]"
+            onClick={() => setShowPersonalizedToast(false)}
+            style={{
+              position: "fixed", top: "calc(max(12px, env(safe-area-inset-top)) + 8px)", left: 16, right: 16,
+              zIndex: 150, padding: "12px 16px", borderRadius: 14,
+              background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.25)",
+              backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+              cursor: "pointer", animation: "fadeToast 0.3s ease-out",
+              textAlign: "center",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "rgba(255,255,255,0.92)", fontWeight: 500, lineHeight: 1.4 }}>
+              ✨ La carta está ordenada según tus gustos
+            </p>
+          </div>
+        )}
 
         {overlay && (
           <div

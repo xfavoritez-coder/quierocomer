@@ -376,6 +376,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "19px", fontWeight: 700, color: G.orange }}>
                     {userName ? `${userName}, tu perfil` : "Tu perfil"}
                   </span>
+                  <p style={{ fontSize: "13px", color: G.textSecondary, margin: "8px 0 0", lineHeight: 1.4 }}>
+                    ✨ La carta ya está ordenada según tus gustos
+                  </p>
                 </div>
 
                 {/* Diet section */}
