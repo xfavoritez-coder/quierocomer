@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
@@ -87,7 +87,7 @@ export async function POST(request: Request) {
     }
 
     const cleaned = cleanContent(pageContent);
-    const content = cleaned.length > 40000 ? cleaned.slice(0, 40000) : cleaned;
+    const content = cleaned.length > 20000 ? cleaned.slice(0, 20000) : cleaned;
 
     // Step 2: Claude extracts categories + detects inline vs catalog
     const step1Prompt = `Analiza esta página de menú de restaurante y extrae la información.
@@ -152,13 +152,17 @@ Reglas:
         }));
         const fetched = catResults.filter(r => r.status === "fulfilled").map(r => (r as any).value);
 
-        // Send all category contents to Claude in one call (fits in context)
+        // Send category contents to Claude in parallel batches (~8 cats each)
         if (fetched.length > 0) {
-          const allCatContent = fetched.map((f: any) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
-          try {
-            const catText = await callClaude(`Extrae TODOS los productos de estas ${fetched.length} categorías de restaurante.
+          const CAT_BATCH = 8;
+          const claudePromises = [];
+          for (let ci = 0; ci < fetched.length; ci += CAT_BATCH) {
+            const batch = fetched.slice(ci, ci + CAT_BATCH);
+            const batchContent = batch.map((f: any) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
+            claudePromises.push(
+              callClaude(`Extrae TODOS los productos de estas ${batch.length} categorías de restaurante.
 
-${allCatContent}
+${batchContent}
 
 Responde con un JSON:
 {
@@ -172,8 +176,13 @@ Responde con un JSON:
   ]
 }
 
-Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000);
-            const catParsed = parseJSON(catText);
+Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000)
+                .then(text => parseJSON(text))
+                .catch(() => ({ categories: [] }))
+            );
+          }
+          const claudeResults = await Promise.all(claudePromises);
+          for (const catParsed of claudeResults) {
             for (const newCat of (catParsed.categories || [])) {
               const existing = parsed.categories.find((c: any) => c.name === newCat.name);
               if (existing) {
@@ -183,7 +192,7 @@ Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Respond
                 parsed.categories.push({ ...newCat, type: typeInfo?.catType || "food" });
               }
             }
-          } catch { /* continue with what we have */ }
+          }
         }
       }
     }
