@@ -140,6 +140,7 @@ export default function AdminSessions() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedSub, setExpandedSub] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [dishSort, setDishSort] = useState<"time" | "order">("order");
   const [groupByVisitor, setGroupByVisitor] = useState(false);
@@ -325,12 +326,12 @@ export default function AdminSessions() {
                   {isOpen && (
                     <div style={{ borderTop: "1px solid #2A2A2A", padding: "8px" }}>
                       {group.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).map((s, idx) => {
-                        const sOpen = expanded === s.id;
+                        const sOpen = expandedSub === s.id;
                         const time = new Date(s.startedAt).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
                         return (
                           <div key={s.id} style={{ marginBottom: idx < group.length - 1 ? 6 : 0, background: sOpen ? "rgba(244,166,35,0.04)" : "rgba(255,255,255,0.02)", border: `1px solid ${sOpen ? "rgba(244,166,35,0.2)" : "#2A2A2A"}`, borderRadius: 10, overflow: "hidden" }}>
                             <button
-                              onClick={(e) => { e.stopPropagation(); setExpanded(sOpen ? `group_${guestId}` : s.id); }}
+                              onClick={(e) => { e.stopPropagation(); setExpandedSub(sOpen ? null : s.id); }}
                               style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                             >
                               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#7fbfdc", fontWeight: 600, flexShrink: 0 }}>{idx + 1}ª</span>
