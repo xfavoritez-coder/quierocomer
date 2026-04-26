@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Sparkles, List, BookOpen, Rocket } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
@@ -40,6 +40,7 @@ interface Props {
   happyHours?: any[];
   timeOfDay?: string;
   weather?: string;
+  popularDishIds?: string[];
 }
 
 export default function CartaRouter(props: Props) {
@@ -125,20 +126,10 @@ export default function CartaRouter(props: Props) {
     if (isReady) trackViewSelected(view);
   }, [view, isReady]);
 
-  // Child calls this when data is ready — dismiss overlay
-  const readyCalledRef = useRef(false);
+  // Child calls this when mounted — dismiss overlay
   const onViewReady = useCallback(() => {
-    if (readyCalledRef.current) return;
-    readyCalledRef.current = true;
     hideViewTransition();
   }, []);
-
-  // Safety: never leave overlay stuck for more than 3s
-  useEffect(() => {
-    if (!overlay) { readyCalledRef.current = false; return; }
-    const t = setTimeout(() => { if (!readyCalledRef.current) onViewReady(); }, 3000);
-    return () => clearTimeout(t);
-  }, [overlay, onViewReady]);
 
   useEffect(() => {
     if (!isReady) return;
@@ -154,19 +145,13 @@ export default function CartaRouter(props: Props) {
     if (isReady) window.scrollTo({ top: 0 });
   }, [view, isReady]);
 
-  // Fetch popular dishes once — shared across all views, survives view switches
-  const [popularDishIds, setPopularDishIds] = useState<Set<string>>(new Set());
-  const popularReady = useRef(false);
-  useEffect(() => {
-    fetch(`/api/qr/popular?restaurantId=${props.restaurant.id}`).then(r => r.json()).then(d => {
-      if (d.popular?.length) setPopularDishIds(new Set(d.popular.map((p: any) => p.dishId)));
-    }).catch(() => {}).finally(() => { popularReady.current = true; });
-  }, [props.restaurant.id]);
+  // Popular dishes come from server (QR page), convert once to Set
+  const popularSet = useRef(new Set(props.popularDishIds || []));
 
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
   const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
-  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds };
+  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current };
 
   return (
     <LangProvider value={lang}>

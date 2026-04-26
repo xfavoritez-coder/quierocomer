@@ -68,34 +68,41 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 }
 
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp, popularDishIds: popularDishIdsProp }: Props) {
+  useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
+  const popularDishIds = popularDishIdsProp ?? new Set<string>();
+  const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
+  const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
+
+  // Instant pMap from localStorage prefs (no network needed)
+  const localPMap = useMemo(() => {
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return null;
+    const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
+    const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
+    return result.hasPersonalization ? result.map : null;
+  }, [dishes, categories, scoringCtx]);
+
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(localPMap);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
-  const popularDishIds = popularDishIdsProp ?? new Set<string>();
 
-  // Fetch personalized profile — popular comes from parent (CartaRouter)
+  // Background fetch: enrich with likedIngredients from DB profile
   useEffect(() => {
     const guestId = getGuestId();
-    if (!guestId && !qrUser?.id) { onReady?.(); return; }
+    if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
       .then((d) => {
-        if (!d.profile) { setPersonalizing(false); onReady?.(); return; }
-        const catNames: Record<string, string> = {};
-        for (const c of categories) catNames[c.id] = c.name;
-        const result = getPersonalizedDishes(
-          dishes as unknown as ScoringDish[],
-          categories,
-          d.profile,
-          { timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }
-        );
+        if (!d.profile) { setPersonalizing(false); return; }
+        const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, d.profile, scoringCtx);
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
-        onReady?.();
       })
-      .catch(() => { setPersonalizing(false); onReady?.(); });
-  }, [restaurant.id, categories, dishes, qrUser?.id, timeOfDayProp, weatherProp, profileTrigger]);
+      .catch(() => setPersonalizing(false));
+  }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(dishes, categories);

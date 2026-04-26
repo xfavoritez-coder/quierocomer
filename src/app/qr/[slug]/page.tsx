@@ -14,6 +14,7 @@ import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import { prisma } from "@/lib/prisma";
+import { getPopularDishes } from "@/lib/qr/utils/getPopularDishes";
 
 // Deduplicate: both generateMetadata and page use the same query
 // Metadata always uses Spanish (restaurant name doesn't change)
@@ -85,11 +86,14 @@ export default async function CartaPage({
     weather
   );
 
-  // Fetch active marketing promos in parallel with nothing blocking
-  const activePromos = await prisma.promotion.findMany({
+  // Fetch popular dishes and marketing promos in parallel
+  const [popularDishes, activePromos] = await Promise.all([
+    getPopularDishes(restaurant.id).catch(() => []),
+    prisma.promotion.findMany({
     where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
     orderBy: { createdAt: "desc" },
-  });
+  }),
+  ]);
   const promoDishIds = activePromos.flatMap(p => p.dishIds);
   const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
     where: { id: { in: promoDishIds } },
@@ -124,6 +128,7 @@ export default async function CartaPage({
     happyHours: (restaurant as any).happyHours || [],
     timeOfDay,
     weather,
+    popularDishIds: popularDishes.map(p => p.dishId),
   };
 
   return (
