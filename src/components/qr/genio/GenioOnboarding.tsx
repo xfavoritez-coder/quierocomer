@@ -718,16 +718,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               </div>
             )}
             {dislikeNoResults && dislikeSearch.length >= 2 && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10 }}>
-                <button onClick={() => {
-                  const val = dislikeSearch.trim().toLowerCase();
-                  if (val && !dislikes.includes(val)) {
-                    setDislikes(prev => { const updated = [...prev, val]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                  }
-                  setDislikeSearch(""); setDislikeResults([]); setDislikeNoResults(false);
-                }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", textAlign: "left", color: G.gold, fontSize: "0.88rem", cursor: "pointer" }}>
-                  + Agregar &quot;{dislikeSearch.trim()}&quot;
-                </button>
+              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, padding: "11px 16px" }}>
+                <span style={{ color: G.textTertiary, fontSize: "0.82rem" }}>No encontramos &quot;{dislikeSearch.trim()}&quot;</span>
               </div>
             )}
           </div>

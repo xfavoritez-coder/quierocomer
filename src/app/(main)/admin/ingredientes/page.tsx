@@ -65,7 +65,7 @@ function SuggestionRow({ originalName, existingIngredients, onApprove, onAliasOf
     return (
       <div style={{ padding: "10px 12px", background: "var(--adm-card)", borderRadius: 10, border: "1px solid rgba(244,166,35,0.25)", maxWidth: 320 }}>
         <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", margin: "0 0 8px" }}>
-          <strong style={{ color: "#F4A623" }}>{originalName}</strong> es alias de:
+          Unir <strong style={{ color: "#F4A623" }}>{originalName}</strong> con:
         </p>
         <input value={aliasSearch} onChange={e => setAliasSearch(e.target.value)} placeholder="Buscar ingrediente..." style={{ width: "100%", padding: "7px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none", marginBottom: 6, boxSizing: "border-box" as const }} autoFocus />
         <div style={{ maxHeight: 140, overflowY: "auto", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 8 }}>
