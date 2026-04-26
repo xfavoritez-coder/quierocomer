@@ -72,13 +72,20 @@ export default function ViewSelector({ restaurantId }: Props) {
     }).catch(() => {});
   };
 
+  const [optimisticLang, setOptimisticLang] = useState<Lang | null>(null);
+  const activeLang = optimisticLang || lang;
+
   const handleLangChange = useCallback((next: Lang) => {
-    if (next === lang) return;
+    if (next === lang && !optimisticLang) return;
+    setOptimisticLang(next);
     localStorage.setItem(LANG_STORAGE_KEY, next);
     const params = new URLSearchParams(searchParams.toString());
     params.set("lang", next);
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [lang, pathname, router, searchParams]);
+  }, [lang, optimisticLang, pathname, router, searchParams]);
+
+  // Clear optimistic state when real lang updates
+  useEffect(() => { setOptimisticLang(null); }, [lang]);
 
   return (
     <div ref={ref} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
@@ -141,7 +148,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
             <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
             {SUPPORTED_LANGS.map((l) => {
-              const isActive = lang === l;
+              const isActive = activeLang === l;
               return (
                 <button
                   key={l}
