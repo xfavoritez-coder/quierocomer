@@ -142,138 +142,48 @@ Reglas:
     const isCatalog = parsed.type === "catalog";
 
     if (isCatalog) {
-      // Step 3a: Fetch empty category pages to discover product links
+      // Fetch ALL empty category pages in parallel (single round, ~12s total)
       const emptyCategories = (parsed.categories || []).filter((c: any) => (!c.dishes || c.dishes.length === 0) && c.categoryUrl);
       if (emptyCategories.length > 0) {
-        const BATCH = 6;
-        for (let i = 0; i < emptyCategories.length; i += BATCH) {
-          const batch = emptyCategories.slice(i, i + BATCH);
-          const results = await Promise.allSettled(batch.map(async (cat: any) => {
-            const catUrl = cat.categoryUrl.startsWith("http") ? cat.categoryUrl : `${baseUrl}${cat.categoryUrl.startsWith("/") ? "" : "/"}${cat.categoryUrl}`;
-            const catContent = await fetchPage(catUrl);
-            const catCleaned = cleanContent(catContent).slice(0, 8000);
-            return { catName: cat.name, catType: cat.type, content: catCleaned };
-          }));
-          // Ask Claude to extract product links from these category pages
-          const fetched = results.filter(r => r.status === "fulfilled").map(r => (r as any).value);
-          if (fetched.length === 0) continue;
-          const catBatchContent = fetched.map((f: any, idx: number) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
-          try {
-            const catExtractText = await callClaude(`Extrae los productos de estas páginas de categoría de restaurante.
+        const catResults = await Promise.allSettled(emptyCategories.map(async (cat: any) => {
+          const catUrl = cat.categoryUrl.startsWith("http") ? cat.categoryUrl : `${baseUrl}${cat.categoryUrl.startsWith("/") ? "" : "/"}${cat.categoryUrl}`;
+          const catContent = await fetchPage(catUrl);
+          return { catName: cat.name, catType: cat.type, content: cleanContent(catContent).slice(0, 4000) };
+        }));
+        const fetched = catResults.filter(r => r.status === "fulfilled").map(r => (r as any).value);
 
-${catBatchContent}
+        // Send all category contents to Claude in one call (fits in context)
+        if (fetched.length > 0) {
+          const allCatContent = fetched.map((f: any) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
+          try {
+            const catText = await callClaude(`Extrae TODOS los productos de estas ${fetched.length} categorías de restaurante.
+
+${allCatContent}
 
 Responde con un JSON:
 {
   "categories": [
     {
-      "name": "Nombre de la categoría",
+      "name": "Nombre exacto de la categoría",
       "dishes": [
-        { "name": "Nombre del plato", "description": "Descripción si la tiene, null si no", "price": 8990, "photo": null, "productUrl": "URL de la página del producto", "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }
+        { "name": "Nombre", "description": "Descripción o null", "price": 8990, "photo": "URL foto o null", "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }
       ]
     }
   ]
 }
 
-Precios enteros ($8.990 → 8990). URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000);
-            const catExtractParsed = parseJSON(catExtractText);
-            for (const newCat of (catExtractParsed.categories || [])) {
+Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000);
+            const catParsed = parseJSON(catText);
+            for (const newCat of (catParsed.categories || [])) {
               const existing = parsed.categories.find((c: any) => c.name === newCat.name);
               if (existing) {
                 existing.dishes = [...(existing.dishes || []), ...(newCat.dishes || [])];
               } else {
-                parsed.categories.push({ ...newCat, type: fetched.find((f: any) => f.catName === newCat.name)?.catType || "food" });
+                const typeInfo = fetched.find((f: any) => f.catName === newCat.name);
+                parsed.categories.push({ ...newCat, type: typeInfo?.catType || "food" });
               }
             }
-          } catch { /* continue */ }
-        }
-      }
-
-      // Step 3b: Collect product links that still need sub-page fetching
-      // Skip dishes that already have price+description from category pages
-      const productLinks: { url: string; category: string; name: string }[] = [];
-      for (const cat of (parsed.categories || [])) {
-        for (const dish of (cat.dishes || [])) {
-          if (dish.productUrl && (!dish.price || dish.price === 0) && !dish.description) {
-            const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
-            productLinks.push({ url: absUrl, category: cat.name, name: dish.name });
-          }
-        }
-      }
-
-      // Cap at 60 products to stay within timeout
-      const linksToFetch = productLinks.slice(0, 60);
-
-      if (linksToFetch.length > 0) {
-        // Fetch sub-pages in parallel batches of 10
-        const productPages: { category: string; content: string }[] = [];
-        const BATCH = 10;
-        for (let i = 0; i < linksToFetch.length; i += BATCH) {
-          const batch = linksToFetch.slice(i, i + BATCH);
-          const results = await Promise.allSettled(batch.map(async (link) => {
-            const pg = await fetchPage(link.url);
-            return { category: link.category, content: cleanContent(pg).slice(0, 3000) };
-          }));
-          for (const r of results) {
-            if (r.status === "fulfilled") productPages.push(r.value);
-          }
-        }
-
-        if (productPages.length > 0) {
-          // Extract dish data from product pages — batches of 12 to Claude
-          const EXTRACT_BATCH = 12;
-          const allDishes: { category: string; dish: any }[] = [];
-
-          for (let i = 0; i < productPages.length; i += EXTRACT_BATCH) {
-            const batch = productPages.slice(i, i + EXTRACT_BATCH);
-            const batchContent = batch.map((p, idx) => `--- PRODUCTO ${idx + 1} (Categoría: ${p.category}) ---\n${p.content}`).join("\n\n");
-
-            try {
-              const extractText = await callClaude(`Extrae la información de estos ${batch.length} productos de restaurante.
-
-${batchContent}
-
-Responde con un JSON:
-{
-  "dishes": [
-    {
-      "category": "Categoría original",
-      "name": "Nombre del plato",
-      "description": "Descripción completa, null si no tiene",
-      "price": 8990,
-      "photo": "URL completa de la foto principal, null si no tiene",
-      "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
-      "isSpicy": false,
-      "modifiers": [
-        { "name": "Grupo de opciones", "required": true, "options": [{ "name": "Opción", "price": 0 }] }
-      ]
-    }
-  ]
-}
-
-Precios enteros ($8.990 → 8990). No inventes datos. Responde SOLO el JSON`);
-              const extractParsed = parseJSON(extractText);
-              for (const dish of (extractParsed.dishes || [])) {
-                allDishes.push({ category: dish.category, dish });
-              }
-            } catch { /* continue */ }
-          }
-
-          // Rebuild categories if we got sub-page data
-          if (allDishes.length > 0) {
-            const catMap = new Map<string, any>();
-            for (const cat of (parsed.categories || [])) {
-              catMap.set(cat.name, { name: cat.name, type: cat.type || "food", dishes: [] });
-            }
-            for (const { category, dish } of allDishes) {
-              const cat = catMap.get(category) || { name: category, type: "food", dishes: [] };
-              const { category: _, ...dishData } = dish;
-              cat.dishes.push(dishData);
-              catMap.set(category, cat);
-            }
-            parsed.categories = Array.from(catMap.values());
-          }
-          // If allDishes is empty, keep the original parsed categories (partial data is better than nothing)
+          } catch { /* continue with what we have */ }
         }
       }
     }
