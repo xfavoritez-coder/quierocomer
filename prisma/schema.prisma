@@ -115,6 +115,7 @@ model Ingredient {
   namePt                  String?
   aliases                 String[]
   category                IngredientCategory
+  approved                Boolean            @default(true)
   createdAt               DateTime           @default(now())
   createdByRestaurantId   String?
   createdByRestaurant     Restaurant?        @relation("CreatedIngredients", fields: [createdByRestaurantId], references: [id])

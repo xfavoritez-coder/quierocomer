@@ -15,6 +15,7 @@ interface Ingredient {
   category: string;
   allergens: { id: string; name: string }[];
   aliases?: string[];
+  approved?: boolean;
   createdAt?: string;
   createdByRestaurantId?: string | null;
   createdByRestaurant?: { name: string } | null;
@@ -302,11 +303,11 @@ export default function IngredientesPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  const ownerCreatedCount = ingredients.filter(i => i.createdByRestaurantId).length;
+  const pendingCount = ingredients.filter(i => i.approved === false).length;
   const filtered = ingredients.filter(i => {
     if (search && !norm(i.name).includes(norm(search))) return false;
     if (catFilter !== "all" && i.category !== catFilter) return false;
-    if (ownerFilter && !i.createdByRestaurantId) return false;
+    if (ownerFilter && i.approved !== false) return false;
     return true;
   });
 
@@ -557,15 +558,15 @@ export default function IngredientesPage() {
         )}
       </div>
 
-      {/* Owner filter */}
-      {ownerCreatedCount > 0 && (
+      {/* Pending approval filter */}
+      {pendingCount > 0 && (
         <div style={{ marginBottom: 12 }}>
           <button onClick={() => setOwnerFilter(f => !f)} style={{
             padding: "6px 14px", borderRadius: 8, cursor: "pointer", fontFamily: F, fontSize: "0.74rem", fontWeight: 600,
-            background: ownerFilter ? "rgba(192,132,252,0.15)" : "rgba(255,255,255,0.04)",
-            border: ownerFilter ? "1px solid rgba(192,132,252,0.4)" : "1px solid var(--adm-card-border)",
-            color: ownerFilter ? "#c084fc" : "var(--adm-text3)",
-          }}>Creados por locales ({ownerCreatedCount})</button>
+            background: ownerFilter ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)",
+            border: ownerFilter ? "1px solid rgba(244,166,35,0.4)" : "1px solid var(--adm-card-border)",
+            color: ownerFilter ? "#F4A623" : "var(--adm-text3)",
+          }}>⏳ Pendientes de aprobación ({pendingCount})</button>
         </div>
       )}
 
@@ -612,8 +613,11 @@ export default function IngredientesPage() {
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 500 }}>{i.name}</span>
+                {i.approved === false && (
+                  <span style={{ fontSize: "0.6rem", marginLeft: 6, padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: "#F4A623", fontFamily: F, fontWeight: 600, verticalAlign: "middle" }}>pendiente</span>
+                )}
                 {i.createdByRestaurant && (
-                  <span style={{ fontSize: "0.6rem", marginLeft: 6, padding: "1px 6px", borderRadius: 4, background: "rgba(192,132,252,0.1)", color: "#c084fc", fontFamily: F, fontWeight: 500, verticalAlign: "middle" }}>creado por {i.createdByRestaurant.name}</span>
+                  <span style={{ fontSize: "0.6rem", marginLeft: 4, padding: "1px 6px", borderRadius: 4, background: "rgba(192,132,252,0.1)", color: "#c084fc", fontFamily: F, fontWeight: 500, verticalAlign: "middle" }}>{i.createdByRestaurant.name}</span>
                 )}
                 {i.aliases && i.aliases.length > 0 && (
                   <div style={{ display: "flex", gap: 3, flexWrap: "wrap", marginTop: 3 }}>
@@ -631,6 +635,12 @@ export default function IngredientesPage() {
                 )}
               </div>
               {i.allergens && i.allergens.length > 0 && <span style={{ fontSize: "0.65rem", padding: "2px 6px", borderRadius: 4, background: "rgba(232,85,48,0.08)", color: "#e85530", fontFamily: F }}>⚠️ {i.allergens.map(a => a.name).join(", ")}</span>}
+              {i.approved === false && (
+                <button onClick={async () => {
+                  await fetch("/api/admin/ingredients", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: i.id, approve: true }) });
+                  setIngredients(prev => prev.map(x => x.id === i.id ? { ...x, approved: true } : x));
+                }} style={{ padding: "4px 10px", background: "rgba(74,222,128,0.12)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#16a34a", cursor: "pointer", fontWeight: 600 }}>Aprobar</button>
+              )}
               <button onClick={() => { setEditing(i.id); setEName(i.name); setECat(i.category); }} style={{ padding: "4px 10px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
               <button onClick={() => { setMerging(merging === i.id ? null : i.id); setMergeSearch(""); }} style={{ padding: "4px 10px", background: "rgba(244,166,35,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: GOLD, cursor: "pointer", fontWeight: 600 }}>Es alias de...</button>
               <button onClick={() => remove(i.id)} style={{ padding: "4px 10px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#ef4444", cursor: "pointer" }}>×</button>

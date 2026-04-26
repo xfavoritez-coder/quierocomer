@@ -9,10 +9,25 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q") ?? "";
   const dishId = req.nextUrl.searchParams.get("dishId");
 
+  // Owners see approved + their own unapproved. Superadmin sees all.
+  const nameFilter = q ? { name: { contains: q, mode: "insensitive" as const } } : {};
+  let where: any = nameFilter;
+  if (!isSuperAdmin(req)) {
+    const ownedIds = await getOwnedRestaurantIds(req);
+    const myRestaurantId = ownedIds?.[0];
+    where = {
+      ...nameFilter,
+      OR: [
+        { approved: true },
+        ...(myRestaurantId ? [{ createdByRestaurantId: myRestaurantId }] : []),
+      ],
+    };
+  }
+
   const ingredients = await prisma.ingredient.findMany({
-    where: q ? { name: { contains: q, mode: "insensitive" } } : {},
+    where,
     orderBy: { name: "asc" },
-    select: { id: true, name: true, category: true, aliases: true, createdAt: true, createdByRestaurantId: true, createdByRestaurant: { select: { name: true } }, allergens: { select: { id: true, name: true } } },
+    select: { id: true, name: true, category: true, aliases: true, approved: true, createdAt: true, createdByRestaurantId: true, createdByRestaurant: { select: { name: true } }, allergens: { select: { id: true, name: true } } },
   });
 
   let linkedIds: string[] = [];
@@ -48,10 +63,13 @@ export async function POST(req: NextRequest) {
       if (ownedIds?.length) createdByRestaurantId = ownedIds[0];
     }
 
+    // Superadmin creates approved, owners create unapproved
+    const isApproved = isSuperAdmin(req) && !restaurantId;
+
     const ingredient = await prisma.ingredient.upsert({
       where: { name: cleanName },
       update: aliases.length > 0 ? { aliases: { push: aliases[0] } } : {},
-      create: { name: cleanName, category: category || "OTHER", aliases, ...(createdByRestaurantId ? { createdByRestaurantId } : {}) },
+      create: { name: cleanName, category: category || "OTHER", aliases, approved: isApproved, ...(createdByRestaurantId ? { createdByRestaurantId } : {}) },
     });
     return NextResponse.json({ ingredient });
   } catch (e) {
@@ -122,6 +140,12 @@ export async function PUT(req: NextRequest) {
         where: { id },
         data: { aliases: updated },
       });
+      return NextResponse.json({ ingredient });
+    }
+
+    // Approve ingredient
+    if (body.approve !== undefined) {
+      const ingredient = await prisma.ingredient.update({ where: { id }, data: { approved: body.approve } });
       return NextResponse.json({ ingredient });
     }
 
