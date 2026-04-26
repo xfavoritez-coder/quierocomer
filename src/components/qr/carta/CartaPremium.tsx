@@ -758,7 +758,7 @@ export default function CartaPremium({
             style={{ height: 60, width: 60, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
           >
             <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: (showGenioNudge || showLikeGenioTip) ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-            {hasCompletedGenio && <span style={{ position: "absolute", top: -2, right: -2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
+            {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
         </div>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
