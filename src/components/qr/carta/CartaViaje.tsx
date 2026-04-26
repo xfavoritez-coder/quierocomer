@@ -70,6 +70,7 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp, popularDishIds: popularDishIdsProp }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
+  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
@@ -174,12 +175,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
             style={{
-              width: 58, height: 58,
+              width: 58, height: 58, position: "relative",
               background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(244,166,35,0.3)", boxShadow: "0 0 20px rgba(244,166,35,0.15)",
+              border: hasCompletedGenio ? "1.5px solid rgba(74,222,128,0.5)" : "1px solid rgba(244,166,35,0.3)",
+              boxShadow: hasCompletedGenio ? "0 0 0 3px rgba(74,222,128,0.25), 0 0 20px rgba(244,166,35,0.15)" : "0 0 20px rgba(244,166,35,0.15)",
             }}
           >
             <span style={{ fontSize: "26px", lineHeight: 1 }}>🧞</span>
+            {hasCompletedGenio && <span style={{ position: "absolute", top: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#16a34a", border: "2px solid #0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1 }}>✓</span>}
           </button>
           {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} size={58} waiterPanelActive={showWaiter} />}
           <ViewSelector restaurantId={restaurant.id} />

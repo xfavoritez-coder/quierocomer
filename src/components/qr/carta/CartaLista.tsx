@@ -542,9 +542,10 @@ export default function CartaLista({
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 60, width: 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease" }}
+          style={{ height: 60, width: 60, background: "#F4A623", boxShadow: hasCompletedGenio ? "0 0 0 3px rgba(74,222,128,0.4), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
         >
           <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
+          {hasCompletedGenio && <span style={{ position: "absolute", top: -2, right: -2, width: 18, height: 18, borderRadius: "50%", background: "#16a34a", border: "2px solid #0e0e0e", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1 }}>✓</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         <ViewSelector restaurantId={restaurant.id} />
