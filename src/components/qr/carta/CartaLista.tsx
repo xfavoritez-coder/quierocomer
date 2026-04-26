@@ -500,8 +500,10 @@ export default function CartaLista({
             border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
           }}
         >
-          <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>{t(lang, "dontKnowWhat")} {restaurant.name}?</h3>
-          <p style={{ fontSize: "14px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "genieKnows")}</p>
+          <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "16px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 2px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span>🧞</span> {t(lang, "dontKnowWhat")} {restaurant.name}?
+          </h3>
+          <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "gBannerSub")}</p>
           <button
             onClick={() => setGenioOpen(true)}
             className="active:scale-[0.97] transition-transform"

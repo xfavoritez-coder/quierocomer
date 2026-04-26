@@ -571,24 +571,6 @@ export default function CartaPremium({
 
           return (
             <div key={cat.id}>
-            {index === Math.max(2, Math.floor(categories.length * 0.3)) && !hasCompletedGenio && (
-              <button
-                onClick={() => setGenioOpen(true)}
-                className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
-                style={{
-                  display: "flex", alignItems: "center", gap: 10, width: "calc(100% - 40px)", margin: "20px 20px 4px",
-                  padding: "12px 16px", borderRadius: 12, cursor: "pointer", border: "1px solid rgba(244,166,35,0.2)",
-                  background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-                }}
-              >
-                <span style={{ fontSize: "1.1rem" }}>🧞</span>
-                <span style={{ flex: 1, textAlign: "left" }}>
-                  <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "#0e0e0e", display: "block" }}>{t(lang, "gBannerTitle")}</span>
-                  <span style={{ fontSize: "0.75rem", color: "#8a5a2c" }}>{t(lang, "gBannerSub")}</span>
-                </span>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            )}
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
             {index === Math.max(4, Math.floor(categories.length * 0.8)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 32 }}>
