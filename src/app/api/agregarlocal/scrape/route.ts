@@ -197,7 +197,7 @@ Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Respond
       }
     }
 
-    // Fetch photos from product sub-pages for dishes missing photos (no Claude needed)
+    // Fetch photos from product sub-pages via direct HTML (not Jina — more reliable for images)
     const dishesNeedingPhotos: { dish: any; url: string }[] = [];
     for (const cat of (parsed.categories || [])) {
       for (const dish of (cat.dishes || [])) {
@@ -208,16 +208,23 @@ Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Respond
       }
     }
     if (dishesNeedingPhotos.length > 0) {
-      // Fetch all product pages in parallel, extract image URL with regex
-      const photoResults = await Promise.allSettled(dishesNeedingPhotos.map(async ({ dish, url }) => {
-        const html = await fetchWithTimeout(`https://r.jina.ai/${url}`, 8000);
-        // Extract first real image URL (cloudfront, cdn, or common image hosts)
-        const imgMatch = html.match(/!\[.*?\]\((https?:\/\/[^\s)]+\.(?:webp|jpg|jpeg|png))/i)
-          || html.match(/(https?:\/\/[^\s"']+\.(?:webp|jpg|jpeg|png))/i);
-        if (imgMatch?.[1] && !imgMatch[1].includes("favicon") && !imgMatch[1].includes("logo")) {
-          dish.photo = imgMatch[1];
-        }
-      }));
+      const PHOTO_BATCH = 15;
+      for (let i = 0; i < dishesNeedingPhotos.length; i += PHOTO_BATCH) {
+        const batch = dishesNeedingPhotos.slice(i, i + PHOTO_BATCH);
+        await Promise.allSettled(batch.map(async ({ dish, url }) => {
+          try {
+            const html = await fetchWithTimeout(url, 6000);
+            // Extract from <img src="..."> or og:image meta tag
+            const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i)
+              || html.match(/content="([^"]+)"[^>]*property="og:image"/i);
+            const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
+            const found = ogMatch?.[1] || imgMatch?.[1];
+            if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
+              dish.photo = found;
+            }
+          } catch {}
+        }));
+      }
     }
 
     // Remove empty categories
