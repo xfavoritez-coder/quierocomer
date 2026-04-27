@@ -65,6 +65,8 @@ export default function ViewSelector({ restaurantId }: Props) {
     setOpen(false);
     if (next === view) return;
     const option = VIEW_KEYS.find((o) => o.value === next);
+    const option = VIEW_KEYS.find((o) => o.value === next);
+    showViewTransition(option ? t(lang, option.labelKey as any) : "", next);
     setView(next);
     import("./utils/cartaAnalytics").then(({ trackCartaViewSelected }) => {
       trackCartaViewSelected(restaurantId, next, view);

@@ -167,19 +167,17 @@ export default function CartaRouter(props: Props) {
             style={{
               top: 0, left: 0, right: 0, bottom: 0, minHeight: "100dvh",
               zIndex: 200,
-              background: "#0e0e0e",
+              background: "rgba(14,14,14,0.85)",
+              backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
               opacity: fadeOut ? 0 : 1,
-              transition: "opacity 0.3s ease",
+              transition: "opacity 0.2s ease",
             }}
           >
             <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
-              {overlay.view === "lista" && <List size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
-              {overlay.view === "premium" && <BookOpen size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
-              {overlay.view === "viaje" && <Rocket size={28} color="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />}
+              {overlay.view === "lista" && <List size={24} color="#F4A623" />}
+              {overlay.view === "premium" && <BookOpen size={24} color="#F4A623" />}
+              {overlay.view === "viaje" && <Rocket size={24} color="#F4A623" />}
             </div>
-            <p style={{ color: "white", fontSize: "1.1rem", fontWeight: 600, marginTop: 20 }}>
-              Cargando vista {overlay.label}
-            </p>
           </div>
         )}
 
