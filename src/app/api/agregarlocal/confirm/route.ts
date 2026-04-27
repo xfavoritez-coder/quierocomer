@@ -21,15 +21,13 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
     });
     if (!res.ok) return null;
 
-    const contentType = res.headers.get("content-type") || "";
-    if (!contentType.startsWith("image/")) return null;
-
     const buffer = Buffer.from(await res.arrayBuffer());
     if (buffer.length < 500) return null; // skip tiny/broken images
 
-    // Optimize with sharp
+    // Let sharp validate — content-type is unreliable (some CDNs return application/octet-stream)
     let pipeline = sharp(buffer);
     const meta = await pipeline.metadata();
+    if (!meta.format) return null; // not a valid image
     if ((meta.width && meta.width > 800) || (meta.height && meta.height > 800)) {
       pipeline = pipeline.resize(800, 800, { fit: "inside", withoutEnlargement: true });
     }
