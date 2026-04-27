@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -152,14 +152,13 @@ export default function CartaPremium({
   }, []);
 
   // Genio nudge — pulse the floating button after 20s (once per session)
-  // Show "¿Ordeno la carta según tus gustos?" after 20s on first visit
   useEffect(() => {
     if (hasCompletedGenio) return;
     if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
     const timer = setTimeout(() => {
       sessionStorage.setItem("qc_genio_nudge_shown", "1");
-      setShowLikeGenioTip(true);
-      setTimeout(() => setShowLikeGenioTip(false), 5000);
+      setShowGenioNudge(true);
+      setTimeout(() => setShowGenioNudge(false), 5000);
     }, 20_000);
     return () => clearTimeout(timer);
   }, [hasCompletedGenio]);
@@ -172,7 +171,14 @@ export default function CartaPremium({
   const profileOpen = onProfileOpenProp ? false : profileOpenLocal;
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
-  // Like genio tip removed — nudge now triggers at 20s on first visit instead
+  // After first like, nudge to use Genio (once per session)
+  useEffect(() => {
+    if (!hasNewLikes || hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_like_genio_tip")) return;
+    sessionStorage.setItem("qc_like_genio_tip", "1");
+    setShowLikeGenioTip(true);
+    setTimeout(() => setShowLikeGenioTip(false), 6000);
+  }, [hasNewLikes, hasCompletedGenio]);
 
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
   useEffect(() => {
@@ -197,21 +203,20 @@ export default function CartaPremium({
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
-  const [profileTrigger, setProfileTrigger] = useState(0);
-  const [personalizing, setPersonalizing] = useState(false);
-  const mountedAt = useRef(Date.now());
-
-  // Instant local pMap refresh (no network) — call after Genio/likes
-  const refreshLocalPMap = useCallback(() => {
+  // pMap from localStorage prefs — computed once on client mount (SSR-safe)
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(() => {
+    if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
-    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return null;
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
-    if (result.hasPersonalization) setPMap(result.map);
-  }, [dishes, categories, scoringCtx]);
+    return result.hasPersonalization ? result.map : null;
+  });
+  const [profileTrigger, setProfileTrigger] = useState(0);
+  const [personalizing, setPersonalizing] = useState(false);
+  const mountedAt = useRef(Date.now());
   const recShownRef = useRef(new Set<string>());
 
   // Track search with debounce
@@ -281,14 +286,11 @@ export default function CartaPremium({
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
-    // Only show personalizing modal if no local pMap exists (new user)
-    if (!pMap) setPersonalizing(true);
-    // Safety: never leave personalizing stuck for more than 5s
-    const safety = setTimeout(() => setPersonalizing(false), 5000);
+    setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
       .then((d) => {
-        clearTimeout(safety);
         if (!d.profile) { setPersonalizing(false); return; }
+        // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
           localStorage.setItem("qr_restrictions", JSON.stringify(d.profile.restrictions?.length ? d.profile.restrictions : ["ninguna"]));
@@ -298,7 +300,7 @@ export default function CartaPremium({
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
-      .catch(() => { clearTimeout(safety); setPersonalizing(false); });
+      .catch(() => setPersonalizing(false));
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
@@ -481,6 +483,19 @@ export default function CartaPremium({
         />
       )}
 
+      {personalizing && Date.now() - mountedAt.current > 500 && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
+            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+          }}
+        >
+          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
+          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+        </div>
+      )}
 
       <main style={{ paddingBottom: 55 }}>
         {/* Ofertas section — inside main as first "category" */}
@@ -729,18 +744,18 @@ export default function CartaPremium({
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
         <div style={{ position: "relative" }}>
-          {showLikeGenioTip && (
+          {(showGenioNudge || showLikeGenioTip) && (
             <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
-              ¿Ordeno la carta según tus gustos? 🧞
+              {showLikeGenioTip ? "¿Ordeno la carta según tus gustos?" : "¿Te recomiendo algo?"} 🧞
               <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
             </div>
           )}
           <button
-            onClick={() => { setShowLikeGenioTip(false); setGenioOpen(true); }}
+            onClick={() => { setShowGenioNudge(false); setGenioOpen(true); }}
             className="flex items-center justify-center rounded-full active:scale-95"
-            style={{ height: 60, width: 60, background: "#F4A623", boxShadow: showLikeGenioTip ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
+            style={{ height: 60, width: 60, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
           >
-            <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: showLikeGenioTip ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
+            <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: (showGenioNudge || showLikeGenioTip) ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
             {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
         </div>
@@ -760,12 +775,11 @@ export default function CartaPremium({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); refreshLocalPMap(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
-          allPhotosReferential={(restaurant as any).allPhotosReferential}
         />
       )}
 
@@ -775,10 +789,9 @@ export default function CartaPremium({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
+          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
-            refreshLocalPMap();
             setProfileTrigger((n) => n + 1);
             // Scroll to dish then open detail
             setTimeout(() => {

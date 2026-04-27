@@ -75,31 +75,33 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
-  const [profileTrigger, setProfileTrigger] = useState(0);
-  const [personalizing, setPersonalizing] = useState(false);
-
-  const refreshLocalPMap = useCallback(() => {
+  // pMap from localStorage prefs — computed once on client mount (SSR-safe)
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(() => {
+    if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
-    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return null;
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
-    if (result.hasPersonalization) setPMap(result.map);
-  }, [dishes, categories, scoringCtx]);
+    return result.hasPersonalization ? result.map : null;
+  });
+  const [profileTrigger, setProfileTrigger] = useState(0);
+  const [personalizing, setPersonalizing] = useState(false);
 
   // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
+    setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
       .then((d) => {
-        if (!d.profile) return;
+        if (!d.profile) { setPersonalizing(false); return; }
         const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, d.profile, scoringCtx);
         if (result.hasPersonalization) setPMap(result.map);
+        setPersonalizing(false);
       })
-      .catch(() => {});
+      .catch(() => setPersonalizing(false));
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const grouped = useMemo(() => {
@@ -234,7 +236,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             dishes={dishes}
             categories={categories}
             qrUser={qrUser}
-            onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
+            onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
             onResult={() => {
               setGenioOpen(false);
               setProfileTrigger((n) => n + 1);
@@ -498,7 +500,7 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
       {isNew && <VjNewBadge inline />}
       {hasParaTi && <span onClick={() => handleBadgeClick("parati")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
       {isRec && !hasParaTi && <span onClick={() => handleBadgeClick("rec")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
-      {hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "5px 14px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>🔥 Popular hoy</span>}
+      {hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Popular hoy</span>}
     </span>
   ) : null;
   const accentColor = "#F4A623";

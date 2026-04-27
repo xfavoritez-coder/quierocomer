@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Search, X, User, Sparkles } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -90,18 +90,18 @@ export default function CartaLista({
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
-  const [profileTrigger, setProfileTrigger] = useState(0);
-
-  const refreshLocalPMap = useCallback(() => {
+  // pMap from localStorage prefs — computed once on client mount (SSR-safe)
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(() => {
+    if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
-    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return null;
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
-    if (result.hasPersonalization) setPMap(result.map);
-  }, [dishes, categories, scoringCtx]);
+    return result.hasPersonalization ? result.map : null;
+  });
+  const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
 
   useEffect(() => { onReady?.(); }, [readyKey]);
@@ -557,7 +557,7 @@ export default function CartaLista({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
-          onClose={() => { setGenioOpen(false); refreshLocalPMap(); setProfileTrigger((n) => n + 1); }}
+          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);
             setProfileTrigger((n) => n + 1);
@@ -575,12 +575,11 @@ export default function CartaLista({
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); refreshLocalPMap(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
-          allPhotosReferential={(restaurant as any).allPhotosReferential}
         />
       )}
     </div>
