@@ -17,7 +17,9 @@ export function showViewTransition(label: string, view: CartaView) {
 }
 
 export function hideViewTransition() {
-  _hideOverlay?.();
+  if (_hideOverlay) {
+    _hideOverlay();
+  }
 }
 
 export function useViewTransition() {
@@ -42,7 +44,7 @@ export function useViewTransition() {
     const t = setTimeout(() => {
       setFadeOut(true);
       setTimeout(() => { setOverlay(null); setFadeOut(false); }, 300);
-    }, 2000);
+    }, 600);
     return () => clearTimeout(t);
   }, [overlay]);
 
