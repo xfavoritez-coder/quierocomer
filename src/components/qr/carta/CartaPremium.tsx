@@ -275,8 +275,7 @@ export default function CartaPremium({
       .catch(() => {});
   }, [restaurant.id, qrUserProp]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { onReady?.(); }, []);
+  useEffect(() => { onReady?.(); }, [readyKey]);
 
   // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {

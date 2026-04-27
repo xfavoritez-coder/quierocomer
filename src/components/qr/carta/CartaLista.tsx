@@ -104,8 +104,7 @@ export default function CartaLista({
   }, [dishes, categories, scoringCtx]);
   const [personalizing, setPersonalizing] = useState(false);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { onReady?.(); }, []);
+  useEffect(() => { onReady?.(); }, [readyKey]);
 
   // Background fetch: enrich pMap with likedIngredients for autoRecommended badges
   useEffect(() => {

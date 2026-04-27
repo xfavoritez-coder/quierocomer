@@ -68,8 +68,7 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
 }
 
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp, popularDishIds: popularDishIdsProp }: Props) {
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { onReady?.(); }, []);
+  useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
   const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
