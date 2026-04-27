@@ -8,6 +8,7 @@ interface AdminRestaurant {
   name: string;
   slug: string;
   logoUrl?: string | null;
+  qrToken?: string | null;
 }
 
 export interface AdminSession {
