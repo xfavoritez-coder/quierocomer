@@ -117,7 +117,8 @@ export async function POST(request: Request) {
         if (dish.modifiers?.length > 0) {
           for (let m = 0; m < dish.modifiers.length; m++) {
             const mod = dish.modifiers[m];
-            if (!mod.name || !mod.options?.length) continue;
+            const validOptions = (mod.options || []).filter((opt: any) => opt.name?.trim());
+            if (!mod.name || !validOptions.length) continue;
 
             const template = await prisma.modifierTemplate.create({
               data: {
@@ -135,8 +136,8 @@ export async function POST(request: Request) {
                 maxSelect: 1,
                 position: m,
                 options: {
-                  create: mod.options.map((opt: any, k: number) => ({
-                    name: opt.name,
+                  create: validOptions.map((opt: any, k: number) => ({
+                    name: opt.name.trim(),
                     priceAdjustment: Number(opt.price) || 0,
                     position: k,
                   })),
