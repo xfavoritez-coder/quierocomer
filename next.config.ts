@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "horusvegan.com" },
       { protocol: "https", hostname: "tb-static.uber.com" },
       { protocol: "https", hostname: "images.rappi.cl" },
+      { protocol: "https", hostname: "**.cloudfront.net" },
+      { protocol: "https", hostname: "**.amazonaws.com" },
     ],
     formats: ["image/webp", "image/avif"],
     deviceSizes: [120, 240, 360, 480],
