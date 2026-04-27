@@ -126,9 +126,19 @@ export default function CartaRouter(props: Props) {
     if (isReady) trackViewSelected(view);
   }, [view, isReady]);
 
-  // Child calls this when mounted — dismiss overlay
+  // Child calls this when mounted — dismiss overlay with minimum visible time
+  const overlayShownAt = useRef(0);
+  useEffect(() => {
+    if (overlay) overlayShownAt.current = Date.now();
+  }, [overlay]);
   const onViewReady = useCallback(() => {
-    hideViewTransition();
+    const elapsed = Date.now() - overlayShownAt.current;
+    const minVisible = 400;
+    if (elapsed >= minVisible) {
+      hideViewTransition();
+    } else {
+      setTimeout(() => hideViewTransition(), minVisible - elapsed);
+    }
   }, []);
 
   useEffect(() => {
@@ -174,10 +184,11 @@ export default function CartaRouter(props: Props) {
             }}
           >
             <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
-              {overlay.view === "lista" && <List size={24} color="#F4A623" />}
-              {overlay.view === "premium" && <BookOpen size={24} color="#F4A623" />}
-              {overlay.view === "viaje" && <Rocket size={24} color="#F4A623" />}
+              {overlay.view === "lista" && <List size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
+              {overlay.view === "premium" && <BookOpen size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
+              {overlay.view === "viaje" && <Rocket size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
             </div>
+            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500, marginTop: 14 }}>{overlay.label}</p>
           </div>
         )}
 
