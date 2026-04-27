@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-export const maxDuration = 120;
+export const maxDuration = 300;
 import { prisma } from "@/lib/prisma";
-import { extractIngredientsForDish } from "@/lib/ai/extractIngredients";
+import { supabase } from "@/lib/supabase";
+import sharp from "sharp";
 
 function slugify(name: string): string {
   return name
@@ -9,6 +10,43 @@ function slugify(name: string): string {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+/** Download external image, optimize with sharp, upload to Supabase */
+async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug: string): Promise<string | null> {
+  try {
+    const res = await fetch(externalUrl, {
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+
+    const contentType = res.headers.get("content-type") || "";
+    if (!contentType.startsWith("image/")) return null;
+
+    const buffer = Buffer.from(await res.arrayBuffer());
+    if (buffer.length < 500) return null; // skip tiny/broken images
+
+    // Optimize with sharp
+    let pipeline = sharp(buffer);
+    const meta = await pipeline.metadata();
+    if ((meta.width && meta.width > 800) || (meta.height && meta.height > 800)) {
+      pipeline = pipeline.resize(800, 800, { fit: "inside", withoutEnlargement: true });
+    }
+    const optimized = await pipeline.webp({ quality: 82 }).toBuffer();
+
+    const fileName = `dishes/${restaurantId}-${Date.now()}-${dishSlug.slice(0, 30)}.webp`;
+    const { error } = await supabase.storage
+      .from("fotos")
+      .upload(fileName, optimized, { contentType: "image/webp", upsert: true });
+
+    if (error) return null;
+
+    const { data } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    return data.publicUrl;
+  } catch {
+    return null;
+  }
 }
 
 export async function POST(request: Request) {
@@ -41,7 +79,7 @@ export async function POST(request: Request) {
 
     // Create categories, dishes, and modifiers
     let totalDishes = 0;
-    const createdDishes: { id: string; name: string; description: string | null }[] = [];
+    const createdDishes: { id: string; name: string; description: string | null; externalPhoto: string | null }[] = [];
     for (let i = 0; i < categories.length; i++) {
       const cat = categories[i];
       if (!cat.dishes?.length) continue;
@@ -60,8 +98,6 @@ export async function POST(request: Request) {
         const dish = cat.dishes[j];
         if (!dish.name?.trim()) continue;
 
-        const photos: string[] = dish.photo ? [dish.photo] : [];
-
         const created = await prisma.dish.create({
           data: {
             restaurantId: restaurant.id,
@@ -69,7 +105,7 @@ export async function POST(request: Request) {
             name: dish.name.trim(),
             description: dish.description || null,
             price: Number(dish.price) || 0,
-            photos,
+            photos: [], // photos added after re-upload
             position: j,
             dishDiet: dish.diet || "OMNIVORE",
             isSpicy: dish.isSpicy || false,
@@ -110,8 +146,25 @@ export async function POST(request: Request) {
           }
         }
 
-        createdDishes.push({ id: created.id, name: created.name, description: created.description });
+        createdDishes.push({ id: created.id, name: created.name, description: created.description, externalPhoto: dish.photo || null });
         totalDishes++;
+      }
+    }
+
+    // Re-upload external photos to Supabase in parallel batches
+    const dishesWithPhotos = createdDishes.filter(d => d.externalPhoto);
+    if (dishesWithPhotos.length > 0) {
+      const BATCH = 10;
+      for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
+        const batch = dishesWithPhotos.slice(i, i + BATCH);
+        const results = await Promise.allSettled(batch.map(async (dish) => {
+          const dishSlug = slugify(dish.name);
+          const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
+          if (supabaseUrl) {
+            await prisma.dish.update({ where: { id: dish.id }, data: { photos: [supabaseUrl] } });
+          }
+          return { dishId: dish.id, ok: !!supabaseUrl };
+        }));
       }
     }
 
