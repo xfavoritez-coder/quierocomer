@@ -36,5 +36,15 @@ export function useViewTransition() {
     return () => { _showOverlay = null; _hideOverlay = null; };
   }, []);
 
+  // Safety: auto-dismiss overlay after 2s to prevent stuck state
+  useEffect(() => {
+    if (!overlay) return;
+    const t = setTimeout(() => {
+      setFadeOut(true);
+      setTimeout(() => { setOverlay(null); setFadeOut(false); }, 300);
+    }, 2000);
+    return () => clearTimeout(t);
+  }, [overlay]);
+
   return { overlay, fadeOut };
 }
