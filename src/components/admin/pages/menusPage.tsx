@@ -301,6 +301,7 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [ePhotoRef, setEPhotoRef] = useState(false);
   const [eFlavorTags, setEFlavorTags] = useState<string[]>([]);
   const [eCategoryId, setECategoryId] = useState("");
   const [ingListOpen, setIngListOpen] = useState(false);
@@ -368,6 +369,7 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setEPhotoRef((d as any).isPhotoReferential || false);
     setEFlavorTags((d as any).flavorTags || []);
     setECategoryId(d.categoryId);
     setEPhotoUrl(d.photos?.[0] || "");
@@ -403,6 +405,7 @@ export default function AdminMenus() {
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
+      isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
     };
@@ -595,6 +598,9 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
+                  </button>
+                  <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ padding: "6px 12px", borderRadius: 8, border: ePhotoRef ? "1.5px solid rgba(127,191,220,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: ePhotoRef ? "rgba(127,191,220,0.1)" : "transparent", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
+                    📷 Foto referencial
                   </button>
                 </div>
               </div>

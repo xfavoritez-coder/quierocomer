@@ -107,6 +107,7 @@ export async function POST(request: Request) {
             position: j,
             dishDiet: dish.diet || "OMNIVORE",
             isSpicy: dish.isSpicy || false,
+            isPhotoReferential: dish._unsplash || false,
             isActive: true,
           },
         });

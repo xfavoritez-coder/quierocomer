@@ -590,6 +590,7 @@ export default function CartaLista({
           personalizationMap={pMap}
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
+          allPhotosReferential={(restaurant as any).allPhotosReferential}
         />
       )}
     </div>

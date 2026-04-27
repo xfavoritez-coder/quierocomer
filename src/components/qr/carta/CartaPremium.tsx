@@ -291,11 +291,14 @@ export default function CartaPremium({
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
-    setPersonalizing(true);
+    // Only show personalizing modal if no local pMap exists (new user)
+    if (!pMap) setPersonalizing(true);
+    // Safety: never leave personalizing stuck for more than 5s
+    const safety = setTimeout(() => setPersonalizing(false), 5000);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then(r => r.json())
       .then((d) => {
+        clearTimeout(safety);
         if (!d.profile) { setPersonalizing(false); return; }
-        // Restore preferences to localStorage if lost (cache cleared, new browser, guest without account)
         if (!localStorage.getItem("qr_diet") && d.profile.dietType) {
           localStorage.setItem("qr_diet", d.profile.dietType);
           localStorage.setItem("qr_restrictions", JSON.stringify(d.profile.restrictions?.length ? d.profile.restrictions : ["ninguna"]));
@@ -305,7 +308,7 @@ export default function CartaPremium({
         if (result.hasPersonalization) setPMap(result.map);
         setPersonalizing(false);
       })
-      .catch(() => setPersonalizing(false));
+      .catch(() => { clearTimeout(safety); setPersonalizing(false); });
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
@@ -785,6 +788,7 @@ export default function CartaPremium({
           personalizationMap={pMap}
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
+          allPhotosReferential={(restaurant as any).allPhotosReferential}
         />
       )}
 

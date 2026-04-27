@@ -27,6 +27,7 @@ interface DishDetailProps {
   personalizationMap?: Map<string, PersonalizationEntry> | null;
   restaurantName?: string;
   popularDishIds?: Set<string>;
+  allPhotosReferential?: boolean;
 }
 
 export default function DishDetail({
@@ -218,7 +219,7 @@ export default function DishDetail({
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
-  personalizationEntry, restaurantName, restaurantAllergens, popularDishIds,
+  personalizationEntry, restaurantName, restaurantAllergens, popularDishIds, allPhotosReferential,
 }: {
   dish: Dish; index: number; total: number;
   categories: Category[]; restaurantId: string;
@@ -231,6 +232,7 @@ function DishSlide({
   restaurantName?: string;
   restaurantAllergens?: Set<string>;
   popularDishIds?: Set<string>;
+  allPhotosReferential?: boolean;
 }) {
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
@@ -309,6 +311,13 @@ function DishSlide({
 
       {/* Bottom gradient — 60% height */}
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.5) 65%, transparent 100%)", zIndex: 4 }} />
+
+      {/* Referential photo notice */}
+      {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
+        <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 6, display: "flex", justifyContent: "flex-end", padding: "0 16px 36px", pointerEvents: "none" }}>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontWeight: 400, letterSpacing: "0.02em" }}>Imagen referencial</span>
+        </div>
+      )}
 
       {/* Content overlay */}
       <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>

@@ -402,6 +402,7 @@ model Restaurant {
   website     String?
   whatsapp    String?     // formato +56 9 1234 5678
   scheduleJson Json?      // { "lun": "12:00-23:00", ..., "dom": "closed" }
+  allPhotosReferential Boolean    @default(false)
   cartaTheme  CartaTheme @default(BASIC)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   waiterPanelActive  Boolean    @default(false)
@@ -498,6 +499,7 @@ model Dish {
   dishDiet       DishDietType @default(OMNIVORE)
   isSpicy        Boolean      @default(false)
   isHighMargin   Boolean      @default(false)
+  isPhotoReferential Boolean  @default(false)
   isFeaturedAuto Boolean      @default(false)
   flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
   position       Int

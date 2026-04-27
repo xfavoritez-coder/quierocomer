@@ -103,15 +103,13 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
   useEffect(() => {
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
-    setPersonalizing(true);
     fetch(`/api/qr/profile?restaurantId=${restaurant.id}&guestId=${guestId}`).then((r) => r.json())
       .then((d) => {
-        if (!d.profile) { setPersonalizing(false); return; }
+        if (!d.profile) return;
         const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, d.profile, scoringCtx);
         if (result.hasPersonalization) setPMap(result.map);
-        setPersonalizing(false);
       })
-      .catch(() => setPersonalizing(false));
+      .catch(() => {});
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const grouped = useMemo(() => {
