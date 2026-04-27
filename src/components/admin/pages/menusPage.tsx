@@ -549,15 +549,27 @@ export default function AdminMenus() {
                       if (!file) return;
                       setPhotoUploading(true);
                       try {
+                        // Compress client-side before upload (Vercel 4.5MB body limit)
+                        const img = new Image();
+                        const url = URL.createObjectURL(file);
+                        await new Promise<void>((resolve) => { img.onload = () => resolve(); img.src = url; });
+                        const canvas = document.createElement("canvas");
+                        const MAX = 1200;
+                        let w = img.width, h = img.height;
+                        if (w > MAX || h > MAX) { const r = Math.min(MAX / w, MAX / h); w = Math.round(w * r); h = Math.round(h * r); }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                        URL.revokeObjectURL(url);
+                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.8));
                         const fd = new FormData();
-                        fd.append("file", file);
+                        fd.append("file", blob, "photo.jpg");
                         fd.append("localId", selectedRestaurantId || "");
                         fd.append("dishName", eName);
                         const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
                         const data = await res.json();
                         if (data.url) setEPhotoUrl(data.url);
                         else alert(data.error || "Error al subir foto");
-                      } catch (err) { alert("Error de conexión al subir foto"); }
+                      } catch (err) { alert("Error al subir foto"); }
                       setPhotoUploading(false);
                     }} />
                   </label>
