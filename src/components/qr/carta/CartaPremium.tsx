@@ -488,7 +488,7 @@ export default function CartaPremium({
         />
       )}
 
-      {personalizing && Date.now() - mountedAt.current > 500 && (
+      {personalizing && !pMap && Date.now() - mountedAt.current > 500 && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
