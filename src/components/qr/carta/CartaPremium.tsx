@@ -152,7 +152,17 @@ export default function CartaPremium({
   }, []);
 
   // Genio nudge — pulse the floating button after 20s (once per session)
-  // Genio idle nudge removed — was "¿Te recomiendo algo?" after 20s
+  // Show "¿Ordeno la carta según tus gustos?" after 20s on first visit
+  useEffect(() => {
+    if (hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
+    const timer = setTimeout(() => {
+      sessionStorage.setItem("qc_genio_nudge_shown", "1");
+      setShowLikeGenioTip(true);
+      setTimeout(() => setShowLikeGenioTip(false), 5000);
+    }, 20_000);
+    return () => clearTimeout(timer);
+  }, [hasCompletedGenio]);
 
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -162,14 +172,7 @@ export default function CartaPremium({
   const profileOpen = onProfileOpenProp ? false : profileOpenLocal;
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
 
-  // After first like, nudge to use Genio (once per session)
-  useEffect(() => {
-    if (!hasNewLikes || hasCompletedGenio) return;
-    if (sessionStorage.getItem("qc_like_genio_tip")) return;
-    sessionStorage.setItem("qc_like_genio_tip", "1");
-    setShowLikeGenioTip(true);
-    setTimeout(() => setShowLikeGenioTip(false), 6000);
-  }, [hasNewLikes, hasCompletedGenio]);
+  // Like genio tip removed — nudge now triggers at 20s on first visit instead
 
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
   useEffect(() => {
