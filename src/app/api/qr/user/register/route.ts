@@ -64,36 +64,7 @@ export async function POST(request: Request) {
       select: { name: true },
     });
 
-    // Send verification email
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://quierocomer.cl"}/api/qr/user/verify?token=${token.token}`;
-      try {
-        await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
-          body: JSON.stringify({
-            from: process.env.FROM_EMAIL ? `QuieroComer <${process.env.FROM_EMAIL}>` : "QuieroComer <onboarding@resend.dev>",
-            to: email,
-            subject: `${name || ""}, confirma para recibir tu regalo 🎂`,
-            html: adminEmailTemplate(`
-<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">¡Último paso, ${name || ""}! 🎂</h2>
-<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:24px;text-align:center">
-  Confirma tu correo para recibir tu regalo de cumpleaños en <strong style="color:#FFD600">${restaurant?.name || "tu restaurante favorito"}</strong>
-</p>
-<div style="text-align:center;margin-bottom:20px">
-  <a href="${verifyUrl}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
-    Confirmar mi correo
-  </a>
-</div>
-<p style="color:#5a4028;font-size:12px;text-align:center;margin-bottom:0">Este link expira en 7 días</p>`),
-          }),
-          signal: AbortSignal.timeout(10000),
-        });
-      } catch (e) {
-        console.error("Email send error:", e);
-      }
-    }
+    // Verification email disabled — users register without email confirmation
 
     // Record interaction
     await prisma.qRUserInteraction.create({
