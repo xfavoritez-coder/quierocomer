@@ -97,23 +97,32 @@ export async function POST(request: Request) {
     const isCatalog = catHeaders.length >= 4 && emptySections > catHeaders.length * 0.4 && hasProductLinks;
 
     let parsed: any;
+    let fetchedCatData: any[] = [];
 
     if (isCatalog) {
       // FAST PATH: skip first Claude call, detect categories from markdown, fetch category pages directly
       const nameMatch = cleaned.match(/^#\s+(.+)/m);
       const logoMatch = cleaned.match(/og:image[^>]*content="([^"]+)"/i) || cleaned.match(/!\[.*?logo.*?\]\((https?:\/\/[^\s)]+)\)/i);
-      const skipCats = new Set(["Destacados", "Resultados de la búsqueda", "destacados"]);
-      const categories = catHeaders.filter(n => !skipCats.has(n)).map(name => {
+      const skipCats = new Set(["Destacados", "Resultados de la búsqueda", "destacados", "resultados de la búsqueda"]);
+      // Filter out page titles / non-category headers (contain "menú", "pide", "precios", etc.)
+      const titlePatterns = /menú|menu|pide|precio|teléfono|pedido|delivery|dirección|horario|información/i;
+      const categories = catHeaders.filter(n => !skipCats.has(n) && !titlePatterns.test(n)).map(name => {
         const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
         return { name, type: "food" as const, slug, categoryUrl: `${baseUrl}/${slug}`, dishes: [] as any[] };
       });
 
       // Fetch all category pages in parallel
       const catResults = await Promise.allSettled(categories.map(async (cat) => {
-        const content = await fetchPage(cat.categoryUrl);
-        return { catName: cat.name, content: cleanContent(content).slice(0, 4000) };
+        const rawContent = await fetchPage(cat.categoryUrl);
+        const content = cleanContent(rawContent);
+        // Extract product links from category page
+        const productLinks = [...content.matchAll(/\]\((https?:\/\/[^\s)]+\/[^\s/)]+)\)/g)]
+          .map(m => m[1])
+          .filter(u => u.includes(baseUrl) && u !== baseUrl + "/");
+        return { catName: cat.name, content: content.slice(0, 4000), productLinks: [...new Set(productLinks)] };
       }));
       const fetched = catResults.filter(r => r.status === "fulfilled").map(r => (r as any).value).filter((f: any) => f.content.length > 50);
+      fetchedCatData = fetched;
 
       // Send to Claude in parallel batches
       if (fetched.length > 0) {
@@ -164,32 +173,59 @@ Precios enteros ($8.990→8990). Fotos absolutas con ${baseUrl}. SOLO JSON.`);
       parsed.type = "inline";
     }
 
-    // Fetch photos from product sub-pages via direct HTML — only if enough time budget
-    const elapsed = Date.now() - startTime;
-    const TIME_BUDGET = 80000; // leave 40s buffer for response
-    const dishesNeedingPhotos: { dish: any; url: string }[] = [];
-    for (const cat of (parsed.categories || [])) {
-      for (const dish of (cat.dishes || [])) {
-        if (!dish.photo && dish.productUrl) {
-          const absUrl = dish.productUrl.startsWith("http") ? dish.productUrl : `${baseUrl}${dish.productUrl.startsWith("/") ? "" : "/"}${dish.productUrl}`;
-          dishesNeedingPhotos.push({ dish, url: absUrl });
+    // Fetch photos from product sub-pages via direct HTML
+    if (isCatalog && fetchedCatData.length > 0) {
+      // Build map: product URL → dish name (from category page links)
+      const allProductUrls = new Map<string, string[]>(); // url → [catName]
+      for (const f of fetchedCatData) {
+        for (const link of (f.productLinks || [])) {
+          if (!allProductUrls.has(link)) allProductUrls.set(link, []);
+          allProductUrls.get(link)!.push(f.catName);
         }
       }
-    }
-    if (dishesNeedingPhotos.length > 0 && elapsed < TIME_BUDGET) {
-      // All in one parallel round with tight timeout
-      await Promise.allSettled(dishesNeedingPhotos.map(async ({ dish, url }) => {
-        try {
-          const html = await fetchWithTimeout(url, 5000);
-          const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i)
-            || html.match(/content="([^"]+)"[^>]*property="og:image"/i);
-          const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
-          const found = ogMatch?.[1] || imgMatch?.[1];
-          if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
-            dish.photo = found;
+
+      // Fetch all product pages in parallel (direct HTML, no Jina — 10s timeout)
+      const photoMap = new Map<string, string>(); // product URL → photo URL
+      const urls = [...allProductUrls.keys()];
+      const PHOTO_BATCH = 20;
+      for (let pi = 0; pi < urls.length; pi += PHOTO_BATCH) {
+        const batch = urls.slice(pi, pi + PHOTO_BATCH);
+        await Promise.allSettled(batch.map(async (productUrl) => {
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 10000);
+            const res = await fetch(productUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" } });
+            const html = await res.text();
+            clearTimeout(timer);
+            const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
+            const found = imgMatch?.[1];
+            if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
+              photoMap.set(productUrl, found);
+            }
+          } catch {}
+        }));
+      }
+
+      // Match photos to dishes by name (product URL slug ≈ dish name slug)
+      for (const cat of (parsed.categories || [])) {
+        for (const dish of (cat.dishes || [])) {
+          if (dish.photo) continue;
+          // Try productUrl first
+          if (dish.productUrl && photoMap.has(dish.productUrl)) {
+            dish.photo = photoMap.get(dish.productUrl);
+            continue;
           }
-        } catch {}
-      }));
+          // Match by dish name slug in URL
+          const dishSlug = (dish.name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          if (dishSlug.length < 2) continue;
+          for (const [pUrl, pPhoto] of photoMap) {
+            if (pUrl.toLowerCase().includes(dishSlug) || dishSlug.includes(pUrl.split("/").pop()?.toLowerCase() || "___")) {
+              dish.photo = pPhoto;
+              break;
+            }
+          }
+        }
+      }
     }
 
     // Remove empty categories
