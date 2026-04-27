@@ -152,16 +152,7 @@ export default function CartaPremium({
   }, []);
 
   // Genio nudge — pulse the floating button after 20s (once per session)
-  useEffect(() => {
-    if (hasCompletedGenio) return;
-    if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
-    const timer = setTimeout(() => {
-      sessionStorage.setItem("qc_genio_nudge_shown", "1");
-      setShowGenioNudge(true);
-      setTimeout(() => setShowGenioNudge(false), 5000);
-    }, 20_000);
-    return () => clearTimeout(timer);
-  }, [hasCompletedGenio]);
+  // Genio idle nudge removed — was "¿Te recomiendo algo?" after 20s
 
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -755,12 +746,18 @@ export default function CartaPremium({
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
         <div style={{ position: "relative" }}>
+          {showLikeGenioTip && (
+            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 8, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
+              ¿Ordeno la carta según tus gustos? 🧞
+              <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
+            </div>
+          )}
           <button
-            onClick={() => { setGenioOpen(true); }}
+            onClick={() => { setShowLikeGenioTip(false); setGenioOpen(true); }}
             className="flex items-center justify-center rounded-full active:scale-95"
-            style={{ height: 60, width: 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
+            style={{ height: 60, width: 60, background: "#F4A623", boxShadow: showLikeGenioTip ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "box-shadow 0.3s ease", position: "relative" }}
           >
-            <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
+            <span style={{ fontSize: "26px", lineHeight: 1, flexShrink: 0, animation: showLikeGenioTip ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
             {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
         </div>
