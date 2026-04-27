@@ -198,17 +198,6 @@ export default function CartaPremium({
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
   const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
-
-  // Compute pMap from localStorage on mount (client-only, avoids hydration mismatch)
-  useEffect(() => {
-    const diet = localStorage.getItem("qr_diet");
-    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
-    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
-    const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
-    const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
-    if (result.hasPersonalization) setPMap(result.map);
-  }, []);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
   const mountedAt = useRef(Date.now());
@@ -492,19 +481,6 @@ export default function CartaPremium({
         />
       )}
 
-      {personalizing && !pMap && Date.now() - mountedAt.current > 500 && (
-        <div
-          className="font-[family-name:var(--font-dm)]"
-          style={{
-            position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
-            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-          }}
-        >
-          <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
-        </div>
-      )}
 
       <main style={{ paddingBottom: 55 }}>
         {/* Ofertas section — inside main as first "category" */}
