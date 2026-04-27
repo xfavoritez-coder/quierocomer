@@ -72,6 +72,7 @@ function parseJSON(text: string): any {
 export async function POST(request: Request) {
   try {
     if (!ANTHROPIC_API_KEY) return NextResponse.json({ error: "API not configured" }, { status: 500 });
+    const startTime = Date.now();
 
     const { url, name: providedName } = await request.json();
     if (!url?.trim()) return NextResponse.json({ error: "URL requerida" }, { status: 400 });
@@ -87,117 +88,85 @@ export async function POST(request: Request) {
     }
 
     const cleaned = cleanContent(pageContent);
-    const content = cleaned.length > 20000 ? cleaned.slice(0, 20000) : cleaned;
 
-    // Step 2: Claude extracts categories + detects inline vs catalog
-    const step1Prompt = `Analiza esta página de menú de restaurante y extrae la información.
+    // Detect catalog vs inline from markdown structure (no Claude needed)
+    const catHeaders = [...cleaned.matchAll(/^#{1,2}\s+(.+)$/gm)].map(m => m[1].trim()).filter(n => n.length > 1 && n.length < 60);
+    const hasProductLinks = /\]\(https?:\/\/[^\s)]+\/[^\s/)]+\)/i.test(cleaned);
+    const sections = cleaned.split(/^#{1,2}\s+/gm).slice(1);
+    const emptySections = sections.filter(s => !s.includes("$") && s.trim().length < 100).length;
+    const isCatalog = catHeaders.length >= 4 && emptySections > catHeaders.length * 0.4 && hasProductLinks;
 
-URL: ${url}
-${providedName ? `Nombre del local: ${providedName}` : ""}
-
-Contenido:
-${content}
-
-IMPORTANTE: Hay dos tipos de páginas de menú:
-1. "inline": todos los platos con precio y descripción están en esta página
-2. "catalog": solo muestra categorías con links a páginas individuales de cada producto
-
-Responde con un JSON:
-{
-  "restaurantName": "Nombre del restaurante",
-  "logo": "URL del logo si lo encuentras, null si no",
-  "type": "inline" | "catalog",
-  "categories": [
-    {
-      "name": "Nombre de la categoría",
-      "type": "food" | "drink" | "dessert",
-      "dishes": [
-        {
-          "name": "Nombre del plato",
-          "description": "Descripción si la tiene, null si no",
-          "price": 8990,
-          "photo": "URL completa de la foto, null si no tiene",
-          "diet": "OMNIVORE" | "VEGAN" | "VEGETARIAN",
-          "isSpicy": false,
-          "modifiers": [],
-          "productUrl": "URL de la página individual del producto si es catálogo, null si es inline"
-        }
-      ]
-    }
-  ]
-}
-
-Reglas:
-- type "catalog": categorías con links de productos sin descripciones completas. Incluye productUrl
-- type "inline": platos con toda su info visible. productUrl = null
-- Para categorías vacías (sin platos visibles pero que aparecen como secciones): incluye la categoría con dishes vacío y agrega un campo "categoryUrl" con la URL probable de esa sección (basándote en el patrón de URLs de la página, ej: si la URL base es example.com/products y la categoría es "California Roll", la URL podría ser example.com/california-roll)
-- Precios: enteros sin puntos ni símbolos. $8.990 → 8990
-- Fotos: URL completa. Relativas → absolutas con ${baseUrl}
-- No inventes datos. Responde SOLO el JSON`;
-
-    const step1Text = await callClaude(step1Prompt);
-    let parsed = parseJSON(step1Text);
-
-    // Step 3: For catalog sites, fetch product sub-pages
-    const isCatalog = parsed.type === "catalog";
+    let parsed: any;
 
     if (isCatalog) {
-      // Fetch ALL empty category pages in parallel (single round, ~12s total)
-      const emptyCategories = (parsed.categories || []).filter((c: any) => (!c.dishes || c.dishes.length === 0) && c.categoryUrl);
-      if (emptyCategories.length > 0) {
-        const catResults = await Promise.allSettled(emptyCategories.map(async (cat: any) => {
-          const catUrl = cat.categoryUrl.startsWith("http") ? cat.categoryUrl : `${baseUrl}${cat.categoryUrl.startsWith("/") ? "" : "/"}${cat.categoryUrl}`;
-          const catContent = await fetchPage(catUrl);
-          return { catName: cat.name, catType: cat.type, content: cleanContent(catContent).slice(0, 4000) };
-        }));
-        const fetched = catResults.filter(r => r.status === "fulfilled").map(r => (r as any).value);
+      // FAST PATH: skip first Claude call, detect categories from markdown, fetch category pages directly
+      const nameMatch = cleaned.match(/^#\s+(.+)/m);
+      const logoMatch = cleaned.match(/og:image[^>]*content="([^"]+)"/i) || cleaned.match(/!\[.*?logo.*?\]\((https?:\/\/[^\s)]+)\)/i);
+      const skipCats = new Set(["Destacados", "Resultados de la búsqueda", "destacados"]);
+      const categories = catHeaders.filter(n => !skipCats.has(n)).map(name => {
+        const slug = name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+        return { name, type: "food" as const, slug, categoryUrl: `${baseUrl}/${slug}`, dishes: [] as any[] };
+      });
 
-        // Send category contents to Claude in parallel batches (~8 cats each)
-        if (fetched.length > 0) {
-          const CAT_BATCH = 8;
-          const claudePromises = [];
-          for (let ci = 0; ci < fetched.length; ci += CAT_BATCH) {
-            const batch = fetched.slice(ci, ci + CAT_BATCH);
-            const batchContent = batch.map((f: any) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
-            claudePromises.push(
-              callClaude(`Extrae TODOS los productos de estas ${batch.length} categorías de restaurante.
+      // Fetch all category pages in parallel
+      const catResults = await Promise.allSettled(categories.map(async (cat) => {
+        const content = await fetchPage(cat.categoryUrl);
+        return { catName: cat.name, content: cleanContent(content).slice(0, 4000) };
+      }));
+      const fetched = catResults.filter(r => r.status === "fulfilled").map(r => (r as any).value).filter((f: any) => f.content.length > 50);
 
-${batchContent}
+      // Send to Claude in parallel batches
+      if (fetched.length > 0) {
+        const CAT_BATCH = 10;
+        const claudePromises = [];
+        for (let ci = 0; ci < fetched.length; ci += CAT_BATCH) {
+          const batch = fetched.slice(ci, ci + CAT_BATCH);
+          const batchContent = batch.map((f: any) => `--- CATEGORÍA: ${f.catName} ---\n${f.content}`).join("\n\n");
+          claudePromises.push(
+            callClaude(`Extrae TODOS los productos de estas ${batch.length} categorías de restaurante. Responde con JSON:
+{"categories":[{"name":"Nombre categoría","dishes":[{"name":"Nombre","description":"Desc o null","price":8990,"photo":null,"productUrl":"URL producto o null","diet":"OMNIVORE","isSpicy":false,"modifiers":[]}]}]}
+Precios enteros ($8.990→8990). URLs absolutas con ${baseUrl}. SOLO JSON.
 
-Responde con un JSON:
-{
-  "categories": [
-    {
-      "name": "Nombre exacto de la categoría",
-      "dishes": [
-        { "name": "Nombre", "description": "Descripción o null", "price": 8990, "photo": "URL foto o null", "diet": "OMNIVORE", "isSpicy": false, "modifiers": [] }
-      ]
-    }
-  ]
-}
-
-Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Responde SOLO el JSON`, 16000)
-                .then(text => parseJSON(text))
-                .catch(() => ({ categories: [] }))
-            );
-          }
-          const claudeResults = await Promise.all(claudePromises);
-          for (const catParsed of claudeResults) {
-            for (const newCat of (catParsed.categories || [])) {
-              const existing = parsed.categories.find((c: any) => c.name === newCat.name);
-              if (existing) {
-                existing.dishes = [...(existing.dishes || []), ...(newCat.dishes || [])];
-              } else {
-                const typeInfo = fetched.find((f: any) => f.catName === newCat.name);
-                parsed.categories.push({ ...newCat, type: typeInfo?.catType || "food" });
-              }
-            }
+${batchContent}`, 16000)
+              .then(text => parseJSON(text))
+              .catch(() => ({ categories: [] }))
+          );
+        }
+        const results = await Promise.all(claudePromises);
+        for (const res of results) {
+          for (const newCat of (res.categories || [])) {
+            const existing = categories.find(c => c.name === newCat.name);
+            if (existing) existing.dishes = newCat.dishes || [];
+            else categories.push({ ...newCat, type: "food", slug: "", categoryUrl: "", dishes: newCat.dishes || [] });
           }
         }
       }
+
+      parsed = {
+        restaurantName: nameMatch?.[1]?.replace(/ - .+$/, "").trim() || providedName || "Sin nombre",
+        logo: logoMatch?.[1] || null,
+        type: "catalog",
+        categories,
+      };
+    } else {
+      // INLINE: use Claude to extract everything from the page
+      const content = cleaned.length > 20000 ? cleaned.slice(0, 20000) : cleaned;
+      const step1Text = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
+URL: ${url}
+${providedName ? `Nombre: ${providedName}` : ""}
+Contenido:
+${content}
+
+Responde con JSON:
+{"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","diet":"OMNIVORE","isSpicy":false,"modifiers":[]}]}]}
+Precios enteros ($8.990→8990). Fotos absolutas con ${baseUrl}. SOLO JSON.`);
+      parsed = parseJSON(step1Text);
+      parsed.type = "inline";
     }
 
-    // Fetch photos from product sub-pages via direct HTML (not Jina — more reliable for images)
+    // Fetch photos from product sub-pages via direct HTML — only if enough time budget
+    const elapsed = Date.now() - startTime;
+    const TIME_BUDGET = 80000; // leave 40s buffer for response
     const dishesNeedingPhotos: { dish: any; url: string }[] = [];
     for (const cat of (parsed.categories || [])) {
       for (const dish of (cat.dishes || [])) {
@@ -207,24 +176,20 @@ Precios enteros ($8.990 → 8990). Fotos: URLs absolutas con ${baseUrl}. Respond
         }
       }
     }
-    if (dishesNeedingPhotos.length > 0) {
-      const PHOTO_BATCH = 15;
-      for (let i = 0; i < dishesNeedingPhotos.length; i += PHOTO_BATCH) {
-        const batch = dishesNeedingPhotos.slice(i, i + PHOTO_BATCH);
-        await Promise.allSettled(batch.map(async ({ dish, url }) => {
-          try {
-            const html = await fetchWithTimeout(url, 6000);
-            // Extract from <img src="..."> or og:image meta tag
-            const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i)
-              || html.match(/content="([^"]+)"[^>]*property="og:image"/i);
-            const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
-            const found = ogMatch?.[1] || imgMatch?.[1];
-            if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
-              dish.photo = found;
-            }
-          } catch {}
-        }));
-      }
+    if (dishesNeedingPhotos.length > 0 && elapsed < TIME_BUDGET) {
+      // All in one parallel round with tight timeout
+      await Promise.allSettled(dishesNeedingPhotos.map(async ({ dish, url }) => {
+        try {
+          const html = await fetchWithTimeout(url, 5000);
+          const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i)
+            || html.match(/content="([^"]+)"[^>]*property="og:image"/i);
+          const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
+          const found = ogMatch?.[1] || imgMatch?.[1];
+          if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
+            dish.photo = found;
+          }
+        } catch {}
+      }));
     }
 
     // Remove empty categories
