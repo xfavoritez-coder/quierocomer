@@ -188,7 +188,7 @@ export default function CartaRouter(props: Props) {
               {overlay.view === "premium" && <BookOpen size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
               {overlay.view === "viaje" && <Rocket size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
             </div>
-            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500, marginTop: 14 }}>{overlay.label}</p>
+            <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500, marginTop: 14 }}>Vista {overlay.label}</p>
           </div>
         )}
 
