@@ -94,13 +94,16 @@ export default async function CartaPage({
     orderBy: { createdAt: "desc" },
   }),
   ]);
-  const promoDishIds = activePromos.flatMap(p => p.dishIds);
+  // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
+  const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+  const filteredPromos = activePromos.filter(p => !p.daysOfWeek?.length || p.daysOfWeek.includes(todayDow));
+  const promoDishIds = filteredPromos.flatMap(p => p.dishIds);
   const promoDishes = promoDishIds.length ? await prisma.dish.findMany({
     where: { id: { in: promoDishIds } },
     select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true },
   }) : [];
   const promoDishMap = Object.fromEntries(promoDishes.map(d => [d.id, d]));
-  const marketingPromos = activePromos.map(p => ({
+  const marketingPromos = filteredPromos.map(p => ({
     id: p.id, name: p.name, description: p.description,
     promoType: p.promoType, imageUrl: p.imageUrl,
     discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
