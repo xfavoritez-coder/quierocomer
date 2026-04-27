@@ -548,13 +548,16 @@ export default function AdminMenus() {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setPhotoUploading(true);
-                      const fd = new FormData();
-                      fd.append("file", file);
-                      fd.append("localId", selectedRestaurantId || "");
-                      fd.append("dishName", eName);
-                      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
-                      const data = await res.json();
-                      if (data.url) setEPhotoUrl(data.url);
+                      try {
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        fd.append("localId", selectedRestaurantId || "");
+                        fd.append("dishName", eName);
+                        const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                        const data = await res.json();
+                        if (data.url) setEPhotoUrl(data.url);
+                        else alert(data.error || "Error al subir foto");
+                      } catch (err) { alert("Error de conexión al subir foto"); }
                       setPhotoUploading(false);
                     }} />
                   </label>

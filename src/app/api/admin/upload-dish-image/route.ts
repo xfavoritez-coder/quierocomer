@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
 
     if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-    const allowed = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowed.includes(file.type)) {
-      return NextResponse.json({ error: "Solo JPG, PNG o WebP" }, { status: 400 });
+    // Accept any image type — sharp will validate and convert
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "Solo archivos de imagen" }, { status: 400 });
     }
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json({ error: "Máximo 10MB" }, { status: 400 });
