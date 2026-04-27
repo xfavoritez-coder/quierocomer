@@ -161,9 +161,9 @@ export async function POST(request: Request) {
         const results = await Promise.allSettled(batch.map(async (dish) => {
           const dishSlug = slugify(dish.name);
           const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
-          if (supabaseUrl) {
-            await prisma.dish.update({ where: { id: dish.id }, data: { photos: [supabaseUrl] } });
-          }
+          // Use Supabase URL if re-upload worked, otherwise keep original external URL
+          const finalUrl = supabaseUrl || dish.externalPhoto!;
+          await prisma.dish.update({ where: { id: dish.id }, data: { photos: [finalUrl] } });
           return { dishId: dish.id, ok: !!supabaseUrl };
         }));
       }
