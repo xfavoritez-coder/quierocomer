@@ -90,17 +90,17 @@ export default function CartaLista({
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
-  // pMap from localStorage prefs — computed once on client mount (SSR-safe)
-  const [pMap, setPMap] = useState<PersonalizationMap | null>(() => {
-    if (typeof window === "undefined") return null;
+  const [pMap, setPMap] = useState<PersonalizationMap | null>(null);
+
+  useEffect(() => {
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const dislikes = (() => { try { return JSON.parse(localStorage.getItem("qr_dislikes") || "[]"); } catch { return []; } })();
-    if (!diet && restrictions.length === 0 && dislikes.length === 0) return null;
+    if (!diet && restrictions.length === 0 && dislikes.length === 0) return;
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
-    return result.hasPersonalization ? result.map : null;
-  });
+    if (result.hasPersonalization) setPMap(result.map);
+  }, []);
   const [profileTrigger, setProfileTrigger] = useState(0);
 
   const refreshLocalPMap = useCallback(() => {
