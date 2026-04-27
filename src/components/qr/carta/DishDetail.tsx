@@ -497,16 +497,6 @@ function DishSlide({
                 </div>
               </div>
             )}
-            {derivedAllergens.length > 0 && (
-              <div style={{ marginTop: 22 }}>
-                <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Contiene</p>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {derivedAllergens.map(a => (
-                  <span key={a} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(234,179,8,0.12)", color: "#fbbf24" }}>⚠️ {a}</span>
-                ))}
-                </div>
-              </div>
-            )}
             {(() => {
               const d = dish as any;
               const traits: { label: string; positive: boolean }[] = [];
