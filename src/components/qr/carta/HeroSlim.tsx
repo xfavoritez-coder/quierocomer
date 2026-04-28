@@ -117,7 +117,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
           )}
           <span
             className="text-white font-[family-name:var(--font-dm)]"
-            style={{ fontSize: "0.88rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}
+            style={{ fontSize: "1rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}
           >
             {restaurant.name}
           </span>
