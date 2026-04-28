@@ -195,12 +195,11 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
     >
       {/* Photo */}
-      <div style={{ height: 180, position: "relative", overflow: "hidden", background: "#f0ece4", marginTop: 0, lineHeight: 0 }}>
-        {photo ? (
-          <img src={photo} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", display: "block" }} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", lineHeight: "normal" }}>🍽</div>
-        )}
+      <div style={photo
+        ? { height: 180, backgroundImage: `url(${photo})`, backgroundSize: "cover", backgroundPosition: "center", position: "relative" }
+        : { height: 180, background: "#f0ece4", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", position: "relative" }
+      }>
+        {!photo && "🍽"}
         {/* Badges on photo */}
         <div style={{ position: "absolute", top: 8, left: 8, display: "flex", gap: 4 }}>
           {isNew && <span style={{ fontSize: "10px", fontWeight: 700, color: "white", background: "#e85530", padding: "3px 8px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
