@@ -184,12 +184,13 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   return (
-    <button
+    <div
       onClick={onClick}
+      role="button"
       style={{
-        background: "white", borderRadius: 14, overflow: "hidden", border: "0 none", borderWidth: 0, padding: 0,
-        cursor: "pointer", textAlign: "left", transition: "transform 0.15s, box-shadow 0.15s",
-        boxShadow: isRec ? "0 0 0 2px rgba(244,166,35,0.3), 0 1px 3px rgba(0,0,0,0.04)" : "0 1px 3px rgba(0,0,0,0.04)", width: "100%",
+        background: "white", borderRadius: 14, overflow: "hidden",
+        cursor: "pointer", textAlign: "left" as const, transition: "transform 0.15s, box-shadow 0.15s",
+        boxShadow: isRec ? "0 0 0 2px rgba(244,166,35,0.3), 0 1px 3px rgba(0,0,0,0.04)" : "0 1px 3px rgba(0,0,0,0.04)",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
@@ -236,6 +237,6 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
           </span>
         )}
       </div>
-    </button>
+    </div>
   );
 }
