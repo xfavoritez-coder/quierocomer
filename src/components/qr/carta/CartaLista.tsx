@@ -641,7 +641,7 @@ function DishListCard({
         fontFamily: "inherit",
       }}
     >
-      <div style={{ width: 130, minHeight: 120, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+      <div style={{ width: 130, minHeight: 136, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} />
         ) : (
@@ -650,32 +650,34 @@ function DishListCard({
         {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "#e85530", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
       </div>
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 6, marginBottom: 2 }}>
-          <h3
-            className="font-[family-name:var(--font-playfair)] flex items-center gap-1"
-            style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", flex: 1, minWidth: 0 }}
-          >
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
-            {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
-            {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
-            {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
+        {(hasAutoLabel || (isRec && !hasAutoLabel) || isPopular) && (
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", marginBottom: 2 }}>
             {hasAutoLabel && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ✨ Para ti
               </span>
             )}
             {isRec && !hasAutoLabel && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>
             )}
             {isPopular && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50, flexShrink: 0 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 🔥 Popular hoy
               </span>
             )}
-          </h3>
-        </div>
+          </div>
+        )}
+        <h3
+          className="font-[family-name:var(--font-playfair)]"
+          style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}
+        >
+          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{dish.name}</span>
+          {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
+          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
+          {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
+        </h3>
         {dish.description && (
           <p
             style={{
