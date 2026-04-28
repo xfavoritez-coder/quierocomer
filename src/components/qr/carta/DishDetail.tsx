@@ -287,7 +287,7 @@ function DishSlide({
     >
       {/* Photo */}
       {photos.length > 0 && (
-        <Image src={photos[photoIndex]} alt={dish.name} fill className="object-cover object-center" sizes="100vw" priority={isActive} key={photos[photoIndex]} quality={95} />
+        <Image src={photos[photoIndex]} alt={dish.name} fill className="object-cover object-center" sizes="100vw" priority={isActive} key={photos[photoIndex]} unoptimized />
       )}
 
       {/* Top gradient */}
