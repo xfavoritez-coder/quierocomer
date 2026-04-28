@@ -6,8 +6,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
     formats: ["image/webp", "image/avif"],
-    deviceSizes: [120, 240, 360, 480],
-    imageSizes: [64, 96, 128, 256],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    imageSizes: [128, 256, 384, 512],
+    minimumCacheTTL: 60,
   },
   async headers() {
     return [
