@@ -40,7 +40,6 @@ export async function POST(request: Request) {
         where: { id: existing.id },
         data: {
           restaurants: { connect: { id: restaurantId } },
-          whatsapp: whatsapp?.trim() || existing.whatsapp,
         },
         include: { restaurants: { select: { id: true, name: true } } },
       });
@@ -50,7 +49,6 @@ export async function POST(request: Request) {
           email: email.trim().toLowerCase(),
           passwordHash,
           name: name.trim(),
-          whatsapp: whatsapp?.trim() || null,
           status: "ACTIVE",
           mustChangePassword: true,
           restaurants: { connect: { id: restaurantId } },
