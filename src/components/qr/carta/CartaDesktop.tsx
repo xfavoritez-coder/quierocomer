@@ -31,6 +31,8 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
+  const [modalPhotoLoaded, setModalPhotoLoaded] = useState(false);
+  useEffect(() => { setModalPhotoLoaded(false); }, [selectedDish?.id]);
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -206,7 +208,16 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             {/* Photo + close button + badges */}
             <div style={{ height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
               {selectedDish.photos?.[0] && (
-                <Image src={selectedDish.photos[0]} alt={selectedDish.name} fill className="object-cover" sizes="520px" unoptimized />
+                <Image
+                  src={selectedDish.photos[0]}
+                  alt={selectedDish.name}
+                  fill
+                  className="object-cover"
+                  sizes="520px"
+                  unoptimized
+                  onLoad={() => setModalPhotoLoaded(true)}
+                  style={{ filter: modalPhotoLoaded ? "blur(0)" : "blur(20px)", transform: "scale(1.05)", transition: "filter 0.4s ease-out" }}
+                />
               )}
               {/* Close X */}
               <button

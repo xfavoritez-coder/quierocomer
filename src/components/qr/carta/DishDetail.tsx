@@ -255,6 +255,9 @@ function DishSlide({
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoLoaded, setPhotoLoaded] = useState(false);
+  // Reset loaded state when photo changes
+  useEffect(() => { setPhotoLoaded(false); }, [photoIndex]);
   const averageRating = ratingMap[dish.id];
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
@@ -287,7 +290,18 @@ function DishSlide({
     >
       {/* Photo */}
       {photos.length > 0 && (
-        <Image src={photos[photoIndex]} alt={dish.name} fill className="object-cover object-center" sizes="100vw" priority={isActive} key={photos[photoIndex]} unoptimized />
+        <Image
+          src={photos[photoIndex]}
+          alt={dish.name}
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority={isActive}
+          key={photos[photoIndex]}
+          unoptimized
+          onLoad={() => setPhotoLoaded(true)}
+          style={{ filter: photoLoaded ? "blur(0)" : "blur(20px)", transform: "scale(1.05)", transition: "filter 0.4s ease-out" }}
+        />
       )}
 
       {/* Top gradient */}
