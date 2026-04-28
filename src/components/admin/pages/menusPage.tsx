@@ -19,7 +19,7 @@ interface Dish {
 interface Restaurant { id: string; name: string; slug: string; }
 
 const F = "var(--font-display)";
-const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#4ade80", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
+const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e85530", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
 /* ── Inline modifier preview (read-only, used inside dish editMode) ── */
 interface IMEOption { id: string; name: string; priceAdjustment: number; isHidden?: boolean; position: number; }
@@ -452,7 +452,7 @@ export default function AdminMenus() {
 
   if (selectedDish && editMode) return (
     <div style={{ maxWidth: 500 }}>
-      <button onClick={() => { setSelectedDish(null); setEditMode(false); }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
+      <button onClick={() => { setSelectedDish(null); setEditMode(false); if (editFromCategoriesRef.current) { editFromCategoriesRef.current = false; handleTabChange("categorias"); } }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
@@ -587,9 +587,10 @@ export default function AdminMenus() {
                   {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>✓ Foto subida</span>}
                 </div>
                 {ePhotoUrl && (
-                  <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ marginTop: 6, padding: "5px 10px", borderRadius: 6, border: ePhotoRef ? "1.5px solid rgba(127,191,220,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.7rem", fontWeight: 600, background: ePhotoRef ? "rgba(127,191,220,0.1)" : "transparent", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
-                    📷 {ePhotoRef ? "Foto referencial ✓" : "Marcar como foto referencial"}
-                  </button>
+                  <label onClick={() => setEPhotoRef(!ePhotoRef)} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
+                    <span style={{ width: 14, height: 14, borderRadius: 3, border: ePhotoRef ? "1.5px solid #7fbfdc" : "1.5px solid var(--adm-card-border)", background: ePhotoRef ? "rgba(127,191,220,0.15)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#7fbfdc" }}>{ePhotoRef ? "✓" : ""}</span>
+                    Foto referencial
+                  </label>
                 )}
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -1159,7 +1160,7 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setTimeout(() => { setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0, behavior: "smooth" }); }, 100); }} />
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; setSelectedDish(dish); startEditDish(dish); handleTabChange("productos"); window.scrollTo({ top: 0 }); }} />
       )}
 
       {/* ── Modificadores tab ── */}
