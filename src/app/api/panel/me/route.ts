@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true } } },
     });
 
     if (!owner) {
