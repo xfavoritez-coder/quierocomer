@@ -10,7 +10,7 @@ import { SUPPORTED_LANGS, LANG_FLAGS } from "@/lib/qr/i18n";
 import { norm } from "@/lib/normalize";
 import { getDishPhoto, groupDishesByCategory } from "./utils/dishHelpers";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
-import { startSession } from "@/lib/sessionTracker";
+import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 
@@ -68,7 +68,27 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   // Start session tracking (same as CartaRouter does for mobile)
   useEffect(() => {
     startSession(restaurant.id, tableId, !!isQrScan);
-  }, [restaurant.id, tableId, isQrScan]);
+    setCartaLang(lang);
+  }, [restaurant.id, tableId, isQrScan, lang]);
+
+  // Track category dwell time
+  const lastCatRef = useRef<{ id: string; start: number }>({ id: activeCategory, start: Date.now() });
+  useEffect(() => {
+    const prev = lastCatRef.current;
+    if (prev.id && prev.id !== activeCategory) {
+      const dwell = Date.now() - prev.start;
+      if (dwell > 1000) trackCategoryDwell(prev.id, dwell);
+    }
+    lastCatRef.current = { id: activeCategory, start: Date.now() };
+  }, [activeCategory]);
+
+  // Track dish detail open/close
+  useEffect(() => {
+    if (selectedDish) {
+      trackDetailOpen(selectedDish.id);
+      return () => { trackDetailClose(); };
+    }
+  }, [selectedDish?.id]);
 
   // Check if genio was completed
   useEffect(() => {
@@ -213,19 +233,28 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             {/* Photo + close button + badges */}
             <div style={{
               height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
-              ...(selectedDish.photos?.[0] ? { backgroundImage: `url(${selectedDish.photos[0]})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
             }}>
               {selectedDish.photos?.[0] && (
-                <Image
-                  src={selectedDish.photos[0]}
-                  alt={selectedDish.name}
-                  fill
-                  className="object-cover"
-                  sizes="520px"
-                  unoptimized
-                  onLoad={() => { loadedPhotosRef.current.add(modalPhotoUrl); setModalPhotoLoaded(true); }}
-                  style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
-                />
+                <>
+                  {/* Native img — served instantly from browser cache (same URL as card) */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={selectedDish.photos[0]}
+                    alt=""
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                  {/* High-quality Image fades in on top once loaded */}
+                  <Image
+                    src={selectedDish.photos[0]}
+                    alt={selectedDish.name}
+                    fill
+                    className="object-cover"
+                    sizes="520px"
+                    quality={95}
+                    onLoad={() => { loadedPhotosRef.current.add(modalPhotoUrl); setModalPhotoLoaded(true); }}
+                    style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
+                  />
+                </>
               )}
               {/* Close X */}
               <button

@@ -293,23 +293,30 @@ function DishSlide({
       data-dish-slide={index}
       style={{
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
-        ...(photos[photoIndex] ? { backgroundImage: `url(${photos[photoIndex]})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
       }}
     >
-      {/* Photo — bg-image shows instantly from cache, Image loads crisp on top */}
+      {/* Photo — native img shows instantly from cache, Next Image loads crisp on top */}
       {photos.length > 0 && (
-        <Image
-          src={photos[photoIndex]}
-          alt={dish.name}
-          fill
-          className="object-cover object-center"
-          sizes="100vw"
-          priority={isActive}
-          key={photos[photoIndex]}
-          unoptimized
-          onLoad={() => { loadedPhotosRef.current.add(currentPhotoUrl); setPhotoLoaded(true); }}
-          style={{ opacity: photoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
-        />
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photos[photoIndex]}
+            alt=""
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+          />
+          <Image
+            src={photos[photoIndex]}
+            alt={dish.name}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority={isActive}
+            key={photos[photoIndex]}
+            unoptimized
+            onLoad={() => { loadedPhotosRef.current.add(currentPhotoUrl); setPhotoLoaded(true); }}
+            style={{ opacity: photoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
+          />
+        </>
       )}
 
       {/* Top gradient */}
