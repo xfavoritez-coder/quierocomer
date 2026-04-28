@@ -103,6 +103,7 @@ export default function MiRestaurantePage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+
   const save = async (fields: Record<string, any>) => {
     if (!rid) return;
     setSaving(true);
@@ -269,6 +270,7 @@ export default function MiRestaurantePage() {
           </button>
         </div>
       </Card>
+
 
       {/* ── Generar QR ── */}
       <div id="qr" style={{ background: "linear-gradient(135deg, #FFF4E0, #FDEFC7)", border: "1px solid #E8D0A0", borderRadius: 16, padding: "24px 20px", marginBottom: 16, textAlign: "center" }}>
