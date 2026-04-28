@@ -60,27 +60,11 @@ export async function getPopularDishes(restaurantId: string): Promise<PopularRes
     }))
     .sort((a, b) => b.score - a.score || b.price - a.price);
 
-  // Global top 5 (min 3 sessions)
+  // Top 5 popular dishes (min 3 sessions)
   const global = scored
     .filter(d => d.sessions >= 3)
     .slice(0, 5)
     .map(d => ({ dishId: d.dishId, score: d.score }));
 
-  // Per category: top 1 per category, min 2 sessions, exclude already in global
-  const globalIds = new Set(global.map(d => d.dishId));
-  const byCategory: PopularDish[] = [];
-  const seenCategories = new Set<string>();
-
-  for (const d of scored) {
-    if (d.sessions < 2 || !d.categoryId || seenCategories.has(d.categoryId)) continue;
-    if (globalIds.has(d.dishId)) {
-      // Category already covered by global popular — mark as seen
-      seenCategories.add(d.categoryId);
-      continue;
-    }
-    seenCategories.add(d.categoryId);
-    byCategory.push({ dishId: d.dishId, score: d.score });
-  }
-
-  return { global, byCategory };
+  return { global, byCategory: [] };
 }
