@@ -426,7 +426,7 @@ export default function CartaLista({
               {category.name}
             </h2>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {catDishes.map((dish) => {
               const entry = pMap?.get(dish.id);
               return (
@@ -651,7 +651,7 @@ function DishListCard({
       </div>
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
         {(hasAutoLabel || (isRec && !hasAutoLabel) || isPopular) && (
-          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", marginBottom: 2 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
             {hasAutoLabel && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ✨ Para ti
