@@ -820,7 +820,6 @@ export default function AgregarLocalPage() {
           </div>
         </div>
       )}
-      `}</style>
     </div>
   );
 }
