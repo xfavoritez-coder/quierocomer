@@ -69,7 +69,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           </div>
 
           {/* Category tabs */}
-          <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 12, scrollbarWidth: "none" }}>
+          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", paddingBottom: 12 }}>
             {categories.map(cat => {
               const isActive = activeCategory === cat.id;
               return (
