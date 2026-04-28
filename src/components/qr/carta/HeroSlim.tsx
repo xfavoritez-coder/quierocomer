@@ -59,9 +59,6 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
     setTouchStart(null);
   };
 
-  const desc = dish?.description || "";
-  const shortDesc = desc.length > 80 ? desc.slice(0, 80) + "..." : desc;
-
   const handleClick = () => {
     if (!dish) return;
     trackHeroClick(restaurant.id, dish.id, "lista");
@@ -140,7 +137,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
             </h2>
             {shortDesc && (
               <p
-                className="font-[family-name:var(--font-dm)]"
+                className="font-[family-name:var(--font-dm)] line-clamp-2"
                 style={{
                   color: "rgba(255,255,255,0.75)",
                   fontSize: "0.94rem",
@@ -148,7 +145,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
                   lineHeight: 1.4,
                 }}
               >
-                {shortDesc}
+                {dish.description}
               </p>
             )}
           </div>
