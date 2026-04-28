@@ -69,7 +69,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           </div>
 
           {/* Category tabs */}
-          <div style={{ display: "flex", gap: 4, flexWrap: "wrap", paddingBottom: 12 }}>
+          <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}>
             {categories.map(cat => {
               const isActive = activeCategory === cat.id;
               return (
@@ -188,15 +188,14 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
       onClick={onClick}
       style={{
         background: "white", borderRadius: 14, overflow: "hidden", border: "none", padding: 0,
-        outline: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid #ebe7df", outlineOffset: -1,
         cursor: "pointer", textAlign: "left", transition: "transform 0.15s, box-shadow 0.15s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)", width: "100%",
+        boxShadow: isRec ? "0 0 0 2px rgba(244,166,35,0.3), 0 1px 3px rgba(0,0,0,0.04)" : "0 1px 3px rgba(0,0,0,0.04)", width: "100%",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
     >
       {/* Photo */}
-      <div style={{ height: 180, position: "relative", overflow: "hidden", background: "#1a1a1a" }}>
+      <div style={{ height: 180, position: "relative", overflow: "hidden", background: "#f0ece4" }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="300px" style={{ objectPosition: "center" }} />
         ) : (
