@@ -403,7 +403,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Carta inteligente con QR", tip: "Tu carta accesible desde la mesa, con personalización automática" },
                   { t: "Vista simple", tip: "Layout clásico: fotos, nombre, precio y descripción" },
                   { t: "El Genio incluido 🧞", tip: "Personaliza la carta según los gustos de cada cliente con inteligencia artificial" },
-                  { t: "Experiencias virales", tip: "Juegos tipo 'que pizza eres' que tus clientes comparten en redes, haciendo viral tu restaurante" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
@@ -426,11 +425,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
                   { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
                   { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
-                  { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
                   { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                   { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
                   { t: "Banners y promos dinamicas", tip: "Cintas de anuncios y promociones que rotan según horario y temporada" },
-                  { t: "Campañas de clientes", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros, y fideliza en automático" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
