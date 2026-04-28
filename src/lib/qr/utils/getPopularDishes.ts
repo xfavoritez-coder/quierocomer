@@ -61,7 +61,7 @@ export async function getPopularDishes(restaurantId: string): Promise<PopularRes
     .sort((a, b) => b.score - a.score || b.price - a.price);
 
   // Popular count relative to menu size: 10% of dishes, min 2, max 8
-  const maxPopular = Math.min(8, Math.max(2, Math.round(dishes.length * 0.1)));
+  const maxPopular = Math.min(10, Math.max(2, Math.round(dishes.length * 0.1)));
 
   const global = scored
     .filter(d => d.sessions >= 3)
