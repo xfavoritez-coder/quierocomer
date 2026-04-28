@@ -187,8 +187,8 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
     <button
       onClick={onClick}
       style={{
-        background: "white", borderRadius: 14, overflow: "hidden",
-        border: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid #ebe7df",
+        background: "white", borderRadius: 14, overflow: "hidden", border: "none",
+        outline: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid #ebe7df", outlineOffset: -1,
         cursor: "pointer", textAlign: "left", transition: "transform 0.15s, box-shadow 0.15s",
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
