@@ -641,7 +641,7 @@ function DishListCard({
         fontFamily: "inherit",
       }}
     >
-      <div style={{ width: 130, minHeight: 136, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} />
         ) : (
