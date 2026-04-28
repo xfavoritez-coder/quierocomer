@@ -255,9 +255,14 @@ function DishSlide({
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
-  const [photoLoaded, setPhotoLoaded] = useState(false);
-  // Reset loaded state when photo changes
-  useEffect(() => { setPhotoLoaded(false); }, [photoIndex]);
+  const loadedPhotosRef = useRef(new Set<string>());
+  const currentPhotoUrl = photos[photoIndex] || "";
+  const [photoLoaded, setPhotoLoaded] = useState(loadedPhotosRef.current.has(currentPhotoUrl));
+  // Reset loaded state only if this specific URL hasn't loaded before
+  useEffect(() => {
+    if (loadedPhotosRef.current.has(currentPhotoUrl)) { setPhotoLoaded(true); }
+    else { setPhotoLoaded(false); }
+  }, [currentPhotoUrl]);
   const averageRating = ratingMap[dish.id];
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
@@ -302,7 +307,7 @@ function DishSlide({
           priority={isActive}
           key={photos[photoIndex]}
           unoptimized
-          onLoad={() => setPhotoLoaded(true)}
+          onLoad={() => { loadedPhotosRef.current.add(currentPhotoUrl); setPhotoLoaded(true); }}
           style={{ opacity: photoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
         />
       )}

@@ -90,7 +90,8 @@ function bindActivityListeners() {
   if (typeof window === "undefined") return;
   const reset = () => resetInactivityTimer();
   window.addEventListener("touchstart", () => { markInteraction(); reset(); }, { passive: true });
-  window.addEventListener("scroll", reset, { passive: true });
+  window.addEventListener("scroll", () => { markInteraction(); reset(); }, { passive: true });
+  window.addEventListener("mousemove", () => { markInteraction(); reset(); }, { passive: true });
   window.addEventListener("click", () => { markInteraction(); reset(); }, { passive: true });
   let hiddenAt: number | null = null;
   window.addEventListener("visibilitychange", () => {

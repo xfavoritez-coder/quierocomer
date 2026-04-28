@@ -31,8 +31,13 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
+  const loadedPhotosRef = useRef(new Set<string>());
+  const modalPhotoUrl = selectedDish?.photos?.[0] || "";
   const [modalPhotoLoaded, setModalPhotoLoaded] = useState(false);
-  useEffect(() => { setModalPhotoLoaded(false); }, [selectedDish?.id]);
+  useEffect(() => {
+    if (loadedPhotosRef.current.has(modalPhotoUrl)) { setModalPhotoLoaded(true); }
+    else { setModalPhotoLoaded(false); }
+  }, [modalPhotoUrl]);
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -218,7 +223,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                   className="object-cover"
                   sizes="520px"
                   unoptimized
-                  onLoad={() => setModalPhotoLoaded(true)}
+                  onLoad={() => { loadedPhotosRef.current.add(modalPhotoUrl); setModalPhotoLoaded(true); }}
                   style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
                 />
               )}
