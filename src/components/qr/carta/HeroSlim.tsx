@@ -60,7 +60,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
   };
 
   const desc = dish?.description || "";
-  const shortDesc = desc.length > 55 ? desc.slice(0, 55) + "..." : desc;
+  const shortDesc = desc.length > 80 ? desc.slice(0, 80) + "..." : desc;
 
   const handleClick = () => {
     if (!dish) return;
@@ -73,7 +73,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
       <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }`}</style>
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: "25vh", cursor: dish ? "pointer" : undefined }}
+        style={{ height: "32vh", maxHeight: "260px", cursor: dish ? "pointer" : undefined }}
         onClick={handleClick}
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
@@ -125,11 +125,11 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
 
         {/* Left-aligned content */}
         {dish && (
-          <div className="absolute z-10" style={{ bottom: 16, left: 16, right: "40%" }}>
+          <div className="absolute z-10" style={{ bottom: 20, left: 16, right: "30%" }}>
             <h2
               className="font-[family-name:var(--font-playfair)] text-white"
               style={{
-                fontSize: "1.35rem",
+                fontSize: "1.5rem",
                 fontWeight: 800,
                 lineHeight: 1.15,
                 textShadow: "0 2px 6px rgba(0,0,0,0.5)",
@@ -142,10 +142,10 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
               <p
                 className="font-[family-name:var(--font-dm)]"
                 style={{
-                  color: "rgba(255,255,255,0.65)",
-                  fontSize: "0.78rem",
-                  marginTop: 4,
-                  lineHeight: 1.35,
+                  color: "rgba(255,255,255,0.75)",
+                  fontSize: "0.88rem",
+                  marginTop: 6,
+                  lineHeight: 1.4,
                 }}
               >
                 {shortDesc}
@@ -154,17 +154,21 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
           </div>
         )}
 
-        {/* Progress bar instead of dots */}
+        {/* Swipe hint dots + progress bar */}
         {heroDishes.length > 1 && (
-          <div className="absolute z-10" style={{ bottom: 0, left: 0, right: 0, height: 3, background: "rgba(255,255,255,0.15)" }}>
-            <div
-              style={{
-                height: "100%",
-                width: `${((current + 1) / heroDishes.length) * 100}%`,
-                background: "#F4A623",
-                transition: "width 0.5s ease",
-              }}
-            />
+          <div className="absolute z-10" style={{ bottom: 10, right: 16, display: "flex", alignItems: "center", gap: 5 }}>
+            {heroDishes.map((_, i) => (
+              <div
+                key={i}
+                style={{
+                  width: i === current ? 16 : 6,
+                  height: 6,
+                  borderRadius: 3,
+                  background: i === current ? "#F4A623" : "rgba(255,255,255,0.4)",
+                  transition: "all 0.35s ease",
+                }}
+              />
+            ))}
           </div>
         )}
       </section>
