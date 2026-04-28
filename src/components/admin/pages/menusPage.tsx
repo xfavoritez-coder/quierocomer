@@ -288,6 +288,7 @@ export default function AdminMenus() {
 
   // Edit state (must be at top level, not inside conditional)
   const [editMode, setEditMode] = useState(false);
+  const editFromCategoriesRef = useRef(false);
   const [eName, setEName] = useState("");
   const [eDesc, setEDesc] = useState("");
   const [ePrice, setEPrice] = useState("");
@@ -430,8 +431,15 @@ export default function AdminMenus() {
       modifierTemplates: (selectedDish as any).modifierTemplates || [],
     };
     setDishes(prev => prev.map(d => d.id === selectedDish.id ? updated : d));
-    setSelectedDish(updated);
-    setEditMode(false);
+    if (editFromCategoriesRef.current) {
+      editFromCategoriesRef.current = false;
+      setSelectedDish(null);
+      setEditMode(false);
+      handleTabChange("categorias");
+    } else {
+      setSelectedDish(updated);
+      setEditMode(false);
+    }
     setSaving(false);
   };
 
@@ -1149,7 +1157,7 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { handleTabChange("productos"); setTimeout(() => { setSelectedDish(dish); startEditDish(dish); }, 100); }} />
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setTimeout(() => { setSelectedDish(dish); startEditDish(dish); }, 100); }} />
       )}
 
       {/* ── Modificadores tab ── */}
