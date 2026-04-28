@@ -156,7 +156,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
 
         {/* Swipe hint dots + progress bar */}
         {heroDishes.length > 1 && (
-          <div className="absolute z-10" style={{ bottom: 10, right: 16, display: "flex", alignItems: "center", gap: 5 }}>
+          <div className="absolute z-10" style={{ bottom: 10, left: 0, right: 0, display: "flex", justifyContent: "center", alignItems: "center", gap: 5 }}>
             {heroDishes.map((_, i) => (
               <div
                 key={i}
