@@ -427,6 +427,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
                   { t: "Multilenguaje ES · EN · PT · IT", tip: "Tu carta traducida automáticamente a inglés, portugués e italiano" },
                   { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
+                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
@@ -444,7 +445,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> Todo lo del plan Gold</div>
                 {[
-                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                   { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
                   { t: "Campañas automáticas", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros y fideliza en automático" },
                   { t: "Email marketing", tip: "Envía promociones y novedades por correo a tus clientes registrados" },
