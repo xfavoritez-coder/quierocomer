@@ -321,6 +321,47 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    // ── Hero click events ──
+    const heroClickEvents = sessionIds.length ? await prisma.statEvent.findMany({
+      where: {
+        eventType: "HERO_CLICK" as any,
+        OR: [
+          { dbSessionId: { in: sessionIds } },
+          ...(sessionGuestIds.length ? [{
+            guestId: { in: sessionGuestIds },
+            dbSessionId: null,
+            createdAt: {
+              gte: new Date(Math.min(...sessions.map(s => s.startedAt.getTime())) - 60_000),
+              lte: new Date(Math.max(...sessions.map(s => (s.endedAt?.getTime() || Date.now()))) + 60_000),
+            },
+          }] : []),
+        ],
+      },
+      select: { guestId: true, dbSessionId: true, dishId: true, metadata: true, createdAt: true },
+    }) : [];
+
+    const heroClicksBySession: Record<string, { dishId: string; dishName: string; dishPhoto: string | null; view: string; clickedAt: Date }[]> = {};
+    for (const s of sessions) {
+      const start = s.startedAt.getTime();
+      const end = s.endedAt ? s.endedAt.getTime() : Date.now();
+      const matching = heroClickEvents.filter((e) =>
+        e.dbSessionId === s.id ||
+        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
+      );
+      if (matching.length === 0) continue;
+      heroClicksBySession[s.id] = matching.map((e) => {
+        const dish = e.dishId ? dishMap[e.dishId] : null;
+        const meta = e.metadata as any;
+        return {
+          dishId: e.dishId || "",
+          dishName: dish?.name || (e.dishId?.slice(0, 8) ?? ""),
+          dishPhoto: dish?.photos?.[0] || null,
+          view: meta?.view || "unknown",
+          clickedAt: e.createdAt,
+        };
+      });
+    }
+
     // ── Popular dishes per restaurant (same logic as /api/qr/popular) ──
     const restaurantIds = [...new Set(sessions.map(s => s.restaurantId))];
     const popularByRestaurant: Record<string, Set<string>> = {};
@@ -411,6 +452,7 @@ export async function GET(req: NextRequest) {
           status: sub.status,
           submittedAt: sub.submittedAt,
         })),
+        heroClicks: heroClicksBySession[s.id] || [],
         waiterCalls: (waiterCallsBySession[s.id] || []).map(wc => ({
           id: wc.id,
           tableName: wc.tableName,

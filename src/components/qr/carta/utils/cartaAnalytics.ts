@@ -47,6 +47,12 @@ export function trackFilterApplied(restaurantId: string, filterType: string, fil
   track(restaurantId, "FILTER_APPLIED", { resultsCount, metadata: { filterType, filterValue } });
 }
 
+// ── Hero click tracking ──
+
+export function trackHeroClick(restaurantId: string, dishId: string, view: "premium" | "lista") {
+  track(restaurantId, "HERO_CLICK", { dishId, metadata: { view } });
+}
+
 // ── Dish impression batching ──
 
 let impressionBatch: { dishId: string; restaurantId: string; position: number; visibleMs: number }[] = [];

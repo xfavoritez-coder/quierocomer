@@ -171,11 +171,19 @@ function getPayload(isFinal: boolean) {
   };
 }
 
+let pendingFinalHeartbeat: { closeReason?: string } | null = null;
+
 function sendHeartbeat(isFinal = false, closeReason?: string) {
   // Create DB session on first heartbeat if user interacted
   if (hadUserInteraction && session && !session.dbSessionId && !creatingDbSession) {
+    if (isFinal) pendingFinalHeartbeat = { closeReason };
     ensureDbSession();
-    return; // dbSessionId not available yet, will send on next tick
+    return; // dbSessionId not available yet — ensureDbSession will send pending heartbeat
+  }
+  // Still creating DB session — queue final heartbeat for when it completes
+  if (creatingDbSession && !session?.dbSessionId) {
+    if (isFinal) pendingFinalHeartbeat = { closeReason };
+    return;
   }
   const payload = getPayload(isFinal);
   if (!payload || !payload.sessionId) return;
@@ -224,11 +232,20 @@ function ensureDbSession() {
       const target = currentSession === session ? currentSession : session;
       if (target && !target.dbSessionId) {
         target.dbSessionId = data.sessionId;
-        if (heartbeatTimer) clearInterval(heartbeatTimer);
-        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+        // Flush any pending final heartbeat that was queued during creation
+        if (pendingFinalHeartbeat) {
+          const { closeReason } = pendingFinalHeartbeat;
+          pendingFinalHeartbeat = null;
+          sendHeartbeat(true, closeReason);
+        } else {
+          // Send first heartbeat immediately with accumulated data
+          sendHeartbeat(false);
+          if (heartbeatTimer) clearInterval(heartbeatTimer);
+          heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+        }
       }
     })
-    .catch(err => { creatingDbSession = false; console.error("[QC] Session start error:", err); });
+    .catch(err => { creatingDbSession = false; pendingFinalHeartbeat = null; console.error("[QC] Session start error:", err); });
 }
 
 /** Start tracking a session for a restaurant */
@@ -408,7 +425,7 @@ export function closeSession(reason: string = "manual") {
   const durationMs = Date.now() - session.startedAt;
   if (durationMs < 2000) return; // Skip accidental sessions
 
-  if (session.dbSessionId) {
+  if (session.dbSessionId || creatingDbSession || hadUserInteraction) {
     sendHeartbeat(true, reason);
   }
 }

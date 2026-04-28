@@ -15,6 +15,7 @@ import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/cl
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
+import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -87,6 +88,22 @@ export default function CartaLista({
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [query, dishes, restaurant.id]);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
+
+  const heroDishes = useMemo(() => {
+    const recommendedWithPhotos = dishes.filter(
+      (d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]
+    );
+    if (recommendedWithPhotos.length > 0) return recommendedWithPhotos;
+    const popularWithPhotos = dishes.filter(
+      (d) => popularDishIds.has(d.id) && d.photos?.[0]
+    ).slice(0, 3);
+    if (popularWithPhotos.length > 0) return popularWithPhotos;
+    const withPhotos = dishes.filter((d) => d.photos?.[0]);
+    if (withPhotos.length <= 3) return withPhotos;
+    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3);
+  }, [dishes, popularDishIds]);
+
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
 
@@ -260,35 +277,8 @@ export default function CartaLista({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      {/* TOP BAR: mini hero oscuro */}
-      <div style={{ position: "relative", background: "#1a1a1a", overflow: "hidden" }}>
-        {/* Background photo blur */}
-        {(() => {
-          const bgPhoto = dishes.find(d => d.photos?.[0])?.photos?.[0];
-          return bgPhoto ? (
-            <div style={{ position: "absolute", inset: -20, zIndex: 0 }}>
-              <Image src={bgPhoto} alt="" fill className="object-cover" sizes="100vw" style={{ filter: "blur(20px) brightness(0.3)", transform: "scale(1.2)" }} />
-            </div>
-          ) : null;
-        })()}
-        <div style={{ position: "relative", zIndex: 1, padding: "16px 16px 14px", display: "flex", alignItems: "center" }}>
-          {/* Left: logo + name — click reloads page */}
-          <button onClick={() => window.location.reload()} className="flex items-center gap-2" style={{ flex: 1, minWidth: 0, background: "none", border: "none", cursor: "pointer", padding: 0 }}>
-            {restaurant.logoUrl ? (
-              <Image src={restaurant.logoUrl} alt={restaurant.name} width={30} height={30} className="rounded-full" style={{ flexShrink: 0, border: "1px solid rgba(255,255,255,0.12)" }} />
-            ) : (
-              <div className="flex items-center justify-center rounded-full" style={{ width: 30, height: 30, background: "rgba(255,255,255,0.12)", fontSize: "0.75rem", fontWeight: 700, color: "rgba(255,255,255,0.8)", flexShrink: 0 }}>
-                {restaurant.name.charAt(0).toUpperCase()}
-              </div>
-            )}
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1.14rem", fontWeight: 400, color: "rgba(255,255,255,0.85)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" }}>
-              {restaurant.name}
-            </span>
-          </button>
-        </div>
-        {/* Bottom accent line */}
-        <div style={{ position: "relative", zIndex: 1, height: 2, background: "linear-gradient(90deg, #F4A623, rgba(244,166,35,0.2), transparent)" }} />
-      </div>
+      {/* Hero Slim */}
+      <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={setSelectedDish} />
 
       {/* Promos */}
       {/* STICKY NAV: search overlay or category tabs with search icon */}

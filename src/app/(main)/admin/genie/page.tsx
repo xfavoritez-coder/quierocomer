@@ -656,6 +656,30 @@ export default function AdminSessions() {
                       </div>
                     )}
 
+                    {/* Hero clicks */}
+                    {s.heroClicks && s.heroClicks.length > 0 && (
+                      <div style={{ marginBottom: 12 }}>
+                        <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Clicks en Hero ({s.heroClicks.length})</p>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                          {s.heroClicks.map((h: any, i: number) => (
+                            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 8 }}>
+                              {h.dishPhoto ? (
+                                <img src={h.dishPhoto} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
+                              ) : (
+                                <div style={{ width: 28, height: 28, borderRadius: 5, background: "#2A2A2A", flexShrink: 0 }} />
+                              )}
+                              <span style={{ fontFamily: F, fontSize: "0.8rem", color: "#ccc", flex: 1 }}>
+                                {h.dishName}
+                                <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: h.view === "premium" ? "rgba(127,191,220,0.15)" : "rgba(74,222,128,0.1)", color: h.view === "premium" ? "#7fbfdc" : "#4ade80", fontWeight: 600, verticalAlign: "middle" }}>
+                                  {h.view === "premium" ? "GALERÍA" : "LISTA"}
+                                </span>
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Picked dish */}
                     {s.pickedDish && (
                       <div style={{ background: "rgba(74,222,128,0.06)", border: "1px solid rgba(74,222,128,0.15)", borderRadius: 10, padding: "10px 12px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>

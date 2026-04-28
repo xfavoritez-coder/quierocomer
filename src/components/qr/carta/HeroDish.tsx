@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
+import { trackHeroClick } from "./utils/cartaAnalytics";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
@@ -197,7 +198,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
               {/* CTA button */}
               <button
-                onClick={() => onDishSelect?.(dish)}
+                onClick={() => { trackHeroClick(restaurant.id, dish.id, "premium"); onDishSelect?.(dish); }}
                 className="font-[family-name:var(--font-dm)] active:scale-95 transition-transform"
                 style={{
                   marginTop: 12,
