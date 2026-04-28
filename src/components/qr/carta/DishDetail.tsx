@@ -295,12 +295,13 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Photo — native img shows instantly from cache, Next Image loads crisp on top */}
+      {/* Photo — cached Next.js thumb as instant placeholder, full-res loads on top */}
       {photos.length > 0 && (
         <>
+          {/* Thumb from Next.js image cache — same URL the card already loaded */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={photos[photoIndex]}
+            src={`/_next/image?url=${encodeURIComponent(photos[photoIndex])}&w=640&q=75`}
             alt=""
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
           />

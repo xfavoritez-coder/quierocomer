@@ -236,21 +236,21 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             }}>
               {selectedDish.photos?.[0] && (
                 <>
-                  {/* Native img — served instantly from browser cache (same URL as card) */}
+                  {/* Thumb from Next.js cache — same URL the card already loaded */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={selectedDish.photos[0]}
+                    src={`/_next/image?url=${encodeURIComponent(selectedDish.photos[0])}&w=640&q=75`}
                     alt=""
                     style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
                   />
-                  {/* High-quality Image fades in on top once loaded */}
+                  {/* Full-quality Image fades in on top once loaded */}
                   <Image
                     src={selectedDish.photos[0]}
                     alt={selectedDish.name}
                     fill
                     className="object-cover"
                     sizes="520px"
-                    quality={95}
+                    unoptimized
                     onLoad={() => { loadedPhotosRef.current.add(modalPhotoUrl); setModalPhotoLoaded(true); }}
                     style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
                   />
