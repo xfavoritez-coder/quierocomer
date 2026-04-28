@@ -122,6 +122,7 @@ interface SessionData {
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
   waiterCalls: { id: string; tableName: string | null; calledAt: string; answeredAt: string | null; responseTime: number | null }[];
+  heroClicks: { dishId: string; dishName: string; dishPhoto: string | null; view: string; clickedAt: string }[];
 }
 
 export default function AdminSessions() {

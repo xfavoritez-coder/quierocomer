@@ -76,11 +76,16 @@ function resetInactivityTimer() {
   inactivityTimer = setTimeout(() => closeSession("inactivity"), INACTIVITY_TIMEOUT);
 }
 
+let dbSessionDelay: ReturnType<typeof setTimeout> | null = null;
+
 function markInteraction() {
   if (!hadUserInteraction) {
     hadUserInteraction = true;
-    // Create DB session immediately on first interaction (don't wait 15s)
-    ensureDbSession();
+    // Delay DB session creation by 3s to filter out quick bot hits,
+    // but still much faster than the old 15s heartbeat wait
+    dbSessionDelay = setTimeout(() => {
+      ensureDbSession();
+    }, 3000);
     // Start heartbeat timer for periodic updates
     if (!heartbeatTimer) {
       heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
@@ -423,11 +428,19 @@ export function closeSession(reason: string = "manual") {
 
   if (inactivityTimer) clearTimeout(inactivityTimer);
   if (heartbeatTimer) clearInterval(heartbeatTimer);
+  if (dbSessionDelay) { clearTimeout(dbSessionDelay); dbSessionDelay = null; }
 
   const durationMs = Date.now() - session.startedAt;
   if (durationMs < 2000) return; // Skip accidental sessions
 
-  if (session.dbSessionId || creatingDbSession || hadUserInteraction) {
+  // If DB session hasn't been created yet but user interacted, create it now for the final flush
+  if (hadUserInteraction && !session.dbSessionId && !creatingDbSession) {
+    ensureDbSession(); // will flush pending final heartbeat when it completes
+    pendingFinalHeartbeat = { closeReason: reason };
+    return;
+  }
+
+  if (session.dbSessionId || creatingDbSession) {
     sendHeartbeat(true, reason);
   }
 }
