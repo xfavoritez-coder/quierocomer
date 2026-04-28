@@ -143,7 +143,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
                 className="font-[family-name:var(--font-dm)]"
                 style={{
                   color: "rgba(255,255,255,0.75)",
-                  fontSize: "0.88rem",
+                  fontSize: "0.94rem",
                   marginTop: 6,
                   lineHeight: 1.4,
                 }}
