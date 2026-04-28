@@ -63,7 +63,8 @@ export default function QRPageClient({ restaurant }: Props) {
         try {
           const logoImg = new Image();
           logoImg.crossOrigin = "anonymous";
-          logoImg.src = restaurant.logoUrl;
+          const logoSrc = restaurant.logoUrl.includes("supabase.co") ? restaurant.logoUrl : `/api/proxy-image?url=${encodeURIComponent(restaurant.logoUrl)}`;
+          logoImg.src = logoSrc;
           await new Promise((r) => { logoImg.onload = r; logoImg.onerror = r; });
           if (logoImg.naturalWidth > 0) {
             ctx.beginPath();
