@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import type { Restaurant, Category, Dish } from "@prisma/client";
+import type { Lang } from "@/lib/qr/i18n";
+import { LangProvider } from "@/contexts/LangContext";
 import CartaDesktop from "./CartaDesktop";
 
 interface DesktopWrapperProps {
@@ -12,9 +14,12 @@ interface DesktopWrapperProps {
   categories?: Category[];
   dishes?: Dish[];
   popularDishIds?: Set<string>;
+  tableId?: string;
+  isQrScan?: boolean;
+  lang?: Lang;
 }
 
-export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds }: DesktopWrapperProps) {
+export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -34,7 +39,11 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
 
   // Desktop: full-width carta with grid layout
   if (restaurant && categories && dishes) {
-    return <CartaDesktop restaurant={restaurant} categories={categories} dishes={dishes} popularDishIds={popularDishIds} />;
+    return (
+      <LangProvider value={lang || "es"}>
+        <CartaDesktop restaurant={restaurant} categories={categories} dishes={dishes} popularDishIds={popularDishIds} tableId={tableId} isQrScan={isQrScan} lang={lang} />
+      </LangProvider>
+    );
   }
 
   // Fallback if no data passed

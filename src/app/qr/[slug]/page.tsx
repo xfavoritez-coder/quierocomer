@@ -142,6 +142,9 @@ export default async function CartaPage({
       categories={categories as any}
       dishes={dishes as any}
       popularDishIds={new Set(cartaProps.popularDishIds || [])}
+      tableId={tableId}
+      isQrScan={isQrScan}
+      lang={lang}
     >
       {isPremium ? (
         <CartaRouter {...cartaProps} />

@@ -1,23 +1,88 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Image from "next/image";
+import { Globe } from "lucide-react";
 import type { Restaurant, Category, Dish } from "@prisma/client";
+import type { Lang } from "@/lib/qr/i18n";
+import { SUPPORTED_LANGS, LANG_FLAGS } from "@/lib/qr/i18n";
 import { norm } from "@/lib/normalize";
 import { getDishPhoto, groupDishesByCategory } from "./utils/dishHelpers";
+import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
+import WaiterButton from "../garzon/WaiterButton";
+import GenioOnboarding from "../genio/GenioOnboarding";
 
 interface Props {
   restaurant: Restaurant;
   categories: Category[];
   dishes: Dish[];
   popularDishIds?: Set<string>;
+  tableId?: string;
+  isQrScan?: boolean;
+  lang?: Lang;
 }
 
-export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds }: Props) {
+const LANG_STORAGE_KEY = "qc_lang";
+
+export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [genioOpen, setGenioOpen] = useState(false);
+  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const lang = initialLang || "es";
+  const [optimisticLang, setOptimisticLang] = useState<Lang | null>(null);
+  const activeLang = optimisticLang || lang;
+
+  // Waiter visibility
+  const [showWaiter, setShowWaiter] = useState(false);
+  useEffect(() => {
+    if (tableId) {
+      const params = new URLSearchParams(window.location.search);
+      const isDemo = params.get("demo") === "true";
+      setMesaToken(restaurant.id, tableId, isDemo);
+      setShowWaiter(true);
+    } else if (isQrScan) {
+      setShowWaiter(true);
+    } else {
+      setShowWaiter(hasMesaToken(restaurant.id));
+    }
+  }, [restaurant.id, tableId, isQrScan]);
+
+  // Check if genio was completed
+  useEffect(() => {
+    setHasCompletedGenio(!!localStorage.getItem("qr_diet"));
+  }, []);
+
+  // Close lang dropdown on outside click
+  useEffect(() => {
+    if (!langOpen) return;
+    const handle = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("mousedown", handle);
+    return () => document.removeEventListener("mousedown", handle);
+  }, [langOpen]);
+
+  const handleLangChange = useCallback((next: Lang) => {
+    if (next === lang && !optimisticLang) return;
+    setOptimisticLang(next);
+    setLangOpen(false);
+    localStorage.setItem(LANG_STORAGE_KEY, next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lang", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [lang, optimisticLang, pathname, router, searchParams]);
+
+  useEffect(() => { setOptimisticLang(null); }, [lang]);
 
   const filtered = useMemo(() => {
     if (!query) return dishes;
@@ -117,7 +182,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
         {filtered.length === 0 && query && (
           <p style={{ textAlign: "center", color: "#999", fontSize: "1rem", padding: 60 }}>
-            No se encontraron resultados para "{query}"
+            No se encontraron resultados para &ldquo;{query}&rdquo;
           </p>
         )}
       </div>
@@ -167,6 +232,128 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
         </div>
       )}
 
+      {/* Floating buttons — bottom right */}
+      <div style={{ position: "fixed", bottom: 28, right: 28, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+        {/* Genio button */}
+        <button
+          onClick={() => setGenioOpen(true)}
+          title="Genio - Te recomiendo algo"
+          style={{
+            width: 56, height: 56, borderRadius: "50%",
+            background: "#F4A623", border: "none", cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(244,166,35,0.35)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            position: "relative",
+            transition: "transform 0.15s, box-shadow 0.15s",
+          }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(244,166,35,0.5)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(244,166,35,0.35)"; }}
+        >
+          <span style={{ fontSize: "24px", lineHeight: 1 }}>🧞</span>
+          {hasCompletedGenio && (
+            <span style={{ position: "absolute", top: 1, right: 1, width: 15, height: 15, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: 700, border: "2px solid white" }}>
+              ✓
+            </span>
+          )}
+        </button>
+
+        {/* Waiter button */}
+        {showWaiter && (
+          <WaiterButton
+            restaurantId={restaurant.id}
+            tableId={tableId || undefined}
+            waiterPanelActive={showWaiter}
+            size={48}
+          />
+        )}
+
+        {/* Language selector */}
+        <div ref={langRef} style={{ position: "relative" }}>
+          <button
+            onClick={() => setLangOpen(!langOpen)}
+            title="Cambiar idioma"
+            style={{
+              width: 48, height: 48, borderRadius: "50%",
+              background: langOpen ? "rgba(244,166,35,0.15)" : "white",
+              border: langOpen ? "1px solid rgba(244,166,35,0.4)" : "1px solid #e0dcd4",
+              cursor: "pointer",
+              boxShadow: langOpen ? "0 0 12px rgba(244,166,35,0.2)" : "0 2px 10px rgba(0,0,0,0.08)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => { if (!langOpen) e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.12)"; }}
+            onMouseLeave={e => { if (!langOpen) e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.08)"; }}
+          >
+            <Globe size={20} color={langOpen ? "#F4A623" : "#666"} strokeWidth={1.75} />
+          </button>
+
+          {/* Language dropdown — opens to the left */}
+          {langOpen && (
+            <div style={{
+              position: "absolute", right: 58, top: "50%", transform: "translateY(-50%)",
+              display: "flex", alignItems: "center", gap: 4,
+              background: "white", borderRadius: 50,
+              padding: "4px 6px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+              border: "1px solid #e8e4dc",
+              animation: "dkLangSlide 0.2s ease-out",
+              whiteSpace: "nowrap",
+            }}>
+              {SUPPORTED_LANGS.map((l) => {
+                const isActive = activeLang === l;
+                return (
+                  <button
+                    key={l}
+                    onClick={() => handleLangChange(l)}
+                    style={{
+                      padding: "7px 14px", borderRadius: 50,
+                      border: "none", cursor: "pointer",
+                      fontSize: "0.78rem", fontWeight: 700,
+                      letterSpacing: "0.04em",
+                      transition: "all 0.15s",
+                      background: isActive ? "#F4A623" : "transparent",
+                      color: isActive ? "white" : "#888",
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = "#f5f3ef"; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = "transparent"; }}
+                  >
+                    {LANG_FLAGS[l]}
+                  </button>
+                );
+              })}
+              {/* Arrow pointing right */}
+              <div style={{
+                position: "absolute", right: -5, top: "50%",
+                transform: "translateY(-50%) rotate(45deg)",
+                width: 10, height: 10,
+                background: "white",
+                border: "1px solid #e8e4dc",
+                borderLeft: "none", borderBottom: "none",
+              }} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Genio modal */}
+      {genioOpen && (
+        <GenioOnboarding
+          restaurantId={restaurant.id}
+          dishes={dishes}
+          categories={categories}
+          onClose={() => { setGenioOpen(false); setHasCompletedGenio(!!localStorage.getItem("qr_diet")); }}
+          onResult={(dish) => {
+            setGenioOpen(false);
+            setHasCompletedGenio(true);
+            setTimeout(() => {
+              const el = document.getElementById(`desktop-cat-${(dish as any).categoryId}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              setTimeout(() => setSelectedDish(dish), 400);
+            }, 200);
+          }}
+        />
+      )}
+
       {/* Footer */}
       <footer style={{ textAlign: "center", padding: "20px 0 30px" }}>
         <span style={{ fontSize: "0.78rem", color: "#bbb" }}>Powered by </span>
@@ -174,6 +361,13 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
         </span>
       </footer>
+
+      <style>{`
+        @keyframes dkLangSlide {
+          from { opacity: 0; transform: translateY(-50%) translateX(8px); }
+          to { opacity: 1; transform: translateY(-50%) translateX(0); }
+        }
+      `}</style>
     </div>
   );
 }
