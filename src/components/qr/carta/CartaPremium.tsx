@@ -25,6 +25,7 @@ import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
+import AnnouncementBanner from "./AnnouncementBanner";
 
 interface Review {
   id: string;
@@ -51,6 +52,7 @@ interface CartaProps {
   timeOfDay?: string;
   weather?: string;
   popularDishIds?: Set<string>;
+  announcements?: { id: string; text: string; linkUrl: string | null }[];
 }
 
 function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
@@ -100,6 +102,7 @@ export default function CartaPremium({
   timeOfDay: timeOfDayProp,
   weather: weatherProp,
   popularDishIds: popularDishIdsProp,
+  announcements,
 }: CartaProps) {
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
@@ -424,6 +427,7 @@ export default function CartaPremium({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (

@@ -41,6 +41,7 @@ interface Props {
   timeOfDay?: string;
   weather?: string;
   popularDishIds?: string[];
+  announcements?: { id: string; text: string; linkUrl: string | null }[];
 }
 
 export default function CartaRouter(props: Props) {

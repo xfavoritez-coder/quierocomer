@@ -86,13 +86,18 @@ export default async function CartaPage({
     weather
   );
 
-  // Fetch popular dishes and marketing promos in parallel
-  const [popularDishes, activePromos] = await Promise.all([
+  // Fetch popular dishes, marketing promos, and announcements in parallel
+  const [popularDishes, activePromos, rawAnnouncements] = await Promise.all([
     getPopularDishes(restaurant.id).catch(() => ({ global: [], byCategory: [] })),
     prisma.promotion.findMany({
     where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
     orderBy: { createdAt: "desc" },
   }),
+    prisma.announcement.findMany({
+      where: { restaurantId: restaurant.id, isActive: true },
+      orderBy: { position: "asc" },
+      select: { id: true, text: true, linkUrl: true, daysOfWeek: true, startDate: true, endDate: true },
+    }),
   ]);
   // Filter promos by day of week (0=sun, 1=mon, ..., 6=sat)
   const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
@@ -110,6 +115,15 @@ export default async function CartaPage({
     validUntil: p.validUntil?.toISOString() || null,
     dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),
   }));
+
+  // Filter announcements by day of week and date range
+  const now = new Date();
+  const activeAnnouncements = rawAnnouncements.filter(a => {
+    if (a.daysOfWeek.length > 0 && !a.daysOfWeek.includes(todayDow)) return false;
+    if (a.startDate && now < new Date(a.startDate)) return false;
+    if (a.endDate && now > new Date(new Date(a.endDate).getTime() + 86400000)) return false;
+    return true;
+  }).map(a => ({ id: a.id, text: a.text, linkUrl: a.linkUrl }));
 
   // Resolve initial view server-side: URL param > restaurant default > fallback
   const validViews = ["premium", "lista", "viaje"];
@@ -132,6 +146,7 @@ export default async function CartaPage({
     timeOfDay,
     weather,
     popularDishIds: [...(popularDishes.global || []), ...(popularDishes.byCategory || [])].map(p => p.dishId),
+    announcements: activeAnnouncements,
   };
 
   return (

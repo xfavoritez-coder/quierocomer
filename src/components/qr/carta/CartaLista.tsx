@@ -23,6 +23,7 @@ import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
+import AnnouncementBanner from "./AnnouncementBanner";
 
 
 interface Review {
@@ -50,6 +51,7 @@ interface Props {
   timeOfDay?: string;
   weather?: string;
   popularDishIds?: Set<string>;
+  announcements?: { id: string; text: string; linkUrl: string | null }[];
 }
 
 
@@ -70,6 +72,7 @@ export default function CartaLista({
   timeOfDay: timeOfDayProp,
   weather: weatherProp,
   popularDishIds: popularDishIdsProp,
+  announcements,
 }: Props) {
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
@@ -279,6 +282,7 @@ export default function CartaLista({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       {/* Hero Slim */}
       <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>

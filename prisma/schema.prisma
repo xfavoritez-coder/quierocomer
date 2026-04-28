@@ -439,7 +439,27 @@ model Restaurant {
   happyHours            HappyHour[]
   createdIngredients    Ingredient[]   @relation("CreatedIngredients")
 
+  announcements         Announcement[]
+
   @@index([ownerId])
+}
+
+model Announcement {
+  id           String    @id @default(cuid())
+  restaurantId String
+  text         String
+  linkUrl      String?
+  daysOfWeek   Int[]     // 0=sun, 1=mon, ..., 6=sat. Empty = every day
+  startDate    DateTime?
+  endDate      DateTime?
+  isActive     Boolean   @default(true)
+  position     Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@index([restaurantId])
 }
 
 enum CartaTheme {

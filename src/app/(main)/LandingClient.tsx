@@ -427,7 +427,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
                   { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                   { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
-                  { t: "Banners y promos dinamicas", tip: "Cintas de anuncios y promociones que rotan según horario y temporada" },
+                  { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
