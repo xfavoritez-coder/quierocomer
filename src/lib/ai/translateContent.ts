@@ -3,10 +3,10 @@ import { prisma } from "@/lib/prisma";
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = "claude-sonnet-4-6";
 
-type Lang = "en" | "pt";
-const TARGET_LANGS: Lang[] = ["en", "pt"];
+type Lang = "en" | "pt" | "it";
+const TARGET_LANGS: Lang[] = ["en", "pt", "it"];
 
-const LANG_NAMES: Record<Lang, string> = { en: "English", pt: "Brazilian Portuguese" };
+const LANG_NAMES: Record<Lang, string> = { en: "English", pt: "Brazilian Portuguese", it: "Italian" };
 
 // ─── Low-level AI call ───────────────────────────────────────────────
 
