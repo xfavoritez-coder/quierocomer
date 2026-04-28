@@ -26,9 +26,6 @@ function buildNav(base: string) {
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
-    { icon: Users, label: "Segmentos", href: `${base}/segmentos` },
-    { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
-    { icon: Mail, label: "Campañas", href: `${base}/campanias` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
   ];
   const BOTTOM_TABS = [
