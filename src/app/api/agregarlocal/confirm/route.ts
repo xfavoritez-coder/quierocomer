@@ -86,7 +86,7 @@ export async function POST(request: Request) {
         slug,
         logoUrl,
         cartaTheme: "PREMIUM",
-        defaultView: "premium",
+        defaultView: "lista",
         isActive: true,
         qrToken,
         qrActivatedAt: new Date(),

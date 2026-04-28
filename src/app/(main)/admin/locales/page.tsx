@@ -112,7 +112,7 @@ export default function AdminLocales() {
             <div style={{ display: "flex", gap: 4 }}>
               {[
                 { value: "lista", label: "Lista" },
-                { value: "premium", label: "Clásica" },
+                { value: "premium", label: "Galería" },
                 { value: "viaje", label: "Espacial" },
               ].map((v) => (
                 <button
