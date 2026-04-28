@@ -24,12 +24,34 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    let pipeline = sharp(buffer);
-    const meta = await pipeline.metadata();
-    if ((meta.width && meta.width > 800) || (meta.height && meta.height > 800)) {
-      pipeline = pipeline.resize(800, 800, { fit: "inside", withoutEnlargement: true });
+    const TARGET_BYTES = 120 * 1024;
+    const MAX_DIMENSION = 1400;
+
+    let img = sharp(buffer);
+    const meta = await img.metadata();
+    if ((meta.width && meta.width > MAX_DIMENSION) || (meta.height && meta.height > MAX_DIMENSION)) {
+      img = img.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
-    const optimized = await pipeline.webp({ quality: 85 }).toBuffer();
+
+    // Adaptive quality: start high, reduce until under target size
+    let optimized: Buffer;
+    let quality = 92;
+    do {
+      optimized = await img.clone().webp({ quality, smartSubsample: true }).toBuffer();
+      if (optimized.length <= TARGET_BYTES) break;
+      quality -= 4;
+    } while (quality >= 40);
+
+    // If still over target, scale down resolution
+    if (optimized.length > TARGET_BYTES) {
+      const scaledMeta = await sharp(optimized).metadata();
+      const scale = Math.sqrt(TARGET_BYTES / optimized.length) * 0.95;
+      const newW = Math.round((scaledMeta.width || 800) * scale);
+      optimized = await sharp(buffer)
+        .resize(newW, undefined, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 78, smartSubsample: true })
+        .toBuffer();
+    }
 
     const slug = (dish.nombre ?? "plato").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").slice(0, 30);
     const fileName = `dishes/user-${sessionId?.slice(0, 8) ?? "anon"}-${menuItemId.slice(0, 8)}-${Date.now()}-${slug}.webp`;

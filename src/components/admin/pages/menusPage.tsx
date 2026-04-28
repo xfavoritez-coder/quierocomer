@@ -564,13 +564,13 @@ export default function AdminMenus() {
                         const url = URL.createObjectURL(file);
                         await new Promise<void>((resolve) => { img.onload = () => resolve(); img.src = url; });
                         const canvas = document.createElement("canvas");
-                        const MAX = 2000;
+                        const MAX = 2400;
                         let w = img.width, h = img.height;
                         if (w > MAX || h > MAX) { const r = Math.min(MAX / w, MAX / h); w = Math.round(w * r); h = Math.round(h * r); }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
                         URL.revokeObjectURL(url);
-                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.95));
+                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.98));
                         const fd = new FormData();
                         fd.append("file", blob, "photo.jpg");
                         fd.append("localId", selectedRestaurantId || "");

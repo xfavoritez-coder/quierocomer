@@ -26,15 +26,38 @@ export async function POST(req: NextRequest) {
     const originalBuffer = Buffer.from(await file.arrayBuffer());
     const originalSize = originalBuffer.length;
 
-    // Process with sharp
-    let pipeline = sharp(originalBuffer);
-    const meta = await pipeline.metadata();
+    // Process with sharp — maximize quality within 120KB target
+    const TARGET_BYTES = 120 * 1024;
+    const MAX_DIMENSION = 1400;
 
-    if ((meta.width && meta.width > 1200) || (meta.height && meta.height > 1200)) {
-      pipeline = pipeline.resize(1200, 1200, { fit: "inside", withoutEnlargement: true });
+    let img = sharp(originalBuffer);
+    const meta = await img.metadata();
+
+    // Resize only if exceeds max dimension
+    if ((meta.width && meta.width > MAX_DIMENSION) || (meta.height && meta.height > MAX_DIMENSION)) {
+      img = img.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
 
-    const optimizedBuffer = await pipeline.webp({ quality: 88 }).toBuffer();
+    // Adaptive quality: start high, reduce until under target size
+    let optimizedBuffer: Buffer;
+    let quality = 92;
+    do {
+      optimizedBuffer = await img.clone().webp({ quality, smartSubsample: true }).toBuffer();
+      if (optimizedBuffer.length <= TARGET_BYTES) break;
+      quality -= 4;
+    } while (quality >= 40);
+
+    // If still over target after quality reduction, scale down resolution
+    if (optimizedBuffer.length > TARGET_BYTES) {
+      const scaledMeta = await sharp(optimizedBuffer).metadata();
+      const scale = Math.sqrt(TARGET_BYTES / optimizedBuffer.length) * 0.95;
+      const newW = Math.round((scaledMeta.width || 800) * scale);
+      optimizedBuffer = await sharp(originalBuffer)
+        .resize(newW, undefined, { fit: "inside", withoutEnlargement: true })
+        .webp({ quality: 78, smartSubsample: true })
+        .toBuffer();
+    }
+
     const optimizedSize = optimizedBuffer.length;
 
     // Build filename

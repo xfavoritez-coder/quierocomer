@@ -26,9 +26,9 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
     if (preview) setPreviewUrl(preview);
   }, [preview]);
 
-  const compressImage = (file: File, maxWidth = 800, quality = 0.75): Promise<File> => {
+  const compressImage = (file: File, maxWidth = 2400, quality = 0.92): Promise<File> => {
     return new Promise((resolve) => {
-      if (file.size < 100 * 1024) { resolve(file); return; } // Skip if <100KB
+      if (file.size < 200 * 1024) { resolve(file); return; } // Skip if <200KB
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -39,11 +39,11 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob((blob) => {
           if (blob && blob.size < file.size) {
-            resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+            resolve(new File([blob], file.name.replace(/\.\w+$/, ".webp"), { type: "image/webp" }));
           } else {
             resolve(file);
           }
-        }, "image/jpeg", quality);
+        }, "image/webp", quality);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);
