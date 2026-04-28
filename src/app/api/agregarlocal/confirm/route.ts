@@ -60,13 +60,31 @@ export async function POST(request: Request) {
     const existing = await prisma.restaurant.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
 
+    // Upload logo to Supabase if it's a base64 data URL
+    let logoUrl: string | null = logo || null;
+    if (logoUrl && logoUrl.startsWith("data:")) {
+      try {
+        const matches = logoUrl.match(/^data:image\/(\w+);base64,(.+)$/);
+        if (matches) {
+          const buffer = Buffer.from(matches[2], "base64");
+          const optimized = await sharp(buffer).resize(256, 256, { fit: "inside", withoutEnlargement: true }).webp({ quality: 85 }).toBuffer();
+          const fileName = `logos/${slug}-${Date.now()}.webp`;
+          const { error } = await supabase.storage.from("fotos").upload(fileName, optimized, { contentType: "image/webp", upsert: true });
+          if (!error) {
+            const { data } = supabase.storage.from("fotos").getPublicUrl(fileName);
+            logoUrl = data.publicUrl;
+          }
+        }
+      } catch {}
+    }
+
     // Create restaurant with QR token
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const restaurant = await prisma.restaurant.create({
       data: {
         name: name.trim(),
         slug,
-        logoUrl: logo || null,
+        logoUrl,
         cartaTheme: "PREMIUM",
         defaultView: "premium",
         isActive: true,

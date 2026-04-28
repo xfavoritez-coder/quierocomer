@@ -67,8 +67,21 @@ export default function AgregarLocalPage() {
   const [logo, setLogo] = useState<string | null>(null);
   const [savingProgress, setSavingProgress] = useState("");
   const [aiModel, setAiModel] = useState<"sonnet" | "haiku">("sonnet");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const skipIngredientsRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleLogo = (file: File | null) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setLogo(dataUrl);
+      setLogoPreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
 
   // Compress image client-side to max 1200px and ~200KB JPEG
   const compressImage = (file: File): Promise<Blob> => {
@@ -249,6 +262,22 @@ export default function AgregarLocalPage() {
                 />
               </div>
             )}
+
+            {/* Logo upload — optional */}
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 6 }}>Logo del local <span style={{ textTransform: "none", fontWeight: 400 }}>(opcional)</span></label>
+              <input ref={logoInputRef} type="file" accept="image/*" onChange={(e) => handleLogo(e.target.files?.[0] || null)} style={{ display: "none" }} />
+              <button onClick={() => logoInputRef.current?.click()} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.04)", cursor: "pointer", textAlign: "left" }}>
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Logo" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "1.1rem" }}>📷</div>
+                )}
+                <span style={{ color: logoPreview ? "rgba(255,255,255,0.8)" : "rgba(255,255,255,0.4)", fontSize: "0.88rem" }}>
+                  {logoPreview ? "Logo seleccionado — toca para cambiar" : "Subir logo del restaurante"}
+                </span>
+              </button>
+            </div>
 
             {mode === "photos" ? (
               <>
