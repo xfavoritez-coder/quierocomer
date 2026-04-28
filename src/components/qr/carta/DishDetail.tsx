@@ -293,7 +293,7 @@ function DishSlide({
           src={photos[photoIndex]}
           alt={dish.name}
           fill
-          className="object-cover object-center"
+          className="object-contain object-center"
           sizes="100vw"
           priority={isActive}
           quality={80}
@@ -309,7 +309,7 @@ function DishSlide({
           loading="eager"
           decoding="async"
           onLoad={() => setImgLoaded(true)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
         />
       )}
 
