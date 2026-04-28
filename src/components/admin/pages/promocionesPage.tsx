@@ -137,12 +137,9 @@ export default function AdminPromociones() {
   };
 
   useEffect(() => {
-    if (sessionLoading) return;
+    if (sessionLoading || !selectedLocal) { setPromos([]); return; }
     setLoading(true);
-    const url = selectedLocal
-      ? `/api/admin/promotions?restaurantId=${selectedLocal}`
-      : `/api/admin/promotions?all=true`;
-    fetch(url)
+    fetch(`/api/admin/promotions?restaurantId=${selectedLocal}`)
       .then(r => r.json()).then(d => setPromos(d.promotions || []))
       .catch(() => {}).finally(() => setLoading(false));
   }, [selectedLocal, sessionLoading]);
