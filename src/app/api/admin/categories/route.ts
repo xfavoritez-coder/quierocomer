@@ -130,10 +130,13 @@ export async function DELETE(req: NextRequest) {
 
     await requireRestaurantForOwner(req, existing.restaurantId);
 
-    if (existing._count.dishes > 0) {
-      return NextResponse.json({ error: `No se puede eliminar: tiene ${existing._count.dishes} plato(s). Mueve o elimina los platos primero.` }, { status: 400 });
+    const activeDishes = await prisma.dish.count({ where: { categoryId: id, isActive: true } });
+    if (activeDishes > 0) {
+      return NextResponse.json({ error: `No se puede eliminar: tiene ${activeDishes} plato(s) activo(s). Mueve o elimina los platos primero.` }, { status: 400 });
     }
 
+    // Delete soft-deleted dishes first to clear foreign key constraints
+    await prisma.dish.deleteMany({ where: { categoryId: id, isActive: false } });
     await prisma.category.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (e: any) {
