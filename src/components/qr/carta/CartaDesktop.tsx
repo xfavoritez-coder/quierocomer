@@ -187,10 +187,10 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
     <button
       onClick={onClick}
       style={{
-        background: "white", borderRadius: 14, overflow: "hidden", border: "none",
+        background: "white", borderRadius: 14, overflow: "hidden", border: "none", padding: 0,
         outline: isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid #ebe7df", outlineOffset: -1,
         cursor: "pointer", textAlign: "left", transition: "transform 0.15s, box-shadow 0.15s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)", width: "100%",
       }}
       onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.1)"; }}
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
