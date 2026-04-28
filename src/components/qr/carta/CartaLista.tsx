@@ -294,8 +294,7 @@ export default function CartaLista({
       {/* STICKY NAV: search overlay or category tabs with search icon */}
       {searchOpen ? (
         <div
-          className="sticky top-0 z-20"
-          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+          style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
         >
           <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
           <input
@@ -313,8 +312,7 @@ export default function CartaLista({
         </div>
       ) : (
         <nav
-          className="sticky top-0 z-20"
-          style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+          style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
         >
           {/* Category tabs */}
           <div
