@@ -11,7 +11,7 @@
  */
 import { getGuestId, getSessionId } from "./guestId";
 
-const HEARTBEAT_INTERVAL = 30_000; // 30 seconds — balances data freshness vs DB load at scale
+const HEARTBEAT_INTERVAL = 15_000; // 15 seconds — Pro tier DB handles this fine at 80+ concurrent users
 const INACTIVITY_TIMEOUT = 45_000; // 45 seconds — gives more breathing room before closing
 const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 
