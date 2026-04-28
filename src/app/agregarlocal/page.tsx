@@ -68,6 +68,14 @@ export default function AgregarLocalPage() {
   const [savingProgress, setSavingProgress] = useState("");
   const [aiModel, setAiModel] = useState<"sonnet" | "haiku">("sonnet");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [ownerModal, setOwnerModal] = useState(false);
+  const [ownerName, setOwnerName] = useState("");
+  const [ownerEmail, setOwnerEmail] = useState("");
+  const [ownerWhatsapp, setOwnerWhatsapp] = useState("");
+  const [ownerSendWelcome, setOwnerSendWelcome] = useState(true);
+  const [ownerSaving, setOwnerSaving] = useState(false);
+  const [ownerDone, setOwnerDone] = useState<{ password: string } | null>(null);
+  const [ownerError, setOwnerError] = useState("");
   const skipIngredientsRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -606,9 +614,21 @@ export default function AgregarLocalPage() {
               <p style={{ fontSize: "0.88rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>{result.url}</p>
             </div>
 
+            {/* Owner button */}
+            <button
+              onClick={() => { setOwnerModal(true); setOwnerError(""); setOwnerDone(null); }}
+              style={{
+                display: "block", width: "100%", padding: "16px", borderRadius: 50,
+                background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)",
+                color: "#7fbfdc", fontSize: "1rem", fontWeight: 700, cursor: "pointer", marginBottom: 10,
+              }}
+            >
+              {ownerDone ? "Dueño registrado" : "Registrar dueño del local"}
+            </button>
+
             <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
               <button onClick={() => { navigator.clipboard.writeText(result.url); }} style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}>Copiar link</button>
-              <button onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); setPhotoResults([]); }} style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}>Agregar otro</button>
+              <button onClick={() => { setStep("upload"); setName(""); setPhotos([]); setPreviews([]); setCategories([]); setResult(null); setPhotoResults([]); setOwnerDone(null); }} style={{ padding: "10px 24px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", cursor: "pointer" }}>Agregar otro</button>
             </div>
           </div>
         )}
@@ -710,6 +730,96 @@ export default function AgregarLocalPage() {
           50% { width: 40%; margin-left: 30%; }
           100% { width: 20%; margin-left: 80%; }
         }
+      `}</style>
+
+      {/* Owner registration modal */}
+      {ownerModal && result && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => !ownerSaving && setOwnerModal(false)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: 400, background: "#1a1a1a", borderRadius: 20, padding: 28, border: "1px solid rgba(255,255,255,0.1)" }}>
+            {ownerDone ? (
+              <>
+                <div style={{ textAlign: "center", marginBottom: 20 }}>
+                  <span style={{ fontSize: "2.5rem", display: "block", marginBottom: 12 }}>✅</span>
+                  <h3 style={{ color: "white", fontSize: "1.1rem", fontWeight: 700, margin: "0 0 4px" }}>Dueño registrado</h3>
+                  <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", margin: 0 }}>{ownerEmail}</p>
+                </div>
+                <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", marginBottom: 16 }}>
+                  <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.08em" }}>Contraseña generada</p>
+                  <p style={{ fontSize: "1rem", color: "#F4A623", fontWeight: 600, margin: 0, wordBreak: "break-all" }}>{ownerDone.password}</p>
+                </div>
+                {ownerSendWelcome && <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", textAlign: "center", margin: "0 0 16px" }}>Se envio el correo de bienvenida</p>}
+                <button onClick={() => setOwnerModal(false)} style={{ width: "100%", padding: "14px", borderRadius: 50, background: "#F4A623", color: "#0e0e0e", fontSize: "0.95rem", fontWeight: 700, border: "none", cursor: "pointer" }}>Cerrar</button>
+              </>
+            ) : (
+              <>
+                <h3 style={{ color: "white", fontSize: "1.1rem", fontWeight: 700, margin: "0 0 4px" }}>Registrar dueño</h3>
+                <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.82rem", margin: "0 0 20px" }}>{name}</p>
+
+                {ownerError && <p style={{ color: "#ef4444", fontSize: "0.8rem", marginBottom: 12, padding: "8px 12px", background: "rgba(239,68,68,0.08)", borderRadius: 8 }}>{ownerError}</p>}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                  <div>
+                    <label style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Nombre</label>
+                    <input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="Juan Perez" style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Correo</label>
+                    <input value={ownerEmail} onChange={(e) => setOwnerEmail(e.target.value)} placeholder="correo@ejemplo.com" type="email" style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>WhatsApp <span style={{ textTransform: "none", fontWeight: 400 }}>(opcional)</span></label>
+                    <input value={ownerWhatsapp} onChange={(e) => setOwnerWhatsapp(e.target.value)} placeholder="+56 9 1234 5678" type="tel" style={{ width: "100%", padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.06)", color: "white", fontSize: "0.92rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+
+                  <label
+                    onClick={() => setOwnerSendWelcome(p => !p)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 10, border: `1px solid ${ownerSendWelcome ? "rgba(244,166,35,0.3)" : "rgba(255,255,255,0.1)"}`, background: ownerSendWelcome ? "rgba(244,166,35,0.06)" : "transparent", cursor: "pointer" }}
+                  >
+                    <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${ownerSendWelcome ? "#F4A623" : "rgba(255,255,255,0.3)"}`, background: ownerSendWelcome ? "#F4A623" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                      {ownerSendWelcome && <span style={{ color: "#0e0e0e", fontSize: "12px", fontWeight: 700 }}>✓</span>}
+                    </div>
+                    <span style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.7)" }}>Enviar correo de bienvenida con contraseña</span>
+                  </label>
+                </div>
+
+                <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+                  <button onClick={() => setOwnerModal(false)} disabled={ownerSaving} style={{ flex: 1, padding: "14px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.15)", background: "transparent", color: "rgba(255,255,255,0.6)", fontSize: "0.92rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
+                  <button
+                    disabled={ownerSaving || !ownerName.trim() || !ownerEmail.trim()}
+                    onClick={async () => {
+                      setOwnerSaving(true);
+                      setOwnerError("");
+                      try {
+                        const res = await fetch("/api/agregarlocal/owner", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            restaurantId: result.restaurantId,
+                            name: ownerName.trim(),
+                            email: ownerEmail.trim(),
+                            whatsapp: ownerWhatsapp.trim() || null,
+                            sendWelcome: ownerSendWelcome,
+                          }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || "Error");
+                        setOwnerDone({ password: data.passwordGenerated });
+                      } catch (e: any) {
+                        setOwnerError(e.message || "Error al guardar");
+                      } finally {
+                        setOwnerSaving(false);
+                      }
+                    }}
+                    style={{ flex: 1, padding: "14px", borderRadius: 50, background: ownerSaving || !ownerName.trim() || !ownerEmail.trim() ? "rgba(244,166,35,0.3)" : "#F4A623", color: "#0e0e0e", fontSize: "0.92rem", fontWeight: 700, border: "none", cursor: ownerSaving ? "wait" : "pointer" }}
+                  >
+                    {ownerSaving ? "Guardando..." : "Guardar"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
       `}</style>
     </div>
   );
