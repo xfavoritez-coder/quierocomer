@@ -31,6 +31,8 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
+  const [modalImgLoaded, setModalImgLoaded] = useState(false);
+  useEffect(() => { setModalImgLoaded(false); }, [selectedDish?.id]);
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -228,6 +230,12 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
               background: "#f0ece4",
             }}>
+              {/* Shimmer while loading */}
+              {selectedDish.photos?.[0] && !modalImgLoaded && (
+                <div style={{ position: "absolute", inset: 0, background: "#f0ece4", overflow: "hidden" }}>
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} />
+                </div>
+              )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {selectedDish.photos?.[0] && (
                 <img
@@ -235,7 +243,8 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                   alt={selectedDish.name}
                   loading="eager"
                   decoding="async"
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  onLoad={() => setModalImgLoaded(true)}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: modalImgLoaded ? 1 : 0, transition: "opacity 0.2s ease" }}
                 />
               )}
               {/* Close X */}
@@ -422,6 +431,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       </footer>
 
       <style>{`
+        @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
         @keyframes dkLangSlide {
           from { opacity: 0; transform: translateY(-50%) translateX(8px); }
           to { opacity: 1; transform: translateY(-50%) translateX(0); }

@@ -207,6 +207,7 @@ export default function DishDetail({
 
       <style>{`
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
         @keyframes fadeToast { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         div::-webkit-scrollbar { display: none; }
       `}</style>
@@ -254,6 +255,8 @@ function DishSlide({
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  useEffect(() => { setImgLoaded(false); }, [photoIndex]);
   const averageRating = ratingMap[dish.id];
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
@@ -286,19 +289,23 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Photo with shimmer placeholder */}
+      {/* Shimmer while photo loads */}
+      {photos.length > 0 && !imgLoaded && (
+        <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", zIndex: 0, overflow: "hidden" }}>
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} />
+        </div>
+      )}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      {photos.length > 0 ? (
+      {photos.length > 0 && (
         <img
           src={photos[photoIndex]}
           alt={dish.name}
           key={photos[photoIndex]}
           loading="eager"
           decoding="async"
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+          onLoad={() => setImgLoaded(true)}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.2s ease" }}
         />
-      ) : (
-        <div style={{ position: "absolute", inset: 0, background: "#1a1a1a" }} />
       )}
 
       {/* Top gradient */}

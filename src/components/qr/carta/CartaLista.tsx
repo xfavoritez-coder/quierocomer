@@ -548,7 +548,10 @@ export default function CartaLista({
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         <ViewSelector restaurantId={restaurant.id} />
       </div>
-      <style>{`@keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }`}</style>
+      <style>{`
+        @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+        @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+      `}</style>
 
       {/* Genio */}
       {genioOpen && (
@@ -606,6 +609,7 @@ function DishListCard({
   isPopular?: boolean;
 }) {
   const photo = getDishPhoto(dish);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const geniePick = isGeniePick(dish);
   const isNew = dish.tags?.includes("NEW");
   const isPromo = dish.tags?.includes("PROMOTION");
@@ -641,9 +645,12 @@ function DishListCard({
         fontFamily: "inherit",
       }}
     >
-      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#e8e4dc" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
         {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} />
+          <>
+            {!imgLoaded && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
+            <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} onLoad={() => setImgLoaded(true)} style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
+          </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
         )}

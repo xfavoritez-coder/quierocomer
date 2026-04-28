@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import type { Dish } from "@prisma/client";
 
@@ -114,6 +115,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
+  const [loaded, setLoaded] = useState(false);
 
   const badges: string[] = [];
   if (autoRecommended) badges.push("✨ Para ti");
@@ -123,11 +125,14 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
   return (
     <button
       onClick={onClick}
-      className="relative text-left overflow-hidden w-full bg-neutral-900"
-      style={{ height: 290, borderRadius: 10, ...(autoRecommended ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" } : {}) }}
+      className="relative text-left overflow-hidden w-full"
+      style={{ height: 290, borderRadius: 10, background: "#1a1a1a", ...(autoRecommended ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" } : {}) }}
     >
       {photo ? (
-        <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ transform: "scale(1.08)" }} quality={95} />
+        <>
+          {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden", zIndex: 0 }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
+          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ transform: "scale(1.08)", opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} quality={95} onLoad={() => setLoaded(true)} />
+        </>
       ) : (
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
       )}
@@ -151,5 +156,10 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
 
 export default function DishCard(props: DishCardProps) {
   if (props.variant === "basic") return <BasicCard {...props} />;
-  return <PremiumCard {...props} />;
+  return (
+    <>
+      <PremiumCard {...props} />
+      <style>{`@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }`}</style>
+    </>
+  );
 }
