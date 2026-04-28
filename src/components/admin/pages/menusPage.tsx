@@ -307,6 +307,8 @@ export default function AdminMenus() {
   const [ingListOpen, setIngListOpen] = useState(false);
   const [ePhotoUrl, setEPhotoUrl] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoSuccess, setPhotoSuccess] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
   const [assignedTemplateIds, setAssignedTemplateIds] = useState<string[]>([]);
@@ -446,7 +448,7 @@ export default function AdminMenus() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
         {selectedDish.photos?.[0] && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
-            <img src={selectedDish.photos[0]} alt="" onClick={() => setPhotoModal(selectedDish.photos[0])} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: "pointer" }} />
+            <img src={ePhotoUrl || selectedDish.photos[0]} alt="" onClick={() => editMode && photoInputRef.current ? photoInputRef.current.click() : setPhotoModal(selectedDish.photos[0])} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: editMode ? "pointer" : "zoom-in" }} />
             {selectedDish.isHero && <span style={{ position: "absolute", top: 10, right: 10, background: "#F4A623", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>HERO</span>}
           </div>
         )}
@@ -541,10 +543,10 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Foto</label>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  {ePhotoUrl && <img src={ePhotoUrl} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />}
+                  {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={() => setPhotoModal(ePhotoUrl)} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />}
                   <label style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, textAlign: "center", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>
                     {photoUploading ? "Subiendo..." : ePhotoUrl ? "Cambiar foto" : "Subir foto"}
-                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
+                    <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                       const file = e.target.files?.[0];
                       if (!file) return;
                       setPhotoUploading(true);
@@ -567,13 +569,14 @@ export default function AdminMenus() {
                         fd.append("dishName", eName);
                         const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
                         const data = await res.json();
-                        if (data.url) setEPhotoUrl(data.url);
+                        if (data.url) { setEPhotoUrl(data.url); setPhotoSuccess(true); setTimeout(() => setPhotoSuccess(false), 2500); }
                         else alert(data.error || "Error al subir foto");
                       } catch (err) { alert("Error al subir foto"); }
                       setPhotoUploading(false);
                     }} />
                   </label>
                   {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>}
+                  {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>✓ Foto subida</span>}
                 </div>
               </div>
               <div style={{ marginBottom: 14 }}>
