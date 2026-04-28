@@ -11,8 +11,8 @@
  */
 import { getGuestId, getSessionId } from "./guestId";
 
-const HEARTBEAT_INTERVAL = 15_000; // 15 seconds (optimized for concurrent load)
-const INACTIVITY_TIMEOUT = 30_000; // 30 seconds
+const HEARTBEAT_INTERVAL = 30_000; // 30 seconds — balances data freshness vs DB load at scale
+const INACTIVITY_TIMEOUT = 45_000; // 45 seconds — gives more breathing room before closing
 const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 
 interface DishDwell {
