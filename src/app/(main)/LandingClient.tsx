@@ -401,7 +401,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
                   { t: "Carta inteligente con QR", tip: "Tu carta accesible desde la mesa, con personalización automática" },
-                  { t: "Vista simple", tip: "Layout clásico: fotos, nombre, precio y descripción" },
+                  { t: "Vista lista", tip: "Layout limpio con fotos, nombre, precio y descripción de cada plato" },
                   { t: "El Genio incluido 🧞", tip: "Personaliza la carta según los gustos de cada cliente con inteligencia artificial" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
