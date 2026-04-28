@@ -79,7 +79,9 @@ function resetInactivityTimer() {
 function markInteraction() {
   if (!hadUserInteraction) {
     hadUserInteraction = true;
-    // Start heartbeat timer — DB session created on first tick (15s)
+    // Create DB session immediately on first interaction (don't wait 15s)
+    ensureDbSession();
+    // Start heartbeat timer for periodic updates
     if (!heartbeatTimer) {
       heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
     }
