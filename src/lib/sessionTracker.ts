@@ -104,8 +104,17 @@ function bindActivityListeners() {
   window.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") {
       hiddenAt = Date.now();
-      // Send heartbeat but don't close — just pause
-      if (session?.dbSessionId) sendHeartbeat(false);
+      // Send preventive final-like heartbeat via sendBeacon — if the user never comes
+      // back (kills app, battery dies), this ensures data is saved
+      if (session?.dbSessionId) {
+        const payload = getPayload(false);
+        if (payload?.sessionId) {
+          bufferPayload({ ...payload, _bufferedAt: Date.now() });
+          const blob = new Blob([JSON.stringify(payload)], { type: "application/json" });
+          const sent = navigator.sendBeacon("/api/qr/sessions/heartbeat", blob);
+          if (sent) try { localStorage.removeItem(HEARTBEAT_BUFFER_KEY); } catch {}
+        }
+      }
       if (inactivityTimer) clearTimeout(inactivityTimer);
       if (heartbeatTimer) clearInterval(heartbeatTimer);
     } else if (document.visibilityState === "visible") {
@@ -179,6 +188,33 @@ function getPayload(isFinal: boolean) {
 }
 
 let pendingFinalHeartbeat: { closeReason?: string } | null = null;
+const HEARTBEAT_BUFFER_KEY = "qc_heartbeat_buffer";
+
+/** Save payload to localStorage as backup in case the request fails */
+function bufferPayload(payload: any) {
+  try {
+    localStorage.setItem(HEARTBEAT_BUFFER_KEY, JSON.stringify(payload));
+  } catch {}
+}
+
+/** Retry any buffered heartbeat from a previous failed session */
+function retryBufferedHeartbeat() {
+  try {
+    const raw = localStorage.getItem(HEARTBEAT_BUFFER_KEY);
+    if (!raw) return;
+    localStorage.removeItem(HEARTBEAT_BUFFER_KEY);
+    const payload = JSON.parse(raw);
+    if (!payload?.sessionId) return;
+    // Don't retry if it's too old (> 5 minutes)
+    if (payload._bufferedAt && Date.now() - payload._bufferedAt > 5 * 60_000) return;
+    delete payload._bufferedAt;
+    fetch("/api/qr/sessions/heartbeat", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch {}
+}
 
 function sendHeartbeat(isFinal = false, closeReason?: string) {
   // Create DB session on first heartbeat if user interacted
@@ -196,18 +232,30 @@ function sendHeartbeat(isFinal = false, closeReason?: string) {
   if (!payload || !payload.sessionId) return;
   if (closeReason) (payload as any).closeReason = closeReason;
 
+  // Buffer to localStorage before sending — cleared on success
+  if (isFinal) {
+    bufferPayload({ ...payload, _bufferedAt: Date.now() });
+  }
+
   const body = JSON.stringify(payload);
 
   if (isFinal && typeof navigator !== "undefined" && navigator.sendBeacon) {
     const blob = new Blob([body], { type: "application/json" });
-    navigator.sendBeacon("/api/qr/sessions/heartbeat", blob);
+    const sent = navigator.sendBeacon("/api/qr/sessions/heartbeat", blob);
+    if (sent) {
+      try { localStorage.removeItem(HEARTBEAT_BUFFER_KEY); } catch {}
+    }
   } else {
     fetch("/api/qr/sessions/heartbeat", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body,
       keepalive: isFinal,
-    }).catch(() => {});
+    })
+      .then(() => {
+        if (isFinal) try { localStorage.removeItem(HEARTBEAT_BUFFER_KEY); } catch {}
+      })
+      .catch(() => {});
   }
 }
 
@@ -276,6 +324,9 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
   deviceType = getDeviceType();
   creatingDbSession = false;
   hadUserInteraction = false;
+
+  // Retry any buffered heartbeat from a previous session that failed to send
+  retryBufferedHeartbeat();
 
   session = {
     restaurantId,

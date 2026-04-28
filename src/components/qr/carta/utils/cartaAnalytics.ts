@@ -1,17 +1,68 @@
 /**
  * Analytics for carta views using the existing StatEvent system.
  * Uses guestId (persistent) + sessionId (per-tab) from centralized lib.
+ *
+ * StatEvents are batched in memory and flushed every 10s or on page close
+ * to reduce DB writes under high concurrency (50-80+ users).
  */
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
 
-function track(restaurantId: string, eventType: string, extra?: Record<string, unknown>) {
-  fetch("/api/qr/stats", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eventType, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), ...extra }),
-  }).catch(() => {});
+// ── StatEvent batching ──
+
+interface QueuedEvent {
+  eventType: string;
+  restaurantId: string;
+  [key: string]: unknown;
 }
+
+let eventBatch: QueuedEvent[] = [];
+let eventFlushTimer: ReturnType<typeof setTimeout> | null = null;
+const EVENT_FLUSH_INTERVAL = 10_000; // 10 seconds
+
+function flushEvents() {
+  if (eventBatch.length === 0) return;
+  const batch = [...eventBatch];
+  eventBatch = [];
+  if (eventFlushTimer) { clearTimeout(eventFlushTimer); eventFlushTimer = null; }
+
+  const payload = JSON.stringify({ events: batch });
+  if (typeof navigator !== "undefined" && navigator.sendBeacon) {
+    navigator.sendBeacon("/api/qr/stats", payload);
+  } else {
+    fetch("/api/qr/stats", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: payload,
+      keepalive: true,
+    }).catch(() => {});
+  }
+}
+
+function scheduleFlush() {
+  if (eventFlushTimer) return;
+  eventFlushTimer = setTimeout(flushEvents, EVENT_FLUSH_INTERVAL);
+}
+
+function track(restaurantId: string, eventType: string, extra?: Record<string, unknown>) {
+  eventBatch.push({
+    eventType,
+    restaurantId,
+    guestId: getGuestId(),
+    sessionId: getSessionId(),
+    dbSessionId: getDbSessionId(),
+    ...extra,
+  });
+  scheduleFlush();
+}
+
+// Flush on page close
+if (typeof window !== "undefined") {
+  window.addEventListener("pagehide", flushEvents);
+  window.addEventListener("beforeunload", flushEvents);
+}
+
+// ── Public tracking functions ──
 
 export function trackCartaViewLoaded(restaurantId: string, view: string) {
   track(restaurantId, "SESSION_START");
@@ -32,8 +83,6 @@ export function trackCartaViajeCategoryReached(restaurantId: string, categoryId:
 export function trackCartaDishOpenedInViaje(restaurantId: string, dishId: string, isGeniePick: boolean) {
   track(restaurantId, "DISH_VIEW", { dishId });
 }
-
-// ── New analytics events ──
 
 export function trackSearchPerformed(restaurantId: string, query: string, resultsCount: number) {
   track(restaurantId, "SEARCH_PERFORMED", { query: query.toLowerCase().trim(), resultsCount });
@@ -79,7 +128,7 @@ export function trackDishImpression(restaurantId: string, dishId: string, positi
   impressionTimer = setTimeout(flushImpressions, 10000); // flush every 10s
 }
 
-// Flush on page close
+// Flush impressions on page close (stat events already handled above)
 if (typeof window !== "undefined") {
   window.addEventListener("pagehide", flushImpressions);
   window.addEventListener("beforeunload", flushImpressions);

@@ -34,57 +34,82 @@ function getTimeOfDay(): TimeOfDay {
   return "LATE";
 }
 
+async function processEvent(event: any, qrUserId: string | null, weather: string | null, timeOfDay: TimeOfDay) {
+  const { eventType, dishId, restaurantId, sessionId, dbSessionId, categoryId, tableId, guestId, promoId, query, resultsCount, clickedResultId, genioSessionId, metadata } = event;
+
+  if (!eventType || !restaurantId) return null;
+
+  const effectiveGuestId = guestId || sessionId || null;
+
+  return {
+    eventType,
+    dishId: dishId || null,
+    categoryId: categoryId || null,
+    tableId: tableId || null,
+    promoId: promoId || null,
+    query: query || null,
+    resultsCount: resultsCount ?? null,
+    clickedResultId: clickedResultId || null,
+    genioSessionId: genioSessionId || null,
+    metadata: metadata || null,
+    restaurantId,
+    sessionId: sessionId || effectiveGuestId || "",
+    dbSessionId: dbSessionId || null,
+    guestId: effectiveGuestId,
+    qrUserId,
+    weather,
+    timeOfDay,
+  };
+}
+
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { eventType, dishId, restaurantId, sessionId, dbSessionId, categoryId, tableId, guestId, promoId, query, resultsCount, clickedResultId, genioSessionId, metadata } = body;
-
-    if (!eventType || !restaurantId) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    let body;
+    const ct = request.headers.get("content-type") || "";
+    if (ct.includes("json")) {
+      body = await request.json();
+    } else {
+      body = JSON.parse(await request.text());
     }
 
-    const effectiveGuestId = guestId || sessionId || null;
-
-    // Get qrUserId from cookie if logged in
     const cookieStore = await cookies();
     const qrUserId = cookieStore.get("qr_user_id")?.value || null;
 
-    // Ensure GuestProfile exists
-    if (effectiveGuestId) {
-      await prisma.guestProfile.upsert({
-        where: { id: effectiveGuestId },
-        create: { id: effectiveGuestId, linkedQrUserId: qrUserId },
-        update: { lastSeenAt: new Date(), visitCount: { increment: eventType === "SESSION_START" ? 1 : 0 }, linkedQrUserId: qrUserId || undefined },
-      });
-    }
+    // Support both single event and batch
+    const events: any[] = body.events || [body];
+    if (events.length === 0) return NextResponse.json({ ok: true });
 
-    // Get weather and time
+    // Get weather and time once for the batch
+    const restaurantId = events[0].restaurantId;
     const [weather, timeOfDay] = await Promise.all([
       getWeatherForRestaurant(restaurantId),
       Promise.resolve(getTimeOfDay()),
     ]);
 
-    await prisma.statEvent.create({
-      data: {
-        eventType,
-        dishId: dishId || null,
-        categoryId: categoryId || null,
-        tableId: tableId || null,
-        promoId: promoId || null,
-        query: query || null,
-        resultsCount: resultsCount ?? null,
-        clickedResultId: clickedResultId || null,
-        genioSessionId: genioSessionId || null,
-        metadata: metadata || null,
-        restaurantId,
-        sessionId: sessionId || effectiveGuestId || "",
-        dbSessionId: dbSessionId || null,
-        guestId: effectiveGuestId,
-        qrUserId,
-        weather,
-        timeOfDay,
-      },
-    });
+    // Ensure GuestProfile exists (once per batch)
+    const effectiveGuestId = events[0].guestId || events[0].sessionId || null;
+    if (effectiveGuestId) {
+      const hasSessionStart = events.some((e: any) => e.eventType === "SESSION_START");
+      await prisma.guestProfile.upsert({
+        where: { id: effectiveGuestId },
+        create: { id: effectiveGuestId, linkedQrUserId: qrUserId },
+        update: { lastSeenAt: new Date(), visitCount: { increment: hasSessionStart ? 1 : 0 }, linkedQrUserId: qrUserId || undefined },
+      });
+    }
+
+    // Process all events
+    const records = [];
+    for (const event of events) {
+      const record = await processEvent(event, qrUserId, weather, timeOfDay);
+      if (record) records.push(record);
+    }
+
+    // Batch insert
+    if (records.length === 1) {
+      await prisma.statEvent.create({ data: records[0] });
+    } else if (records.length > 1) {
+      await prisma.statEvent.createMany({ data: records });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
