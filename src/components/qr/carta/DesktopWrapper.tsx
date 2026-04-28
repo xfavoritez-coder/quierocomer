@@ -23,11 +23,6 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
   useEffect(() => {
-    const isPreview = new URLSearchParams(window.location.search).get("preview") === "true";
-    if (isPreview) {
-      setIsDesktop(false);
-      return;
-    }
     const check = () => setIsDesktop(window.innerWidth >= 768);
     check();
     window.addEventListener("resize", check);
