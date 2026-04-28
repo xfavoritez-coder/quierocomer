@@ -279,97 +279,94 @@ export default function CartaLista({
       {/* Hero Slim */}
       <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={setSelectedDish} />
 
-      {/* Promos */}
-      {/* STICKY NAV: search overlay or category tabs with search icon */}
-      {searchOpen ? (
-        <div
-          style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
-        >
-          <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
-          <input
-            autoFocus
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t(lang, "search")}
-            className="font-[family-name:var(--font-dm)]"
-            style={{ flex: 1, border: "none", outline: "none", fontSize: "0.92rem", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
-          />
-          <button onClick={() => { setSearchOpen(false); setQuery(""); }} style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-            <X size={18} color="rgba(14,14,14,0.4)" />
-          </button>
-        </div>
-      ) : (
-        <nav
-          style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
-        >
-          {/* Category tabs */}
-          <div
-            ref={catScrollRef}
-            className="flex overflow-x-auto"
-            style={{ flex: 1, height: "100%", paddingLeft: 12, paddingRight: 4, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
-          >
-            {hasPromos && (() => {
-              const isActive = "promos" === activeCategory;
-              return (
-                <button
-                  key="promos"
-                  ref={isActive ? activeCatRef : null}
-                  onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
-                  className="shrink-0 font-[family-name:var(--font-dm)]"
-                  style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
-                >Ofertas</button>
-              );
-            })()}
-            {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
-              const isActive = cat.id === activeCategory;
-              return (
-                <button
-                  key={cat.id}
-                  ref={isActive ? activeCatRef : null}
-                  onClick={() => {
-                    setActiveCategory(cat.id);
-                    const el = document.getElementById(`lista-cat-${cat.id}`);
-                    if (el) {
-                      const top = el.getBoundingClientRect().top + window.scrollY - 52;
-                      window.scrollTo({ top, behavior: "smooth" });
-                    }
-                  }}
-                  className="shrink-0 font-[family-name:var(--font-dm)]"
-                  style={{
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    padding: "0 2px",
-                    fontSize: "1rem",
-                    fontWeight: isActive ? 700 : 500,
-                    color: isActive ? "#0e0e0e" : "#999",
-                    background: "none",
-                    border: "none",
-                    borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
-                    transition: "color 0.15s, border-color 0.15s",
-                  }}
-                >
-                  {cat.name}
-                </button>
-              );
-            })}
-          </div>
-          {/* Search icon */}
-          <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
-              aria-label="Buscar"
-            >
-              <Search size={19} color="#666" />
+      {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+        {searchOpen ? (
+          <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
+            <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
+            <input
+              autoFocus
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t(lang, "search")}
+              className="font-[family-name:var(--font-dm)]"
+              style={{ flex: 1, border: "none", outline: "none", fontSize: "0.92rem", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
+            />
+            <button onClick={() => { setSearchOpen(false); setQuery(""); }} style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
+              <X size={18} color="rgba(14,14,14,0.4)" />
             </button>
           </div>
-        </nav>
-      )}
+        ) : (
+          <nav style={{ height: 44, display: "flex", alignItems: "center" }}>
+            {/* Category tabs */}
+            <div
+              ref={catScrollRef}
+              className="flex overflow-x-auto"
+              style={{ flex: 1, height: "100%", paddingLeft: 12, paddingRight: 4, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+            >
+              {hasPromos && (() => {
+                const isActive = "promos" === activeCategory;
+                return (
+                  <button
+                    key="promos"
+                    ref={isActive ? activeCatRef : null}
+                    onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
+                    className="shrink-0 font-[family-name:var(--font-dm)]"
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
+                  >Ofertas</button>
+                );
+              })()}
+              {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
+                const isActive = cat.id === activeCategory;
+                return (
+                  <button
+                    key={cat.id}
+                    ref={isActive ? activeCatRef : null}
+                    onClick={() => {
+                      setActiveCategory(cat.id);
+                      const el = document.getElementById(`lista-cat-${cat.id}`);
+                      if (el) {
+                        const top = el.getBoundingClientRect().top + window.scrollY - 52;
+                        window.scrollTo({ top, behavior: "smooth" });
+                      }
+                    }}
+                    className="shrink-0 font-[family-name:var(--font-dm)]"
+                    style={{
+                      height: "100%",
+                      display: "flex",
+                      alignItems: "center",
+                      padding: "0 2px",
+                      fontSize: "1rem",
+                      fontWeight: isActive ? 700 : 500,
+                      color: isActive ? "#0e0e0e" : "#999",
+                      background: "none",
+                      border: "none",
+                      borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "color 0.15s, border-color 0.15s",
+                    }}
+                  >
+                    {cat.name}
+                  </button>
+                );
+              })}
+            </div>
+            {/* Search icon */}
+            <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center justify-center"
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
+                aria-label="Buscar"
+              >
+                <Search size={19} color="#666" />
+              </button>
+            </div>
+          </nav>
+        )}
+      </div>
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
