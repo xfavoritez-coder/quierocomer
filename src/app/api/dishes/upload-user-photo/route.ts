@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const TARGET_BYTES = 200 * 1024;
+    const TARGET_BYTES = 130 * 1024;
     const MAX_DIMENSION = 1600;
 
     let img = sharp(buffer).rotate(); // auto-rotate from EXIF

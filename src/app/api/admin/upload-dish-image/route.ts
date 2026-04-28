@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const originalSize = originalBuffer.length;
 
     // Process with sharp — single-pass optimization, max quality within 200KB
-    const TARGET_BYTES = 200 * 1024;
+    const TARGET_BYTES = 130 * 1024;
     const MAX_DIMENSION = 1600;
 
     let img = sharp(originalBuffer).rotate(); // auto-rotate from EXIF
