@@ -63,7 +63,7 @@ function placeholderGradient(id: string) {
 
 function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; style?: React.CSSProperties }) {
   const photo = getDishPhoto(dish);
-  if (photo) return <Image src={photo} alt={dish.name} fill className={`object-cover ${className || ""}`} sizes="100vw" style={style} />;
+  if (photo) return <Image src={photo} alt={dish.name} fill className={`object-cover ${className || ""}`} sizes="100vw" style={style} quality={95} />;
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 

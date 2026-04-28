@@ -35,7 +35,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
     <>
       <div className="shrink-0 relative overflow-hidden bg-neutral-900" style={{ width: 80, height: 80, borderRadius: 10 }}>
         {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="80px" />
+          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="240px" quality={95} />
         ) : (
           <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl">🍽</div>
         )}
@@ -127,7 +127,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       style={{ height: "calc(205px * 4 / 3 + 45px)", borderRadius: 10, ...(autoRecommended ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" } : {}) }}
     >
       {photo ? (
-        <Image src={photo} alt={dish.name} fill className="object-cover" sizes="205px" style={{ transform: "scale(1.08)" }} />
+        <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ transform: "scale(1.08)" }} quality={95} />
       ) : (
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
       )}

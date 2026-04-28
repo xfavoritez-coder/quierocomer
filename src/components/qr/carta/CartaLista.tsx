@@ -642,7 +642,7 @@ function DishListCard({
     >
       <div style={{ width: 120, height: 120, borderRadius: 10, overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
         {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="76px" />
+          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
         )}
