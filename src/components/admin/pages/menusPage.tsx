@@ -700,7 +700,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Alérgenos</label>
                 <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                  Los alérgenos se detectan automáticamente a partir de los ingredientes del producto.
+                  Los alérgenos se detectan automáticamente a partir de los ingredientes del producto. <strong style={{ color: "var(--adm-text2)" }}>No se muestran al cliente</strong>, solo se usan para ordenar la carta según sus gustos y restricciones.
                 </p>
                 {(selectedDish as any)?.allergenDetails && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
