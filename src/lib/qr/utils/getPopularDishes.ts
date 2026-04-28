@@ -60,13 +60,21 @@ export async function getPopularDishes(restaurantId: string): Promise<PopularRes
     }))
     .sort((a, b) => b.score - a.score || b.price - a.price);
 
-  // Popular count relative to menu size: 10% of dishes, min 2, max 8
+  // Popular count relative to menu size: 10% of dishes, min 2, max 10
   const maxPopular = Math.min(10, Math.max(2, Math.round(dishes.length * 0.1)));
 
-  const global = scored
-    .filter(d => d.sessions >= 3)
-    .slice(0, maxPopular)
-    .map(d => ({ dishId: d.dishId, score: d.score }));
+  // Max 2 popular per category to spread badges across sections
+  const catCounts = new Map<string, number>();
+  const global: PopularDish[] = [];
+
+  for (const d of scored) {
+    if (d.sessions < 3) continue;
+    if (global.length >= maxPopular) break;
+    const catCount = catCounts.get(d.categoryId) ?? 0;
+    if (catCount >= 2) continue;
+    catCounts.set(d.categoryId, catCount + 1);
+    global.push({ dishId: d.dishId, score: d.score });
+  }
 
   return { global, byCategory: [] };
 }
