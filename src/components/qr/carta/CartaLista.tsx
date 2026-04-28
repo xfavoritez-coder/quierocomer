@@ -316,22 +316,11 @@ export default function CartaLista({
           className="sticky top-0 z-20"
           style={{ background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
         >
-          {/* Search icon */}
-          <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center justify-center"
-              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
-              aria-label="Buscar"
-            >
-              <Search size={19} color="#666" />
-            </button>
-          </div>
           {/* Category tabs */}
           <div
             ref={catScrollRef}
             className="flex overflow-x-auto"
-            style={{ flex: 1, height: "100%", paddingLeft: 8, paddingRight: 16, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch", maskImage: "linear-gradient(to right, black 90%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 90%, transparent 100%)" }}
+            style={{ flex: 1, height: "100%", paddingLeft: 12, paddingRight: 4, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
           >
             {hasPromos && (() => {
               const isActive = "promos" === activeCategory;
@@ -380,6 +369,17 @@ export default function CartaLista({
                 </button>
               );
             })}
+          </div>
+          {/* Search icon */}
+          <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center justify-center"
+              style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
+              aria-label="Buscar"
+            >
+              <Search size={19} color="#666" />
+            </button>
           </div>
         </nav>
       )}

@@ -462,7 +462,7 @@ export default function CartaPremium({
           categories={hasPromos ? [{ id: "promos", name: "Ofertas", position: -1, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any, ...categories] : categories}
           activeCategory={activeCategory}
           onCategoryChange={(id) => { setActiveCategory(id); if (id === "promos") { const el = document.getElementById("cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 54, behavior: "smooth" }); } }}
-          leftSlot={
+          rightSlot={
             <button
               onClick={() => setSearchOpen(true)}
               className="flex items-center justify-center"
