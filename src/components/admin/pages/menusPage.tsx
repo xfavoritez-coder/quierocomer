@@ -543,7 +543,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Foto</label>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={() => setPhotoModal(ePhotoUrl)} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />}
+                  {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoModal(ePhotoUrl); }} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />}
                   <label style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, textAlign: "center", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>
                     {photoUploading ? "Subiendo..." : ePhotoUrl ? "Cambiar foto" : "Subir foto"}
                     <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
