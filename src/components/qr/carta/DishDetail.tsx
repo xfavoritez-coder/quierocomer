@@ -68,13 +68,13 @@ export default function DishDetail({
     requestAnimationFrame(() => setVisible(true));
 
     // If body is already locked (e.g. by Genio), don't re-lock
-    const alreadyLocked = document.body.style.position === "fixed";
+    const alreadyLocked = document.body.style.overflow === "hidden";
+    let savedScrollY = 0;
     if (!alreadyLocked) {
-      const scrollY = window.scrollY;
+      savedScrollY = window.scrollY;
+      // Use overflow hidden on html+body — no position change = no flash
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
-      document.body.style.position = "fixed";
-      document.body.style.width = "100%";
-      document.body.style.top = `-${scrollY}px`;
     }
 
     // Scroll to the selected dish instantly
@@ -85,12 +85,9 @@ export default function DishDetail({
 
     return () => {
       if (!alreadyLocked) {
-        const top = document.body.style.top;
+        document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
-        document.body.style.position = "";
-        document.body.style.width = "";
-        document.body.style.top = "";
-        window.scrollTo(0, parseInt(top || "0") * -1);
+        window.scrollTo(0, savedScrollY);
       }
     };
   }, [currentIndex]);
