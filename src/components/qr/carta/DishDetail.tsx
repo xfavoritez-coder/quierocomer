@@ -286,9 +286,12 @@ function DishSlide({
   return (
     <div
       data-dish-slide={index}
-      style={{ flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden" }}
+      style={{
+        flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
+        ...(photos[photoIndex] ? { backgroundImage: `url(${photos[photoIndex]})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
+      }}
     >
-      {/* Photo */}
+      {/* Photo — bg-image shows instantly from cache, Image loads crisp on top */}
       {photos.length > 0 && (
         <Image
           src={photos[photoIndex]}
@@ -300,7 +303,7 @@ function DishSlide({
           key={photos[photoIndex]}
           unoptimized
           onLoad={() => setPhotoLoaded(true)}
-          style={{ filter: photoLoaded ? "blur(0)" : "blur(20px)", transform: "scale(1.05)", transition: "filter 0.4s ease-out" }}
+          style={{ opacity: photoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
         />
       )}
 

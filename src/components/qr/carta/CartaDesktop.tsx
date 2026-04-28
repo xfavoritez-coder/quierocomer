@@ -206,7 +206,10 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             style={{ background: "white", borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
           >
             {/* Photo + close button + badges */}
-            <div style={{ height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
+            <div style={{
+              height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
+              ...(selectedDish.photos?.[0] ? { backgroundImage: `url(${selectedDish.photos[0]})`, backgroundSize: "cover", backgroundPosition: "center" } : {}),
+            }}>
               {selectedDish.photos?.[0] && (
                 <Image
                   src={selectedDish.photos[0]}
@@ -216,7 +219,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                   sizes="520px"
                   unoptimized
                   onLoad={() => setModalPhotoLoaded(true)}
-                  style={{ filter: modalPhotoLoaded ? "blur(0)" : "blur(20px)", transform: "scale(1.05)", transition: "filter 0.4s ease-out" }}
+                  style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
                 />
               )}
               {/* Close X */}
