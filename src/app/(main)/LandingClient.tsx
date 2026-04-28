@@ -391,7 +391,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
             <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Parte gratis. Crece cuando quieras.</h2>
           </div>
-          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 780, margin: "0 auto" }}>
+          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, maxWidth: 1000, margin: "0 auto" }}>
             {/* FREE */}
             <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: 28 }}>
               <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#666", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Gratis</p>
@@ -408,10 +408,10 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 ))}
               </div>
             </div>
-            {/* PREMIUM */}
+            {/* GOLD */}
             <div style={{ background: "#111", borderRadius: 14, padding: 28, position: "relative", color: "#fff" }}>
               <span style={{ position: "absolute", top: -10, right: 20, background: "#fbbf24", color: "#111", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Premium</p>
+              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Gold</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
                 <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$35.000</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
@@ -425,11 +425,31 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
                   { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
                   { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
-                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                   { t: "Multilenguaje ES · EN · PT · IT", tip: "Tu carta traducida automáticamente a inglés, portugués e italiano" },
                   { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
+                ))}
+              </div>
+            </div>
+            {/* PREMIUM */}
+            <div style={{ background: "#0a0a0a", borderRadius: 14, padding: 28, position: "relative", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
+              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#c084fc", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Premium</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$55.000</span>
+                <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
+              </div>
+              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Neto · Sin contratos</p>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#c084fc", color: "#fff", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> Todo lo del plan Gold</div>
+                {[
+                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
+                  { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
+                  { t: "Campañas automáticas", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros y fideliza en automático" },
+                  { t: "Email marketing", tip: "Envía promociones y novedades por correo a tus clientes registrados" },
+                ].map((f) => (
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
                 ))}
               </div>
             </div>
