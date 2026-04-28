@@ -316,12 +316,10 @@ export default function CartaPremium({
     ).slice(0, 3);
     if (popularWithPhotos.length > 0) return popularWithPhotos;
 
-    // 3. Fallback: 3 random dishes with photos
+    // 3. Fallback: first 3 dishes with photos (by position)
     const withPhotos = dishes.filter((d) => d.photos?.[0]);
     if (withPhotos.length <= 3) return withPhotos;
-    // Shuffle and pick 3
-    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
   }, [dishes, popularDishIds]);
 
   // Build sorted dish list matching carta visual order (category by category, recommended first, then by score)

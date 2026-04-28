@@ -100,8 +100,7 @@ export default function CartaLista({
     if (popularWithPhotos.length > 0) return popularWithPhotos;
     const withPhotos = dishes.filter((d) => d.photos?.[0]);
     if (withPhotos.length <= 3) return withPhotos;
-    const shuffled = [...withPhotos].sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 3);
+    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
   }, [dishes, popularDishIds]);
 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
