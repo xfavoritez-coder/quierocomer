@@ -6,6 +6,7 @@ interface PanelRestaurant {
   id: string;
   name: string;
   slug: string;
+  qrToken?: string | null;
 }
 
 export interface PanelSession {
