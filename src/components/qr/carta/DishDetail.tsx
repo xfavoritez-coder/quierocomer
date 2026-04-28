@@ -289,16 +289,29 @@ function DishSlide({
     >
       {/* Photo with shimmer placeholder */}
       {photos.length > 0 ? (
-        <Image
-          src={photos[photoIndex]}
-          alt={dish.name}
-          fill
-          className="object-cover object-center"
-          sizes="100vw"
-          priority={isActive}
-          key={photos[photoIndex]}
-          quality={90}
-        />
+        <>
+          {/* Instant: Next.js optimized version from cache */}
+          <Image
+            src={photos[photoIndex]}
+            alt={dish.name}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority={isActive}
+            key={`thumb-${photos[photoIndex]}`}
+            quality={90}
+          />
+          {/* Full quality: raw original loads on top */}
+          <Image
+            src={photos[photoIndex]}
+            alt={dish.name}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            key={`full-${photos[photoIndex]}`}
+            unoptimized
+          />
+        </>
       ) : (
         <div style={{ position: "absolute", inset: 0, background: "#1a1a1a" }} />
       )}

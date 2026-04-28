@@ -229,14 +229,24 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               background: "#f0ece4",
             }}>
               {selectedDish.photos?.[0] && (
-                <Image
-                  src={selectedDish.photos[0]}
-                  alt={selectedDish.name}
-                  fill
-                  className="object-cover"
-                  sizes="520px"
-                  quality={90}
-                />
+                <>
+                  <Image
+                    src={selectedDish.photos[0]}
+                    alt={selectedDish.name}
+                    fill
+                    className="object-cover"
+                    sizes="520px"
+                    quality={90}
+                  />
+                  <Image
+                    src={selectedDish.photos[0]}
+                    alt={selectedDish.name}
+                    fill
+                    className="object-cover"
+                    sizes="520px"
+                    unoptimized
+                  />
+                </>
               )}
               {/* Close X */}
               <button
