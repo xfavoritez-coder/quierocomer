@@ -26,35 +26,35 @@ export async function POST(req: NextRequest) {
     const originalBuffer = Buffer.from(await file.arrayBuffer());
     const originalSize = originalBuffer.length;
 
-    // Process with sharp — maximize quality within 120KB target
-    const TARGET_BYTES = 120 * 1024;
-    const MAX_DIMENSION = 1400;
+    // Process with sharp — single-pass optimization, max quality within 200KB
+    const TARGET_BYTES = 200 * 1024;
+    const MAX_DIMENSION = 1600;
 
-    let img = sharp(originalBuffer);
+    let img = sharp(originalBuffer).rotate(); // auto-rotate from EXIF
+
     const meta = await img.metadata();
 
-    // Resize only if exceeds max dimension
     if ((meta.width && meta.width > MAX_DIMENSION) || (meta.height && meta.height > MAX_DIMENSION)) {
       img = img.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
 
-    // Adaptive quality: start high, reduce until under target size
+    // Adaptive quality: start very high, reduce until under target
     let optimizedBuffer: Buffer;
-    let quality = 92;
+    let quality = 95;
     do {
-      optimizedBuffer = await img.clone().webp({ quality, smartSubsample: true }).toBuffer();
+      optimizedBuffer = await img.clone().webp({ quality, effort: 6, smartSubsample: true }).toBuffer();
       if (optimizedBuffer.length <= TARGET_BYTES) break;
-      quality -= 4;
-    } while (quality >= 40);
+      quality -= 3;
+    } while (quality >= 50);
 
-    // If still over target after quality reduction, scale down resolution
+    // If still over target, scale down resolution proportionally
     if (optimizedBuffer.length > TARGET_BYTES) {
       const scaledMeta = await sharp(optimizedBuffer).metadata();
       const scale = Math.sqrt(TARGET_BYTES / optimizedBuffer.length) * 0.95;
-      const newW = Math.round((scaledMeta.width || 800) * scale);
-      optimizedBuffer = await sharp(originalBuffer)
+      const newW = Math.round((scaledMeta.width || 1000) * scale);
+      optimizedBuffer = await sharp(originalBuffer).rotate()
         .resize(newW, undefined, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 78, smartSubsample: true })
+        .webp({ quality: 82, effort: 6, smartSubsample: true })
         .toBuffer();
     }
 

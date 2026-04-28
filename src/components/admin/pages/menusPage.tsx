@@ -559,20 +559,23 @@ export default function AdminMenus() {
                       if (!file) return;
                       setPhotoUploading(true);
                       try {
-                        // Compress client-side before upload (Vercel 4.5MB body limit)
-                        const img = new Image();
-                        const url = URL.createObjectURL(file);
-                        await new Promise<void>((resolve) => { img.onload = () => resolve(); img.src = url; });
-                        const canvas = document.createElement("canvas");
-                        const MAX = 2400;
-                        let w = img.width, h = img.height;
-                        if (w > MAX || h > MAX) { const r = Math.min(MAX / w, MAX / h); w = Math.round(w * r); h = Math.round(h * r); }
-                        canvas.width = w; canvas.height = h;
-                        canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-                        URL.revokeObjectURL(url);
-                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.98));
+                        // Only downscale if file exceeds Vercel 4.5MB body limit — no quality loss
+                        let uploadFile: File | Blob = file;
+                        if (file.size > 4 * 1024 * 1024) {
+                          const img = new Image();
+                          const url = URL.createObjectURL(file);
+                          await new Promise<void>((resolve) => { img.onload = () => resolve(); img.src = url; });
+                          const canvas = document.createElement("canvas");
+                          const MAX = 2400;
+                          let w = img.width, h = img.height;
+                          if (w > MAX || h > MAX) { const r = Math.min(MAX / w, MAX / h); w = Math.round(w * r); h = Math.round(h * r); }
+                          canvas.width = w; canvas.height = h;
+                          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                          URL.revokeObjectURL(url);
+                          uploadFile = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+                        }
                         const fd = new FormData();
-                        fd.append("file", blob, "photo.jpg");
+                        fd.append("file", uploadFile, file.name);
                         fd.append("localId", selectedRestaurantId || "");
                         fd.append("dishName", eName);
                         const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });

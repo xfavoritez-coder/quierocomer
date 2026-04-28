@@ -24,32 +24,33 @@ export async function POST(req: NextRequest) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const TARGET_BYTES = 120 * 1024;
-    const MAX_DIMENSION = 1400;
+    const TARGET_BYTES = 200 * 1024;
+    const MAX_DIMENSION = 1600;
 
-    let img = sharp(buffer);
+    let img = sharp(buffer).rotate(); // auto-rotate from EXIF
+
     const meta = await img.metadata();
     if ((meta.width && meta.width > MAX_DIMENSION) || (meta.height && meta.height > MAX_DIMENSION)) {
       img = img.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
 
-    // Adaptive quality: start high, reduce until under target size
+    // Adaptive quality: start very high, reduce until under target
     let optimized: Buffer;
-    let quality = 92;
+    let quality = 95;
     do {
-      optimized = await img.clone().webp({ quality, smartSubsample: true }).toBuffer();
+      optimized = await img.clone().webp({ quality, effort: 6, smartSubsample: true }).toBuffer();
       if (optimized.length <= TARGET_BYTES) break;
-      quality -= 4;
-    } while (quality >= 40);
+      quality -= 3;
+    } while (quality >= 50);
 
-    // If still over target, scale down resolution
+    // If still over target, scale down resolution proportionally
     if (optimized.length > TARGET_BYTES) {
       const scaledMeta = await sharp(optimized).metadata();
       const scale = Math.sqrt(TARGET_BYTES / optimized.length) * 0.95;
-      const newW = Math.round((scaledMeta.width || 800) * scale);
-      optimized = await sharp(buffer)
+      const newW = Math.round((scaledMeta.width || 1000) * scale);
+      optimized = await sharp(buffer).rotate()
         .resize(newW, undefined, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 78, smartSubsample: true })
+        .webp({ quality: 82, effort: 6, smartSubsample: true })
         .toBuffer();
     }
 
