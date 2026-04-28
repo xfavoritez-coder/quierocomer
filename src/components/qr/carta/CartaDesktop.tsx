@@ -230,21 +230,27 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
               background: "#f0ece4",
             }}>
-              {/* Shimmer while loading */}
-              {selectedDish.photos?.[0] && !modalImgLoaded && (
-                <div style={{ position: "absolute", inset: 0, background: "#f0ece4", overflow: "hidden" }}>
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.03) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} />
-                </div>
+              {/* Layer 1: Next.js optimized — instant from cache */}
+              {selectedDish.photos?.[0] && (
+                <Image
+                  src={selectedDish.photos[0]}
+                  alt={selectedDish.name}
+                  fill
+                  className="object-cover"
+                  sizes="520px"
+                  quality={80}
+                />
               )}
+              {/* Layer 2: raw original — fades in when loaded */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               {selectedDish.photos?.[0] && (
                 <img
                   src={selectedDish.photos[0]}
-                  alt={selectedDish.name}
+                  alt=""
                   loading="eager"
                   decoding="async"
                   onLoad={() => setModalImgLoaded(true)}
-                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: modalImgLoaded ? 1 : 0, transition: "opacity 0.2s ease" }}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: modalImgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
                 />
               )}
               {/* Close X */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
@@ -289,22 +290,29 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Shimmer while photo loads */}
-      {photos.length > 0 && !imgLoaded && (
-        <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", zIndex: 0, overflow: "hidden" }}>
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} />
-        </div>
+      {/* Layer 1: Next.js optimized — loads instantly from cache */}
+      {photos.length > 0 && (
+        <Image
+          src={photos[photoIndex]}
+          alt={dish.name}
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority={isActive}
+          quality={80}
+        />
       )}
+      {/* Layer 2: raw original — fades in silently when loaded */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {photos.length > 0 && (
         <img
           src={photos[photoIndex]}
-          alt={dish.name}
+          alt=""
           key={photos[photoIndex]}
           loading="eager"
           decoding="async"
           onLoad={() => setImgLoaded(true)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.2s ease" }}
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
         />
       )}
 
