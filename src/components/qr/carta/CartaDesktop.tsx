@@ -10,6 +10,7 @@ import { SUPPORTED_LANGS, LANG_FLAGS } from "@/lib/qr/i18n";
 import { norm } from "@/lib/normalize";
 import { getDishPhoto, groupDishesByCategory } from "./utils/dishHelpers";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
+import { startSession } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 
@@ -55,6 +56,11 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
     } else {
       setShowWaiter(hasMesaToken(restaurant.id));
     }
+  }, [restaurant.id, tableId, isQrScan]);
+
+  // Start session tracking (same as CartaRouter does for mobile)
+  useEffect(() => {
+    startSession(restaurant.id, tableId, !!isQrScan);
   }, [restaurant.id, tableId, isQrScan]);
 
   // Check if genio was completed
