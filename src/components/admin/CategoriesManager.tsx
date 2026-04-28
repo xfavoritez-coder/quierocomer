@@ -120,7 +120,9 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                     onDelete(category.id);
                   }
                 } else {
-                  onDelete(category.id);
+                  if (confirm(`¿Eliminar la categoría "${category.name}"?`)) {
+                    onDelete(category.id);
+                  }
                 }
               }} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "#ef4444", cursor: "pointer" }}>Eliminar</button>
               <span onClick={() => setExpanded(!expanded)} style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>▾</span>
