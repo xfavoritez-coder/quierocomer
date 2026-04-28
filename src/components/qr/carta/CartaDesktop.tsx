@@ -197,11 +197,39 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             onClick={e => e.stopPropagation()}
             style={{ background: "white", borderRadius: 20, maxWidth: 520, width: "100%", maxHeight: "85vh", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}
           >
-            {selectedDish.photos?.[0] && (
-              <div style={{ height: 300, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
+            {/* Photo + close button + badges */}
+            <div style={{ height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
+              {selectedDish.photos?.[0] && (
                 <Image src={selectedDish.photos[0]} alt={selectedDish.name} fill className="object-cover" sizes="520px" unoptimized />
+              )}
+              {/* Close X */}
+              <button
+                onClick={() => setSelectedDish(null)}
+                style={{
+                  position: "absolute", top: 12, right: 12, width: 36, height: 36,
+                  borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)",
+                  border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "white", fontSize: "18px", fontWeight: 300, lineHeight: 1, zIndex: 2,
+                  transition: "background 0.15s",
+                }}
+                onMouseEnter={e => { e.currentTarget.style.background = "rgba(0,0,0,0.7)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "rgba(0,0,0,0.5)"; }}
+              >
+                ✕
+              </button>
+              {/* Badges on photo */}
+              <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, zIndex: 1 }}>
+                {selectedDish.tags?.includes("NEW") && <span style={{ fontSize: "11px", fontWeight: 700, color: "white", background: "#e85530", padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
+                {popularDishIds?.has(selectedDish.id) && <span style={{ fontSize: "11px", fontWeight: 600, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 50 }}>🔥 Popular</span>}
+                {selectedDish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "11px", fontWeight: 600, color: "white", background: "rgba(244,166,35,0.85)", padding: "4px 10px", borderRadius: 50 }}>⭐ Recomendado</span>}
               </div>
-            )}
+              {/* Diet badges bottom-right */}
+              <div style={{ position: "absolute", bottom: 10, right: 12, display: "flex", gap: 5 }}>
+                {(selectedDish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌿</span>}
+                {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌱</span>}
+                {(selectedDish as any).isSpicy && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌶️</span>}
+              </div>
+            </div>
             <div style={{ padding: "24px 28px 28px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
                 <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1a1a1a", flex: 1 }}>
@@ -216,17 +244,12 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                   {selectedDish.description}
                 </p>
               )}
+              {/* Diet labels below description */}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(selectedDish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🌿 Vegano</span>}
                 {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🌱 Vegetariano</span>}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
-              <button
-                onClick={() => setSelectedDish(null)}
-                style={{ marginTop: 20, width: "100%", padding: "12px", borderRadius: 12, border: "1px solid #e0dcd4", background: "transparent", cursor: "pointer", fontSize: "0.9rem", color: "#666", fontWeight: 500 }}
-              >
-                Cerrar
-              </button>
             </div>
           </div>
         </div>
