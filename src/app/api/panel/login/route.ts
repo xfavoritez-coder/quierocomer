@@ -30,13 +30,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { email, password } = await req.json();
+    const { email: rawEmail, password } = await req.json();
+    const email = rawEmail?.toLowerCase().trim();
     if (!email || !password) {
       return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });
     }
 
-    const owner = await prisma.restaurantOwner.findUnique({
-      where: { email },
+    const owner = await prisma.restaurantOwner.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
       include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
 
