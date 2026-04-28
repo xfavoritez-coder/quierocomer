@@ -586,6 +586,11 @@ export default function AdminMenus() {
                   {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>}
                   {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>✓ Foto subida</span>}
                 </div>
+                {ePhotoUrl && (
+                  <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ marginTop: 6, padding: "5px 10px", borderRadius: 6, border: ePhotoRef ? "1.5px solid rgba(127,191,220,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.7rem", fontWeight: 600, background: ePhotoRef ? "rgba(127,191,220,0.1)" : "transparent", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
+                    📷 {ePhotoRef ? "Foto referencial ✓" : "Marcar como foto referencial"}
+                  </button>
+                )}
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Categoría</label>
@@ -624,9 +629,6 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
-                  </button>
-                  <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ padding: "6px 12px", borderRadius: 8, border: ePhotoRef ? "1.5px solid rgba(127,191,220,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: ePhotoRef ? "rgba(127,191,220,0.1)" : "transparent", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
-                    📷 Foto referencial
                   </button>
                 </div>
               </div>
@@ -1157,7 +1159,7 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setTimeout(() => { setSelectedDish(dish); startEditDish(dish); }, 100); }} />
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setTimeout(() => { setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0, behavior: "smooth" }); }, 100); }} />
       )}
 
       {/* ── Modificadores tab ── */}
