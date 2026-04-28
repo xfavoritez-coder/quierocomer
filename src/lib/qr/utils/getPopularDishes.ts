@@ -60,10 +60,12 @@ export async function getPopularDishes(restaurantId: string): Promise<PopularRes
     }))
     .sort((a, b) => b.score - a.score || b.price - a.price);
 
-  // Top 5 popular dishes (min 3 sessions)
+  // Popular count relative to menu size: 10% of dishes, min 2, max 8
+  const maxPopular = Math.min(8, Math.max(2, Math.round(dishes.length * 0.1)));
+
   const global = scored
     .filter(d => d.sessions >= 3)
-    .slice(0, 5)
+    .slice(0, maxPopular)
     .map(d => ({ dishId: d.dishId, score: d.score }));
 
   return { global, byCategory: [] };
