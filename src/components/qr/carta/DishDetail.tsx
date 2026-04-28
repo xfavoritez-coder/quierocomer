@@ -363,33 +363,38 @@ function DishSlide({
         {/* BLOQUE 1: Header — info left + heart right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 6, display: "block" }}>{categoryName}</span>}
+            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
+            {/* Badges between category and name */}
+            {(personalizationEntry?.autoRecommended || (isRec && !personalizationEntry?.autoRecommended) || popularDishIds?.has(dish.id)) && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+                {personalizationEntry?.autoRecommended && (
+                  <button
+                    onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 2000); } }}
+                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
+                  >
+                    ✨ Para ti
+                  </button>
+                )}
+                {isRec && !personalizationEntry?.autoRecommended && (
+                  <button
+                    onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
+                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
+                  >
+                    ⭐ Recomendado
+                  </button>
+                )}
+                {popularDishIds?.has(dish.id) && (
+                  <button
+                    onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
+                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
+                  >
+                    🔥 Popular hoy
+                  </button>
+                )}
+              </div>
+            )}
             <h2 style={{ fontSize: "29px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
-              {personalizationEntry?.autoRecommended && (
-                <button
-                  onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
-                >
-                  ✨ Para ti
-                </button>
-              )}
-              {isRec && !personalizationEntry?.autoRecommended && (
-                <button
-                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
-                >
-                  ⭐ Recomendado
-                </button>
-              )}
-              {popularDishIds?.has(dish.id) && (
-                <button
-                  onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.82rem", fontWeight: 600, padding: "5px 14px", borderRadius: 50, cursor: "pointer", marginLeft: 10, verticalAlign: "middle", position: "relative", top: -2 }}
-                >
-                  🔥 Popular hoy
-                </button>
-              )}
             </h2>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
