@@ -414,7 +414,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ position: "absolute", top: -10, right: 20, background: "#fbbf24", color: "#111", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
               <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$25.000</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$35.000</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
               </div>
               <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Neto · Sin contratos</p>
