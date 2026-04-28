@@ -184,8 +184,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     setPushActive(false);
     setSubscribed(false);
     setCalls([]);
-    localStorage.removeItem("garzon_slug");
-    window.location.href = "/qr/admin/garzon";
+    window.location.reload();
   }, []);
 
   const answerCall = async (callId: string) => {
