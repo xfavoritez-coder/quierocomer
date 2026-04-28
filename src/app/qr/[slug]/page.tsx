@@ -135,7 +135,14 @@ export default async function CartaPage({
   };
 
   return (
-    <DesktopWrapper restaurantName={restaurant.name} slug={slug}>
+    <DesktopWrapper
+      restaurantName={restaurant.name}
+      slug={slug}
+      restaurant={restaurant as any}
+      categories={categories as any}
+      dishes={dishes as any}
+      popularDishIds={new Set(cartaProps.popularDishIds || [])}
+    >
       {isPremium ? (
         <CartaRouter {...cartaProps} />
       ) : (

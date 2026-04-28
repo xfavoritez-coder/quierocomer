@@ -1,14 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { Restaurant, Category, Dish } from "@prisma/client";
+import CartaDesktop from "./CartaDesktop";
 
 interface DesktopWrapperProps {
   restaurantName: string;
   slug: string;
   children: React.ReactNode;
+  restaurant?: Restaurant;
+  categories?: Category[];
+  dishes?: Dish[];
+  popularDishIds?: Set<string>;
 }
 
-export default function DesktopWrapper({ restaurantName, slug, children }: DesktopWrapperProps) {
+export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -26,11 +32,11 @@ export default function DesktopWrapper({ restaurantName, slug, children }: Deskt
   if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#f7f7f5" }} />;
   if (!isDesktop) return <>{children}</>;
 
-  return (
-    <div style={{ minHeight: "100dvh", background: "#f5f3ef" }}>
-      <div style={{ maxWidth: 520, margin: "0 auto", background: "#f7f7f5", minHeight: "100dvh", boxShadow: "0 0 40px rgba(0,0,0,0.08)" }}>
-        {children}
-      </div>
-    </div>
-  );
+  // Desktop: full-width carta with grid layout
+  if (restaurant && categories && dishes) {
+    return <CartaDesktop restaurant={restaurant} categories={categories} dishes={dishes} popularDishIds={popularDishIds} />;
+  }
+
+  // Fallback if no data passed
+  return <>{children}</>;
 }
