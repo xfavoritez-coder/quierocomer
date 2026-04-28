@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import Image from "next/image";
 import type { Dish, Category } from "@prisma/client";
 import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
@@ -288,30 +287,16 @@ function DishSlide({
       }}
     >
       {/* Photo with shimmer placeholder */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       {photos.length > 0 ? (
-        <>
-          {/* Instant: Next.js optimized version from cache */}
-          <Image
-            src={photos[photoIndex]}
-            alt={dish.name}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority={isActive}
-            key={`thumb-${photos[photoIndex]}`}
-            quality={90}
-          />
-          {/* Full quality: raw original loads on top */}
-          <Image
-            src={photos[photoIndex]}
-            alt={dish.name}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            key={`full-${photos[photoIndex]}`}
-            unoptimized
-          />
-        </>
+        <img
+          src={photos[photoIndex]}
+          alt={dish.name}
+          key={photos[photoIndex]}
+          loading="eager"
+          decoding="async"
+          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center" }}
+        />
       ) : (
         <div style={{ position: "absolute", inset: 0, background: "#1a1a1a" }} />
       )}

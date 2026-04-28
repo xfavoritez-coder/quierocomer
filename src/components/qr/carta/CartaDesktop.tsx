@@ -228,25 +228,15 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
               background: "#f0ece4",
             }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               {selectedDish.photos?.[0] && (
-                <>
-                  <Image
-                    src={selectedDish.photos[0]}
-                    alt={selectedDish.name}
-                    fill
-                    className="object-cover"
-                    sizes="520px"
-                    quality={90}
-                  />
-                  <Image
-                    src={selectedDish.photos[0]}
-                    alt={selectedDish.name}
-                    fill
-                    className="object-cover"
-                    sizes="520px"
-                    unoptimized
-                  />
-                </>
+                <img
+                  src={selectedDish.photos[0]}
+                  alt={selectedDish.name}
+                  loading="eager"
+                  decoding="async"
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                />
               )}
               {/* Close X */}
               <button
