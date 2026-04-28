@@ -134,7 +134,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           >
             {selectedDish.photos?.[0] && (
               <div style={{ height: 300, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
-                <Image src={selectedDish.photos[0]} alt={selectedDish.name} fill className="object-cover" sizes="520px" quality={95} />
+                <Image src={selectedDish.photos[0]} alt={selectedDish.name} fill className="object-cover" sizes="520px" unoptimized />
               </div>
             )}
             <div style={{ padding: "24px 28px 28px" }}>
