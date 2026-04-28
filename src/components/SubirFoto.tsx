@@ -27,10 +27,9 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
   }, [preview]);
 
   const compressImage = (file: File): Promise<File> => {
-    // Only downscale if file is too large for upload (5MB limit)
-    // Let the server handle quality optimization with Sharp (much better than Canvas)
+    // Only downscale if file exceeds upload limit — server does quality optimization
     return new Promise((resolve) => {
-      if (file.size < 4.5 * 1024 * 1024) { resolve(file); return; }
+      if (file.size < 4 * 1024 * 1024) { resolve(file); return; }
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement("canvas");
@@ -40,13 +39,14 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
         canvas.height = img.height * ratio;
         const ctx = canvas.getContext("2d")!;
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        // WebP 0.99 = near-lossless, much smaller than PNG for large photos
         canvas.toBlob((blob) => {
           if (blob && blob.size < file.size) {
-            resolve(new File([blob], file.name.replace(/\.\w+$/, ".png"), { type: "image/png" }));
+            resolve(new File([blob], file.name.replace(/\.\w+$/, ".webp"), { type: "image/webp" }));
           } else {
             resolve(file);
           }
-        }, "image/png");
+        }, "image/webp", 0.99);
       };
       img.onerror = () => resolve(file);
       img.src = URL.createObjectURL(file);

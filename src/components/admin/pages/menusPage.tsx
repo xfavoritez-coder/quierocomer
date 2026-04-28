@@ -559,7 +559,7 @@ export default function AdminMenus() {
                       if (!file) return;
                       setPhotoUploading(true);
                       try {
-                        // Only downscale if file exceeds Vercel 4.5MB body limit — no quality loss
+                        // Downscale only if needed to fit Vercel 4.5MB body limit
                         let uploadFile: File | Blob = file;
                         if (file.size > 4 * 1024 * 1024) {
                           const img = new Image();
@@ -572,7 +572,8 @@ export default function AdminMenus() {
                           canvas.width = w; canvas.height = h;
                           canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
                           URL.revokeObjectURL(url);
-                          uploadFile = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+                          // WebP 0.99 = near-lossless but much smaller than PNG
+                          uploadFile = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.99));
                         }
                         const fd = new FormData();
                         fd.append("file", uploadFile, file.name);
@@ -968,8 +969,22 @@ export default function AdminMenus() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     setNewDishPhotoUploading(true);
+                    let uploadFile: File | Blob = file;
+                    if (file.size > 4 * 1024 * 1024) {
+                      const img = new window.Image();
+                      const url = URL.createObjectURL(file);
+                      await new Promise<void>((r) => { img.onload = () => r(); img.src = url; });
+                      const canvas = document.createElement("canvas");
+                      const MAX = 2400;
+                      let w = img.width, h = img.height;
+                      if (w > MAX || h > MAX) { const ratio = Math.min(MAX / w, MAX / h); w = Math.round(w * ratio); h = Math.round(h * ratio); }
+                      canvas.width = w; canvas.height = h;
+                      canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                      URL.revokeObjectURL(url);
+                      uploadFile = await new Promise<Blob>((r) => canvas.toBlob((b) => r(b!), "image/webp", 0.99));
+                    }
                     const fd = new FormData();
-                    fd.append("file", file);
+                    fd.append("file", uploadFile, file.name);
                     fd.append("localId", selectedRestaurantId || "");
                     fd.append("dishName", newDishName || "plato");
                     const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
