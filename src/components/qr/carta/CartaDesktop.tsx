@@ -31,13 +31,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
-  const loadedPhotosRef = useRef(new Set<string>());
-  const modalPhotoUrl = selectedDish?.photos?.[0] || "";
-  const [modalPhotoLoaded, setModalPhotoLoaded] = useState(false);
-  useEffect(() => {
-    if (loadedPhotosRef.current.has(modalPhotoUrl)) { setModalPhotoLoaded(true); }
-    else { setModalPhotoLoaded(false); }
-  }, [modalPhotoUrl]);
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -233,28 +226,17 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             {/* Photo + close button + badges */}
             <div style={{
               height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
+              background: "#f0ece4",
             }}>
               {selectedDish.photos?.[0] && (
-                <>
-                  {/* Thumb from Next.js cache — same URL the card already loaded */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/_next/image?url=${encodeURIComponent(selectedDish.photos[0])}&w=640&q=75`}
-                    alt=""
-                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-                  />
-                  {/* Full-quality Image fades in on top once loaded */}
-                  <Image
-                    src={selectedDish.photos[0]}
-                    alt={selectedDish.name}
-                    fill
-                    className="object-cover"
-                    sizes="520px"
-                    unoptimized
-                    onLoad={() => { loadedPhotosRef.current.add(modalPhotoUrl); setModalPhotoLoaded(true); }}
-                    style={{ opacity: modalPhotoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
-                  />
-                </>
+                <Image
+                  src={selectedDish.photos[0]}
+                  alt={selectedDish.name}
+                  fill
+                  className="object-cover"
+                  sizes="520px"
+                  quality={90}
+                />
               )}
               {/* Close X */}
               <button

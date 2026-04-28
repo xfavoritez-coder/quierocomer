@@ -255,14 +255,6 @@ function DishSlide({
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
-  const loadedPhotosRef = useRef(new Set<string>());
-  const currentPhotoUrl = photos[photoIndex] || "";
-  const [photoLoaded, setPhotoLoaded] = useState(loadedPhotosRef.current.has(currentPhotoUrl));
-  // Reset loaded state only if this specific URL hasn't loaded before
-  useEffect(() => {
-    if (loadedPhotosRef.current.has(currentPhotoUrl)) { setPhotoLoaded(true); }
-    else { setPhotoLoaded(false); }
-  }, [currentPhotoUrl]);
   const averageRating = ratingMap[dish.id];
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
@@ -295,29 +287,20 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Photo — cached Next.js thumb as instant placeholder, full-res loads on top */}
-      {photos.length > 0 && (
-        <>
-          {/* Thumb from Next.js image cache — same URL the card already loaded */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={`/_next/image?url=${encodeURIComponent(photos[photoIndex])}&w=640&q=75`}
-            alt=""
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
-          />
-          <Image
-            src={photos[photoIndex]}
-            alt={dish.name}
-            fill
-            className="object-cover object-center"
-            sizes="100vw"
-            priority={isActive}
-            key={photos[photoIndex]}
-            unoptimized
-            onLoad={() => { loadedPhotosRef.current.add(currentPhotoUrl); setPhotoLoaded(true); }}
-            style={{ opacity: photoLoaded ? 1 : 0, transition: "opacity 0.3s ease-out" }}
-          />
-        </>
+      {/* Photo with shimmer placeholder */}
+      {photos.length > 0 ? (
+        <Image
+          src={photos[photoIndex]}
+          alt={dish.name}
+          fill
+          className="object-cover object-center"
+          sizes="100vw"
+          priority={isActive}
+          key={photos[photoIndex]}
+          quality={90}
+        />
+      ) : (
+        <div style={{ position: "absolute", inset: 0, background: "#1a1a1a" }} />
       )}
 
       {/* Top gradient */}
