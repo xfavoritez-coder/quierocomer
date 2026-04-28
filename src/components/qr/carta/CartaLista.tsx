@@ -697,7 +697,7 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span
             className="font-[family-name:var(--font-dm)]"
-            style={{ fontSize: "0.95rem", color: dish.discountPrice ? "#F4A623" : "#0e0e0e" }}
+            style={{ fontSize: "0.95rem", color: dish.discountPrice ? "#F4A623" : "#888" }}
           >
             ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
           </span>
