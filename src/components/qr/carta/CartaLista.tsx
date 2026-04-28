@@ -175,6 +175,7 @@ export default function CartaLista({
     return () => { flush(); document.removeEventListener("visibilitychange", flush); };
   }, []);
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [dishFromHero, setDishFromHero] = useState(false);
 
   const [genioOpen, setGenioOpen] = useState(false);
   const catScrollRef = useRef<HTMLDivElement>(null);
@@ -277,7 +278,7 @@ export default function CartaLista({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       {/* Hero Slim */}
-      <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={setSelectedDish} />
+      <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
@@ -557,12 +558,12 @@ export default function CartaLista({
       {selectedDish && (
         <DishDetail
           dish={selectedDish}
-          allDishes={sortedDishes}
+          allDishes={dishFromHero ? [selectedDish] : sortedDishes}
           categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); setDishFromHero(false); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}

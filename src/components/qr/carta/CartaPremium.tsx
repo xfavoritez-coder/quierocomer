@@ -164,6 +164,7 @@ export default function CartaPremium({
   }, [hasCompletedGenio]);
 
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const [dishFromHero, setDishFromHero] = useState(false);
   const [genioOpen, setGenioOpen] = useState(false);
   const [qrUserLocal, setQrUserLocal] = useState<any>(null);
   const [profileOpenLocal, setProfileOpenLocal] = useState(false);
@@ -422,7 +423,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={setSelectedDish} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
@@ -767,12 +768,12 @@ export default function CartaPremium({
       {selectedDish && (
         <DishDetail
           dish={selectedDish}
-          allDishes={sortedDishes}
+          allDishes={dishFromHero ? [selectedDish] : sortedDishes}
           categories={categories}
           restaurantId={restaurant.id}
           reviews={reviews}
           ratingMap={ratingMap}
-          onClose={() => { setSelectedDish(null); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
+          onClose={() => { setSelectedDish(null); setDishFromHero(false); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
           onChangeDish={setSelectedDish}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
