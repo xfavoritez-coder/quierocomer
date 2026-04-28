@@ -633,7 +633,6 @@ export default function CartaPremium({
                     );
                   })}
                 </div>
-                <ScrollFade />
               </div>
             </section>
             </div>
