@@ -173,13 +173,14 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
             style={{
-              width: 58, height: 58, position: "relative",
+              width: hasCompletedGenio ? 52 : 58, height: hasCompletedGenio ? 52 : 58, position: "relative",
               background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
               border: "1px solid rgba(244,166,35,0.3)",
               boxShadow: "0 0 20px rgba(244,166,35,0.15)",
+              transition: "all 0.3s ease",
             }}
           >
-            <span style={{ fontSize: "26px", lineHeight: 1 }}>🧞</span>
+            <span style={{ fontSize: hasCompletedGenio ? "22px" : "26px", lineHeight: 1 }}>🧞</span>
             {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
           {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} size={58} waiterPanelActive={showWaiter} />}
