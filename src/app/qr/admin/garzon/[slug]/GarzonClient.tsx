@@ -128,7 +128,14 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
 
   const [needsPermission, setNeedsPermission] = useState(false);
 
+  const [shiftEnded, setShiftEnded] = useState(() =>
+    typeof window !== "undefined" && sessionStorage.getItem("garzon_shift_ended") === "1"
+  );
+
   useEffect(() => {
+    // If shift was ended in this tab session, don't auto-subscribe
+    if (shiftEnded) return;
+
     // Check if we already have permission
     if ("Notification" in window && Notification.permission === "granted") {
       subscribe();
@@ -139,10 +146,11 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     } else {
       setSubscribed(true); // polling only
     }
-  }, [subscribe]);
+  }, [subscribe, shiftEnded]);
 
-  // Poll active calls
+  // Poll active calls — only when shift is active
   useEffect(() => {
+    if (shiftEnded) return;
     const poll = () => {
       fetch(`/api/qr/waiter/active-calls?restaurantId=${restaurantId}`)
         .then((r) => r.json())
@@ -159,7 +167,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     poll();
     const interval = setInterval(poll, 10000);
     return () => clearInterval(interval);
-  }, [restaurantId]);
+  }, [restaurantId, shiftEnded]);
 
   // Update "ago" timer
   useEffect(() => {
@@ -184,7 +192,10 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     setPushActive(false);
     setSubscribed(false);
     setCalls([]);
-    window.location.reload();
+    // Mark shift as ended for this tab session — prevents auto-resubscribe on reload.
+    // sessionStorage clears when the app is fully closed, so next day it auto-connects.
+    sessionStorage.setItem("garzon_shift_ended", "1");
+    setShiftEnded(true);
   }, []);
 
   const answerCall = async (callId: string) => {
@@ -210,23 +221,53 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
           </div>
         </div>
         {/* Center: status */}
-        <div className="flex items-center" style={{ gap: 5, flexShrink: 0 }}>
-          {subscribed ? <Wifi size={13} color="#16a34a" /> : <WifiOff size={13} color="#dc2626" />}
-          <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626", whiteSpace: "nowrap" }}>
-            {subscribed ? (pushActive ? "Push" : "Polling") : "Off"}
-          </span>
-        </div>
+        {!shiftEnded && (
+          <div className="flex items-center" style={{ gap: 5, flexShrink: 0 }}>
+            {subscribed ? <Wifi size={13} color="#16a34a" /> : <WifiOff size={13} color="#dc2626" />}
+            <span style={{ fontSize: "0.68rem", color: subscribed ? "#16a34a" : "#dc2626", whiteSpace: "nowrap" }}>
+              {subscribed ? (pushActive ? "Push" : "Polling") : "Off"}
+            </span>
+          </div>
+        )}
         {/* Right: salir */}
-        <button
-          onClick={endShift}
-          style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
-        >
-          Salir
-        </button>
+        {!shiftEnded && (
+          <button
+            onClick={endShift}
+            style={{ padding: "8px 16px", borderRadius: 10, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.5)", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}
+          >
+            Salir
+          </button>
+        )}
       </div>
 
+      {/* Shift ended screen */}
+      {shiftEnded && (
+        <div className="flex flex-col items-center justify-center" style={{ padding: "80px 20px", gap: 20 }}>
+          <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Bell size={28} color="rgba(255,255,255,0.25)" />
+          </div>
+          <div style={{ textAlign: "center" }}>
+            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "1rem", marginBottom: 4 }}>Turno finalizado</p>
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.82rem" }}>No se recibiran notificaciones</p>
+          </div>
+          <button
+            onClick={() => {
+              sessionStorage.removeItem("garzon_shift_ended");
+              setShiftEnded(false);
+            }}
+            style={{
+              padding: "16px 40px", borderRadius: 50, background: "#F4A623",
+              color: "#0e0e0e", fontSize: "1rem", fontWeight: 700,
+              border: "none", cursor: "pointer", marginTop: 8,
+            }}
+          >
+            Iniciar turno
+          </button>
+        </div>
+      )}
+
       {/* Permission banner */}
-      {needsPermission && (
+      {needsPermission && !shiftEnded && (
         <button
           onClick={async () => {
             unlockAudio();
@@ -254,14 +295,14 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
       )}
 
       {/* Error */}
-      {error && (
+      {error && !shiftEnded && (
         <div style={{ padding: "12px 20px", background: "rgba(220,38,38,0.15)", color: "#dc2626", fontSize: "0.85rem" }}>
           {error}
         </div>
       )}
 
       {/* Calls */}
-      <div style={{ padding: 20 }}>
+      {!shiftEnded && <div style={{ padding: 20 }}>
         {calls.length === 0 ? (
           <div className="flex flex-col items-center justify-center" style={{ paddingTop: 80, gap: 16 }}>
             <Bell size={48} color="rgba(255,255,255,0.15)" />
@@ -341,7 +382,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
             })}
           </div>
         )}
-      </div>
+      </div>}
 
       <style>{`
         @keyframes callPulse {
