@@ -570,7 +570,7 @@ export default function AdminMenus() {
                         canvas.width = w; canvas.height = h;
                         canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
                         URL.revokeObjectURL(url);
-                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/jpeg", 0.85));
+                        const blob = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.95));
                         const fd = new FormData();
                         fd.append("file", blob, "photo.jpg");
                         fd.append("localId", selectedRestaurantId || "");

@@ -30,11 +30,11 @@ export async function POST(req: NextRequest) {
     let pipeline = sharp(originalBuffer);
     const meta = await pipeline.metadata();
 
-    if ((meta.width && meta.width > 1400) || (meta.height && meta.height > 1400)) {
-      pipeline = pipeline.resize(1400, 1400, { fit: "inside", withoutEnlargement: true });
+    if ((meta.width && meta.width > 1600) || (meta.height && meta.height > 1600)) {
+      pipeline = pipeline.resize(1600, 1600, { fit: "inside", withoutEnlargement: true });
     }
 
-    const optimizedBuffer = await pipeline.webp({ quality: 88 }).toBuffer();
+    const optimizedBuffer = await pipeline.webp({ quality: 92 }).toBuffer();
     const optimizedSize = optimizedBuffer.length;
 
     // Build filename
