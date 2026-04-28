@@ -196,9 +196,9 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
       onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)"; }}
     >
       {/* Photo */}
-      <div style={{ height: 180, position: "relative", overflow: "hidden", background: photo ? "#f0f0f0" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+      <div style={{ height: 180, position: "relative", overflow: "hidden", background: "#e8e4d8" }}>
         {photo ? (
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="300px" />
+          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="300px" style={{ background: "#e8e4d8" }} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem" }}>🍽</div>
         )}

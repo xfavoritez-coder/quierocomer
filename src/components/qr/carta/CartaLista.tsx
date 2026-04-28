@@ -331,7 +331,7 @@ export default function CartaLista({
           <div
             ref={catScrollRef}
             className="flex overflow-x-auto"
-            style={{ flex: 1, height: "100%", paddingLeft: 8, paddingRight: 16, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
+            style={{ flex: 1, height: "100%", paddingLeft: 8, paddingRight: 16, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch", maskImage: "linear-gradient(to right, black 90%, transparent 100%)", WebkitMaskImage: "linear-gradient(to right, black 90%, transparent 100%)" }}
           >
             {hasPromos && (() => {
               const isActive = "promos" === activeCategory;

@@ -23,9 +23,10 @@ interface Props {
   restaurantId: string;
   allDishes: any[];
   onDishesChange: (dishes: any[]) => void;
+  onEditDish?: (dish: any) => void;
 }
 
-function SortableDish({ dish, onMove, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; categories: Category[]; currentCatId: string }) {
+function SortableDish({ dish, onMove, onEdit, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; categories: Category[]; currentCatId: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
   const [moving, setMoving] = useState(false);
 
@@ -40,7 +41,8 @@ function SortableDish({ dish, onMove, categories, currentCatId }: { dish: Dish; 
         )}
         <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
         <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
-        <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Cambiar categoría</button>
+        {onEdit && <button onClick={() => onEdit(dish)} style={{ padding: "3px 8px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#F4A623", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Editar</button>}
+        <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
       </div>
       {moving && (
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap", padding: "4px 0 8px 42px" }}>
@@ -55,11 +57,12 @@ function SortableDish({ dish, onMove, categories, currentCatId }: { dish: Dish; 
   );
 }
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onRename, onToggle, onDelete, onTypeChange }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
   onReorder: (catId: string, dishIds: string[]) => void;
+  onEditDish?: (dish: Dish) => void;
   onMove: (dishId: string, toCatId: string) => void;
   onRename: (id: string, name: string) => void;
   onToggle: (id: string, isActive: boolean) => void;
@@ -132,7 +135,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDishDragEnd}>
                 <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
                   {dishes.map(d => (
-                    <SortableDish key={d.id} dish={d} onMove={onMove} categories={allCategories} currentCatId={category.id} />
+                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} categories={allCategories} currentCatId={category.id} />
                   ))}
                 </SortableContext>
               </DndContext>
@@ -149,7 +152,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -269,6 +272,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               dishes={getDishesForCategory(cat.id)}
               onReorder={reorderDishes}
               onMove={moveDish}
+              onEditDish={onEditDish}
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}
