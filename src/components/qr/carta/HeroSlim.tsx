@@ -129,7 +129,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
             <h2
               className="font-[family-name:var(--font-playfair)] text-white"
               style={{
-                fontSize: "1.5rem",
+                fontSize: "1.3rem",
                 fontWeight: 800,
                 lineHeight: 1.15,
                 textShadow: "0 2px 6px rgba(0,0,0,0.5)",
