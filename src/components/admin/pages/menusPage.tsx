@@ -714,7 +714,8 @@ export default function AdminMenus() {
               </div>
 
               <div ref={ingRef} style={{ marginBottom: 14 }}>
-                <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados)</label>
+                <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados) <span title="Los ingredientes ayudan a personalizar la carta para cada cliente según sus gustos, alergias y restricciones alimentarias" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Agrega ingredientes para personalizar la carta y filtrar por alergias y preferencias de cada cliente</p>
                 {/* Selected pills */}
                 {eIngredientIds.length > 0 && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
