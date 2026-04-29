@@ -158,7 +158,11 @@ export default function DishDetail({
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
       >
-        {allDishes.map((d, idx) => (
+        {allDishes.map((d, idx) => {
+          // Only render nearby slides to prevent iOS memory crash
+          const distance = Math.abs(idx - activeIdx);
+          if (distance > 1) return <div key={d.id} style={{ flex: "0 0 100%", width: "100vw", scrollSnapAlign: "start" }} />;
+          return (
           <DishSlide
             key={d.id}
             dish={d}
@@ -180,7 +184,8 @@ export default function DishDetail({
             allDishes={allDishes}
             onChangeDish={onChangeDish}
           />
-        ))}
+          );
+        })}
       </div>
 
       <style>{`
