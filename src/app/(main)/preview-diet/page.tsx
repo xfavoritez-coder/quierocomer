@@ -151,7 +151,7 @@ function VistaPremium() {
   const [showFab, setShowFab] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 500);
+    const onScroll = () => setShowFab(window.scrollY > 300);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
@@ -233,7 +233,7 @@ function VistaLista() {
   const [showFab, setShowFab] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 500);
+    const onScroll = () => setShowFab(window.scrollY > 300);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
