@@ -522,9 +522,13 @@ export default function AdminMenus() {
 
   const MAX_RECOMMENDED = 5;
   const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
-  const toggleTag = (t: string) => {
+  const toggleTag = async (t: string) => {
+    if (!selectedDish) return;
     if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
-    setETags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+    const newTags = eTags.includes(t) ? eTags.filter(x => x !== t) : [...eTags, t];
+    setETags(newTags);
+    await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
+    setDishes(prev => prev.map(x => x.id === selectedDish.id ? { ...x, tags: newTags } : x));
   };
 
   if (selectedDish && editMode) return (
@@ -535,7 +539,12 @@ export default function AdminMenus() {
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
             <img src={ePhotoUrl || selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             {/* Referential badge — bottom right */}
-            <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
+            <button onClick={async () => {
+              const newVal = !ePhotoRef;
+              setEPhotoRef(newVal);
+              await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isPhotoReferential: newVal }) });
+              setDishes(prev => prev.map(x => x.id === selectedDish.id ? { ...x, isPhotoReferential: newVal } as any : x));
+            }} style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
               📷 {ePhotoRef ? "Foto referencial ✓" : "Foto referencial"}
             </button>
             {/* Tags over photo */}

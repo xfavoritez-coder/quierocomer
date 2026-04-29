@@ -48,6 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isHighMargin !== undefined && { isHighMargin: body.isHighMargin }),
         ...(body.isFeaturedAuto !== undefined && { isFeaturedAuto: body.isFeaturedAuto }),
         ...(body.flavorTags !== undefined && { flavorTags: body.flavorTags }),
+        ...(body.isPhotoReferential !== undefined && { isPhotoReferential: body.isPhotoReferential }),
         ...(body.categoryId !== undefined && { categoryId: body.categoryId }),
         ...(body.position !== undefined && { position: body.position }),
       },
