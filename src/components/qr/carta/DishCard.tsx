@@ -24,7 +24,7 @@ function DishBadges({ dish }: { dish: Dish }) {
   else if (d.dishDiet === "VEGETARIAN") badges.push({ icon: "🥗", title: "Vegetariano" });
   if (d.isSpicy) badges.push({ icon: "🌶️", title: "Picante" });
   if (!badges.length) return null;
-  return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "12px", flexShrink: 0 }} title={b.title}>{b.icon}</span>)}</>;
+  return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "12px", verticalAlign: "middle" }} title={b.title}>{b.icon}</span>)}</>;
 }
 
 /* ── BASIC ── */
@@ -42,10 +42,9 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         )}
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-        <h3 className="font-[family-name:var(--font-dm)] flex items-center gap-1" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3 }}>
-          <span className="truncate">{dish.name}</span>
-          <DishBadges dish={dish} />
-          {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
+        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {dish.name}{" "}<DishBadges dish={dish} />
+          {dish.tags?.includes("NEW") && <>{" "}<span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
         </h3>
         {(isRec || isPopular) && (
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
@@ -136,10 +135,9 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
           <span key={i} className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.78rem", fontWeight: 600, padding: "3px 9px", borderRadius: 8 }}>{b}</span>
         ))}
       </div>
-      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2 flex items-center gap-1" style={{ bottom: 28, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
-        <span>{dish.name}</span>
-        <DishBadges dish={dish} />
-        {dish.tags?.includes("NEW") && <span style={{ background: "#e85530", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
+      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2" style={{ bottom: 28, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3 }}>
+        {dish.name}{" "}<DishBadges dish={dish} />
+        {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
       </h3>
       <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 500, color: "#F4A623" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
