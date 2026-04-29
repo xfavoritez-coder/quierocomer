@@ -57,20 +57,31 @@ export default function DishDetail({
     return allergens;
   }, [allDishes]);
 
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Mount: scroll to initial dish
+  // Mount: lock body, scroll to initial dish
   useEffect(() => {
-    // Scroll to the selected dish instantly
+    requestAnimationFrame(() => setVisible(true));
+
+    const savedScrollY = window.scrollY;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+
     const el = scrollRef.current;
     if (el && currentIndex > 0) {
       el.scrollTo({ left: currentIndex * el.clientWidth, behavior: "instant" as any });
     }
+
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, savedScrollY);
+    };
   }, [currentIndex]);
 
 
@@ -116,10 +127,6 @@ export default function DishDetail({
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  // Swipe gestures removed — modal is scrollable, close button is sticky
-  const handleTouchStart = undefined;
-  const handleTouchMove = undefined;
-  const handleTouchEnd = undefined;
 
   return (
     <div
@@ -138,9 +145,6 @@ export default function DishDetail({
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {allDishes.map((d, idx) => (
           <DishSlide
