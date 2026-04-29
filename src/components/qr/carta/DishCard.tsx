@@ -21,7 +21,7 @@ function DishBadges({ dish }: { dish: Dish }) {
   const d = dish as any;
   const badges: { icon: string; title: string }[] = [];
   if (d.dishDiet === "VEGAN") badges.push({ icon: "🌿", title: "Vegano" });
-  else if (d.dishDiet === "VEGETARIAN") badges.push({ icon: "🌱", title: "Vegetariano" });
+  else if (d.dishDiet === "VEGETARIAN") badges.push({ icon: "🥗", title: "Vegetariano" });
   if (d.isSpicy) badges.push({ icon: "🌶️", title: "Picante" });
   if (!badges.length) return null;
   return <>{badges.map((b, i) => <span key={i} style={{ fontSize: "12px", flexShrink: 0 }} title={b.title}>{b.icon}</span>)}</>;
