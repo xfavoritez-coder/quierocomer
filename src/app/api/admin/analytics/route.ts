@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
     // OWNER must provide restaurantId; SUPERADMIN can pass null for global
     const restaurantId = await requireRestaurantForOwner(req, restaurantIdParam);
 
-    const to = toStr ? new Date(toStr) : new Date();
-    const from = fromStr ? new Date(fromStr) : new Date(to.getTime() - 28 * 24 * 60 * 60 * 1000);
+    const to = toStr ? new Date(toStr + "T23:59:59.999Z") : new Date();
+    const from = fromStr ? new Date(fromStr + "T00:00:00.000Z") : new Date(to.getTime() - 28 * 24 * 60 * 60 * 1000);
 
     if (type === "metrics") {
       const data = await getVisitorMetrics(restaurantId, from, to);
