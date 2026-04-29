@@ -1113,8 +1113,8 @@ export default function AdminMenus() {
               border: isRec ? "1.5px solid rgba(244,166,35,0.3)" : "1px solid var(--adm-card-border)",
               borderRadius: 12, overflow: "hidden", opacity: d.isActive ? 1 : 0.5,
             }}>
-              {/* Header — clickeable */}
-              <button onClick={() => setExpandedDishId(isExpanded ? null : d.id)} style={{
+              {/* Header — click goes to edit */}
+              <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{
                 display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
                 background: "transparent", border: "none",
                 cursor: "pointer", width: "100%", textAlign: "left",
@@ -1145,33 +1145,7 @@ export default function AdminMenus() {
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
                   {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Oculto</p>}
                 </div>
-                <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                  <button onClick={async () => {
-                    const isRec = d.tags?.includes("RECOMMENDED");
-                    if (!isRec) {
-                      const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
-                      if (currentRecCount >= 5) { alert("Máximo 5 platos destacados"); return; }
-                    }
-                    const newTags = isRec ? (d.tags || []).filter(t => t !== "RECOMMENDED") : [...(d.tags || []), "RECOMMENDED"];
-                    await fetch(`/api/admin/dishes/${d.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags }) });
-                    setDishes(prev => prev.map(x => x.id === d.id ? { ...x, tags: newTags } : x));
-                  }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: d.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)", color: d.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text3)", display: "flex", alignItems: "center", gap: 4 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "none"} stroke={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Destacar
-                  </button>
-                  <button onClick={() => toggleDishActive(d)} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: d.isActive ? "var(--adm-text3)" : "#4ade80", display: "flex", alignItems: "center", gap: 4 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.isActive ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></> : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}</svg>
-                    {d.isActive ? "Ocultar" : "Mostrar"}
-                  </button>
-                  <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(127,191,220,0.08)", color: "#7fbfdc" }}>Editar</button>
-                  <button onClick={async () => {
-                    if (!confirm(`¿Eliminar "${d.name}"?`)) return;
-                    await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
-                    setDishes(prev => prev.filter(x => x.id !== d.id));
-                    setExpandedDishId(null);
-                  }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(239,68,68,0.06)", color: "#ef4444" }}>Eliminar</button>
-                </div>
-                <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
+                <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", flexShrink: 0 }}>›</span>
               </button>
 
               {/* Expanded content */}
