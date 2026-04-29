@@ -135,7 +135,8 @@ export default function DishDetail({
   }, [allDishes, dish.id, onChangeDish]);
 
   const close = useCallback(() => {
-    onClose();
+    setVisible(false);
+    setTimeout(onClose, 200);
   }, [onClose]);
 
 
@@ -145,6 +146,7 @@ export default function DishDetail({
       style={{
         position: "fixed", inset: -1,
         zIndex: 120, background: "#000",
+        opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
     >
       {/* Horizontal scroll container — native snap */}
