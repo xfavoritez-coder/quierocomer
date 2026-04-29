@@ -1050,15 +1050,10 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "productos" && (<>
-      {!creatingDish && (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo producto</button>
-        </div>
-      )}
-      <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap" }}>
-        <div style={{ flex: 1, minWidth: 180, position: "relative" }}>
+      <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ minWidth: 140, maxWidth: 200, position: "relative", flex: "1 1 140px" }}>
           <input
-            placeholder="Buscar producto..."
+            placeholder="Buscar..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ width: "100%", padding: "10px 14px", paddingRight: search ? 36 : 14, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
@@ -1083,6 +1078,9 @@ export default function AdminMenus() {
           <option value="all">Todos los tipos</option>
           {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
         </select>
+        {!creatingDish && (
+          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
+        )}
       </div>
 
       {/* Bulk actions bar */}
