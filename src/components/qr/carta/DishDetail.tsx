@@ -523,8 +523,8 @@ function DishSlide({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
-                        {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.2)", color: "#fbbf24", flexShrink: 0 }}>⭐</span>}
-                        {popularDishIds?.has(s.dish.id) && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171", flexShrink: 0 }}>🔥</span>}
+                        {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.2)", color: "#fbbf24", flexShrink: 0 }}>⭐ Recomendado</span>}
+                        {popularDishIds?.has(s.dish.id) && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171", flexShrink: 0 }}>🔥 Popular hoy</span>}
                       </div>
                       {s.dish.description && (
                         <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
