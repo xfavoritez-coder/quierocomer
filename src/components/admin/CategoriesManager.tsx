@@ -108,8 +108,13 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: category.isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{category.name}</span>
                 <span onClick={(e) => { e.stopPropagation(); setEditing(true); setEditName(category.name); }} style={{ fontSize: "0.65rem", cursor: "pointer", opacity: 0.4 }}>✏️</span>
                 <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
-                  {dishes.length} producto{dishes.length !== 1 ? "s" : ""}{hiddenCount > 0 ? ` (${hiddenCount} oculto${hiddenCount !== 1 ? "s" : ""})` : ""}
+                  {dishes.length} producto{dishes.length !== 1 ? "s" : ""}
                 </span>
+                {hiddenCount > 0 && (
+                  <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 600, color: "#999", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.08)" }}>
+                    {hiddenCount} oculto{hiddenCount !== 1 ? "s" : ""}
+                  </span>
+                )}
                 <span style={{ marginLeft: "auto" }} />
               </button>
               {/* dishType select */}
