@@ -2,303 +2,182 @@
 
 import { useState, useEffect } from "react";
 
-const F = "var(--font-display)";
-const B = "var(--font-body)";
+const DM = "var(--font-display)";
+const PF = "var(--font-playfair, Georgia, serif)";
 const BRAND = "#F4A623";
 
 interface Dish {
+  id: string;
   name: string;
   price: number;
   photo: string;
   diet: "VEGAN" | "VEGETARIAN" | "OMNIVORE";
+  desc?: string;
 }
 
 interface Category {
+  id: string;
   name: string;
   dishes: Dish[];
 }
 
 const MENU: Category[] = [
   {
-    name: "Para compartir",
+    id: "1", name: "Para compartir",
     dishes: [
-      { name: "Gyozas de cerdo", price: 6900, photo: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Edamame con sal de mar", price: 3500, photo: "https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=200&h=200&fit=crop", diet: "VEGAN" },
-      { name: "Tempura de langostinos", price: 8900, photo: "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Rollitos primavera veganos", price: 5200, photo: "https://images.unsplash.com/photo-1544025162-d76694265947?w=200&h=200&fit=crop", diet: "VEGAN" },
+      { id: "d1", name: "Gyozas de cerdo", price: 6900, photo: "https://images.unsplash.com/photo-1496116218417-1a781b1c416c?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "6 unidades con salsa ponzu" },
+      { id: "d2", name: "Edamame con sal de mar", price: 3500, photo: "https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Porotos de soja al vapor" },
+      { id: "d3", name: "Tempura de langostinos", price: 8900, photo: "https://images.unsplash.com/photo-1615141982883-c7ad0e69fd62?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "4 langostinos en masa tempura" },
+      { id: "d4", name: "Rollitos primavera veganos", price: 5200, photo: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Rellenos de verduras frescas" },
     ],
   },
   {
-    name: "Ceviches y tiraditos",
+    id: "2", name: "Ceviches y tiraditos",
     dishes: [
-      { name: "Ceviche clásico", price: 12900, photo: "https://images.unsplash.com/photo-1535399831218-d5bd36d1a6b3?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Tiradito de salmón", price: 14500, photo: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Ceviche de mango", price: 11900, photo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop", diet: "OMNIVORE" },
+      { id: "d5", name: "Ceviche clásico", price: 12900, photo: "https://images.unsplash.com/photo-1535399831218-d5bd36d1a6b3?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Pescado del día, limón, cilantro" },
+      { id: "d6", name: "Tiradito de salmón", price: 14500, photo: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Láminas de salmón, ají amarillo" },
+      { id: "d7", name: "Ceviche de mango", price: 11900, photo: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Con leche de tigre tropical" },
     ],
   },
   {
-    name: "Rolls clásicos",
+    id: "3", name: "Rolls clásicos",
     dishes: [
-      { name: "California roll", price: 9900, photo: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Avocado roll", price: 7500, photo: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=200&h=200&fit=crop", diet: "VEGAN" },
-      { name: "Spicy tuna roll", price: 11900, photo: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Veggie dragon roll", price: 8900, photo: "https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=200&h=200&fit=crop", diet: "VEGAN" },
+      { id: "d8", name: "California roll", price: 9900, photo: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Kanikama, palta, pepino" },
+      { id: "d9", name: "Avocado roll", price: 7500, photo: "https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Palta cremosa, sésamo" },
+      { id: "d10", name: "Spicy tuna roll", price: 11900, photo: "https://images.unsplash.com/photo-1553621042-f6e147245754?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Atún picante, mayo sriracha" },
+      { id: "d11", name: "Veggie dragon roll", price: 8900, photo: "https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Palta, espárrago, zanahoria" },
     ],
   },
   {
-    name: "Fondos",
+    id: "4", name: "Fondos",
     dishes: [
-      { name: "Ramen de cerdo", price: 15900, photo: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Pad thai de tofu", price: 12500, photo: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=200&h=200&fit=crop", diet: "VEGAN" },
-      { name: "Teriyaki de pollo", price: 13900, photo: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop", diet: "OMNIVORE" },
-      { name: "Bowl de quinoa y verduras", price: 11500, photo: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop", diet: "VEGAN" },
-      { name: "Curry verde vegano", price: 12900, photo: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=200&h=200&fit=crop", diet: "VEGAN" },
+      { id: "d12", name: "Ramen de cerdo", price: 15900, photo: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Chashu, huevo, cebollín" },
+      { id: "d13", name: "Pad thai de tofu", price: 12500, photo: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Tofu firme, maní, brotes" },
+      { id: "d14", name: "Teriyaki de pollo", price: 13900, photo: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Pollo glaseado, arroz japonés" },
+      { id: "d15", name: "Bowl de quinoa", price: 11500, photo: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Quinoa, verduras asadas, hummus" },
+      { id: "d16", name: "Curry verde vegano", price: 12900, photo: "https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Leche de coco, albahaca thai" },
     ],
   },
   {
-    name: "Postres",
+    id: "5", name: "Postres",
     dishes: [
-      { name: "Mochi de matcha", price: 4500, photo: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=200&h=200&fit=crop", diet: "VEGAN" },
-      { name: "Cheesecake yuzu", price: 5900, photo: "https://images.unsplash.com/photo-1567171466295-4afa63d45416?w=200&h=200&fit=crop", diet: "VEGETARIAN" },
-      { name: "Tempura de helado", price: 6500, photo: "https://images.unsplash.com/photo-1488900128323-21503983a07e?w=200&h=200&fit=crop", diet: "OMNIVORE" },
+      { id: "d17", name: "Mochi de matcha", price: 4500, photo: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=400&h=400&fit=crop", diet: "VEGAN", desc: "Helado vegano de matcha" },
+      { id: "d18", name: "Cheesecake yuzu", price: 5900, photo: "https://images.unsplash.com/photo-1567171466295-4afa63d45416?w=400&h=400&fit=crop", diet: "VEGETARIAN", desc: "Base de galleta, coulis cítrico" },
+      { id: "d19", name: "Tempura de helado", price: 6500, photo: "https://images.unsplash.com/photo-1488900128323-21503983a07e?w=400&h=400&fit=crop", diet: "OMNIVORE", desc: "Helado frito con canela" },
     ],
   },
 ];
 
-function DishCard({ dish, highlight }: { dish: Dish; highlight?: boolean }) {
+const allVegan = MENU.flatMap(cat => cat.dishes.filter(d => d.diet === "VEGAN").map(d => ({ ...d, category: cat.name })));
+
+/* ── Premium Card (horizontal scroll) ── */
+function PremiumCard({ dish }: { dish: Dish }) {
   return (
-    <div style={{ display: "flex", gap: 10, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.06)", opacity: highlight === false ? 0.3 : 1, transition: "opacity 0.3s" }}>
-      <img src={dish.photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 600, color: "white", margin: "2px 0 2px" }}>
+    <div style={{ width: 205, minWidth: 205, flexShrink: 0, scrollSnapAlign: "start" }}>
+      <div style={{ position: "relative", borderRadius: 10, overflow: "hidden", height: 290, background: "#1a1a1a" }}>
+        <img src={dish.photo} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
+        <h3 style={{ position: "absolute", bottom: 28, left: 10, right: 10, fontFamily: DM, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3, margin: 0 }}>
           {dish.name}{" "}
-          {dish.diet === "VEGAN" && <span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌿</span>}
-          {dish.diet === "VEGETARIAN" && <span style={{ fontSize: "12px", verticalAlign: "middle" }}>🥗</span>}
-        </p>
-        <p style={{ fontFamily: F, fontSize: "0.85rem", color: BRAND, margin: 0 }}>${dish.price.toLocaleString("es-CL")}</p>
+          {dish.diet === "VEGAN" && <span style={{ fontSize: 12, verticalAlign: "middle" }}>🌿</span>}
+          {dish.diet === "VEGETARIAN" && <span style={{ fontSize: 12, verticalAlign: "middle" }}>🥗</span>}
+        </h3>
+        <span style={{ position: "absolute", bottom: 9, left: 10, fontFamily: DM, fontSize: "0.9rem", fontWeight: 500, color: BRAND }}>
+          ${dish.price.toLocaleString("es-CL")}
+        </span>
       </div>
     </div>
   );
 }
 
-/* ── OPCIÓN 1: Badge en header ── */
-function Option1() {
+/* ── Lista Card (vertical list) ── */
+function ListaCard({ dish }: { dish: Dish }) {
   return (
-    <div>
-      {MENU.map(cat => {
-        const veganCount = cat.dishes.filter(d => d.diet === "VEGAN").length;
-        // Reorder: vegans first
-        const sorted = [...cat.dishes].sort((a, b) => {
-          if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
-          if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
-          return 0;
-        });
-        return (
-          <div key={cat.name} style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "white", margin: 0 }}>{cat.name}</h3>
-              {veganCount > 0 && (
-                <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#4ade80", background: "rgba(74,222,128,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                  🌿 {veganCount} vegano{veganCount > 1 ? "s" : ""}
-                </span>
-              )}
-            </div>
-            {sorted.map(d => <DishCard key={d.name} dish={d} />)}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ── OPCIÓN 2: Categorías sin match colapsadas ── */
-function Option2() {
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  return (
-    <div>
-      {MENU.map(cat => {
-        const veganCount = cat.dishes.filter(d => d.diet === "VEGAN").length;
-        const isCollapsed = veganCount === 0 && !expanded.has(cat.name);
-        const sorted = [...cat.dishes].sort((a, b) => {
-          if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
-          if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
-          return 0;
-        });
-        return (
-          <div key={cat.name} style={{ marginBottom: isCollapsed ? 8 : 24 }}>
-            <button
-              onClick={() => {
-                if (veganCount === 0) {
-                  setExpanded(prev => {
-                    const n = new Set(prev);
-                    n.has(cat.name) ? n.delete(cat.name) : n.add(cat.name);
-                    return n;
-                  });
-                }
-              }}
-              style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: isCollapsed ? 0 : 8, background: "none", border: "none", padding: 0, cursor: veganCount === 0 ? "pointer" : "default", width: "100%" }}
-            >
-              <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: veganCount > 0 ? "white" : "#555", margin: 0 }}>{cat.name}</h3>
-              {veganCount > 0 ? (
-                <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#4ade80", background: "rgba(74,222,128,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                  🌿 {veganCount}
-                </span>
-              ) : (
-                <span style={{ fontSize: "0.68rem", color: "#555" }}>Sin opciones veganas</span>
-              )}
-              {veganCount === 0 && (
-                <span style={{ marginLeft: "auto", fontSize: "0.85rem", color: "#555", transform: expanded.has(cat.name) ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▾</span>
-              )}
-            </button>
-            {!isCollapsed && sorted.map(d => <DishCard key={d.name} dish={d} />)}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ── OPCIÓN 3: Banner "Ir a opciones veganas" ── */
-function Option3() {
-  const firstVeganCat = MENU.find(c => c.dishes.some(d => d.diet === "VEGAN"));
-  return (
-    <div>
-      {/* Sticky banner */}
-      <div style={{ position: "sticky", top: 0, zIndex: 10, padding: "10px 0", marginBottom: 16 }}>
-        <button
-          onClick={() => {
-            const el = document.getElementById("opt3-" + firstVeganCat?.name);
-            el?.scrollIntoView({ behavior: "smooth", block: "start" });
-          }}
-          style={{ width: "100%", padding: "10px 16px", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-        >
-          <span style={{ fontSize: "14px" }}>🌿</span>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "#4ade80" }}>Ir a opciones veganas ↓</span>
-        </button>
+    <div style={{ display: "flex", gap: 0, background: "#fff", borderRadius: 12, overflow: "hidden", border: "1px solid #f0ebe0" }}>
+      <div style={{ width: 140, minHeight: 120, position: "relative", flexShrink: 0 }}>
+        <img src={dish.photo} alt={dish.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
       </div>
-      {MENU.map(cat => {
-        const sorted = [...cat.dishes].sort((a, b) => {
-          if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
-          if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
-          return 0;
-        });
-        return (
-          <div key={cat.name} id={`opt3-${cat.name}`} style={{ marginBottom: 24 }}>
-            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "white", margin: "0 0 8px" }}>{cat.name}</h3>
-            {sorted.map(d => <DishCard key={d.name} dish={d} />)}
-          </div>
-        );
-      })}
+      <div style={{ flex: 1, padding: "12px 14px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <h3 style={{ fontFamily: DM, fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", margin: "0 0 4px", lineHeight: 1.3 }}>
+          {dish.name}{" "}
+          {dish.diet === "VEGAN" && <span style={{ fontSize: 12, verticalAlign: "middle" }}>🌿</span>}
+          {dish.diet === "VEGETARIAN" && <span style={{ fontSize: 12, verticalAlign: "middle" }}>🥗</span>}
+        </h3>
+        {dish.desc && <p style={{ fontSize: "0.82rem", color: "#999", margin: "0 0 8px", lineHeight: 1.4, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{dish.desc}</p>}
+        <span style={{ fontFamily: DM, fontSize: "0.9rem", fontWeight: 600, color: BRAND }}>${dish.price.toLocaleString("es-CL")}</span>
+      </div>
     </div>
   );
 }
 
-/* ── OPCIÓN 4: Filtro automático del Genio ── */
-function Option4() {
-  const [filterOn, setFilterOn] = useState(true);
+/* ── Genio Vegan Carousel ── */
+function GenioCarousel({ onDishClick }: { onDishClick?: (id: string) => void }) {
   return (
-    <div>
-      {/* Toggle */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: filterOn ? "rgba(74,222,128,0.08)" : "rgba(255,255,255,0.04)", border: `1px solid ${filterOn ? "rgba(74,222,128,0.2)" : "rgba(255,255,255,0.08)"}`, borderRadius: 12, marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: "16px" }}>🧞</span>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: filterOn ? "#4ade80" : "#888" }}>
-            {filterOn ? "Mostrando opciones veganas" : "Mostrando carta completa"}
-          </span>
+    <div style={{
+      margin: "0 20px 20px", padding: "16px 14px",
+      background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
+      border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+        <span style={{ fontSize: "1.3rem" }}>🧞</span>
+        <div>
+          <p style={{ fontFamily: DM, fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>
+            Encontré {allVegan.length} platos veganos para ti
+          </p>
+          <p style={{ fontFamily: DM, fontSize: "0.72rem", color: "#8a5a2c", margin: "2px 0 0" }}>
+            Repartidos en {new Set(allVegan.map(d => d.category)).size} secciones de la carta
+          </p>
         </div>
-        <button
-          onClick={() => setFilterOn(!filterOn)}
-          style={{ position: "relative", width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", background: filterOn ? "#4ade80" : "rgba(255,255,255,0.15)", transition: "background 0.2s", padding: 0 }}
-        >
-          <div style={{ position: "absolute", top: 2, left: filterOn ? 22 : 2, width: 20, height: 20, borderRadius: "50%", background: "white", transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }} />
-        </button>
       </div>
-
-      {MENU.map(cat => {
-        const visibleDishes = filterOn
-          ? cat.dishes.filter(d => d.diet === "VEGAN")
-          : [...cat.dishes].sort((a, b) => {
-              if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
-              if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
-              return 0;
-            });
-
-        if (filterOn && visibleDishes.length === 0) return null;
-
-        return (
-          <div key={cat.name} style={{ marginBottom: 24 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "white", margin: 0 }}>{cat.name}</h3>
-              {filterOn && (
-                <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#4ade80", background: "rgba(74,222,128,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                  {visibleDishes.length} plato{visibleDishes.length > 1 ? "s" : ""}
-                </span>
-              )}
-            </div>
-            {visibleDishes.map(d => <DishCard key={d.name} dish={d} />)}
-          </div>
-        );
-      })}
-
-      {filterOn && (
-        <button onClick={() => setFilterOn(false)} style={{ width: "100%", padding: "12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, cursor: "pointer", marginTop: 8 }}>
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "#888" }}>Ver carta completa →</span>
-        </button>
-      )}
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" as any }}>
+        {allVegan.map(d => (
+          <button key={d.id} onClick={() => onDishClick?.(d.id)} style={{
+            flexShrink: 0, background: "#fff", border: "1px solid rgba(244,166,35,0.15)",
+            borderRadius: 12, padding: 6, cursor: "pointer", width: 100, textAlign: "left",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
+          }}>
+            <img src={d.photo} alt="" style={{ width: "100%", height: 60, borderRadius: 8, objectFit: "cover", marginBottom: 4 }} />
+            <p style={{ fontFamily: DM, fontSize: "0.65rem", fontWeight: 600, color: "#0e0e0e", margin: "0 0 1px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+            <p style={{ fontFamily: DM, fontSize: "0.62rem", color: BRAND, fontWeight: 600, margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
 
-/* ── OPCIÓN 5: Selección del Genio arriba ── */
-function Option5() {
-  const allVegan = MENU.flatMap(cat => cat.dishes.filter(d => d.diet === "VEGAN").map(d => ({ ...d, category: cat.name })));
-  const [dismissed, setDismissed] = useState(false);
+/* ── Vista Premium ── */
+function VistaPremium() {
   const [showFab, setShowFab] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 400);
+    const onScroll = () => setShowFab(window.scrollY > 500);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  const scrollToDish = (id: string) => {
+    const el = document.getElementById(`premium-${id}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   return (
-    <div>
-      {/* Genio selection */}
-      {!dismissed && (
-        <div style={{ marginBottom: 24, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 16, padding: "16px 14px", position: "relative" }}>
-          <button onClick={() => setDismissed(true)} style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}>✕</button>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-            <span style={{ fontSize: "18px" }}>🧞</span>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "white", margin: 0 }}>Encontré {allVegan.length} platos veganos para ti</p>
-              <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>Repartidos en {new Set(allVegan.map(d => d.category)).size} secciones de la carta</p>
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
-            {allVegan.map(d => (
-              <button key={d.name} onClick={() => {
-                const el = document.getElementById("opt5-dish-" + d.name.replace(/\s/g, "-"));
-                el?.scrollIntoView({ behavior: "smooth", block: "center" });
-                el?.animate([{ background: "rgba(74,222,128,0.15)" }, { background: "transparent" }], { duration: 1500 });
-              }} style={{ flexShrink: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 8, cursor: "pointer", width: 110, textAlign: "left" }}>
-                <img src={d.photo} alt="" style={{ width: "100%", height: 64, borderRadius: 8, objectFit: "cover", marginBottom: 6 }} />
-                <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 600, color: "white", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: BRAND, margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
-              </button>
-            ))}
-          </div>
+    <div style={{ background: "#fff", minHeight: "100vh" }}>
+      {/* Fake hero */}
+      <div style={{ height: 280, background: "linear-gradient(to bottom, #1a1a1a, #333)", position: "relative", overflow: "hidden" }}>
+        <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&h=400&fit=crop" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.6 }} />
+        <div style={{ position: "absolute", bottom: 20, left: 20 }}>
+          <p style={{ fontFamily: DM, fontSize: "0.85rem", color: "rgba(255,255,255,0.6)", margin: "0 0 4px" }}>Carta · ordenada para ti</p>
+          <h1 style={{ fontFamily: PF, fontSize: "1.6rem", fontWeight: 700, color: "white", margin: 0 }}>Hand Roll</h1>
         </div>
-      )}
+      </div>
 
-      {/* Back to top button — shows after dismissing or scrolling past the genio section */}
-      {dismissed && (
-        <button onClick={() => { setDismissed(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ width: "100%", padding: "10px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, cursor: "pointer", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
-          <span style={{ fontSize: "14px" }}>🧞</span>
-          <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: BRAND }}>Ver mis opciones veganas ↑</span>
-        </button>
-      )}
+      {/* Genio carousel */}
+      <div style={{ paddingTop: 20 }}>
+        <GenioCarousel onDishClick={scrollToDish} />
+      </div>
 
-      {/* Normal menu — untouched order, vegans reordered within each category */}
+      {/* Categories with horizontal scroll */}
       {MENU.map(cat => {
         const sorted = [...cat.dishes].sort((a, b) => {
           if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
@@ -306,86 +185,156 @@ function Option5() {
           return 0;
         });
         return (
-          <div key={cat.name} style={{ marginBottom: 24 }}>
-            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "white", margin: "0 0 8px" }}>{cat.name}</h3>
-            {sorted.map(d => (
-              <div key={d.name} id={`opt5-dish-${d.name.replace(/\s/g, "-")}`} style={{ borderRadius: 10, transition: "background 0.3s" }}>
-                <DishCard dish={d} />
-              </div>
-            ))}
-          </div>
+          <section key={cat.id} style={{ paddingTop: 21 }}>
+            <div style={{ padding: "0 20px", marginBottom: 10 }}>
+              <h2 style={{ fontFamily: PF, fontSize: "1.5rem", fontWeight: 800, color: "#0e0e0e", margin: 0 }}>{cat.name}</h2>
+            </div>
+            <div style={{ display: "flex", overflowX: "auto", gap: 10, paddingLeft: 20, paddingRight: 20, paddingBottom: 8, scrollSnapType: "x mandatory", scrollbarWidth: "none" as any }}>
+              {sorted.map(d => (
+                <div key={d.id} id={`premium-${d.id}`}>
+                  <PremiumCard dish={d} />
+                </div>
+              ))}
+            </div>
+          </section>
         );
       })}
 
-      {/* Floating button — appears when scrolled down */}
+      {/* Genio banner bottom */}
+      <div style={{ margin: "32px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12, background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14 }}>
+        <span style={{ fontSize: "1.3rem" }}>🧞</span>
+        <div style={{ flex: 1 }}>
+          <span style={{ fontFamily: DM, fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Tu carta está personalizada ✓</span>
+          <span style={{ fontFamily: DM, fontSize: "0.72rem", color: "#8a5a2c", marginLeft: 8 }}>Editar gustos</span>
+        </div>
+      </div>
+
+      {/* Floating button */}
       {showFab && (
-        <button
-          onClick={() => { setDismissed(false); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          style={{
-            position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30,
-            display: "flex", alignItems: "center", gap: 6,
-            padding: "10px 20px", background: "rgba(14,14,14,0.9)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-            border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
-            cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-          }}
-        >
+        <button onClick={() => window.scrollTo({ top: 280, behavior: "smooth" })} style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30,
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "10px 20px", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)",
+          border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+        }}>
           <span style={{ fontSize: "14px" }}>🌿</span>
-          <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: BRAND }}>Mis opciones veganas</span>
+          <span style={{ fontFamily: DM, fontSize: "0.78rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
         </button>
       )}
+
+      <div style={{ height: 100 }} />
+    </div>
+  );
+}
+
+/* ── Vista Lista ── */
+function VistaLista() {
+  const [showFab, setShowFab] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowFab(window.scrollY > 500);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToDish = (id: string) => {
+    const el = document.getElementById(`lista-${id}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
+  return (
+    <div style={{ background: "#f7f7f5", minHeight: "100vh" }}>
+      {/* Fake slim hero */}
+      <div style={{ height: 180, background: "#1a1a1a", position: "relative", overflow: "hidden" }}>
+        <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=800&h=300&fit=crop" alt="" style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.5 }} />
+        <div style={{ position: "absolute", bottom: 16, left: 16 }}>
+          <h1 style={{ fontFamily: DM, fontSize: "1.2rem", fontWeight: 700, color: "white", margin: 0 }}>Hand Roll</h1>
+        </div>
+      </div>
+
+      {/* Genio carousel */}
+      <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+        <GenioCarousel onDishClick={scrollToDish} />
+      </div>
+
+      {/* Category tabs */}
+      <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
+        {MENU.map(cat => (
+          <button key={cat.id} style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#999", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Categories with vertical list */}
+      <div style={{ padding: "0 16px" }}>
+        {MENU.map(cat => {
+          const sorted = [...cat.dishes].sort((a, b) => {
+            if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
+            if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
+            return 0;
+          });
+          return (
+            <section key={cat.id} style={{ paddingTop: 20 }}>
+              <h2 style={{ fontFamily: PF, fontSize: "1.1rem", fontWeight: 700, color: "#777", margin: "0 0 10px" }}>{cat.name}</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                {sorted.map(d => (
+                  <div key={d.id} id={`lista-${d.id}`}>
+                    <ListaCard dish={d} />
+                  </div>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      {/* Floating button */}
+      {showFab && (
+        <button onClick={() => window.scrollTo({ top: 180, behavior: "smooth" })} style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30,
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "10px 20px", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)",
+          border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+        }}>
+          <span style={{ fontSize: "14px" }}>🌿</span>
+          <span style={{ fontFamily: DM, fontSize: "0.78rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
+        </button>
+      )}
+
+      <div style={{ height: 100 }} />
     </div>
   );
 }
 
 /* ── PAGE ── */
 export default function PreviewDietPage() {
-  const [active, setActive] = useState(5);
-
-  const descriptions = [
-    "Badge en el header de cada categoría mostrando cuántas opciones veganas tiene. Las categorías no se mueven.",
-    "Las categorías sin opciones veganas se colapsan automáticamente. Se pueden expandir tocándolas.",
-    "Un banner sticky arriba que lleva directo a la primera categoría con opciones veganas.",
-    "Filtro automático del Genio: solo muestra platos veganos. Las categorías sin opciones desaparecen. Toggle para ver la carta completa.",
-    "El Genio muestra un resumen con todos los platos veganos en un carrusel horizontal arriba. Al tocar uno, baja al plato en la carta. La carta no se modifica.",
-  ];
+  const [view, setView] = useState<"premium" | "lista">("premium");
 
   return (
-    <div style={{ minHeight: "100dvh", background: "#0e0e0e", color: "white", fontFamily: B }}>
-      {/* Tab bar */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0e0e0e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "12px 16px 0" }}>
-        <p style={{ fontFamily: F, fontSize: "0.75rem", color: BRAND, textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 10px" }}>Preview: cliente vegano</p>
-        <div style={{ display: "flex", gap: 4 }}>
-          {[1, 2, 3, 4, 5].map(n => (
-            <button
-              key={n}
-              onClick={() => setActive(n)}
-              style={{
-                flex: 1, padding: "8px 0 10px", background: "none", border: "none", cursor: "pointer",
-                fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-                color: active === n ? BRAND : "#666",
-                borderBottom: active === n ? `2px solid ${BRAND}` : "2px solid transparent",
-              }}
-            >
-              {n === 5 ? "⭐ 5" : n}
+    <div style={{ minHeight: "100dvh" }}>
+      {/* View switcher */}
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(14,14,14,0.95)", backdropFilter: "blur(8px)", padding: "8px 16px", display: "flex", alignItems: "center", gap: 12 }}>
+        <span style={{ fontFamily: DM, fontSize: "0.7rem", color: BRAND, textTransform: "uppercase", letterSpacing: "1px", fontWeight: 600 }}>Preview vegano</span>
+        <div style={{ display: "flex", gap: 4, marginLeft: "auto" }}>
+          {(["premium", "lista"] as const).map(v => (
+            <button key={v} onClick={() => { setView(v); window.scrollTo({ top: 0 }); }} style={{
+              padding: "6px 14px", borderRadius: 6, border: "none", cursor: "pointer",
+              fontFamily: DM, fontSize: "0.75rem", fontWeight: 600,
+              background: view === v ? BRAND : "rgba(255,255,255,0.08)",
+              color: view === v ? "#0a0a0a" : "#888",
+            }}>
+              {v === "premium" ? "Galería" : "Lista"}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Description */}
-      <div style={{ padding: "14px 16px", background: "rgba(244,166,35,0.06)", borderBottom: "1px solid rgba(244,166,35,0.1)" }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ccc", margin: 0, lineHeight: 1.5 }}>
-          {descriptions[active - 1]}
-        </p>
-      </div>
-
-      {/* Content */}
-      <div style={{ padding: "20px 16px", maxWidth: 480, margin: "0 auto" }}>
-        {active === 1 && <Option1 />}
-        {active === 2 && <Option2 />}
-        {active === 3 && <Option3 />}
-        {active === 4 && <Option4 />}
-        {active === 5 && <Option5 />}
+      <div style={{ paddingTop: 44 }}>
+        {view === "premium" && <VistaPremium />}
+        {view === "lista" && <VistaLista />}
       </div>
     </div>
   );
