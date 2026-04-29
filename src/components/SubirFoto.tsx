@@ -69,7 +69,7 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
 
         console.log("[SubirFoto] Subiendo:", filename);
 
-        const { data, error: upErr } = await supabase.storage.from("locales").upload(filename, file, {
+        const { data, error: upErr } = await supabase.storage.from("fotos").upload(filename, file, {
           cacheControl: "3600",
           upsert: false,
           contentType: file.type,
@@ -82,7 +82,7 @@ export default function SubirFoto({ onUpload, folder = "general", label = "Subir
 
         console.log("[SubirFoto] Subido OK:", data.path);
 
-        const { data: urlData } = supabase.storage.from("locales").getPublicUrl(data.path);
+        const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(data.path);
 
         console.log("[SubirFoto] URL pública:", urlData.publicUrl);
 
