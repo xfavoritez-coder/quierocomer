@@ -293,8 +293,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — sticky so it peeks behind content as you scroll */}
-      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "50vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo */}
+      <div style={{ position: "relative", width: "100%", height: "50vh", overflow: "hidden" }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -346,8 +346,8 @@ function DishSlide({
         )}
       </div>
 
-      {/* Content — flows below photo with dark background over the sticky photo */}
-      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px", borderRadius: "16px 16px 0 0", marginTop: -16 }}>
+      {/* Content — flows below photo */}
+      <div style={{ padding: "20px 20px 60px" }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
