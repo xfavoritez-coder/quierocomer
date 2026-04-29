@@ -64,11 +64,8 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Capture viewport height on mount (fixes iOS browser bar gap)
-  // Mount: lock scroll, fade in — position:fixed forces iOS bar back
+  // Mount: lock body first, then show modal — prevents flash
   useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-
     const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
     const savedScrollY = window.scrollY;
     if (!alreadyLocked) {
@@ -78,6 +75,8 @@ export default function DishDetail({
       document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     }
+    // Show modal after body is locked — no flash
+    setVisible(true);
 
     return () => {
       if (!alreadyLocked) {
