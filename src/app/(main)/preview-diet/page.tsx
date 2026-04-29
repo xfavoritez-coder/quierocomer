@@ -164,8 +164,17 @@ function VistaPremium() {
         </div>
       </div>
 
-      {/* Genio carousel */}
-      <div style={{ paddingTop: 20 }}>
+      {/* Category nav */}
+      <div style={{ position: "sticky", top: 44, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
+        {MENU.map(cat => (
+          <button key={cat.id} style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#999", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
+            {cat.name}
+          </button>
+        ))}
+      </div>
+
+      {/* Genio carousel — below nav */}
+      <div style={{ paddingTop: 16 }}>
         <GenioCarousel onDishClick={scrollToDish} />
       </div>
 
@@ -224,18 +233,18 @@ function VistaLista() {
         </div>
       </div>
 
-      {/* Genio carousel */}
-      <div style={{ paddingTop: 16, paddingBottom: 4 }}>
-        <GenioCarousel onDishClick={scrollToDish} />
-      </div>
-
       {/* Category tabs */}
-      <div style={{ position: "sticky", top: 0, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
+      <div style={{ position: "sticky", top: 44, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
         {MENU.map(cat => (
           <button key={cat.id} style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#999", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
             {cat.name}
           </button>
         ))}
+      </div>
+
+      {/* Genio carousel — below nav */}
+      <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+        <GenioCarousel onDishClick={scrollToDish} />
       </div>
 
       {/* Categories with vertical list */}
