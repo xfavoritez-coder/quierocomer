@@ -85,12 +85,15 @@ export default function DishDetail({
     return () => { trackDetailClose(); };
   }, [dish.id, restaurantId]);
 
-  // Observe which slide is active
+  // Observe which slide is active — delay to prevent iOS false triggers on mount
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+    let mounted = false;
+    const timer = setTimeout(() => { mounted = true; }, 500);
     const slides = el.querySelectorAll("[data-dish-slide]");
     const obs = new IntersectionObserver((entries) => {
+      if (!mounted) return; // Ignore triggers during initial mount
       entries.forEach((e) => {
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
           const idx = parseInt((e.target as HTMLElement).dataset.dishSlide || "0");
@@ -105,7 +108,7 @@ export default function DishDetail({
       });
     }, { root: el, threshold: [0.6] });
     slides.forEach((s) => obs.observe(s));
-    return () => obs.disconnect();
+    return () => { clearTimeout(timer); obs.disconnect(); };
   }, [allDishes, dish.id, onChangeDish]);
 
   const close = useCallback(() => {
