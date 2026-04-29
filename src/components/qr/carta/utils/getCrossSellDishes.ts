@@ -97,38 +97,24 @@ export function getCrossSellDishes(
     return shuffled.slice(0, count);
   };
 
-  if (currentType === "food" || currentType === "entry") {
+  if (currentType === "food") {
+    // Main dish → 1 drink + 2 entries (or fill with drinks/desserts)
     const drinks = getByType("drink");
-    const entries = isEntry ? [] : getByType("entry");
-    const desserts = getByType("dessert");
-
-    // Always mix: 1 drink + 1 entry or dessert + 1 more
+    const entries = getByType("entry");
     const picks: { dish: Dish; reason: string }[] = [];
 
-    // Slot 1: a drink
     if (drinks.length > 0) {
-      const d = pickRandom(drinks, 1)[0];
-      picks.push({ dish: d, reason: "Para acompañar" });
+      picks.push({ dish: pickRandom(drinks, 1)[0], reason: "Para acompañar" });
     }
-
-    // Slot 2: an entry (if viewing main) or a dessert
-    if (!isEntry && entries.length > 0) {
-      const d = pickRandom(entries.filter(e => !picks.some(p => p.dish.id === e.id)), 1);
-      if (d.length > 0) picks.push({ dish: d[0], reason: "Mientras esperas" });
+    const entryPicks = pickRandom(entries.filter(e => !picks.some(p => p.dish.id === e.id)), 2);
+    for (const d of entryPicks) {
+      picks.push({ dish: d, reason: "Mientras esperas" });
     }
-    if (picks.length < 2 && desserts.length > 0) {
-      const d = pickRandom(desserts.filter(e => !picks.some(p => p.dish.id === e.id)), 1);
-      if (d.length > 0) picks.push({ dish: d[0], reason: "Para terminar" });
-    }
-
-    // Slot 3: fill with whatever is left (drink, entry, dessert)
+    // Fill remaining with drinks
     if (picks.length < 3) {
-      const remaining = [...drinks, ...entries, ...desserts].filter(d => !picks.some(p => p.dish.id === d.id));
-      const extra = pickRandom(remaining, 3 - picks.length);
-      for (const d of extra) {
-        const t = catTypeMap.get(d.categoryId) || "food";
-        const reason = t === "drink" ? "Para acompañar" : t === "entry" ? "Mientras esperas" : t === "dessert" ? "Para terminar" : "Te puede gustar";
-        picks.push({ dish: d, reason });
+      const moreDrinks = drinks.filter(d => !picks.some(p => p.dish.id === d.id));
+      for (const d of pickRandom(moreDrinks, 3 - picks.length)) {
+        picks.push({ dish: d, reason: "Para acompañar" });
       }
     }
 
@@ -139,16 +125,40 @@ export function getCrossSellDishes(
         usedIds.add(p.dish.id);
       }
     }
-  } else if (currentType === "drink") {
-    // Drink → suggest popular food
-    const food = getByType("food");
-    const recommended = food.filter((d) => d.tags?.includes("RECOMMENDED"));
-    const source = recommended.length > 0 ? recommended : food;
+  } else if (currentType === "entry") {
+    // Entry → suggest main dishes (fondos)
+    const mains = getByType("food");
+    const recommended = mains.filter(d => d.tags?.includes("RECOMMENDED"));
+    const source = recommended.length >= MAX ? recommended : mains;
     const picks = pickRandom(source, MAX - results.length);
     for (const d of picks) {
       if (!usedIds.has(d.id)) {
-        results.push({ dish: d, reason: "Va bien con esto" });
+        results.push({ dish: d, reason: "De fondo" });
         usedIds.add(d.id);
+      }
+    }
+  } else if (currentType === "drink") {
+    // Drink → suggest desserts first, then food
+    const desserts = getByType("dessert");
+    const food = getByType("food");
+    const picks: { dish: Dish; reason: string }[] = [];
+
+    for (const d of pickRandom(desserts, 2)) {
+      picks.push({ dish: d, reason: "Para terminar" });
+    }
+    if (picks.length < MAX) {
+      const recommended = food.filter(d => d.tags?.includes("RECOMMENDED"));
+      const source = recommended.length > 0 ? recommended : food;
+      for (const d of pickRandom(source.filter(f => !picks.some(p => p.dish.id === f.id)), MAX - picks.length)) {
+        picks.push({ dish: d, reason: "Para picar" });
+      }
+    }
+
+    for (const p of picks) {
+      if (results.length >= MAX) break;
+      if (!usedIds.has(p.dish.id)) {
+        results.push(p);
+        usedIds.add(p.dish.id);
       }
     }
   } else if (currentType === "dessert") {
@@ -177,15 +187,13 @@ export function getCrossSellDishes(
   if (manualSuggestionIds && manualSuggestionIds.length > 0 && results.some(r => manualSuggestionIds.includes(r.dish.id))) {
     title = "Va bien con";
   } else if (currentType === "food" || currentType === "entry") {
-    if (isEntry) {
-      title = "¿Qué sigue?";
-    } else {
-      title = "Acompaña tu plato";
-    }
+    title = "Acompaña tu plato";
+  } else if (currentType === "entry") {
+    title = "¿Qué sigue?";
   } else if (currentType === "drink") {
-    title = "Para picar";
-  } else if (currentType === "dessert") {
     title = "Para cerrar";
+  } else if (currentType === "dessert") {
+    title = "¿Un café con eso?";
   }
 
   return { title, items: results.slice(0, MAX) };
