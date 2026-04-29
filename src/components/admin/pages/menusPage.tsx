@@ -147,6 +147,7 @@ export default function AdminMenus() {
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
+  const [dietFilter, setDietFilter] = useState<string>("all");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [photoModal, setPhotoModal] = useState<string | null>(null);
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
@@ -267,6 +268,7 @@ export default function AdminMenus() {
       list = list.filter(d => norm(d.name).includes(q) || norm(d.description || "").includes(q) || norm(d.ingredients || "").includes(q));
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
+    if (dietFilter !== "all") list = list.filter(d => (d.dishDiet || "OMNIVORE") === dietFilter);
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
@@ -277,10 +279,10 @@ export default function AdminMenus() {
       if (aRec !== bRec) return aRec - bRec;
       return a.name.localeCompare(b.name, "es");
     });
-  }, [dishes, search, catFilter]);
+  }, [dishes, search, catFilter, dietFilter]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, catFilter, selectedRestaurantId]);
+  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, selectedRestaurantId]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -1017,6 +1019,14 @@ export default function AdminMenus() {
         >
           <option value="all">Todas las categorias</option>
           {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select
+          value={dietFilter}
+          onChange={e => setDietFilter(e.target.value)}
+          style={{ padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+        >
+          <option value="all">Todos los tipos</option>
+          {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
         </select>
       </div>
 
