@@ -782,18 +782,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           </p>
 
           {/* Tip card */}
-          <div style={{ display: "flex", gap: 12, alignItems: "flex-start", textAlign: "left", padding: "16px 18px", borderRadius: 12, background: "linear-gradient(135deg, rgba(234,88,12,0.10) 0%, rgba(180,83,9,0.04) 100%)", border: `0.5px solid rgba(234,88,12,0.25)`, marginBottom: 28, width: "100%", maxWidth: 320, position: "relative", zIndex: 2 }}>
-            <span style={{ fontSize: "20px", flexShrink: 0, marginTop: 1 }}>👍</span>
-            <div>
-              <p style={{ margin: "0 0 4px", fontSize: "15px", fontWeight: 600, color: "rgba(255,255,255,0.85)", lineHeight: 1.3 }}>
-                Toca el pulgar en los platos que te gusten
-              </p>
-              <p style={{ margin: 0, fontSize: "14px", color: G.textTertiary, lineHeight: 1.5 }}>
-                El Genio aprende y afina tu carta cada vez mejor para ti.
-              </p>
-            </div>
-          </div>
-
           {/* Button */}
           <button
             onClick={() => {
