@@ -335,8 +335,8 @@ function DishSlide({
         <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
       </div>
 
-      {/* Bottom gradient — 60% height */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "60%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 30%, rgba(0,0,0,0.5) 65%, transparent 100%)", zIndex: 4 }} />
+      {/* Bottom gradient — starts from 45% up to overlap with photo bottom */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "65%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.9) 35%, rgba(0,0,0,0.6) 60%, transparent 100%)", zIndex: 4 }} />
 
       {/* Referential photo notice */}
       {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
@@ -345,8 +345,8 @@ function DishSlide({
         </div>
       )}
 
-      {/* Content overlay */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, padding: "0 20px 40px", zIndex: 5 }}>
+      {/* Content overlay — positioned to overlap photo bottom edge */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "42%", padding: "0 20px 40px", zIndex: 5, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
