@@ -445,6 +445,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> Todo lo del plan Gold</div>
                 {[
+                  { t: "Productos sugeridos", tip: "Aumenta el ticket de venta sugiriendo productos relacionados directamente en la carta" },
                   { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
                   { t: "Campañas automáticas", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros y fideliza en automático" },
                   { t: "Email marketing", tip: "Envía promociones y novedades por correo a tus clientes registrados" },
