@@ -93,6 +93,16 @@ export default function DishDetail({
     };
   }, [currentIndex]);
 
+  // Fix iOS viewport height when browser bar hides/shows
+  const [vpHeight, setVpHeight] = useState<string | null>(null);
+  useEffect(() => {
+    if (!window.visualViewport) return;
+    const update = () => setVpHeight(`${window.visualViewport!.height}px`);
+    update();
+    window.visualViewport.addEventListener("resize", update);
+    return () => window.visualViewport?.removeEventListener("resize", update);
+  }, []);
+
   // Track dish view stat on mount
   useEffect(() => {
     trackDetailOpen(dish.id);
@@ -141,7 +151,8 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+        position: "fixed", top: 0, left: 0, right: 0,
+        height: vpHeight || "100dvh",
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
@@ -150,7 +161,7 @@ export default function DishDetail({
       <div
         ref={scrollRef}
         style={{
-          display: "flex", width: "100%", height: "100%",
+          display: "flex", width: "100%", height: vpHeight || "100dvh",
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
@@ -288,7 +299,7 @@ function DishSlide({
       onTouchStart={handlePullStart}
       onTouchEnd={handlePullEnd}
       style={{
-        flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
+        flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
       {/* Photo — sticky, stays at half height when scrolling down */}
