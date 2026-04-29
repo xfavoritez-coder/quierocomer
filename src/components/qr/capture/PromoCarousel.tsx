@@ -189,7 +189,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "0 0 12px" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "0 20px 12px" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div

@@ -17,6 +17,7 @@ import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHe
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
+import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
@@ -392,7 +393,7 @@ export default function CartaLista({
 
       {/* OFERTAS section */}
       {hasPromos && (
-        <section id="lista-cat-promos" style={{ padding: "12px 12px 0" }}>
+        <section id="lista-cat-promos" style={{ padding: "12px 0 0", margin: "0 -8px" }}>
           <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
@@ -562,6 +563,7 @@ export default function CartaLista({
 
       {/* DishDetail modal */}
       {selectedDish && (
+        <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
         <DishDetail
           dish={selectedDish}
           allDishes={dishFromHero ? [selectedDish] : sortedDishes}
@@ -575,6 +577,7 @@ export default function CartaLista({
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
         />
+        </DishDetailErrorBoundary>
       )}
     </div>
   );
