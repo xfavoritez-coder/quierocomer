@@ -65,12 +65,8 @@ export default function DishDetail({
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
   // Capture viewport height on mount (fixes iOS browser bar gap)
-  const [vh, setVh] = useState("100%");
-
   // Mount: lock scroll, fade in
   useEffect(() => {
-    // Capture real visible height before anything changes
-    setVh(`${window.innerHeight}px`);
     requestAnimationFrame(() => setVisible(true));
 
     const alreadyLocked = document.body.style.overflow === "hidden";
@@ -143,8 +139,7 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0,
-        height: vh,
+        position: "fixed", top: 0, left: 0, right: 0, bottom: -50,
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
