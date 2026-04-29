@@ -13,7 +13,7 @@ const GOLD = "#F4A623";
 interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; }
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  food: { label: "Platos", emoji: "🍽️", color: GOLD },
+  food: { label: "Platos de fondo", emoji: "🍽️", color: GOLD },
   entry: { label: "Entradas", emoji: "🥗", color: "#4ade80" },
   drink: { label: "Bebestibles", emoji: "🥤", color: "#7fbfdc" },
   dessert: { label: "Postres", emoji: "🍰", color: "#c084fc" },
