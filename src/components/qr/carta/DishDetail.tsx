@@ -335,8 +335,6 @@ function DishSlide({
         <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
       </div>
 
-      {/* Bottom gradient — starts from 45% up to overlap with photo bottom */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, height: "65%", background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.9) 35%, rgba(0,0,0,0.6) 60%, transparent 100%)", zIndex: 4 }} />
 
       {/* Referential photo notice */}
       {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
@@ -345,8 +343,8 @@ function DishSlide({
         </div>
       )}
 
-      {/* Content overlay — starts just below photo, scrollable if needed */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "48%", padding: "0 20px 40px", zIndex: 5, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+      {/* Content overlay — starts below photo */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "55%", padding: "20px 20px 40px", zIndex: 5, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
@@ -425,14 +423,14 @@ function DishSlide({
               {dish.discountPrice ? (
                 <>
                   <span className="line-through" style={{ color: "rgba(255,255,255,0.4)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
-                  <span style={{ color: "#fbbf24", fontSize: "16px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "#fbbf24", fontSize: "17px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
                 </>
               ) : (
-                <span style={{ color: "#fbbf24", fontSize: "16px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
+                <span style={{ color: "#fbbf24", fontSize: "17px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
               )}
             </div>
           </div>
-          <div style={{ position: "relative", flexShrink: 0, marginTop: 20 }}>
+          <div style={{ position: "relative", flexShrink: 0 }}>
             <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }} />
             {showLikeNudge && (
               <div onClick={() => setShowLikeNudge(false)} className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", top: -52, right: 0, background: "#FFF4E6", borderRadius: 10, padding: "7px 11px", boxShadow: "0 4px 12px rgba(180,130,50,0.25)", width: 180, animation: "fadeToast 0.3s ease-out", cursor: "pointer", zIndex: 10 }}>
