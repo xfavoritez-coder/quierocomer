@@ -8,6 +8,7 @@ import CategoriesManager from "@/components/admin/CategoriesManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search } from "lucide-react";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -156,6 +157,7 @@ export default function AdminMenus() {
   const [photoModal, setPhotoModal] = useState<string | null>(null);
   const [expandedDishId, setExpandedDishId] = useState<string | null>(null);
   const [kebabOpenId, setKebabOpenId] = useState<string | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
   const [menuTab, setMenuTab] = useState<"productos" | "categorias" | "modificadores" | "horarios">("productos");
@@ -166,6 +168,14 @@ export default function AdminMenus() {
     window.addEventListener("nav-same-page", handler);
     return () => window.removeEventListener("nav-same-page", handler);
   }, []);
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpenId) return;
+    const close = () => setMenuOpenId(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuOpenId]);
 
   const handleTabChange = (tab: typeof menuTab) => {
     setMenuTab(tab);
@@ -1023,16 +1033,16 @@ export default function AdminMenus() {
 
   return (
     <div style={{ maxWidth: 800 }}>
-      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
+      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "#F4A623", margin: 0 }}>Mi Carta</h1>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Administra los productos y categorías de {activeRestaurant?.name} · {filtered.length} productos</p>
+          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "var(--adm-text)", margin: 0 }}>Mi Carta</h1>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{filtered.length} productos · {categories.length} categorías</p>
         </div>
         <RestaurantPicker />
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--adm-hover)", borderRadius: 10, padding: 3 }}>
+      {/* Tabs — pill style */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" as any }}>
         {([
           { key: "productos" as const, label: "Productos" },
           { key: "categorias" as const, label: "Categorías" },
@@ -1040,46 +1050,55 @@ export default function AdminMenus() {
           { key: "horarios" as const, label: "Horarios" },
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
-            flex: 1, padding: "8px 12px", borderRadius: 8, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
-            background: menuTab === tab.key ? "white" : "transparent",
-            color: menuTab === tab.key ? "#F4A623" : "var(--adm-text3)",
-            boxShadow: menuTab === tab.key ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+            padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "13px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0,
+            background: menuTab === tab.key ? "#1a1a1a" : "transparent",
+            color: menuTab === tab.key ? "#fff" : "#5a5a5a",
           }}>{tab.label}</button>
         ))}
       </div>
 
       {menuTab === "productos" && (<>
-      <div style={{ display: "flex", gap: 10, marginBottom: creatingDish ? 10 : 20, flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ minWidth: 140, maxWidth: 200, position: "relative", flex: "1 1 140px" }}>
-          <input
-            placeholder="Buscar..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "10px 14px", paddingRight: search ? 36 : 14, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", fontSize: "0.85rem", padding: 2 }}>✕</button>
-          )}
+      {/* Search */}
+      <div style={{ position: "relative", marginBottom: 10 }}>
+        <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#999", pointerEvents: "none" }} />
+        <input
+          placeholder="Buscar plato..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+        />
+        {search && (
+          <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", fontSize: "0.85rem", padding: 2 }}>✕</button>
+        )}
+      </div>
+      {/* Filter chips */}
+      <div style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <select
+            value={dietFilter}
+            onChange={e => setDietFilter(e.target.value)}
+            style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: dietFilter !== "all" ? "#1a1a1a" : "#F5F4F1", color: dietFilter !== "all" ? "#fff" : "#1a1a1a", outline: "none" }}
+          >
+            <option value="all">Todos los tipos</option>
+            {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
+          </select>
+          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: dietFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
         </div>
-        <select
-          value={catFilter}
-          onChange={e => setCatFilter(e.target.value)}
-          style={{ padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-        >
-          <option value="all">Todas las categorias</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select
-          value={dietFilter}
-          onChange={e => setDietFilter(e.target.value)}
-          style={{ padding: "10px 14px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
-        >
-          <option value="all">Todos los tipos</option>
-          {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
-        </select>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <select
+            value={catFilter}
+            onChange={e => setCatFilter(e.target.value)}
+            style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: catFilter !== "all" ? "#1a1a1a" : "#F5F4F1", color: catFilter !== "all" ? "#fff" : "#1a1a1a", outline: "none" }}
+          >
+            <option value="all">Todas las categorías</option>
+            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
+          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
+        </div>
+        {/* Desktop-only + Nuevo inline */}
         {!creatingDish && (
-          <button onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
+          <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
         )}
       </div>
 
@@ -1208,84 +1227,73 @@ export default function AdminMenus() {
       {loading ? (
         <SkeletonLoading type="list" />
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {/* Select all header */}
-          {paginated.length > 0 && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 14px" }}>
-              <input type="checkbox" checked={bulkSelected.size === paginated.length && paginated.length > 0} onChange={toggleBulkAll} style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }} />
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Seleccionar todos</span>
-            </div>
-          )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {paginated.map(d => {
             const isRec = d.tags?.includes("RECOMMENDED");
             const isExpanded = expandedDishId === d.id;
+            const isHidden = !d.isActive;
             return (
             <div key={d.id} style={{
-              background: bulkSelected.has(d.id) ? "rgba(244,166,35,0.06)" : isRec ? "rgba(244,166,35,0.03)" : "var(--adm-card)",
-              border: bulkSelected.has(d.id) ? "1.5px solid rgba(244,166,35,0.25)" : isRec ? "1.5px solid rgba(244,166,35,0.3)" : "1px solid var(--adm-card-border)",
-              borderRadius: 12, overflow: "hidden", opacity: d.isActive ? 1 : 0.5,
+              background: isHidden ? "#FAF9F7" : "var(--adm-card)",
+              border: "0.5px solid rgba(0,0,0,0.08)",
+              borderRadius: 12, overflow: "hidden", opacity: isHidden ? 0.7 : 1,
             }}>
-              {/* Header — click goes to edit */}
-              <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{
-                display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
-                background: "transparent", border: "none",
-                cursor: "pointer", width: "100%", textAlign: "left",
-              }}>
-                <input type="checkbox" checked={bulkSelected.has(d.id)} onChange={(e) => { e.stopPropagation(); toggleBulk(d.id); }} onClick={e => e.stopPropagation()} style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }} />
+              {/* Row */}
+              <div style={{ display: "flex", gap: 12, padding: 10, alignItems: "center" }}>
+                {/* Photo */}
                 {d.photos?.[0] ? (
-                  <img src={d.photos[0]} alt="" onClick={(e) => { e.stopPropagation(); setPhotoModal(d.photos[0]); }} style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
+                  <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
                 ) : (
-                  <div style={{ width: 44, height: 44, borderRadius: 8, background: "var(--adm-card-border)", flexShrink: 0 }} />
+                  <div style={{ width: 56, height: 56, borderRadius: 8, background: "#eee", flexShrink: 0 }} />
                 )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    {isRec && <span style={{ fontSize: "0.8rem", color: "#F4A623", flexShrink: 0 }}>★</span>}
-                    <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                    {recentlyCreated.has(d.id) && <span style={{ fontSize: "0.59rem", fontWeight: 700, color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "1px 6px", borderRadius: 50, flexShrink: 0 }}>Recién agregado</span>}
-                    {d.tags?.includes("NEW") && <span style={{ fontSize: "0.56rem", fontWeight: 700, color: "white", background: "#e85530", padding: "0px 6px", borderRadius: 50, flexShrink: 0 }}>Nuevo</span>}
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.71rem", color: "var(--adm-text2)", margin: 0 }}>{d.category.name}</p>
-                    {(d as any).dishDiet && <span style={{ fontSize: "0.58rem", color: (DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE).color }}>{DIET_OPTIONS.find(o => o.value === (d as any).dishDiet)?.icon}</span>}
-                    {(d as any).isSpicy && <span style={{ fontSize: "0.58rem" }}>🌶️</span>}
-                    {((d as any).flavorTags || []).map((f: string) => {
-                      const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
-                      return <span key={f} style={{ fontSize: "0.58rem" }}>{icons[f] || "•"}</span>;
-                    })}
-                  </div>
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }} onClick={() => { setSelectedDish(d); startEditDish(d); }} role="button" tabIndex={0}>
+                  <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {d.name}
+                  </p>
+                  <span style={{ display: "inline-block", fontSize: "10px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999, marginTop: 4 }}>{d.category.name}</span>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                 </div>
-                <div style={{ flexShrink: 0, textAlign: "right" }}>
-                  <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
-                  {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Oculto</p>}
-                </div>
-                <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                {/* Actions */}
+                <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center" }}>
+                  {/* Star */}
                   <button onClick={async () => {
-                    const isRec = d.tags?.includes("RECOMMENDED");
-                    if (!isRec) {
+                    const wasRec = d.tags?.includes("RECOMMENDED");
+                    if (!wasRec) {
                       const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
                       if (currentRecCount >= 5) { alert("Máximo 5 platos destacados"); return; }
                     }
-                    const newTags = isRec ? (d.tags || []).filter(t => t !== "RECOMMENDED") : [...(d.tags || []), "RECOMMENDED"];
+                    const newTags = wasRec ? (d.tags || []).filter(t => t !== "RECOMMENDED") : [...(d.tags || []), "RECOMMENDED"];
                     await fetch(`/api/admin/dishes/${d.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags }) });
                     setDishes(prev => prev.map(x => x.id === d.id ? { ...x, tags: newTags } : x));
-                  }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: d.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)", color: d.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text3)", display: "flex", alignItems: "center", gap: 4 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "none"} stroke={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    Destacar
+                  }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <Star size={16} fill={isRec ? "#EF9F27" : "none"} color={isRec ? "#EF9F27" : "#888"} />
                   </button>
-                  <button onClick={() => toggleDishActive(d)} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: d.isActive ? "var(--adm-text3)" : "#4ade80", display: "flex", alignItems: "center", gap: 4 }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.isActive ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></> : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}</svg>
-                    {d.isActive ? "Ocultar" : "Mostrar"}
+                  {/* Eye */}
+                  <button onClick={() => toggleDishActive(d)} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    {d.isActive ? <Eye size={16} color="#888" /> : <EyeOff size={16} color="#C5C0B5" />}
                   </button>
-                  <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(127,191,220,0.08)", color: "#7fbfdc" }}>Editar</button>
-                  <button onClick={async () => {
-                    if (!confirm(`¿Eliminar "${d.name}"?`)) return;
-                    await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
-                    setDishes(prev => prev.filter(x => x.id !== d.id));
-                    setExpandedDishId(null);
-                  }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(239,68,68,0.06)", color: "#ef4444" }}>Eliminar</button>
+                  {/* More menu */}
+                  <div style={{ position: "relative" }}>
+                    <button onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === d.id ? null : d.id); }} style={{ width: 32, height: 32, borderRadius: 8, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <MoreVertical size={16} color="#888" />
+                    </button>
+                    {menuOpenId === d.id && (
+                      <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fff", border: "1px solid #eee", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 140, overflow: "hidden" }}>
+                        <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#1a1a1a", textAlign: "left" }}>Editar</button>
+                        <button style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#999", textAlign: "left" }}>Duplicar</button>{/* TODO: implement duplicate */}
+                        <button onClick={async () => {
+                          setMenuOpenId(null);
+                          if (!confirm(`¿Eliminar "${d.name}"?`)) return;
+                          await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
+                          setDishes(prev => prev.filter(x => x.id !== d.id));
+                          setExpandedDishId(null);
+                        }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#A32D2D", textAlign: "left" }}>Eliminar</button>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <span style={{ fontSize: "0.85rem", color: "var(--adm-text3)", flexShrink: 0 }}>›</span>
-              </button>
+              </div>
 
               {/* Expanded content */}
               {isExpanded && (
@@ -1392,11 +1400,23 @@ export default function AdminMenus() {
       {menuTab === "horarios" && selectedRestaurantId && (
         <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
       )}
+      {/* FAB — mobile only, Productos tab only */}
+      {menuTab === "productos" && !creatingDish && !editMode && (
+        <button className="mcarta-fab" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
+          <Plus size={24} />
+        </button>
+      )}
+
       {photoModal && (
         <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>
           <img src={photoModal} alt="" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 768px) { .mcarta-fab { display: flex !important; } .lnd-desktop-only { display: none !important; } }
+        @media (min-width: 769px) { .mcarta-fab { display: none !important; } }
+      `}</style>
     </div>
   );
 }
