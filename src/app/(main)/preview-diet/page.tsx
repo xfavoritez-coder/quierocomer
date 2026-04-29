@@ -249,15 +249,72 @@ function Option4() {
   );
 }
 
+/* ── OPCIÓN 5: Selección del Genio arriba ── */
+function Option5() {
+  const allVegan = MENU.flatMap(cat => cat.dishes.filter(d => d.diet === "VEGAN").map(d => ({ ...d, category: cat.name })));
+  const [dismissed, setDismissed] = useState(false);
+
+  return (
+    <div>
+      {/* Genio selection */}
+      {!dismissed && (
+        <div style={{ marginBottom: 24, background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 16, padding: "16px 14px", position: "relative" }}>
+          <button onClick={() => setDismissed(true)} style={{ position: "absolute", top: 10, right: 12, background: "none", border: "none", color: "rgba(255,255,255,0.3)", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}>✕</button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+            <span style={{ fontSize: "18px" }}>🧞</span>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "white", margin: 0 }}>Encontré {allVegan.length} platos veganos para ti</p>
+              <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.4)", margin: "2px 0 0" }}>Repartidos en {new Set(allVegan.map(d => d.category)).size} secciones de la carta</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, scrollbarWidth: "none" }}>
+            {allVegan.map(d => (
+              <button key={d.name} onClick={() => {
+                const el = document.getElementById("opt5-dish-" + d.name.replace(/\s/g, "-"));
+                el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                el?.animate([{ background: "rgba(74,222,128,0.15)" }, { background: "transparent" }], { duration: 1500 });
+              }} style={{ flexShrink: 0, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: 8, cursor: "pointer", width: 110, textAlign: "left" }}>
+                <img src={d.photo} alt="" style={{ width: "100%", height: 64, borderRadius: 8, objectFit: "cover", marginBottom: 6 }} />
+                <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 600, color: "white", margin: "0 0 2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: BRAND, margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Normal menu — untouched order, vegans reordered within each category */}
+      {MENU.map(cat => {
+        const sorted = [...cat.dishes].sort((a, b) => {
+          if (a.diet === "VEGAN" && b.diet !== "VEGAN") return -1;
+          if (a.diet !== "VEGAN" && b.diet === "VEGAN") return 1;
+          return 0;
+        });
+        return (
+          <div key={cat.name} style={{ marginBottom: 24 }}>
+            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "white", margin: "0 0 8px" }}>{cat.name}</h3>
+            {sorted.map(d => (
+              <div key={d.name} id={`opt5-dish-${d.name.replace(/\s/g, "-")}`} style={{ borderRadius: 10, transition: "background 0.3s" }}>
+                <DishCard dish={d} />
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── PAGE ── */
 export default function PreviewDietPage() {
-  const [active, setActive] = useState(1);
+  const [active, setActive] = useState(5);
 
   const descriptions = [
     "Badge en el header de cada categoría mostrando cuántas opciones veganas tiene. Las categorías no se mueven.",
     "Las categorías sin opciones veganas se colapsan automáticamente. Se pueden expandir tocándolas.",
     "Un banner sticky arriba que lleva directo a la primera categoría con opciones veganas.",
     "Filtro automático del Genio: solo muestra platos veganos. Las categorías sin opciones desaparecen. Toggle para ver la carta completa.",
+    "El Genio muestra un resumen con todos los platos veganos en un carrusel horizontal arriba. Al tocar uno, baja al plato en la carta. La carta no se modifica.",
   ];
 
   return (
@@ -266,18 +323,18 @@ export default function PreviewDietPage() {
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#0e0e0e", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "12px 16px 0" }}>
         <p style={{ fontFamily: F, fontSize: "0.75rem", color: BRAND, textTransform: "uppercase", letterSpacing: "1px", margin: "0 0 10px" }}>Preview: cliente vegano</p>
         <div style={{ display: "flex", gap: 4 }}>
-          {[1, 2, 3, 4].map(n => (
+          {[1, 2, 3, 4, 5].map(n => (
             <button
               key={n}
               onClick={() => setActive(n)}
               style={{
                 flex: 1, padding: "8px 0 10px", background: "none", border: "none", cursor: "pointer",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
+                fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
                 color: active === n ? BRAND : "#666",
                 borderBottom: active === n ? `2px solid ${BRAND}` : "2px solid transparent",
               }}
             >
-              Opción {n}
+              {n === 5 ? "⭐ 5" : n}
             </button>
           ))}
         </div>
@@ -296,6 +353,7 @@ export default function PreviewDietPage() {
         {active === 2 && <Option2 />}
         {active === 3 && <Option3 />}
         {active === 4 && <Option4 />}
+        {active === 5 && <Option5 />}
       </div>
     </div>
   );
