@@ -24,16 +24,16 @@ function formatDuration(ms: number) {
 type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas";
 
 /* ═══ TAB: Resumen ═══ */
-function TabResumen({ rid }: { rid: string }) {
+function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const p = new URLSearchParams({ type: "metrics" });
+    const p = new URLSearchParams({ type: "metrics", from, to });
     if (rid) p.set("restaurantId", rid);
     fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
@@ -51,16 +51,16 @@ function TabResumen({ rid }: { rid: string }) {
 }
 
 /* ═══ TAB: Platos ═══ */
-function TabPlatos({ rid }: { rid: string }) {
+function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const p = new URLSearchParams({ type: "dishes" });
+    const p = new URLSearchParams({ type: "dishes", from, to });
     if (rid) p.set("restaurantId", rid);
     fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
@@ -97,21 +97,21 @@ function TabPlatos({ rid }: { rid: string }) {
 }
 
 /* ═══ TAB: Clientes ═══ */
-function TabClientes({ rid }: { rid: string }) {
+function TabClientes({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [funnel, setFunnel] = useState<any>(null);
   const [genio, setGenio] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const p1 = new URLSearchParams({ type: "funnel" });
-    const p2 = new URLSearchParams({ type: "genio" });
+    const p1 = new URLSearchParams({ type: "funnel", from, to });
+    const p2 = new URLSearchParams({ type: "genio", from, to });
     if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); }
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p2}`).then(r => r.json()),
     ]).then(([f, g]) => { setFunnel(f); setGenio(g); }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
 
@@ -177,44 +177,53 @@ function TabClientes({ rid }: { rid: string }) {
 }
 
 /* ═══ TAB: Garzón ═══ */
-function TabGarzon({ rid }: { rid: string }) {
+function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!rid) { setLoading(false); return; }
     setLoading(true);
-    fetch(`/api/admin/analytics-garzon?restaurantId=${rid}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid]);
+    const params = rid ? `restaurantId=${rid}` : (isSuper ? "all=true" : "");
+    if (!params) { setLoading(false); return; }
+    fetch(`/api/admin/analytics-garzon?${params}`).then(r => r.json()).then(d => { if (!d.error) setData(d); }).catch(() => {}).finally(() => setLoading(false));
+  }, [rid, isSuper]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos de garzón</p>;
 
-  const answeredPct = data.totalCalls > 0 ? Math.round((data.answeredCalls / data.totalCalls) * 100) : 0;
-  const avgResponse = data.avgResponseTimeSec ? `${Math.floor(data.avgResponseTimeSec / 60)}m ${data.avgResponseTimeSec % 60}s` : "-";
+  const days = Object.entries(data.perDay || {});
+  const maxDay = Math.max(...days.map(d => d[1] as number), 1);
+
+  const formatTime = (sec: number) => sec < 60 ? `${sec}s` : `${Math.floor(sec / 60)}m ${sec % 60}s`;
+  const formatHour = (h: number) => `${h.toString().padStart(2, "0")}:00`;
+  const GOLD = "#F4A623";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Card label="Llamadas hoy" value={data.todayCalls || 0} />
-        <Card label="Llamadas esta semana" value={data.weekCalls || 0} />
-        <Card label="% Atendidas" value={`${answeredPct}%`} color={answeredPct > 80 ? "#4ade80" : answeredPct > 50 ? "var(--adm-accent)" : "#ef4444"} />
-        <Card label="Tiempo promedio respuesta" value={avgResponse} color={data.avgResponseTimeSec && data.avgResponseTimeSec < 120 ? "#4ade80" : "var(--adm-accent)"} />
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* Summary */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }} className="adm-grid-2">
+        {[
+          { label: "Hoy", value: data.today, color: GOLD },
+          { label: "Semana", value: data.week },
+          { label: "% Atendidos", value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
+          { label: "Tiempo resp.", value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
+        ].map((c, i) => (
+          <Card key={i} label={c.label} value={c.value} color={c.color} />
+        ))}
       </div>
 
-      {/* Calls by day */}
-      {data.byDay && data.byDay.length > 0 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Llamadas por día</p>
-          <div style={{ display: "flex", gap: 6, alignItems: "flex-end", height: 80 }}>
-            {data.byDay.map((d: any, i: number) => {
-              const max = Math.max(...data.byDay.map((x: any) => x.count));
-              const h = max > 0 ? (d.count / max) * 100 : 0;
+      {/* Bar chart - calls per day */}
+      {days.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>Llamados por día</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: 100 }}>
+            {days.map(([date, count]) => {
+              const dayName = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][new Date(date + "T12:00:00").getDay()];
               return (
-                <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)" }}>{d.count}</span>
-                  <div style={{ width: "100%", height: `${h}%`, minHeight: 2, background: "var(--adm-accent)", borderRadius: 4 }} />
-                  <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{d.label}</span>
+                <div key={date} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)" }}>{count as number}</span>
+                  <div style={{ width: "100%", height: Math.max(4, ((count as number) / maxDay) * 80), background: (count as number) > 0 ? GOLD : "var(--adm-card-border)", borderRadius: 4 }} />
+                  <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{dayName}</span>
                 </div>
               );
             })}
@@ -222,16 +231,53 @@ function TabGarzon({ rid }: { rid: string }) {
         </div>
       )}
 
-      {/* Top tables */}
-      {data.topTables && data.topTables.length > 0 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", fontWeight: 600 }}>Mesas más activas</p>
-          {data.topTables.slice(0, 5).map((t: any, i: number) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
-              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)" }}>{t.name || `Mesa ${i + 1}`}</span>
-              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 600 }}>{t.count}</span>
+      {/* Two columns: top mesas + peak hours */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="adm-grid-2">
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Mesas más activas</p>
+          {(data.topMesas || []).length > 0 ? data.topMesas.map((m: any, i: number) => (
+            <div key={m.name} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.topMesas.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+              <span style={{ fontFamily: F, fontSize: "0.75rem", color: GOLD, fontWeight: 700, width: 20 }}>{i + 1}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{m.name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)" }}>{m.count}x</span>
             </div>
-          ))}
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos</p>}
+        </div>
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Horas punta</p>
+          {(data.peakHours || []).length > 0 ? data.peakHours.map((h: any, i: number) => (
+            <div key={h.hour} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: i < data.peakHours.length - 1 ? "1px solid var(--adm-card-border)" : "none" }}>
+              <span style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 600 }}>{formatHour(h.hour)}</span>
+              <div style={{ flex: 1, height: 6, background: "var(--adm-card-border)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ width: `${(h.count / (data.peakHours[0]?.count || 1)) * 100}%`, height: "100%", background: GOLD, borderRadius: 3 }} />
+              </div>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{h.count}</span>
+            </div>
+          )) : <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin datos</p>}
+        </div>
+      </div>
+
+      {/* Recent calls */}
+      {(data.recent || []).length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Últimos llamados</p>
+          {data.recent.map((c: any) => {
+            const time = new Date(c.calledAt);
+            const hhmm = `${time.getHours().toString().padStart(2, "0")}:${time.getMinutes().toString().padStart(2, "0")}`;
+            const dateStr = time.toLocaleDateString("es-CL", { day: "numeric", month: "short" });
+            return (
+              <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: c.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
+                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{c.tableName || "Sin mesa"}</span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{dateStr} {hhmm}</span>
+                {c.responseTime !== null ? (
+                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{formatTime(c.responseTime)}</span>
+                ) : (
+                  <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#ef4444" }}>Sin atender</span>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -239,16 +285,16 @@ function TabGarzon({ rid }: { rid: string }) {
 }
 
 /* ═══ TAB: Búsquedas ═══ */
-function TabBusquedas({ rid }: { rid: string }) {
+function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const p = new URLSearchParams({ type: "searches" });
+    const p = new URLSearchParams({ type: "searches", from, to });
     if (rid) p.set("restaurantId", rid);
     fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(d => setData(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoading(false));
-  }, [rid]);
+  }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
 
@@ -281,12 +327,27 @@ const TABS: { key: Tab; label: string; icon: string }[] = [
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
 ];
 
+type DatePreset = "hoy" | "ayer" | "semana" | "custom";
+
+function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string): { from: string; to: string } {
+  const today = new Date();
+  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  if (preset === "hoy") return { from: fmt(today), to: fmt(today) };
+  if (preset === "ayer") { const y = new Date(today); y.setDate(y.getDate() - 1); return { from: fmt(y), to: fmt(y) }; }
+  if (preset === "semana") { const w = new Date(today); w.setDate(w.getDate() - 7); return { from: fmt(w), to: fmt(today) }; }
+  return { from: customFrom || fmt(new Date(today.getTime() - 28 * 86400000)), to: customTo || fmt(today) };
+}
+
 export default function AnalyticsDashboard() {
   const { restaurants, isSuper, selectedRestaurantId } = useAdminSession();
   const [restaurantId, setRestaurantId] = useState("");
   const [tab, setTab] = useState<Tab>("resumen");
+  const [datePreset, setDatePreset] = useState<DatePreset>("semana");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
 
   const effectiveRid = isSuper ? restaurantId : (selectedRestaurantId || "");
+  const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -301,6 +362,25 @@ export default function AnalyticsDashboard() {
             {restaurants.map((r) => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
           </select>
         )}
+      </div>
+
+      {/* Date filters */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
+        {(["hoy", "ayer", "semana"] as DatePreset[]).map(p => (
+          <button key={p} onClick={() => setDatePreset(p)} style={{
+            padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+            background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
+            color: datePreset === p ? "#0a0a0a" : "var(--adm-text3)",
+          }}>
+            {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : "Esta semana"}
+          </button>
+        ))}
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <input type="date" value={customFrom} onChange={e => { setCustomFrom(e.target.value); setDatePreset("custom"); }} style={{ padding: "5px 8px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.72rem", outline: "none", colorScheme: "dark" }} />
+          <span style={{ color: "var(--adm-text3)", fontSize: "0.72rem" }}>—</span>
+          <input type="date" value={customTo} onChange={e => { setCustomTo(e.target.value); setDatePreset("custom"); }} style={{ padding: "5px 8px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.72rem", outline: "none", colorScheme: "dark" }} />
+        </div>
       </div>
 
       {/* Tabs */}
@@ -319,11 +399,11 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Content */}
-      {tab === "resumen" && <TabResumen rid={effectiveRid} />}
-      {tab === "platos" && <TabPlatos rid={effectiveRid} />}
-      {tab === "clientes" && <TabClientes rid={effectiveRid} />}
-      {tab === "garzon" && <TabGarzon rid={effectiveRid} />}
-      {tab === "busquedas" && <TabBusquedas rid={effectiveRid} />}
+      {tab === "resumen" && <TabResumen rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "platos" && <TabPlatos rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
+      {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
     </div>
   );
 }
