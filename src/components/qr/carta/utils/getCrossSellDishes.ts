@@ -103,9 +103,10 @@ export function getCrossSellDishes(
   };
 
   if (currentType === "food") {
-    // Main dish → 1 drink + 2 entries (or fill with drinks/desserts)
+    // Main dish → 1 drink + 2 entries, fill remaining with entries/desserts
     const drinks = getByType("drink");
     const entries = getByType("entry");
+    const desserts = getByType("dessert");
     const picks: { dish: Dish; reason: string }[] = [];
 
     if (drinks.length > 0) {
@@ -115,11 +116,16 @@ export function getCrossSellDishes(
     for (const d of entryPicks) {
       picks.push({ dish: d, reason: "Mientras esperas" });
     }
-    // Fill remaining with drinks
+    // Fill remaining with more entries, then desserts, then drinks
     if (picks.length < 3) {
-      const moreDrinks = drinks.filter(d => !picks.some(p => p.dish.id === d.id));
-      for (const d of pickRandom(moreDrinks, 3 - picks.length)) {
-        picks.push({ dish: d, reason: "Para acompañar" });
+      const remaining = [
+        ...entries.filter(d => !picks.some(p => p.dish.id === d.id)).map(d => ({ dish: d, reason: "Mientras esperas" })),
+        ...desserts.filter(d => !picks.some(p => p.dish.id === d.id)).map(d => ({ dish: d, reason: "Para terminar" })),
+        ...drinks.filter(d => !picks.some(p => p.dish.id === d.id)).map(d => ({ dish: d, reason: "Para acompañar" })),
+      ];
+      for (const p of pickRandom(remaining.map(r => r.dish), 3 - picks.length)) {
+        const r = remaining.find(x => x.dish.id === p.id);
+        if (r) picks.push(r);
       }
     }
 
