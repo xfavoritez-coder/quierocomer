@@ -393,7 +393,7 @@ export default function CartaLista({
 
       {/* OFERTAS section */}
       {hasPromos && (
-        <section id="lista-cat-promos" style={{ padding: "8px 12px 0" }}>
+        <section id="lista-cat-promos" style={{ padding: "14px 12px 0" }}>
           <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);

@@ -3,9 +3,24 @@ import { Component } from "react";
 
 export default class DishDetailErrorBoundary extends Component<{ children: React.ReactNode; onClose: () => void }, { error: string | null }> {
   state = { error: null as string | null };
+  private unlistenError: (() => void) | null = null;
 
   static getDerivedStateFromError(error: Error) {
     return { error: error.message || "Error desconocido" };
+  }
+
+  componentDidMount() {
+    // Also catch unhandled errors that bypass React error boundaries
+    const handler = (event: ErrorEvent) => {
+      event.preventDefault();
+      this.setState({ error: event.message || "Error no capturado" });
+    };
+    window.addEventListener("error", handler);
+    this.unlistenError = () => window.removeEventListener("error", handler);
+  }
+
+  componentWillUnmount() {
+    this.unlistenError?.();
   }
 
   componentDidCatch(error: Error) {

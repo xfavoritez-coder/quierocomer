@@ -6,6 +6,7 @@ import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
 import DishCard from "./DishCard";
 import DishDetail from "./DishDetail";
+import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
@@ -772,6 +773,7 @@ export default function CartaPremium({
       `}</style>
 
       {selectedDish && (
+        <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
         <DishDetail
           dish={selectedDish}
           allDishes={dishFromHero ? [selectedDish] : sortedDishes}
@@ -785,6 +787,7 @@ export default function CartaPremium({
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}
         />
+        </DishDetailErrorBoundary>
       )}
 
       {genioOpen && (
