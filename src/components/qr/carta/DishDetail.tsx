@@ -93,15 +93,6 @@ export default function DishDetail({
     };
   }, [currentIndex]);
 
-  // Fix iOS viewport height when browser bar hides/shows
-  const [vpHeight, setVpHeight] = useState<string | null>(null);
-  useEffect(() => {
-    if (!window.visualViewport) return;
-    const update = () => setVpHeight(`${window.visualViewport!.height}px`);
-    update();
-    window.visualViewport.addEventListener("resize", update);
-    return () => window.visualViewport?.removeEventListener("resize", update);
-  }, []);
 
   // Track dish view stat on mount
   useEffect(() => {
@@ -152,7 +143,7 @@ export default function DishDetail({
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0,
-        height: vpHeight || "100dvh",
+        height: "100dvh",
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
@@ -161,7 +152,7 @@ export default function DishDetail({
       <div
         ref={scrollRef}
         style={{
-          display: "flex", width: "100%", height: vpHeight || "100dvh",
+          display: "flex", width: "100%", height: "100dvh",
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
