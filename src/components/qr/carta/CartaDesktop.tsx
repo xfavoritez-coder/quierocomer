@@ -49,8 +49,10 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   const activeLang = optimisticLang || lang;
 
   // Waiter visibility
+  const waiterEnabled = (restaurant as any).waiterPanelActive !== false;
   const [showWaiter, setShowWaiter] = useState(false);
   useEffect(() => {
+    if (!waiterEnabled) { setShowWaiter(false); return; }
     if (tableId) {
       const params = new URLSearchParams(window.location.search);
       const isDemo = params.get("demo") === "true";
@@ -61,7 +63,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
     } else {
       setShowWaiter(hasMesaToken(restaurant.id));
     }
-  }, [restaurant.id, tableId, isQrScan]);
+  }, [restaurant.id, tableId, isQrScan, waiterEnabled]);
 
   // Start session tracking (same as CartaRouter does for mobile)
   useEffect(() => {
@@ -399,7 +401,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               animation: "dkLangSlide 0.2s ease-out",
               whiteSpace: "nowrap",
             }}>
-              {SUPPORTED_LANGS.map((l) => {
+              {(((restaurant as any).enabledLangs?.length ? SUPPORTED_LANGS.filter(l => (restaurant as any).enabledLangs.includes(l)) : SUPPORTED_LANGS)).map((l) => {
                 const isActive = activeLang === l;
                 return (
                   <button

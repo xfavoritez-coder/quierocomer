@@ -101,9 +101,11 @@ export default function CartaRouter(props: Props) {
   })();
 
   // Set mesa token if arriving from table QR or general QR with token
+  const waiterEnabled = (props.restaurant as any).waiterPanelActive !== false;
   const [showWaiter, setShowWaiter] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!waiterEnabled) { setShowWaiter(false); return; }
     const params = new URLSearchParams(window.location.search);
     const mesa = params.get("mesa");
     const isDemo = params.get("demo") === "true";
@@ -115,7 +117,7 @@ export default function CartaRouter(props: Props) {
     } else {
       setShowWaiter(hasMesaToken(props.restaurant.id));
     }
-  }, [props.restaurant.id, isQrScan]);
+  }, [props.restaurant.id, isQrScan, waiterEnabled]);
 
   // Start session tracking
   useEffect(() => {

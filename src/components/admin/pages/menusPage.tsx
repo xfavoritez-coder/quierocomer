@@ -1236,7 +1236,8 @@ export default function AdminMenus() {
             <div key={d.id} style={{
               background: isHidden ? "#FAF9F7" : "var(--adm-card)",
               border: "0.5px solid rgba(0,0,0,0.08)",
-              borderRadius: 12, overflow: "hidden", opacity: isHidden ? 0.7 : 1,
+              borderRadius: 12, overflow: menuOpenId === d.id ? "visible" : "hidden", opacity: isHidden ? 0.7 : 1,
+              position: menuOpenId === d.id ? "relative" as const : undefined, zIndex: menuOpenId === d.id ? 100 : undefined,
             }}>
               {/* Row */}
               <div style={{ display: "flex", gap: 12, padding: 10, alignItems: "center" }}>

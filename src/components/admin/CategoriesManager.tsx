@@ -183,7 +183,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   Toda oculta
                 </span>
               )}
-              <span style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: "#F5F0E8", color: "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1 }}>
+              <span onClick={(e) => { e.stopPropagation(); setChangingType(true); }} style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: "#F5F0E8", color: "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer" }}>
                 {dt.label}
               </span>
             </div>
@@ -283,6 +283,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
+  const [showCreateInput, setShowCreateInput] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
@@ -302,7 +303,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
     if (!newCatName.trim()) return;
     const res = await fetch("/api/admin/categories", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId, name: newCatName.trim() }) });
     const cat = await res.json();
-    if (res.ok) { setCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]); setNewCatName(""); }
+    if (res.ok) { setCategories(prev => [...prev, { ...cat, _count: { dishes: 0 } }]); setNewCatName(""); setShowCreateInput(false); }
   };
 
   const renameCategory = async (id: string, name: string) => {
@@ -391,11 +392,18 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
       </div>
 
       {/* Create */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-        <input value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && createCategory()} placeholder="Nueva categoría..."
-          style={{ flex: 1, padding: "10px 14px", background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: 13, outline: "none" }} />
-        <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
-      </div>
+      {showCreateInput ? (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <input value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createCategory(); if (e.key === "Escape") { setShowCreateInput(false); setNewCatName(""); } }} placeholder="Nombre de la categoría..." autoFocus
+            style={{ flex: 1, padding: "10px 14px", background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: 13, outline: "none" }} />
+          <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
+          <button onClick={() => { setShowCreateInput(false); setNewCatName(""); }} style={{ padding: "10px 12px", background: "transparent", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10, fontFamily: F, fontSize: 13, color: "#888", cursor: "pointer" }}>Cancelar</button>
+        </div>
+      ) : (
+        <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", marginBottom: 16 }}>
+          + Nueva categoría
+        </button>
+      )}
 
       {/* Sortable categories */}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleCategoryDragEnd}>

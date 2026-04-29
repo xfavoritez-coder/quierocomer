@@ -21,9 +21,10 @@ const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "vie
 
 interface Props {
   restaurantId: string;
+  enabledLangs?: string[];
 }
 
-export default function ViewSelector({ restaurantId }: Props) {
+export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
   const { view, setView } = useCartaView();
   const lang = useLang();
   const router = useRouter();
@@ -153,7 +154,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           {/* Language selector row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
             <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
-            {SUPPORTED_LANGS.map((l) => {
+            {(enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : SUPPORTED_LANGS).map((l) => {
               const isActive = activeLang === l;
               return (
                 <button

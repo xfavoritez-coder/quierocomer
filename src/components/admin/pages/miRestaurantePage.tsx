@@ -298,6 +298,30 @@ export default function MiRestaurantePage() {
           </p>
         </div>
 
+        {/* Toggle activar/desactivar */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 14px", background: "var(--adm-input)", borderRadius: 10, marginBottom: 14 }}>
+          <div>
+            <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>Campanita en la carta</span>
+            <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+              {data?.waiterPanelActive ? "Los clientes pueden llamar al garzón" : "La campanita no se muestra en la carta"}
+            </p>
+          </div>
+          <button
+            onClick={() => save({ waiterPanelActive: !data?.waiterPanelActive })}
+            style={{
+              width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+              background: data?.waiterPanelActive ? GOLD : "var(--adm-input-border)",
+              transition: "background 0.2s", flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: data?.waiterPanelActive ? 23 : 3, transition: "left 0.2s",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            }} />
+          </button>
+        </div>
+
         {/* Link display */}
         <div style={{ display: "flex", gap: 8, alignItems: "center", background: "var(--adm-input)", borderRadius: 10, padding: "10px 12px", border: "1px solid var(--adm-input-border)", marginBottom: 12 }}>
           <span style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{garzonLink}</span>

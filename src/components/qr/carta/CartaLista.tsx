@@ -557,7 +557,7 @@ export default function CartaLista({
           {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-        <ViewSelector restaurantId={restaurant.id} />
+        <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} />
       </div>
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }

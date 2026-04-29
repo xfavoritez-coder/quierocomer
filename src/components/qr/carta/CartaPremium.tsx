@@ -785,7 +785,7 @@ export default function CartaPremium({
           </button>
         </div>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-        <ViewSelector restaurantId={restaurant.id} />
+        <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} />
       </div>
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }

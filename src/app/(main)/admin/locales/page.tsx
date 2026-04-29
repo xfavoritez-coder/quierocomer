@@ -27,6 +27,7 @@ interface Restaurant {
   ownerId: string | null;
   createdAt: string;
   owner: { id: string; name: string; email: string } | null;
+  waiterPanelActive: boolean;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
 }
 
@@ -57,6 +58,7 @@ export default function AdminLocales() {
   const [editLangs, setEditLangs] = useState<string[]>(["es", "en", "pt"]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [announcements, setAnnouncements] = useState<{ id: string; text: string; isActive: boolean }[]>([]);
 
   // Sync form when selected changes
   useEffect(() => {
@@ -71,6 +73,10 @@ export default function AdminLocales() {
     setEditDietType(selected.dietType || "OMNIVORE");
     setEditLangs(selected.enabledLangs?.length ? selected.enabledLangs : ["es", "en", "pt"]);
     setSaved(false);
+    // Fetch announcements
+    if (selected) {
+      fetch(`/api/admin/announcements?restaurantId=${selected.id}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setAnnouncements(d); }).catch(() => setAnnouncements([]));
+    }
   }, [selected?.id]);
 
   const saveChanges = async () => {
@@ -318,6 +324,51 @@ export default function AdminLocales() {
             <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", margin: "0 0 4px" }}>QR de la carta</p>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}{selected.qrToken ? `?t=${selected.qrToken}` : ""}</p>
           </div>
+        </div>
+
+        {/* Toggle garzón */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 12 }}>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", margin: 0 }}>🔔 Campanita garzón</p>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0" }}>{selected.waiterPanelActive ? "Visible en la carta" : "Desactivada"}</p>
+          </div>
+          <button
+            onClick={async () => {
+              const val = !selected.waiterPanelActive;
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ waiterPanelActive: val }) });
+              const u = { ...selected, waiterPanelActive: val };
+              setSelected(u);
+              setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }}
+            style={{
+              width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+              background: selected.waiterPanelActive ? "#4ade80" : "rgba(255,255,255,0.15)",
+              transition: "background 0.2s", flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: selected.waiterPanelActive ? 23 : 3, transition: "left 0.2s",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            }} />
+          </button>
+        </div>
+
+        {/* Anuncios */}
+        <div style={{ marginTop: 12, padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12 }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", margin: "0 0 10px" }}>📢 Anuncios ({announcements.length})</p>
+          {announcements.length === 0 ? (
+            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#555", margin: 0, fontStyle: "italic" }}>Sin anuncios configurados</p>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {announcements.map(a => (
+                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: a.isActive ? "#4ade80" : "#555", flexShrink: 0 }} />
+                  <span style={{ fontFamily: F, fontSize: "0.75rem", color: a.isActive ? "#ccc" : "#666", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
