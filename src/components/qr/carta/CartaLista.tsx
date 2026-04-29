@@ -646,14 +646,9 @@ function DishListCard({
         {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "#e85530", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
       </div>
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-        {(hasAutoLabel || (isRec && !hasAutoLabel) || isPopular) && (
+        {(isRec || isPopular) && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", marginBottom: 3 }}>
-            {hasAutoLabel && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                ✨ Para ti
-              </span>
-            )}
-            {isRec && !hasAutoLabel && (
+            {isRec && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>

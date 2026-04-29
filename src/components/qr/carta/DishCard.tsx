@@ -47,14 +47,9 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           <DishBadges dish={dish} />
           {dish.tags?.includes("NEW") && <span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, flexShrink: 0, letterSpacing: "0.05em" }}>NUEVO</span>}
         </h3>
-        {(autoRecommended || (isRec && !autoRecommended) || isPopular) && (
+        {(isRec || isPopular) && (
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
-            {autoRecommended && (
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                ✨ Para ti
-              </span>
-            )}
-            {isRec && !autoRecommended && (
+            {isRec && (
               <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>
@@ -118,7 +113,6 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
   const [loaded, setLoaded] = useState(false);
 
   const badges: string[] = [];
-  if (autoRecommended) badges.push("✨ Para ti");
   else if (isRec) badges.push("⭐ Recomendado");
   if (isPopular) badges.push("🔥 Popular hoy");
 

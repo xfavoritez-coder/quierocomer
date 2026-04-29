@@ -132,31 +132,10 @@ export default function DishDetail({
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  // Swipe up/down to close — simple fade out, no drag animation
-  const touchRef = useRef<{ x: number; y: number; locked: "v" | "h" | null; dy: number } | null>(null);
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, locked: null, dy: 0 };
-  };
-  const handleTouchMove = (e: React.TouchEvent) => {
-    const t = touchRef.current;
-    if (!t) return;
-    const dx = Math.abs(e.touches[0].clientX - t.x);
-    const dy = e.touches[0].clientY - t.y;
-    const adx = dx, ady = Math.abs(dy);
-    if (!t.locked && (adx > 18 || ady > 18)) {
-      if (ady > adx * 2) t.locked = "v";
-      else if (adx > 8) t.locked = "h";
-    }
-    if (t.locked === "v") {
-      e.preventDefault();
-      t.dy = dy;
-    }
-  };
+  // Swipe gestures removed — modal is scrollable, close button is sticky
+  const handleTouchStart = undefined;
+  const handleTouchMove = undefined;
   const handleTouchEnd = () => {
-    const t = touchRef.current;
-    touchRef.current = null;
-    if (t?.locked === "v" && Math.abs(t.dy) > 60) {
-      close(); // fade out via visible → false
     }
   };
 
@@ -293,8 +272,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo */}
-      <div style={{ position: "relative", width: "100%", height: "50vh", overflow: "hidden" }}>
+      {/* Photo — sticky, stays at half height when scrolling down */}
+      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "50vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -346,22 +325,9 @@ function DishSlide({
         )}
       </div>
 
-      {/* Content — flows below photo */}
-      <div style={{ padding: "20px 20px 60px" }}>
+      {/* Content — flows below photo, black bg covers sticky photo */}
+      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px" }}>
 
-        {/* "Para ti" explanation toggle */}
-        {showParaTiTooltip && personalizationEntry?.autoRecommended && (
-          <div
-            onClick={() => setShowParaTiTooltip(false)}
-            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
-          >
-            <p style={{ margin: 0, fontSize: "0.82rem", color: "rgba(255,255,255,0.9)", lineHeight: 1.4 }}>
-              ✨ {personalizationEntry.reason
-                ? `${personalizationEntry.reason}. Por eso lo seleccionamos para ti.`
-                : "Seleccionado para ti porque coincide con tus gustos, dieta y preferencias."}
-            </p>
-          </div>
-        )}
 
         {/* "Recomendado" explanation toggle */}
         {showRecTooltip && isRec && (
@@ -406,17 +372,9 @@ function DishSlide({
             </div>
           </div>
           {/* Badges */}
-          {(personalizationEntry?.autoRecommended || (isRec && !personalizationEntry?.autoRecommended) || popularDishIds?.has(dish.id)) && (
+          {(isRec || popularDishIds?.has(dish.id)) && (
             <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-              {personalizationEntry?.autoRecommended && (
-                <button
-                  onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
-                >
-                  ✨ Para ti
-                </button>
-              )}
-              {isRec && !personalizationEntry?.autoRecommended && (
+              {isRec && (
                 <button
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}

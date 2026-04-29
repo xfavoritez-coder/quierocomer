@@ -499,8 +499,7 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
       {d.dishDiet === "VEGETARIAN" && <span style={{ fontSize: "15px" }}>🌱</span>}
       {d.isSpicy && <span style={{ fontSize: "15px" }}>🌶️</span>}
       {isNew && <VjNewBadge inline />}
-      {hasParaTi && <span onClick={() => handleBadgeClick("parati")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(244,166,35,0.2)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "#fbbf24", border: "1px solid rgba(244,166,35,0.3)", cursor: "pointer" }}>✨ Para ti</span>}
-      {isRec && !hasParaTi && <span onClick={() => handleBadgeClick("rec")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
+      {isRec && <span onClick={() => handleBadgeClick("rec")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>}
       {hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Popular hoy</span>}
     </span>
   ) : null;
