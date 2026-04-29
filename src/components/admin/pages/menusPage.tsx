@@ -52,21 +52,22 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
   if (loading) return null;
 
   return (
-    <div style={{ marginTop: 20, padding: "16px", background: "var(--adm-hover)", borderRadius: 12 }}>
-      <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px", fontWeight: 600 }}>Va bien con</p>
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Sugerir con este plato <span title="Estos platos aparecen como sugerencia cuando alguien ve este producto en la carta" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
 
-      {suggestions.map(s => (
-        <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
-          {s.photos?.[0] && <img src={s.photos[0]} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
-          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{s.name}</span>
-          <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)" }}>${s.price.toLocaleString("es-CL")}</span>
-          <button onClick={() => remove(s.id)} style={{ background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.85rem", padding: 2 }}>✕</button>
+      {suggestions.length > 0 && (
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
+          {suggestions.map(s => (
+            <span key={s.id} onClick={() => remove(s.id)} style={{ fontSize: "0.75rem", padding: "4px 10px", borderRadius: 50, background: "rgba(244,166,35,0.12)", color: "#F4A623", cursor: "pointer", display: "flex", alignItems: "center", gap: 4, fontFamily: F, fontWeight: 500 }}>
+              {s.name} ✕
+            </span>
+          ))}
         </div>
-      ))}
+      )}
 
       {suggestions.length < 5 && (
         adding ? (
-          <div style={{ marginTop: 8 }}>
+          <div>
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar plato..." autoFocus style={{ width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
             {filtered.length > 0 && (
               <div style={{ maxHeight: 150, overflowY: "auto", marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
@@ -79,17 +80,13 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
                 ))}
               </div>
             )}
-            <button onClick={() => { setAdding(false); setSearch(""); }} style={{ marginTop: 6, background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>Cancelar</button>
+            <button onClick={() => { setAdding(false); setSearch(""); }} style={{ marginTop: 6, background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>Cancelar</button>
           </div>
         ) : (
-          <button onClick={() => setAdding(true)} style={{ marginTop: 8, padding: "8px 14px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer", width: "100%" }}>
-            + Agregar sugerencia
+          <button onClick={() => setAdding(true)} style={{ padding: "6px 12px", background: "var(--adm-input)", border: "none", borderRadius: 8, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>
+            + Agregar
           </button>
         )
-      )}
-
-      {suggestions.length === 0 && !adding && (
-        <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Sin sugerencias. Los platos sugeridos aparecen en la carta cuando alguien ve este producto.</p>
       )}
     </div>
   );
@@ -372,6 +369,7 @@ export default function AdminMenus() {
   const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string }[]>([]);
   const [ingSearch, setIngSearch] = useState("");
   const [eAllergens, setEAllergens] = useState<string[]>([]);
+  const [allAllergens, setAllAllergens] = useState<{ id: string; name: string; type: string }[]>([]);
   const [eTags, setETags] = useState<string[]>([]);
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
@@ -466,6 +464,9 @@ export default function AdminMenus() {
         setAllIngredients(data.ingredients || []);
         setEIngredientIds(data.linkedIds || []);
       }).catch(() => {});
+    if (allAllergens.length === 0) {
+      fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(d.allergens || [])).catch(() => {});
+    }
   };
 
   const saveDishEdit = async () => {
@@ -485,6 +486,7 @@ export default function AdminMenus() {
       isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
+      allergens: eAllergens.length > 0 ? eAllergens.join(", ") : null,
     };
     if (eCategoryId !== selectedDish.categoryId) {
       updates.categoryId = eCategoryId;
@@ -789,12 +791,10 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Alérgenos</label>
-                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                  Los alérgenos se detectan automáticamente a partir de los ingredientes del producto. <strong style={{ color: "var(--adm-text2)" }}>No se muestran al cliente</strong>, solo se usan para ordenar la carta según sus gustos y restricciones.
-                </p>
-                {(selectedDish as any)?.allergenDetails && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 8 }}>
+                <label style={LBL}>Alérgenos <span title="Se usan para ordenar la carta según restricciones de cada cliente" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
+                {(selectedDish as any)?.allergenDetails && Object.keys((selectedDish as any).allergenDetails).length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Detectados por ingredientes:</p>
                     {Object.entries((selectedDish as any).allergenDetails as Record<string, string[]>).map(([allergen, ingredients]) => (
                       <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                         <span style={{ fontSize: "0.7rem", padding: "4px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen}</span>
@@ -803,6 +803,17 @@ export default function AdminMenus() {
                     ))}
                   </div>
                 )}
+                <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>Marcar manualmente:</p>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {allAllergens.map(a => {
+                    const active = eAllergens.includes(a.name);
+                    return (
+                      <button key={a.id} onClick={() => setEAllergens(prev => active ? prev.filter(x => x !== a.name) : [...prev, a.name])} style={{ fontSize: "0.72rem", padding: "4px 12px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontWeight: 500, background: active ? "rgba(244,166,35,0.15)" : "var(--adm-input)", color: active ? "#F4A623" : "var(--adm-text3)", transition: "all 0.15s" }}>
+                        {active ? "⚠️ " : ""}{a.name}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Modificadores — inline management */}
@@ -933,13 +944,13 @@ export default function AdminMenus() {
                 )}
               </div>
 
+              {/* Sugerencias — "Va bien con" */}
+              <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
+
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
                 <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
               </div>
-
-              {/* Sugerencias — "Va bien con" */}
-              <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
             </>
           )}
         </div>
