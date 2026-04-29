@@ -447,7 +447,7 @@ export default function CartaPremium({
               flex: 1,
               border: "none",
               outline: "none",
-              fontSize: "0.92rem",
+              fontSize: "16px",
               color: "#0e0e0e",
               background: "transparent",
               fontFamily: "inherit",

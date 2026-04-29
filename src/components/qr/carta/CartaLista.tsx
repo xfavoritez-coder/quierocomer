@@ -296,7 +296,7 @@ export default function CartaLista({
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t(lang, "search")}
               className="font-[family-name:var(--font-dm)]"
-              style={{ flex: 1, border: "none", outline: "none", fontSize: "0.92rem", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
+              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
             />
             <button onClick={() => { setSearchOpen(false); setQuery(""); }} style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
               <X size={18} color="rgba(14,14,14,0.4)" />
