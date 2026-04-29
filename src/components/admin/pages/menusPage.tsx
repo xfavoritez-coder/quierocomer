@@ -534,9 +534,9 @@ export default function AdminMenus() {
         {(ePhotoUrl || selectedDish.photos?.[0]) && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
             <img src={ePhotoUrl || selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            {/* Referential badge — top right */}
-            <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ position: "absolute", top: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
-              📷 {ePhotoRef ? "Referencial ✓" : "Referencial"}
+            {/* Referential badge — bottom right */}
+            <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ position: "absolute", bottom: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
+              📷 {ePhotoRef ? "Foto referencial ✓" : "Foto referencial"}
             </button>
             {/* Tags over photo */}
             <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
@@ -1142,6 +1142,23 @@ export default function AdminMenus() {
                 <div style={{ flexShrink: 0, textAlign: "right" }}>
                   <p style={{ fontFamily: F, fontSize: "0.88rem", color: "#F4A623", margin: 0, fontWeight: 600 }}>${d.price.toLocaleString("es-CL")}</p>
                   {!d.isActive && <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#ff6b6b", margin: 0 }}>Oculto</p>}
+                </div>
+                <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <button onClick={async () => {
+                    const isR = d.tags?.includes("RECOMMENDED");
+                    if (!isR) {
+                      const cnt = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
+                      if (cnt >= 5) { alert("Máximo 5 platos destacados"); return; }
+                    }
+                    const newTags = isR ? (d.tags || []).filter(t => t !== "RECOMMENDED") : [...(d.tags || []), "RECOMMENDED"];
+                    await fetch(`/api/admin/dishes/${d.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags }) });
+                    setDishes(prev => prev.map(x => x.id === d.id ? { ...x, tags: newTags } : x));
+                  }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: d.tags?.includes("RECOMMENDED") ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.04)", color: d.tags?.includes("RECOMMENDED") ? "#F4A623" : "var(--adm-text3)" }}>
+                    ★
+                  </button>
+                  <button onClick={() => toggleDishActive(d)} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: d.isActive ? "rgba(255,255,255,0.04)" : "rgba(74,222,128,0.1)", color: d.isActive ? "var(--adm-text3)" : "#4ade80" }}>
+                    {d.isActive ? "👁" : "👁‍🗨"}
+                  </button>
                 </div>
                 <span style={{ fontSize: "0.8rem", color: "var(--adm-text3)", flexShrink: 0 }}>›</span>
               </button>
