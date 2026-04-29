@@ -10,6 +10,7 @@ import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
 import PromoCarousel from "../capture/PromoCarousel";
+import GenioVeganCarousel from "./GenioVeganCarousel";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
@@ -401,8 +402,14 @@ export default function CartaLista({
         </section>
       )}
 
-      {false && personalizing && (
-        <div />
+      {/* Genio vegan carousel */}
+      {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
+        <div style={{ paddingTop: hasPromos ? 8 : 16, paddingLeft: 4, paddingRight: 4 }}>
+          <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
+            const dish = dishes.find(d => d.id === dishId);
+            if (dish) setSelectedDish(dish);
+          }} />
+        </div>
       )}
 
       {/* CATEGORIES */}
@@ -526,6 +533,18 @@ export default function CartaLista({
         </a>
         <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
+
+      {/* Floating vegan pill */}
+      {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && dishes.some(d => (d as any).dishDiet === "VEGAN") && (
+        <button
+          onClick={() => { const el = document.getElementById("genio-vegan-carousel"); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+          className="fixed z-40 font-[family-name:var(--font-dm)]"
+          style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(234,243,222,0.95)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(99,153,34,0.3)", borderRadius: 999, cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}
+        >
+          <span style={{ fontSize: "14px" }}>🌿</span>
+          <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#173404" }}>{t(lang, "gMyVeganOptions")}</span>
+        </button>
+      )}
 
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
@@ -662,7 +681,7 @@ function DishListCard({
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{dish.name}</span>
           {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
-          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🥗</span>}
+          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌱</span>}
           {(dish as any).isSpicy && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌶️</span>}
         </h3>
         {dish.description && (
