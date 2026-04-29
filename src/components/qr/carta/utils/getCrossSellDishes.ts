@@ -175,10 +175,10 @@ export function getCrossSellDishes(
   let title = "Va bien con";
   if (manualSuggestionIds && manualSuggestionIds.length > 0 && results.some(r => manualSuggestionIds.includes(r.dish.id))) {
     title = "Va bien con";
-  } else if (currentType === "food" || currentType === "entry") {
-    title = "Acompaña tu plato";
   } else if (currentType === "entry") {
     title = "¿Qué sigue?";
+  } else if (currentType === "food") {
+    title = "Acompaña tu plato";
   } else if (currentType === "drink" || currentType === "hot") {
     title = "Deja espacio para...";
   } else if (currentType === "dessert") {
