@@ -57,7 +57,7 @@ export default function DishDetail({
     return allergens;
   }, [allDishes]);
 
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,8 +75,6 @@ export default function DishDetail({
       document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     }
-    // Show modal after body is locked — no flash
-    setVisible(true);
 
     return () => {
       if (!alreadyLocked) {
@@ -137,8 +135,7 @@ export default function DishDetail({
   }, [allDishes, dish.id, onChangeDish]);
 
   const close = useCallback(() => {
-    setVisible(false);
-    setTimeout(onClose, 200);
+    onClose();
   }, [onClose]);
 
 
@@ -146,9 +143,8 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", inset: 0,
+        position: "fixed", inset: -1,
         zIndex: 120, background: "#000",
-        opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
     >
       {/* Horizontal scroll container — native snap */}
