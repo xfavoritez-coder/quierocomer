@@ -64,28 +64,25 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Mount: lock body scroll, fade in — position:fixed forces iOS bar back
+  // Capture viewport height on mount (fixes iOS browser bar gap)
+  const [vh, setVh] = useState("100%");
+
+  // Mount: lock scroll, fade in
   useEffect(() => {
+    // Capture real visible height before anything changes
+    setVh(`${window.innerHeight}px`);
     requestAnimationFrame(() => setVisible(true));
 
-    const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
-    const savedScrollY = window.scrollY;
+    const alreadyLocked = document.body.style.overflow === "hidden";
     if (!alreadyLocked) {
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
     }
 
     return () => {
       if (!alreadyLocked) {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
+        document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
-        window.scrollTo(0, savedScrollY);
       }
     };
   }, []); // Only on mount/unmount
@@ -146,7 +143,8 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", inset: 0,
+        position: "fixed", top: 0, left: 0, right: 0,
+        height: vh,
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
