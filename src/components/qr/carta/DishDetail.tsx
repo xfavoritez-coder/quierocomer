@@ -142,8 +142,7 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0,
-        height: "100dvh",
+        position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
@@ -152,7 +151,7 @@ export default function DishDetail({
       <div
         ref={scrollRef}
         style={{
-          display: "flex", width: "100%", height: "100dvh",
+          display: "flex", width: "100%", height: "100%",
           overflowX: "scroll", scrollSnapType: "x mandatory",
           scrollbarWidth: "none", WebkitOverflowScrolling: "touch",
         }}
