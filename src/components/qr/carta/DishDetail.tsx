@@ -203,8 +203,12 @@ function DishSlide({
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   // Memoize cross-sell so it doesn't reshuffle on every re-render
-  const manualIds = useMemo(() => ((dish as any).suggestedWith || []).map((s: any) => s.suggestedDishId), [dish.id]);
-  const crossSell = useMemo(() => getCrossSellDishes(dish, allDishes, categories, manualIds.length > 0 ? manualIds : undefined), [dish.id, allDishes, categories, manualIds]);
+  const manualIds = useMemo(() => {
+    try { return ((dish as any).suggestedWith || []).map((s: any) => s.suggestedDishId); } catch { return []; }
+  }, [dish.id]);
+  const crossSell = useMemo(() => {
+    try { return getCrossSellDishes(dish, allDishes, categories, manualIds.length > 0 ? manualIds : undefined); } catch { return { title: "", items: [] }; }
+  }, [dish.id, allDishes, categories, manualIds]);
 
   // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
   const [showLikeNudge, setShowLikeNudge] = useState(false);
@@ -239,20 +243,6 @@ function DishSlide({
       if (a.type === "ALLERGEN" && !seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
     }
   }
-  // Pull-down to close when already at top
-  const pullRef = useRef<{ y: number; scrollTop: number } | null>(null);
-  const slideRef = useRef<HTMLDivElement>(null);
-  const handlePullStart = (e: React.TouchEvent) => {
-    const el = slideRef.current;
-    if (el) pullRef.current = { y: e.touches[0].clientY, scrollTop: el.scrollTop };
-  };
-  const handlePullEnd = (e: React.TouchEvent) => {
-    const p = pullRef.current;
-    pullRef.current = null;
-    if (!p) return;
-    const dy = e.changedTouches[0].clientY - p.y;
-    if (p.scrollTop <= 0 && dy > 80) onClose();
-  };
 
   const lang = useLang();
   const ingredientNames = dishIngs.map((di: any) => {
@@ -266,10 +256,7 @@ function DishSlide({
 
   return (
     <div
-      ref={slideRef}
       data-dish-slide={index}
-      onTouchStart={handlePullStart}
-      onTouchEnd={handlePullEnd}
       style={{
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
