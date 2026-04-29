@@ -290,12 +290,11 @@ function DishSlide({
     <div
       data-dish-slide={index}
       style={{
-        flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
+        flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo container — limited to top 55% so cover doesn't crop too aggressively */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", overflow: "hidden" }}>
-        {/* Layer 1: Next.js optimized — loads instantly from cache */}
+      {/* Photo */}
+      <div style={{ position: "relative", width: "100%", height: "50vh", overflow: "hidden" }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -307,7 +306,6 @@ function DishSlide({
             quality={80}
           />
         )}
-        {/* Layer 2: raw original — fades in silently when loaded */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {photos.length > 0 && (
           <img
@@ -320,37 +318,36 @@ function DishSlide({
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
           />
         )}
+
+        {/* Top gradient */}
+        <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 100, zIndex: 8, background: "linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)" }} />
+
+        {/* Photo dots */}
+        {photos.length > 1 && (
+          <div className="absolute flex" style={{ top: 16, left: "50%", transform: "translateX(-50%)", gap: 5, zIndex: 10 }}>
+            {photos.map((_, i) => (
+              <button key={i} onClick={() => setPhotoIndex(i)} style={{ width: 6, height: 6, borderRadius: "50%", background: i === photoIndex ? "white" : "rgba(255,255,255,0.4)", border: "none", padding: 0 }} />
+            ))}
+          </div>
+        )}
+
+        {/* Top bar: counter + close */}
+        <div className="absolute flex items-center" style={{ top: 16, left: 16, right: 16, zIndex: 10 }}>
+          <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
+          <div style={{ flex: 1 }} />
+          <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
+        </div>
+
+        {/* Referential photo notice */}
+        {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
+          <div className="absolute" style={{ bottom: 8, right: 16, zIndex: 6, pointerEvents: "none" }}>
+            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontWeight: 400, letterSpacing: "0.02em" }}>Imagen referencial</span>
+          </div>
+        )}
       </div>
 
-      {/* Top gradient */}
-      <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 100, zIndex: 8, background: "linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)" }} />
-
-      {/* Photo dots */}
-      {photos.length > 1 && (
-        <div className="absolute flex" style={{ top: 16, left: "50%", transform: "translateX(-50%)", gap: 5, zIndex: 10 }}>
-          {photos.map((_, i) => (
-            <button key={i} onClick={() => setPhotoIndex(i)} style={{ width: 6, height: 6, borderRadius: "50%", background: i === photoIndex ? "white" : "rgba(255,255,255,0.4)", border: "none", padding: 0 }} />
-          ))}
-        </div>
-      )}
-
-      {/* Top bar: counter + close only */}
-      <div className="absolute flex items-center" style={{ top: 16, left: 16, right: 16, zIndex: 10 }}>
-        <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
-        <div style={{ flex: 1 }} />
-        <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
-      </div>
-
-
-      {/* Referential photo notice */}
-      {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
-        <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 6, display: "flex", justifyContent: "flex-end", padding: "0 16px 36px", pointerEvents: "none" }}>
-          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontWeight: 400, letterSpacing: "0.02em" }}>Imagen referencial</span>
-        </div>
-      )}
-
-      {/* Content overlay — starts below photo */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "55%", padding: "20px 20px 40px", zIndex: 5, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
+      {/* Content — flows below photo, scrolls together */}
+      <div style={{ padding: "20px 20px 60px" }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
@@ -394,7 +391,7 @@ function DishSlide({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            <h2 style={{ fontSize: "29px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+            <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
             </h2>
             <div style={{ marginTop: 6 }}>
@@ -452,7 +449,7 @@ function DishSlide({
         {desc && (
           <p
             onClick={() => isLongDesc && setExpandedDescs((s) => { const n = new Set(s); if (n.has(dish.id)) n.delete(dish.id); else n.add(dish.id); return new Set(n); })}
-            style={{ margin: 0, fontSize: "18px", color: "rgba(255,255,255,0.78)", lineHeight: 1.45, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
+            style={{ margin: 0, fontSize: "16px", color: "rgba(255,255,255,0.78)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
           >{desc}</p>
         )}
 
@@ -506,11 +503,11 @@ function DishSlide({
 
         {/* Cross-sell suggestions */}
         {(() => {
-          const suggestions = getCrossSellDishes(dish, allDishes, categories);
+          const { title, items: suggestions } = getCrossSellDishes(dish, allDishes, categories);
           if (suggestions.length === 0) return null;
           return (
             <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>Complementa tu pedido</p>
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {suggestions.map((s) => (
                   <div
@@ -541,8 +538,8 @@ function DishSlide({
       {/* Ingredients panel */}
       {showInfo && (
         <>
-          <div onClick={() => setShowInfo(false)} className="absolute" style={{ inset: 0, zIndex: 19 }} />
-          <div className="absolute" style={{ bottom: 0, left: 0, right: 0, zIndex: 20, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
+          <div onClick={() => setShowInfo(false)} style={{ position: "fixed", inset: 0, zIndex: 119 }} />
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
             <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.9rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
             {ingredientNames.length > 0 && (
               <div style={{ marginBottom: 0 }}>

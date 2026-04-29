@@ -18,12 +18,17 @@ interface CrossSellDish {
   reason: string;
 }
 
+interface CrossSellResult {
+  title: string;
+  items: CrossSellDish[];
+}
+
 export function getCrossSellDishes(
   currentDish: Dish,
   allDishes: Dish[],
   categories: Category[],
   manualSuggestionIds?: string[],
-): CrossSellDish[] {
+): CrossSellResult {
   const MAX = 3;
   const results: CrossSellDish[] = [];
   const usedIds = new Set<string>([currentDish.id]);
@@ -58,7 +63,7 @@ export function getCrossSellDishes(
     }
   }
 
-  if (results.length >= MAX) return results;
+  if (results.length >= MAX) return { title: "Va bien con", items: results };
 
   // 2. Fallback by type
   const getByType = (type: string, excludeCatName?: RegExp) => {
@@ -153,5 +158,31 @@ export function getCrossSellDishes(
     }
   }
 
-  return results.slice(0, MAX);
+  // Contextual title based on what we're showing
+  let title = "Va bien con";
+  if (manualSuggestionIds && manualSuggestionIds.length > 0 && results.some(r => manualSuggestionIds.includes(r.dish.id))) {
+    title = "Va bien con";
+  } else if (currentType === "food" || currentType === "entry") {
+    // Check what type of suggestions we're showing
+    const hasDrinks = results.some(r => (catTypeMap.get(r.dish.categoryId) || "food") === "drink");
+    const hasEntries = results.some(r => {
+      const t = catTypeMap.get(r.dish.categoryId) || "food";
+      return t === "entry";
+    });
+    if (isEntry) {
+      title = "¿Qué sigue?";
+    } else if (hasDrinks && results.length === results.filter(r => (catTypeMap.get(r.dish.categoryId) || "food") === "drink").length) {
+      title = "¿Y para tomar?";
+    } else if (hasEntries) {
+      title = "Mientras esperas";
+    } else {
+      title = "¿Y para tomar?";
+    }
+  } else if (currentType === "drink") {
+    title = "Para picar";
+  } else if (currentType === "dessert") {
+    title = "Para cerrar";
+  }
+
+  return { title, items: results.slice(0, MAX) };
 }
