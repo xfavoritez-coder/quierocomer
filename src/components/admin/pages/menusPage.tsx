@@ -21,6 +21,80 @@ interface Restaurant { id: string; name: string; slug: string; }
 const F = "var(--font-display)";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e85530", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
+/* ── Dish suggestions editor ("Va bien con") ── */
+function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishes: Dish[] }) {
+  const [suggestions, setSuggestions] = useState<{ id: string; name: string; photos: string[]; price: number }[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState("");
+
+  useEffect(() => {
+    fetch(`/api/admin/dish-suggestions?dishId=${dishId}`).then(r => r.json()).then(d => setSuggestions(d.suggestions || [])).catch(() => {}).finally(() => setLoading(false));
+  }, [dishId]);
+
+  const filtered = search.trim()
+    ? allDishes.filter(d => d.id !== dishId && !suggestions.some(s => s.id === d.id) && norm(d.name).includes(norm(search)))
+    : [];
+
+  const add = async (suggestedDishId: string) => {
+    await fetch("/api/admin/dish-suggestions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishId, suggestedDishId }) });
+    const dish = allDishes.find(d => d.id === suggestedDishId);
+    if (dish) setSuggestions(prev => [...prev, { id: dish.id, name: dish.name, photos: dish.photos, price: dish.price }]);
+    setSearch("");
+    setAdding(false);
+  };
+
+  const remove = async (suggestedDishId: string) => {
+    await fetch("/api/admin/dish-suggestions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishId, suggestedDishId }) });
+    setSuggestions(prev => prev.filter(s => s.id !== suggestedDishId));
+  };
+
+  if (loading) return null;
+
+  return (
+    <div style={{ marginTop: 20, padding: "16px", background: "var(--adm-hover)", borderRadius: 12 }}>
+      <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px", fontWeight: 600 }}>Va bien con</p>
+
+      {suggestions.map(s => (
+        <div key={s.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
+          {s.photos?.[0] && <img src={s.photos[0]} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
+          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1 }}>{s.name}</span>
+          <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)" }}>${s.price.toLocaleString("es-CL")}</span>
+          <button onClick={() => remove(s.id)} style={{ background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.85rem", padding: 2 }}>✕</button>
+        </div>
+      ))}
+
+      {suggestions.length < 5 && (
+        adding ? (
+          <div style={{ marginTop: 8 }}>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar plato..." autoFocus style={{ width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+            {filtered.length > 0 && (
+              <div style={{ maxHeight: 150, overflowY: "auto", marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8 }}>
+                {filtered.slice(0, 8).map(d => (
+                  <button key={d.id} onClick={() => add(d.id)} style={{ display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "8px 12px", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                    {d.photos?.[0] && <img src={d.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />}
+                    <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text)" }}>{d.name}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", marginLeft: "auto" }}>${d.price.toLocaleString("es-CL")}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+            <button onClick={() => { setAdding(false); setSearch(""); }} style={{ marginTop: 6, background: "none", border: "none", color: "var(--adm-text3)", fontFamily: F, fontSize: "0.75rem", cursor: "pointer" }}>Cancelar</button>
+          </div>
+        ) : (
+          <button onClick={() => setAdding(true)} style={{ marginTop: 8, padding: "8px 14px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer", width: "100%" }}>
+            + Agregar sugerencia
+          </button>
+        )
+      )}
+
+      {suggestions.length === 0 && !adding && (
+        <p style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>Sin sugerencias. Los platos sugeridos aparecen en la carta cuando alguien ve este producto.</p>
+      )}
+    </div>
+  );
+}
+
 /* ── Inline modifier preview (read-only, used inside dish editMode) ── */
 interface IMEOption { id: string; name: string; priceAdjustment: number; isHidden?: boolean; position: number; }
 interface IMEGroup { id: string; name: string; required: boolean; maxSelect: number; position: number; options: IMEOption[]; }
@@ -539,6 +613,9 @@ export default function AdminMenus() {
                   )}
                 </button>
               </div>
+
+              {/* Sugerencias — "Va bien con" */}
+              <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
 
             </>
           ) : (

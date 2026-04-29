@@ -506,7 +506,7 @@ function DishSlide({
           const { title, items: suggestions } = getCrossSellDishes(dish, allDishes, categories);
           if (suggestions.length === 0) return null;
           return (
-            <div style={{ marginTop: 20 }}>
+            <div style={{ marginTop: 32 }}>
               <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {suggestions.map((s) => (
@@ -526,7 +526,7 @@ function DishSlide({
                         <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
                     </div>
-                    <span style={{ fontSize: "1rem", color: "#fbbf24", fontWeight: 600, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                    <span style={{ fontSize: "1rem", color: "#fbbf24", fontWeight: 400, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
                   </div>
                 ))}
               </div>

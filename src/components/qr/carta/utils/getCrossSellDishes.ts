@@ -54,6 +54,7 @@ export function getCrossSellDishes(
   const currentType = catTypeMap.get(currentDish.categoryId) || "food";
   const isEntry = currentType === "entry";
 
+
   // Helper: get active dishes with photos, excluding used
   const available = allDishes.filter(
     (d) => d.isActive && !usedIds.has(d.id) && d.photos?.[0]
