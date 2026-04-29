@@ -427,7 +427,6 @@ export default function CartaPremium({
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
@@ -485,6 +484,9 @@ export default function CartaPremium({
           }
         />
       )}
+
+      {/* Announcement banner — below nav */}
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {personalizing && Date.now() - mountedAt.current > 500 && (
         <div

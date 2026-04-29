@@ -16,6 +16,7 @@ interface Restaurant {
   cartaTheme: string;
   defaultView: string | null;
   qrActivatedAt: string | null;
+  qrToken: string | null;
   isActive: boolean;
   ownerId: string | null;
   createdAt: string;
@@ -115,10 +116,45 @@ export default function AdminLocales() {
           ))}
         </div>
 
+        {/* Editable fields */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Nombre</label>
+            <input defaultValue={selected.name} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              if (v && v !== selected.name) {
+                await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: v }) });
+                const u = { ...selected, name: v }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.88rem", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Descripción</label>
+            <textarea defaultValue={selected.description || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ description: v || null }) });
+              const u = { ...selected, description: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }} rows={2} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Logo URL</label>
+            <input defaultValue={selected.logoUrl || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl: v || null }) });
+              const u = { ...selected, logoUrl: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://..." />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Teléfono</label>
+            <input defaultValue={selected.phone || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: v || null }) });
+              const u = { ...selected, phone: v || null }; setSelected(u);
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 2 1234 5678" />
+          </div>
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "0.85rem", fontFamily: F, color: "#aaa" }}>
-          {selected.description && <p style={{ margin: 0 }}>{selected.description}</p>}
-          {selected.phone && <p style={{ margin: 0 }}>Tel: {selected.phone}</p>}
-          {selected.address && <p style={{ margin: 0 }}>Dir: {selected.address}</p>}
           <p style={{ margin: 0 }}>Tema: {selected.cartaTheme}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
             <span>Vista por defecto:</span>
@@ -251,11 +287,11 @@ export default function AdminLocales() {
         {/* Inline QR */}
         <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12, marginTop: 16 }}>
           <div style={{ background: "white", borderRadius: 10, padding: 8, flexShrink: 0 }}>
-            <QRCodeCanvas value={`https://quierocomer.cl/qr/${selected.slug}`} size={80} level="H" />
+            <QRCodeCanvas value={`https://quierocomer.cl/qr/${selected.slug}${selected.qrToken ? `?t=${selected.qrToken}` : ""}`} size={80} level="H" />
           </div>
           <div>
             <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#888", margin: "0 0 4px" }}>QR de la carta</p>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}</p>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", margin: 0, wordBreak: "break-all" }}>quierocomer.cl/qr/{selected.slug}{selected.qrToken ? `?t=${selected.qrToken}` : ""}</p>
           </div>
         </div>
       </div>

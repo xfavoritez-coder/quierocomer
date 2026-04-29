@@ -282,7 +282,6 @@ export default function CartaLista({
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
       {/* Hero Slim */}
       <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
-      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
@@ -372,6 +371,9 @@ export default function CartaLista({
           </nav>
         )}
       </div>
+
+      {/* Announcement banner — below nav */}
+      {announcements && announcements.length > 0 && <AnnouncementBanner announcements={announcements} />}
 
       {/* EMPTY STATE */}
       {grouped.length === 0 && (

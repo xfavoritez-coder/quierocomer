@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
       select: {
         id: true, slug: true, name: true, description: true,
         logoUrl: true, bannerUrl: true, phone: true, address: true,
-        cartaTheme: true, defaultView: true, qrActivatedAt: true, isActive: true, ownerId: true,
+        cartaTheme: true, defaultView: true, qrActivatedAt: true, qrToken: true, isActive: true, ownerId: true,
         createdAt: true, updatedAt: true,
         owner: { select: { id: true, name: true, email: true } },
         _count: { select: { dishes: true, categories: true, statEvents: true, sessions: true } },

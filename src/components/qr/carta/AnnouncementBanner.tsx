@@ -38,19 +38,19 @@ export default function AnnouncementBanner({ announcements }: Props) {
           margin: 0,
           fontSize: "0.82rem",
           fontWeight: 600,
-          color: "#0e0e0e",
+          color: "#713F12",
           textAlign: "center",
           lineHeight: 1.35,
         }}
       >
         {ann.text}
       </p>
-      {ann.linkUrl && <ExternalLink size={13} color="#0e0e0e" style={{ opacity: 0.5, flexShrink: 0 }} />}
+      {ann.linkUrl && <ExternalLink size={13} color="#713F12" style={{ opacity: 0.5, flexShrink: 0 }} />}
     </div>
   );
 
   return (
-    <div style={{ position: "relative", background: "#F4A623", overflow: "hidden" }}>
+    <div style={{ position: "relative", background: "#FEF9C3", overflow: "hidden" }}>
       {ann.linkUrl ? (
         <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
           {content}
@@ -67,7 +67,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
           top: "50%",
           right: 10,
           transform: "translateY(-50%)",
-          background: "rgba(14,14,14,0.1)",
+          background: "rgba(113,63,18,0.1)",
           border: "none",
           borderRadius: "50%",
           width: 22,
@@ -79,7 +79,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
           padding: 0,
         }}
       >
-        <X size={12} color="#0e0e0e" />
+        <X size={12} color="#713F12" />
       </button>
 
       {/* Dots indicator */}
@@ -92,7 +92,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
                 width: i === current ? 12 : 4,
                 height: 4,
                 borderRadius: 2,
-                background: i === current ? "#0e0e0e" : "rgba(14,14,14,0.25)",
+                background: i === current ? "#713F12" : "rgba(113,63,18,0.25)",
                 transition: "all 0.3s ease",
               }}
             />
