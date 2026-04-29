@@ -427,7 +427,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
                   { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
                   { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
-                  { t: "Multilenguaje ES · EN · PT · IT", tip: "Tu carta traducida automáticamente a inglés, portugués e italiano" },
+                  { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
                   { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
                   { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
                 ].map((f) => (
