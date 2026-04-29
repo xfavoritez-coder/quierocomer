@@ -182,6 +182,15 @@ export function getCrossSellDishes(
     }
   }
 
+  // Fallback: if diet filtering left us short, fill with any available dish
+  if (results.length < MAX) {
+    const remaining = available.filter(d => !usedIds.has(d.id) && d.categoryId !== currentDish.categoryId);
+    for (const d of pickRandom(remaining, MAX - results.length)) {
+      results.push({ dish: d, reason: "También te puede gustar" });
+      usedIds.add(d.id);
+    }
+  }
+
   // Contextual title based on what we're actually showing
   let title = "Va bien con";
   if (manualSuggestionIds && manualSuggestionIds.length > 0 && results.some(r => manualSuggestionIds.includes(r.dish.id))) {
