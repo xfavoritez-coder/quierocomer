@@ -396,9 +396,9 @@ function DishSlide({
                 </button></>
               )}
               {(dish as any).isSpicy && (
-                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, flexShrink: 0 }}>
+                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, verticalAlign: "middle" }}>
                   🌶️ {showDietTooltip && "Picante"}
-                </button>
+                </button></>
               )}
             </div>
             <div style={{ marginTop: 6 }}>
