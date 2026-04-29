@@ -33,6 +33,11 @@ export default function ViewSelector({ restaurantId }: Props) {
   const [showTooltip, setShowTooltip] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // Notify other components when view selector opens/closes
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("view-selector-toggle", { detail: { open } }));
+  }, [open]);
+
   // Close on outside click/touch
   useEffect(() => {
     if (!open) return;

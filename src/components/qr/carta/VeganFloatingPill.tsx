@@ -6,15 +6,25 @@ import { t } from "@/lib/qr/i18n";
 
 export default function VeganFloatingPill() {
   const lang = useLang();
-  const [visible, setVisible] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [viewSelectorOpen, setViewSelectorOpen] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setVisible(window.scrollY > 400);
+    const onScroll = () => setScrolled(window.scrollY > 400);
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+
+    const onViewToggle = (e: Event) => {
+      setViewSelectorOpen((e as CustomEvent).detail?.open ?? false);
+    };
+    window.addEventListener("view-selector-toggle", onViewToggle);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("view-selector-toggle", onViewToggle);
+    };
   }, []);
 
-  if (!visible) return null;
+  if (!scrolled || viewSelectorOpen) return null;
 
   return (
     <button
@@ -24,7 +34,7 @@ export default function VeganFloatingPill() {
       }}
       className="fixed z-40 font-[family-name:var(--font-dm)]"
       style={{
-        bottom: "calc(120px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)",
+        bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)",
         display: "flex", alignItems: "center", gap: 6,
         padding: "10px 20px", background: "rgba(234,243,222,0.95)", backdropFilter: "blur(8px)",
         border: "0.5px solid rgba(99,153,34,0.3)", borderRadius: 999,
