@@ -64,13 +64,8 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Capture real viewport height on mount (fixes iOS browser bar gap)
-  const [modalHeight, setModalHeight] = useState("100%");
-
   // Mount: lock body, scroll to initial dish
   useEffect(() => {
-    // Capture innerHeight immediately — this is the real visible height on iOS
-    setModalHeight(`${window.innerHeight}px`);
     requestAnimationFrame(() => setVisible(true));
 
     // If body is already locked (e.g. by Genio), don't re-lock
@@ -78,9 +73,11 @@ export default function DishDetail({
     let savedScrollY = 0;
     if (!alreadyLocked) {
       savedScrollY = window.scrollY;
-      // Use overflow hidden on html+body — no position change = no flash
+      // Lock scroll and force full height — fixes iOS browser bar gap
       document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
+      document.documentElement.style.height = "100%";
+      document.body.style.height = "100%";
     }
 
     // Scroll to the selected dish instantly
@@ -93,6 +90,8 @@ export default function DishDetail({
       if (!alreadyLocked) {
         document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
+        document.documentElement.style.height = "";
+        document.body.style.height = "";
         window.scrollTo(0, savedScrollY);
       }
     };
@@ -147,8 +146,7 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0,
-        height: modalHeight,
+        position: "fixed", inset: 0,
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
