@@ -508,24 +508,26 @@ function DishSlide({
                   <div
                     key={s.dish.id}
                     onClick={() => onChangeDish(s.dish)}
-                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "rgba(255,255,255,0.06)", borderRadius: 16, cursor: "pointer" }}
+                    style={{ display: "flex", gap: 14, padding: "16px 18px", background: "rgba(255,255,255,0.06)", borderRadius: 16, cursor: "pointer" }}
                   >
                     {s.dish.photos?.[0] ? (
-                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 78, height: 78, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                     ) : (
-                      <div style={{ width: 70, height: 70, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
+                      <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
-                        {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.2)", color: "#fbbf24", flexShrink: 0 }}>⭐ Recomendado</span>}
-                        {popularDishIds?.has(s.dish.id) && <span style={{ fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171", flexShrink: 0 }}>🔥 Popular hoy</span>}
-                      </div>
-                      {s.dish.description && (
-                        <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
+                      {(s.dish.tags?.includes("RECOMMENDED") || popularDishIds?.has(s.dish.id)) && (
+                        <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
+                          {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(244,166,35,0.2)", color: "#fbbf24" }}>⭐ Recomendado</span>}
+                          {popularDishIds?.has(s.dish.id) && !s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171" }}>🔥 Popular hoy</span>}
+                        </div>
                       )}
+                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
+                      {s.dish.description && (
+                        <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
+                      )}
+                      <span style={{ fontSize: "0.92rem", color: "#fbbf24", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
                     </div>
-                    <span style={{ fontSize: "0.94rem", color: "#fbbf24", fontWeight: 400, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
                   </div>
                 ))}
               </div>
