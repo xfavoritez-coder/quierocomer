@@ -14,15 +14,16 @@ export async function DELETE(req: NextRequest) {
   if (!isSuperAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 403 });
 
   try {
-    const { sessionId } = await req.json();
-    if (!sessionId) return NextResponse.json({ error: "sessionId requerido" }, { status: 400 });
+    const { sessionId, sessionIds } = await req.json();
+    const ids: string[] = sessionIds || (sessionId ? [sessionId] : []);
+    if (ids.length === 0) return NextResponse.json({ error: "sessionId o sessionIds requerido" }, { status: 400 });
 
-    // Delete related records first
-    await prisma.statEvent.deleteMany({ where: { dbSessionId: sessionId } });
-    await prisma.waiterCall.deleteMany({ where: { sessionId } });
-    await prisma.session.delete({ where: { id: sessionId } });
+    // Delete related records first, then sessions
+    await prisma.statEvent.deleteMany({ where: { dbSessionId: { in: ids } } });
+    await prisma.waiterCall.deleteMany({ where: { sessionId: { in: ids } } });
+    await prisma.session.deleteMany({ where: { id: { in: ids } } });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, deleted: ids.length });
   } catch (e: any) {
     console.error("Session delete error:", e);
     return NextResponse.json({ error: "Error" }, { status: 500 });

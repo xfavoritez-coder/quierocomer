@@ -145,6 +145,8 @@ export default function AdminSessions() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [dishSort, setDishSort] = useState<"time" | "order">("order");
   const [groupByVisitor, setGroupByVisitor] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const toDateStr = (d: Date) => d.toISOString().split("T")[0];
   const today = () => toDateStr(new Date());
@@ -404,6 +406,41 @@ export default function AdminSessions() {
       ) : (
         /* ═══ FLAT LIST ═══ */
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {/* Bulk actions */}
+          {sessions.length > 0 && (
+            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 16px", flexWrap: "wrap" }}>
+              <input type="checkbox" checked={bulkSelected.size === sessions.length && sessions.length > 0} onChange={() => {
+                if (bulkSelected.size === sessions.length) setBulkSelected(new Set());
+                else setBulkSelected(new Set(sessions.map(s => s.id)));
+              }} style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer" }} />
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#888" }}>
+                {bulkSelected.size > 0 ? `${bulkSelected.size} seleccionada${bulkSelected.size > 1 ? "s" : ""}` : "Seleccionar todas"}
+              </span>
+              {bulkSelected.size > 0 && (
+                <>
+                  <button
+                    disabled={bulkDeleting}
+                    onClick={async () => {
+                      if (!confirm(`¿Eliminar ${bulkSelected.size} sesión${bulkSelected.size > 1 ? "es" : ""}?`)) return;
+                      setBulkDeleting(true);
+                      const ids = Array.from(bulkSelected);
+                      const res = await fetch("/api/admin/sessions", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ sessionIds: ids }) });
+                      if (res.ok) {
+                        setSessions(prev => prev.filter(s => !bulkSelected.has(s.id)));
+                        setTotal(prev => prev - ids.length);
+                        setBulkSelected(new Set());
+                      }
+                      setBulkDeleting(false);
+                    }}
+                    style={{ padding: "5px 12px", borderRadius: 8, border: "none", background: "rgba(239,68,68,0.1)", color: "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    {bulkDeleting ? "Eliminando..." : `🗑 Eliminar ${bulkSelected.size}`}
+                  </button>
+                  <button onClick={() => setBulkSelected(new Set())} style={{ padding: "5px 10px", borderRadius: 8, border: "1px solid #2A2A2A", background: "none", color: "#888", fontFamily: F, fontSize: "0.72rem", cursor: "pointer" }}>Cancelar</button>
+                </>
+              )}
+            </div>
+          )}
           {sessions.map(s => {
             const isOpen = expanded === s.id;
             const day = new Date(s.startedAt).toISOString().split("T")[0];
@@ -411,12 +448,13 @@ export default function AdminSessions() {
             const visitNum = sameDaySessions.length > 1 ? sameDaySessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).findIndex(x => x.id === s.id) + 1 : 0;
             const totalVisitsToday = sameDaySessions.length;
             return (
-              <div key={s.id} style={{ background: "#1A1A1A", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s", position: "relative" }}>
+              <div key={s.id} style={{ background: bulkSelected.has(s.id) ? "rgba(244,166,35,0.04)" : "#1A1A1A", border: `1px solid ${bulkSelected.has(s.id) ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s", position: "relative" }}>
                 {/* Header row */}
                 <button
                   onClick={() => setExpanded(isOpen ? null : s.id)}
                   style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}
                 >
+                  <input type="checkbox" checked={bulkSelected.has(s.id)} onChange={(e) => { e.stopPropagation(); setBulkSelected(prev => { const n = new Set(prev); n.has(s.id) ? n.delete(s.id) : n.add(s.id); return n; }); }} onClick={e => e.stopPropagation()} style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }} />
                   {/* Restaurant logo */}
                   {s.restaurant.logoUrl ? (
                     <img src={s.restaurant.logoUrl} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />

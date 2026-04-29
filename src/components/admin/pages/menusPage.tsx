@@ -487,7 +487,7 @@ export default function AdminMenus() {
   const DIET_OPTIONS: { value: string; label: string; icon: string }[] = [
     { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
     { value: "VEGAN", label: "Vegano", icon: "🌿" },
-    { value: "VEGETARIAN", label: "Vegetariano", icon: "🌱" },
+    { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
   ];
 
   const startEditDish = async (d: Dish) => {
