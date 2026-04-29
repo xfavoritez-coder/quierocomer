@@ -112,17 +112,21 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 </span>
                 <span style={{ marginLeft: "auto" }} />
               </button>
-              {/* dishType toggle */}
-              <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
-                {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => {
-                  const active = (category.dishType || "food") === key;
-                  return (
-                    <button key={key} onClick={() => onTypeChange(category.id, key)} style={{ padding: "3px 8px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.62rem", fontWeight: 600, background: active ? v.color : "rgba(255,255,255,0.04)", color: active ? "#fff" : "var(--adm-text3)", opacity: active ? 1 : 0.45, transition: "all 0.15s", whiteSpace: "nowrap" }}>
-                      {v.emoji} {v.label}
-                    </button>
-                  );
-                })}
-              </div>
+              {/* dishType select */}
+              {(() => {
+                const dt = DISH_TYPE_LABELS[category.dishType || "food"] || DISH_TYPE_LABELS.food;
+                return (
+                  <select
+                    value={category.dishType || "food"}
+                    onChange={(e) => onTypeChange(category.id, e.target.value)}
+                    style={{ padding: "3px 6px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: dt.color, color: "#fff", outline: "none", appearance: "none", WebkitAppearance: "none", paddingRight: 16, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center", flexShrink: 0 }}
+                  >
+                    {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
+                      <option key={key} value={key}>{v.emoji} {v.label}</option>
+                    ))}
+                  </select>
+                );
+              })()}
               <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: category.isActive ? "var(--adm-text3)" : "#4ade80" }}>
                 {category.isActive ? "Ocultar" : "Mostrar"}
               </button>
