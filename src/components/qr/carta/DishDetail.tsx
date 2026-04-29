@@ -308,11 +308,9 @@ function DishSlide({
           </div>
         )}
 
-        {/* Top bar: counter + close */}
-        <div className="absolute flex items-center" style={{ top: 16, left: 16, right: 16, zIndex: 10 }}>
+        {/* Counter */}
+        <div className="absolute" style={{ top: 16, left: 16, zIndex: 10 }}>
           <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
-          <div style={{ flex: 1 }} />
-          <button onClick={onClose} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
         </div>
 
         {/* Referential photo notice */}
@@ -324,8 +322,10 @@ function DishSlide({
       </div>
 
       {/* Content — flows below photo, black bg covers sticky photo */}
-      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px" }}>
+      {/* Close button — fixed, always visible */}
+      <button onClick={onClose} className="flex items-center justify-center" style={{ position: "fixed", top: 16, right: 16, zIndex: 130, width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
 
+      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px" }}>
 
         {/* "Recomendado" explanation toggle */}
         {showRecTooltip && isRec && (
@@ -464,7 +464,7 @@ function DishSlide({
           return (
             <div style={{ marginTop: 32 }}>
               <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {suggestions.map((s) => (
                   <div
                     key={s.dish.id}
