@@ -42,8 +42,15 @@ export async function GET(req: NextRequest) {
       const data = await getPersonalizationMetrics(restaurantId, from, to);
       return NextResponse.json(data);
     }
-    if (type === "attention") {
+    if (type === "attention" || type === "dishes") {
       const data = await getTopAttentionDishes(restaurantId, from, to);
+      if (type === "dishes") {
+        // Reshape for the Platos tab
+        const dishes = data.dishes || [];
+        const byViews = [...dishes].sort((a: any, b: any) => b.uniqueSessions - a.uniqueSessions).slice(0, 10).map((d: any) => ({ name: d.name, photo: d.photo, count: d.uniqueSessions }));
+        const byDetail = [...dishes].filter((d: any) => d.avgDwellMs > 3000).sort((a: any, b: any) => b.avgDwellMs - a.avgDwellMs).slice(0, 10).map((d: any) => ({ name: d.name, photo: d.photo, count: Math.round(d.avgDwellMs / 1000) + "s" }));
+        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, genioRecommended: [] });
+      }
       return NextResponse.json(data);
     }
     if (type === "ticket-trend" && restaurantId) {
