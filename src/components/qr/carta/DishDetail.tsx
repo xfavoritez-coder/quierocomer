@@ -405,7 +405,7 @@ function DishSlide({
         {desc && (
           <p
             onClick={() => isLongDesc && setExpandedDescs((s) => { const n = new Set(s); if (n.has(dish.id)) n.delete(dish.id); else n.add(dish.id); return new Set(n); })}
-            style={{ margin: 0, fontSize: "16px", color: "rgba(255,255,255,0.78)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
+            style={{ margin: 0, fontSize: "17px", color: "rgba(255,255,255,0.78)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
           >{desc}</p>
         )}
 
@@ -463,7 +463,7 @@ function DishSlide({
           if (suggestions.length === 0) return null;
           return (
             <div style={{ marginTop: 32 }}>
-              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
+              <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 {suggestions.map((s) => (
                   <div
