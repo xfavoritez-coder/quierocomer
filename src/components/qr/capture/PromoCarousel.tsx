@@ -158,17 +158,34 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
     return "translateX(0)";
   };
 
+  const savedScrollRef = useRef(0);
+
   const openPromo = (p: Promo) => {
-    prevPromoRef.current = null; // Don't animate on first open
+    prevPromoRef.current = null;
     setSelectedPromo(p);
     setModalVisible(true);
     modalOpenedAt.current = Date.now();
     trackPromo(restaurantId, "PROMO_CLICKED", p.dishes[0]?.id);
+    // Lock body to prevent iOS gap
+    savedScrollRef.current = window.scrollY;
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${savedScrollRef.current}px`;
+    document.body.style.left = "0";
+    document.body.style.right = "0";
+    document.body.style.overflow = "hidden";
   };
 
   const closeModal = () => {
     setModalVisible(false);
-    setTimeout(() => setSelectedPromo(null), 400);
+    setTimeout(() => {
+      setSelectedPromo(null);
+      document.body.style.position = "";
+      document.body.style.top = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflow = "";
+      window.scrollTo(0, savedScrollRef.current);
+    }, 400);
   };
 
   const handleViewDish = (dishId: string) => {
