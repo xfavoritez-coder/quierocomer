@@ -93,7 +93,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
-      <div style={{ background: expanded ? "var(--adm-card)" : "transparent", border: isEmpty ? "1px dashed var(--adm-card-border)" : "1px solid var(--adm-card-border)", borderRadius: expanded ? 14 : 10, overflow: "hidden" }}>
+      <div style={{ background: expanded ? "var(--adm-card)" : "transparent", border: isEmpty ? "1px dashed var(--adm-card-border)" : "1px solid var(--adm-card-border)", borderRadius: expanded ? 14 : 10, overflow: expanded ? "hidden" : "visible" }}>
         {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px" }}>
           <div {...attributes} {...listeners} style={{ cursor: "grab", padding: "4px 3px", color: "var(--adm-text3)", fontSize: "1rem", touchAction: "none", flexShrink: 0, lineHeight: 1 }}>⠿</div>
