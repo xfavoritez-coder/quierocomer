@@ -220,6 +220,9 @@ function DishSlide({
   const [showPopularTooltip, setShowPopularTooltip] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
 
+  // Memoize cross-sell so it doesn't reshuffle on every re-render
+  const crossSell = useMemo(() => getCrossSellDishes(dish, allDishes, categories), [dish.id, allDishes, categories]);
+
   // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
   const [showLikeNudge, setShowLikeNudge] = useState(false);
   useEffect(() => {
@@ -459,7 +462,7 @@ function DishSlide({
 
         {/* Cross-sell suggestions */}
         {(() => {
-          const { title, items: suggestions } = getCrossSellDishes(dish, allDishes, categories);
+          const { title, items: suggestions } = crossSell;
           if (suggestions.length === 0) return null;
           return (
             <div style={{ marginTop: 32 }}>
