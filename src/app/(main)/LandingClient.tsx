@@ -34,82 +34,44 @@ function InfoTip({ text, dark }: { text: string; dark?: boolean }) {
   );
 }
 
-function Check({ color = "#d4a015" }: { color?: string }) {
+function Check({ color = "#EF9F27" }: { color?: string }) {
   return <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 2 }}><path d="M3 7.5L5.5 10L11 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
 }
 
-/* ─── Desert SVG (full width) ─── */
-function DesertSVG() {
+/* ─── FAQ Accordion ─── */
+function FaqItem({ q, a }: { q: string; a: string }) {
+  const [open, setOpen] = useState(false);
   return (
-    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: 20 }}>
-      <svg viewBox="0 0 1440 260" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: "auto" }}>
-        <circle cx="1150" cy="60" r="26" fill="#fcd34d" opacity="0.85" />
-        <path d="M0 180 L120 100 L240 160 L360 80 L480 140 L600 70 L720 130 L840 85 L960 150 L1080 75 L1200 120 L1320 90 L1440 110 L1440 260 L0 260Z" fill="#f59e0b" opacity="0.35" />
-        <path d="M0 200 L160 140 L320 185 L480 130 L640 170 L800 120 L960 160 L1120 125 L1280 155 L1440 135 L1440 260 L0 260Z" fill="#d97706" opacity="0.45" />
-        <path d="M0 225 Q360 200 720 220 Q1080 200 1440 225 L1440 260 L0 260Z" fill="#b45309" opacity="0.3" />
-        <rect x="245" y="180" width="5" height="35" rx="2" fill="#3d5a2e" opacity="0.6" />
-        <rect x="240" y="188" width="4" height="14" rx="2" fill="#3d5a2e" opacity="0.6" transform="rotate(-22 240 188)" />
-        <rect x="252" y="185" width="4" height="16" rx="2" fill="#3d5a2e" opacity="0.6" transform="rotate(18 252 185)" />
-        <rect x="1045" y="190" width="6" height="40" rx="3" fill="#3d5a2e" opacity="0.5" />
-        <rect x="1039" y="200" width="4" height="16" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(-25 1039 200)" />
-        <rect x="1053" y="196" width="4" height="20" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(18 1053 196)" />
-        <rect x="0" y="235" width="1440" height="25" fill="#92400e" opacity="0.25" />
-        {/* Distant walking figure */}
-        <g className="lnd-walker" opacity="0.55" fill="#3a2010" transform="scale(1.6)">
-          {/* Head */}
-          <circle r="3" />
-          {/* Body */}
-          <line x1="0" y1="3" x2="0" y2="12" stroke="#5a3718" strokeWidth="1.8" strokeLinecap="round" />
-          {/* Legs — slight walk pose */}
-          <line x1="0" y1="12" x2="-2.5" y2="18" stroke="#5a3718" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="0" y1="12" x2="2" y2="18" stroke="#5a3718" strokeWidth="1.5" strokeLinecap="round" />
-          {/* Arms */}
-          <line x1="0" y1="6" x2="-3" y2="10" stroke="#5a3718" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="0" y1="6" x2="2.5" y2="9" stroke="#5a3718" strokeWidth="1.2" strokeLinecap="round" />
-          {/* Hat brim */}
-          <ellipse cx="0" cy="-2" rx="4.5" ry="1" />
-        </g>
-      </svg>
+    <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #eeeae0", overflow: "hidden" }}>
+      <button onClick={() => setOpen(!open)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "18px 22px", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
+        <span style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", lineHeight: 1.4 }}>{q}</span>
+        <span style={{ fontSize: 18, color: "#999", transform: open ? "rotate(45deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0, lineHeight: 1 }}>+</span>
+      </button>
+      {open && (
+        <div style={{ padding: "0 22px 18px" }}>
+          <p style={{ fontFamily: B, fontSize: 14, color: "#666", lineHeight: 1.6, margin: 0 }}>{a}</p>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ─── Night Footer Dunes SVG ─── */
-function FooterDunesSVG() {
-  return (
-    <>
-    {/* Moon as separate SVG to keep it round */}
-    <div style={{ position: "absolute", right: "15%", bottom: 110, width: 48, height: 48, zIndex: 2 }}>
-      <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%" }}>
-        <circle cx="24" cy="24" r="22" fill="#fef3c7" opacity="0.95" />
-        <circle cx="24" cy="24" r="22" fill="url(#moonGlow)" opacity="0.3" />
-        <defs><radialGradient id="moonGlow"><stop offset="0%" stopColor="#fff" /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
-      </svg>
-    </div>
-    <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 140 }}>
-      <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.5" />
-      <path d="M0 120 Q150 90 300 110 Q450 85 600 105 Q700 90 800 100 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.7" />
-      <path d="M0 140 Q200 120 400 135 Q600 120 800 140 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.9" />
-      <rect x="120" y="95" width="4" height="30" rx="2" fill="#1e1b4b" opacity="0.85" />
-      <rect x="116" y="102" width="3" height="12" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-20 116 102)" />
-      <rect x="126" y="100" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(15 126 100)" />
-      <rect x="680" y="85" width="5" height="35" rx="2" fill="#1e1b4b" opacity="0.85" />
-      <rect x="675" y="93" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-22 675 93)" />
-      <rect x="687" y="90" width="3" height="16" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(18 687 90)" />
-    </svg>
-    </>
-  );
-}
+const F = "var(--font-display)";
+const B = "var(--font-body)";
+const BRAND = "#EF9F27";
+const BG_WARM = "#FAF9F7";
 
 /* ─── Main ─── */
 export default function LandingClient({ logos }: { logos: Logo[] }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [email, setEmail] = useState("");
   const [nombre, setNombre] = useState("");
+  const [restaurante, setRestaurante] = useState("");
+  const [email, setEmail] = useState("");
   const [telefono, setTelefono] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 40);
@@ -119,29 +81,29 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || sending) return;
+    if (!nombre || !restaurante || !email || !telefono) { setFormError("Completa todos los campos"); return; }
+    setFormError("");
     setSending(true);
-    try { await fetch("/api/landing/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, nombre, telefono }) }); setSubmitted(true); } catch {}
+    try { await fetch("/api/landing/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, nombre: `${nombre} — ${restaurante}`, telefono }) }); setSubmitted(true); } catch {}
     setSending(false);
   };
 
-  const F = "var(--font-display)";
-  const B = "var(--font-body)";
-
   return (
-    <div style={{ fontFamily: B, color: "#111", background: "linear-gradient(180deg, #ffffff 85%, #f97316 100%)", overflowX: "hidden" }}>
+    <div style={{ fontFamily: B, color: "#111", overflowX: "hidden" }}>
 
       {/* ══════ NAVBAR ══════ */}
-      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.95)" : "transparent", borderBottom: scrolled ? "1px solid #eeeae0" : "1px solid transparent", backdropFilter: scrolled ? "blur(12px)" : undefined, transition: "all 0.25s" }}>
+      <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.97)" : "rgba(250,249,247,0.97)", borderBottom: scrolled ? "1px solid #eeeae0" : "1px solid transparent", backdropFilter: "blur(12px)", transition: "all 0.25s" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
           <Link href="/" style={{ textDecoration: "none", fontFamily: F, fontSize: "1.1rem", fontWeight: 800 }}>
-            <span style={{ color: "#111" }}>Quiero</span><span style={{ color: "#d4a015" }}>Comer</span>
+            <span style={{ color: "#111" }}>Quiero</span><span style={{ color: BRAND }}>Comer</span>
           </Link>
           <div className="lnd-nav-desktop" style={{ display: "flex", alignItems: "center", gap: 28 }}>
+            <a href="#como-funciona" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Cómo funciona</a>
             <a href="#funcionalidades" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Funcionalidades</a>
             <a href="#planes" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Planes</a>
+            <a href="#casos" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Casos</a>
             <Link href="/panel/login" style={{ fontSize: 13, color: "#555", textDecoration: "none", fontFamily: F, fontWeight: 500 }}>Iniciar sesión</Link>
-            <a href="#contacto" style={{ fontSize: 13, color: "#fff", background: "#111", padding: "8px 16px", borderRadius: 8, textDecoration: "none", fontFamily: F, fontWeight: 600 }}>Agendar demo</a>
+            <a href="#contacto" style={{ fontSize: 13, color: "#fff", background: "#1a1a1a", padding: "8px 18px", borderRadius: 999, textDecoration: "none", fontFamily: F, fontWeight: 600 }}>Contáctame</a>
           </div>
           <button className="lnd-nav-mobile" onClick={() => setMobileMenu(!mobileMenu)} style={{ display: "none", background: "none", border: "none", cursor: "pointer", padding: 4 }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round">
@@ -149,36 +111,88 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </svg>
           </button>
         </div>
-        {/* Mobile dropdown menu */}
         {mobileMenu && (
           <div className="lnd-nav-mobile" style={{ display: "none", flexDirection: "column", background: "#fff", borderBottom: "1px solid #eeeae0", padding: "4px 24px 16px" }}>
+            <a href="#como-funciona" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Cómo funciona</a>
             <a href="#funcionalidades" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Funcionalidades</a>
             <a href="#planes" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Planes</a>
+            <a href="#casos" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Casos</a>
             <Link href="/panel/login" onClick={() => setMobileMenu(false)} style={{ padding: "14px 0", fontSize: 15, color: "#333", textDecoration: "none", fontFamily: F, fontWeight: 600, borderBottom: "1px solid #f5f0e8" }}>Iniciar sesión</Link>
-            <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 12, textAlign: "center", padding: "12px 0", background: "#111", color: "#fff", borderRadius: 10, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Agendar demo</a>
+            <a href="#contacto" onClick={() => setMobileMenu(false)} style={{ display: "block", marginTop: 12, textAlign: "center", padding: "12px 0", background: "#1a1a1a", color: "#fff", borderRadius: 999, textDecoration: "none", fontFamily: F, fontWeight: 700, fontSize: 15 }}>Contáctame</a>
           </div>
         )}
       </nav>
 
       {/* ══════ HERO ══════ */}
-      <section style={{ background: "linear-gradient(180deg, #fff8e7 0%, #fef3c7 60%, #fde68a 100%)", paddingTop: 56 }}>
-        <div style={{ maxWidth: 680, margin: "0 auto", padding: "60px 24px 0", textAlign: "center" }}>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(255,255,255,0.75)", backdropFilter: "blur(8px)", padding: "6px 14px", borderRadius: 999, border: "0.5px solid rgba(120,53,15,0.15)", fontSize: "12.5px", color: "#78350f", fontWeight: 500, marginBottom: 20 }}>
-            <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
-          </span>
-          <h1 style={{ fontFamily: F, fontSize: "clamp(30px, 5vw, 42px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
-            La carta que <span style={{ color: "#d4a015" }}>recomienda por ti</span> y sube tu ticket por mesa
-          </h1>
-          <p style={{ fontFamily: B, fontSize: "clamp(15px, 2.5vw, 16px)", color: "#555", lineHeight: 1.5, maxWidth: 520, margin: "0 auto 28px" }}>
-            Se adapta a los gustos de cada cliente y le muestra justo lo que quiere pedir. Aumenta el ticket promedio de cada mesa.
-          </p>
-          <a href="#contacto" style={{ display: "inline-block", padding: "12px 22px", background: "#111", color: "#fff", borderRadius: 10, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Agenda tu demo →</a>
+      <section style={{ background: BG_WARM, paddingTop: 56 }}>
+        <div className="lnd-hero-grid" style={{ maxWidth: 1100, margin: "0 auto", padding: "64px 24px 0", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "center" }}>
+          {/* Left: text */}
+          <div>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(239,159,39,0.1)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#92400e", fontWeight: 600, marginBottom: 20, fontFamily: F }}>
+              <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
+            </span>
+            <h1 style={{ fontFamily: F, fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
+              La carta digital que sube el ticket de cada mesa
+            </h1>
+            <p style={{ fontFamily: B, fontSize: "clamp(15px, 2vw, 17px)", color: "#555", lineHeight: 1.6, maxWidth: 480, marginBottom: 28 }}>
+              Tu carta se reordena para cada cliente según sus gustos. Sugiere acompañamientos. Llama al garzón cuando hace falta. Sin que tu equipo haga nada
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
+              <a href="#contacto" style={{ display: "inline-flex", alignItems: "center", padding: "13px 24px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Contáctame →</a>
+              <a href="/qr/hand-roll" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", padding: "13px 24px", background: "transparent", color: "#1a1a1a", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none", border: "1.5px solid #ddd" }}>Ver carta de ejemplo</a>
+            </div>
+            <p style={{ fontSize: 13, color: "#999", fontFamily: F, fontWeight: 500 }}>Implementación gratis · Listo en 24 horas · Sin contratos</p>
+          </div>
+          {/* Right: phone mockup */}
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <div style={{ width: 280, background: "#111", borderRadius: 32, padding: "12px 10px", boxShadow: "0 24px 64px rgba(0,0,0,0.15)" }}>
+              <div style={{ background: "#fff", borderRadius: 22, overflow: "hidden", minHeight: 480 }}>
+                {/* Phone header */}
+                <div style={{ padding: "18px 16px 12px", borderBottom: "1px solid #f0ebe0" }}>
+                  <p style={{ fontFamily: F, fontSize: 18, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>Hand Roll</p>
+                  <p style={{ fontSize: 12, color: "#999", margin: 0 }}>Carta · ordenada para ti</p>
+                </div>
+                {/* Featured card */}
+                <div style={{ margin: "14px 12px", background: "#FFFBF0", border: `2px solid ${BRAND}`, borderRadius: 14, padding: 12 }}>
+                  <span style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.5px" }}>⭐ Recomendado para ti</span>
+                  <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                    <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop" alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover" }} />
+                    <div>
+                      <p style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "#111", margin: "4px 0 4px" }}>Tabla de sushi familiar</p>
+                      <p style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>$32.990</p>
+                    </div>
+                  </div>
+                </div>
+                {/* Category: Entradas */}
+                <div style={{ padding: "0 12px" }}>
+                  <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", margin: "12px 0 8px" }}>Entradas</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <img src="https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1541014741259-de529411b96a?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                  </div>
+                </div>
+                {/* Category: Fondos */}
+                <div style={{ padding: "0 12px 14px" }}>
+                  <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", margin: "12px 0 8px" }}>Fondos</p>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                  </div>
+                </div>
+                {/* Waiter button */}
+                <div style={{ padding: "8px 12px 16px" }}>
+                  <div style={{ background: BRAND, borderRadius: 10, padding: "10px 0", textAlign: "center" }}>
+                    <span style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#fff" }}>🛎️ Llamar al garzón</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <DesertSVG />
       </section>
 
       {/* ══════ LOGOS BAR ══════ */}
-      <section style={{ background: "#faf6ee", borderTop: "1px solid #f5e6c8", borderBottom: "1px solid #eeeae0", padding: "32px 0" }}>
+      <section id="casos" style={{ background: "#fff", borderTop: "1px solid #eeeae0", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
         <p style={{ fontSize: "11.5px", fontWeight: 600, color: "#999", letterSpacing: "1.5px", textTransform: "uppercase", textAlign: "center", marginBottom: 18, padding: "0 24px", fontFamily: F }}>
           Restaurantes que ya confían en QuieroComer
         </p>
@@ -188,7 +202,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               {logos.map((l) => (
                 <a key={l.slug} href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer"
                   className="lnd-logo-chip"
-                  style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #f0ebe0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, scrollSnapAlign: "start", transition: "all 0.2s" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #eeeae0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, scrollSnapAlign: "start", transition: "all 0.2s" }}>
                   {l.logoUrl ? (
                     <img src={l.logoUrl} alt={l.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
                   ) : (
@@ -196,7 +210,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   )}
                   <div style={{ display: "flex", flexDirection: "column", lineHeight: 1.2 }}>
                     <span style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#333" }}>{l.name}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: "#d4a015" }}>Ver carta →</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: BRAND }}>Ver carta →</span>
                   </div>
                 </a>
               ))}
@@ -205,354 +219,267 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
-      {/* ══════ FEATURES ══════ */}
-      <section id="funcionalidades" style={{ background: "#fff", padding: "60px 24px" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
-          <div style={{ maxWidth: 580, margin: "0 auto 36px", textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>¿Por qué QuieroComer?</p>
-            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 12, color: "#111" }}>Una carta que vende por ti</h2>
-            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.55 }}>Personalización inteligente que convierte navegación en ventas.</p>
+      {/* ══════ POR QUÉ QUIEROCOMER ══════ */}
+      <section id="como-funciona" style={{ background: "#fff", padding: "64px 24px" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Por qué QuieroComer</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 10, color: "#111" }}>Una carta que vende por ti</h2>
+            <p style={{ fontSize: 16, color: "#666", lineHeight: 1.5 }}>Personalización inteligente que convierte navegación en ventas</p>
           </div>
-
-          {/* Genio Card */}
-          <div className="lnd-genio-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 28, background: "#faf3e3", border: "1px solid #f5e6c8", borderRadius: 16, padding: "clamp(24px, 4vw, 32px)", marginBottom: 14 }}>
-            <div>
-              <div style={{ textAlign: "center", marginBottom: 16 }}>
-                <span style={{ fontSize: 32, display: "block", marginBottom: 10 }}>🧞</span>
-                <h3 style={{ fontFamily: F, fontSize: "clamp(22px, 3vw, 25px)", fontWeight: 700, color: "#111", margin: 0 }}>El Genio, tu vendedor silencioso</h3>
-              </div>
-              <p style={{ fontSize: 16, color: "#333", lineHeight: 1.55, marginBottom: 16, fontWeight: 400, textAlign: "center" }}>
-                Aprende los gustos de cada cliente y reordena la carta para mostrar primero lo que más le va a gustar. <strong style={{ color: "#111", fontWeight: 600 }}>Cada visita, mejores recomendaciones.</strong>
-              </p>
-            </div>
-            {/* Chat mock */}
-            <div style={{ background: "#fff", borderRadius: 12, padding: 14, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 12 }}>
-                <div style={{ background: "#f3f0e8", color: "#3a3937", padding: "10px 14px", borderRadius: "10px 10px 3px 10px", fontSize: "13.5px", lineHeight: 1.45, maxWidth: "75%" }}>Tengo hambre pero no quiero algo pesado</div>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "#e5e0d3", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 600, color: "#888", flexShrink: 0 }}>C</div>
-              </div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg, #fbbf24, #f59e0b)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, flexShrink: 0 }}>🧞</div>
-                <div>
-                  <div style={{ background: "#fff8e7", color: "#78350f", padding: "10px 14px", borderRadius: "10px 10px 10px 3px", fontSize: "13.5px", lineHeight: 1.45, border: "0.5px solid #f5e6c8" }}>Te recomiendo el tiradito o el ceviche del día.</div>
-                  <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                    {/* Tiradito Manglar */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "0.5px solid #f5e6c8", padding: "6px 10px 6px 6px", borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 4, background: "linear-gradient(135deg, #fef3c7, #fbbf24)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#fff" stroke="#d4a015" strokeWidth="1" /><path d="M5 6 Q8 5 11 6 Q11 9 8 10 Q5 9 5 6Z" fill="#fca5a5" /><circle cx="7" cy="7" r="0.8" fill="#d4a015" /></svg>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#78350f", lineHeight: 1.1 }}>Tiradito Manglar</span>
-                        <span style={{ fontSize: 9, color: "#999", fontWeight: 600, lineHeight: 1.1, marginTop: 1 }}>$12.899</span>
-                      </div>
-                    </div>
-                    {/* Ceviche del día */}
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 7, background: "#fff", border: "0.5px solid #f5e6c8", padding: "6px 10px 6px 6px", borderRadius: 8, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
-                      <div style={{ width: 20, height: 20, borderRadius: 4, background: "linear-gradient(135deg, #dbeafe, #60a5fa)", display: "inline-flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <svg width="12" height="12" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="#fff" stroke="#2563eb" strokeWidth="1" /><path d="M4 9 Q8 6 12 9 Q11 11 8 11 Q5 11 4 9Z" fill="#60a5fa" /><circle cx="8" cy="7" r="0.6" fill="#fff" /></svg>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column" }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: "#78350f", lineHeight: 1.1 }}>Ceviche del día</span>
-                        <span style={{ fontSize: 9, color: "#999", fontWeight: 600, lineHeight: 1.1, marginTop: 1 }}>$14.500</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Separator */}
-          <div style={{ maxWidth: 520, margin: "clamp(40px, 6vw, 60px) auto 28px", textAlign: "center", padding: "0 20px" }}>
-            <h3 style={{ fontFamily: F, fontSize: "clamp(22px, 3vw, 26px)", fontWeight: 700, color: "#111", letterSpacing: "-0.6px", lineHeight: 1.15, margin: "0 0 8px" }}>No es solo el Genio</h3>
-            <p style={{ fontSize: "clamp(14px, 2vw, 15px)", color: "#666", lineHeight: 1.5, margin: 0 }}>Estas son otras cosas que tu carta hace por ti.</p>
-          </div>
-
-          {/* 4 Feature Cards */}
-          <div className="lnd-features-grid" style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 12 }}>
-            {/* Card 1: Diseño premium */}
-            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
-              <div style={{ background: "linear-gradient(135deg, #fef3c7, #fde68a)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <svg viewBox="0 0 200 100" width="180" height="80">
-                  {[{ x: 10, c: "#f59e0b" }, { x: 72, c: "#dc2626" }, { x: 134, c: "#1a5f3f" }].map((card, i) => (
-                    <g key={i}>
-                      <rect x={card.x} y={15} width={55} height={70} rx={8} fill="#fff" stroke="#fbbf24" strokeWidth={1.5} />
-                      <circle cx={card.x + 27} cy={40} r={12} fill={card.c} opacity={0.55} />
-                      <rect x={card.x + 10} y={58} width={35} height={3} rx={1.5} fill="#d4a015" opacity={0.5} />
-                      <rect x={card.x + 14} y={65} width={25} height={2} rx={1} fill="#d4a015" opacity={0.3} />
-                    </g>
-                  ))}
-                  <path d="M193 46 L197 50 L193 54" stroke="#d4a015" strokeWidth={1.5} fill="none" strokeLinecap="round" opacity={0.5} />
-                </svg>
-              </div>
-              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Diseño premium</h4>
-              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Scroll horizontal por sección, swipe entre fotos, hero con tu plato estrella.</p>
-            </div>
-
-            {/* Card 2: Carta viva */}
-            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
-              <div style={{ background: "linear-gradient(135deg, #fef2f2, #fecaca)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <svg viewBox="0 0 200 110" width="180" height="100">
-                  {/* Morning card */}
-                  <g transform="translate(20,20) rotate(-8)">
-                    <rect width={45} height={65} rx={6} fill="#fff" stroke="#fca5a5" strokeWidth={1.5} />
-                    <circle cx={22} cy={15} r={6} fill="#fbbf24" /><line x1={28} y1={13} x2={32} y2={11} stroke="#f59e0b" strokeWidth={1} /><line x1={28} y1={17} x2={32} y2={19} stroke="#f59e0b" strokeWidth={1} />
-                    <rect x={8} y={28} width={28} height={2.5} rx={1} fill="#fca5a5" opacity={0.5} />
-                    <rect x={8} y={34} width={20} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
-                    <rect x={8} y={40} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
-                  </g>
-                  {/* Active card (center) */}
-                  <g transform="translate(78,13)">
-                    <rect width={48} height={78} rx={7} fill="#fff" stroke="#dc2626" strokeWidth={2.5} />
-                    <circle cx={24} cy={18} r={8} fill="#fbbf24" />
-                    <text x={24} y={42} textAnchor="middle" fontSize={6} fontWeight={700} fill="#991b1b">ALMUERZO</text>
-                    <rect x={8} y={50} width={32} height={2.5} rx={1} fill="#dc2626" opacity={0.4} />
-                    <rect x={8} y={56} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.4} />
-                    <rect x={8} y={62} width={28} height={2} rx={1} fill="#fca5a5" opacity={0.3} />
-                    {/* Sparkle */}
-                    <path d="M44 5 L45.5 0 L47 5 L52 6.5 L47 8 L45.5 13 L44 8 L39 6.5 Z" fill="#fbbf24" />
-                  </g>
-                  {/* Night card */}
-                  <g transform="translate(138,20) rotate(8)">
-                    <rect width={45} height={65} rx={6} fill="#fff" stroke="#fca5a5" strokeWidth={1.5} />
-                    <path d="M18 11 Q12 11 12 17 Q12 23 18 23 Q15 17 18 11 Z" fill="#7c3aed" />
-                    <rect x={8} y={30} width={28} height={2.5} rx={1} fill="#fca5a5" opacity={0.5} />
-                    <rect x={8} y={36} width={20} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
-                    <rect x={8} y={42} width={24} height={2} rx={1} fill="#fca5a5" opacity={0.35} />
-                  </g>
-                </svg>
-              </div>
-              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Carta adaptativa</h4>
-              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Al mediodía sube el almuerzo. Cuando llueve, platos calientes primero.</p>
-            </div>
-
-            {/* Card 3: Llamada al garzón */}
-            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
-              <div style={{ background: "linear-gradient(135deg, #eff6ff, #bfdbfe)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <svg viewBox="0 0 200 100" width="180" height="80">
-                  {/* Phone */}
-                  <rect x={30} y={15} width={50} height={70} rx={8} fill="#1e3a8a" />
-                  <rect x={34} y={21} width={42} height={52} rx={3} fill="#dbeafe" />
-                  <circle cx={55} cy={79} r={3} fill="#60a5fa" />
-                  {/* Button on screen */}
-                  <rect x={40} y={39} width={30} height={16} rx={3} fill="#3b82f6" />
-                  <text x={55} y={50} textAnchor="middle" fontSize={5} fill="#fff" fontWeight={600}>LLAMAR</text>
-                  {/* Finger */}
-                  <circle cx={55} cy={47} r={5} fill="#fcd9b0" stroke="#1e3a8a" strokeWidth={1.5} />
-                  {/* Signal waves */}
-                  <path d="M95 47 Q102 47 102 52 Q102 57 95 57" stroke="#3b82f6" strokeWidth={2} fill="none" opacity={0.9} />
-                  <path d="M95 40 Q112 40 112 52 Q112 64 95 64" stroke="#3b82f6" strokeWidth={1.8} fill="none" opacity={0.6} />
-                  <path d="M95 33 Q122 33 122 52 Q122 71 95 71" stroke="#3b82f6" strokeWidth={1.5} fill="none" opacity={0.3} />
-                  {/* Bell */}
-                  <g transform="translate(155,45)">
-                    <path d="M-10 0 Q-10 -12 0 -12 Q10 -12 10 0 L12 5 L-12 5 Z" fill="#fbbf24" />
-                    <rect x={-2} y={-18} width={4} height={6} rx={1} fill="#fbbf24" />
-                    <circle cx={0} cy={9} r={2.5} fill="#dc2626" />
-                    <line x1={-16} y1={-2} x2={-13} y2={-2} stroke="#fbbf24" strokeWidth={1.5} strokeLinecap="round" />
-                    <line x1={13} y1={-2} x2={16} y2={-2} stroke="#fbbf24" strokeWidth={1.5} strokeLinecap="round" />
-                    <line x1={-15} y1={3} x2={-12} y2={3} stroke="#fbbf24" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
-                    <line x1={12} y1={3} x2={15} y2={3} stroke="#fbbf24" strokeWidth={1} strokeLinecap="round" opacity={0.6} />
-                  </g>
-                </svg>
-              </div>
-              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Llamada al garzón</h4>
-              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>El cliente toca un botón y el garzón recibe notificación al instante.</p>
-            </div>
-
-            {/* Card 4: Estadísticas avanzadas */}
-            <div className="lnd-feature-card" style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 18, padding: 20, transition: "all 0.25s" }}>
-              <div style={{ background: "linear-gradient(135deg, #faf5ff, #e9d5ff)", borderRadius: 12, height: 100, display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
-                <svg viewBox="0 0 200 100" width="180" height="80">
-                  <line x1={20} y1={80} x2={180} y2={80} stroke="#a78bfa" strokeWidth={1.5} opacity={0.4} />
-                  {[
-                    { x: 30, h: 25, c: "#c4b5fd" }, { x: 58, h: 40, c: "#a78bfa" },
-                    { x: 86, h: 55, c: "#7c3aed" }, { x: 114, h: 35, c: "#a78bfa" },
-                    { x: 142, h: 20, c: "#c4b5fd" },
-                  ].map((b, i) => (
-                    <rect key={i} x={b.x} y={80 - b.h} width={22} height={b.h} rx={3} fill={b.c} />
-                  ))}
-                  {/* Star on tallest */}
-                  <path d="M97 18 L98.5 13 L100 18 L105 19.5 L100 21 L98.5 26 L97 21 L92 19.5 Z" fill="#fbbf24" />
-                  {/* Trend line */}
-                  <path d="M35 70 Q75 50 97 30 Q125 45 155 60" stroke="#7c3aed" strokeWidth={2} strokeDasharray="3,2" fill="none" />
-                </svg>
-              </div>
-              <h4 style={{ fontFamily: F, fontSize: 19, fontWeight: 700, color: "#111", marginBottom: 8 }}>Estadísticas avanzadas</h4>
-              <p style={{ fontSize: "15px", color: "#666", lineHeight: 1.5, margin: 0 }}>Qué platos ven más vs cuáles piden. Qué funciona los viernes de lluvia.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ PLANES ══════ */}
-      <section id="planes" style={{ background: "#fefaf0", padding: "70px 24px" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ maxWidth: 580, margin: "0 auto 44px", textAlign: "center" }}>
-            <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
-            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Parte gratis. Crece cuando quieras.</h2>
-          </div>
-          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, maxWidth: 1000, margin: "0 auto" }}>
-            {/* FREE */}
-            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: 28 }}>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#666", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Gratis</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 10, lineHeight: 1.4 }}>Para empezar con una carta digital de verdad</p>
-              <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
-              <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Para siempre</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#f3f0e8", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
-              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                {[
-                  { t: "Carta inteligente con QR", tip: "Tu carta accesible desde la mesa, con personalización automática" },
-                  { t: "Vista lista", tip: "Layout limpio con fotos, nombre, precio y descripción de cada plato" },
-                  { t: "El Genio incluido 🧞", tip: "Personaliza la carta según los gustos de cada cliente con inteligencia artificial" },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
-                ))}
-              </div>
-            </div>
-            {/* GOLD */}
-            <div style={{ background: "#111", borderRadius: 14, padding: 28, position: "relative", color: "#fff" }}>
-              <span style={{ position: "absolute", top: -10, right: 20, background: "#fbbf24", color: "#111", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Gold</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#aaa", marginBottom: 10, lineHeight: 1.4 }}>Para destacar tu restaurante y conocer a tus clientes</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$35.000</span>
-                <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
-              </div>
-              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Neto · Sin contratos</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#fbbf24", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.12)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> Todo lo del plan gratis</div>
-                {[
-                  { t: "3 vistas personalizables", tip: "Elige entre 3 estilos visuales de carta según el tipo de restaurante" },
-                  { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
-                  { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
-                  { t: "Estadísticas básicas", tip: "Visualizaciones de tu carta, platos más vistos y actividad por día" },
-                  { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
-                  { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
-                  { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#fbbf24" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
-                ))}
-              </div>
-            </div>
-            {/* PREMIUM */}
-            <div style={{ background: "#0a0a0a", borderRadius: 14, padding: 28, position: "relative", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#c084fc", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Premium</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#aaa", marginBottom: 10, lineHeight: 1.4 }}>Para vender más con automatización e inteligencia</p>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$55.000</span>
-                <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
-              </div>
-              <p style={{ fontSize: 13, color: "#aaa", marginBottom: 20 }}>Neto · Sin contratos</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#c084fc", color: "#fff", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Agendar demo</a>
-              <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> Todo lo del plan Gold</div>
-                {[
-                  { t: "Estadísticas avanzadas", tip: "Conoce qué platos convierten más, en qué horarios vendes mejor, qué promociones funcionan y toma decisiones con datos reales de tu negocio" },
-                  { t: "Productos sugeridos", tip: "Aumenta el ticket de venta sugiriendo productos relacionados directamente en la carta" },
-                  { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
-                  { t: "Campañas automáticas", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros y fideliza en automático" },
-                  { t: "Email marketing", tip: "Envía promociones y novedades por correo a tus clientes registrados" },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> <span>{f.t}</span> <InfoTip text={f.tip} dark /></div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ══════ IMPLEMENTACIÓN GRATIS ══════ */}
-      <section style={{ background: "#f9f6ee", padding: "60px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 600, margin: "0 auto" }}>
-          <p style={{ fontSize: 12, color: "#d4a015", textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Implementación</p>
-          <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 16 }}>
-            Nosotros nos encargamos de todo
-          </h2>
-          <p style={{ fontSize: 16, color: "#666", lineHeight: 1.6, maxWidth: 480, margin: "0 auto 32px" }}>
-            Pasamos tu carta actual con fotos, precios y descripciones. Tú no tienes que hacer nada — la implementación es 100% gratis.
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, maxWidth: 500, margin: "0 auto" }}>
+          <div className="lnd-features-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
-              { emoji: "📸", title: "Tu carta con fotos", desc: "Subimos todos tus platos con sus fotos y descripciones" },
-              { emoji: "⚡", title: "En 24 horas", desc: "Tu carta digital lista para usar en un día" },
-              { emoji: "💰", title: "Sin costo", desc: "La implementación es completamente gratis" },
-            ].map(item => (
-              <div key={item.title} style={{ padding: "20px 12px" }}>
-                <span style={{ fontSize: 28, display: "block", marginBottom: 8 }}>{item.emoji}</span>
-                <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#111", marginBottom: 4 }}>{item.title}</p>
-                <p style={{ fontSize: 13, color: "#888", lineHeight: 1.4 }}>{item.desc}</p>
+              { emoji: "🧞", title: "Carta personalizada por cliente", desc: "Aprende los gustos de cada comensal y reordena la carta para mostrar primero lo que más le va a gustar" },
+              { emoji: "📈", title: "Sube el ticket por mesa", desc: "El Genio sugiere acompañamientos y postres en el momento justo. Discreto, no invasivo" },
+              { emoji: "🛎️", title: "Llamar al garzón con un toque", desc: "El cliente toca un botón y el garzón recibe notificación al instante. Adiós a esperar con el brazo en alto" },
+              { emoji: "📊", title: "Estadísticas que sirven", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
+            ].map(f => (
+              <div key={f.title} className="lnd-feature-card" style={{ background: BG_WARM, borderRadius: 16, padding: 24, transition: "all 0.2s" }}>
+                <span style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{f.emoji}</span>
+                <p style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", marginBottom: 6 }}>{f.title}</p>
+                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
+      {/* ══════ VENDEDOR SILENCIOSO ══════ */}
+      <section id="funcionalidades" style={{ background: BG_WARM, padding: "64px 24px" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
+          <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Vendedor silencioso</p>
+          <h3 style={{ fontFamily: F, fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 10, color: "#111" }}>Sugiere lo que falta. Sube el ticket sin pedir nada</h3>
+          <p style={{ fontSize: 15, color: "#666", lineHeight: 1.55, maxWidth: 540, margin: "0 auto 32px" }}>Cuando el cliente está mirando un plato, el Genio le muestra qué acompañamiento, postre o bebida combina mejor</p>
+
+          {/* Cross-sell mock card */}
+          <div style={{ background: "#fff", borderRadius: 18, padding: 24, maxWidth: 420, margin: "0 auto", boxShadow: "0 2px 16px rgba(0,0,0,0.06)", textAlign: "left" }}>
+            {/* Current dish */}
+            <div style={{ display: "flex", gap: 14, marginBottom: 16 }}>
+              <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop" alt="" style={{ width: 72, height: 72, borderRadius: 12, objectFit: "cover" }} />
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <p style={{ fontFamily: F, fontSize: 16, fontWeight: 600, color: "#111", margin: "0 0 4px" }}>Tabla de sushi familiar</p>
+                <p style={{ fontFamily: F, fontSize: 16, fontWeight: 700, color: "#111", margin: 0 }}>$32.990</p>
+              </div>
+            </div>
+            {/* Suggestion label */}
+            <p style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 10 }}>🧞 Va perfecto con</p>
+            {/* Suggested products */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              <div style={{ background: BG_WARM, borderRadius: 12, padding: 10, display: "flex", gap: 10, alignItems: "center" }}>
+                <img src="https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=100&h=100&fit=crop" alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
+                <div>
+                  <p style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: "#111", margin: "0 0 2px" }}>Edamame</p>
+                  <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#555", margin: 0 }}>$3.500</p>
+                </div>
+              </div>
+              <div style={{ background: BG_WARM, borderRadius: 12, padding: 10, display: "flex", gap: 10, alignItems: "center" }}>
+                <img src="https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=100&h=100&fit=crop" alt="" style={{ width: 44, height: 44, borderRadius: 8, objectFit: "cover" }} />
+                <div>
+                  <p style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: "#111", margin: "0 0 2px" }}>Sake del día</p>
+                  <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#555", margin: 0 }}>$4.900</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ TESTIMONIOS ══════ */}
+      <section style={{ background: "#fff", padding: "64px 24px" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 40 }}>
+            <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Lo que dicen los restaurantes</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Hecho para gente que cocina</h2>
+          </div>
+          <div className="lnd-testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+            {[
+              { quote: "Antes pasaba que los garzones tenían que estar explicando los platos uno por uno. Ahora el cliente abre la carta, ve la foto, lee y pide. Nos liberó harto tiempo en el servicio", name: "Alfredo Morales", place: "Hand Roll", initials: "AM", color: BRAND },
+              { quote: "Se nota en las ventas. Hay platos que antes pasaban desapercibidos y ahora están saliendo todos los días. La gente entra a la carta y termina pidiendo más cosas que antes", name: "Carlos Gómez", place: "Horus Vegan", initials: "CG", color: "#16a34a" },
+              { quote: "Me cargaron la carta en menos de un día y con fotos buenas. Pensé que iba a ser una lata cambiar a algo digital pero lo hicieron todo ellos. Cero pega para mí", name: "Javier Muñoz", place: "Juana la Brava", initials: "JM", color: "#7c3aed" },
+            ].map(t => (
+              <div key={t.name} style={{ background: BG_WARM, borderRadius: 16, padding: 24 }}>
+                <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, margin: "0 0 20px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 12, fontWeight: 700 }}>{t.initials}</div>
+                  <div>
+                    <p style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "#111", margin: 0 }}>{t.name}</p>
+                    <p style={{ fontSize: 12, color: "#888", margin: 0 }}>{t.place}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ PLANES ══════ */}
+      <section id="planes" style={{ background: BG_WARM, padding: "64px 24px" }}>
+        <div style={{ maxWidth: 1060, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 44 }}>
+            <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 8 }}>Parte gratis. Crece cuando quieras</h2>
+            <p style={{ fontSize: 15, color: "#666" }}>Implementación gratis en los tres planes. Sin contratos</p>
+          </div>
+          <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
+            {/* FREE */}
+            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 28 }}>
+              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
+              <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
+              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Para siempre</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para probar cómo se ve tu carta digital</p>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  { t: "Carta inteligente con QR", tip: "Tus clientes escanean un QR y ven tu carta digital" },
+                  { t: "Vista lista", tip: "Todos los platos en formato lista limpia" },
+                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente" },
+                ].map((f) => (
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                ))}
+              </div>
+            </div>
+            {/* GOLD */}
+            <div style={{ background: "#fff", borderRadius: 16, padding: 28, position: "relative", border: `2px solid ${BRAND}` }}>
+              <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: BRAND, color: "#fff", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 12px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
+              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$35.000</span>
+                <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
+              </div>
+              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Neto · Sin contratos</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para destacar tus platos y entender a tus clientes</p>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Quiero el plan Gold →</a>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan gratis</div>
+                {[
+                  { t: "3 vistas personalizables", tip: "Vista lista, vista galería con fotos grandes y vista compacta" },
+                  { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
+                  { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },
+                  { t: "Estadísticas avanzadas", tip: "Ve qué platos se miran más, cuáles se piden y a qué horas" },
+                  { t: "Multilenguaje (ES · EN · PT)", tip: "Tu carta se traduce automáticamente al idioma del cliente" },
+                  { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación" },
+                ].map((f) => (
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                ))}
+              </div>
+            </div>
+            {/* PREMIUM */}
+            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 28 }}>
+              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$55.000</span>
+                <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
+              </div>
+              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Neto · Sin contratos</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para vender más sin levantar un dedo</p>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Quiero el Premium</a>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo del plan Gold</div>
+                {[
+                  { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
+                  { t: "Automatizaciones", tip: "Reglas que se ejecutan solas: subir el almuerzo al mediodía, platos calientes cuando llueve" },
+                  { t: "Campañas automáticas", tip: "Mensajes a clientes en su cumpleaños o cuando hace tiempo no vienen" },
+                  { t: "Email marketing", tip: "Envía novedades de tu restaurante a tu lista de clientes" },
+                ].map((f) => (
+                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ IMPLEMENTACIÓN ══════ */}
+      <section style={{ background: "#fff", padding: "64px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 700, margin: "0 auto" }}>
+          <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Implementación</p>
+          <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 36 }}>Nosotros nos encargamos</h2>
+          <div className="lnd-impl-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
+            {[
+              { emoji: "📸", title: "Subimos tu carta", desc: "Cargamos todos tus platos con fotos, precios y descripciones. Tú no haces nada" },
+              { emoji: "⚡", title: "En 24 horas", desc: "Tu carta digital lista para usar en un día" },
+              { emoji: "🤝", title: "Sin costo", desc: "La implementación es 100% gratis en todos los planes" },
+            ].map(item => (
+              <div key={item.title} style={{ padding: "20px 12px" }}>
+                <span style={{ fontSize: 32, display: "block", marginBottom: 10 }}>{item.emoji}</span>
+                <p style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", marginBottom: 6 }}>{item.title}</p>
+                <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ══════ FAQ ══════ */}
+      <section style={{ background: BG_WARM, padding: "64px 24px" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 36 }}>
+            <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Preguntas frecuentes</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Lo que todos preguntan</h2>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <FaqItem q="¿Necesito comprar algún equipo o tablet?" a="No. Solo necesitas un código QR impreso en cada mesa. Tus clientes lo escanean con su celular" />
+            <FaqItem q="¿Mis clientes tienen que descargar una app?" a="No. La carta se abre directamente en el navegador del celular. Cero fricción" />
+            <FaqItem q="¿Cómo actualizo mi carta cuando cambio precios o platos?" a="Desde un panel sencillo. Cambias el precio o agregas un plato y se actualiza al instante en todos los QR" />
+            <FaqItem q="¿Qué pasa si me arrepiento?" a="No hay contratos ni permanencias. Cancelas cuando quieras y dejas de pagar el mes siguiente" />
+            <FaqItem q="¿Funciona si mi restaurante no tiene buen wifi?" a="Tus clientes usan su propio plan de datos. No depende del wifi del local" />
+          </div>
+        </div>
+      </section>
+
       {/* ══════ CTA FINAL ══════ */}
-      <section id="contacto" style={{ background: "#fff", padding: "80px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: F, fontSize: "clamp(28px, 4vw, 40px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.05, marginBottom: 14, color: "#111" }}>
-            ¿Listo para probar<br />la carta que vende por ti?
+      <section id="contacto" style={{ background: "#1a1a1a", padding: "80px 24px", textAlign: "center" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto" }}>
+          <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 12, color: "#fff" }}>
+            ¿Listo para probar la carta que vende por ti?
           </h2>
-          <p style={{ fontSize: 16, color: "#666", maxWidth: 480, margin: "0 auto 28px", lineHeight: 1.5 }}>
-            Déjanos tu correo y te contactamos en 24 horas para mostrarte una demo.
-          </p>
+          <p style={{ fontSize: 15, color: "#999", marginBottom: 32, lineHeight: 1.5 }}>Déjanos tus datos y te contactamos en 24 horas</p>
           {submitted ? (
-            <p style={{ fontSize: 15, color: "#16a34a", fontWeight: 600, fontFamily: F }}>Recibido. Te contactamos pronto.</p>
+            <p style={{ fontSize: 15, color: "#4ade80", fontWeight: 600, fontFamily: F }}>Recibido. Te contactamos pronto</p>
           ) : (
-            <form onSubmit={handleSubmit} className="lnd-cta-form" style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: 440, margin: "0 auto" }}>
-              <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Tu nombre" required
-                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
-              <input type="tel" value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="+56 9 1234 5678"
-                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@restaurante.cl" required
-                style={{ padding: "12px 16px", border: "1px solid #e5e0d3", borderRadius: 10, fontSize: 14, fontFamily: B, outline: "none" }} />
-              <button type="submit" disabled={sending} style={{ padding: "12px 20px", background: "#fbbf24", color: "#111", borderRadius: 10, border: "none", fontFamily: F, fontWeight: 700, fontSize: 14, cursor: "pointer", whiteSpace: "nowrap", boxShadow: "0 2px 10px rgba(251,191,36,0.3)" }}>
-                {sending ? "..." : "Quiero probar →"}
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre" required
+                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
+              <input type="text" value={restaurante} onChange={e => setRestaurante(e.target.value)} placeholder="Nombre del restaurante" required
+                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Correo" required
+                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
+              <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Teléfono" required
+                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
+              {formError && <p style={{ fontSize: 13, color: "#ef4444", margin: 0 }}>{formError}</p>}
+              <button type="submit" disabled={sending} style={{ padding: "14px 20px", background: BRAND, color: "#fff", borderRadius: 999, border: "none", fontFamily: F, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 4 }}>
+                {sending ? "Enviando..." : "Contáctame →"}
               </button>
             </form>
           )}
         </div>
       </section>
 
-      {/* ══════ FOOTER NOCHE ══════ */}
-      <footer style={{ background: "linear-gradient(180deg, #1e1b4b 0%, #4c1d95 40%, #7e22ce 70%, #be185d 90%, #f97316 100%)", color: "#fff", padding: "60px 24px 24px", position: "relative", overflow: "hidden" }}>
-        {/* Stars */}
-        {[
-          { l: 80, t: 20, s: 2, o: 0.7 }, { l: 200, t: 35, s: 3, o: 0.5 }, { l: 350, t: 15, s: 2, o: 0.9 },
-          { l: 500, t: 40, s: 2, o: 0.6 }, { l: 650, t: 18, s: 3, o: 0.8 }, { l: 800, t: 30, s: 2, o: 0.5 },
-          { l: 950, t: 22, s: 2, o: 0.7 }, { l: 1100, t: 45, s: 3, o: 0.6 },
-        ].map((s, i) => (
-          <div key={i} style={{ position: "absolute", left: s.l, top: s.t, width: s.s, height: s.s, borderRadius: "50%", background: "#fff", opacity: s.o, boxShadow: s.s === 3 ? "0 0 4px rgba(255,255,255,0.8)" : "none" }} />
-        ))}
-        <FooterDunesSVG />
-        <div style={{ position: "relative", zIndex: 3, maxWidth: 960, margin: "0 auto" }}>
-          {/* Top */}
-          <div className="lnd-footer-top" style={{ display: "flex", justifyContent: "space-between", gap: 40, marginBottom: 40 }}>
+      {/* ══════ FOOTER ══════ */}
+      <footer style={{ background: "#0a0a0a", color: "#fff", padding: "48px 24px 24px" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+          <div className="lnd-footer-top" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 40 }}>
             <div>
-              <p style={{ fontFamily: F, fontSize: 22, fontWeight: 800, marginBottom: 10 }}>
-                <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: "#fbbf24" }}>Comer</span>
+              <p style={{ fontFamily: F, fontSize: 20, fontWeight: 800, marginBottom: 10 }}>
+                <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: BRAND }}>Comer</span>
               </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", maxWidth: 260, lineHeight: 1.5, margin: 0 }}>La carta inteligente que recomienda por ti.</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: 0 }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
             </div>
-            <div className="lnd-footer-links" style={{ display: "flex", gap: 48 }}>
-              <div>
-                <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 12 }}>Producto</h5>
-                <a href="#funcionalidades" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.85)", textDecoration: "none", padding: "4px 0" }}>Funcionalidades</a>
-                <a href="#planes" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.85)", textDecoration: "none", padding: "4px 0" }}>Planes</a>
-                <a href="#contacto" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.85)", textDecoration: "none", padding: "4px 0" }}>Demo</a>
-              </div>
-              <div>
-                <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 12 }}>Empresa</h5>
-                <a href="#contacto" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.85)", textDecoration: "none", padding: "4px 0" }}>Contacto</a>
-                <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.45)", padding: "4px 0" }}>Privacidad</span>
-                <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.45)", padding: "4px 0" }}>Términos</span>
-              </div>
+            <div>
+              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Producto</h5>
+              <a href="#como-funciona" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Cómo funciona</a>
+              <a href="#funcionalidades" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Funcionalidades</a>
+              <a href="#planes" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Planes</a>
+            </div>
+            <div>
+              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Empresa</h5>
+              <a href="#casos" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Casos de éxito</a>
+              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "4px 0" }}>Privacidad</span>
+              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "4px 0" }}>Términos</span>
             </div>
           </div>
-          {/* Bottom */}
-          <div style={{ paddingTop: 20, textAlign: "center" }}>
-            <span style={{ fontSize: 13, color: "rgba(255,255,255,0.6)" }}>Hecho en Chile con 💛 y mucha hambre</span>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20, textAlign: "center" }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>© 2026 QuieroComer · Santiago, Chile</span>
           </div>
         </div>
       </footer>
@@ -560,25 +487,26 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       {/* ══════ CSS ══════ */}
       <style>{`
         @keyframes lndFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-        @keyframes lndWalk { 0% { transform: scale(1.6) translate(660px, 122px); } 100% { transform: scale(1.6) translate(220px, 128px); } }
-        .lnd-walker { animation: lndWalk 40s linear infinite; }
-        .lnd-logos-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, #faf6ee); pointer-events: none; z-index: 2; }
+        .lnd-logos-track::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(to right, transparent, #fff); pointer-events: none; z-index: 2; }
         .lnd-logos-scroll::-webkit-scrollbar { display: none; }
         @media (min-width: 769px) {
           .lnd-logos-track::after { display: none; }
           .lnd-logos-scroll { display: flex !important; justify-content: center; }
         }
-        .lnd-logo-chip:hover { border-color: #d4a015 !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(212,160,21,0.12); }
-        .lnd-feature-card:hover { border-color: #d4a015 !important; transform: translateY(-3px); box-shadow: 0 4px 16px rgba(212,160,21,0.1); }
+        .lnd-logo-chip:hover { border-color: ${BRAND} !important; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(239,159,39,0.15); }
+        .lnd-feature-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        input::placeholder { color: rgba(255,255,255,0.35) !important; }
         @media (max-width: 768px) {
           .lnd-nav-desktop { display: none !important; }
           .lnd-nav-mobile { display: flex !important; }
-          .lnd-genio-grid { grid-template-columns: 1fr !important; }
+          .lnd-hero-grid { grid-template-columns: 1fr !important; text-align: center; }
+          .lnd-hero-grid p, .lnd-hero-grid div:first-child { margin-left: auto; margin-right: auto; }
+          .lnd-hero-grid > div:first-child > div:last-of-type { justify-content: center; }
           .lnd-features-grid { grid-template-columns: 1fr !important; }
+          .lnd-testimonials-grid { grid-template-columns: 1fr !important; }
           .lnd-plans-grid { grid-template-columns: 1fr !important; }
-          .lnd-cta-form { flex-direction: column !important; }
-          .lnd-footer-top { flex-direction: column !important; }
-          .lnd-footer-links { gap: 32px !important; }
+          .lnd-impl-grid { grid-template-columns: 1fr !important; }
+          .lnd-footer-top { grid-template-columns: 1fr !important; text-align: center; }
         }
         @media (min-width: 769px) {
           .lnd-nav-mobile { display: none !important; }
