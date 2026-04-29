@@ -148,14 +148,6 @@ function GenioCarousel({ onDishClick }: { onDishClick?: (id: string) => void }) 
 
 /* ── Vista Premium ── */
 function VistaPremium() {
-  const [showFab, setShowFab] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 300);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
   const scrollToDish = (id: string) => {
     const el = document.getElementById(`premium-${id}`);
     el?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -209,20 +201,6 @@ function VistaPremium() {
         </div>
       </div>
 
-      {/* Floating button */}
-      {showFab && (
-        <button onClick={() => window.scrollTo({ top: 280, behavior: "smooth" })} style={{
-          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30,
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "10px 20px", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)",
-          border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
-          cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-        }}>
-          <span style={{ fontSize: "14px" }}>🌿</span>
-          <span style={{ fontFamily: DM, fontSize: "0.78rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
-        </button>
-      )}
-
       <div style={{ height: 100 }} />
     </div>
   );
@@ -230,13 +208,6 @@ function VistaPremium() {
 
 /* ── Vista Lista ── */
 function VistaLista() {
-  const [showFab, setShowFab] = useState(false);
-
-  useEffect(() => {
-    const onScroll = () => setShowFab(window.scrollY > 300);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const scrollToDish = (id: string) => {
     const el = document.getElementById(`lista-${id}`);
@@ -290,20 +261,6 @@ function VistaLista() {
         })}
       </div>
 
-      {/* Floating button */}
-      {showFab && (
-        <button onClick={() => window.scrollTo({ top: 180, behavior: "smooth" })} style={{
-          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 30,
-          display: "flex", alignItems: "center", gap: 6,
-          padding: "10px 20px", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)",
-          border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
-          cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-        }}>
-          <span style={{ fontSize: "14px" }}>🌿</span>
-          <span style={{ fontFamily: DM, fontSize: "0.78rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
-        </button>
-      )}
-
       <div style={{ height: 100 }} />
     </div>
   );
@@ -312,6 +269,13 @@ function VistaLista() {
 /* ── PAGE ── */
 export default function PreviewDietPage() {
   const [view, setView] = useState<"premium" | "lista">("premium");
+  const [showFab, setShowFab] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowFab(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <div style={{ minHeight: "100dvh" }}>
@@ -336,6 +300,20 @@ export default function PreviewDietPage() {
         {view === "premium" && <VistaPremium />}
         {view === "lista" && <VistaLista />}
       </div>
+
+      {/* Floating button — always rendered from parent */}
+      {showFab && (
+        <button onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })} style={{
+          position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 100,
+          display: "flex", alignItems: "center", gap: 6,
+          padding: "12px 22px", background: "rgba(255,255,255,0.95)", backdropFilter: "blur(8px)",
+          border: "1px solid rgba(244,166,35,0.3)", borderRadius: 999,
+          cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+        }}>
+          <span style={{ fontSize: "15px" }}>🌿</span>
+          <span style={{ fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
+        </button>
+      )}
     </div>
   );
 }
