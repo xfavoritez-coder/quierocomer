@@ -29,8 +29,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#f7f7f5" }} />;
-  if (!isDesktop) return <>{children}</>;
+  if (isDesktop === null || !isDesktop) return <>{children}</>;
 
   // Desktop: full-width carta with grid layout
   if (restaurant && categories && dishes) {

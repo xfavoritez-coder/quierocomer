@@ -336,10 +336,7 @@ function DishSlide({
           </div>
         )}
 
-        {/* Counter */}
-        <div className="absolute" style={{ top: 16, left: 16, zIndex: 10 }}>
-          <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
-        </div>
+        {/* Counter — hidden in lista/galeria modals */}
 
         {/* Referential photo notice — inside photo */}
         {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
@@ -529,7 +526,7 @@ function DishSlide({
                       )}
                       <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
                       {s.dish.description && (
-                        <p style={{ fontSize: "0.85rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
+                        <p style={{ fontSize: "0.86rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
                       <span style={{ fontSize: "0.92rem", color: "#fbbf24", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
                     </div>
