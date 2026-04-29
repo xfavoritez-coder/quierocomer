@@ -65,20 +65,28 @@ export default function DishDetail({
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
   // Capture viewport height on mount (fixes iOS browser bar gap)
-  // Mount: lock scroll, fade in
+  // Mount: lock scroll, fade in — position:fixed forces iOS bar back
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
 
-    const alreadyLocked = document.body.style.overflow === "hidden";
+    const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
+    const savedScrollY = window.scrollY;
     if (!alreadyLocked) {
-      document.documentElement.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     }
 
     return () => {
       if (!alreadyLocked) {
-        document.documentElement.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
         document.body.style.overflow = "";
+        window.scrollTo(0, savedScrollY);
       }
     };
   }, []); // Only on mount/unmount
@@ -139,7 +147,7 @@ export default function DishDetail({
     <div
       className="font-[family-name:var(--font-dm)]"
       style={{
-        position: "fixed", top: 0, left: 0, right: 0, bottom: -50,
+        position: "fixed", inset: 0,
         zIndex: 120, background: "#000",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
