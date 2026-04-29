@@ -39,7 +39,7 @@ export function getCrossSellDishes(
   const catTypeMap = new Map<string, string>();
   const catNameMap = new Map<string, string>();
   for (const cat of categories) {
-    let type = (cat as any).dishType || "food";
+    let type = cat.dishType || "food";
     if (type === "food" && ENTRY_PATTERN.test(cat.name)) {
       type = "entry";
     }
