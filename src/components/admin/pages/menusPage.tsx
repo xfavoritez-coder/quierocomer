@@ -13,7 +13,7 @@ interface Category { id: string; name: string; position: number; isActive: boole
 interface Dish {
   id: string; name: string; description: string | null; price: number; discountPrice: number | null;
   photos: string[]; tags: string[]; isHero: boolean; isActive: boolean; ingredients: string | null;
-  allergens: string | null; position: number; categoryId: string;
+  allergens: string | null; dishDiet?: string; isSpicy?: boolean; flavorTags?: string[]; position: number; categoryId: string;
   category: { id: string; name: string };
 }
 interface Restaurant { id: string; name: string; slug: string; }
