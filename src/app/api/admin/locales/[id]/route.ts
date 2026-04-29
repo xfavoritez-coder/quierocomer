@@ -71,6 +71,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.whatsapp !== undefined && { whatsapp: body.whatsapp }),
         ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),
         ...(body.waiterPanelActive !== undefined && { waiterPanelActive: body.waiterPanelActive }),
+        ...(body.dietType !== undefined && { dietType: body.dietType }),
       };
     } else {
       // Owner: silently filter to allowed fields only

@@ -405,6 +405,7 @@ model Restaurant {
   allPhotosReferential Boolean    @default(false)
   cartaTheme  CartaTheme @default(BASIC)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
+  dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   waiterPanelActive  Boolean    @default(false)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir

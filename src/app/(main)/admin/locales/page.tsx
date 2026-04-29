@@ -17,6 +17,7 @@ interface Restaurant {
   address: string | null;
   instagram: string | null;
   website: string | null;
+  dietType: string;
   cartaTheme: string;
   defaultView: string | null;
   qrActivatedAt: string | null;
@@ -51,6 +52,7 @@ export default function AdminLocales() {
   const [editInstagram, setEditInstagram] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
   const [editAddress, setEditAddress] = useState("");
+  const [editDietType, setEditDietType] = useState("OMNIVORE");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -64,6 +66,7 @@ export default function AdminLocales() {
     setEditInstagram(selected.instagram || "");
     setEditWebsite(selected.website || "");
     setEditAddress(selected.address || "");
+    setEditDietType(selected.dietType || "OMNIVORE");
     setSaved(false);
   }, [selected?.id]);
 
@@ -79,6 +82,7 @@ export default function AdminLocales() {
         instagram: editInstagram.trim().replace(/^@/, "") || null,
         website: editWebsite.trim() || null,
         address: editAddress.trim() || null,
+        dietType: editDietType,
       };
       await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const u = { ...selected, ...body };
@@ -200,6 +204,25 @@ export default function AdminLocales() {
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Dirección</label>
             <input value={editAddress} onChange={e => setEditAddress(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="Av. Providencia 1234, Santiago" />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Tipo de local</label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {[
+                { value: "OMNIVORE", label: "Carnívoro", icon: "🍖" },
+                { value: "VEGETARIAN", label: "Vegetariano", icon: "🌱" },
+                { value: "VEGAN", label: "Vegano", icon: "🌿" },
+              ].map(opt => (
+                <button key={opt.value} onClick={() => setEditDietType(opt.value)} style={{
+                  flex: 1, padding: "8px 6px", borderRadius: 8, border: "none", cursor: "pointer",
+                  fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+                  background: editDietType === opt.value ? (opt.value === "OMNIVORE" ? "rgba(139,90,43,0.2)" : "rgba(74,222,128,0.15)") : "rgba(255,255,255,0.04)",
+                  color: editDietType === opt.value ? (opt.value === "OMNIVORE" ? "#c9935a" : "#4ade80") : "#666",
+                }}>
+                  {opt.icon} {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
           <button onClick={saveChanges} disabled={saving} style={{ padding: "12px", background: saved ? "rgba(74,222,128,0.15)" : "#F4A623", color: saved ? "#4ade80" : "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", marginTop: 6 }}>
             {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}
