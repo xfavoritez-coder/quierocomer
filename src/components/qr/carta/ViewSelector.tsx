@@ -220,7 +220,7 @@ export default function ViewSelector({ restaurantId }: Props) {
           arrow="right"
           style={{ position: "absolute", right: 62, top: "50%", transform: "translateY(-50%)", width: 180, zIndex: 40 }}
         >
-          Cambia de vista o idioma.
+          Cambia de vista o idioma
         </GenioTip>
       )}
 

@@ -64,20 +64,26 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Mount: lock body scroll, fade in
+  // Mount: lock body scroll, fade in — position:fixed forces iOS bar back
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
 
-    const alreadyLocked = document.body.style.overflow === "hidden";
+    const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
     const savedScrollY = window.scrollY;
     if (!alreadyLocked) {
-      document.documentElement.style.overflow = "hidden";
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
     }
 
     return () => {
       if (!alreadyLocked) {
-        document.documentElement.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
         document.body.style.overflow = "";
         window.scrollTo(0, savedScrollY);
       }
@@ -269,9 +275,22 @@ function DishSlide({
   }).filter(Boolean);
   const hasInfo = ingredientNames.length > 0 || derivedAllergens.length > 0;
 
+  // Pull-down to close when at top
+  const slideRef = useRef<HTMLDivElement>(null);
+  const pullY = useRef<number | null>(null);
+
   return (
     <div
+      ref={slideRef}
       data-dish-slide={index}
+      onTouchStart={(e) => { pullY.current = e.touches[0].clientY; }}
+      onTouchEnd={(e) => {
+        if (pullY.current === null) return;
+        const dy = e.changedTouches[0].clientY - pullY.current;
+        pullY.current = null;
+        const el = slideRef.current;
+        if (el && el.scrollTop <= 0 && dy > 100) onClose();
+      }}
       style={{
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
