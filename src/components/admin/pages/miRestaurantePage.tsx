@@ -125,7 +125,7 @@ export default function MiRestaurantePage() {
     setSaving(false);
   };
 
-  const saveInfo = () => save({ name, description, logoUrl: logoUrl || null, bannerUrl: bannerUrl || null });
+  const saveInfo = () => save({ name, description, logoUrl: logoUrl || null });
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
   const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
