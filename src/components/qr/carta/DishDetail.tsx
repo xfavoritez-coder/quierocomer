@@ -7,6 +7,7 @@ import FavoriteHeart from "./FavoriteHeart";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { trackDetailOpen, trackDetailClose, getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
+import { getCrossSellDishes } from "./utils/getCrossSellDishes";
 
 interface PersonalizationEntry {
   score: number;
@@ -199,6 +200,8 @@ export default function DishDetail({
             restaurantName={restaurantName}
             restaurantAllergens={restaurantAllergens}
             popularDishIds={popularDishIds}
+            allDishes={allDishes}
+            onChangeDish={onChangeDish}
           />
         ))}
       </div>
@@ -218,6 +221,7 @@ function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
   personalizationEntry, restaurantName, restaurantAllergens, popularDishIds, allPhotosReferential,
+  allDishes, onChangeDish,
 }: {
   dish: Dish; index: number; total: number;
   categories: Category[]; restaurantId: string;
@@ -231,6 +235,8 @@ function DishSlide({
   restaurantAllergens?: Set<string>;
   popularDishIds?: Set<string>;
   allPhotosReferential?: boolean;
+  allDishes: Dish[];
+  onChangeDish: (dish: Dish) => void;
 }) {
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
@@ -384,38 +390,10 @@ function DishSlide({
           </div>
         )}
 
-        {/* BLOQUE 1: Header — info left + heart right */}
+        {/* BLOQUE 1: Header — name left + badges right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Badges */}
-            {(personalizationEntry?.autoRecommended || (isRec && !personalizationEntry?.autoRecommended) || popularDishIds?.has(dish.id)) && (
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
-                {personalizationEntry?.autoRecommended && (
-                  <button
-                    onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 2000); } }}
-                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
-                  >
-                    ✨ Para ti
-                  </button>
-                )}
-                {isRec && !personalizationEntry?.autoRecommended && (
-                  <button
-                    onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
-                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
-                  >
-                    ⭐ Recomendado
-                  </button>
-                )}
-                {popularDishIds?.has(dish.id) && (
-                  <button
-                    onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
-                    style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.78rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer" }}
-                  >
-                    🔥 Popular hoy
-                  </button>
-                )}
-              </div>
-            )}
+            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
             <h2 style={{ fontSize: "29px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
             </h2>
@@ -430,17 +408,35 @@ function DishSlide({
               )}
             </div>
           </div>
-          <div style={{ position: "relative", flexShrink: 0 }}>
-            <FavoriteHeart dishId={dish.id} restaurantId={dish.restaurantId} size={20} style={{ width: 42, height: 42, borderRadius: "50%", background: "rgba(255,255,255,0.95)", boxShadow: "0 2px 8px rgba(0,0,0,0.3)", border: "none", display: "flex", alignItems: "center", justifyContent: "center" }} />
-            {showLikeNudge && (
-              <div onClick={() => setShowLikeNudge(false)} className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", top: -52, right: 0, background: "#FFF4E6", borderRadius: 10, padding: "7px 11px", boxShadow: "0 4px 12px rgba(180,130,50,0.25)", width: 180, animation: "fadeToast 0.3s ease-out", cursor: "pointer", zIndex: 10 }}>
-                <p style={{ fontSize: "11px", color: "#5c3d1e", margin: 0, lineHeight: 1.4 }}>
-                  👍 Dale me gusta para mejorar tus recomendaciones
-                </p>
-                <div style={{ position: "absolute", bottom: -5, right: 14, width: 10, height: 10, background: "#FFF4E6", transform: "rotate(45deg)" }} />
-              </div>
-            )}
-          </div>
+          {/* Badges */}
+          {(personalizationEntry?.autoRecommended || (isRec && !personalizationEntry?.autoRecommended) || popularDishIds?.has(dish.id)) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
+              {personalizationEntry?.autoRecommended && (
+                <button
+                  onClick={() => { if (showParaTiTooltip) { setShowParaTiTooltip(false); } else { setShowParaTiTooltip(true); setTimeout(() => setShowParaTiTooltip(false), 2000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  ✨ Para ti
+                </button>
+              )}
+              {isRec && !personalizationEntry?.autoRecommended && (
+                <button
+                  onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  ⭐ Recomendado
+                </button>
+              )}
+              {popularDishIds?.has(dish.id) && (
+                <button
+                  onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
+                  style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                >
+                  🔥 Popular hoy
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Rating + Stock */}
@@ -502,11 +498,44 @@ function DishSlide({
 
         {/* BLOQUE 3: Link ingredientes */}
         {hasInfo && (
-          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 16, background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500, padding: "6px 14px", borderRadius: 50, cursor: "pointer" }}>
+          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 16, background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, padding: "6px 14px", borderRadius: 50, cursor: "pointer" }}>
             Ver ingredientes
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
         )}
+
+        {/* Cross-sell suggestions */}
+        {(() => {
+          const suggestions = getCrossSellDishes(dish, allDishes, categories);
+          if (suggestions.length === 0) return null;
+          return (
+            <div style={{ marginTop: 20 }}>
+              <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>Complementa tu pedido</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {suggestions.map((s) => (
+                  <div
+                    key={s.dish.id}
+                    onClick={() => onChangeDish(s.dish)}
+                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer" }}
+                  >
+                    {s.dish.photos?.[0] ? (
+                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
+                      {s.dish.description && (
+                        <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", margin: "2px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.35 }}>{s.dish.description}</p>
+                      )}
+                    </div>
+                    <span style={{ fontSize: "0.82rem", color: "#fbbf24", fontWeight: 600, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Ingredients panel */}

@@ -440,6 +440,7 @@ model Restaurant {
   createdIngredients    Ingredient[]   @relation("CreatedIngredients")
 
   announcements         Announcement[]
+  dishSuggestions        DishSuggestion[]
 
   @@index([ownerId])
 }
@@ -533,9 +534,27 @@ model Dish {
   dishFavorites       DishFavorite[]
   modifierTemplates   ModifierTemplate[]     // many-to-many: plantillas de modificadores asignadas
   translations        DishTranslation[]
+  suggestedWith       DishSuggestion[]       @relation("SuggestionFrom")
+  suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
 
   @@index([restaurantId])
   @@index([categoryId])
+}
+
+model DishSuggestion {
+  id              String   @id @default(cuid())
+  dishId          String
+  suggestedDishId String
+  restaurantId    String
+  createdAt       DateTime @default(now())
+
+  dish            Dish       @relation("SuggestionFrom", fields: [dishId], references: [id], onDelete: Cascade)
+  suggestedDish   Dish       @relation("SuggestionTo", fields: [suggestedDishId], references: [id], onDelete: Cascade)
+  restaurant      Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([dishId, suggestedDishId])
+  @@index([dishId])
+  @@index([restaurantId])
 }
 
 model DishTranslation {

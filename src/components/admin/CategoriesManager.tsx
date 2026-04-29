@@ -14,6 +14,7 @@ interface Dish { id: string; name: string; photos: string[]; price: number; posi
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
   food: { label: "Platos", emoji: "🍽️", color: GOLD },
+  entry: { label: "Entradas", emoji: "🥗", color: "#4ade80" },
   drink: { label: "Bebestibles", emoji: "🥤", color: "#7fbfdc" },
   dessert: { label: "Postres", emoji: "🍰", color: "#c084fc" },
   extra: { label: "Extras", emoji: "🔧", color: "#888" },
@@ -111,6 +112,14 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 </span>
                 <span style={{ marginLeft: "auto" }} />
               </button>
+              {/* dishType toggle */}
+              <div style={{ display: "flex", gap: 3, flexShrink: 0 }}>
+                {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
+                  <button key={key} onClick={() => onTypeChange(category.id, key)} style={{ padding: "2px 8px", borderRadius: 5, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.6rem", fontWeight: 600, background: (category.dishType || "food") === key ? v.color : "rgba(255,255,255,0.04)", color: (category.dishType || "food") === key ? "#fff" : "var(--adm-text3)", opacity: (category.dishType || "food") === key ? 1 : 0.5, transition: "all 0.15s" }}>
+                    {v.emoji}
+                  </button>
+                ))}
+              </div>
               <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: category.isActive ? "var(--adm-text3)" : "#4ade80" }}>
                 {category.isActive ? "Ocultar" : "Mostrar"}
               </button>
