@@ -4,6 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { norm } from "@/lib/normalize";
+import SubirFoto from "@/components/SubirFoto";
 
 interface Restaurant {
   id: string;
@@ -12,7 +13,10 @@ interface Restaurant {
   description: string | null;
   logoUrl: string | null;
   phone: string | null;
+  whatsapp: string | null;
   address: string | null;
+  instagram: string | null;
+  website: string | null;
   cartaTheme: string;
   defaultView: string | null;
   qrActivatedAt: string | null;
@@ -137,12 +141,18 @@ export default function AdminLocales() {
             }} rows={2} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
           </div>
           <div>
-            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Logo URL</label>
-            <input defaultValue={selected.logoUrl || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl: v || null }) });
-              const u = { ...selected, logoUrl: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://..." />
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Logo</label>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              {selected.logoUrl ? (
+                <img src={selected.logoUrl} alt="Logo" style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, color: "#0a0a0a" }}>{selected.name.charAt(0)}</div>
+              )}
+              <SubirFoto folder="logos" label="Cambiar logo" circular height="56px" preview={selected.logoUrl} onUpload={async (url: string) => {
+                await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ logoUrl: url }) });
+                const u = { ...selected, logoUrl: url }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }} />
+            </div>
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Teléfono</label>
@@ -151,6 +161,41 @@ export default function AdminLocales() {
               await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: v || null }) });
               const u = { ...selected, phone: v || null }; setSelected(u);
             }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 2 1234 5678" />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>WhatsApp</label>
+            <input defaultValue={selected.whatsapp || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ whatsapp: v || null }) });
+              const u = { ...selected, whatsapp: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 9 1234 5678" />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Instagram</label>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRight: "none", borderRadius: "8px 0 0 8px", color: "#666", fontFamily: F, fontSize: "0.82rem" }}>@</span>
+              <input defaultValue={selected.instagram || ""} onBlur={async (e) => {
+                const v = e.target.value.trim().replace(/^@/, "");
+                await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagram: v || null }) });
+                const u = { ...selected, instagram: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+              }} style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: "0 8px 8px 0", color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="tu_usuario" />
+            </div>
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Sitio web</label>
+            <input defaultValue={selected.website || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ website: v || null }) });
+              const u = { ...selected, website: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://tu-sitio.cl" />
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Dirección</label>
+            <input defaultValue={selected.address || ""} onBlur={async (e) => {
+              const v = e.target.value.trim();
+              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address: v || null }) });
+              const u = { ...selected, address: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="Av. Providencia 1234, Santiago" />
           </div>
         </div>
 
