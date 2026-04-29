@@ -108,11 +108,16 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
       const reg = await navigator.serviceWorker.register("/sw-waiter.js");
       await navigator.serviceWorker.ready;
 
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
-      });
+      // Try to reuse existing subscription, or create a new one
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+        });
+      }
 
+      // Always POST to backend to ensure isActive: true
       const res = await fetch("/api/qr/waiter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -181,11 +186,14 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
         if (sub) {
+          // Notify backend to stop sending push notifications
           await fetch("/api/qr/waiter/subscribe", {
             method: "DELETE",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ endpoint: sub.endpoint }),
           });
+          // DON'T call sub.unsubscribe() — keep the browser subscription alive
+          // so we can reuse it when the waiter starts the next shift
         }
       }
     } catch {}
@@ -254,6 +262,10 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
             onClick={() => {
               sessionStorage.removeItem("garzon_shift_ended");
               setShiftEnded(false);
+              // Explicitly re-subscribe to push notifications
+              if ("Notification" in window && Notification.permission === "granted") {
+                subscribe();
+              }
             }}
             style={{
               padding: "16px 40px", borderRadius: 50, background: "#F4A623",
