@@ -426,7 +426,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "3 vistas personalizables", tip: "Elige entre 3 estilos visuales de carta según el tipo de restaurante" },
                   { t: "Destaca tus platos estrella", tip: "Marca platos como 'nuevo' o 'recomendado' con etiquetas visuales" },
                   { t: "Publicar ofertas del día", tip: "Crea promociones temporales que aparecen destacadas en tu carta" },
-                  { t: "Estadísticas avanzadas", tip: "Datos detallados: qué platos leen más, conversión, horas peak" },
+                  { t: "Estadísticas básicas", tip: "Visualizaciones de tu carta, platos más vistos y actividad por día" },
                   { t: "Multilenguaje ES · EN · PT", tip: "Tu carta traducida automáticamente a inglés y portugués" },
                   { t: "Cinta de anuncios", tip: "Publica avisos en tu carta: horarios especiales, eventos, links a reservas o lo que necesites" },
                   { t: "Llamar al garzón", tip: "Tus clientes llaman al garzón desde su celular, sin levantarse" },
@@ -448,6 +448,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 16, color: "#e5e5e5" }}><Check color="#c084fc" /> Todo lo del plan Gold</div>
                 {[
+                  { t: "Estadísticas avanzadas", tip: "Conoce qué platos convierten más, en qué horarios vendes mejor, qué promociones funcionan y toma decisiones con datos reales de tu negocio" },
                   { t: "Productos sugeridos", tip: "Aumenta el ticket de venta sugiriendo productos relacionados directamente en la carta" },
                   { t: "Automatizaciones", tip: "Acciones que se ejecutan solas según reglas que tú defines" },
                   { t: "Campañas automáticas", tip: "Reconecta con clientes que no vuelven, felicita cumpleañeros y fideliza en automático" },
