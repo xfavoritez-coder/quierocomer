@@ -287,31 +287,34 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", position: "relative", overflow: "hidden",
       }}
     >
-      {/* Layer 1: Next.js optimized — loads instantly from cache */}
-      {photos.length > 0 && (
-        <Image
-          src={photos[photoIndex]}
-          alt={dish.name}
-          fill
-          className="object-contain object-center"
-          sizes="100vw"
-          priority={isActive}
-          quality={80}
-        />
-      )}
-      {/* Layer 2: raw original — fades in silently when loaded */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      {photos.length > 0 && (
-        <img
-          src={photos[photoIndex]}
-          alt=""
-          key={photos[photoIndex]}
-          loading="eager"
-          decoding="async"
-          onLoad={() => setImgLoaded(true)}
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
-        />
-      )}
+      {/* Photo container — limited to top 55% so cover doesn't crop too aggressively */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "55%", overflow: "hidden" }}>
+        {/* Layer 1: Next.js optimized — loads instantly from cache */}
+        {photos.length > 0 && (
+          <Image
+            src={photos[photoIndex]}
+            alt={dish.name}
+            fill
+            className="object-cover object-center"
+            sizes="100vw"
+            priority={isActive}
+            quality={80}
+          />
+        )}
+        {/* Layer 2: raw original — fades in silently when loaded */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {photos.length > 0 && (
+          <img
+            src={photos[photoIndex]}
+            alt=""
+            key={photos[photoIndex]}
+            loading="eager"
+            decoding="async"
+            onLoad={() => setImgLoaded(true)}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+          />
+        )}
+      </div>
 
       {/* Top gradient */}
       <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 100, zIndex: 8, background: "linear-gradient(to bottom, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.15) 60%, transparent 100%)" }} />
