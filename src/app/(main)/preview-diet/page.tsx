@@ -283,6 +283,14 @@ function Option5() {
         </div>
       )}
 
+      {/* Back to top button — shows after dismissing or scrolling past the genio section */}
+      {dismissed && (
+        <button onClick={() => { setDismissed(false); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ width: "100%", padding: "10px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, cursor: "pointer", marginBottom: 20, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+          <span style={{ fontSize: "14px" }}>🧞</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: BRAND }}>Ver mis opciones veganas ↑</span>
+        </button>
+      )}
+
       {/* Normal menu — untouched order, vegans reordered within each category */}
       {MENU.map(cat => {
         const sorted = [...cat.dishes].sort((a, b) => {
