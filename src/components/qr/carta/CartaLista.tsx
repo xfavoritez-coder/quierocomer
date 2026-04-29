@@ -585,7 +585,7 @@ export default function CartaLista({
           reviews={reviews}
           ratingMap={ratingMap}
           onClose={() => { setSelectedDish(null); setDishFromHero(false); if (hasNewLikes) { clearNewLikes(); setProfileTrigger((n) => n + 1); } }}
-          onChangeDish={setSelectedDish}
+          onChangeDish={(d) => { setDishFromHero(false); setSelectedDish(d); }}
           personalizationMap={pMap}
           restaurantName={restaurant.name}
           popularDishIds={popularDishIds}

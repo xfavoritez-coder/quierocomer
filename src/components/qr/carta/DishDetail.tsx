@@ -64,6 +64,13 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
+  // Sync activeIdx when dish changes externally (cross-sell click)
+  useEffect(() => {
+    if (currentIndex >= 0 && currentIndex !== activeIdx) {
+      setActiveIdx(currentIndex);
+    }
+  }, [currentIndex]);
+
   // Mount: lock body first, then show modal — prevents flash
   useEffect(() => {
     const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
@@ -88,11 +95,14 @@ export default function DishDetail({
     };
   }, []); // Only on mount/unmount
 
-  // Scroll to initial dish position
+  // Scroll to dish position when dish changes (including cross-sell navigation)
+  const programmaticScrollRef = useRef(false);
   useEffect(() => {
     const el = scrollRef.current;
-    if (el && currentIndex > 0) {
+    if (el && currentIndex >= 0) {
+      programmaticScrollRef.current = true;
       el.scrollTo({ left: currentIndex * el.clientWidth, behavior: "instant" as any });
+      setTimeout(() => { programmaticScrollRef.current = false; }, 300);
     }
   }, [currentIndex]);
 
@@ -116,7 +126,7 @@ export default function DishDetail({
     const timer = setTimeout(() => { mounted = true; }, 500);
     const slides = el.querySelectorAll("[data-dish-slide]");
     const obs = new IntersectionObserver((entries) => {
-      if (!mounted) return; // Ignore triggers during initial mount
+      if (!mounted || programmaticScrollRef.current) return; // Ignore triggers during initial mount or programmatic scroll
       entries.forEach((e) => {
         if (e.isIntersecting && e.intersectionRatio > 0.6) {
           const idx = parseInt((e.target as HTMLElement).dataset.dishSlide || "0");
