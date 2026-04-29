@@ -63,13 +63,11 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
         {/* Input */}
         <input
           ref={inputRef}
-          type="number"
-          min={1}
-          max={99}
+          type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder="Ej: 4"
+          placeholder="Ej: 4, A1, Terraza"
           style={{
             width: "100%", padding: "14px 16px", boxSizing: "border-box",
             background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.15)",
