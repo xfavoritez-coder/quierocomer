@@ -120,7 +120,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
     <button
       onClick={onClick}
       className="relative text-left overflow-hidden w-full"
-      style={{ height: 290, borderRadius: 10, background: "#1a1a1a", ...(autoRecommended ? { boxShadow: "0 0 0 1.5px rgba(244,166,35,0.5)" } : {}) }}
+      style={{ height: 290, borderRadius: 10, background: "#1a1a1a" }}
     >
       {photo ? (
         <>

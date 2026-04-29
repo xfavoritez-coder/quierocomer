@@ -606,17 +606,8 @@ function DishListCard({
   const isPromo = dish.tags?.includes("PROMOTION");
   const isRec = dish.tags?.includes("RECOMMENDED");
 
-  const hasAutoLabel = autoRecommended && !isRec;
-  const cardBg = isRec
-    ? "rgba(244,166,35,0.04)"
-    : hasAutoLabel
-    ? (isExploration ? "rgba(99,102,241,0.04)" : "rgba(244,166,35,0.06)")
-    : "white";
-  const cardBorder = isRec
-    ? "2px solid rgba(244,166,35,0.3)"
-    : hasAutoLabel
-    ? `1.5px solid ${isExploration ? "rgba(99,102,241,0.2)" : "rgba(244,166,35,0.2)"}`
-    : "1px solid rgba(0,0,0,0.04)";
+  const cardBg = isRec ? "rgba(244,166,35,0.04)" : "white";
+  const cardBorder = isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.04)";
 
   return (
     <button
