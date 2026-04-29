@@ -135,7 +135,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
             >
               {dish.name}
             </h2>
-            {shortDesc && (
+            {dish.description && (
               <p
                 className="font-[family-name:var(--font-dm)] line-clamp-2"
                 style={{
