@@ -33,13 +33,6 @@ const F = "var(--font-display)";
 export default function AdminLocales() {
   const { isSuper } = useAdminSession();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [announcements, setAnnouncements] = useState<any[]>([]);
-  const [annText, setAnnText] = useState("");
-  const [annLink, setAnnLink] = useState("");
-  const [annDays, setAnnDays] = useState<number[]>([]);
-  const [annStart, setAnnStart] = useState("");
-  const [annEnd, setAnnEnd] = useState("");
-  const [annSaving, setAnnSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"todos" | "activos" | "inactivos" | "sin_owner">("todos");
@@ -50,11 +43,52 @@ export default function AdminLocales() {
     fetch("/api/admin/locales").then(r => r.json()).then(d => { if (Array.isArray(d)) setRestaurants(d); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  // Fetch announcements when a restaurant is selected
+  // Edit form state
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editWhatsapp, setEditWhatsapp] = useState("");
+  const [editInstagram, setEditInstagram] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Sync form when selected changes
   useEffect(() => {
-    if (!selected) { setAnnouncements([]); return; }
-    fetch(`/api/admin/announcements?restaurantId=${selected.id}`).then(r => r.json()).then(d => setAnnouncements(d.announcements || [])).catch(() => {});
+    if (!selected) return;
+    setEditName(selected.name);
+    setEditDesc(selected.description || "");
+    setEditPhone(selected.phone || "");
+    setEditWhatsapp(selected.whatsapp || "");
+    setEditInstagram(selected.instagram || "");
+    setEditWebsite(selected.website || "");
+    setEditAddress(selected.address || "");
+    setSaved(false);
   }, [selected?.id]);
+
+  const saveChanges = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      const body = {
+        name: editName.trim() || selected.name,
+        description: editDesc.trim() || null,
+        phone: editPhone.trim() || null,
+        whatsapp: editWhatsapp.trim() || null,
+        instagram: editInstagram.trim().replace(/^@/, "") || null,
+        website: editWebsite.trim() || null,
+        address: editAddress.trim() || null,
+      };
+      await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const u = { ...selected, ...body };
+      setSelected(u);
+      setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {}
+    setSaving(false);
+  };
 
   const filtered = useMemo(() => {
     let list = restaurants;
@@ -124,21 +158,11 @@ export default function AdminLocales() {
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Nombre</label>
-            <input defaultValue={selected.name} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              if (v && v !== selected.name) {
-                await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: v }) });
-                const u = { ...selected, name: v }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-              }
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.88rem", outline: "none", boxSizing: "border-box" }} />
+            <input value={editName} onChange={e => setEditName(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.88rem", outline: "none", boxSizing: "border-box" }} />
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Descripción</label>
-            <textarea defaultValue={selected.description || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ description: v || null }) });
-              const u = { ...selected, description: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-            }} rows={2} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
+            <textarea value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={2} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", resize: "vertical" }} />
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Logo</label>
@@ -156,47 +180,30 @@ export default function AdminLocales() {
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Teléfono</label>
-            <input defaultValue={selected.phone || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: v || null }) });
-              const u = { ...selected, phone: v || null }; setSelected(u);
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 2 1234 5678" />
+            <input value={editPhone} onChange={e => setEditPhone(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 2 1234 5678" />
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>WhatsApp</label>
-            <input defaultValue={selected.whatsapp || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ whatsapp: v || null }) });
-              const u = { ...selected, whatsapp: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 9 1234 5678" />
+            <input value={editWhatsapp} onChange={e => setEditWhatsapp(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="+56 9 1234 5678" />
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Instagram</label>
             <div style={{ display: "flex", alignItems: "center" }}>
               <span style={{ padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRight: "none", borderRadius: "8px 0 0 8px", color: "#666", fontFamily: F, fontSize: "0.82rem" }}>@</span>
-              <input defaultValue={selected.instagram || ""} onBlur={async (e) => {
-                const v = e.target.value.trim().replace(/^@/, "");
-                await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ instagram: v || null }) });
-                const u = { ...selected, instagram: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-              }} style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: "0 8px 8px 0", color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="tu_usuario" />
+              <input value={editInstagram} onChange={e => setEditInstagram(e.target.value.replace(/^@/, ""))} style={{ flex: 1, padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: "0 8px 8px 0", color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="tu_usuario" />
             </div>
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Sitio web</label>
-            <input defaultValue={selected.website || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ website: v || null }) });
-              const u = { ...selected, website: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://tu-sitio.cl" />
+            <input value={editWebsite} onChange={e => setEditWebsite(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="https://tu-sitio.cl" />
           </div>
           <div>
             <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 3 }}>Dirección</label>
-            <input defaultValue={selected.address || ""} onBlur={async (e) => {
-              const v = e.target.value.trim();
-              await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ address: v || null }) });
-              const u = { ...selected, address: v || null }; setSelected(u); setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
-            }} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="Av. Providencia 1234, Santiago" />
+            <input value={editAddress} onChange={e => setEditAddress(e.target.value)} style={{ width: "100%", padding: "8px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box" }} placeholder="Av. Providencia 1234, Santiago" />
           </div>
+          <button onClick={saveChanges} disabled={saving} style={{ padding: "12px", background: saved ? "rgba(74,222,128,0.15)" : "#F4A623", color: saved ? "#4ade80" : "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", marginTop: 6 }}>
+            {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}
+          </button>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "0.85rem", fontFamily: F, color: "#aaa" }}>
@@ -244,89 +251,6 @@ export default function AdminLocales() {
           <button onClick={() => deleteRestaurant(selected)} style={{ flex: 1, padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
             🗑 Eliminar local
           </button>
-        </div>
-
-        {/* Announcements */}
-        <div style={{ marginTop: 20, padding: 16, background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12 }}>
-          <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 12px" }}>Cinta de anuncios</p>
-
-          {/* Existing announcements */}
-          {announcements.map((ann) => (
-            <div key={ann.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8, marginBottom: 8 }}>
-              <button onClick={async () => {
-                await fetch("/api/admin/announcements", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: ann.id, isActive: !ann.isActive }) });
-                setAnnouncements(prev => prev.map(a => a.id === ann.id ? { ...a, isActive: !a.isActive } : a));
-              }} style={{ width: 18, height: 18, borderRadius: 4, border: `2px solid ${ann.isActive ? "#F4A623" : "rgba(255,255,255,0.2)"}`, background: ann.isActive ? "#F4A623" : "transparent", cursor: "pointer", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: 0 }}>
-                {ann.isActive && <span style={{ color: "#0a0a0a", fontSize: "10px", fontWeight: 700 }}>✓</span>}
-              </button>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontFamily: F, fontSize: "0.82rem", color: ann.isActive ? "#ccc" : "#555", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ann.text}</p>
-                <div style={{ display: "flex", gap: 6, marginTop: 3, flexWrap: "wrap" }}>
-                  {ann.linkUrl && <span style={{ fontSize: "0.62rem", color: "#7fbfdc" }}>🔗 Link</span>}
-                  {ann.daysOfWeek?.length > 0 && <span style={{ fontSize: "0.62rem", color: "#888" }}>{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].filter((_: string, i: number) => ann.daysOfWeek.includes(i)).join(" ")}</span>}
-                  {ann.startDate && <span style={{ fontSize: "0.62rem", color: "#888" }}>Desde {new Date(ann.startDate).toLocaleDateString("es-CL")}</span>}
-                  {ann.endDate && <span style={{ fontSize: "0.62rem", color: "#888" }}>Hasta {new Date(ann.endDate).toLocaleDateString("es-CL")}</span>}
-                </div>
-              </div>
-              <button onClick={async () => {
-                await fetch("/api/admin/announcements", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: ann.id }) });
-                setAnnouncements(prev => prev.filter(a => a.id !== ann.id));
-              }} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.85rem", padding: 4, flexShrink: 0 }}>✕</button>
-            </div>
-          ))}
-
-          {/* Add new announcement */}
-          {announcements.length < 3 && (
-            <div style={{ marginTop: announcements.length > 0 ? 12 : 0 }}>
-              <input value={annText} onChange={e => setAnnText(e.target.value)} placeholder="Texto del anuncio..." style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
-              <input value={annLink} onChange={e => setAnnLink(e.target.value)} placeholder="Link (opcional) — https://..." style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, color: "white", fontFamily: F, fontSize: "0.82rem", outline: "none", boxSizing: "border-box", marginBottom: 8 }} />
-
-              {/* Day selector */}
-              <div style={{ display: "flex", gap: 4, marginBottom: 8 }}>
-                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", alignSelf: "center", marginRight: 4 }}>Días:</span>
-                {["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((d, i) => (
-                  <button key={i} onClick={() => setAnnDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 28, height: 28, borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, background: annDays.includes(i) ? "#F4A623" : "rgba(255,255,255,0.06)", color: annDays.includes(i) ? "#0a0a0a" : "#666" }}>{d}</button>
-                ))}
-                {annDays.length > 0 && <button onClick={() => setAnnDays([])} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.68rem", fontFamily: F }}>Todos</button>}
-              </div>
-
-              {/* Date range */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#555", display: "block", marginBottom: 2 }}>Desde (opcional)</label>
-                  <input type="date" value={annStart} onChange={e => setAnnStart(e.target.value)} style={{ width: "100%", padding: "6px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.78rem", outline: "none", boxSizing: "border-box", colorScheme: "dark" }} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#555", display: "block", marginBottom: 2 }}>Hasta (opcional)</label>
-                  <input type="date" value={annEnd} onChange={e => setAnnEnd(e.target.value)} style={{ width: "100%", padding: "6px 8px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, color: "white", fontFamily: F, fontSize: "0.78rem", outline: "none", boxSizing: "border-box", colorScheme: "dark" }} />
-                </div>
-              </div>
-
-              <button
-                disabled={!annText.trim() || annSaving}
-                onClick={async () => {
-                  setAnnSaving(true);
-                  try {
-                    const res = await fetch("/api/admin/announcements", {
-                      method: "POST", headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ restaurantId: selected.id, text: annText.trim(), linkUrl: annLink.trim() || null, daysOfWeek: annDays.length > 0 ? annDays : [], startDate: annStart || null, endDate: annEnd || null }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) { alert(data.error || "Error"); return; }
-                    setAnnouncements(prev => [...prev, data.announcement]);
-                    setAnnText(""); setAnnLink(""); setAnnDays([]); setAnnStart(""); setAnnEnd("");
-                  } catch {} finally { setAnnSaving(false); }
-                }}
-                style={{ width: "100%", padding: "10px", borderRadius: 8, border: "none", cursor: annText.trim() ? "pointer" : "default", fontFamily: F, fontSize: "0.85rem", fontWeight: 600, background: annText.trim() ? "#F4A623" : "rgba(255,255,255,0.06)", color: annText.trim() ? "#0a0a0a" : "#555" }}
-              >
-                {annSaving ? "Guardando..." : "Agregar anuncio"}
-              </button>
-            </div>
-          )}
-
-          {announcements.length === 0 && !annText && (
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#555", margin: 0 }}>Sin anuncios. Agrega uno para que aparezca en la carta.</p>
-          )}
         </div>
 
         {/* Inline QR */}
