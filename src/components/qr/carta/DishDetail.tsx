@@ -57,7 +57,7 @@ export default function DishDetail({
     return allergens;
   }, [allDishes]);
 
-  const [visible, setVisible] = useState(false);
+  const [visible, setVisible] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -66,8 +66,6 @@ export default function DishDetail({
 
   // Mount: lock body, scroll to initial dish
   useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-
     // If body is already locked (e.g. by Genio), don't re-lock
     const alreadyLocked = document.body.style.overflow === "hidden";
     let savedScrollY = 0;
