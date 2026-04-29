@@ -166,6 +166,7 @@ function VistaPremium() {
 
       {/* Category nav */}
       <div style={{ position: "sticky", top: 44, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
+        <button style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: `2px solid ${BRAND}`, fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: BRAND, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Ofertas</button>
         {MENU.map(cat => (
           <button key={cat.id} style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#999", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
             {cat.name}
@@ -173,8 +174,31 @@ function VistaPremium() {
         ))}
       </div>
 
-      {/* Genio carousel — below nav */}
-      <div style={{ paddingTop: 16 }}>
+      {/* Promos section */}
+      <div style={{ padding: "16px 12px 4px" }}>
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" as any }}>
+          {[
+            { name: "2x1 en Rolls", desc: "Todos los rolls clásicos", discount: 50, price: 9900, photo: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=200&h=200&fit=crop" },
+            { name: "Combo Familiar", desc: "Tabla de sushi + 2 entradas", discount: null, price: 42900, photo: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop" },
+          ].map((p, i) => (
+            <div key={i} style={{ flex: "0 0 290px", minWidth: 290, scrollSnapAlign: "start", background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 16, display: "flex", overflow: "hidden" }}>
+              <div style={{ width: 95, minHeight: 80, position: "relative", flexShrink: 0 }}>
+                <img src={p.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {p.discount && <span style={{ position: "absolute", top: 4, left: 4, background: "#10b981", color: "white", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>-{p.discount}%</span>}
+              </div>
+              <div style={{ flex: 1, padding: "10px 12px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#C23B1E", letterSpacing: "0.2em", textTransform: "uppercase" }}>HOY</span>
+                <p style={{ fontFamily: DM, fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: "2px 0 0" }}>{p.name}</p>
+                <p style={{ fontSize: "12.5px", color: "#8a7060", margin: "2px 0 0" }}>{p.desc}</p>
+                <span style={{ fontSize: "15px", fontWeight: 700, color: BRAND, marginTop: 4, display: "block" }}>${p.price.toLocaleString("es-CL")}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Genio carousel — below promos */}
+      <div style={{ paddingTop: 12 }}>
         <GenioCarousel onDishClick={scrollToDish} />
       </div>
 
@@ -235,6 +259,7 @@ function VistaLista() {
 
       {/* Category tabs */}
       <div style={{ position: "sticky", top: 44, zIndex: 10, background: "#fff", borderBottom: "1px solid #eee", padding: "0 16px", overflowX: "auto", scrollbarWidth: "none" as any, display: "flex", gap: 0 }}>
+        <button style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: `2px solid ${BRAND}`, fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: BRAND, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>Ofertas</button>
         {MENU.map(cat => (
           <button key={cat.id} style={{ padding: "12px 14px", background: "none", border: "none", borderBottom: "2px solid transparent", fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#999", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
             {cat.name}
@@ -242,8 +267,31 @@ function VistaLista() {
         ))}
       </div>
 
-      {/* Genio carousel — below nav */}
-      <div style={{ paddingTop: 16, paddingBottom: 4 }}>
+      {/* Promos section */}
+      <div style={{ padding: "16px 16px 4px" }}>
+        <div style={{ display: "flex", gap: 10, overflowX: "auto", scrollSnapType: "x mandatory", scrollbarWidth: "none" as any }}>
+          {[
+            { name: "2x1 en Rolls", desc: "Todos los rolls clásicos", discount: 50, price: 9900, photo: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=200&h=200&fit=crop" },
+            { name: "Combo Familiar", desc: "Tabla de sushi + 2 entradas", discount: null, price: 42900, photo: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop" },
+          ].map((p, i) => (
+            <div key={i} style={{ flex: "0 0 290px", minWidth: 290, scrollSnapAlign: "start", background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 16, display: "flex", overflow: "hidden" }}>
+              <div style={{ width: 95, minHeight: 80, position: "relative", flexShrink: 0 }}>
+                <img src={p.photo} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                {p.discount && <span style={{ position: "absolute", top: 4, left: 4, background: "#10b981", color: "white", fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: 6 }}>-{p.discount}%</span>}
+              </div>
+              <div style={{ flex: 1, padding: "10px 12px" }}>
+                <span style={{ fontSize: "13px", fontWeight: 700, color: "#C23B1E", letterSpacing: "0.2em", textTransform: "uppercase" }}>HOY</span>
+                <p style={{ fontFamily: DM, fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: "2px 0 0" }}>{p.name}</p>
+                <p style={{ fontSize: "12.5px", color: "#8a7060", margin: "2px 0 0" }}>{p.desc}</p>
+                <span style={{ fontSize: "15px", fontWeight: 700, color: BRAND, marginTop: 4, display: "block" }}>${p.price.toLocaleString("es-CL")}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Genio carousel — below promos */}
+      <div style={{ paddingTop: 12, paddingBottom: 4 }}>
         <GenioCarousel onDishClick={scrollToDish} />
       </div>
 
@@ -320,7 +368,7 @@ export default function PreviewDietPage() {
           cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
         }}>
           <span style={{ fontSize: "15px" }}>🌿</span>
-          <span style={{ fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas</span>
+          <span style={{ fontFamily: DM, fontSize: "0.82rem", fontWeight: 600, color: "#0e0e0e" }}>Mis opciones veganas ↑</span>
         </button>
       )}
     </div>
