@@ -8,7 +8,7 @@ import CategoriesManager from "@/components/admin/CategoriesManager";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
-import { Star, Eye, EyeOff, MoreVertical, Plus, Search } from "lucide-react";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw } from "lucide-react";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -21,6 +21,198 @@ interface Restaurant { id: string; name: string; slug: string; }
 
 const F = "var(--font-display)";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e85530", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
+
+/* ── Dish translations editor ── */
+const LANG_INFO: Record<string, { label: string; flag: string }> = {
+  en: { label: "Inglés", flag: "🇺🇸" },
+  pt: { label: "Portugués", flag: "🇧🇷" },
+  it: { label: "Italiano", flag: "🇮🇹" },
+};
+
+function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; restaurantId: string }) {
+  const [open, setOpen] = useState(false);
+  const [translations, setTranslations] = useState<Record<string, { description: string; isManual: boolean }>>({});
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
+  const [enabledLangs, setEnabledLangs] = useState<string[]>([]);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const [trRes, restRes] = await Promise.all([
+        fetch(`/api/admin/dishes/${dishId}/translations`),
+        fetch(`/api/admin/locales/${restaurantId}`),
+      ]);
+      const trData = await trRes.json();
+      const restData = await restRes.json();
+      const map: Record<string, { description: string; isManual: boolean }> = {};
+      const draftMap: Record<string, string> = {};
+      if (Array.isArray(trData)) {
+        for (const t of trData) {
+          map[t.lang] = { description: t.description || "", isManual: t.isManual };
+          draftMap[t.lang] = t.description || "";
+        }
+      }
+      setTranslations(map);
+      setDrafts(draftMap);
+      const langs = restData?.enabledLangs?.filter((l: string) => l !== "es") || ["en", "pt"];
+      setEnabledLangs(langs);
+    } catch {}
+    setLoading(false);
+  };
+
+  const handleOpen = () => {
+    if (!open) load();
+    setOpen(!open);
+  };
+
+  const saveTranslation = async (lang: string) => {
+    const desc = drafts[lang]?.trim();
+    if (!desc) return;
+    setSaving(lang);
+    try {
+      await fetch(`/api/admin/dishes/${dishId}/translations`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang, description: desc }),
+      });
+      setTranslations(prev => ({ ...prev, [lang]: { description: desc, isManual: true } }));
+    } catch {}
+    setSaving(null);
+  };
+
+  const regenerate = async (lang: string) => {
+    setRegenerating(lang);
+    try {
+      // Delete the manual flag by setting isManual to false, then trigger re-translation
+      await fetch(`/api/admin/dishes/${dishId}/translations`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lang, description: translations[lang]?.description || "", regenerate: true }),
+      });
+      // Reload after a moment to get the regenerated version
+      setTimeout(async () => {
+        const res = await fetch(`/api/admin/dishes/${dishId}/translations`);
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const map: Record<string, { description: string; isManual: boolean }> = {};
+          const draftMap: Record<string, string> = {};
+          for (const t of data) {
+            map[t.lang] = { description: t.description || "", isManual: t.isManual };
+            draftMap[t.lang] = t.description || "";
+          }
+          setTranslations(map);
+          setDrafts(draftMap);
+        }
+        setRegenerating(null);
+      }, 3000);
+    } catch { setRegenerating(null); }
+  };
+
+  const langs = enabledLangs.length > 0 ? enabledLangs : ["en", "pt"];
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <button
+        onClick={handleOpen}
+        style={{
+          display: "flex", alignItems: "center", gap: 8, width: "100%",
+          padding: "10px 14px", background: open ? "rgba(127,191,220,0.08)" : "var(--adm-input, #F5F4F1)",
+          border: open ? "1px solid rgba(127,191,220,0.2)" : "1px solid var(--adm-card-border, #eee)",
+          borderRadius: 10, cursor: "pointer", fontFamily: F, fontSize: "0.82rem",
+          fontWeight: 600, color: open ? "#7fbfdc" : "var(--adm-text2, #666)",
+        }}
+      >
+        <Globe size={15} />
+        Traducciones
+        <span style={{ marginLeft: "auto", fontSize: "0.7rem", color: "var(--adm-text3, #999)" }}>
+          {Object.values(translations).filter(t => t.description).length}/{langs.length}
+        </span>
+        <span style={{ transform: open ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.2s", fontSize: "0.8rem" }}>▾</span>
+      </button>
+
+      {open && (
+        <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 10 }}>
+          {loading ? (
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3, #999)", padding: "10px 0" }}>Cargando traducciones...</p>
+          ) : (
+            langs.map(lang => {
+              const info = LANG_INFO[lang];
+              if (!info) return null;
+              const tr = translations[lang];
+              const draft = drafts[lang] || "";
+              const changed = draft !== (tr?.description || "");
+              return (
+                <div key={lang} style={{ background: "var(--adm-input, #F5F4F1)", borderRadius: 10, padding: "10px 12px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                    <span style={{ fontSize: "1rem" }}>{info.flag}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "var(--adm-text, #333)" }}>{info.label}</span>
+                    {tr?.isManual && (
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>Manual</span>
+                    )}
+                    {tr && !tr.isManual && tr.description && (
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Auto</span>
+                    )}
+                    {!tr?.description && (
+                      <span style={{ fontSize: "0.58rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: "rgba(255,255,255,0.06)", color: "var(--adm-text3, #999)" }}>Sin traducción</span>
+                    )}
+                  </div>
+                  <textarea
+                    value={draft}
+                    onChange={e => setDrafts(prev => ({ ...prev, [lang]: e.target.value }))}
+                    placeholder={`Descripción en ${info.label.toLowerCase()}...`}
+                    rows={2}
+                    style={{
+                      width: "100%", padding: "8px 10px", borderRadius: 8,
+                      border: "1px solid var(--adm-card-border, #eee)", background: "var(--adm-card, white)",
+                      fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text, #333)",
+                      outline: "none", resize: "vertical", boxSizing: "border-box",
+                    }}
+                  />
+                  <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                    {changed && (
+                      <button
+                        onClick={() => saveTranslation(lang)}
+                        disabled={saving === lang || !draft.trim()}
+                        style={{
+                          padding: "5px 12px", borderRadius: 6, border: "none",
+                          background: "#1a1a1a", color: "white", fontFamily: F,
+                          fontSize: "0.7rem", fontWeight: 600, cursor: "pointer",
+                          opacity: saving === lang ? 0.5 : 1,
+                        }}
+                      >
+                        {saving === lang ? "Guardando..." : "Guardar"}
+                      </button>
+                    )}
+                    {tr?.description && (
+                      <button
+                        onClick={() => regenerate(lang)}
+                        disabled={!!regenerating}
+                        title="Regenerar traducción automática"
+                        style={{
+                          padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border, #eee)",
+                          background: "transparent", color: "var(--adm-text3, #999)", fontFamily: F,
+                          fontSize: "0.68rem", fontWeight: 500, cursor: "pointer",
+                          display: "flex", alignItems: "center", gap: 4,
+                          opacity: regenerating === lang ? 0.5 : 1,
+                        }}
+                      >
+                        <RefreshCw size={11} className={regenerating === lang ? "animate-spin" : ""} />
+                        {regenerating === lang ? "Regenerando..." : "Regenerar"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* ── Dish suggestions editor ("Va bien con") ── */
 function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishes: Dish[] }) {
@@ -1019,6 +1211,9 @@ export default function AdminMenus() {
 
               {/* Sugerencias — "Va bien con" */}
               <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
+
+              {/* Traducciones */}
+              {selectedRestaurantId && <DishTranslationsEditor dishId={selectedDish.id} restaurantId={selectedRestaurantId} />}
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
