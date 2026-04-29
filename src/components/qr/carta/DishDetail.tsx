@@ -256,6 +256,21 @@ function DishSlide({
       if (a.type === "ALLERGEN" && !seenAllergens.has(a.name)) { seenAllergens.add(a.name); derivedAllergens.push(a.name); }
     }
   }
+  // Pull-down to close when already at top
+  const pullRef = useRef<{ y: number; scrollTop: number } | null>(null);
+  const slideRef = useRef<HTMLDivElement>(null);
+  const handlePullStart = (e: React.TouchEvent) => {
+    const el = slideRef.current;
+    if (el) pullRef.current = { y: e.touches[0].clientY, scrollTop: el.scrollTop };
+  };
+  const handlePullEnd = (e: React.TouchEvent) => {
+    const p = pullRef.current;
+    pullRef.current = null;
+    if (!p) return;
+    const dy = e.changedTouches[0].clientY - p.y;
+    if (p.scrollTop <= 0 && dy > 80) onClose();
+  };
+
   const lang = useLang();
   const ingredientNames = dishIngs.map((di: any) => {
     const ing = di.ingredient;
@@ -268,7 +283,10 @@ function DishSlide({
 
   return (
     <div
+      ref={slideRef}
       data-dish-slide={index}
+      onTouchStart={handlePullStart}
+      onTouchEnd={handlePullEnd}
       style={{
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
