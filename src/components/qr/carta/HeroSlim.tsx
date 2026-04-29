@@ -103,18 +103,18 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
           style={{ top: 10, left: 14, height: 36, background: "none", border: "none", cursor: "pointer", padding: 0 }}
         >
           {logoSrc ? (
-            <Image src={logoSrc} alt={restaurant.name} width={24} height={24} className="rounded-full" style={{ border: "none" }} />
+            <Image src={logoSrc} alt={restaurant.name} width={25} height={25} className="rounded-full" style={{ border: "none" }} />
           ) : (
             <div
               className="flex items-center justify-center rounded-full"
-              style={{ width: 24, height: 24, background: "#F4A623", fontSize: "0.65rem", fontWeight: 700, color: "#0e0e0e" }}
+              style={{ width: 25, height: 25, background: "#F4A623", fontSize: "0.65rem", fontWeight: 700, color: "#0e0e0e" }}
             >
               {initial}
             </div>
           )}
           <span
             className="text-white font-[family-name:var(--font-dm)]"
-            style={{ fontSize: "1rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}
+            style={{ fontSize: "1.12rem", fontWeight: 400, textShadow: "0 1px 3px rgba(0,0,0,0.4)", opacity: 0.85 }}
           >
             {restaurant.name}
           </span>

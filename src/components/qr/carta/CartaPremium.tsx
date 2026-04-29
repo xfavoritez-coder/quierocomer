@@ -111,7 +111,10 @@ export default function CartaPremium({
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   useEffect(() => {
-    setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    check();
+    window.addEventListener("genio-updated", check);
+    return () => window.removeEventListener("genio-updated", check);
   }, []);
   const hasPromos = marketingPromos && marketingPromos.length > 0;
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
@@ -518,7 +521,7 @@ export default function CartaPremium({
 
         {/* Genio vegan carousel — only for omnivore restaurants when user is vegan */}
         {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-          <div style={{ paddingTop: hasPromos ? 8 : 16 }}>
+          <div style={{ paddingTop: hasPromos ? 16 : 10 }}>
             <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
               const dish = dishes.find(d => d.id === dishId);
               if (dish) setSelectedDish(dish);

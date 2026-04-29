@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Eye, EyeOff, MoreVertical, GripVertical } from "lucide-react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
-const GOLD = "#F4A623";
 
 interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; }
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
-const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  food: { label: "Platos de fondo", emoji: "🍽️", color: GOLD },
-  entry: { label: "Entradas", emoji: "🥗", color: "#4ade80" },
-  drink: { label: "Bebestibles", emoji: "🥤", color: "#7fbfdc" },
-  dessert: { label: "Postres", emoji: "🍰", color: "#c084fc" },
-  extra: { label: "Extras", emoji: "🔧", color: "#888" },
+const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
+  food: { label: "Platos de fondo", emoji: "🍽️" },
+  entry: { label: "Entradas", emoji: "🥗" },
+  drink: { label: "Bebestibles", emoji: "🥤" },
+  dessert: { label: "Postres", emoji: "🍰" },
+  extra: { label: "Extras", emoji: "🔧" },
 };
 
 interface Props {
@@ -58,6 +58,13 @@ function SortableDish({ dish, onMove, onEdit, categories, currentCatId }: { dish
   );
 }
 
+/* ── Icon button shared style ── */
+const iconBtnStyle: React.CSSProperties = {
+  width: 32, height: 32, borderRadius: 8, background: "transparent",
+  border: "none", color: "#888", cursor: "pointer", display: "flex",
+  alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
+};
+
 function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
@@ -74,7 +81,9 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState(category.name);
-  const [showTypeTip, setShowTypeTip] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [changingType, setChangingType] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -88,100 +97,184 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   };
 
   const hiddenCount = dishes.filter(d => d.isActive === false).length;
-  const isEmpty = dishes.length === 0;
   const dt = DISH_TYPE_LABELS[category.dishType || "food"] || DISH_TYPE_LABELS.food;
+  const isHidden = !category.isActive;
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [menuOpen]);
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
-      <div style={{ background: expanded ? "var(--adm-card)" : "transparent", border: isEmpty ? "1px dashed var(--adm-card-border)" : "1px solid var(--adm-card-border)", borderRadius: expanded ? 14 : 10, overflow: expanded ? "hidden" : "visible" }}>
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px" }}>
-          <div {...attributes} {...listeners} style={{ cursor: "grab", padding: "4px 3px", color: "var(--adm-text3)", fontSize: "1rem", touchAction: "none", flexShrink: 0, lineHeight: 1 }}>⠿</div>
-          {editing ? (
-            <>
-              <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onRename(category.id, editName); setEditing(false); } }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", outline: "none" }} autoFocus />
-              <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 10px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer" }}>OK</button>
-              <button onClick={() => setEditing(false)} style={{ padding: "4px 8px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
-            </>
-          ) : (
-            <>
-              <button onClick={() => setExpanded(!expanded)} style={{ flex: 1, background: "none", border: "none", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-                <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: category.isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{category.name}</span>
-                <span onClick={(e) => { e.stopPropagation(); setEditing(true); setEditName(category.name); }} style={{ fontSize: "0.65rem", cursor: "pointer", opacity: 0.4 }}>✏️</span>
-                <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
-                  {dishes.length} producto{dishes.length !== 1 ? "s" : ""}
-                </span>
-                {hiddenCount > 0 && (
-                  <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 600, color: "#999", background: "rgba(255,255,255,0.06)", padding: "2px 8px", borderRadius: 50, border: "1px solid rgba(255,255,255,0.08)" }}>
-                    {hiddenCount} oculto{hiddenCount !== 1 ? "s" : ""}
-                  </span>
-                )}
-                <span style={{ marginLeft: "auto" }} />
-              </button>
-              {/* dishType select + help */}
-              <div style={{ position: "relative", display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
-                {(() => {
-                  const dt = DISH_TYPE_LABELS[category.dishType || "food"] || DISH_TYPE_LABELS.food;
-                  return (
-                    <select
-                      value={category.dishType || "food"}
-                      onChange={(e) => onTypeChange(category.id, e.target.value)}
-                      style={{ padding: "3px 6px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: dt.color, color: "#fff", outline: "none", appearance: "none", WebkitAppearance: "none", paddingRight: 16, backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 4px center", flexShrink: 0 }}
-                    >
-                      {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
-                        <option key={key} value={key}>{v.emoji} {v.label}</option>
-                      ))}
-                    </select>
-                  );
-                })()}
-                <button onClick={() => setShowTypeTip(!showTypeTip)} style={{ width: 18, height: 18, borderRadius: "50%", border: "1px solid var(--adm-card-border)", background: showTypeTip ? "var(--adm-text3)" : "transparent", color: showTypeTip ? "var(--adm-card)" : "var(--adm-text3)", fontSize: "0.6rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1, flexShrink: 0 }}>?</button>
-                {showTypeTip && (
-                  <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, width: 240, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 50 }}>
-                    <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-                      Clasifica el tipo de productos de esta categoría. Se usa para sugerir complementos automáticamente en la carta — por ejemplo, ofrecer un postre o bebestible junto a un plato de fondo.
-                    </p>
-                  </div>
-                )}
-              </div>
-              <button onClick={() => onToggle(category.id, !category.isActive)} style={{ padding: "3px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: category.isActive ? "var(--adm-text3)" : "#4ade80" }}>
-                {category.isActive ? "Ocultar" : "Mostrar"}
-              </button>
-              <button onClick={() => {
-                if (dishes.length > 0) {
-                  if (confirm(`"${category.name}" tiene ${dishes.length} producto(s). ¿Quieres moverlos a otra categoría y eliminarla?`)) {
-                    onDelete(category.id);
-                  }
-                } else {
-                  if (confirm(`¿Eliminar la categoría "${category.name}"?`)) {
-                    onDelete(category.id);
-                  }
-                }
-              }} style={{ padding: "3px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", fontWeight: 600, color: "#ef4444", cursor: "pointer" }}>Eliminar</button>
-              <span onClick={() => setExpanded(!expanded)} style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: expanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>▾</span>
-            </>
-          )}
+      {/* Category row */}
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{
+          background: isHidden ? "#FAF9F7" : "white",
+          border: "0.5px solid rgba(0,0,0,0.08)",
+          borderRadius: 12,
+          padding: 12,
+          display: "flex",
+          gap: 10,
+          alignItems: "center",
+          opacity: isHidden ? 0.7 : 1,
+          cursor: "pointer",
+          overflow: expanded ? "visible" : "hidden",
+          ...(expanded ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : {}),
+        }}
+      >
+        {/* Drag handle */}
+        <div
+          {...attributes} {...listeners}
+          onClick={e => e.stopPropagation()}
+          style={{ width: 24, height: 24, color: "#C5C0B5", fontSize: 14, cursor: "grab", touchAction: "none", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}
+        >
+          <GripVertical size={16} />
         </div>
 
-        {/* Expanded: dish list with drag */}
-        {expanded && (
-          <div style={{ padding: "0 14px 14px" }}>
-            {dishes.length > 0 ? (
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDishDragEnd}>
-                <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
-                  {dishes.map(d => (
-                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} categories={allCategories} currentCatId={category.id} />
-                  ))}
-                </SortableContext>
-              </DndContext>
-            ) : (
-              <div style={{ textAlign: "center", padding: "20px 12px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Sin productos en esta categoría</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", opacity: 0.6, marginTop: 4 }}>Agrega productos desde la pestaña Productos</p>
-              </div>
-            )}
+        {/* Body */}
+        {editing ? (
+          <div style={{ flex: 1, display: "flex", gap: 8, alignItems: "center" }} onClick={e => e.stopPropagation()}>
+            <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onRename(category.id, editName); setEditing(false); } }} style={{ flex: 1, padding: "4px 8px", background: "#F5F4F1", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "#1a1a1a", outline: "none" }} autoFocus />
+            <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 12px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" }}>OK</button>
+            <button onClick={() => setEditing(false)} style={{ padding: "4px 8px", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>X</button>
+          </div>
+        ) : changingType ? (
+          <div style={{ flex: 1, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }} onClick={e => e.stopPropagation()}>
+            {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
+              <button
+                key={key}
+                onClick={() => { onTypeChange(category.id, key); setChangingType(false); }}
+                style={{
+                  padding: "4px 10px", borderRadius: 999, border: (category.dishType || "food") === key ? "1.5px solid #854F0B" : "1px solid rgba(0,0,0,0.08)",
+                  background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
+                  fontFamily: F, fontSize: "0.68rem", fontWeight: 500, color: "#854F0B", cursor: "pointer",
+                }}
+              >
+                {v.emoji} {v.label}
+              </button>
+            ))}
+            <button onClick={() => setChangingType(false)} style={{ padding: "4px 8px", background: "none", border: "none", fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>Cancelar</button>
+          </div>
+        ) : (
+          <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
+            {/* Name */}
+            <span style={{ fontFamily: F, fontSize: "14.5px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", letterSpacing: "-0.1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {category.name}
+            </span>
+            {/* Meta row */}
+            <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <span style={{ fontFamily: FB, fontSize: 11, color: "#888" }}>
+                {dishes.length} producto{dishes.length !== 1 ? "s" : ""}
+              </span>
+              {hiddenCount > 0 && (
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "#F0EBE2", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
+                  {hiddenCount} oculto{hiddenCount !== 1 ? "s" : ""}
+                </span>
+              )}
+              {isHidden && (
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "#F0EBE2", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
+                  Toda oculta
+                </span>
+              )}
+              <span style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: "#F5F0E8", color: "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1 }}>
+                {dt.label}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Actions */}
+        {!editing && !changingType && (
+          <div style={{ flexShrink: 0, display: "flex", gap: 0 }} onClick={e => e.stopPropagation()}>
+            {/* Visibility toggle */}
+            <button
+              onClick={() => onToggle(category.id, !category.isActive)}
+              style={iconBtnStyle}
+              title={isHidden ? "Mostrar categoría" : "Ocultar categoría"}
+            >
+              {isHidden ? <EyeOff size={16} color="#C5C0B5" /> : <Eye size={16} />}
+            </button>
+            {/* Menu */}
+            <div style={{ position: "relative" }} ref={menuRef}>
+              <button onClick={() => setMenuOpen(!menuOpen)} style={iconBtnStyle}>
+                <MoreVertical size={16} />
+              </button>
+              {menuOpen && (
+                <div style={{
+                  position: "absolute", right: 0, top: "100%", marginTop: 4, width: 180,
+                  background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.12)", zIndex: 100, overflow: "hidden",
+                }}>
+                  <button
+                    onClick={() => { setMenuOpen(false); setEditing(true); setEditName(category.name); }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#1a1a1a", cursor: "pointer" }}
+                  >
+                    Editar nombre
+                  </button>
+                  <button
+                    onClick={() => { setMenuOpen(false); setChangingType(true); }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#1a1a1a", cursor: "pointer", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                  >
+                    Cambiar tipo
+                  </button>
+                  <button
+                    disabled
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#bbb", cursor: "default", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                  >
+                    Duplicar
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMenuOpen(false);
+                      if (dishes.length > 0) {
+                        if (confirm(`"${category.name}" tiene ${dishes.length} producto(s). ¿Quieres moverlos a otra categoría y eliminarla?`)) {
+                          onDelete(category.id);
+                        }
+                      } else {
+                        if (confirm(`¿Eliminar la categoría "${category.name}"?`)) {
+                          onDelete(category.id);
+                        }
+                      }
+                    }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#ef4444", cursor: "pointer", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
+
+      {/* Expanded: dish list with drag */}
+      {expanded && (
+        <div style={{ padding: "0 14px 14px", background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderTop: "none", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+          {dishes.length > 0 ? (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDishDragEnd}>
+              <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
+                <div style={{ paddingTop: 8 }}>
+                  {dishes.map(d => (
+                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} categories={allCategories} currentCatId={category.id} />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
+          ) : (
+            <div style={{ textAlign: "center", padding: "20px 12px" }}>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888" }}>Sin productos en esta categoría</p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "#888", opacity: 0.6, marginTop: 4 }}>Agrega productos desde la pestaña Productos</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -284,15 +377,24 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
 
   return (
     <div>
-      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
-        Arrastra para reordenar categorías y platos. El orden se refleja en la carta QR.
-      </p>
+      {/* Hint card */}
+      <div style={{
+        background: "#FAF9F7", border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 10,
+        padding: "10px 14px", margin: "0 0 14px", display: "flex", gap: 8, alignItems: "center",
+      }}>
+        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#FAEEDA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11 }}>
+          💡
+        </div>
+        <span style={{ fontFamily: FB, fontSize: 11, color: "#5a5a5a", lineHeight: 1.4 }}>
+          Arrastra para reordenar. El orden se refleja en la carta QR.
+        </span>
+      </div>
 
       {/* Create */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
         <input value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => e.key === "Enter" && createCategory()} placeholder="Nueva categoría..."
-          style={{ flex: 1, padding: "10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none" }} />
-        <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: !newCatName.trim() ? 0.5 : 1 }}>+ Crear</button>
+          style={{ flex: 1, padding: "10px 14px", background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: 13, outline: "none" }} />
+        <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
       </div>
 
       {/* Sortable categories */}

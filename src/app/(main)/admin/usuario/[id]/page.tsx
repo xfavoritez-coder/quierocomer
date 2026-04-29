@@ -313,6 +313,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                       <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platos vistos</p>
                       {s.dishesViewed.map((d: any, i: number) => (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                          <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 700, color: "#7fbfdc", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>
                           {d.dish?.photos?.[0] && <img src={d.dish.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId?.slice(0, 8)}</span>
                           <span style={{ fontFamily: F, fontSize: "0.7rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.dwellMs)}</span>

@@ -31,7 +31,7 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
       id="genio-vegan-carousel"
       className="font-[family-name:var(--font-dm)]"
       style={{
-        margin: "0 12px 16px",
+        margin: "0 12px 10px",
         padding: "14px 12px 12px",
         background: "#EAF3DE",
         border: "0.5px solid rgba(99, 153, 34, 0.2)",
@@ -105,7 +105,7 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
               {/* Price */}
               <p style={{
                 fontFamily: "var(--font-dm), system-ui, sans-serif",
-                fontSize: "12px", fontWeight: 500, color: "#1a1a1a", margin: 0,
+                fontSize: "12px", fontWeight: 500, color: "#3B6D11", margin: 0,
               }}>
                 ${d.price.toLocaleString("es-CL")}
               </p>

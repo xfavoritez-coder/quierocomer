@@ -518,6 +518,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   if (document.cookie.includes("qr_user_id")) { fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType, restrictions: restrictions.filter(x => x !== "ninguna"), dislikes }) }).catch(() => {}); }
                   const changed = dietType !== initialDiet.current || JSON.stringify(restrictions) !== initialRestrictions.current || JSON.stringify(dislikes) !== initialDislikes.current;
                   if (changed) { trackStat(restaurantId, "GENIO_PROFILE_SAVED", undefined, genioSessionId); }
+                  window.dispatchEvent(new Event("genio-updated"));
                   setVisible(false); setTimeout(onClose, 200);
                 }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, display: "block", margin: "0 auto 14px", maxWidth: 280 }}>
                   Guardar cambios
@@ -786,6 +787,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <button
             onClick={() => {
               trackStat(restaurantId, "GENIO_COMPLETE", undefined, genioSessionId);
+              window.dispatchEvent(new Event("genio-updated"));
               setVisible(false);
               setTimeout(onClose, 200);
             }}

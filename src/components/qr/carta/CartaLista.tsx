@@ -79,7 +79,13 @@ export default function CartaLista({
 }: Props) {
   const lang = useLang();
   const { hasNewLikes, clearNewLikes } = useFavorites();
-  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
+  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
+  useEffect(() => {
+    const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    check();
+    window.addEventListener("genio-updated", check);
+    return () => window.removeEventListener("genio-updated", check);
+  }, []);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -405,7 +411,7 @@ export default function CartaLista({
 
       {/* Genio vegan carousel */}
       {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-        <div style={{ paddingTop: hasPromos ? 8 : 16, paddingLeft: 0, paddingRight: 0 }}>
+        <div style={{ paddingTop: hasPromos ? 16 : 10, paddingLeft: 0, paddingRight: 0 }}>
           <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);

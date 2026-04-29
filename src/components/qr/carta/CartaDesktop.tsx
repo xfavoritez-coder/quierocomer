@@ -13,6 +13,8 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
+import PromoCarousel from "../capture/PromoCarousel";
+import GenioVeganCarousel from "./GenioVeganCarousel";
 
 interface Props {
   restaurant: Restaurant;
@@ -22,11 +24,12 @@ interface Props {
   tableId?: string;
   isQrScan?: boolean;
   lang?: Lang;
+  marketingPromos?: any[];
 }
 
 const LANG_STORAGE_KEY = "qc_lang";
 
-export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang }: Props) {
+export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang, marketingPromos }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
@@ -87,7 +90,10 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
   // Check if genio was completed
   useEffect(() => {
-    setHasCompletedGenio(!!localStorage.getItem("qr_diet"));
+    const check = () => setHasCompletedGenio(!!localStorage.getItem("qr_diet"));
+    check();
+    window.addEventListener("genio-updated", check);
+    return () => window.removeEventListener("genio-updated", check);
   }, []);
 
   // Close lang dropdown on outside click
@@ -187,6 +193,26 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
       {/* Content */}
       <div ref={contentRef} style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px 80px" }}>
+        {/* Promos banner */}
+        {marketingPromos && marketingPromos.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
+        )}
+
+        {/* Vegan carousel */}
+        {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
+          <div style={{ marginBottom: 32 }}>
+            <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
+        )}
+
         {grouped.map(group => {
           if (group.dishes.length === 0) return null;
           return (

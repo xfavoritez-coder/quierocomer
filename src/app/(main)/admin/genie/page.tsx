@@ -368,6 +368,7 @@ export default function AdminSessions() {
                                     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                                       {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 6, fontSize: "0.75rem", fontFamily: F }}>
+                                          {dishSort === "order" && <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#7fbfdc", minWidth: 16, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>}
                                           <span style={{ color: "#ccc", flex: 1 }}>
                                             {d.dish?.name || d.dishId.slice(0, 8)}
                                             {d.isRecommended && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 600 }}>REC</span>}
@@ -474,6 +475,11 @@ export default function AdminSessions() {
                       {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>🔔 Garzón</span>}
                       {s.isBot && <span style={{ fontSize: "0.6rem", background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Bot</span>}
                       {s.qrUser && (() => {
+                        const regTime = new Date(s.qrUser.createdAt).getTime();
+                        const sStart = new Date(s.startedAt).getTime() - 60_000;
+                        const sEnd = s.endedAt ? new Date(s.endedAt).getTime() + 60_000 : Date.now() + 60_000;
+                        const isRegistrationSession = regTime >= sStart && regTime <= sEnd;
+                        if (!isRegistrationSession) return null;
                         const src = s.qrUser.interactions?.[0]?.type;
                         const label = src ? SOURCE_LABELS[src] || src.replace("_CONVERTED", "") : null;
                         return <span style={{ fontSize: "0.6rem", background: "rgba(74,222,128,0.15)", color: "#4ade80", padding: "1px 6px", borderRadius: 4, fontWeight: 600 }}>Registrado{label ? ` vía ${label}` : ""}</span>;
@@ -743,6 +749,7 @@ export default function AdminSessions() {
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                           {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8 }}>
+                              {dishSort === "order" && <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 700, color: "#7fbfdc", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>}
                               {d.dish?.photos?.[0] ? (
                                 <img src={d.dish.photos[0]} alt="" style={{ width: 28, height: 28, borderRadius: 5, objectFit: "cover", flexShrink: 0 }} />
                               ) : (

@@ -160,6 +160,7 @@ export default async function CartaPage({
       tableId={tableId}
       isQrScan={isQrScan}
       lang={lang}
+      marketingPromos={marketingPromos}
     >
       {isPremium ? (
         <CartaRouter {...cartaProps} />
