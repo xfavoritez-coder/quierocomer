@@ -31,7 +31,7 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
       id="genio-vegan-carousel"
       className="font-[family-name:var(--font-dm)]"
       style={{
-        margin: "0 20px 16px",
+        margin: "0 12px 16px",
         padding: "14px 12px 12px",
         background: "#EAF3DE",
         border: "0.5px solid rgba(99, 153, 34, 0.2)",

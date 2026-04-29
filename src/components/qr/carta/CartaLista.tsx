@@ -405,7 +405,7 @@ export default function CartaLista({
 
       {/* Genio vegan carousel */}
       {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-        <div style={{ paddingTop: hasPromos ? 8 : 16, paddingLeft: 4, paddingRight: 4 }}>
+        <div style={{ paddingTop: hasPromos ? 8 : 16, paddingLeft: 0, paddingRight: 0 }}>
           <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
