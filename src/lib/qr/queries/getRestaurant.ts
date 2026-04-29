@@ -33,6 +33,9 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
               },
             },
           },
+          suggestedWith: {
+            select: { suggestedDishId: true },
+          },
           ...(needTranslations && {
             translations: { where: { lang } },
           }),

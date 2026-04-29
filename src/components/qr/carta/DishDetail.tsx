@@ -227,7 +227,8 @@ function DishSlide({
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   // Memoize cross-sell so it doesn't reshuffle on every re-render
-  const crossSell = useMemo(() => getCrossSellDishes(dish, allDishes, categories), [dish.id, allDishes, categories]);
+  const manualIds = useMemo(() => ((dish as any).suggestedWith || []).map((s: any) => s.suggestedDishId), [dish.id]);
+  const crossSell = useMemo(() => getCrossSellDishes(dish, allDishes, categories, manualIds.length > 0 ? manualIds : undefined), [dish.id, allDishes, categories, manualIds]);
 
   // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
   const [showLikeNudge, setShowLikeNudge] = useState(false);
@@ -390,18 +391,18 @@ function DishSlide({
             {((dish as any).dishDiet === "VEGAN" || (dish as any).dishDiet === "VEGETARIAN" || (dish as any).isSpicy) && (
               <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
                 {(dish as any).dishDiet === "VEGAN" && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                    🌿 {showDietTooltip ? "Vegano" : "🌿"}
+                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600 }}>
+                    🌿 {showDietTooltip && "Vegano"}
                   </button>
                 )}
                 {(dish as any).dishDiet === "VEGETARIAN" && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                    🥗 {showDietTooltip ? "Vegetariano" : "🥗"}
+                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600 }}>
+                    🥗 {showDietTooltip && "Vegetariano"}
                   </button>
                 )}
                 {(dish as any).isSpicy && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                    🌶️ {showDietTooltip ? "Picante" : "🌶️"}
+                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600 }}>
+                    🌶️ {showDietTooltip && "Picante"}
                   </button>
                 )}
               </div>
