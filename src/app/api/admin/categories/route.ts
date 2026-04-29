@@ -3,13 +3,15 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse } from "@/lib/adminAuth";
 import { translateCategory } from "@/lib/ai/translateContent";
 
-const DRINK_KW = ["bebida", "trago", "cerveza", "jugo", "vino", "cocktail", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
-const SWEET_KW = ["postre", "dulce", "kuchen", "torta", "helado", "dessert"];
+const ENTRY_KW = ["entrada", "compartir", "appetizer", "starter", "antipast", "aperitivo", "piqueo", "snack", "para picar", "tapas"];
+const DRINK_KW = ["bebida", "bebestible", "trago", "cerveza", "jugo", "vino", "cocktail", "cóctel", "mocktail", "sour", "schop", "café", "cafe", "coffee", "té", "infusion", "agua", "drink"];
+const SWEET_KW = ["postre", "dulce", "kuchen", "torta", "helado", "dessert", "pastel"];
 const EXTRA_KW = ["extra", "adicional", "agregado", "complemento", "topping", "salsa"];
 
-function inferDishType(name: string): "food" | "drink" | "dessert" | "extra" {
+function inferDishType(name: string): "food" | "entry" | "drink" | "dessert" | "extra" {
   const n = name.toLowerCase();
   if (EXTRA_KW.some(kw => n.includes(kw))) return "extra";
+  if (ENTRY_KW.some(kw => n.includes(kw))) return "entry";
   if (DRINK_KW.some(kw => n.includes(kw))) return "drink";
   if (SWEET_KW.some(kw => n.includes(kw))) return "dessert";
   return "food";

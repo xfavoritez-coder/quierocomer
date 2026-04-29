@@ -293,8 +293,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", height: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo */}
-      <div style={{ position: "relative", width: "100%", height: "50vh", overflow: "hidden" }}>
+      {/* Photo — sticky so it peeks behind content as you scroll */}
+      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "50vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -346,8 +346,8 @@ function DishSlide({
         )}
       </div>
 
-      {/* Content — flows below photo, scrolls together */}
-      <div style={{ padding: "20px 20px 60px" }}>
+      {/* Content — flows below photo with dark background over the sticky photo */}
+      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px", borderRadius: "16px 16px 0 0", marginTop: -16 }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
@@ -513,20 +513,20 @@ function DishSlide({
                   <div
                     key={s.dish.id}
                     onClick={() => onChangeDish(s.dish)}
-                    style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.06)", borderRadius: 12, cursor: "pointer" }}
+                    style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px", background: "rgba(255,255,255,0.06)", borderRadius: 16, cursor: "pointer" }}
                   >
                     {s.dish.photos?.[0] ? (
-                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 70, height: 70, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
                     ) : (
-                      <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
+                      <div style={{ width: 70, height: 70, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: "0.85rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
+                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
                       {s.dish.description && (
-                        <p style={{ fontSize: "0.72rem", color: "rgba(255,255,255,0.45)", margin: "2px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.35 }}>{s.dish.description}</p>
+                        <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
                     </div>
-                    <span style={{ fontSize: "0.82rem", color: "#fbbf24", fontWeight: 600, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                    <span style={{ fontSize: "1rem", color: "#fbbf24", fontWeight: 600, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
                   </div>
                 ))}
               </div>

@@ -33,17 +33,21 @@ export function getCrossSellDishes(
   const results: CrossSellDish[] = [];
   const usedIds = new Set<string>([currentDish.id]);
 
-  // Build category type map
+  // Build category type map — auto-detect entries by name if dishType is "food"
+  const ENTRY_PATTERN = /entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i;
   const catTypeMap = new Map<string, string>();
   const catNameMap = new Map<string, string>();
   for (const cat of categories) {
-    catTypeMap.set(cat.id, (cat as any).dishType || "food");
+    let type = (cat as any).dishType || "food";
+    // Auto-detect entries from category name when not explicitly set
+    if (type === "food" && ENTRY_PATTERN.test(cat.name)) {
+      type = "entry";
+    }
+    catTypeMap.set(cat.id, type);
     catNameMap.set(cat.id, cat.name.toLowerCase());
   }
 
   const currentType = catTypeMap.get(currentDish.categoryId) || "food";
-
-  // Entry is either explicit type or detected by category name
   const isEntry = currentType === "entry";
 
   // Helper: get active dishes with photos, excluding used
@@ -94,28 +98,38 @@ export function getCrossSellDishes(
   };
 
   if (currentType === "food" || currentType === "entry") {
-    // Food/entry → suggest drinks, desserts, entries (if viewing main)
     const drinks = getByType("drink");
+    const entries = isEntry ? [] : getByType("entry");
     const desserts = getByType("dessert");
-    const entries = isEntry
-      ? [] // don't suggest entries if already viewing entry
-      : [...getByType("entry"), ...getByCatName(/entrada|appetizer|starter|antipast/i).filter(d => !getByType("entry").some(e => e.id === d.id))];
 
-    // Mix: 1 drink, 1 entry (if main), 1 dessert
+    // Always mix: 1 drink + 1 entry or dessert + 1 more
     const picks: { dish: Dish; reason: string }[] = [];
-    if (!isEntry && entries.length > 0) {
-      picks.push(...pickRandom(entries, 1).map((d) => ({ dish: d, reason: "Para empezar" })));
-    }
+
+    // Slot 1: a drink
     if (drinks.length > 0) {
-      picks.push(...pickRandom(drinks, 1).map((d) => ({ dish: d, reason: "Para acompañar" })));
+      const d = pickRandom(drinks, 1)[0];
+      picks.push({ dish: d, reason: "Para acompañar" });
     }
-    if (desserts.length > 0) {
-      picks.push(...pickRandom(desserts, 1).map((d) => ({ dish: d, reason: "Para terminar" })));
+
+    // Slot 2: an entry (if viewing main) or a dessert
+    if (!isEntry && entries.length > 0) {
+      const d = pickRandom(entries.filter(e => !picks.some(p => p.dish.id === e.id)), 1);
+      if (d.length > 0) picks.push({ dish: d[0], reason: "Mientras esperas" });
     }
-    // Fill remaining with more drinks
-    if (picks.length < MAX - results.length && drinks.length > 1) {
-      const extra = drinks.filter((d) => !picks.some((p) => p.dish.id === d.id));
-      picks.push(...pickRandom(extra, MAX - results.length - picks.length).map((d) => ({ dish: d, reason: "Para acompañar" })));
+    if (picks.length < 2 && desserts.length > 0) {
+      const d = pickRandom(desserts.filter(e => !picks.some(p => p.dish.id === e.id)), 1);
+      if (d.length > 0) picks.push({ dish: d[0], reason: "Para terminar" });
+    }
+
+    // Slot 3: fill with whatever is left (drink, entry, dessert)
+    if (picks.length < 3) {
+      const remaining = [...drinks, ...entries, ...desserts].filter(d => !picks.some(p => p.dish.id === d.id));
+      const extra = pickRandom(remaining, 3 - picks.length);
+      for (const d of extra) {
+        const t = catTypeMap.get(d.categoryId) || "food";
+        const reason = t === "drink" ? "Para acompañar" : t === "entry" ? "Mientras esperas" : t === "dessert" ? "Para terminar" : "Te puede gustar";
+        picks.push({ dish: d, reason });
+      }
     }
 
     for (const p of picks) {
@@ -158,25 +172,15 @@ export function getCrossSellDishes(
     }
   }
 
-  // Contextual title based on what we're showing
+  // Contextual title based on what we're actually showing
   let title = "Va bien con";
   if (manualSuggestionIds && manualSuggestionIds.length > 0 && results.some(r => manualSuggestionIds.includes(r.dish.id))) {
     title = "Va bien con";
   } else if (currentType === "food" || currentType === "entry") {
-    // Check what type of suggestions we're showing
-    const hasDrinks = results.some(r => (catTypeMap.get(r.dish.categoryId) || "food") === "drink");
-    const hasEntries = results.some(r => {
-      const t = catTypeMap.get(r.dish.categoryId) || "food";
-      return t === "entry";
-    });
     if (isEntry) {
       title = "¿Qué sigue?";
-    } else if (hasDrinks && results.length === results.filter(r => (catTypeMap.get(r.dish.categoryId) || "food") === "drink").length) {
-      title = "¿Y para tomar?";
-    } else if (hasEntries) {
-      title = "Mientras esperas";
     } else {
-      title = "¿Y para tomar?";
+      title = "Acompaña tu plato";
     }
   } else if (currentType === "drink") {
     title = "Para picar";

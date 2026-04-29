@@ -4,6 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 
+function detectDishType(categoryName: string): string {
+  const n = categoryName.toLowerCase();
+  if (/entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i.test(n)) return "entry";
+  if (/bebida|bebestible|drink|trago|cocktail|cóctel|mocktail|jugo|vino|cerveza|café|coffee|tea|té/i.test(n)) return "drink";
+  if (/postre|dessert|dulce|helado|torta|pastel/i.test(n)) return "dessert";
+  return "food";
+}
+
 function slugify(name: string): string {
   return name
     .toLowerCase()
@@ -105,7 +113,7 @@ export async function POST(request: Request) {
           restaurantId: restaurant.id,
           name: cat.name,
           position: i,
-          dishType: cat.type || "food",
+          dishType: cat.type || detectDishType(cat.name),
           isActive: true,
         },
       });
