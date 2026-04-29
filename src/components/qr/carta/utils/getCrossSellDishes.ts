@@ -35,13 +35,17 @@ export function getCrossSellDishes(
 
   // Build category type map — auto-detect entries by name if dishType is "food"
   const ENTRY_PATTERN = /entrada|compartir|appetizer|starter|antipast|aperitivo|piqueo|snack|para picar|tapas/i;
+  const HOT_PATTERN = /café|cafe|coffee|té|tea|infusi|caliente/i;
   const catTypeMap = new Map<string, string>();
   const catNameMap = new Map<string, string>();
   for (const cat of categories) {
     let type = (cat as any).dishType || "food";
-    // Auto-detect entries from category name when not explicitly set
     if (type === "food" && ENTRY_PATTERN.test(cat.name)) {
       type = "entry";
+    }
+    // Detect hot drinks (café/té) as separate from cold drinks
+    if (type === "drink" && HOT_PATTERN.test(cat.name)) {
+      type = "hot";
     }
     catTypeMap.set(cat.id, type);
     catNameMap.set(cat.id, cat.name.toLowerCase());
@@ -137,46 +141,30 @@ export function getCrossSellDishes(
         usedIds.add(d.id);
       }
     }
-  } else if (currentType === "drink") {
-    // Drink → suggest desserts first, then food
+  } else if (currentType === "drink" || currentType === "hot") {
+    // Drink → only desserts — "Deja espacio para..."
     const desserts = getByType("dessert");
-    const food = getByType("food");
-    const picks: { dish: Dish; reason: string }[] = [];
-
-    for (const d of pickRandom(desserts, 2)) {
-      picks.push({ dish: d, reason: "Para terminar" });
-    }
-    if (picks.length < MAX) {
-      const recommended = food.filter(d => d.tags?.includes("RECOMMENDED"));
-      const source = recommended.length > 0 ? recommended : food;
-      for (const d of pickRandom(source.filter(f => !picks.some(p => p.dish.id === f.id)), MAX - picks.length)) {
-        picks.push({ dish: d, reason: "Para picar" });
-      }
-    }
-
-    for (const p of picks) {
-      if (results.length >= MAX) break;
-      if (!usedIds.has(p.dish.id)) {
-        results.push(p);
-        usedIds.add(p.dish.id);
+    for (const d of pickRandom(desserts, MAX - results.length)) {
+      if (!usedIds.has(d.id)) {
+        results.push({ dish: d, reason: "Deja espacio" });
+        usedIds.add(d.id);
       }
     }
   } else if (currentType === "dessert") {
-    // Dessert → suggest drinks (coffee, tea, digestifs)
+    // Dessert → hot drinks (café/té) first, then any drink as fallback
+    const hot = getByType("hot");
     const drinks = getByType("drink");
-    const picks = pickRandom(drinks, MAX - results.length);
-    for (const d of picks) {
+
+    for (const d of pickRandom(hot, MAX - results.length)) {
       if (!usedIds.has(d.id)) {
         results.push({ dish: d, reason: "Para acompañar" });
         usedIds.add(d.id);
       }
     }
-    // If not enough drinks, suggest other desserts
+    // Fallback to regular drinks if not enough hot drinks
     if (results.length < MAX) {
-      const otherDesserts = getByType("dessert").filter((d) => !usedIds.has(d.id));
-      const extra = pickRandom(otherDesserts, MAX - results.length);
-      for (const d of extra) {
-        results.push({ dish: d, reason: "También te puede gustar" });
+      for (const d of pickRandom(drinks.filter(dr => !usedIds.has(dr.id)), MAX - results.length)) {
+        results.push({ dish: d, reason: "Para acompañar" });
         usedIds.add(d.id);
       }
     }
@@ -190,8 +178,8 @@ export function getCrossSellDishes(
     title = "Acompaña tu plato";
   } else if (currentType === "entry") {
     title = "¿Qué sigue?";
-  } else if (currentType === "drink") {
-    title = "Para cerrar";
+  } else if (currentType === "drink" || currentType === "hot") {
+    title = "Deja espacio para...";
   } else if (currentType === "dessert") {
     title = "¿Un café con eso?";
   }
