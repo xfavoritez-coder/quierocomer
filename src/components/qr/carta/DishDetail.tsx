@@ -340,13 +340,14 @@ function DishSlide({
           <span style={{ color: "rgba(255,255,255,0.7)", fontSize: "1rem", fontWeight: 500, textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{index + 1} / {total}</span>
         </div>
 
-        {/* Referential photo notice */}
-        {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
-          <div className="absolute" style={{ bottom: 8, right: 16, zIndex: 6, pointerEvents: "none" }}>
-            <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.45)", fontWeight: 400, letterSpacing: "0.02em" }}>Imagen referencial</span>
-          </div>
-        )}
       </div>
+
+      {/* Referential photo notice — between photo and content */}
+      {photos.length > 0 && ((dish as any).isPhotoReferential || allPhotosReferential) && (
+        <div style={{ position: "relative", zIndex: 1, background: "#000", textAlign: "right", padding: "4px 16px 0" }}>
+          <span style={{ fontSize: "10px", color: "rgba(255,255,255,0.35)", fontWeight: 400, letterSpacing: "0.02em" }}>Imagen referencial</span>
+        </div>
+      )}
 
       {/* Content — flows below photo, black bg covers sticky photo */}
       {/* Close button — fixed, always visible */}

@@ -534,6 +534,10 @@ export default function AdminMenus() {
         {(ePhotoUrl || selectedDish.photos?.[0]) && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
             <img src={ePhotoUrl || selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {/* Referential badge — top right */}
+            <button onClick={() => setEPhotoRef(!ePhotoRef)} style={{ position: "absolute", top: 10, right: 10, padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.65rem", fontWeight: 600, background: ePhotoRef ? "rgba(255,255,255,0.9)" : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: ePhotoRef ? "#333" : "rgba(255,255,255,0.7)", transition: "all 0.15s", zIndex: 2 }}>
+              📷 {ePhotoRef ? "Referencial ✓" : "Referencial"}
+            </button>
             {/* Tags over photo */}
             <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
               {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
@@ -684,12 +688,6 @@ export default function AdminMenus() {
                   {ePhotoUrl && <button onClick={() => setEPhotoUrl("")} style={{ padding: "6px 10px", background: "rgba(239,68,68,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "#ef4444", cursor: "pointer" }}>Quitar</button>}
                   {photoSuccess && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#16a34a", fontWeight: 600 }}>✓ Foto subida</span>}
                 </div>
-                {ePhotoUrl && (
-                  <label onClick={() => setEPhotoRef(!ePhotoRef)} style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontFamily: F, fontSize: "0.76rem", color: ePhotoRef ? "#7fbfdc" : "var(--adm-text3)" }}>
-                    <span style={{ width: 14, height: 14, borderRadius: 3, border: ePhotoRef ? "1.5px solid #7fbfdc" : "1.5px solid var(--adm-card-border)", background: ePhotoRef ? "rgba(127,191,220,0.15)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "#7fbfdc" }}>{ePhotoRef ? "✓" : ""}</span>
-                    Foto referencial
-                  </label>
-                )}
               </div>
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Categoría</label>
