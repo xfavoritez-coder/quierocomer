@@ -122,7 +122,7 @@ export default function HeroSlim({ restaurant, heroDishes, onDishSelect }: HeroS
 
         {/* Left-aligned content */}
         {dish && (
-          <div className="absolute z-10" style={{ bottom: 20, left: 16, right: "30%" }}>
+          <div className="absolute z-10" style={{ bottom: 28, left: 16, right: "30%" }}>
             <h2
               className="font-[family-name:var(--font-playfair)] text-white"
               style={{
