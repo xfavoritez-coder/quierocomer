@@ -415,18 +415,17 @@ function DishSlide({
               )}
             </div>
           </div>
-          {/* Badges */}
+          {/* Badge — only one: Recomendado wins over Popular */}
           {(isRec || popularDishIds?.has(dish.id)) && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6, flexShrink: 0 }}>
-              {isRec && (
+            <div style={{ flexShrink: 0 }}>
+              {isRec ? (
                 <button
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   ⭐ Recomendado
                 </button>
-              )}
-              {popularDishIds?.has(dish.id) && (
+              ) : (
                 <button
                   onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}

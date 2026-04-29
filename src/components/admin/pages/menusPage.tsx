@@ -1169,7 +1169,7 @@ export default function AdminMenus() {
                     setExpandedDishId(null);
                   }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(239,68,68,0.06)", color: "#ef4444" }}>Eliminar</button>
                 </div>
-                <span style={{ fontSize: "1rem", color: "var(--adm-text3)", transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}>▾</span>
+                <span style={{ fontSize: "0.85rem", color: "var(--adm-text3)", flexShrink: 0 }}>›</span>
               </button>
 
               {/* Expanded content */}
