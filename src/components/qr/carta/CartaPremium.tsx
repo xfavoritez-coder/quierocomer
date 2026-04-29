@@ -28,6 +28,7 @@ import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 import AnnouncementBanner from "./AnnouncementBanner";
 import GenioVeganCarousel from "./GenioVeganCarousel";
+import VeganFloatingPill from "./VeganFloatingPill";
 
 interface Review {
   id: string;
@@ -756,16 +757,9 @@ export default function CartaPremium({
         <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
-      {/* Floating vegan pill */}
+      {/* Floating vegan pill — only shows after scrolling */}
       {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && dishes.some(d => (d as any).dishDiet === "VEGAN") && (
-        <button
-          onClick={() => { const el = document.getElementById("genio-vegan-carousel"); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-          className="fixed z-40 font-[family-name:var(--font-dm)]"
-          style={{ bottom: "calc(120px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", gap: 6, padding: "10px 20px", background: "rgba(234,243,222,0.95)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(99,153,34,0.3)", borderRadius: 999, cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.1)" }}
-        >
-          <span style={{ fontSize: "14px" }}>🌿</span>
-          <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#173404" }}>{t(lang, "gMyVeganOptions")}</span>
-        </button>
+        <VeganFloatingPill />
       )}
 
       {/* Floating buttons */}

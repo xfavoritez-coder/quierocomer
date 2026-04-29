@@ -24,7 +24,7 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
   if (veganDishes.length === 0) return null;
 
   const title = t(lang, "gVeganDishesForYou").replace("{n}", String(veganDishes.length));
-  const subtitle = t(lang, "gVeganInSections").replace("{n}", String(sectionCount));
+  const subtitle = t(lang, "gVeganSubtitle");
 
   return (
     <div

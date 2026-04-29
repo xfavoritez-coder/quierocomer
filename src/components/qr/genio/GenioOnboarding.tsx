@@ -169,7 +169,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const savedDislikes = typeof window !== "undefined" ? localStorage.getItem("qr_dislikes") : null;
   const hasSaved = !!(savedDiet && savedRestrictions);
 
-  const userName = qrUserProp?.name || null;
+  const userName = qrUserProp?.name?.split(" ")[0] || null;
 
   // Load restrictions/allergens dynamically from DB
   const [restrictionOptions, setRestrictionOptions] = useState<RestrictionOption[]>([

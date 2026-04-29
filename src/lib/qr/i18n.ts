@@ -97,7 +97,7 @@ const dict = {
     gGreatThanks: "¡Genial! Gracias 🙌", gThanksImprove: "Gracias, lo mejoraré 🧞",
     gStepOf: "Paso {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Quitar selección", gLikeBtn: "Me gusta 👆",
-    gVeganDishesForYou: "{n} platos para ti 🌿", gVeganInSections: "En {n} secciones de la carta", gMyVeganOptions: "Mis opciones veganas ↑",
+    gVeganDishesForYou: "{n} opciones veganas para ti 🌿", gVeganSubtitle: "Toca un plato para verlo en la carta", gMyVeganOptions: "Mis opciones veganas ↑",
   },
   en: {
     search: "Search dish...",
@@ -179,7 +179,7 @@ const dict = {
     gGreatThanks: "Awesome! Thanks 🙌", gThanksImprove: "Thanks, I'll improve 🧞",
     gStepOf: "Step {step} of 3", gResult: "✨ Result",
     gRemoveSelection: "Remove selection", gLikeBtn: "I like this 👆",
-    gVeganDishesForYou: "{n} dishes for you 🌿", gVeganInSections: "In {n} sections of the menu", gMyVeganOptions: "My vegan options ↑",
+    gVeganDishesForYou: "{n} vegan options for you 🌿", gVeganSubtitle: "Tap a dish to see it on the menu", gMyVeganOptions: "My vegan options ↑",
   },
   pt: {
     search: "Buscar prato...",
@@ -261,7 +261,7 @@ const dict = {
     gGreatThanks: "Ótimo! Obrigado 🙌", gThanksImprove: "Obrigado, vou melhorar 🧞",
     gStepOf: "Passo {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Remover seleção", gLikeBtn: "Gostei 👆",
-    gVeganDishesForYou: "{n} pratos para você 🌿", gVeganInSections: "Em {n} seções do cardápio", gMyVeganOptions: "Minhas opções veganas ↑",
+    gVeganDishesForYou: "{n} opções veganas para você 🌿", gVeganSubtitle: "Toque em um prato para ver no cardápio", gMyVeganOptions: "Minhas opções veganas ↑",
   },
   it: {
     search: "Cerca piatto...",
@@ -343,7 +343,7 @@ const dict = {
     gGreatThanks: "Fantastico! Grazie 🙌", gThanksImprove: "Grazie, migliorerò 🧞",
     gStepOf: "Passo {step} di 3", gResult: "✨ Risultato",
     gRemoveSelection: "Rimuovi selezione", gLikeBtn: "Mi piace 👆",
-    gVeganDishesForYou: "{n} piatti per te 🌿", gVeganInSections: "In {n} sezioni del menù", gMyVeganOptions: "Le mie opzioni vegane ↑",
+    gVeganDishesForYou: "{n} opzioni vegane per te 🌿", gVeganSubtitle: "Tocca un piatto per vederlo nel menù", gMyVeganOptions: "Le mie opzioni vegane ↑",
   },
 } as const;
 
