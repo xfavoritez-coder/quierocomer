@@ -394,7 +394,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, maxWidth: 1000, margin: "0 auto" }}>
             {/* FREE */}
             <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: 28 }}>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#666", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Gratis</p>
+              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#666", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Gratis</p>
+              <p style={{ fontFamily: FB, fontSize: 13, color: "#888", marginBottom: 10, lineHeight: 1.4 }}>Para empezar con una carta digital de verdad</p>
               <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
               <p style={{ fontSize: 13, color: "#888", marginBottom: 20 }}>Para siempre</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "10px 14px", background: "#f3f0e8", color: "#111", borderRadius: 9, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
@@ -411,7 +412,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             {/* GOLD */}
             <div style={{ background: "#111", borderRadius: 14, padding: 28, position: "relative", color: "#fff" }}>
               <span style={{ position: "absolute", top: -10, right: 20, background: "#fbbf24", color: "#111", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Gold</p>
+              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#fbbf24", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Gold</p>
+              <p style={{ fontFamily: FB, fontSize: 13, color: "#aaa", marginBottom: 10, lineHeight: 1.4 }}>Para destacar tu restaurante y conocer a tus clientes</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
                 <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$35.000</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
@@ -435,7 +437,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </div>
             {/* PREMIUM */}
             <div style={{ background: "#0a0a0a", borderRadius: 14, padding: 28, position: "relative", color: "#fff", border: "1px solid rgba(255,255,255,0.1)" }}>
-              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#c084fc", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 8 }}>Premium</p>
+              <p style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#c084fc", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 4 }}>Premium</p>
+              <p style={{ fontFamily: FB, fontSize: 13, color: "#aaa", marginBottom: 10, lineHeight: 1.4 }}>Para vender más con automatización e inteligencia</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginBottom: 2 }}>
                 <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px" }}>$55.000</span>
                 <span style={{ fontSize: 18, color: "#aaa", fontWeight: 500 }}>/mes</span>
