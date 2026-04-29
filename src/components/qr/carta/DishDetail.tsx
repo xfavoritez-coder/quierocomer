@@ -345,8 +345,8 @@ function DishSlide({
         </div>
       )}
 
-      {/* Content overlay — positioned to overlap photo bottom edge */}
-      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "42%", padding: "0 20px 40px", zIndex: 5, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+      {/* Content overlay — starts just below photo, scrollable if needed */}
+      <div className="absolute" style={{ bottom: 0, left: 0, right: 0, top: "48%", padding: "0 20px 40px", zIndex: 5, overflowY: "auto", WebkitOverflowScrolling: "touch", scrollbarWidth: "none" }}>
 
         {/* "Para ti" explanation toggle */}
         {showParaTiTooltip && personalizationEntry?.autoRecommended && (
@@ -389,8 +389,7 @@ function DishSlide({
         {/* BLOQUE 1: Header — info left + heart right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            {/* Badges between category and name */}
+            {/* Badges */}
             {(personalizationEntry?.autoRecommended || (isRec && !personalizationEntry?.autoRecommended) || popularDishIds?.has(dish.id)) && (
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                 {personalizationEntry?.autoRecommended && (
@@ -505,7 +504,7 @@ function DishSlide({
 
         {/* BLOQUE 3: Link ingredientes */}
         {hasInfo && (
-          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 24, background: "none", border: "none", borderBottom: "0.5px solid rgba(255,255,255,0.3)", color: "rgba(255,255,255,0.85)", fontSize: "13px", fontWeight: 500, padding: "0 0 2px", cursor: "pointer" }}>
+          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 16, background: "rgba(255,255,255,0.08)", border: "none", color: "rgba(255,255,255,0.7)", fontSize: "13px", fontWeight: 500, padding: "6px 14px", borderRadius: 50, cursor: "pointer" }}>
             Ver ingredientes
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
           </button>
