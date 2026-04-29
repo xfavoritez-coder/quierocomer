@@ -73,11 +73,12 @@ export default function DishDetail({
     let savedScrollY = 0;
     if (!alreadyLocked) {
       savedScrollY = window.scrollY;
-      // Lock scroll and force full height — fixes iOS browser bar gap
-      document.documentElement.style.overflow = "hidden";
+      // Freeze page in place using position:fixed — prevents iOS bar gap
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${savedScrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
-      document.documentElement.style.height = "100%";
-      document.body.style.height = "100%";
     }
 
     // Scroll to the selected dish instantly
@@ -88,10 +89,11 @@ export default function DishDetail({
 
     return () => {
       if (!alreadyLocked) {
-        document.documentElement.style.overflow = "";
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
         document.body.style.overflow = "";
-        document.documentElement.style.height = "";
-        document.body.style.height = "";
         window.scrollTo(0, savedScrollY);
       }
     };
