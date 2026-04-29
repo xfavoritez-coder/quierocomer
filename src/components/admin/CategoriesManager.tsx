@@ -136,7 +136,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 })()}
                 <button onClick={() => setShowTypeTip(!showTypeTip)} style={{ width: 18, height: 18, borderRadius: "50%", border: "1px solid var(--adm-card-border)", background: showTypeTip ? "var(--adm-text3)" : "transparent", color: showTypeTip ? "var(--adm-card)" : "var(--adm-text3)", fontSize: "0.6rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1, flexShrink: 0 }}>?</button>
                 {showTypeTip && (
-                  <div style={{ position: "absolute", top: "calc(100% + 6px)", right: 0, width: 240, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 50 }}>
+                  <div style={{ position: "absolute", bottom: "calc(100% + 6px)", right: 0, width: 240, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", zIndex: 50 }}>
                     <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
                       Clasifica el tipo de productos de esta categoría. Se usa para sugerir complementos automáticamente en la carta — por ejemplo, ofrecer un postre o bebestible junto a un plato de fondo.
                     </p>
