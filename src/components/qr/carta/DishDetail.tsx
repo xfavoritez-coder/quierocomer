@@ -489,7 +489,7 @@ function DishSlide({
                         <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
                     </div>
-                    <span style={{ fontSize: "1rem", color: "#fbbf24", fontWeight: 400, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                    <span style={{ fontSize: "0.94rem", color: "#fbbf24", fontWeight: 400, flexShrink: 0 }}>${s.dish.price.toLocaleString("es-CL")}</span>
                   </div>
                 ))}
               </div>
