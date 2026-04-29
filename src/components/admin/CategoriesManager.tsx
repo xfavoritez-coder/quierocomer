@@ -273,16 +273,9 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
 
   return (
     <div>
-      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 6px", lineHeight: 1.5 }}>
+      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
         Arrastra para reordenar categorías y platos. El orden se refleja en la carta QR.
       </p>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "10px 14px", background: "rgba(244,166,35,0.06)", border: "1px solid rgba(244,166,35,0.15)", borderRadius: 10, marginBottom: 14 }}>
-        <span style={{ fontSize: "1rem", lineHeight: 1.4, flexShrink: 0 }}>💡</span>
-        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.55 }}>
-          Cada categoría tiene una <strong style={{ color: "var(--adm-text)" }}>etiqueta de tipo</strong> (ej. {Object.values(DISH_TYPE_LABELS).map(v => v.emoji).join(" ")}).
-          Clasifica bien tus categorías para que la carta pueda <strong style={{ color: "var(--adm-text)" }}>sugerir productos complementarios</strong> automáticamente — por ejemplo, un postre o bebestible al ver un plato de fondo. Esto ayuda a aumentar tu ticket de venta.
-        </p>
-      </div>
 
       {/* Create */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
