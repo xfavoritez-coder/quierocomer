@@ -384,29 +384,26 @@ function DishSlide({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
-              {dish.name}
-            </h2>
-            {/* Diet/spicy badges */}
-            {((dish as any).dishDiet === "VEGAN" || (dish as any).dishDiet === "VEGETARIAN" || (dish as any).isSpicy) && (
-              <div style={{ display: "flex", gap: 6, marginTop: 8, flexWrap: "wrap" }}>
-                {(dish as any).dishDiet === "VEGAN" && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600 }}>
-                    🌿 {showDietTooltip && "Vegano"}
-                  </button>
-                )}
-                {(dish as any).dishDiet === "VEGETARIAN" && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600 }}>
-                    🥗 {showDietTooltip && "Vegetariano"}
-                  </button>
-                )}
-                {(dish as any).isSpicy && (
-                  <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.8rem", padding: "4px 10px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600 }}>
-                    🌶️ {showDietTooltip && "Picante"}
-                  </button>
-                )}
-              </div>
-            )}
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+                {dish.name}
+              </h2>
+              {(dish as any).dishDiet === "VEGAN" && (
+                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>
+                  🌿 {showDietTooltip && "Vegano"}
+                </button>
+              )}
+              {(dish as any).dishDiet === "VEGETARIAN" && (
+                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>
+                  🥗 {showDietTooltip && "Vegetariano"}
+                </button>
+              )}
+              {(dish as any).isSpicy && (
+                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, flexShrink: 0 }}>
+                  🌶️ {showDietTooltip && "Picante"}
+                </button>
+              )}
+            </div>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
                 <>
