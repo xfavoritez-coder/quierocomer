@@ -53,7 +53,8 @@ function DishSuggestionsEditor({ dishId, allDishes }: { dishId: string; allDishe
 
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Sugerir con este plato <span title="Estos platos aparecen como sugerencia cuando alguien ve este producto en la carta" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
+      <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 3, fontWeight: 500 }}>Sugerir con este plato</label>
+      <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px", lineHeight: 1.4 }}>Aparecen como sugerencia cuando alguien ve este producto</p>
 
       {suggestions.length > 0 && (
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
@@ -530,10 +531,21 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 500 }}>
       <button onClick={() => { setSelectedDish(null); setEditMode(false); if (editFromCategoriesRef.current) { editFromCategoriesRef.current = false; handleTabChange("categorias"); } }} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, overflow: "hidden" }}>
-        {selectedDish.photos?.[0] && (
+        {(ePhotoUrl || selectedDish.photos?.[0]) && (
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
-            <img src={ePhotoUrl || selectedDish.photos[0]} alt="" onClick={() => editMode && photoInputRef.current ? photoInputRef.current.click() : setPhotoModal(selectedDish.photos[0])} style={{ width: "100%", height: "100%", objectFit: "cover", cursor: editMode ? "pointer" : "zoom-in" }} />
-            {selectedDish.isHero && <span style={{ position: "absolute", top: 10, right: 10, background: "#F4A623", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "3px 8px", borderRadius: 6 }}>HERO</span>}
+            <img src={ePhotoUrl || selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {/* Tags over photo */}
+            <div style={{ position: "absolute", bottom: 10, left: 10, right: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {TAG_OPTIONS.map(t => {
+                const active = eTags.includes(t.value);
+                const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
+                return (
+                  <button key={t.value} onClick={() => toggleTag(t.value)} disabled={atLimit} style={{ padding: "5px 12px", borderRadius: 50, border: "none", cursor: atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? TAG_COLORS[t.value] : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: "white", opacity: atLimit ? 0.3 : active ? 1 : 0.7, transition: "all 0.15s" }}>
+                    {t.value === "RECOMMENDED" && "★ "}{t.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
         <div style={{ padding: 24 }}>
@@ -716,8 +728,8 @@ export default function AdminMenus() {
               </div>
 
               <div ref={ingRef} style={{ marginBottom: 14 }}>
-                <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados) <span title="Los ingredientes ayudan a personalizar la carta para cada cliente según sus gustos, alergias y restricciones alimentarias" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Agrega ingredientes para personalizar la carta y filtrar por alergias y preferencias de cada cliente</p>
+                <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados)</label>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Personaliza la carta según gustos, alergias y restricciones de cada cliente</p>
                 {/* Selected pills */}
                 {eIngredientIds.length > 0 && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
@@ -791,7 +803,7 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Alérgenos <span title="Se usan para ordenar la carta según restricciones de cada cliente" style={{ cursor: "help", opacity: 0.5 }}>ⓘ</span></label>
+                <label style={LBL}>Alérgenos</label>
                 {(selectedDish as any)?.allergenDetails && Object.keys((selectedDish as any).allergenDetails).length > 0 && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
                     <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Detectados por ingredientes:</p>
@@ -925,24 +937,9 @@ export default function AdminMenus() {
                 </div>
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Tags <span style={{ fontWeight: 400, color: "var(--adm-text3)", fontSize: "0.68rem" }}>({recCount + (eTags.includes("RECOMMENDED") ? 1 : 0)}/{MAX_RECOMMENDED} recomendados)</span></label>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {TAG_OPTIONS.map(t => {
-                    const active = eTags.includes(t.value);
-                    const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
-                    return (
-                      <button key={t.value} onClick={() => toggleTag(t.value)} disabled={atLimit} style={{ padding: "5px 10px", borderRadius: 6, border: active ? `1.5px solid ${TAG_COLORS[t.value]}40` : "1.5px solid var(--adm-card-border)", cursor: atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? `${TAG_COLORS[t.value]}15` : "transparent", color: active ? TAG_COLORS[t.value] : "var(--adm-text3)", display: "inline-flex", alignItems: "center", gap: 4, opacity: atLimit ? 0.4 : 1 }}>
-                        {t.value === "RECOMMENDED" && <span style={{ fontSize: "0.7rem", opacity: active ? 1 : 0.4 }}>★</span>}
-                        {t.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
-                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "6px 0 0" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
-                )}
-              </div>
+              {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "0 0 10px" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
+              )}
 
               {/* Sugerencias — "Va bien con" */}
               <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
