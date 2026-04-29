@@ -66,16 +66,16 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
 
   const sections = [
-    { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀" },
-    { title: "Más abiertos en detalle", items: data.mostDetailed || [], icon: "🔍" },
-    { title: "Recomendados por el Genio", items: data.genioRecommended || [], icon: "🧞" },
+    { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀", unit: "veces" },
+    { title: "Más tiempo en detalle", items: data.mostDetailed || [], icon: "🔍", unit: "" },
+    { title: "Recomendados por el Genio", items: data.genioRecommended || [], icon: "🧞", unit: "veces" },
   ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {sections.map(s => (
         <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{s.icon} {s.title}</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{s.icon} {s.title} {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}</p>
           {s.items.length === 0 ? (
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
           ) : (
