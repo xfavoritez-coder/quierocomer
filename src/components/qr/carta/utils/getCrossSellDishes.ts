@@ -28,6 +28,7 @@ export function getCrossSellDishes(
   allDishes: Dish[],
   categories: Category[],
   manualSuggestionIds?: string[],
+  userDiet?: string | null,
 ): CrossSellResult {
   const MAX = 3;
   const results: CrossSellDish[] = [];
@@ -56,9 +57,13 @@ export function getCrossSellDishes(
 
 
   // Helper: get active dishes with photos, excluding used
-  const available = allDishes.filter(
-    (d) => d.isActive && !usedIds.has(d.id) && d.photos?.[0]
-  );
+  // Filter by user diet if vegan/vegetarian
+  const available = allDishes.filter((d) => {
+    if (!d.isActive || usedIds.has(d.id) || !d.photos?.[0]) return false;
+    if (userDiet === "vegan" && (d as any).dishDiet !== "VEGAN") return false;
+    if (userDiet === "vegetarian" && (d as any).dishDiet === "OMNIVORE") return false;
+    return true;
+  });
 
   // 1. Manual suggestions
   if (manualSuggestionIds && manualSuggestionIds.length > 0) {

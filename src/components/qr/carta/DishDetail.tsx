@@ -231,7 +231,8 @@ function DishSlide({
     try { return ((dish as any).suggestedWith || []).map((s: any) => s.suggestedDishId); } catch { return []; }
   }, [dish.id]);
   const crossSell = useMemo(() => {
-    try { return getCrossSellDishes(dish, allDishes, categories, manualIds.length > 0 ? manualIds : undefined); } catch { return { title: "", items: [] }; }
+    const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
+    try { return getCrossSellDishes(dish, allDishes, categories, manualIds.length > 0 ? manualIds : undefined, diet); } catch { return { title: "", items: [] }; }
   }, [dish.id, allDishes, categories, manualIds]);
 
   // Second-visit nudge: show tip near 👍 to educate about likes improving recommendations
@@ -380,19 +381,19 @@ function DishSlide({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+            <div>
+              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px", display: "inline" }}>
                 {dish.name}
               </h2>
               {(dish as any).dishDiet === "VEGAN" && (
-                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>
+                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, verticalAlign: "middle" }}>
                   🌿 {showDietTooltip && "Vegano"}
-                </button>
+                </button></>
               )}
               {(dish as any).dishDiet === "VEGETARIAN" && (
-                <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, flexShrink: 0 }}>
+                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, verticalAlign: "middle" }}>
                   🥗 {showDietTooltip && "Vegetariano"}
-                </button>
+                </button></>
               )}
               {(dish as any).isSpicy && (
                 <button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, flexShrink: 0 }}>

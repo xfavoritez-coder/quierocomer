@@ -54,7 +54,8 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
         </div>
       </div>
 
-      {/* Scrollable cards */}
+      {/* Scrollable cards with fade hint */}
+      <div style={{ position: "relative" }}>
       <div style={{
         display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4,
         scrollbarWidth: "none" as any,
@@ -111,6 +112,9 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick }: 
             </button>
           );
         })}
+      </div>
+      {/* Right fade hint */}
+      <div style={{ position: "absolute", top: 0, right: 0, bottom: 4, width: 32, background: "linear-gradient(to right, transparent, #EAF3DE)", pointerEvents: "none", borderRadius: "0 12px 12px 0" }} />
       </div>
     </div>
   );
