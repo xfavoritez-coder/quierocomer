@@ -67,16 +67,24 @@ export default function DishDetail({
   // Mount: lock body, scroll to initial dish
   useEffect(() => {
     // If body is already locked (e.g. by Genio), don't re-lock
-    const alreadyLocked = document.body.style.overflow === "hidden";
+    const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
     let savedScrollY = 0;
+    let usedFixed = false;
     if (!alreadyLocked) {
       savedScrollY = window.scrollY;
-      // Freeze page in place using position:fixed — prevents iOS bar gap
-      document.body.style.position = "fixed";
-      document.body.style.top = `-${savedScrollY}px`;
-      document.body.style.left = "0";
-      document.body.style.right = "0";
-      document.body.style.overflow = "hidden";
+      if (savedScrollY > 0) {
+        // Freeze page in place using position:fixed — prevents iOS bar gap
+        document.body.style.position = "fixed";
+        document.body.style.top = `-${savedScrollY}px`;
+        document.body.style.left = "0";
+        document.body.style.right = "0";
+        document.body.style.overflow = "hidden";
+        usedFixed = true;
+      } else {
+        // At top of page — just lock overflow (position:fixed at top can cause iOS reload)
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+      }
     }
 
     // Scroll to the selected dish instantly
@@ -87,12 +95,17 @@ export default function DishDetail({
 
     return () => {
       if (!alreadyLocked) {
-        document.body.style.position = "";
-        document.body.style.top = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
-        document.body.style.overflow = "";
-        window.scrollTo(0, savedScrollY);
+        if (usedFixed) {
+          document.body.style.position = "";
+          document.body.style.top = "";
+          document.body.style.left = "";
+          document.body.style.right = "";
+          document.body.style.overflow = "";
+          window.scrollTo(0, savedScrollY);
+        } else {
+          document.documentElement.style.overflow = "";
+          document.body.style.overflow = "";
+        }
       }
     };
   }, [currentIndex]);
