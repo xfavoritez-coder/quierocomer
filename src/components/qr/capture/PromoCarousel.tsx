@@ -43,7 +43,7 @@ function trackPromo(restaurantId: string, eventType: string, dishId?: string, pr
   }).catch(() => {});
 }
 
-export default function PromoCarousel({ restaurantId, onViewDish, initialPromos }: Props) {
+export default function PromoCarousel({ restaurantId, onViewDish, initialPromos, compact }: Props & { compact?: boolean }) {
   const [promos, setPromos] = useState<Promo[]>(initialPromos || []);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -189,7 +189,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos 
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: "0 20px 12px" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: compact ? "0 0 12px" : "0 20px 12px" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
