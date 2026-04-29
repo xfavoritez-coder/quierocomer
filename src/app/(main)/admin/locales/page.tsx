@@ -18,6 +18,7 @@ interface Restaurant {
   instagram: string | null;
   website: string | null;
   dietType: string;
+  enabledLangs: string[];
   cartaTheme: string;
   defaultView: string | null;
   qrActivatedAt: string | null;
@@ -53,6 +54,7 @@ export default function AdminLocales() {
   const [editWebsite, setEditWebsite] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editDietType, setEditDietType] = useState("OMNIVORE");
+  const [editLangs, setEditLangs] = useState<string[]>(["es", "en", "pt"]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -67,6 +69,7 @@ export default function AdminLocales() {
     setEditWebsite(selected.website || "");
     setEditAddress(selected.address || "");
     setEditDietType(selected.dietType || "OMNIVORE");
+    setEditLangs(selected.enabledLangs?.length ? selected.enabledLangs : ["es", "en", "pt"]);
     setSaved(false);
   }, [selected?.id]);
 
@@ -83,6 +86,7 @@ export default function AdminLocales() {
         website: editWebsite.trim() || null,
         address: editAddress.trim() || null,
         dietType: editDietType,
+        enabledLangs: editLangs,
       };
       await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const u = { ...selected, ...body };
@@ -223,6 +227,35 @@ export default function AdminLocales() {
                 </button>
               ))}
             </div>
+          </div>
+          <div>
+            <label style={{ fontFamily: F, fontSize: "0.65rem", color: "#666", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 6 }}>Idiomas de la carta</label>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {[
+                { code: "es", label: "Español", flag: "🇪🇸" },
+                { code: "en", label: "Inglés", flag: "🇺🇸" },
+                { code: "pt", label: "Portugués", flag: "🇧🇷" },
+                { code: "it", label: "Italiano", flag: "🇮🇹" },
+              ].map(lang => {
+                const isOn = editLangs.includes(lang.code);
+                const isEs = lang.code === "es";
+                return (
+                  <button key={lang.code} disabled={isEs} onClick={() => {
+                    if (isEs) return;
+                    setEditLangs(prev => isOn ? prev.filter(l => l !== lang.code) : [...prev, lang.code]);
+                  }} style={{
+                    padding: "8px 12px", borderRadius: 8, border: "none", cursor: isEs ? "default" : "pointer",
+                    fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+                    background: isOn ? "rgba(127,191,220,0.15)" : "rgba(255,255,255,0.04)",
+                    color: isOn ? "#7fbfdc" : "#555",
+                    opacity: isEs ? 0.7 : 1,
+                  }}>
+                    {lang.flag} {lang.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p style={{ fontFamily: F, fontSize: "0.62rem", color: "#555", margin: "6px 0 0" }}>Español siempre activo. Los demás se pueden activar o desactivar.</p>
           </div>
           <button onClick={saveChanges} disabled={saving} style={{ padding: "12px", background: saved ? "rgba(74,222,128,0.15)" : "#F4A623", color: saved ? "#4ade80" : "#0a0a0a", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer", marginTop: 6 }}>
             {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar cambios"}

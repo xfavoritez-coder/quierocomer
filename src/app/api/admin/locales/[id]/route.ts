@@ -72,6 +72,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),
         ...(body.waiterPanelActive !== undefined && { waiterPanelActive: body.waiterPanelActive }),
         ...(body.dietType !== undefined && { dietType: body.dietType }),
+        ...(body.enabledLangs !== undefined && { enabledLangs: body.enabledLangs }),
       };
     } else {
       // Owner: silently filter to allowed fields only
