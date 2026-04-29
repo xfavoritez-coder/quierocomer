@@ -64,24 +64,32 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Mount: lock body, scroll to initial dish
+  // Mount: lock body scroll, fade in
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
 
+    const alreadyLocked = document.body.style.overflow === "hidden";
     const savedScrollY = window.scrollY;
-    document.documentElement.style.overflow = "hidden";
-    document.body.style.overflow = "hidden";
+    if (!alreadyLocked) {
+      document.documentElement.style.overflow = "hidden";
+      document.body.style.overflow = "hidden";
+    }
 
+    return () => {
+      if (!alreadyLocked) {
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, savedScrollY);
+      }
+    };
+  }, []); // Only on mount/unmount
+
+  // Scroll to initial dish position
+  useEffect(() => {
     const el = scrollRef.current;
     if (el && currentIndex > 0) {
       el.scrollTo({ left: currentIndex * el.clientWidth, behavior: "instant" as any });
     }
-
-    return () => {
-      document.documentElement.style.overflow = "";
-      document.body.style.overflow = "";
-      window.scrollTo(0, savedScrollY);
-    };
   }, [currentIndex]);
 
 
