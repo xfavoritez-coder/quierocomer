@@ -135,9 +135,7 @@ export default function DishDetail({
   // Swipe gestures removed — modal is scrollable, close button is sticky
   const handleTouchStart = undefined;
   const handleTouchMove = undefined;
-  const handleTouchEnd = () => {
-    }
-  };
+  const handleTouchEnd = undefined;
 
   return (
     <div

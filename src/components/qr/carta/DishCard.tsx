@@ -113,7 +113,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
   const [loaded, setLoaded] = useState(false);
 
   const badges: string[] = [];
-  else if (isRec) badges.push("⭐ Recomendado");
+  if (isRec) badges.push("⭐ Recomendado");
   if (isPopular) badges.push("🔥 Popular hoy");
 
   return (
