@@ -525,7 +525,12 @@ function DishSlide({
                           {popularDishIds?.has(s.dish.id) && !s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171" }}>🔥 Popular hoy</span>}
                         </div>
                       )}
-                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.dish.name}</p>
+                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {s.dish.name}
+                        {(s.dish as any).dishDiet === "VEGAN" && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌿</span></>}
+                        {(s.dish as any).dishDiet === "VEGETARIAN" && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🥗</span></>}
+                        {(s.dish as any).isSpicy && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌶️</span></>}
+                      </p>
                       {s.dish.description && (
                         <p style={{ fontSize: "0.86rem", color: "rgba(255,255,255,0.45)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
