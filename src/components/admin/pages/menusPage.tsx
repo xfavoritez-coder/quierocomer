@@ -535,16 +535,21 @@ export default function AdminMenus() {
           <div style={{ height: 200, position: "relative", overflow: "hidden" }}>
             <img src={ePhotoUrl || selectedDish.photos[0]} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             {/* Tags over photo */}
-            <div style={{ position: "absolute", bottom: 10, left: 10, right: 10, display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {TAG_OPTIONS.map(t => {
-                const active = eTags.includes(t.value);
-                const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
-                return (
-                  <button key={t.value} onClick={() => toggleTag(t.value)} disabled={atLimit} style={{ padding: "5px 12px", borderRadius: 50, border: "none", cursor: atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? TAG_COLORS[t.value] : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: "white", opacity: atLimit ? 0.3 : active ? 1 : 0.7, transition: "all 0.15s" }}>
-                    {t.value === "RECOMMENDED" && "★ "}{t.label}
-                  </button>
-                );
-              })}
+            <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
+              {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
+                <p style={{ fontFamily: F, fontSize: "0.65rem", color: "#fbbf24", margin: "0 0 6px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 6, display: "inline-block" }}>Máx. {MAX_RECOMMENDED} recomendados alcanzado</p>
+              )}
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                {TAG_OPTIONS.map(t => {
+                  const active = eTags.includes(t.value);
+                  const atLimit = t.value === "RECOMMENDED" && !active && recCount >= MAX_RECOMMENDED;
+                  return (
+                    <button key={t.value} onClick={() => toggleTag(t.value)} disabled={atLimit} style={{ padding: "5px 12px", borderRadius: 50, border: "none", cursor: atLimit ? "not-allowed" : "pointer", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, background: active ? TAG_COLORS[t.value] : "rgba(0,0,0,0.5)", backdropFilter: "blur(6px)", color: "white", opacity: atLimit ? 0.3 : active ? 1 : 0.7, transition: "all 0.15s" }}>
+                      {t.value === "RECOMMENDED" && "★ "}{t.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -937,9 +942,6 @@ export default function AdminMenus() {
                 </div>
               </div>
 
-              {recCount >= MAX_RECOMMENDED && !eTags.includes("RECOMMENDED") && (
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#e85530", margin: "0 0 10px" }}>Máximo {MAX_RECOMMENDED} recomendados. Quita uno de otro plato para agregar aquí.</p>
-              )}
 
               {/* Sugerencias — "Va bien con" */}
               <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
