@@ -23,6 +23,7 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: "Carta QR Viva — QuieroComer",
   description: "La carta digital inteligente que se adapta a ti.",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
 };
 
 export default function QRLayout({ children }: { children: React.ReactNode }) {
