@@ -64,50 +64,13 @@ export default function DishDetail({
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
   const [activeIdx, setActiveIdx] = useState(currentIndex >= 0 ? currentIndex : 0);
 
-  // Mount: lock body, scroll to initial dish
+  // Mount: scroll to initial dish
   useEffect(() => {
-    // If body is already locked (e.g. by Genio), don't re-lock
-    const alreadyLocked = document.body.style.overflow === "hidden" || document.body.style.position === "fixed";
-    let savedScrollY = 0;
-    let usedFixed = false;
-    if (!alreadyLocked) {
-      savedScrollY = window.scrollY;
-      if (savedScrollY > 0) {
-        // Freeze page in place using position:fixed — prevents iOS bar gap
-        document.body.style.position = "fixed";
-        document.body.style.top = `-${savedScrollY}px`;
-        document.body.style.left = "0";
-        document.body.style.right = "0";
-        document.body.style.overflow = "hidden";
-        usedFixed = true;
-      } else {
-        // At top of page — just lock overflow (position:fixed at top can cause iOS reload)
-        document.documentElement.style.overflow = "hidden";
-        document.body.style.overflow = "hidden";
-      }
-    }
-
     // Scroll to the selected dish instantly
     const el = scrollRef.current;
     if (el && currentIndex > 0) {
       el.scrollTo({ left: currentIndex * el.clientWidth, behavior: "instant" as any });
     }
-
-    return () => {
-      if (!alreadyLocked) {
-        if (usedFixed) {
-          document.body.style.position = "";
-          document.body.style.top = "";
-          document.body.style.left = "";
-          document.body.style.right = "";
-          document.body.style.overflow = "";
-          window.scrollTo(0, savedScrollY);
-        } else {
-          document.documentElement.style.overflow = "";
-          document.body.style.overflow = "";
-        }
-      }
-    };
   }, [currentIndex]);
 
 
