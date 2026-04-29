@@ -277,7 +277,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               {/* Diet badges bottom-right */}
               <div style={{ position: "absolute", bottom: 10, right: 12, display: "flex", gap: 5 }}>
                 {(selectedDish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌿</span>}
-                {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌱</span>}
+                {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🥗</span>}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "12px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 6, color: "white" }}>🌶️</span>}
               </div>
             </div>
@@ -298,7 +298,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               {/* Diet labels below description */}
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {(selectedDish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🌿 Vegano</span>}
-                {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🌱 Vegetariano</span>}
+                {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🥗 Vegetariano</span>}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
             </div>
@@ -479,7 +479,7 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
         {/* Diet badges */}
         <div style={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 4 }}>
           {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "11px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "2px 6px", borderRadius: 4, color: "white" }}>🌿</span>}
-          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "11px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "2px 6px", borderRadius: 4, color: "white" }}>🌱</span>}
+          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "11px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "2px 6px", borderRadius: 4, color: "white" }}>🥗</span>}
           {(dish as any).isSpicy && <span style={{ fontSize: "11px", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "2px 6px", borderRadius: 4, color: "white" }}>🌶️</span>}
         </div>
       </div>
