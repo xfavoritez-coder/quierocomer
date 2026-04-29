@@ -614,8 +614,6 @@ export default function AdminMenus() {
                 </button>
               </div>
 
-              {/* Sugerencias — "Va bien con" */}
-              <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
 
             </>
           ) : (
@@ -938,6 +936,9 @@ export default function AdminMenus() {
                 <button onClick={saveDishEdit} disabled={saving || !eName || !ePrice} style={{ flex: 1, padding: "10px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", opacity: saving ? 0.5 : 1 }}>{saving ? "Guardando..." : "Guardar"}</button>
                 <button onClick={() => setEditMode(false)} style={{ flex: 1, padding: "10px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
               </div>
+
+              {/* Sugerencias — "Va bien con" */}
+              <DishSuggestionsEditor dishId={selectedDish.id} allDishes={dishes} />
             </>
           )}
         </div>
@@ -1147,11 +1148,11 @@ export default function AdminMenus() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "none"} stroke={d.tags?.includes("RECOMMENDED") ? "#F4A623" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     Destacar
                   </button>
-                  <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(127,191,220,0.08)", color: "#7fbfdc" }}>Editar</button>
                   <button onClick={() => toggleDishActive(d)} style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border)", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "transparent", color: d.isActive ? "var(--adm-text3)" : "#4ade80", display: "flex", alignItems: "center", gap: 4 }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">{d.isActive ? <><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></> : <><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></>}</svg>
                     {d.isActive ? "Ocultar" : "Mostrar"}
                   </button>
+                  <button onClick={() => { setSelectedDish(d); startEditDish(d); }} style={{ padding: "5px 10px", borderRadius: 6, border: "none", fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", background: "rgba(127,191,220,0.08)", color: "#7fbfdc" }}>Editar</button>
                   <button onClick={async () => {
                     if (!confirm(`¿Eliminar "${d.name}"?`)) return;
                     await fetch(`/api/admin/dishes/${d.id}`, { method: "DELETE" });
