@@ -94,11 +94,9 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
   const hasWeb = !!r.website;
 
   // Tag for hero eyebrow
-  const eyebrow = dish.tags?.includes("RECOMMENDED")
-    ? { emoji: "⭐", text: t(lang, "recommended" as any) || "Recomendado" }
-    : dish.tags?.includes("NEW")
+  const eyebrow = dish.tags?.includes("NEW")
     ? { emoji: "✨", text: t(lang, "feedHeroNew" as any) || "Nuevo en la carta" }
-    : { emoji: "🔥", text: t(lang, "feedHeroTrending" as any) || "Plato del momento" };
+    : { emoji: "⭐", text: t(lang, "recommended" as any) || "Recomendado" };
 
   return (
     <div
@@ -169,8 +167,8 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
         {/* Eyebrow */}
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 5,
-          background: "#EF9F27", color: "#fff",
-          fontSize: 8, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+          background: "#EF9F27", color: "#1a1a1a",
+          fontSize: 9, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
           letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: 14,
         }}>
           {eyebrow.emoji} {eyebrow.text}
