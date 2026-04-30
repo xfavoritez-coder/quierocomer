@@ -255,7 +255,9 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           >
             {/* Photo + close button + badges */}
             <div style={{
-              height: selectedDish.photos?.[0] ? 300 : 0, position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
+              aspectRatio: selectedDish.photos?.[0] ? "4 / 3" : undefined,
+              height: selectedDish.photos?.[0] ? undefined : 0,
+              position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
               background: "#f0ece4",
             }}>
               {/* Layer 1: Next.js optimized — instant from cache */}
@@ -266,7 +268,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                   fill
                   className="object-cover"
                   sizes="520px"
-                  quality={80}
                 />
               )}
               {/* Layer 2: raw original — fades in when loaded */}
