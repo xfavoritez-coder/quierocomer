@@ -32,7 +32,6 @@ const DIRECT_FETCH_DOMAINS = [
   "queresto.com",
   "thefork.com",
   "lafourchette.com",
-  "veganmobile.cl",
 ];
 
 // Domains where Jina is required (heavy JS rendering)
