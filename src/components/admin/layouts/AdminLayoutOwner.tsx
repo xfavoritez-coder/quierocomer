@@ -303,6 +303,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         .owl-bottom-nav { display: none; }
         .owl-main {
           margin-left: 220px; padding: 24px 32px; min-height: 100vh;
+          zoom: 1.03;
         }
 
         /* Mobile <768px */
@@ -321,6 +322,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           }
           .owl-main {
             margin-left: 0; padding: 20px 16px 96px; min-height: calc(100vh - 56px);
+            zoom: 1.03;
           }
         }
       `}</style>
