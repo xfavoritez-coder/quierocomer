@@ -168,41 +168,42 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   Toda oculta
                 </span>
               )}
-              <div style={{ position: "relative", display: "inline-block" }}>
-                <span onClick={(e) => { e.stopPropagation(); setChangingType(!changingType); }} style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "#F5F0E8", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
-                  {dt.label} ▾
-                </span>
-                {changingType && (
-                  <div onClick={e => e.stopPropagation()} style={{
-                    position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 100,
-                    background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: 4, minWidth: 150,
-                  }}>
-                    {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
-                      <button
-                        key={key}
-                        onClick={() => { onTypeChange(category.id, key); setChangingType(false); }}
-                        style={{
-                          display: "flex", alignItems: "center", gap: 6, width: "100%",
-                          padding: "8px 10px", border: "none", borderRadius: 6, cursor: "pointer",
-                          background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
-                          fontFamily: F, fontSize: "0.72rem", fontWeight: 500, color: "#854F0B",
-                          textAlign: "left",
-                        }}
-                      >
-                        {v.emoji} {v.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}
 
         {/* Actions */}
         {!editing && (
-          <div style={{ flexShrink: 0, display: "flex", gap: 0 }} onClick={e => e.stopPropagation()}>
+          <div style={{ flexShrink: 0, display: "flex", gap: 2, alignItems: "center" }} onClick={e => e.stopPropagation()}>
+            {/* Type badge */}
+            <div style={{ position: "relative" }}>
+              <span onClick={() => setChangingType(!changingType)} style={{ fontFamily: F, fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "#F5F0E8", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
+                {dt.label} ▾
+              </span>
+              {changingType && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 100,
+                  background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: 4, minWidth: 150,
+                }}>
+                  {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
+                    <button
+                      key={key}
+                      onClick={() => { onTypeChange(category.id, key); setChangingType(false); }}
+                      style={{
+                        display: "flex", alignItems: "center", gap: 6, width: "100%",
+                        padding: "8px 10px", border: "none", borderRadius: 6, cursor: "pointer",
+                        background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
+                        fontFamily: F, fontSize: "0.72rem", fontWeight: 500, color: "#854F0B",
+                        textAlign: "left",
+                      }}
+                    >
+                      {v.emoji} {v.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
             {/* Visibility toggle */}
             <button
               onClick={() => onToggle(category.id, !category.isActive)}
@@ -388,19 +389,6 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
 
   return (
     <div>
-      {/* Hint card */}
-      <div style={{
-        background: "#FAF9F7", border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 10,
-        padding: "10px 14px", margin: "0 0 14px", display: "flex", gap: 8, alignItems: "center",
-      }}>
-        <div style={{ width: 22, height: 22, borderRadius: "50%", background: "#FAEEDA", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 11 }}>
-          💡
-        </div>
-        <span style={{ fontFamily: FB, fontSize: 11, color: "#5a5a5a", lineHeight: 1.4 }}>
-          Arrastra para reordenar. El orden se refleja en la carta QR.
-        </span>
-      </div>
-
       {/* Create */}
       {showCreateInput ? (
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
