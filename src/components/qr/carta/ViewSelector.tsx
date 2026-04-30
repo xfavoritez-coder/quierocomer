@@ -117,8 +117,8 @@ export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
             whiteSpace: "nowrap",
           }}
         >
-          {/* View options row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
+          {/* View options grid */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 2px" }}>
             {VIEW_KEYS.map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
@@ -127,22 +127,23 @@ export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
                   key={value}
                   role="menuitem"
                   onClick={() => handleSelect(value)}
-                  className="flex items-center active:scale-95 transition-transform"
+                  className="flex items-center justify-center active:scale-95 transition-transform"
                   style={{
                     gap: 5,
-                    padding: "8px 14px",
+                    padding: "8px 12px",
                     borderRadius: 50,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    fontSize: "0.78rem",
+                    fontSize: "0.75rem",
                     fontWeight: 600,
                     transition: "all 0.15s",
                     background: isActive ? "white" : "transparent",
                     color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.75)",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <Icon size={14} strokeWidth={1.75} />
+                  <Icon size={13} strokeWidth={1.75} />
                   {label}
                 </button>
               );

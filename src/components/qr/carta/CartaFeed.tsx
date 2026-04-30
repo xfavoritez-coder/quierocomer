@@ -314,7 +314,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Name + NEW pill */}
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 18, fontWeight: 500, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
               {dish.name}
             </span>
             {isNew && (
@@ -326,7 +326,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           {/* Description */}
           {dish.description && (
             <p className="font-[family-name:var(--font-dm)]" style={{
-              fontSize: 14, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
+              fontSize: 15, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
               display: "-webkit-box", WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical" as any, overflow: "hidden",
             }}>
@@ -631,7 +631,7 @@ export default function CartaFeed({
       {/* ═══ FLOATING ELEMENTS ═══ */}
       <VeganFloatingPill />
 
-      <div className="fixed flex items-center gap-2 z-30" style={{ bottom: 18, right: 16 }}>
+      <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 18, right: 16 }}>
         <button onClick={() => setGenioOpen(true)} className="flex items-center justify-center rounded-full active:scale-95"
           style={{ height: hasCompletedGenio ? 52 : 60, width: hasCompletedGenio ? 52 : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
           <span style={{ fontSize: hasCompletedGenio ? "22px" : "26px", lineHeight: 1 }}>🧞</span>

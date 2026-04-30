@@ -8,10 +8,15 @@ export default function VeganFloatingPill() {
   const lang = useLang();
   const [scrolled, setScrolled] = useState(false);
   const [viewSelectorOpen, setViewSelectorOpen] = useState(false);
+  const [isVegan, setIsVegan] = useState(false);
 
   useEffect(() => {
+    const checkVegan = () => setIsVegan(localStorage.getItem("qr_diet") === "vegan");
+    checkVegan();
+
     const onScroll = () => setScrolled(window.scrollY > 400);
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("genio-updated", checkVegan);
 
     const onViewToggle = (e: Event) => {
       setViewSelectorOpen((e as CustomEvent).detail?.open ?? false);
@@ -20,11 +25,12 @@ export default function VeganFloatingPill() {
 
     return () => {
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("genio-updated", checkVegan);
       window.removeEventListener("view-selector-toggle", onViewToggle);
     };
   }, []);
 
-  if (!scrolled || viewSelectorOpen) return null;
+  if (!isVegan || !scrolled || viewSelectorOpen) return null;
 
   return (
     <button
