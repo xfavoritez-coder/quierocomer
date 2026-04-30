@@ -263,12 +263,12 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
                   ⭐ {t(lang, "recommended" as any) || "Recomendado"}
                 </span>
               )}
-              {isPopular && !isRec && (
+              {isPopular && (
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(250,238,218,0.95)", color: "#C04A1B" }}>
                   🔥 {t(lang, "feedPopular" as any) || "Popular hoy"}
                 </span>
               )}
-              {pEntry?.autoRecommended && !isRec && !isPopular && (
+              {pEntry?.autoRecommended && (
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
                   🧞 Para ti
                 </span>
