@@ -469,33 +469,24 @@ function DishSlide({
 
           const hasRichOptions = allGroups.some((g: any) => g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0));
 
-          if (hasRichOptions) {
-            return (
-              <div style={{ marginTop: 14 }}>
-                {allGroups.map((g: any) => {
-                  const hasRich = g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0);
-                  if (!hasRich) {
-                    return (
-                      <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: "0 0 4px" }}>
-                        <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => o.name).join(" · ")}
-                      </p>
-                    );
-                  }
-                  return null;
-                })}
-              </div>
-            );
-          }
-
           return (
             <div style={{ marginTop: 14 }}>
               {allGroups.map((g: any) => (
-                <p key={g.id} style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.9rem", margin: "0 0 4px" }}>
-                  <span style={{ fontWeight: 600 }}>{g.name}:</span> {g.options?.map((o: any) => {
-                    const price = o.priceAdjustment ? ` (+$${Math.abs(o.priceAdjustment).toLocaleString("es-CL")})` : "";
-                    return o.name + price;
-                  }).join(" · ")}
-                </p>
+                <div key={g.id} style={{ marginBottom: 10 }}>
+                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", fontWeight: 600, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{g.name}</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {g.options?.map((o: any) => (
+                      <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 8 }}>
+                        <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem" }}>{o.name}</span>
+                        {o.priceAdjustment !== 0 && (
+                          <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>
+                            +${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           );
