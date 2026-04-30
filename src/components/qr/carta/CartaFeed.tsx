@@ -401,7 +401,7 @@ export default function CartaFeed({
     const localProfile = { dietType: diet, restrictions, dislikedIngredients: dislikes, likedIngredients: {}, viewHistory: [], visitCount: 0, visitedCategoryIds: [], lastSessionDate: null };
     const result = getPersonalizedDishes(dishes as unknown as ScoringDish[], categories, localProfile, scoringCtx);
     return result.hasPersonalization ? result.map : null;
-  });
+  }, [dishes, categories, scoringCtx]);
   const [pMap, setPMap] = useState<PersonalizationMap | null>(pMapLocal);
   const [profileTrigger, setProfileTrigger] = useState(0);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
