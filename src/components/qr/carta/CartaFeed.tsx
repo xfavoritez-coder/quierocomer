@@ -252,7 +252,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
     >
       {/* Photo */}
       {photo ? (
-        <div style={{ position: "relative", width: "100%", aspectRatio: "4 / 3" }}>
+        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 10" }}>
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 500px" loading="lazy" />
 
           {/* Badges top-left */}
@@ -304,7 +304,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           )}
         </div>
       ) : (
-        <div style={{ width: "100%", aspectRatio: "4 / 3", background: "#f5f3ef", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", color: "#ddd" }}>
+        <div style={{ width: "100%", aspectRatio: "16 / 10", background: "#f5f3ef", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem", color: "#ddd" }}>
           🍽
         </div>
       )}
