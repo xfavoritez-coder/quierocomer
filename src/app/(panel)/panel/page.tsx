@@ -102,8 +102,15 @@ export default function PanelDashboard() {
   const avgText = avgMin > 0 ? `${avgMin}m ${avgSec}s` : `${avgSec}s`;
   const restName = restaurants.find(r => r.id === selectedRestaurantId)?.name || "tu local";
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
+
   return (
     <div style={{ maxWidth: 640 }}>
+      <p style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 20px" }}>
+        {greeting}, {ownerName?.split(" ")[0] || ""} 👋
+      </p>
+
       {/* Quick actions */}
       {(() => {
         const rest = restaurants.find(r => r.id === selectedRestaurantId);
