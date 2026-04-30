@@ -182,7 +182,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
 
       {/* Saved toast */}
       {savedMsg && (
-        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#16a34a", color: "white", padding: "8px 20px", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, zIndex: 1000, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", animation: "fadeInDown 0.2s ease" }}>
+        <div style={{ position: "fixed", top: 20, right: 20, background: "#16a34a", color: "white", padding: "8px 20px", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, zIndex: 9999, boxShadow: "0 4px 16px rgba(0,0,0,0.15)", animation: "fadeInDown 0.2s ease" }}>
           ✓ {savedMsg}
         </div>
       )}
@@ -234,7 +234,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                 <div style={{ padding: "0 16px 16px", borderTop: "1px solid var(--adm-card-border)" }}>
                   {/* Assigned dishes */}
                   <div style={{ margin: "12px 0" }}>
-                    <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px" }}>Platos asignados</p>
+                    {template.dishes.length > 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px" }}>Platos asignados</p>}
                     <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
                       {template.dishes.map(d => (
                         <span key={d.id} style={{ display: "inline-flex", alignItems: "center", gap: 3, fontSize: "0.72rem", padding: "3px 10px", borderRadius: 50, background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: FB }}>
@@ -247,15 +247,11 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                       ))}
                     </div>
 
-                    {/* Add dish / category buttons */}
-                    <div style={{ display: "flex", gap: 6, position: "relative" }}>
+                    {/* Add dish button */}
+                    <div style={{ position: "relative" }}>
                       <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setPickerMode("dish"); setDishSearch(""); }}
                         style={{ fontSize: "0.78rem", padding: "6px 14px", borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: GOLD, cursor: "pointer", fontFamily: F, fontWeight: 600 }}>
                         + Agregar plato
-                      </button>
-                      <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setPickerMode("category"); setDishSearch(""); }}
-                        style={{ fontSize: "0.78rem", padding: "6px 14px", borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: "var(--adm-text2)", cursor: "pointer", fontFamily: F, fontWeight: 500 }}>
-                        + Agregar categoría
                       </button>
 
                       {/* Picker dropdown */}
