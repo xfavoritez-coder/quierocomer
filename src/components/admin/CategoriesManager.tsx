@@ -100,15 +100,16 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   const dt = DISH_TYPE_LABELS[category.dishType || "food"] || DISH_TYPE_LABELS.food;
   const isHidden = !category.isActive;
 
-  // Close menu on outside click
+  // Close menu/type dropdown on outside click
   useEffect(() => {
-    if (!menuOpen) return;
+    if (!menuOpen && !changingType) return;
     const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+      if (changingType) setChangingType(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
-  }, [menuOpen]);
+  }, [menuOpen, changingType]);
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1, marginBottom: 8 }}>
@@ -145,23 +146,6 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
             <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" }}>OK</button>
             <button onClick={() => setEditing(false)} style={{ padding: "4px 8px", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>X</button>
           </div>
-        ) : changingType ? (
-          <div style={{ flex: 1, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }} onClick={e => e.stopPropagation()}>
-            {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
-              <button
-                key={key}
-                onClick={() => { onTypeChange(category.id, key); setChangingType(false); }}
-                style={{
-                  padding: "4px 10px", borderRadius: 999, border: (category.dishType || "food") === key ? "1.5px solid #854F0B" : "1px solid rgba(0,0,0,0.08)",
-                  background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
-                  fontFamily: F, fontSize: "0.68rem", fontWeight: 500, color: "#854F0B", cursor: "pointer",
-                }}
-              >
-                {v.emoji} {v.label}
-              </button>
-            ))}
-            <button onClick={() => setChangingType(false)} style={{ padding: "4px 8px", background: "none", border: "none", fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>Cancelar</button>
-          </div>
         ) : (
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
             {/* Name */}
@@ -183,15 +167,40 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                   Toda oculta
                 </span>
               )}
-              <span onClick={(e) => { e.stopPropagation(); setChangingType(true); }} style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: "#F5F0E8", color: "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer" }}>
-                {dt.label}
-              </span>
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <span onClick={(e) => { e.stopPropagation(); setChangingType(!changingType); }} style={{ fontFamily: F, fontSize: 10, fontWeight: 500, padding: "2px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "#F5F0E8", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
+                  {dt.label} ▾
+                </span>
+                {changingType && (
+                  <div onClick={e => e.stopPropagation()} style={{
+                    position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 100,
+                    background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
+                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: 4, minWidth: 150,
+                  }}>
+                    {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
+                      <button
+                        key={key}
+                        onClick={() => { onTypeChange(category.id, key); setChangingType(false); }}
+                        style={{
+                          display: "flex", alignItems: "center", gap: 6, width: "100%",
+                          padding: "8px 10px", border: "none", borderRadius: 6, cursor: "pointer",
+                          background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
+                          fontFamily: F, fontSize: "0.72rem", fontWeight: 500, color: "#854F0B",
+                          textAlign: "left",
+                        }}
+                      >
+                        {v.emoji} {v.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
         {/* Actions */}
-        {!editing && !changingType && (
+        {!editing && (
           <div style={{ flexShrink: 0, display: "flex", gap: 0 }} onClick={e => e.stopPropagation()}>
             {/* Visibility toggle */}
             <button
