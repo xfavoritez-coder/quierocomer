@@ -318,7 +318,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
               {dish.name}
             </span>
             {isNew && (
-              <span style={{ display: "inline-block", background: "#1a1a1a", color: "#fff", fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", verticalAlign: "middle" }}>
+              <span style={{ display: "inline-block", background: "#e85530", color: "#fff", fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", verticalAlign: "middle" }}>
                 {t(lang, "new" as any) || "NUEVO"}
               </span>
             )}
