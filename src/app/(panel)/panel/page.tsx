@@ -104,13 +104,6 @@ export default function PanelDashboard() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      {/* Hero */}
-      <div style={{ background: "linear-gradient(135deg, #FFF4E0, #FDEFC7)", border: "1px solid #E8D0A0", borderRadius: 16, padding: "20px", marginBottom: 20 }}>
-        <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 600, color: "#1a1a1a", margin: "0 0 4px" }}>👋 Hola, {ownerName?.split(" ")[0] || ""}</p>
-        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#8a7550", margin: 0 }}>Así va <strong>{restName}</strong> esta semana</p>
-        <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#b8a888", margin: "8px 0 0" }}>{timeAgo(data.lastScanAt)}</p>
-      </div>
-
       {/* Quick actions */}
       {(() => {
         const rest = restaurants.find(r => r.id === selectedRestaurantId);
