@@ -126,8 +126,9 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
           alignItems: "center",
           opacity: isHidden ? 0.7 : 1,
           cursor: "pointer",
-          overflow: expanded ? "visible" : "hidden",
+          overflow: (expanded || changingType) ? "visible" : "hidden",
           ...(expanded ? { borderBottomLeftRadius: 0, borderBottomRightRadius: 0 } : {}),
+          ...(changingType ? { zIndex: 50, position: "relative" as const } : {}),
         }}
       >
         {/* Drag handle */}
