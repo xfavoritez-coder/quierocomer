@@ -197,12 +197,12 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           Restaurantes que ya confían en QuieroComer
         </p>
         <div className="lnd-logos-track" style={{ position: "relative" }}>
-          <div className="lnd-logos-scroll" style={{ overflowX: "auto", padding: "6px 0", scrollbarWidth: "none" as any }}>
+          <div className="lnd-logos-scroll" style={{ overflowX: "auto", padding: "6px 0", scrollbarWidth: "none" as any, WebkitOverflowScrolling: "touch" }}>
             <div className="lnd-logos-row" style={{ display: "flex", gap: 10, width: "max-content", paddingLeft: 24, paddingRight: 24 }}>
               {logos.map((l) => (
                 <a key={l.slug} href={`/qr/${l.slug}`} target="_blank" rel="noopener noreferrer"
                   className="lnd-logo-chip"
-                  style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #eeeae0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, scrollSnapAlign: "start", transition: "all 0.2s" }}>
+                  style={{ display: "flex", alignItems: "center", gap: 12, background: "#fff", border: "1px solid #eeeae0", borderRadius: 999, padding: "10px 20px 10px 10px", textDecoration: "none", flexShrink: 0, transition: "all 0.2s", touchAction: "manipulation" }}>
                   {l.logoUrl ? (
                     <img src={l.logoUrl} alt={l.name} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover" }} />
                   ) : (
