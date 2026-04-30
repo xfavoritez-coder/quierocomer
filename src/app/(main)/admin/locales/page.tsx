@@ -75,7 +75,7 @@ export default function AdminLocales() {
     setSaved(false);
     // Fetch announcements
     if (selected) {
-      fetch(`/api/admin/announcements?restaurantId=${selected.id}`).then(r => r.json()).then(d => { if (Array.isArray(d)) setAnnouncements(d); }).catch(() => setAnnouncements([]));
+      fetch(`/api/admin/announcements?restaurantId=${selected.id}`).then(r => r.json()).then(d => { const list = d?.announcements || d; setAnnouncements(Array.isArray(list) ? list : []); }).catch(() => setAnnouncements([]));
     }
   }, [selected?.id]);
 
