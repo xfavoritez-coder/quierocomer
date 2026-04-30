@@ -597,8 +597,9 @@ model ModifierTemplateGroup {
   maxSelect  Int      @default(1)
   position   Int      @default(0)
 
-  template ModifierTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  options  ModifierTemplateOption[]
+  template     ModifierTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  options      ModifierTemplateOption[]
+  translations ModifierGroupTranslation[]
 
   @@index([templateId])
 }
@@ -614,9 +615,37 @@ model ModifierTemplateOption {
   isHidden        Boolean @default(false)
   position        Int     @default(0)
 
-  group ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  group        ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  translations ModifierOptionTranslation[]
 
   @@index([groupId])
+}
+
+model ModifierGroupTranslation {
+  id       String @id @default(cuid())
+  groupId  String
+  lang     String // "en", "pt", "it"
+  name     String
+  isManual Boolean @default(false)
+
+  group ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, lang])
+  @@index([groupId])
+}
+
+model ModifierOptionTranslation {
+  id          String  @id @default(cuid())
+  optionId    String
+  lang        String  // "en", "pt", "it"
+  name        String
+  description String?
+  isManual    Boolean @default(false)
+
+  option ModifierTemplateOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([optionId, lang])
+  @@index([optionId])
 }
 
 enum DishDietType {

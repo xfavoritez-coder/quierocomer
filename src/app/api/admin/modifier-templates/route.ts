@@ -144,6 +144,7 @@ export async function PUT(req: NextRequest) {
         },
         include: { options: true },
       });
+      import("@/lib/ai/translateContent").then(m => m.translateModifierGroup(group.id)).catch(() => {});
       return NextResponse.json(group);
     }
 
@@ -163,6 +164,9 @@ export async function PUT(req: NextRequest) {
       if (body.maxSelect !== undefined) data.maxSelect = body.maxSelect;
 
       const updated = await prisma.modifierTemplateGroup.update({ where: { id: body.groupId }, data, include: { options: { orderBy: { position: "asc" } } } });
+      if (body.name !== undefined) {
+        import("@/lib/ai/translateContent").then(m => m.translateModifierGroup(body.groupId)).catch(() => {});
+      }
       return NextResponse.json(updated);
     }
 
@@ -183,6 +187,7 @@ export async function PUT(req: NextRequest) {
           position: (group.options[0]?.position ?? -1) + 1,
         },
       });
+      import("@/lib/ai/translateContent").then(m => m.translateModifierGroup(body.addOptionToGroup)).catch(() => {});
       return NextResponse.json(option);
     }
 

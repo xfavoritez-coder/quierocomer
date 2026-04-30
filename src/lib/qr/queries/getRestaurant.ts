@@ -22,7 +22,14 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
             include: {
               groups: {
                 orderBy: { position: "asc" },
-                include: { options: { where: { isHidden: false }, orderBy: { position: "asc" } } },
+                include: {
+                  options: {
+                    where: { isHidden: false },
+                    orderBy: { position: "asc" },
+                    ...(needTranslations && { include: { translations: { where: { lang } } } }),
+                  },
+                  ...(needTranslations && { translations: { where: { lang } } }),
+                },
               },
             },
           },
@@ -91,6 +98,18 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
     for (const dish of restaurant.dishes as any[]) {
       const tr = dish.translations?.[0];
       if (tr?.description) dish.description = tr.description;
+      // Overlay modifier translations
+      for (const template of (dish.modifierTemplates || [])) {
+        for (const group of (template.groups || [])) {
+          const gtr = group.translations?.[0];
+          if (gtr?.name) group.name = gtr.name;
+          for (const opt of (group.options || [])) {
+            const otr = opt.translations?.[0];
+            if (otr?.name) opt.name = otr.name;
+            if (otr?.description) opt.description = otr.description;
+          }
+        }
+      }
     }
   }
 

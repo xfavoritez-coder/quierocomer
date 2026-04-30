@@ -10,8 +10,8 @@ const LANG_NAMES: Record<Lang, string> = { en: "English", pt: "Brazilian Portugu
 
 // ─── Low-level AI call ───────────────────────────────────────────────
 
-async function callTranslation(prompt: string): Promise<Record<Lang, string>> {
-  if (!ANTHROPIC_API_KEY) return {} as Record<Lang, string>;
+async function callTranslation(prompt: string): Promise<Record<string, string>> {
+  if (!ANTHROPIC_API_KEY) return {};
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -29,7 +29,7 @@ async function callTranslation(prompt: string): Promise<Record<Lang, string>> {
 
   if (!res.ok) {
     console.error("[translate] API error", res.status, await res.text());
-    return {} as Record<Lang, string>;
+    return {};
   }
 
   const data = await res.json();
@@ -43,7 +43,7 @@ async function callTranslation(prompt: string): Promise<Record<Lang, string>> {
     return JSON.parse(match[0]);
   } catch {
     console.error("[translate] JSON parse error", text);
-    return {} as Record<Lang, string>;
+    return {};
   }
 }
 
@@ -128,6 +128,76 @@ Return ONLY a JSON object: { ${langList.replace(/: "[^"]+"/g, ': "translated nam
       create: { categoryId, lang, name: value, isManual: false },
       update: { name: value, isManual: false },
     });
+  }
+}
+
+// ─── Modifier group + options translation ──────────────────────────
+
+export async function translateModifierGroup(groupId: string): Promise<void> {
+  const group = await prisma.modifierTemplateGroup.findUnique({
+    where: { id: groupId },
+    include: { translations: true, options: { where: { isHidden: false }, include: { translations: true } } },
+  });
+  if (!group) return;
+
+  // Collect all names to translate in one call (group name + option names)
+  const items: { key: string; value: string }[] = [{ key: "group", value: group.name }];
+  for (const opt of group.options) {
+    items.push({ key: `opt_${opt.id}`, value: opt.name });
+    if (opt.description) items.push({ key: `desc_${opt.id}`, value: opt.description });
+  }
+
+  for (const lang of TARGET_LANGS) {
+    // Skip if group has manual translation
+    const groupTr = group.translations.find(t => t.lang === lang);
+    if (groupTr?.isManual) continue;
+
+    // Check which options need translation
+    const needsTranslation = !groupTr || group.options.some(o => !o.translations.find(t => t.lang === lang)?.isManual);
+    if (!needsTranslation) continue;
+
+    const itemList = items.map(i => `"${i.key}": "${i.value}"`).join(", ");
+    const prompt = `Translate these restaurant menu modifier names from Spanish to ${LANG_NAMES[lang]}. Be natural, concise. Keep food terms recognizable.
+
+Items: { ${itemList} }
+
+Return ONLY a JSON object with the same keys and translated values.`;
+
+    const result = await callTranslation(prompt);
+    if (!result || Object.keys(result).length === 0) continue;
+
+    // Save group translation
+    if (result.group) {
+      await prisma.modifierGroupTranslation.upsert({
+        where: { groupId_lang: { groupId, lang } },
+        create: { groupId, lang, name: result.group, isManual: false },
+        update: { name: result.group, isManual: false },
+      });
+    }
+
+    // Save option translations
+    for (const opt of group.options) {
+      const translatedName = result[`opt_${opt.id}`];
+      if (!translatedName) continue;
+      const optTr = opt.translations.find(t => t.lang === lang);
+      if (optTr?.isManual) continue;
+      await prisma.modifierOptionTranslation.upsert({
+        where: { optionId_lang: { optionId: opt.id, lang } },
+        create: { optionId: opt.id, lang, name: translatedName, description: result[`desc_${opt.id}`] || null, isManual: false },
+        update: { name: translatedName, description: result[`desc_${opt.id}`] || null, isManual: false },
+      });
+    }
+  }
+}
+
+export async function translateModifierTemplate(templateId: string): Promise<void> {
+  const template = await prisma.modifierTemplate.findUnique({
+    where: { id: templateId },
+    include: { groups: { select: { id: true } } },
+  });
+  if (!template) return;
+  for (const group of template.groups) {
+    await translateModifierGroup(group.id);
   }
 }
 
