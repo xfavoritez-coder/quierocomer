@@ -939,7 +939,7 @@ export default function AdminMenus() {
                           canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
                           URL.revokeObjectURL(url);
                           // WebP 0.99 = near-lossless but much smaller than PNG
-                          uploadFile = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.99));
+                          uploadFile = await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b!), "image/webp", 0.85));
                         }
                         const fd = new FormData();
                         fd.append("file", uploadFile, file.name);

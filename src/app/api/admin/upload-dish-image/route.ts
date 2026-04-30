@@ -38,23 +38,19 @@ export async function POST(req: NextRequest) {
       img = img.resize(MAX_DIMENSION, MAX_DIMENSION, { fit: "inside", withoutEnlargement: true });
     }
 
-    // Adaptive quality: start very high, reduce until under target
-    let optimizedBuffer: Buffer;
-    let quality = 95;
-    do {
-      optimizedBuffer = await img.clone().webp({ quality, effort: 6, smartSubsample: true }).toBuffer();
-      if (optimizedBuffer.length <= TARGET_BYTES) break;
-      quality -= 3;
-    } while (quality >= 50);
-
-    // If still over target, scale down resolution proportionally
+    // Two-pass quality: try high first, then low — no loop
+    let optimizedBuffer = await img.clone().webp({ quality: 82, effort: 4, smartSubsample: true }).toBuffer();
     if (optimizedBuffer.length > TARGET_BYTES) {
-      const scaledMeta = await sharp(optimizedBuffer).metadata();
+      optimizedBuffer = await img.clone().webp({ quality: 65, effort: 4, smartSubsample: true }).toBuffer();
+    }
+
+    // If still over target, scale down resolution
+    if (optimizedBuffer.length > TARGET_BYTES) {
       const scale = Math.sqrt(TARGET_BYTES / optimizedBuffer.length) * 0.95;
-      const newW = Math.round((scaledMeta.width || 1000) * scale);
+      const newW = Math.round((meta.width || 1000) * scale);
       optimizedBuffer = await sharp(originalBuffer).rotate()
         .resize(newW, undefined, { fit: "inside", withoutEnlargement: true })
-        .webp({ quality: 82, effort: 6, smartSubsample: true })
+        .webp({ quality: 72, effort: 4, smartSubsample: true })
         .toBuffer();
     }
 
