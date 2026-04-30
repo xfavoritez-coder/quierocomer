@@ -304,6 +304,16 @@ export default function AdminLocales() {
 
         <div className="adm-btn-row" style={{ display: "flex", gap: 10, marginTop: 20, flexWrap: "wrap" }}>
           <a href={`/qr/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, color: "#F4A623", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>Ver carta</a>
+          {selected.ownerId && (
+            <button onClick={async () => {
+              const res = await fetch("/api/admin/impersonate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ownerId: selected.ownerId }) });
+              const data = await res.json();
+              if (res.ok) window.open("/panel", "_blank");
+              else alert(data.error || "Error");
+            }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(192,132,252,0.1)", border: "1px solid rgba(192,132,252,0.2)", borderRadius: 10, color: "#c084fc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+              🔑 Entrar como owner
+            </button>
+          )}
           <button onClick={() => { navigator.clipboard.writeText(`https://quierocomer.cl/qr/generar/${selected.slug}`); setQrModalOpen(true); }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>📱 Generar QR</button>
           <a href={`/qr/${selected.slug}?mesa=demo&demo=true`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>🔔 Demo Garzón</a>
           <a href={`/qr/admin/garzon/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>📱 Panel Garzón</a>
