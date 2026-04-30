@@ -50,6 +50,21 @@ export async function POST(request: Request) {
     // Detect bots from user agent
     const isBot = userAgent ? BOT_PATTERNS.test(userAgent) : false;
 
+    // Deduplicate: if same guest has an active session for this restaurant within last 2 min, reuse it
+    const recentSession = await prisma.session.findFirst({
+      where: {
+        guestId,
+        restaurantId,
+        startedAt: { gte: new Date(Date.now() - 2 * 60_000) },
+        endedAt: null,
+      },
+      orderBy: { startedAt: "desc" },
+      select: { id: true },
+    });
+    if (recentSession) {
+      return NextResponse.json({ ok: true, sessionId: recentSession.id });
+    }
+
     // Create session with returning visitor flag
     const session = await prisma.session.create({
       data: {
