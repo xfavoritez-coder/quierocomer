@@ -27,18 +27,62 @@ async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string>
   } finally { clearTimeout(timer); }
 }
 
+// Domains where direct HTML fetch works better than Jina (server-rendered menu platforms)
+const DIRECT_FETCH_DOMAINS = [
+  "queresto.com",
+  "thefork.com",
+  "lafourchette.com",
+];
+
+// Domains where Jina is required (heavy JS rendering)
+const JINA_FIRST_DOMAINS = [
+  "fudo.com",
+  "fudo.cl",
+  "meitre.com",
+];
+
+function getDomain(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
+}
+
 async function fetchPage(url: string): Promise<string> {
-  // Try direct fetch first (preserves prices/photos better for menu platforms)
-  try {
-    const direct = await fetchWithTimeout(url, 10000);
-    // If we got substantial HTML content, use it
-    if (direct.length > 500) return direct;
-  } catch {}
-  // Fallback to Jina reader for JS-rendered pages
-  try {
-    return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000);
-  } catch {}
-  return await fetchWithTimeout(url, 8000);
+  const domain = getDomain(url);
+  const preferDirect = DIRECT_FETCH_DOMAINS.some(d => domain.includes(d));
+  const preferJina = JINA_FIRST_DOMAINS.some(d => domain.includes(d));
+
+  if (preferDirect) {
+    // Direct first — these platforms server-render with prices/photos in HTML
+    try {
+      const direct = await fetchWithTimeout(url, 10000);
+      if (direct.length > 500) return direct;
+    } catch {}
+    try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000); } catch {}
+    return await fetchWithTimeout(url, 8000);
+  }
+
+  if (preferJina) {
+    // Jina first — these need JS rendering
+    try { return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000); } catch {}
+    return await fetchWithTimeout(url, 8000);
+  }
+
+  // Unknown domain: try both, pick the one with more content
+  let jinaContent = "";
+  let directContent = "";
+  try { jinaContent = await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000); } catch {}
+  try { directContent = await fetchWithTimeout(url, 8000); } catch {}
+
+  if (!jinaContent && !directContent) throw new Error("No se pudo acceder a la URL");
+
+  // Prefer whichever has more price-like patterns (indicates real menu data)
+  const pricePattern = /\$[\d.,]+|\d{3,6}/g;
+  const jinaPrices = (jinaContent.match(pricePattern) || []).length;
+  const directPrices = (directContent.match(pricePattern) || []).length;
+
+  // If direct has significantly more prices, use it (better structured data)
+  if (directPrices > jinaPrices * 1.5 && directContent.length > 500) return directContent;
+  // Otherwise prefer Jina (cleaner markdown)
+  return jinaContent || directContent;
 }
 
 function cleanContent(html: string): string {
