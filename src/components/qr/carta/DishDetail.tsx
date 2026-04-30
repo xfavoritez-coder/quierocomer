@@ -475,13 +475,19 @@ function DishSlide({
           const allGroups = templates.flatMap((t: any) => t.groups || []);
           if (allGroups.length === 0) return null;
 
-          // Flatten: split comma-separated option names into individual rows
+          // Flatten: split comma-separated names into individual rows, preserve desc/image per original option
           const flattenOptions = (options: any[]) => {
-            const rows: { name: string; price: number }[] = [];
+            const rows: { name: string; price: number; description?: string | null; imageUrl?: string | null }[] = [];
             for (const o of options) {
-              const items = o.name.split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
-              for (const item of items) {
-                rows.push({ name: item, price: o.priceAdjustment || 0 });
+              const hasCommas = o.name.includes(",");
+              if (hasCommas) {
+                const items = o.name.split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
+                // First item gets desc/image (they belong to the group), rest just name+price
+                for (let i = 0; i < items.length; i++) {
+                  rows.push({ name: items[i], price: o.priceAdjustment || 0, description: i === 0 ? o.description : null, imageUrl: i === 0 ? o.imageUrl : null });
+                }
+              } else {
+                rows.push({ name: o.name, price: o.priceAdjustment || 0, description: o.description, imageUrl: o.imageUrl });
               }
             }
             return rows;
@@ -499,12 +505,20 @@ function DishSlide({
                     <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", fontWeight: 600, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
                     <div>
                       {rows.map((row, i) => (
-                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
-                          <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "0.92rem", fontWeight: 600 }}>{row.name}</span>
-                          {row.price !== 0 && (
-                            <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", fontWeight: 400, flexShrink: 0, marginLeft: 12 }}>
-                              +${Math.abs(row.price).toLocaleString("es-CL")}
-                            </span>
+                        <div key={i} style={{ padding: "10px 0", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            {row.imageUrl && (
+                              <img src={row.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                            )}
+                            <span style={{ color: "rgba(255,255,255,0.9)", fontSize: "0.92rem", fontWeight: 600, flex: 1 }}>{row.name}</span>
+                            {row.price !== 0 && (
+                              <span style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.85rem", fontWeight: 400, flexShrink: 0, marginLeft: 12 }}>
+                                +${Math.abs(row.price).toLocaleString("es-CL")}
+                              </span>
+                            )}
+                          </div>
+                          {row.description && (
+                            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", margin: "4px 0 0", lineHeight: 1.4, paddingLeft: row.imageUrl ? 46 : 0 }}>{row.description}</p>
                           )}
                         </div>
                       ))}
