@@ -281,9 +281,9 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
             <div style={{ position: "absolute", bottom: 8, right: 8, display: "flex", gap: 4 }}>
               {visibleAttrs.map((a, i) => (
                 <div key={i} title={a.title} style={{
-                  width: 26, height: 26, borderRadius: "50%",
+                  width: 28, height: 28, borderRadius: "50%",
                   background: "rgba(255,255,255,0.95)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
-                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13,
+                  display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15,
                 }}>
                   {a.emoji}
                 </div>
