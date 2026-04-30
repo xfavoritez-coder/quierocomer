@@ -242,7 +242,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                           <span onClick={async () => {
                             await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: template.id, unassignDishId: d.id }) });
                             setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, dishes: t.dishes.filter(x => x.id !== d.id) } : t));
-                          }} style={{ cursor: "pointer", fontSize: "0.58rem", opacity: 0.6, marginLeft: 2 }}>×</span>
+                          }} style={{ cursor: "pointer", fontSize: "0.78rem", opacity: 0.6, marginLeft: 4, lineHeight: 1 }}>×</span>
                         </span>
                       ))}
                     </div>
@@ -251,7 +251,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                     <div style={{ position: "relative" }}>
                       <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setPickerMode("dish"); setDishSearch(""); }}
                         style={{ fontSize: "0.78rem", padding: "6px 14px", borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: GOLD, cursor: "pointer", fontFamily: F, fontWeight: 600 }}>
-                        + Agregar plato
+                        + Agregar platos
                       </button>
 
                       {/* Picker dropdown */}
