@@ -314,7 +314,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Name + NEW pill */}
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 16, fontWeight: 500, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 18, fontWeight: 500, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
               {dish.name}
             </span>
             {isNew && (
