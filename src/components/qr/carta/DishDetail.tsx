@@ -390,7 +390,7 @@ function DishSlide({
         {/* BLOQUE 1: Header — name left + badges right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {categoryName && <span style={{ color: "#999", fontSize: "12.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
+            {categoryName && <span style={{ color: "#999", fontSize: "13.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
             <div>
               <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px", display: "inline" }}>
                 {dish.name}
