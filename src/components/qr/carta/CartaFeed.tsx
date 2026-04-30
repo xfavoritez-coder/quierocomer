@@ -247,7 +247,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         display: "block", width: "100%", background: "#fff",
         border: "0.5px solid rgba(0,0,0,0.06)", borderRadius: 14,
         overflow: "hidden", cursor: "pointer", textAlign: "left",
-        padding: 0, marginBottom: 14,
+        padding: 0, marginBottom: 20,
       }}
     >
       {/* Photo */}
