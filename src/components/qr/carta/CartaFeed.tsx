@@ -629,7 +629,7 @@ export default function CartaFeed({
       </div>
 
       {/* ═══ FLOATING ELEMENTS ═══ */}
-      <VeganFloatingPill restaurantId={restaurant.id} />
+      <VeganFloatingPill />
 
       <div className="fixed flex items-center gap-2 z-30" style={{ bottom: 18, right: 16 }}>
         <button onClick={() => setGenioOpen(true)} className="flex items-center justify-center rounded-full active:scale-95"
