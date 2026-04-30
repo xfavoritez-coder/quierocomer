@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import HeroDish from "./HeroDish";
 import CategoryNav from "./CategoryNav";
@@ -43,13 +43,12 @@ export default function CartaBasic({
   const [genioOpen, setGenioOpen] = useState(false);
   const showWaiter = !!(tableId || isQrScan);
 
-  const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED"));
-  const heroDishes = recommended.length > 0
-    ? recommended
-    : [...dishes]
-        .filter(d => d.photos?.[0]) // only dishes with photos
-        .sort((a, b) => (ratingMap[b.id]?.avg || 0) - (ratingMap[a.id]?.avg || 0))
-        .slice(0, 3);
+  const heroDishes = useMemo(() => {
+    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
+    if (rec.length > 0) return rec;
+    const withPhotos = dishes.filter(d => d.photos?.[0]);
+    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
+  }, [dishes]);
 
   // IntersectionObserver-based active category detection
   useEffect(() => {

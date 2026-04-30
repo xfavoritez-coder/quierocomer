@@ -55,9 +55,9 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
   const lang = useLang();
   const heroDishes = useMemo(() => {
     const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
-    if (rec.length >= 2) return rec.slice(0, 5);
+    if (rec.length > 0) return rec;
     const withPhoto = dishes.filter(d => d.photos?.[0]);
-    return withPhoto.slice(0, 5);
+    return [...withPhoto].sort((a, b) => a.position - b.position).slice(0, 3);
   }, [dishes]);
 
   const [activeIdx, setActiveIdx] = useState(0);
