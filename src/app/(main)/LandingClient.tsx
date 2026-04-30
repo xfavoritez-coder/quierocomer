@@ -415,15 +415,27 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           {submitted ? (
             <p style={{ fontSize: 15, color: "#4ade80", fontWeight: 600, fontFamily: F }}>Recibido. Te contactamos pronto</p>
           ) : (
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-              <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Nombre" required
-                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
-              <input type="text" value={restaurante} onChange={e => setRestaurante(e.target.value)} placeholder="Nombre del restaurante" required
-                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
-              <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Correo" required
-                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
-              <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Teléfono" required
-                style={{ padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none" }} />
+            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "left" }}>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Tu nombre</label>
+                <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: María López" required
+                  style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Restaurante</label>
+                <input type="text" value={restaurante} onChange={e => setRestaurante(e.target.value)} placeholder="Ej: La Cocina de María" required
+                  style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Correo electrónico</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ej: maria@mirestaurante.cl" required
+                  style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Teléfono</label>
+                <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Ej: +56 9 1234 5678" required
+                  style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
+              </div>
               {formError && <p style={{ fontSize: 13, color: "#ef4444", margin: 0 }}>{formError}</p>}
               <button type="submit" disabled={sending} style={{ padding: "14px 20px", background: BRAND, color: "#fff", borderRadius: 999, border: "none", fontFamily: F, fontWeight: 700, fontSize: 15, cursor: "pointer", marginTop: 4 }}>
                 {sending ? "Enviando..." : "Contáctame →"}
@@ -437,11 +449,11 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <footer style={{ background: "#0a0a0a", color: "#fff", padding: "48px 24px 24px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div className="lnd-footer-top" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 40 }}>
-            <div>
+            <div style={{ textAlign: "center" }}>
               <p style={{ fontFamily: F, fontSize: 20, fontWeight: 800, marginBottom: 10 }}>
                 <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: BRAND }}>Comer</span>
               </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: "0 auto", textAlign: "center" }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: "0 auto" }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
             </div>
             <div>
               <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Producto</h5>
