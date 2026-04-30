@@ -475,30 +475,16 @@ function DishSlide({
           const allGroups = templates.flatMap((t: any) => t.groups || []);
           if (allGroups.length === 0) return null;
 
-          // Flatten: split comma-separated names into individual rows, preserve desc/image per original option
-          const flattenOptions = (options: any[]) => {
-            const rows: { name: string; price: number; description?: string | null; imageUrl?: string | null }[] = [];
-            for (const o of options) {
-              const hasCommas = o.name.includes(",");
-              if (hasCommas) {
-                const items = o.name.split(/,\s*/).map((s: string) => s.trim()).filter(Boolean);
-                // First item gets desc/image (they belong to the group), rest just name+price
-                for (let i = 0; i < items.length; i++) {
-                  rows.push({ name: items[i], price: o.priceAdjustment || 0, description: i === 0 ? o.description : null, imageUrl: i === 0 ? o.imageUrl : null });
-                }
-              } else {
-                rows.push({ name: o.name, price: o.priceAdjustment || 0, description: o.description, imageUrl: o.imageUrl });
-              }
-            }
-            return rows;
-          };
+          // Map options directly — no splitting, each option is one row
+          const mapOptions = (options: any[]) =>
+            options.map((o: any) => ({ name: o.name, price: o.priceAdjustment || 0, description: o.description, imageUrl: o.imageUrl }));
 
           return (
             <div style={{ marginTop: 24 }}>
               {allGroups.map((g: any) => {
                 const options = g.options || [];
                 if (options.length === 0) return null;
-                const rows = flattenOptions(options);
+                const rows = mapOptions(options);
 
                 return (
                   <div key={g.id} style={{ marginBottom: 16 }}>
