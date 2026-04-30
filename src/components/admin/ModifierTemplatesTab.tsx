@@ -385,7 +385,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                 <button onClick={async () => {
                                   const newHidden = !opt.isHidden;
                                   await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: opt.id, isHidden: newHidden }) });
-                                  setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === group.id ? { ...g, options: g.options.map(o => o.id === opt.id ? { ...o, isHidden: newHidden } : o) } : g) } : t));
+                                  setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, groups: t.groups.map(g => g.id === group.id ? { ...g, options: g.options.map(o => o.id === opt.id ? { ...o, isHidden: newHidden } : o) } : g) } : t));
                                 }} style={{ padding: "2px 8px", background: opt.isHidden ? "rgba(74,222,128,0.1)" : "rgba(255,170,0,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: opt.isHidden ? "#4ade80" : "#b88a00", cursor: "pointer", fontWeight: 600 }}>
                                   {opt.isHidden ? "Mostrar" : "Ocultar"}
                                 </button>
