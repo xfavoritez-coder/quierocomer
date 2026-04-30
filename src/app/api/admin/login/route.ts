@@ -49,51 +49,8 @@ export async function POST(req: NextRequest) {
       return response;
     }
 
-    // 2. Check RestaurantOwner
-    const owner = await prisma.restaurantOwner.findUnique({
-      where: { email },
-      include: { restaurants: { select: { id: true, name: true, slug: true } } },
-    });
-
-    if (!owner) {
-      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
-    }
-
-    const valid = await bcrypt.compare(password, owner.passwordHash);
-    if (!valid) {
-      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
-    }
-
-    // 3. Check account status
-    if (owner.status === "SUSPENDED") {
-      return NextResponse.json(
-        { error: "Cuenta suspendida. Contacta al administrador." },
-        { status: 403 },
-      );
-    }
-    if (owner.status === "PENDING") {
-      return NextResponse.json(
-        { error: "Cuenta pendiente de aprobación." },
-        { status: 403 },
-      );
-    }
-
-    // Update lastLoginAt
-    await prisma.restaurantOwner.update({
-      where: { id: owner.id },
-      data: { lastLoginAt: new Date() },
-    });
-
-    const token = crypto.randomUUID();
-    const response = NextResponse.json({
-      ok: true,
-      role: owner.role,
-      name: owner.name,
-      restaurantIds: owner.restaurants.map((r) => r.id),
-      restaurants: owner.restaurants,
-    });
-    setCookies(response, token, owner.role, owner.id);
-    return response;
+    // Admin login is superadmin only — owners use /panel/login
+    return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
   } catch (error) {
     console.error("Admin login error:", error);
     return NextResponse.json({ error: "Error interno" }, { status: 500 });
