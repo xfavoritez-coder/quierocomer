@@ -361,7 +361,13 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                       fd.append("dishName", eoName || "opcion");
                                       const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
                                       const data = await res.json();
-                                      if (data.url) setEoImage(data.url);
+                                      if (data.url) {
+                                        setEoImage(data.url);
+                                        // Auto-save photo to DB immediately
+                                        await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, imageUrl: data.url }) });
+                                        setTemplates(prev => prev.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, options: g.options.map(o => o.id === editingOption ? { ...o, imageUrl: data.url } : o) })) })));
+                                        showSaved("Foto guardada");
+                                      }
                                       setEoUploading(false);
                                     }} />
                                   </label>
