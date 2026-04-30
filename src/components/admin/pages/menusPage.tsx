@@ -178,7 +178,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                         disabled={saving === lang || !draft.trim()}
                         style={{
                           padding: "5px 12px", borderRadius: 6, border: "none",
-                          background: "#1a1a1a", color: "white", fontFamily: F,
+                          background: "#F4A623", color: "white", fontFamily: F,
                           fontSize: "0.7rem", fontWeight: 600, cursor: "pointer",
                           opacity: saving === lang ? 0.5 : 1,
                         }}
@@ -1293,7 +1293,7 @@ export default function AdminMenus() {
         </div>
         {/* Desktop-only + Nuevo inline */}
         {!creatingDish && (
-          <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
+          <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
         )}
       </div>
 
@@ -1365,7 +1365,7 @@ export default function AdminMenus() {
             </div>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Descripción</label>
-              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Opcional" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
+              <textarea value={newDishDesc} onChange={e => setNewDishDesc(e.target.value)} placeholder="Ej: Salmón fresco sobre arroz con palta, togarashi y salsa ponzu" rows={2} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" as const, resize: "vertical" }} />
             </div>
             <div>
               <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.08em", display: "block", marginBottom: 4 }}>Foto</label>

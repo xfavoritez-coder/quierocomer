@@ -139,7 +139,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 12, marginBottom: 16 }}>
               <a href="#contacto" style={{ display: "inline-flex", alignItems: "center", padding: "13px 24px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none" }}>Contáctame →</a>
-              <a href="/qr/hand-roll" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", padding: "13px 24px", background: "transparent", color: "#1a1a1a", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none", border: "1.5px solid #ddd" }}>Ver carta de ejemplo</a>
+              <a href="/qr/horus" target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", padding: "13px 24px", background: "transparent", color: "#1a1a1a", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 15, textDecoration: "none", border: "1.5px solid #ddd" }}>Ver carta de ejemplo</a>
             </div>
             <p style={{ fontSize: 13, color: "#999", fontFamily: F, fontWeight: 500 }}>Implementación gratis · Listo en 24 horas · Sin contratos</p>
           </div>
@@ -149,17 +149,17 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ background: "#fff", borderRadius: 22, overflow: "hidden", minHeight: 480 }}>
                 {/* Phone header */}
                 <div style={{ padding: "18px 16px 12px", borderBottom: "1px solid #f0ebe0" }}>
-                  <p style={{ fontFamily: F, fontSize: 18, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>Hand Roll</p>
+                  <p style={{ fontFamily: F, fontSize: 18, fontWeight: 700, color: "#111", margin: "0 0 2px" }}>Horus Vegan</p>
                   <p style={{ fontSize: 12, color: "#999", margin: 0 }}>Carta · ordenada para ti</p>
                 </div>
                 {/* Featured card */}
                 <div style={{ margin: "14px 12px", background: "#FFFBF0", border: `2px solid ${BRAND}`, borderRadius: 14, padding: 12 }}>
                   <span style={{ fontFamily: F, fontSize: 9, fontWeight: 700, color: BRAND, textTransform: "uppercase", letterSpacing: "0.5px" }}>⭐ Recomendado para ti</span>
                   <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-                    <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=200&h=200&fit=crop" alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=200&h=200&fit=crop" alt="" style={{ width: 64, height: 64, borderRadius: 10, objectFit: "cover" }} />
                     <div>
-                      <p style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "#111", margin: "4px 0 4px" }}>Tabla de sushi familiar</p>
-                      <p style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>$32.990</p>
+                      <p style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "#111", margin: "4px 0 4px" }}>Buddha Bowl quinoa</p>
+                      <p style={{ fontFamily: F, fontSize: 15, fontWeight: 700, color: "#111", margin: 0 }}>$9.990</p>
                     </div>
                   </div>
                 </div>
@@ -167,16 +167,16 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <div style={{ padding: "0 12px" }}>
                   <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", margin: "12px 0 8px" }}>Entradas</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <img src="https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
-                    <img src="https://images.unsplash.com/photo-1541014741259-de529411b96a?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1540420773420-3366772f4999?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1543339308-d595c471b5f7?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
                   </div>
                 </div>
                 {/* Category: Fondos */}
                 <div style={{ padding: "0 12px 14px" }}>
                   <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", margin: "12px 0 8px" }}>Fondos</p>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
-                    <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
+                    <img src="https://images.unsplash.com/photo-1547592180-85f173990554?w=200&h=200&fit=crop" alt="" style={{ width: "100%", aspectRatio: "1", borderRadius: 10, objectFit: "cover" }} />
                   </div>
                 </div>
                 {/* Waiter button */}
@@ -234,7 +234,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               { emoji: "🛎️", title: "Llamar al garzón con un toque", desc: "El cliente toca un botón y el garzón recibe notificación al instante. Adiós a esperar con el brazo en alto" },
               { emoji: "📊", title: "Estadísticas que sirven", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
             ].map(f => (
-              <div key={f.title} className="lnd-feature-card" style={{ background: BG_WARM, borderRadius: 16, padding: 24, transition: "all 0.2s" }}>
+              <div key={f.title} className="lnd-feature-card" style={{ background: BG_WARM, borderRadius: 16, padding: 24, transition: "all 0.2s", textAlign: "center" }}>
                 <span style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{f.emoji}</span>
                 <p style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", marginBottom: 6 }}>{f.title}</p>
                 <p style={{ fontSize: 13, color: "#666", lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
@@ -295,7 +295,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             {[
               { quote: "Antes pasaba que los garzones tenían que estar explicando los platos uno por uno. Ahora el cliente abre la carta, ve la foto, lee y pide. Nos liberó harto tiempo en el servicio", name: "Alfredo Morales", place: "Hand Roll", initials: "AM", color: BRAND },
               { quote: "Se nota en las ventas. Hay platos que antes pasaban desapercibidos y ahora están saliendo todos los días. La gente entra a la carta y termina pidiendo más cosas que antes", name: "Carlos Gómez", place: "Horus Vegan", initials: "CG", color: "#16a34a" },
-              { quote: "Me cargaron la carta en menos de un día y con fotos buenas. Pensé que iba a ser una lata cambiar a algo digital pero lo hicieron todo ellos. Cero pega para mí", name: "Javier Muñoz", place: "Juana la Brava", initials: "JM", color: "#7c3aed" },
             ].map(t => (
               <div key={t.name} style={{ background: BG_WARM, borderRadius: 16, padding: 24 }}>
                 <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, margin: "0 0 20px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
@@ -389,27 +388,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
-      {/* ══════ IMPLEMENTACIÓN ══════ */}
-      <section style={{ background: "#fff", padding: "64px 24px", textAlign: "center" }}>
-        <div style={{ maxWidth: 700, margin: "0 auto" }}>
-          <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Implementación</p>
-          <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 36 }}>Nosotros nos encargamos</h2>
-          <div className="lnd-impl-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 20 }}>
-            {[
-              { emoji: "📸", title: "Subimos tu carta", desc: "Cargamos todos tus platos con fotos, precios y descripciones. Tú no haces nada" },
-              { emoji: "⚡", title: "En 24 horas", desc: "Tu carta digital lista para usar en un día" },
-              { emoji: "🤝", title: "Sin costo", desc: "La implementación es 100% gratis en todos los planes" },
-            ].map(item => (
-              <div key={item.title} style={{ padding: "20px 12px" }}>
-                <span style={{ fontSize: 32, display: "block", marginBottom: 10 }}>{item.emoji}</span>
-                <p style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", marginBottom: 6 }}>{item.title}</p>
-                <p style={{ fontSize: 13, color: "#888", lineHeight: 1.5 }}>{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ══════ FAQ ══════ */}
       <section style={{ background: BG_WARM, padding: "64px 24px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
@@ -463,7 +441,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <p style={{ fontFamily: F, fontSize: 20, fontWeight: 800, marginBottom: 10 }}>
                 <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: BRAND }}>Comer</span>
               </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: 0 }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: "0 auto", textAlign: "center" }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
             </div>
             <div>
               <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Producto</h5>

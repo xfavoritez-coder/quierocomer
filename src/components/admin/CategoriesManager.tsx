@@ -142,7 +142,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
         {editing ? (
           <div style={{ flex: 1, display: "flex", gap: 8, alignItems: "center" }} onClick={e => e.stopPropagation()}>
             <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onRename(category.id, editName); setEditing(false); } }} style={{ flex: 1, padding: "4px 8px", background: "#F5F4F1", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "#1a1a1a", outline: "none" }} autoFocus />
-            <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 12px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" }}>OK</button>
+            <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" }}>OK</button>
             <button onClick={() => setEditing(false)} style={{ padding: "4px 8px", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>X</button>
           </div>
         ) : changingType ? (
@@ -396,13 +396,15 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           <input value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createCategory(); if (e.key === "Escape") { setShowCreateInput(false); setNewCatName(""); } }} placeholder="Nombre de la categoría..." autoFocus
             style={{ flex: 1, padding: "10px 14px", background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: 13, outline: "none" }} />
-          <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
+          <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
           <button onClick={() => { setShowCreateInput(false); setNewCatName(""); }} style={{ padding: "10px 12px", background: "transparent", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10, fontFamily: F, fontSize: 13, color: "#888", cursor: "pointer" }}>Cancelar</button>
         </div>
       ) : (
-        <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, width: "100%", padding: "10px 16px", background: "#1a1a1a", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 500, cursor: "pointer", marginBottom: 16 }}>
-          + Nueva categoría
-        </button>
+        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+          <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            + Nueva categoría
+          </button>
+        </div>
       )}
 
       {/* Sortable categories */}
