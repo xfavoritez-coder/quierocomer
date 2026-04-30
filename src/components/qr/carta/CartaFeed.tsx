@@ -347,7 +347,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
               </span>
             </div>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 600, color: "#F4A623", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 400, color: "#F4A623", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
               ${dish.price.toLocaleString("es-CL")}
             </span>
           )}
