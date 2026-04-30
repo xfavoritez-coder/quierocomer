@@ -103,6 +103,7 @@ export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
           style={{
             position: "absolute",
             right: 62,
+            bottom: 0,
             display: "flex",
             flexDirection: "column",
             gap: 0,

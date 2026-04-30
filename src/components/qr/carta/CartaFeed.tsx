@@ -510,7 +510,7 @@ export default function CartaFeed({
                 {hasPromos && (
                   <button
                     onClick={() => { setActiveCategory("promos"); document.getElementById("feed-cat-promos")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
-                    style={{ padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 12, fontWeight: activeCategory === "promos" ? 500 : 400, whiteSpace: "nowrap", background: activeCategory === "promos" ? "rgba(239,159,39,0.12)" : "#F5F4F1", color: activeCategory === "promos" ? "#92400e" : "#5a5a5a" }}
+                    style={{ padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontSize: 13, fontWeight: activeCategory === "promos" ? 500 : 400, whiteSpace: "nowrap", background: activeCategory === "promos" ? "rgba(239,159,39,0.12)" : "#F5F4F1", color: activeCategory === "promos" ? "#92400e" : "#5a5a5a" }}
                   >
                     🔥 {t(lang, "offers" as any) || "Ofertas"}
                   </button>
@@ -522,7 +522,7 @@ export default function CartaFeed({
                     onClick={() => { setActiveCategory(cat.id); document.getElementById(`feed-cat-${cat.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
                     style={{
                       padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                      fontSize: 12, fontWeight: activeCategory === cat.id ? 500 : 400, whiteSpace: "nowrap",
+                      fontSize: 13, fontWeight: activeCategory === cat.id ? 500 : 400, whiteSpace: "nowrap",
                       background: activeCategory === cat.id ? "rgba(239,159,39,0.12)" : "#F5F4F1",
                       color: activeCategory === cat.id ? "#92400e" : "#5a5a5a",
                     }}
@@ -631,7 +631,7 @@ export default function CartaFeed({
       {/* ═══ FLOATING ELEMENTS ═══ */}
       <VeganFloatingPill />
 
-      <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 18, right: 16 }}>
+      <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 24, right: 16 }}>
         <button onClick={() => setGenioOpen(true)} className="flex items-center justify-center rounded-full active:scale-95"
           style={{ height: hasCompletedGenio ? 52 : 60, width: hasCompletedGenio ? 52 : 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
           <span style={{ fontSize: hasCompletedGenio ? "22px" : "26px", lineHeight: 1 }}>🧞</span>
