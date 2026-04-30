@@ -28,6 +28,13 @@ async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string>
 }
 
 async function fetchPage(url: string): Promise<string> {
+  // Try direct fetch first (preserves prices/photos better for menu platforms)
+  try {
+    const direct = await fetchWithTimeout(url, 10000);
+    // If we got substantial HTML content, use it
+    if (direct.length > 500) return direct;
+  } catch {}
+  // Fallback to Jina reader for JS-rendered pages
   try {
     return await fetchWithTimeout(`https://r.jina.ai/${url}`, 12000);
   } catch {}
@@ -35,14 +42,33 @@ async function fetchPage(url: string): Promise<string> {
 }
 
 function cleanContent(html: string): string {
-  return html
+  // Extract image URLs before stripping tags
+  const imgUrls: string[] = [];
+  const imgMatches = html.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi);
+  for (const m of imgMatches) {
+    const src = m[1];
+    if (src && !src.includes("favicon") && !src.includes("logo") && !src.includes("icon") && !src.includes("data:image") && src.length > 10) {
+      imgUrls.push(src);
+    }
+  }
+
+  let cleaned = html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<nav[\s\S]*?<\/nav>/gi, "")
     .replace(/<footer[\s\S]*?<\/footer>/gi, "")
+    // Preserve price-like patterns by converting spans/divs with prices to text
+    .replace(/<[^>]*>\s*(\$[\d.,]+)\s*<\/[^>]*>/gi, " $1 ")
     .replace(/\n{3,}/g, "\n\n")
     .replace(/ {2,}/g, " ")
     .trim();
+
+  // Append found image URLs so Claude can reference them
+  if (imgUrls.length > 0) {
+    cleaned += "\n\n[IMAGES FOUND ON PAGE]\n" + imgUrls.slice(0, 80).join("\n");
+  }
+
+  return cleaned;
 }
 
 async function callClaude(prompt: string, maxTokens = 16000): Promise<string> {
@@ -134,7 +160,13 @@ export async function POST(request: Request) {
           claudePromises.push(
             callClaude(`Extrae TODOS los productos de estas ${batch.length} categorías de restaurante. Responde con JSON:
 {"categories":[{"name":"Nombre categoría","dishes":[{"name":"Nombre","description":"Desc o null","price":8990,"photo":null,"productUrl":"URL producto o null","diet":"OMNIVORE","isSpicy":false,"modifiers":[]}]}]}
-Precios enteros ($8.990→8990). URLs absolutas con ${baseUrl}. SOLO JSON.
+
+REGLAS:
+- Precios enteros: $8.990→8990, $12.500→12500 (punto es separador de miles, NO decimal)
+- NO dejes price en 0 si hay un precio visible
+- Fotos: busca URLs de imágenes en [IMAGES FOUND ON PAGE] y asócialas por nombre/posición
+- URLs absolutas con ${baseUrl}
+- SOLO JSON
 
 ${batchContent}`, 16000)
               .then(text => parseJSON(text))
@@ -168,7 +200,14 @@ ${content}
 
 Responde con JSON:
 {"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","diet":"OMNIVORE","isSpicy":false,"modifiers":[]}]}]}
-Precios enteros ($8.990→8990). Fotos absolutas con ${baseUrl}. SOLO JSON.`);
+
+REGLAS IMPORTANTES:
+- Precios: busca números que parezcan precios (ej: $8.990, 8990, $12.500). Conviértelos a enteros sin puntos: $8.990→8990
+- Si un precio tiene formato "8.990" (con punto de miles), es 8990 no 8.99
+- Fotos: busca URLs de imágenes en la sección [IMAGES FOUND ON PAGE] y asócialas al plato correspondiente por nombre o posición
+- Las URLs de fotos deben ser absolutas. Si son relativas, añade ${baseUrl} al inicio
+- NO dejes price en 0 si hay un precio visible en la página
+- SOLO JSON, sin texto adicional.`);
       parsed = parseJSON(step1Text);
       parsed.type = "inline";
     }
