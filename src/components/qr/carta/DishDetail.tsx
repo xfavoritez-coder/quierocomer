@@ -467,27 +467,74 @@ function DishSlide({
           const allGroups = templates.flatMap((t: any) => t.groups || []);
           if (allGroups.length === 0) return null;
 
-          const hasRichOptions = allGroups.some((g: any) => g.options?.some((o: any) => o.imageUrl || o.description || o.priceAdjustment !== 0));
-
           return (
             <div style={{ marginTop: 14 }}>
-              {allGroups.map((g: any) => (
-                <div key={g.id} style={{ marginBottom: 10 }}>
-                  <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", fontWeight: 600, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{g.name}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {g.options?.map((o: any) => (
-                      <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 8 }}>
-                        <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem" }}>{o.name}</span>
-                        {o.priceAdjustment !== 0 && (
-                          <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>
-                            +${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}
-                          </span>
-                        )}
+              {allGroups.map((g: any) => {
+                const options: { id: string; name: string; priceAdjustment: number }[] = g.options || [];
+                if (options.length === 0) return null;
+
+                // Check if options share prices → group by price for cleaner display
+                const priceGroups = new Map<number, string[]>();
+                for (const o of options) {
+                  const price = o.priceAdjustment || 0;
+                  if (!priceGroups.has(price)) priceGroups.set(price, []);
+                  // Split comma-separated items into individual entries
+                  const items = o.name.split(/,\s*/).map(s => s.trim()).filter(Boolean);
+                  priceGroups.get(price)!.push(...items);
+                }
+
+                // Use grouped view if: multiple options share a price, or any option has commas
+                const hasSharedPrices = [...priceGroups.values()].some(items => items.length > 1);
+                const hasCommas = options.some(o => o.name.includes(","));
+                const useGrouped = hasSharedPrices || hasCommas;
+
+                if (useGrouped) {
+                  // Sort price groups by price ascending
+                  const sorted = [...priceGroups.entries()].sort((a, b) => a[0] - b[0]);
+                  return (
+                    <div key={g.id} style={{ marginBottom: 14 }}>
+                      <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", fontWeight: 600, margin: "0 0 8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{g.name}</p>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        {sorted.map(([price, items]) => (
+                          <div key={price} style={{ background: "rgba(255,255,255,0.06)", borderRadius: 10, padding: "8px 12px" }}>
+                            {price !== 0 && (
+                              <p style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 600, margin: "0 0 6px" }}>
+                                +${Math.abs(price).toLocaleString("es-CL")} c/u
+                              </p>
+                            )}
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                              {items.map((item, i) => (
+                                <span key={i} style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.82rem", padding: "2px 8px", background: "rgba(255,255,255,0.06)", borderRadius: 6 }}>
+                                  {item}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
+                  );
+                }
+
+                // Default: simple list (no grouping needed)
+                return (
+                  <div key={g.id} style={{ marginBottom: 10 }}>
+                    <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.82rem", fontWeight: 600, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>{g.name}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {options.map((o: any) => (
+                        <div key={o.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: "rgba(255,255,255,0.06)", borderRadius: 8 }}>
+                          <span style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.85rem" }}>{o.name}</span>
+                          {o.priceAdjustment !== 0 && (
+                            <span style={{ color: "#F4A623", fontSize: "0.78rem", fontWeight: 500, flexShrink: 0, marginLeft: 8 }}>
+                              +${Math.abs(o.priceAdjustment).toLocaleString("es-CL")}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           );
         })()}
