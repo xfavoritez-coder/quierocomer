@@ -95,7 +95,7 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
 
   // Tag for hero eyebrow
   const eyebrow = dish.tags?.includes("RECOMMENDED")
-    ? { emoji: "⭐", text: t(lang, "feedHeroTop" as any) || "Top de la casa" }
+    ? { emoji: "⭐", text: t(lang, "recommended" as any) || "Recomendado" }
     : dish.tags?.includes("NEW")
     ? { emoji: "✨", text: t(lang, "feedHeroNew" as any) || "Nuevo en la carta" }
     : { emoji: "🔥", text: t(lang, "feedHeroTrending" as any) || "Plato del momento" };
@@ -169,8 +169,8 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
         {/* Eyebrow */}
         <span style={{
           display: "inline-flex", alignItems: "center", gap: 5,
-          background: "#EF9F27", color: "#2C1810",
-          fontSize: 10, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+          background: "#EF9F27", color: "#fff",
+          fontSize: 8, fontWeight: 600, padding: "4px 10px", borderRadius: 999,
           letterSpacing: "0.4px", textTransform: "uppercase", marginBottom: 14,
         }}>
           {eyebrow.emoji} {eyebrow.text}
@@ -259,7 +259,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
 
           {/* Badges top-left */}
           {(isRec || isPopular || pEntry?.autoRecommended) && (
-            <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 5, flexWrap: "wrap", maxWidth: "calc(100% - 20px)" }}>
+            <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 5, flexWrap: "wrap", maxWidth: "calc(100% - 60px)" }}>
               {isRec && (
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
                   ⭐ {t(lang, "recommended" as any) || "Recomendado"}
@@ -328,7 +328,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           {/* Description */}
           {dish.description && (
             <p className="font-[family-name:var(--font-dm)]" style={{
-              fontSize: 12, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
+              fontSize: 14, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
               display: "-webkit-box", WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical" as any, overflow: "hidden",
             }}>
@@ -340,7 +340,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         <div style={{ flexShrink: 0 }}>
           {hasDiscount ? (
             <div style={{ textAlign: "right" }}>
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 600, color: "#16a34a", letterSpacing: "-0.2px" }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 400, color: "#16a34a", letterSpacing: "-0.2px" }}>
                 ${dish.discountPrice!.toLocaleString("es-CL")}
               </span>
               <br />
@@ -349,7 +349,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
               </span>
             </div>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 600, color: "#1a1a1a", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 400, color: "#1a1a1a", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
               ${dish.price.toLocaleString("es-CL")}
             </span>
           )}
