@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Layers, List, BookOpen, Rocket } from "lucide-react";
+import { Layers, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
@@ -13,9 +13,10 @@ import GenioTip from "../genio/GenioTip";
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const LANG_STORAGE_KEY = "qc_lang";
 
-const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewSpace"; Icon: typeof List }[] = [
+const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewSpace" | "viewFeed"; Icon: typeof List }[] = [
   { value: "lista", labelKey: "viewList", Icon: List },
   { value: "premium", labelKey: "viewGallery", Icon: BookOpen },
+  { value: "feed", labelKey: "viewFeed", Icon: LayoutGrid },
   { value: "viaje", labelKey: "viewSpace", Icon: Rocket },
 ];
 

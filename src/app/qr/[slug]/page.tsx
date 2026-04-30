@@ -126,7 +126,7 @@ export default async function CartaPage({
   }).map(a => ({ id: a.id, text: a.text, linkUrl: a.linkUrl }));
 
   // Resolve initial view server-side: URL param > restaurant default > fallback
-  const validViews = ["premium", "lista", "viaje"];
+  const validViews = ["premium", "lista", "viaje", "feed"];
   const serverView = validViews.includes(urlView || "") ? urlView! : ((restaurant as any).defaultView || "premium");
 
   const isPremium = restaurant.cartaTheme === "PREMIUM";

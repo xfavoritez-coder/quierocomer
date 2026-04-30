@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Sparkles, List, BookOpen, Rocket } from "lucide-react";
+import { Sparkles, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
 import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
 import { startSession, trackViewSelected, setCartaLang } from "@/lib/sessionTracker";
@@ -9,6 +9,7 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
+import CartaFeed from "./CartaFeed";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
@@ -172,6 +173,7 @@ export default function CartaRouter(props: Props) {
         <HappyHourBanner happyHours={props.happyHours || []} />
         {view === "premium" && <CartaPremium {...sharedProps} />}
         {view === "lista" && <CartaLista {...sharedProps} />}
+        {view === "feed" && <CartaFeed {...sharedProps} />}
         {view === "viaje" && <CartaViaje {...sharedProps} />}
 
         {overlay && (
@@ -189,6 +191,7 @@ export default function CartaRouter(props: Props) {
             <div style={{ animation: "genioFloat 1.5s ease-in-out infinite" }}>
               {overlay.view === "lista" && <List size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
               {overlay.view === "premium" && <BookOpen size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
+              {overlay.view === "feed" && <LayoutGrid size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
               {overlay.view === "viaje" && <Rocket size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
             </div>
             <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500, marginTop: 14 }}>Vista {overlay.label}</p>
