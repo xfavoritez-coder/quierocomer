@@ -6,7 +6,6 @@ import {
   authErrorResponse,
 } from "@/lib/adminAuth";
 
-export const config = { api: { bodyParser: false } };
 export const maxDuration = 30;
 
 export async function POST(req: NextRequest) {
