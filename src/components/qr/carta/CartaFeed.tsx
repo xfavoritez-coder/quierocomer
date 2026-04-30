@@ -347,7 +347,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
               </span>
             </div>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 400, color: "#F4A623", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 500, color: "#555", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
               ${dish.price.toLocaleString("es-CL")}
             </span>
           )}
@@ -382,7 +382,10 @@ export default function CartaFeed({
   useEffect(() => {
     if (!query || query.length < 2) return;
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
-    searchTimerRef.current = setTimeout(() => { trackSearchPerformed(restaurant.id, query); }, 1500);
+    searchTimerRef.current = setTimeout(() => {
+      const results = dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query)));
+      trackSearchPerformed(restaurant.id, query, results.length);
+    }, 1500);
     return () => { if (searchTimerRef.current) clearTimeout(searchTimerRef.current); };
   }, [query, restaurant.id]);
 
