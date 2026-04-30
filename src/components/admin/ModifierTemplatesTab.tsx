@@ -349,8 +349,8 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                 <input value={eoDesc} onChange={e => setEoDesc(e.target.value)} placeholder="Descripción (opcional)" style={INP} />
                                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                                   {eoImage && <img src={eoImage} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover" }} />}
-                                  <label style={{ padding: "5px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-                                    {eoUploading ? "..." : eoImage ? "Cambiar foto" : "Foto (opcional)"}
+                                  <label style={{ padding: "5px 10px", background: eoUploading ? "rgba(244,166,35,0.1)" : "var(--adm-input)", border: `1px solid ${eoUploading ? GOLD : "var(--adm-card-border)"}`, borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: eoUploading ? GOLD : "var(--adm-text2)", cursor: eoUploading ? "wait" : "pointer", transition: "all 0.2s" }}>
+                                    {eoUploading ? "Subiendo foto..." : eoImage ? "Cambiar foto" : "Foto (opcional)"}
                                     <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
                                       const file = e.target.files?.[0];
                                       if (!file) return;

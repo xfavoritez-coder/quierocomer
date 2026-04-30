@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
@@ -352,7 +352,18 @@ export default function AdminMenus() {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 20;
-  const [menuTab, setMenuTab] = useState<"productos" | "categorias" | "modificadores" | "horarios">("productos");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const validTabs = ["productos", "categorias", "modificadores", "horarios"] as const;
+  type MenuTab = typeof validTabs[number];
+  const tabFromUrl = searchParams.get("tab") as MenuTab | null;
+  const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
+  const setMenuTab = (tab: MenuTab) => {
+    setMenuTabState(tab);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", tab);
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
 
   // Reset when clicking same nav link (e.g. "Mi Carta" while viewing a dish)
   useEffect(() => {
