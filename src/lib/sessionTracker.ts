@@ -63,6 +63,24 @@ let startingSession = false; // prevent duplicate start calls
 let creatingDbSession = false; // prevent duplicate DB session creation
 let hadUserInteraction = false; // true after real touch/click
 
+const SESSION_STORAGE_KEY = "qc_active_session";
+const SESSION_REUSE_WINDOW = 2 * 60_000; // 2 minutes — reuse session if reloaded within this window
+
+function persistSession(dbSessionId: string, restaurantId: string, startedAt: number) {
+  try { sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ dbSessionId, restaurantId, startedAt })); } catch {}
+}
+
+function getPersistedSession(): { dbSessionId: string; restaurantId: string; startedAt: number } | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearPersistedSession() {
+  try { sessionStorage.removeItem(SESSION_STORAGE_KEY); } catch {}
+}
+
 function getDeviceType(): string {
   if (typeof window === "undefined") return "unknown";
   const w = window.innerWidth;
@@ -287,6 +305,7 @@ function ensureDbSession() {
       const target = currentSession === session ? currentSession : session;
       if (target && !target.dbSessionId) {
         target.dbSessionId = data.sessionId;
+        persistSession(data.sessionId, target.restaurantId, target.startedAt);
         // Flush any pending final heartbeat that was queued during creation
         if (pendingFinalHeartbeat) {
           const { closeReason } = pendingFinalHeartbeat;
@@ -315,6 +334,41 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     closeSession("stale");
   }
   if (startingSession) return;
+
+  // Check if there's a recent persisted session we can reuse (e.g. page reload)
+  if (!session) {
+    const persisted = getPersistedSession();
+    if (persisted && persisted.restaurantId === restaurantId) {
+      const age = Date.now() - persisted.startedAt;
+      if (age < SESSION_REUSE_WINDOW) {
+        // Restore the session from sessionStorage — avoids creating a duplicate
+        startingSession = true;
+        deviceType = getDeviceType();
+        hadUserInteraction = true; // was already interacting before reload
+        session = {
+          restaurantId,
+          tableId,
+          dbSessionId: persisted.dbSessionId,
+          startedAt: persisted.startedAt,
+          viewUsed: null,
+          viewHistory: [],
+          currentViewStart: Date.now(),
+          dishDwells: new Map(),
+          categoryDwells: new Map(),
+          pickedDishId: null,
+          cartaLang: pendingLang,
+          closed: false,
+        };
+        startingSession = false;
+        if (!activityBound) { bindActivityListeners(); activityBound = true; }
+        resetInactivityTimer();
+        // Resume heartbeat for the restored session
+        if (heartbeatTimer) clearInterval(heartbeatTimer);
+        heartbeatTimer = setInterval(() => sendHeartbeat(false), HEARTBEAT_INTERVAL);
+        return;
+      }
+    }
+  }
 
   if (session && !session.closed) {
     closeSession("new_session");
@@ -480,6 +534,11 @@ export function closeSession(reason: string = "manual") {
   if (inactivityTimer) clearTimeout(inactivityTimer);
   if (heartbeatTimer) clearInterval(heartbeatTimer);
   if (dbSessionDelay) { clearTimeout(dbSessionDelay); dbSessionDelay = null; }
+
+  // Clear persisted session on definitive close reasons (not on reload/navigation)
+  if (reason === "inactivity" || reason === "stale" || reason === "manual") {
+    clearPersistedSession();
+  }
 
   const durationMs = Date.now() - session.startedAt;
   if (durationMs < 2000) return; // Skip accidental sessions
