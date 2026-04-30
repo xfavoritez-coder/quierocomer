@@ -917,7 +917,7 @@ export default function AdminMenus() {
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Foto</label>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                  {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPhotoModal(ePhotoUrl); }} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />}
+                  {ePhotoUrl && <img src={ePhotoUrl} alt="" onClick={(e) => { e.preventDefault(); e.stopPropagation(); photoInputRef.current?.click(); }} style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", flexShrink: 0, cursor: "pointer" }} title="Cambiar foto" />}
                   <label style={{ flex: 1, padding: "10px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, textAlign: "center", cursor: "pointer", fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)" }}>
                     {photoUploading ? "Subiendo..." : ePhotoUrl ? "Cambiar foto" : "Subir foto"}
                     <input ref={photoInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
@@ -1428,11 +1428,12 @@ export default function AdminMenus() {
             const isExpanded = expandedDishId === d.id;
             const isHidden = !d.isActive;
             return (
-            <div key={d.id} style={{
+            <div key={d.id} className="adm-dish-card" style={{
               background: isHidden ? "#FAF9F7" : "var(--adm-card)",
               border: "0.5px solid rgba(0,0,0,0.08)",
               borderRadius: 12, overflow: menuOpenId === d.id ? "visible" : "hidden", opacity: isHidden ? 0.7 : 1,
               position: menuOpenId === d.id ? "relative" as const : undefined, zIndex: menuOpenId === d.id ? 100 : undefined,
+              cursor: "pointer", transition: "box-shadow 0.15s, transform 0.15s",
             }}>
               {/* Row */}
               <div style={{ display: "flex", gap: 12, padding: 10, alignItems: "center" }}>
@@ -1612,6 +1613,7 @@ export default function AdminMenus() {
       <style>{`
         @media (max-width: 768px) { .mcarta-fab { display: flex !important; } .lnd-desktop-only { display: none !important; } }
         @media (min-width: 769px) { .mcarta-fab { display: none !important; } }
+        .adm-dish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
       `}</style>
     </div>
   );
