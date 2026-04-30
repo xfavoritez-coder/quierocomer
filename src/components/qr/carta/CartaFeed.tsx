@@ -470,7 +470,7 @@ export default function CartaFeed({
 
   const handleDishClick = useCallback((dish: Dish) => {
     setSelectedDish(dish);
-    trackCartaDishOpenedInList(restaurant.id, dish.id);
+    trackCartaDishOpenedInList(restaurant.id, dish.id, false);
   }, [restaurant.id]);
 
   useEffect(() => { onReady?.(); }, [readyKey]);
