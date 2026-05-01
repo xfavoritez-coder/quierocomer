@@ -81,7 +81,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       // Auto-detect gluten-free if user didn't explicitly set it
       if (body.isGlutenFree === undefined && body.ingredientIds.length > 0) {
         const allergens = await prisma.allergen.findMany({
-          where: { ingredients: { some: { ingredientId: { in: body.ingredientIds } } } },
+          where: { ingredients: { some: { id: { in: body.ingredientIds } } } },
           select: { name: true },
         });
         const hasGluten = allergens.some(a => a.name.toLowerCase() === "gluten");
