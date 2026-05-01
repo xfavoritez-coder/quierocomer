@@ -84,45 +84,25 @@ function DesertSVG() {
   );
 }
 
-/* ─── Night Footer Dunes SVG ─── */
+/* ─── Sunset Footer Dunes SVG ─── */
 function FooterDunesSVG() {
-  // Random but deterministic stars
-  const stars = [
-    { x: 50, y: 30, r: 1.2 }, { x: 120, y: 15, r: 0.8 }, { x: 200, y: 45, r: 1 },
-    { x: 280, y: 20, r: 0.6 }, { x: 350, y: 35, r: 1.1 }, { x: 420, y: 12, r: 0.7 },
-    { x: 500, y: 40, r: 0.9 }, { x: 580, y: 25, r: 1.3 }, { x: 650, y: 18, r: 0.8 },
-    { x: 720, y: 38, r: 1 }, { x: 100, y: 50, r: 0.5 }, { x: 300, y: 55, r: 0.6 },
-    { x: 550, y: 8, r: 0.7 }, { x: 700, y: 48, r: 0.9 }, { x: 180, y: 60, r: 0.5 },
-    { x: 450, y: 58, r: 0.8 }, { x: 600, y: 52, r: 0.6 }, { x: 750, y: 10, r: 1.1 },
-  ];
   return (
     <>
-      {/* Stars */}
-      <svg viewBox="0 0 800 70" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", left: 0, right: 0, bottom: 100, width: "100%", height: 70, opacity: 0.6 }}>
-        {stars.map((s, i) => (
-          <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#fff" opacity={0.4 + (i % 3) * 0.2}>
-            <animate attributeName="opacity" values={`${0.3 + (i % 3) * 0.2};${0.7 + (i % 2) * 0.3};${0.3 + (i % 3) * 0.2}`} dur={`${2 + (i % 4)}s`} repeatCount="indefinite" />
-          </circle>
-        ))}
-      </svg>
-      {/* Moon */}
-      <div style={{ position: "absolute", right: "15%", bottom: 120, width: 48, height: 48, zIndex: 2 }}>
-        <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%" }}>
-          <circle cx="24" cy="24" r="22" fill="#fef3c7" opacity="0.95" />
-          <circle cx="24" cy="24" r="22" fill="url(#moonGlow)" opacity="0.3" />
-          <defs><radialGradient id="moonGlow"><stop offset="0%" stopColor="#fff" /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
-        </svg>
-      </div>
-      <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 140 }}>
-        <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.5" />
-        <path d="M0 120 Q150 90 300 110 Q450 85 600 105 Q700 90 800 100 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.7" />
-        <path d="M0 140 Q200 120 400 135 Q600 120 800 140 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.9" />
-        <rect x="120" y="95" width="4" height="30" rx="2" fill="#1e1b4b" opacity="0.85" />
-        <rect x="116" y="102" width="3" height="12" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-20 116 102)" />
-        <rect x="126" y="100" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(15 126 100)" />
-        <rect x="680" y="85" width="5" height="35" rx="2" fill="#1e1b4b" opacity="0.85" />
-        <rect x="675" y="93" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-22 675 93)" />
-        <rect x="687" y="90" width="3" height="16" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(18 687 90)" />
+      {/* Setting sun glow on horizon */}
+      <div aria-hidden style={{ position: "absolute", right: "18%", bottom: 70, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, #FFE0A8 0%, #FFB570 35%, rgba(255,140,80,0) 70%)", filter: "blur(2px)", pointerEvents: "none", zIndex: 0 }} />
+      {/* Setting sun disc */}
+      <div aria-hidden style={{ position: "absolute", right: "calc(18% + 38px)", bottom: 108, width: 64, height: 64, borderRadius: "50%", background: "radial-gradient(circle, #FFF4D6 0%, #FFC97A 70%, #FF9B4A 100%)", boxShadow: "0 0 60px 10px rgba(255,180,100,0.55)", pointerEvents: "none", zIndex: 1 }} />
+      {/* Dunes */}
+      <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 160, zIndex: 2 }}>
+        <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#5B1F46" opacity="0.55" />
+        <path d="M0 120 Q150 90 300 110 Q450 85 600 105 Q700 90 800 100 L800 160 L0 160Z" fill="#3F1438" opacity="0.78" />
+        <path d="M0 140 Q200 120 400 135 Q600 120 800 140 L800 160 L0 160Z" fill="#260B26" opacity="0.95" />
+        <rect x="120" y="95" width="4" height="30" rx="2" fill="#1a0820" opacity="0.92" />
+        <rect x="116" y="102" width="3" height="12" rx="1" fill="#1a0820" opacity="0.92" transform="rotate(-20 116 102)" />
+        <rect x="126" y="100" width="3" height="14" rx="1" fill="#1a0820" opacity="0.92" transform="rotate(15 126 100)" />
+        <rect x="680" y="85" width="5" height="35" rx="2" fill="#1a0820" opacity="0.92" />
+        <rect x="675" y="93" width="3" height="14" rx="1" fill="#1a0820" opacity="0.92" transform="rotate(-22 675 93)" />
+        <rect x="687" y="90" width="3" height="16" rx="1" fill="#1a0820" opacity="0.92" transform="rotate(18 687 90)" />
       </svg>
     </>
   );
@@ -473,31 +453,31 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ FOOTER ══════ */}
-      <footer style={{ background: "#0a0a0a", color: "#fff", padding: "48px 24px 24px", position: "relative", overflow: "hidden" }}>
+      <footer style={{ background: "linear-gradient(to bottom, #2D1B4E 0%, #6B2B5C 35%, #C2553D 70%, #E89456 100%)", color: "#fff", padding: "56px 24px 220px", position: "relative", overflow: "hidden" }}>
         <FooterDunesSVG />
-        <div style={{ maxWidth: 960, margin: "0 auto" }}>
+        <div style={{ maxWidth: 960, margin: "0 auto", position: "relative", zIndex: 3 }}>
           <div className="lnd-footer-top" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 40 }}>
             <div style={{ textAlign: "center" }}>
               <p style={{ fontFamily: F, fontSize: 20, fontWeight: 800, marginBottom: 10 }}>
-                <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: BRAND }}>Comer</span>
+                <span style={{ color: "#fff" }}>Quiero</span><span style={{ color: "#FFD27A" }}>Comer</span>
               </p>
-              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.55)", maxWidth: 280, lineHeight: 1.55, margin: "0 auto" }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", maxWidth: 280, lineHeight: 1.55, margin: "0 auto" }}>La carta inteligente que recomienda por ti. Hecho en Chile con 💛 y mucha hambre</p>
             </div>
             <div>
-              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Producto</h5>
-              <a href="#como-funciona" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Cómo funciona</a>
-              <a href="#funcionalidades" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Funcionalidades</a>
-              <a href="#planes" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Planes</a>
+              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Producto</h5>
+              <a href="#como-funciona" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", padding: "4px 0" }}>Cómo funciona</a>
+              <a href="#funcionalidades" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", padding: "4px 0" }}>Funcionalidades</a>
+              <a href="#planes" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", padding: "4px 0" }}>Planes</a>
             </div>
             <div>
-              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Empresa</h5>
-              <a href="#casos" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", textDecoration: "none", padding: "4px 0" }}>Casos de éxito</a>
-              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "4px 0" }}>Privacidad</span>
-              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.35)", padding: "4px 0" }}>Términos</span>
+              <h5 style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.7)", letterSpacing: "1px", textTransform: "uppercase", marginBottom: 14 }}>Empresa</h5>
+              <a href="#casos" style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.92)", textDecoration: "none", padding: "4px 0" }}>Casos de éxito</a>
+              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", padding: "4px 0" }}>Privacidad</span>
+              <span style={{ display: "block", fontSize: 13, color: "rgba(255,255,255,0.7)", padding: "4px 0" }}>Términos</span>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.08)", paddingTop: 20, textAlign: "center" }}>
-            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.35)" }}>© 2026 QuieroComer · Santiago, Chile</span>
+          <div style={{ borderTop: "1px solid rgba(255,255,255,0.18)", paddingTop: 20, textAlign: "center" }}>
+            <span style={{ fontSize: 12, color: "rgba(255,255,255,0.92)", fontWeight: 500 }}>© 2026 QuieroComer · Santiago, Chile</span>
           </div>
         </div>
       </footer>
