@@ -583,13 +583,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <div style={{ position: "absolute", inset: -42, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.45) 0%, rgba(217,119,6,0.15) 40%, transparent 70%)", animation: "genioPulse 2.8s ease-in-out infinite" }} />
                   <span style={{ fontSize: "3rem", position: "relative", filter: "drop-shadow(0 0 14px rgba(245,158,11,0.7))" }}>🧞</span>
                 </div>
-                <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: G.orange }}>
+                <p className="text-center" style={{ color: G.orange, fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, margin: 0 }}>
                   {t(lang, "gHelloGenius")}
-                </h1>
-                <p className="text-center" style={{ color: G.textSecondary, fontSize: "1.12rem", maxWidth: 300, lineHeight: 1.5, fontWeight: 500 }}>
-                  {t(lang, "gTellMeRecommend")}
                 </p>
-                <button onClick={() => { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, marginTop: 8, maxWidth: 260 }}>
+                <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: "white", margin: 0, lineHeight: 1.2 }}>
+                  {(() => { const text = t(lang, "gTellMeRecommend"); const words = text.split(" "); const last2 = words.slice(-2).join(" "); const rest = words.slice(0, -2).join(" "); return <>{rest} <em>{last2}</em></>; })()}
+                </h1>
+                <p className="text-center" style={{ color: G.textSecondary, fontSize: "0.95rem", maxWidth: 300, lineHeight: 1.5, margin: 0 }}>
+                  {t(lang, "gTellMeSub" as any)}
+                </p>
+                <button onClick={() => { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, marginTop: 8, maxWidth: 280 }}>
                   {t(lang, "gStartBtn")} →
                 </button>
               </div>
