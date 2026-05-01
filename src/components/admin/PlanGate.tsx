@@ -39,17 +39,19 @@ const PLAN_FEATURES_WITH_TIPS: Record<string, { text: string; tip: string }[]> =
   ],
 };
 
-function InfoTip({ text }: { text: string }) {
+function FeatureRow({ text, tip, color }: { text: string; tip: string; color: string }) {
   const [open, setOpen] = useState(false);
   return (
-    <span style={{ position: "relative", display: "inline-flex" }}>
-      <button onClick={(e) => { e.stopPropagation(); setOpen(!open); }} style={{ width: 15, height: 15, borderRadius: "50%", border: "none", background: "#e8e3d8", color: "#888", fontSize: "8px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0, lineHeight: 1 }}>i</button>
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
+        <span style={{ color, fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
+        <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "#444", flex: 1 }}>{text}</span>
+        <span style={{ width: 15, height: 15, borderRadius: "50%", background: open ? "#1a1a1a" : "#e8e3d8", color: open ? "#fff" : "#888", fontSize: "8px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
+      </div>
       {open && (
-        <span onClick={() => setOpen(false)} style={{ position: "absolute", bottom: "calc(100% + 6px)", left: "50%", transform: "translateX(-50%)", background: "#1a1a1a", color: "#fff", padding: "6px 10px", borderRadius: 6, fontSize: "11px", lineHeight: 1.4, width: 180, zIndex: 50, boxShadow: "0 4px 12px rgba(0,0,0,0.15)", cursor: "pointer" }}>
-          {text}
-        </span>
+        <p style={{ margin: "4px 0 2px 20px", fontSize: "0.72rem", color: "#888", lineHeight: 1.4 }}>{tip}</p>
       )}
-    </span>
+    </div>
   );
 }
 
@@ -160,11 +162,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
               }}>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                   {(PLAN_FEATURES_WITH_TIPS[modalTab] || []).map(f => (
-                    <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ color: modalTab === "PREMIUM" ? "#7c3aed" : "#F4A623", fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.8rem", color: "#444", flex: 1 }}>{f.text}</span>
-                      <InfoTip text={f.tip} />
-                    </div>
+                    <FeatureRow key={f.text} text={f.text} tip={f.tip} color={modalTab === "PREMIUM" ? "#7c3aed" : "#F4A623"} />
                   ))}
                 </div>
               </div>
