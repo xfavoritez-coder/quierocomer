@@ -183,7 +183,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           </div>
           <div className="lnd-features-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
             {[
-              { emoji: "🧞", title: "Carta personalizada por cliente", desc: "Aprende los gustos de cada comensal y reordena la carta para mostrar primero lo que más le va a gustar" },
               { emoji: "📈", title: "Sube el ticket por mesa", desc: "El Genio sugiere acompañamientos y postres en el momento justo. Discreto, no invasivo" },
               { emoji: "🛎️", title: "Llamar al garzón con un toque", desc: "El cliente toca un botón y el garzón recibe notificación al instante. Adiós a esperar con el brazo en alto" },
               { emoji: "📊", title: "Estadísticas que sirven", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
