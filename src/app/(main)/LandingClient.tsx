@@ -64,9 +64,11 @@ const BG_WARM = "#FAF9F7";
 /* ─── Desert SVG (separator) ─── */
 function DesertSVG() {
   return (
-    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: -1, background: BG_WARM }}>
+    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: -1, background: `linear-gradient(to bottom, ${BG_WARM} 60%, #fff 100%)` }}>
       <svg viewBox="0 0 1440 260" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: "auto" }}>
-        <rect width="1440" height="260" fill={BG_WARM} />
+        <rect width="1440" height="180" fill={BG_WARM} />
+        <rect y="180" width="1440" height="80" fill="url(#desertFade)" />
+        <defs><linearGradient id="desertFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={BG_WARM} /><stop offset="100%" stopColor="#ffffff" /></linearGradient></defs>
         <circle cx="1150" cy="60" r="26" fill="#fcd34d" opacity="0.85" />
         <path d="M0 180 L120 100 L240 160 L360 80 L480 140 L600 70 L720 130 L840 85 L960 150 L1080 75 L1200 120 L1320 90 L1440 110 L1440 260 L0 260Z" fill="#f59e0b" opacity="0.35" />
         <path d="M0 200 L160 140 L320 185 L480 130 L640 170 L800 120 L960 160 L1120 125 L1280 155 L1440 135 L1440 260 L0 260Z" fill="#d97706" opacity="0.45" />
