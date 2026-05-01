@@ -61,6 +61,53 @@ const B = "var(--font-body)";
 const BRAND = "#EF9F27";
 const BG_WARM = "#FAF9F7";
 
+/* ─── Desert SVG (separator) ─── */
+function DesertSVG() {
+  return (
+    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: -1 }}>
+      <svg viewBox="0 0 1440 260" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: "auto" }}>
+        <circle cx="1150" cy="60" r="26" fill="#fcd34d" opacity="0.85" />
+        <path d="M0 180 L120 100 L240 160 L360 80 L480 140 L600 70 L720 130 L840 85 L960 150 L1080 75 L1200 120 L1320 90 L1440 110 L1440 260 L0 260Z" fill="#f59e0b" opacity="0.35" />
+        <path d="M0 200 L160 140 L320 185 L480 130 L640 170 L800 120 L960 160 L1120 125 L1280 155 L1440 135 L1440 260 L0 260Z" fill="#d97706" opacity="0.45" />
+        <path d="M0 225 Q360 200 720 220 Q1080 200 1440 225 L1440 260 L0 260Z" fill="#b45309" opacity="0.3" />
+        <rect x="245" y="180" width="5" height="35" rx="2" fill="#3d5a2e" opacity="0.6" />
+        <rect x="240" y="188" width="4" height="14" rx="2" fill="#3d5a2e" opacity="0.6" transform="rotate(-22 240 188)" />
+        <rect x="252" y="185" width="4" height="16" rx="2" fill="#3d5a2e" opacity="0.6" transform="rotate(18 252 185)" />
+        <rect x="1045" y="190" width="6" height="40" rx="3" fill="#3d5a2e" opacity="0.5" />
+        <rect x="1039" y="200" width="4" height="16" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(-25 1039 200)" />
+        <rect x="1053" y="196" width="4" height="20" rx="2" fill="#3d5a2e" opacity="0.5" transform="rotate(18 1053 196)" />
+        <rect x="0" y="235" width="1440" height="25" fill="#92400e" opacity="0.25" />
+      </svg>
+    </div>
+  );
+}
+
+/* ─── Night Footer Dunes SVG ─── */
+function FooterDunesSVG() {
+  return (
+    <>
+      <div style={{ position: "absolute", right: "15%", bottom: 110, width: 48, height: 48, zIndex: 2 }}>
+        <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%" }}>
+          <circle cx="24" cy="24" r="22" fill="#fef3c7" opacity="0.95" />
+          <circle cx="24" cy="24" r="22" fill="url(#moonGlow)" opacity="0.3" />
+          <defs><radialGradient id="moonGlow"><stop offset="0%" stopColor="#fff" /><stop offset="100%" stopColor="transparent" /></radialGradient></defs>
+        </svg>
+      </div>
+      <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 140 }}>
+        <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.5" />
+        <path d="M0 120 Q150 90 300 110 Q450 85 600 105 Q700 90 800 100 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.7" />
+        <path d="M0 140 Q200 120 400 135 Q600 120 800 140 L800 160 L0 160Z" fill="#1e1b4b" opacity="0.9" />
+        <rect x="120" y="95" width="4" height="30" rx="2" fill="#1e1b4b" opacity="0.85" />
+        <rect x="116" y="102" width="3" height="12" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-20 116 102)" />
+        <rect x="126" y="100" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(15 126 100)" />
+        <rect x="680" y="85" width="5" height="35" rx="2" fill="#1e1b4b" opacity="0.85" />
+        <rect x="675" y="93" width="3" height="14" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(-22 675 93)" />
+        <rect x="687" y="90" width="3" height="16" rx="1" fill="#1e1b4b" opacity="0.85" transform="rotate(18 687 90)" />
+      </svg>
+    </>
+  );
+}
+
 /* ─── Main ─── */
 export default function LandingClient({ logos }: { logos: Logo[] }) {
   const [scrolled, setScrolled] = useState(false);
@@ -144,6 +191,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
           </div>
         </div>
       </section>
+
+      {/* Desert separator */}
+      <DesertSVG />
 
       {/* ══════ LOGOS BAR ══════ */}
       <section id="casos" style={{ background: "#fff", borderTop: "1px solid #eeeae0", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
@@ -401,7 +451,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ FOOTER ══════ */}
-      <footer style={{ background: "#0a0a0a", color: "#fff", padding: "48px 24px 24px" }}>
+      <footer style={{ background: "#0a0a0a", color: "#fff", padding: "48px 24px 24px", position: "relative", overflow: "hidden" }}>
+        <FooterDunesSVG />
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div className="lnd-footer-top" style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40, marginBottom: 40 }}>
             <div style={{ textAlign: "center" }}>
