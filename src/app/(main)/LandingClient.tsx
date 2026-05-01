@@ -69,7 +69,6 @@ function DesertSVG() {
         <rect width="1440" height="180" fill={BG_WARM} />
         <rect y="180" width="1440" height="80" fill="url(#desertFade)" />
         <defs><linearGradient id="desertFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={BG_WARM} /><stop offset="100%" stopColor="#ffffff" /></linearGradient></defs>
-        <circle cx="1150" cy="60" r="26" fill="#fcd34d" opacity="0.85" />
         <path d="M0 180 L120 100 L240 160 L360 80 L480 140 L600 70 L720 130 L840 85 L960 150 L1080 75 L1200 120 L1320 90 L1440 110 L1440 260 L0 260Z" fill="#f59e0b" opacity="0.35" />
         <path d="M0 200 L160 140 L320 185 L480 130 L640 170 L800 120 L960 160 L1120 125 L1280 155 L1440 135 L1440 260 L0 260Z" fill="#d97706" opacity="0.45" />
         <path d="M0 225 Q360 200 720 220 Q1080 200 1440 225 L1440 260 L0 260Z" fill="#b45309" opacity="0.3" />
@@ -192,8 +191,10 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </nav>
 
       {/* ══════ HERO ══════ */}
-      <section style={{ background: BG_WARM, paddingTop: 56 }}>
-        <div style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 48px", textAlign: "center" }}>
+      <section style={{ background: `linear-gradient(to bottom, #CFE2EC 0%, #E8E0CC 55%, ${BG_WARM} 100%)`, paddingTop: 56, position: "relative", overflow: "hidden" }}>
+        {/* Sol con halo */}
+        <div aria-hidden style={{ position: "absolute", top: 70, right: "10%", width: 90, height: 90, borderRadius: "50%", background: "radial-gradient(circle, #FCD34D 0%, #F59E0B 55%, rgba(245,158,11,0) 75%)", boxShadow: "0 0 80px 20px rgba(252,211,77,0.45)", pointerEvents: "none" }} />
+        <div style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 48px", textAlign: "center", position: "relative" }}>
           <div>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(239,159,39,0.1)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#92400e", fontWeight: 600, marginBottom: 20, fontFamily: F }}>
               <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
@@ -256,7 +257,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             {[
               { emoji: "📈", title: "Sube el ticket por mesa", desc: "El Genio sugiere acompañamientos y postres en el momento justo. Discreto, no invasivo" },
               { emoji: "🛎️", title: "Llamar al garzón con un toque", desc: "El cliente toca un botón y el garzón recibe notificación al instante. Adiós a esperar con el brazo en alto" },
-              { emoji: "📊", title: "Estadísticas que sirven", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
+              { emoji: "📊", title: "Estadísticas avanzadas", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
             ].map(f => (
               <div key={f.title} className="lnd-feature-card" style={{ background: BG_WARM, borderRadius: 16, padding: 24, transition: "all 0.2s", textAlign: "center" }}>
                 <span style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{f.emoji}</span>
