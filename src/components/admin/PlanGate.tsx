@@ -13,7 +13,7 @@ const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: strin
   stats_advanced: { title: "El recorrido completo", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", cta: "Ve lo que otros no ven" },
   waiter: { title: "Sin levantar la mano", desc: "Tu cliente toca un botón y el garzón lo sabe al instante. Cero esperas.", cta: "El garzón siempre atento" },
   automations: { title: "Emails que trabajan por ti", desc: "Bienvenida, cumpleaños, reactivación. Se envían solos, tú no haces nada.", cta: "Haz que tus clientes vuelvan sin esfuerzo" },
-  campaigns: { title: "Tu voz llega a todos", desc: "Un click y todos tus clientes reciben tu novedad.", cta: "Comunícate con un click" },
+  campaigns: { title: "Mantén a tus clientes cerca", desc: "Envía promos, novedades y lanzamientos directo al correo de quienes ya te conocen.", cta: "Llega a todos tus clientes con un click" },
   multilang: { title: "Tu carta en su idioma", desc: "Turistas leen tu menú en su idioma. Automático.", cta: "Abre tu carta al mundo" },
   clients_full: { title: "Todos tus clientes, en un lugar", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", cta: "Tu base completa" },
 };
@@ -83,11 +83,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
   return (
     <>
       <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
-        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 350, overflow: "hidden" }}>
+        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 420, overflow: "hidden" }}>
           {children}
         </div>
         <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "100%", maxHeight: 350,
+          position: "absolute", top: 0, left: 0, right: 0, height: "100%", maxHeight: 420,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", gap: 12,
           background: "rgba(255,255,255,0.6)", borderRadius: 16, padding: 32,
