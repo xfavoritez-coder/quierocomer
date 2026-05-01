@@ -57,32 +57,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Also get users from sessions (linked via qrUserId)
-    const sessionUsers = await prisma.session.findMany({
-      where: { restaurantId, qrUserId: { not: null } },
-      select: {
-        qrUser: {
-          select: { id: true, name: true, email: true, birthDate: true, dietType: true, createdAt: true },
-        },
-      },
-      distinct: ["qrUserId"],
-      orderBy: { startedAt: "desc" },
-    });
-
-    for (const s of sessionUsers) {
-      if (!s.qrUser || seen.has(s.qrUser.id)) continue;
-      seen.add(s.qrUser.id);
-      clients.push({
-        id: s.qrUser.id,
-        name: s.qrUser.name,
-        email: s.qrUser.email,
-        birthDate: s.qrUser.birthDate?.toISOString() || null,
-        dietType: s.qrUser.dietType,
-        registeredAt: s.qrUser.createdAt.toISOString(),
-        source: "session",
-      });
-    }
-
     // Sort by registeredAt desc
     clients.sort((a, b) => new Date(b.registeredAt).getTime() - new Date(a.registeredAt).getTime());
 
