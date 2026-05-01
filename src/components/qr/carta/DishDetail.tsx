@@ -310,7 +310,7 @@ function DishSlide({
       }}
     >
       {/* Photo — sticky, stays at half height when scrolling down */}
-      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "50vh", overflow: "hidden", zIndex: 0 }}>
+      <div style={{ position: "sticky", top: "-30vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
