@@ -55,22 +55,31 @@ export async function trackUserRegistration({
         });
       }
 
-      // 3. Mark current session as converted
-      if (sessionId) {
+      // 3. Mark current session as converted.
+      // Prefer the actual DB session id; only fall back to "most recent active" so
+      // we don't accidentally tag an old visit when the current one's session row
+      // hasn't been created yet (sessionTracker delays creation by ~3s).
+      if (dbSessionId) {
         await tx.session.updateMany({
-          where: { id: sessionId },
+          where: { id: dbSessionId },
           data: { converted: true },
         });
       } else if (guestId) {
-        // Fallback: mark the latest session of this guest
-        const latestSession = await tx.session.findFirst({
-          where: { guestId, restaurantId },
+        const recentOpenSession = await tx.session.findFirst({
+          where: {
+            guestId,
+            restaurantId,
+            OR: [
+              { endedAt: null },
+              { endedAt: { gte: new Date(Date.now() - 5 * 60_000) } },
+            ],
+          },
           orderBy: { startedAt: "desc" },
           select: { id: true },
         });
-        if (latestSession) {
+        if (recentOpenSession) {
           await tx.session.update({
-            where: { id: latestSession.id },
+            where: { id: recentOpenSession.id },
             data: { converted: true },
           });
         }
