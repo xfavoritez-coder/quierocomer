@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getMostFavoritedDishes } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -48,8 +48,13 @@ export async function GET(req: NextRequest) {
         // Reshape for the Platos tab
         const dishes = data.dishes || [];
         const byViews = [...dishes].sort((a: any, b: any) => b.uniqueSessions - a.uniqueSessions).slice(0, 10).map((d: any) => ({ name: d.name, photo: d.photo, count: d.uniqueSessions }));
-        const byDetail = [...dishes].filter((d: any) => d.avgDwellMs > 3000).sort((a: any, b: any) => b.avgDwellMs - a.avgDwellMs).slice(0, 10).map((d: any) => ({ name: d.name, photo: d.photo, count: Math.round(d.avgDwellMs / 1000) + "s" }));
-        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, genioRecommended: [] });
+        const byDetail = [...dishes]
+          .filter((d: any) => d.detailViews > 0 && d.avgDetailMs >= 1000)
+          .sort((a: any, b: any) => b.avgDetailMs - a.avgDetailMs)
+          .slice(0, 10)
+          .map((d: any) => ({ name: d.name, photo: d.photo, count: Math.round(d.avgDetailMs / 1000) + "s" }));
+        const mostFavorited = await getMostFavoritedDishes(restaurantId, from, to);
+        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, mostFavorited });
       }
       return NextResponse.json(data);
     }

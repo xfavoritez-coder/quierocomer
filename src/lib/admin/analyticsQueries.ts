@@ -303,16 +303,20 @@ export async function getTopAttentionDishes(restaurantId: string | null, from: D
     take: 5000,
   });
 
-  // Aggregate dwell time per dish
-  const dwells: Record<string, { totalMs: number; views: number; uniqueSessions: number }> = {};
+  // Aggregate dwell time per dish (carta) and detail time (popup)
+  const dwells: Record<string, { totalMs: number; detailMs: number; detailViews: number; views: number; uniqueSessions: number }> = {};
   for (const s of sessions) {
     const viewed = s.dishesViewed as any[];
     if (!Array.isArray(viewed)) continue;
     const seenInSession = new Set<string>();
     for (const d of viewed) {
       if (!d.dishId) continue;
-      if (!dwells[d.dishId]) dwells[d.dishId] = { totalMs: 0, views: 0, uniqueSessions: 0 };
+      if (!dwells[d.dishId]) dwells[d.dishId] = { totalMs: 0, detailMs: 0, detailViews: 0, views: 0, uniqueSessions: 0 };
       dwells[d.dishId].totalMs += d.dwellMs || 0;
+      if (d.detailMs && d.detailMs > 0) {
+        dwells[d.dishId].detailMs += d.detailMs;
+        dwells[d.dishId].detailViews++;
+      }
       dwells[d.dishId].views++;
       if (!seenInSession.has(d.dishId)) { dwells[d.dishId].uniqueSessions++; seenInSession.add(d.dishId); }
     }
@@ -344,9 +348,35 @@ export async function getTopAttentionDishes(restaurantId: string | null, from: D
         views: data.views,
         uniqueSessions: data.uniqueSessions,
         avgDwellMs: Math.round(data.totalMs / data.views),
+        avgDetailMs: data.detailViews > 0 ? Math.round(data.detailMs / data.detailViews) : 0,
+        detailViews: data.detailViews,
         totalDwellMs: data.totalMs,
+        totalDetailMs: data.detailMs,
         viewPct: sessions.length > 0 ? Math.round((data.uniqueSessions / sessions.length) * 100) : 0,
       };
     }),
   };
+}
+
+export async function getMostFavoritedDishes(restaurantId: string | null, from: Date, to: Date) {
+  const where: any = { createdAt: { gte: from, lte: to } };
+  if (restaurantId) where.restaurantId = restaurantId;
+  const grouped = await prisma.dishFavorite.groupBy({
+    by: ["dishId"],
+    where,
+    _count: { dishId: true },
+    orderBy: { _count: { dishId: "desc" } },
+    take: 10,
+  });
+  if (grouped.length === 0) return [];
+  const dishes = await prisma.dish.findMany({
+    where: { id: { in: grouped.map(g => g.dishId) } },
+    select: { id: true, name: true, photos: true },
+  });
+  const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
+  return grouped.map(g => ({
+    name: dishMap[g.dishId]?.name || g.dishId,
+    photo: dishMap[g.dishId]?.photos?.[0] || null,
+    count: g._count.dishId,
+  }));
 }
