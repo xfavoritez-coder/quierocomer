@@ -281,7 +281,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <UserCog size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi perfil</span>
             </a>
             {basePath === "/panel" && (
-              <button onClick={() => { closeAccount(); window.dispatchEvent(new CustomEvent("show-plan-modal")); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
+              <button onClick={() => { closeAccount(); setTimeout(() => window.dispatchEvent(new CustomEvent("show-plan-modal")), 300); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
                 <Zap size={18} color={activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888"} />
                 <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi plan</span>
                 <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4,

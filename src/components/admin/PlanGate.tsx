@@ -7,15 +7,15 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
 const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: string; cta: string }>> = {
-  promotions: { title: "Ofertas del día", desc: "Publica promociones y descuentos que se muestran en tu carta digital.", cta: "Empieza a publicar ofertas" },
-  announcements: { title: "Anuncios en tu carta", desc: "Comunica novedades, horarios especiales o eventos directamente a tus clientes.", cta: "Activa los anuncios" },
-  stats_basic: { title: "Descubre qué pasa en tu carta", desc: "Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios.", cta: "Accede a tus estadísticas" },
-  stats_advanced: { title: "Estadísticas avanzadas", desc: "Recorrido de cada cliente, filtros por fecha, clima, horarios pico y mucho más.", cta: "Desbloquea el análisis completo" },
-  waiter: { title: "Llamar al garzón", desc: "Tus clientes tocan un botón en la carta y el garzón recibe la notificación al instante en su celular. Menos esperas, mejor servicio.", cta: "Que tus clientes llamen al garzón desde la mesa" },
-  automations: { title: "Automatizaciones", desc: "Emails que se envían solos: bienvenida, cumpleaños, reactivación. Sin mover un dedo.", cta: "Automatiza tu comunicación" },
-  campaigns: { title: "Campañas y email marketing", desc: "Envía novedades y promociones a tus clientes registrados con un solo click.", cta: "Empieza a comunicarte con tus clientes" },
-  multilang: { title: "Multilenguaje", desc: "Tu carta se traduce automáticamente al idioma del cliente.", cta: "Traduce tu carta" },
-  clients_full: { title: "Todos tus clientes", desc: "Listado completo de clientes con emails, cumpleaños y preferencias.", cta: "Ve todos tus clientes" },
+  promotions: { title: "Ofertas que venden solas", desc: "Descuentos que aparecen justo cuando el cliente está decidiendo qué pedir.", cta: "Haz que tus promos se vean" },
+  announcements: { title: "Habla directo con tu cliente", desc: "Lo primero que ven al abrir la carta. Novedades, eventos, horarios.", cta: "Tu mensaje en la carta" },
+  stats_basic: { title: "¿Qué plato deberías empujar?", desc: "Qué miran, qué ignoran y a qué hora llega más gente. Datos reales.", cta: "Entiende a tus clientes" },
+  stats_advanced: { title: "El recorrido completo", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", cta: "Ve lo que otros no ven" },
+  waiter: { title: "Sin levantar la mano", desc: "Tu cliente toca un botón y el garzón lo sabe al instante. Cero esperas.", cta: "El garzón siempre atento" },
+  automations: { title: "Emails que trabajan por ti", desc: "Bienvenida, cumpleaños, reactivación. Se envían solos, tú no haces nada.", cta: "Que vuelvan sin esfuerzo" },
+  campaigns: { title: "Tu voz llega a todos", desc: "Un click y todos tus clientes reciben tu novedad.", cta: "Comunícate con un click" },
+  multilang: { title: "Tu carta en su idioma", desc: "Turistas leen tu menú en su idioma. Automático.", cta: "Abre tu carta al mundo" },
+  clients_full: { title: "Todos tus clientes, en un lugar", desc: "Emails, cumpleaños, preferencias. Exporta y usa donde quieras.", cta: "Tu base completa" },
 };
 
 const PLAN_FEATURES_WITH_TIPS: Record<string, { text: string; tip: string }[]> = {
