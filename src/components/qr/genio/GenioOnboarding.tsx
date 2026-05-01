@@ -586,8 +586,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <p className="text-center" style={{ color: G.orange, fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, margin: 0 }}>
                   {t(lang, "gHelloGenius")}
                 </p>
-                <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: "white", margin: 0, lineHeight: 1.2 }}>
-                  {(() => { const text = t(lang, "gTellMeRecommend"); const words = text.split(" "); const last2 = words.slice(-2).join(" "); const rest = words.slice(0, -2).join(" "); return <>{rest} <em>{last2}</em></>; })()}
+                <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: "white", margin: 0, lineHeight: 1.2, maxWidth: 280 }}>
+                  {(() => { const text = t(lang, "gTellMeRecommend"); const words = text.split(" "); const last2 = words.slice(-2).join(" "); const rest = words.slice(0, -2).join(" "); return <>{rest} <em style={{ color: G.orange, fontStyle: "italic" }}>{last2}</em></>; })()}
                 </h1>
                 <p className="text-center" style={{ color: G.textSecondary, fontSize: "0.95rem", maxWidth: 300, lineHeight: 1.5, margin: 0 }}>
                   {t(lang, "gTellMeSub" as any)}
