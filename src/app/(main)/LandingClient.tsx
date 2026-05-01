@@ -334,7 +334,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
-                  { t: "Campañas y email marketing", tip: "Envía novedades, promociones y comunicaciones a tu lista de clientes registrados" },
+                  { t: "Campañas y email marketing", tip: "Crea y envía emails con novedades, promociones o comunicaciones a tus clientes registrados" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
