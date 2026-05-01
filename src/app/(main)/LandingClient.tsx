@@ -88,10 +88,8 @@ function DesertSVG() {
 function FooterDunesSVG() {
   return (
     <>
-      {/* Setting sun glow on horizon */}
-      <div aria-hidden style={{ position: "absolute", right: "18%", bottom: 70, width: 140, height: 140, borderRadius: "50%", background: "radial-gradient(circle, #FFE0A8 0%, #FFB570 35%, rgba(255,140,80,0) 70%)", filter: "blur(2px)", pointerEvents: "none", zIndex: 0 }} />
-      {/* Setting sun disc */}
-      <div aria-hidden style={{ position: "absolute", right: "calc(18% + 38px)", bottom: 108, width: 64, height: 64, borderRadius: "50%", background: "radial-gradient(circle, #FFF4D6 0%, #FFC97A 70%, #FF9B4A 100%)", boxShadow: "0 0 60px 10px rgba(255,180,100,0.55)", pointerEvents: "none", zIndex: 1 }} />
+      {/* Setting sun disc (sin halo) */}
+      <div aria-hidden style={{ position: "absolute", right: "calc(18% + 38px)", bottom: 108, width: 64, height: 64, borderRadius: "50%", background: "radial-gradient(circle, #FFF4D6 0%, #FFC97A 70%, #FF9B4A 100%)", pointerEvents: "none", zIndex: 1 }} />
       {/* Dunes */}
       <svg viewBox="0 0 800 160" preserveAspectRatio="none" style={{ position: "absolute", left: 0, right: 0, bottom: 0, width: "100%", height: 160, zIndex: 2 }}>
         <path d="M0 100 Q100 70 200 90 Q300 60 400 85 Q500 55 600 80 Q700 65 800 75 L800 160 L0 160Z" fill="#5B1F46" opacity="0.55" />
@@ -238,9 +236,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               { emoji: "📊", title: "Estadísticas avanzadas", desc: "Qué platos ven más vs cuáles piden. A qué horas. Qué funciona los viernes de lluvia" },
             ].map(f => (
               <div key={f.title} className="lnd-feature-card" style={{ background: BG_WARM, borderRadius: 16, padding: 24, transition: "all 0.2s", textAlign: "center" }}>
-                <span style={{ fontSize: 24, display: "block", marginBottom: 10 }}>{f.emoji}</span>
-                <p style={{ fontFamily: F, fontSize: 15, fontWeight: 600, color: "#111", marginBottom: 6 }}>{f.title}</p>
-                <p style={{ fontSize: 13, color: "#666", lineHeight: 1.55, margin: 0 }}>{f.desc}</p>
+                <span style={{ fontSize: 28, display: "block", marginBottom: 12 }}>{f.emoji}</span>
+                <p style={{ fontFamily: F, fontSize: 18, fontWeight: 700, color: "#111", marginBottom: 8, lineHeight: 1.3 }}>{f.title}</p>
+                <p style={{ fontSize: 15, color: "#555", lineHeight: 1.6, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -300,13 +298,13 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               { quote: "Se nota en las ventas. Hay platos que antes pasaban desapercibidos y ahora están saliendo todos los días. La gente entra a la carta y termina pidiendo más cosas que antes", name: "Carlos Gómez", place: "Horus Vegan", initials: "CG", color: "#16a34a" },
               { quote: "Los clientes nos dicen que la experiencia de ver la carta se siente premium. El local ahora tiene otro nivel y eso se nota en cómo la gente pide y disfruta", name: "Daniel Trejo", place: "Nascosto Pizzeria", initials: "DT", color: "#e85530" },
             ].map(t => (
-              <div key={t.name} style={{ background: BG_WARM, borderRadius: 16, padding: 24 }}>
-                <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, margin: "0 0 20px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 12, fontWeight: 700 }}>{t.initials}</div>
+              <div key={t.name} style={{ background: BG_WARM, borderRadius: 16, padding: 26 }}>
+                <p style={{ fontSize: 15, color: "#333", lineHeight: 1.65, margin: "0 0 22px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: "50%", background: t.color, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontFamily: F, fontSize: 13, fontWeight: 700 }}>{t.initials}</div>
                   <div>
-                    <p style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "#111", margin: 0 }}>{t.name}</p>
-                    <p style={{ fontSize: 12, color: "#888", margin: 0 }}>{t.place}</p>
+                    <p style={{ fontFamily: F, fontSize: 14.5, fontWeight: 600, color: "#111", margin: 0 }}>{t.name}</p>
+                    <p style={{ fontSize: 13, color: "#888", margin: 0 }}>{t.place}</p>
                   </div>
                 </div>
               </div>
