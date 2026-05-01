@@ -278,6 +278,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, [restaurantId]);
 
   const close = useCallback(() => {
+    window.dispatchEvent(new Event("genio-updated"));
     setVisible(false);
     setTimeout(onClose, 200);
   }, [onClose]);
