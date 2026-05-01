@@ -295,6 +295,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             {[
               { quote: "Antes pasaba que los garzones tenían que estar explicando los platos uno por uno. Ahora el cliente abre la carta, ve la foto, lee y pide. Nos liberó harto tiempo en el servicio", name: "Alfredo Morales", place: "Hand Roll", initials: "AM", color: BRAND },
               { quote: "Se nota en las ventas. Hay platos que antes pasaban desapercibidos y ahora están saliendo todos los días. La gente entra a la carta y termina pidiendo más cosas que antes", name: "Carlos Gómez", place: "Horus Vegan", initials: "CG", color: "#16a34a" },
+              { quote: "Los clientes nos dicen que la experiencia de ver la carta se siente premium. El local ahora tiene otro nivel y eso se nota en cómo la gente pide y disfruta", name: "Daniel Trejo", place: "Nascosto Pizzeria", initials: "DT", color: "#e85530" },
             ].map(t => (
               <div key={t.name} style={{ background: BG_WARM, borderRadius: 16, padding: 24 }}>
                 <p style={{ fontSize: 13, color: "#444", lineHeight: 1.7, margin: "0 0 20px", fontStyle: "italic" }}>&ldquo;{t.quote}&rdquo;</p>
@@ -338,7 +339,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               </div>
             </div>
             {/* GOLD */}
-            <div style={{ background: "#fff", borderRadius: 16, padding: 28, position: "relative", border: `2px solid ${BRAND}` }}>
+            <div style={{ background: "linear-gradient(180deg, #FFFDF5 0%, #FFF8E7 100%)", borderRadius: 16, padding: 28, position: "relative", border: `2px solid ${BRAND}` }}>
               <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: BRAND, color: "#fff", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 12px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
@@ -351,20 +352,19 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan gratis</div>
                 {[
-                  { t: "3 vistas personalizables", tip: "Vista lista, vista galería con fotos grandes y vista compacta" },
+                  { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
                   { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
                   { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },
-                  { t: "Estadísticas avanzadas", tip: "Ve qué platos se miran más, cuáles se piden y a qué horas" },
+                  { t: "Estadísticas básicas", tip: "Ve cuántas personas visitan tu carta y qué platos ven más" },
                   { t: "Multilenguaje (ES · EN · PT)", tip: "Tu carta se traduce automáticamente al idioma del cliente" },
-                  { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
             {/* PREMIUM */}
-            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 28 }}>
-              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
+            <div style={{ background: "linear-gradient(180deg, #FAF5FF 0%, #F3E8FF 100%)", border: "1px solid #e9d5ff", borderRadius: 16, padding: 28 }}>
+              <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#7c3aed", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
                 <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$55.000</span>
                 <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
@@ -375,10 +375,12 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo del plan Gold</div>
                 {[
+                  { t: "4 vistas de carta", tip: "Lista, galería, feed y espacial — elige la que mejor represente tu local" },
+                  { t: "Estadísticas avanzadas", tip: "Ve qué platos se miran más, cuáles se piden, a qué horas y en qué clima" },
+                  { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Reglas que se ejecutan solas: subir el almuerzo al mediodía, platos calientes cuando llueve" },
-                  { t: "Campañas automáticas", tip: "Mensajes a clientes en su cumpleaños o cuando hace tiempo no vienen" },
-                  { t: "Email marketing", tip: "Envía novedades de tu restaurante a tu lista de clientes" },
+                  { t: "Campañas y email marketing", tip: "Mensajes automáticos en cumpleaños, reactivación de clientes y envío de novedades" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
