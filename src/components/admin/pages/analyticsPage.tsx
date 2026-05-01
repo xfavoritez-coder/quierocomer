@@ -4,6 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
+import PlanUpgradeModal from "@/components/admin/PlanUpgradeModal";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
@@ -353,6 +354,7 @@ export default function AnalyticsDashboard() {
   const [datePreset, setDatePreset] = useState<DatePreset>("semana");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const effectiveRid = isSuper ? restaurantId : (selectedRestaurantId || "");
   const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
@@ -387,20 +389,20 @@ export default function AnalyticsDashboard() {
           </button>
         ))}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <input type="date" value={customFrom} onChange={e => { setCustomFrom(e.target.value); setDatePreset("custom"); }} style={{ padding: "5px 8px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.72rem", outline: "none", colorScheme: "dark" }} />
-          <span style={{ color: "var(--adm-text3)", fontSize: "0.72rem" }}>—</span>
-          <input type="date" value={customTo} onChange={e => { setCustomTo(e.target.value); setDatePreset("custom"); }} style={{ padding: "5px 8px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.72rem", outline: "none", colorScheme: "dark" }} />
+          <input type="date" value={customFrom} onChange={e => { setCustomFrom(e.target.value); setDatePreset("custom"); }} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
+          <span style={{ color: "var(--adm-text3)", fontSize: "0.68rem" }}>—</span>
+          <input type="date" value={customTo} onChange={e => { setCustomTo(e.target.value); setDatePreset("custom"); }} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
         </div>
       </div>
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" }}>
         {allTabs.map(t => {
-          const isAdvanced = TABS_ADVANCED.some(a => a.key === t.key);
-          const locked = isAdvanced && !hasAdvanced;
+          const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
+          const locked = isAdvancedTab && !hasAdvanced;
           return (
-            <button key={t.key} onClick={() => { if (!locked) setTab(t.key); }} style={{
-              padding: "8px 16px", borderRadius: 10, border: "none", cursor: locked ? "default" : "pointer",
+            <button key={t.key} onClick={() => { if (locked) { setShowUpgradeModal(true); } else { setTab(t.key); } }} style={{
+              padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
               background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
               color: tab === t.key ? "#0a0a0a" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
@@ -416,24 +418,12 @@ export default function AnalyticsDashboard() {
       {/* Content */}
       {tab === "resumen" && <TabResumen rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "platos" && <TabPlatos rid={effectiveRid} from={dateFrom} to={dateTo} />}
-      {tab === "clientes" && (
-        hasAdvanced
-          ? <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />
-          : <PlanGate plan={activePlan} feature="stats_advanced"><TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} /></PlanGate>
-      )}
-      {tab === "garzon" && (
-        hasAdvanced
-          ? <TabGarzon rid={effectiveRid} isSuper={isSuper} />
-          : <PlanGate plan={activePlan} feature="stats_advanced"><TabGarzon rid={effectiveRid} isSuper={isSuper} /></PlanGate>
-      )}
-      {tab === "busquedas" && (
-        hasAdvanced
-          ? <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />
-          : <PlanGate plan={activePlan} feature="stats_advanced"><TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} /></PlanGate>
-      )}
+      {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
+      {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
 
       {/* Upgrade teaser for Gold users */}
-      {!hasAdvanced && tab !== "clientes" && tab !== "garzon" && tab !== "busquedas" && (
+      {!hasAdvanced && (
         <div style={{ marginTop: 32, background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04))", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 16, padding: "24px 28px", textAlign: "center" }}>
           <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
             💎 Desbloquea estadísticas avanzadas
@@ -441,15 +431,17 @@ export default function AnalyticsDashboard() {
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
             Embudo de conversión, impacto del Genio, búsquedas de clientes y estadísticas del garzón
           </p>
-          <a
-            href={`https://wa.me/56999946208?text=${encodeURIComponent("Hola! Me gustaría saber más sobre el plan Premium de QuieroComer para mi restaurante 🍽️")}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: "inline-block", padding: "10px 24px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textDecoration: "none", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
+          <button
+            onClick={() => setShowUpgradeModal(true)}
+            style={{ padding: "10px 24px", background: "#7c3aed", color: "#fff", borderRadius: 999, border: "none", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
           >
-            Ver plan Premium →
-          </a>
+            Pasarme a Premium →
+          </button>
         </div>
+      )}
+
+      {showUpgradeModal && (
+        <PlanUpgradeModal initialTab="PREMIUM" onClose={() => setShowUpgradeModal(false)} />
       )}
     </div>
   );
