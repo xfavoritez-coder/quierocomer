@@ -17,7 +17,7 @@ const PLAN_FEATURES_WITH_TIPS: Record<string, { text: string; tip: string }[]> =
   PREMIUM: [
     { text: "Todo del plan Gold", tip: "Incluye todas las funciones del plan Gold" },
     { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
-    { text: "Estadísticas avanzadas", tip: "Embudo de conversión, impacto del Genio, búsquedas de clientes y estadísticas del garzón" },
+    { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas y estadísticas del garzón" },
     { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe notificación push" },
     { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket" },
     { text: "Automatizaciones", tip: "Emails automáticos de bienvenida, cumpleaños y reactivación" },

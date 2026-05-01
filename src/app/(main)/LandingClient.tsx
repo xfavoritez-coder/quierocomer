@@ -400,7 +400,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> Todo del plan Gold</div>
                 {[
                   { t: "4 vistas de carta", tip: "Lista, galería, feed y espacial — elige la que mejor represente tu local" },
-                  { t: "Estadísticas avanzadas", tip: "Embudo de conversión, impacto del Genio, búsquedas de clientes, estadísticas del garzón y más" },
+                  { t: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, qué buscan en tu carta y estadísticas del garzón" },
                   { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },

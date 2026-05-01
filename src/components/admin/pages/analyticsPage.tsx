@@ -25,7 +25,7 @@ function formatDuration(ms: number) {
   return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
 }
 
-type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas";
+type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones";
 
 /* ═══ TAB: Resumen ═══ */
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
@@ -322,6 +322,136 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
   );
 }
 
+/* ═══ TAB: Sesiones ═══ */
+function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    setLoading(true);
+    setPage(1);
+    const p = new URLSearchParams({ from, to, page: "1" });
+    if (rid) p.set("restaurantId", rid);
+    fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
+  }, [rid, from, to]);
+
+  const loadPage = (pg: number) => {
+    setLoading(true);
+    setPage(pg);
+    const p = new URLSearchParams({ from, to, page: String(pg) });
+    if (rid) p.set("restaurantId", rid);
+    fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  if (loading) return <SkeletonLoading type="list" />;
+  if (!data?.sessions?.length) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin sesiones en este período</p>;
+
+  const toggle = (id: string) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+  const fmtTime = (d: string) => { const t = new Date(d); return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`; };
+  const fmtDate = (d: string) => new Date(d).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
+  const viewLabels: Record<string, string> = { premium: "Galería", lista: "Lista", feed: "Feed", viaje: "Espacial" };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>
+        {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
+      </p>
+      {data.sessions.map((s: any) => {
+        const isOpen = expanded.has(s.id);
+        const dishes = s.dishesViewed || [];
+        const duration = s.durationMs ? formatDuration(s.durationMs) : "—";
+        const userName = s.qrUser?.name || (s.guest?.visitCount > 1 ? `Visitante recurrente (${s.guest.visitCount}x)` : "Visitante nuevo");
+
+        return (
+          <div key={s.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", boxShadow: "var(--adm-card-shadow, none)" }}>
+            <div onClick={() => toggle(s.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", cursor: "pointer" }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
+                  {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
+                </div>
+                <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)} {fmtTime(s.startedAt)}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{duration}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} plato{dishes.length !== 1 ? "s" : ""}</span>
+                  {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
+                  {s.usedGenio && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.15)", color: "#F4A623" }}>🧞 Genio</span>}
+                  {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>🔔 Garzón</span>}
+                </div>
+              </div>
+              <span style={{ color: "var(--adm-text3)", fontSize: "0.75rem", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>
+            </div>
+
+            {isOpen && (
+              <div style={{ padding: "0 16px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
+                {dishes.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Platos vistos (en orden)</p>
+                    {dishes.map((d: any, i: number) => (
+                      <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
+                        {d.dish?.photos?.[0] && <img src={d.dish.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover", flexShrink: 0 }} />}
+                        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {d.dish?.name || d.dishId?.slice(0, 8)}
+                        </span>
+                        {d.isPopular && <span style={{ fontSize: "0.6rem", padding: "1px 5px", borderRadius: 4, background: "rgba(239,68,68,0.12)", color: "#f87171" }}>🔥</span>}
+                        {d.isRecommended && <span style={{ fontSize: "0.6rem", padding: "1px 5px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: "#fbbf24" }}>⭐</span>}
+                        {d.detailMs > 0 && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-accent)", fontWeight: 600, flexShrink: 0 }}>{formatDuration(d.detailMs)}</span>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "10px 0 0" }}>No vio platos en detalle</p>
+                )}
+
+                {/* Waiter calls */}
+                {s.waiterCalls?.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>🔔 Llamados al garzón</p>
+                    {s.waiterCalls.map((wc: any) => (
+                      <div key={wc.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                        <div style={{ width: 6, height: 6, borderRadius: "50%", background: wc.answeredAt ? "#16a34a" : "#ef4444", flexShrink: 0 }} />
+                        <span style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text)" }}>{wc.tableName || "Sin mesa"}</span>
+                        <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{fmtTime(wc.calledAt)}</span>
+                        {wc.responseTime !== null && <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#16a34a", fontWeight: 600 }}>{wc.responseTime}s</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Favorites */}
+                {s.dishFavorites?.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>❤️ Favoritos guardados</p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {s.dishFavorites.map((f: any) => (
+                        <span key={f.id} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "3px 8px", borderRadius: 6, background: "rgba(239,68,68,0.1)", color: "#f87171" }}>
+                          {f.dish?.name || "—"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Pagination */}
+      {data.totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 8 }}>
+          {page > 1 && <button onClick={() => loadPage(page - 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>← Anterior</button>}
+          <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text3)", padding: "6px 0" }}>{page} / {data.totalPages}</span>
+          {page < data.totalPages && <button onClick={() => loadPage(page + 1)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>Siguiente →</button>}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══ MAIN ═══ */
 const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
   { key: "resumen", label: "Resumen", icon: "📊" },
@@ -329,6 +459,7 @@ const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
 ];
 
 const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
+  { key: "sesiones", label: "Sesiones", icon: "👁️" },
   { key: "clientes", label: "Clientes", icon: "👥" },
   { key: "garzon", label: "Garzón", icon: "🔔" },
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
@@ -418,6 +549,7 @@ export default function AnalyticsDashboard() {
       {/* Content */}
       {tab === "resumen" && <TabResumen rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "platos" && <TabPlatos rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "sesiones" && <TabSesiones rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
       {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
@@ -426,10 +558,10 @@ export default function AnalyticsDashboard() {
       {!hasAdvanced && (
         <div style={{ marginTop: 32, background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04))", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 16, padding: "24px 28px", textAlign: "center" }}>
           <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
-            💎 Desbloquea estadísticas avanzadas
+            💎 Ve exactamente qué hace cada cliente en tu carta
           </p>
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-            Embudo de conversión, impacto del Genio, búsquedas de clientes y estadísticas del garzón
+            Sesiones en vivo, qué platos miran, cuánto tiempo pasan en cada uno, qué buscan y más
           </p>
           <button
             onClick={() => setShowUpgradeModal(true)}
