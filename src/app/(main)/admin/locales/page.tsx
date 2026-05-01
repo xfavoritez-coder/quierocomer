@@ -312,7 +312,7 @@ export default function AdminLocales() {
             <span>Plan:</span>
             <div style={{ display: "flex", gap: 4 }}>
               {[
-                { value: "FREE", label: "Gratis", color: "#888", bg: "rgba(255,255,255,0.06)" },
+                { value: "FREE", label: "Gratis", color: "#9ca3af", bg: "rgba(156,163,175,0.18)" },
                 { value: "GOLD", label: "Gold", color: "#F4A623", bg: "rgba(244,166,35,0.15)" },
                 { value: "PREMIUM", label: "Premium", color: "#c084fc", bg: "rgba(192,132,252,0.15)" },
               ].map((p) => (
@@ -329,6 +329,7 @@ export default function AdminLocales() {
                     fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
                     background: (selected.plan || "PREMIUM") === p.value ? p.bg : "rgba(255,255,255,0.06)",
                     color: (selected.plan || "PREMIUM") === p.value ? p.color : "#888",
+                    transition: "all 0.15s ease",
                   }}
                 >
                   {p.label}

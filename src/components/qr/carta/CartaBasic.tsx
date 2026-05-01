@@ -129,6 +129,7 @@ export default function CartaBasic({
           allDishes={dishes}
           categories={categories}
           restaurantId={restaurant.id}
+          restaurantPlan={(restaurant as any).plan}
           reviews={reviews}
           ratingMap={ratingMap}
           onClose={() => setSelectedDish(null)}
