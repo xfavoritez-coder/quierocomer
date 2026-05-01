@@ -345,6 +345,8 @@ export default function AdminMenus() {
   const [dietFilter, setDietFilter] = useState<string>("all");
   const [spicyFilter, setSpicyFilter] = useState(false);
   const [glutenFreeFilter, setGlutenFreeFilter] = useState(false);
+  const [lactoseFreeFilter, setLactoseFreeFilter] = useState(false);
+  const [soyFreeFilter, setSoyFreeFilter] = useState(false);
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkActionValue, setBulkActionValue] = useState<string>("");
@@ -492,6 +494,8 @@ export default function AdminMenus() {
     if (dietFilter !== "all") list = list.filter(d => (d.dishDiet || "OMNIVORE") === dietFilter);
     if (spicyFilter) list = list.filter(d => (d as any).isSpicy);
     if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree);
+    if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree);
+    if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree);
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
@@ -652,6 +656,8 @@ export default function AdminMenus() {
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
   const [eGlutenFree, setEGlutenFree] = useState(false);
+  const [eLactoseFree, setELactoseFree] = useState(false);
+  const [eSoyFree, setESoyFree] = useState(false);
   const [ePhotoRef, setEPhotoRef] = useState(false);
   const [eFlavorTags, setEFlavorTags] = useState<string[]>([]);
   const [eCategoryId, setECategoryId] = useState("");
@@ -723,6 +729,8 @@ export default function AdminMenus() {
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
     setEGlutenFree((d as any).isGlutenFree || false);
+    setELactoseFree((d as any).isLactoseFree || false);
+    setESoyFree((d as any).isSoyFree || false);
     setEPhotoRef((d as any).isPhotoReferential || false);
     setEFlavorTags((d as any).flavorTags || []);
     setECategoryId(d.categoryId);
@@ -763,6 +771,8 @@ export default function AdminMenus() {
       dishDiet: eDiet,
       isSpicy: eSpicy,
       isGlutenFree: eGlutenFree,
+      isLactoseFree: eLactoseFree,
+      isSoyFree: eSoyFree,
       isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
@@ -867,6 +877,8 @@ export default function AdminMenus() {
                 {(selectedDish as any).dishDiet && (() => { const dc = DIET_COLORS[(selectedDish as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet); return <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
                 {(selectedDish as any).isGlutenFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(139,105,20,0.1)", color: "#8B6914" }}>🌾 Sin gluten</span>}
+                {(selectedDish as any).isLactoseFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(59,130,246,0.1)", color: "#2563EB" }}>🥛 Sin lactosa</span>}
+                {(selectedDish as any).isSoyFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#059669" }}>🫘 Sin soya</span>}
                 {((selectedDish as any).flavorTags || []).map((f: string) => {
                   const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
                   const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
@@ -1018,6 +1030,12 @@ export default function AdminMenus() {
                   </button>
                   <button onClick={() => setEGlutenFree(!eGlutenFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eGlutenFree ? "1.5px solid rgba(139,105,20,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eGlutenFree ? "rgba(139,105,20,0.1)" : "transparent", color: eGlutenFree ? "#8B6914" : "var(--adm-text3)" }}>
                     🌾 Sin gluten
+                  </button>
+                  <button onClick={() => setELactoseFree(!eLactoseFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eLactoseFree ? "1.5px solid rgba(59,130,246,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eLactoseFree ? "rgba(59,130,246,0.1)" : "transparent", color: eLactoseFree ? "#2563EB" : "var(--adm-text3)" }}>
+                    🥛 Sin lactosa
+                  </button>
+                  <button onClick={() => setESoyFree(!eSoyFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eSoyFree ? "1.5px solid rgba(16,185,129,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSoyFree ? "rgba(16,185,129,0.1)" : "transparent", color: eSoyFree ? "#059669" : "var(--adm-text3)" }}>
+                    🫘 Sin soya
                   </button>
                 </div>
               </div>
@@ -1321,6 +1339,12 @@ export default function AdminMenus() {
         <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "#F5F4F1", color: glutenFreeFilter ? "#8B6914" : "#1a1a1a" }}>
           🌾 Sin gluten
         </button>
+        <button onClick={() => setLactoseFreeFilter(!lactoseFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: lactoseFreeFilter ? "rgba(59,130,246,0.15)" : "#F5F4F1", color: lactoseFreeFilter ? "#2563EB" : "#1a1a1a" }}>
+          🥛 Sin lactosa
+        </button>
+        <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
+          🫘 Sin soya
+        </button>
         {/* Desktop-only + Nuevo inline */}
         {!creatingDish && (
           <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
@@ -1531,11 +1555,13 @@ export default function AdminMenus() {
                 <div style={{ padding: "0 14px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
                   {/* Description */}
                   {/* Diet + Spicy */}
-                  {((d as any).dishDiet || (d as any).isSpicy || (d as any).isGlutenFree || ((d as any).flavorTags || []).length > 0) && (
+                  {((d as any).dishDiet || (d as any).isSpicy || (d as any).isGlutenFree || (d as any).isLactoseFree || (d as any).isSoyFree || ((d as any).flavorTags || []).length > 0) && (
                     <div style={{ display: "flex", gap: 6, margin: "10px 0 8px", flexWrap: "wrap" }}>
                       {(d as any).dishDiet && (() => { const dc = DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(o => o.value === (d as any).dishDiet); return <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                       {(d as any).isSpicy && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
                       {(d as any).isGlutenFree && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(139,105,20,0.1)", color: "#8B6914" }}>🌾 Sin gluten</span>}
+                      {(d as any).isLactoseFree && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(59,130,246,0.1)", color: "#2563EB" }}>🥛 Sin lactosa</span>}
+                      {(d as any).isSoyFree && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#059669" }}>🫘 Sin soya</span>}
                       {((d as any).flavorTags || []).map((f: string) => {
                         const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
                         const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
