@@ -356,9 +356,9 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                       if (!file) return;
                                       setEoUploading(true);
                                       try {
-                                        // Pre-compress if too large for Vercel body limit
+                                        // Pre-compress to fit Vercel's 4.5MB body limit
                                         let uploadFile: File | Blob = file;
-                                        if (file.size > 4 * 1024 * 1024) {
+                                        if (file.size > 2 * 1024 * 1024) {
                                           const img = new window.Image();
                                           const url = URL.createObjectURL(file);
                                           await new Promise<void>(r => { img.onload = () => r(); img.src = url; });
@@ -376,6 +376,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                         fd.append("localId", restaurantId);
                                         fd.append("dishName", eoName || "opcion");
                                         const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                                        if (!res.ok && res.status === 413) { showSaved("Foto muy grande"); setEoUploading(false); return; }
                                         const data = await res.json();
                                         if (data.url) {
                                           setEoImage(data.url);
