@@ -356,8 +356,23 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                       if (!file) return;
                                       setEoUploading(true);
                                       try {
+                                        // Pre-compress if too large for Vercel body limit
+                                        let uploadFile: File | Blob = file;
+                                        if (file.size > 4 * 1024 * 1024) {
+                                          const img = new window.Image();
+                                          const url = URL.createObjectURL(file);
+                                          await new Promise<void>(r => { img.onload = () => r(); img.src = url; });
+                                          const canvas = document.createElement("canvas");
+                                          const MAX = 1600;
+                                          let w = img.width, h = img.height;
+                                          if (w > MAX || h > MAX) { const ratio = Math.min(MAX / w, MAX / h); w = Math.round(w * ratio); h = Math.round(h * ratio); }
+                                          canvas.width = w; canvas.height = h;
+                                          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
+                                          URL.revokeObjectURL(url);
+                                          uploadFile = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), "image/webp", 0.85));
+                                        }
                                         const fd = new FormData();
-                                        fd.append("file", file);
+                                        fd.append("file", uploadFile, file.name);
                                         fd.append("localId", restaurantId);
                                         fd.append("dishName", eoName || "opcion");
                                         const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
@@ -368,11 +383,12 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                           setTemplates(prev => prev.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, options: g.options.map(o => o.id === editingOption ? { ...o, imageUrl: data.url } : o) })) })));
                                           showSaved("Foto guardada");
                                         } else {
-                                          showSaved("Error al subir");
+                                          console.error("Upload response:", data);
+                                          showSaved(data.error || "Error al subir");
                                         }
                                       } catch (err) {
                                         console.error("Upload error:", err);
-                                        showSaved("Error al subir");
+                                        showSaved("Error de conexión");
                                       }
                                       setEoUploading(false);
                                     }} />
