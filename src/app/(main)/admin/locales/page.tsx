@@ -28,6 +28,7 @@ interface Restaurant {
   createdAt: string;
   owner: { id: string; name: string; email: string } | null;
   waiterPanelActive: boolean;
+  plan: string;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
 }
 

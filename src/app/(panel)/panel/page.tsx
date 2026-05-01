@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession"; // reads from SessionContext in panel
+import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { Stat, RankList } from "@/components/admin/DashboardWidgets";
+import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Eye, QrCode, Bell, Tag, ExternalLink } from "lucide-react";
@@ -135,7 +137,8 @@ export default function PanelDashboard() {
         );
       })()}
 
-      {/* Today */}
+      {/* Stats — gated for FREE */}
+      <PlanGate plan={(restaurants.find(r => r.id === selectedRestaurantId) as any)?.plan} feature="stats_basic">
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Hoy</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
         <Stat icon="📱" label="Escaneos hoy" value={data.todayScans} />
@@ -189,6 +192,7 @@ export default function PanelDashboard() {
           </div>
         </div>
       )}
+      </PlanGate>
     </div>
   );
 }
