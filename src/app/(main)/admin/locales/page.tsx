@@ -327,8 +327,8 @@ export default function AdminLocales() {
                   style={{
                     padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
                     fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-                    background: (selected as any).plan === p.value ? p.bg : "rgba(255,255,255,0.06)",
-                    color: (selected as any).plan === p.value ? p.color : "#888",
+                    background: (selected.plan || "PREMIUM") === p.value ? p.bg : "rgba(255,255,255,0.06)",
+                    color: (selected.plan || "PREMIUM") === p.value ? p.color : "#888",
                   }}
                 >
                   {p.label}
