@@ -112,7 +112,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
             boxShadow: needed === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
           }}>
-            Ver planes →
+            {needed === "PREMIUM" ? "Pasarme a Premium →" : "Desbloquear con Gold →"}
           </button>
         </div>
       </div>
