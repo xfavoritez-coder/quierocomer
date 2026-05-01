@@ -25,40 +25,51 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     if (sessionStorage.getItem("qc_bday_auto_checked")) return;
     sessionStorage.setItem("qc_bday_auto_checked", "1");
 
-    // Increment visit count (owned here, not in BirthdayBanner)
     const visitKey = `qc_visit_count_${restaurantId}`;
-    const visits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
-    localStorage.setItem(visitKey, String(visits));
+    const localVisits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
+    localStorage.setItem(visitKey, String(localVisits));
 
-    const isSecondVisit = visits >= 2;
     const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
+    if (alreadyShowedModal) return;
 
-    if (!isSecondVisit || alreadyShowedModal) return;
+    const guestId = getGuestId();
 
-    // Check if user needs birthday
-    fetch("/api/qr/user/me")
+    // Server-side visit check (per-guest, survives localStorage clears / different browsers)
+    // restaurantSessions is the count BEFORE this visit's session-start fires,
+    // so >= 1 means at least one prior session → this is at least the 2nd visit.
+    fetch(`/api/qr/guest/visit-info?guestId=${encodeURIComponent(guestId)}&restaurantId=${encodeURIComponent(restaurantId)}`)
       .then((r) => r.json())
-      .then((d) => {
-        if (d.user) {
-          if (!d.user.birthDate) {
-            setExistingUser({ name: d.user.name, email: d.user.email });
-            setModalOpen(true);
-            localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-            fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
-          }
-          return;
-        }
-        // Not logged in — use banner variant
-        fetch("/api/qr/banner/select")
+      .then((info) => {
+        const serverPriorSessions = info.restaurantSessions || 0;
+        const isSecondVisit = localVisits >= 2 || serverPriorSessions >= 1;
+        if (!isSecondVisit) return;
+
+        // Check if user needs birthday
+        fetch("/api/qr/user/me")
           .then((r) => r.json())
           .then((d) => {
-            if (d.variant) {
-              setVariant(d.variant);
-              setModalOpen(true);
-              localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-              fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
+            if (d.user) {
+              if (!d.user.birthDate) {
+                setExistingUser({ name: d.user.name, email: d.user.email });
+                setModalOpen(true);
+                localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+                fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
+              }
+              return;
             }
-          });
+            // Not logged in — use banner variant
+            fetch("/api/qr/banner/select")
+              .then((r) => r.json())
+              .then((d) => {
+                if (d.variant) {
+                  setVariant(d.variant);
+                  setModalOpen(true);
+                  localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+                  fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
+                }
+              });
+          })
+          .catch(() => {});
       })
       .catch(() => {});
   }, [restaurantId]);

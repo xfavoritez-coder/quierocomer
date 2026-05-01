@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       where.id = { in: ids };
     } else if (activity === "cumple") {
       const birthdaySessionIds = await prisma.statEvent.findMany({
-        where: { eventType: { in: ["BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"] }, ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
+        where: { eventType: { in: ["BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN"] }, ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
         select: { dbSessionId: true },
         distinct: ["dbSessionId"],
       });
@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
 
     // Try dbSessionId first (new events), fall back to time range (legacy events)
-    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"];
+    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN"];
 
     const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
       where: {
