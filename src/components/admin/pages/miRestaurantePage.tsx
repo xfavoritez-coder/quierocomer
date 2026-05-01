@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
+import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
@@ -59,6 +61,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function MiRestaurantePage() {
   const { selectedRestaurantId, restaurants } = useAdminSession();
+  const { activePlan } = usePanelSession();
   const [data, setData] = useState<RestaurantData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -289,6 +292,7 @@ export default function MiRestaurantePage() {
       </div>
 
       {/* ── Link del garzón ── */}
+      <PlanGate plan={activePlan} feature="waiter">
       <div id="garzon" style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "24px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ textAlign: "center", marginBottom: 14 }}>
           <Bell size={36} color={GOLD} style={{ marginBottom: 8 }} />
@@ -349,6 +353,7 @@ export default function MiRestaurantePage() {
           Este link es público. No lo compartas en redes sociales.
         </p>
       </div>
+      </PlanGate>
 
       {/* ── Fotos referenciales ── */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16 }}>
