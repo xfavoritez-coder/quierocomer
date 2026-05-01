@@ -26,6 +26,7 @@ function buildNav(base: string) {
     { icon: Home, label: "Inicio", href: base },
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
+    { icon: Users, label: "Clientes", href: `${base}/clientes` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
