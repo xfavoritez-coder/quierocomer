@@ -27,6 +27,7 @@ interface DishDetailProps {
   onChangeDish: (dish: Dish) => void;
   personalizationMap?: Map<string, PersonalizationEntry> | null;
   restaurantName?: string;
+  restaurantPlan?: string;
   popularDishIds?: Set<string>;
   allPhotosReferential?: boolean;
 }
@@ -41,6 +42,7 @@ export default function DishDetail({
   onChangeDish,
   personalizationMap,
   restaurantName,
+  restaurantPlan,
   popularDishIds,
 }: DishDetailProps) {
   // Compute allergens that exist across the restaurant (for "Libre de" section)
@@ -189,6 +191,7 @@ export default function DishDetail({
             onClose={close}
             personalizationEntry={personalizationMap?.get(d.id)}
             restaurantName={restaurantName}
+            restaurantPlan={restaurantPlan}
             restaurantAllergens={restaurantAllergens}
             popularDishIds={popularDishIds}
             allDishes={allDishes}
@@ -212,7 +215,7 @@ export default function DishDetail({
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
   expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
-  personalizationEntry, restaurantName, restaurantAllergens, popularDishIds, allPhotosReferential,
+  personalizationEntry, restaurantName, restaurantPlan, restaurantAllergens, popularDishIds, allPhotosReferential,
   allDishes, onChangeDish,
 }: {
   dish: Dish; index: number; total: number;
@@ -529,7 +532,7 @@ function DishSlide({
 
         {/* Cross-sell suggestions — PREMIUM only */}
         {(() => {
-          if (props.restaurantPlan && props.restaurantPlan !== "PREMIUM") return null;
+          if (restaurantPlan && restaurantPlan !== "PREMIUM") return null;
           const { title, items: suggestions } = crossSell;
           if (suggestions.length === 0) return null;
           return (
