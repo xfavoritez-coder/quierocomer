@@ -1632,6 +1632,11 @@ export default function AdminMenus() {
           <Plus size={24} />
         </button>
       )}
+      {menuTab === "horarios" && (
+        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("hh-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
+          <Plus size={24} />
+        </button>
+      )}
 
       {photoModal && (
         <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>

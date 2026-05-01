@@ -31,6 +31,13 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
 
+  // Listen for FAB click
+  useEffect(() => {
+    const handler = () => setCreating(true);
+    window.addEventListener("hh-fab-click", handler);
+    return () => window.removeEventListener("hh-fab-click", handler);
+  }, []);
+
   // Form state
   const [fName, setFName] = useState("");
   const [fDays, setFDays] = useState<number[]>([1, 2, 3, 4, 5]);
@@ -249,7 +256,7 @@ export default function HappyHoursTab({ restaurantId, categories }: { restaurant
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+        <div className="lnd-desktop-only" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
           <button onClick={() => setCreating(true)} style={{
             padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10,
             fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer",
