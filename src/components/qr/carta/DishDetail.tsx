@@ -280,6 +280,7 @@ function DishSlide({
   }
 
   const lang = useLang();
+  const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
   const ingredientNames = dishIngs.map((di: any) => {
     const ing = di.ingredient;
     if (!ing) return null;
@@ -309,8 +310,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — sticky: stays while content scrolls over it */}
-      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo — sticky parallax on desktop, relative on iOS (WebKit breaks sticky in overflow:auto) */}
+      <div style={{ position: isIOS ? "relative" : "sticky", top: isIOS ? undefined : "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
