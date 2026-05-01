@@ -119,10 +119,9 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
         const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
         const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
         const scrollId = getCarouselScrollId(mode);
-        if (scrollId) {
-          const el = document.getElementById(scrollId);
-          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        const el = scrollId ? document.getElementById(scrollId) : null;
+        const target = el || document.getElementById("genio-diet-message");
+        if (target) target.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 500);
     };
     check();

@@ -8,7 +8,7 @@ interface Props {
 }
 
 const MESSAGES: Record<Props["type"], string> = {
-  "no-results": "Aún no hay opciones con tus preferencias en esta carta 🧞",
+  "no-results": "Este local aún no tiene platos marcados con tus preferencias, pero seguro encuentras algo que te guste 🧞",
   "redundant-vegan": "¡Todo el menú es vegano! 🌿",
   "redundant-vegetarian": "¡Todo el menú es vegetariano! 🥗",
 };
@@ -22,6 +22,7 @@ export default function GenioDietMessage({ type }: Props) {
 
   return (
     <div
+      id="genio-diet-message"
       className="font-[family-name:var(--font-dm)]"
       style={{
         margin: "0 12px 10px",
