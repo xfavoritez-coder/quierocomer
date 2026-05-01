@@ -32,7 +32,6 @@ function buildNav(base: string) {
     { icon: Bell, label: "Garzón", href: `${base}/garzon` },
     { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
     { icon: Mail, label: "Campañas", href: `${base}/campanias` },
-    { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },
@@ -291,6 +290,11 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : "Free"}
                 </span>
               </button>
+            )}
+            {basePath === "/panel" && (
+              <a href="/panel/mi-restaurante" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
+                <Store size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi Restaurante</span>
+              </a>
             )}
             <button onClick={() => setPwOpen(true)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
               <Lock size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Cambiar contraseña</span>
