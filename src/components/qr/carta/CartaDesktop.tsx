@@ -256,10 +256,13 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             {/* Photo + close button + badges */}
             <div style={{
               aspectRatio: selectedDish.photos?.[0] ? "4 / 3" : undefined,
-              height: selectedDish.photos?.[0] ? undefined : 0,
+              height: selectedDish.photos?.[0] ? undefined : 160,
               position: "relative", overflow: "hidden", borderRadius: "20px 20px 0 0",
-              background: "#f0ece4",
+              background: "linear-gradient(135deg, #f5f0e8 0%, #e8e0d0 100%)",
+              display: selectedDish.photos?.[0] ? undefined : "flex",
+              alignItems: "center", justifyContent: "center",
             }}>
+              {!selectedDish.photos?.[0] && <span style={{ fontSize: "2.5rem", opacity: 0.2 }}>🍽</span>}
               {/* Layer 1: Next.js optimized — instant from cache */}
               {selectedDish.photos?.[0] && (
                 <Image
