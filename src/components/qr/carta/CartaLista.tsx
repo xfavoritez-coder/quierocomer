@@ -152,6 +152,19 @@ export default function CartaLista({
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
+
+  const dietNavItem = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+    const hasGluten = restrictions.includes("gluten");
+    if (diet === "vegan" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🌿 Vegano + GF" : "🌿 Vegano", scrollTo: "genio-vegan-carousel" };
+    if (diet === "vegetarian" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🥗 Vegetariano + GF" : "🥗 Vegetariano", scrollTo: "genio-vegetarian-carousel" };
+    if (hasGluten) return { id: "diet-carousel", name: "🌾 Sin gluten", scrollTo: "genio-glutenfree-carousel" };
+    return null;
+  }, [restaurant]);
+
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const lastScrollY = useRef(0);
   useEffect(() => {
@@ -369,6 +382,17 @@ export default function CartaLista({
                   </button>
                 );
               })}
+              {dietNavItem && (() => {
+                const isActive = "diet-carousel" === activeCategory;
+                return (
+                  <button
+                    key="diet-carousel"
+                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                    className="shrink-0 font-[family-name:var(--font-dm)]"
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "0.92rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >{dietNavItem.name}</button>
+                );
+              })()}
             </div>
             {/* Search icon */}
             <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
@@ -421,10 +445,10 @@ export default function CartaLista({
         const hasGluten = restrictions.includes("gluten");
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
         return (
-          <div style={{ paddingTop: hasPromos ? 16 : 10, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
             {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
             {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
-            {diet === "omnivore" && hasGluten && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {hasGluten && (diet === "omnivore" || !isOmnivoreRestaurant) && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
           </div>
         );
       })()}

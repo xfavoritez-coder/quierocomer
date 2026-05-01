@@ -218,7 +218,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             <div style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 8 }}>
               {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
               {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
-              {diet === "omnivore" && hasGluten && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {hasGluten && (diet === "omnivore" || !isOmnivoreRestaurant) && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             </div>
           );
         })()}
