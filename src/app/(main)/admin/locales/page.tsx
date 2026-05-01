@@ -150,9 +150,18 @@ export default function AdminLocales() {
             <h2 style={{ fontFamily: F, fontSize: "1.3rem", color: "white", margin: 0 }}>{selected.name}</h2>
             <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", margin: 0 }}>/{selected.slug}</p>
           </div>
-          <span style={{ marginLeft: "auto", fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20, background: selected.isActive ? "rgba(74,222,128,0.1)" : "rgba(255,100,100,0.1)", color: selected.isActive ? "#4ade80" : "#ff6b6b", border: `1px solid ${selected.isActive ? "rgba(74,222,128,0.2)" : "rgba(255,100,100,0.2)"}` }}>
-            {selected.isActive ? "Activo" : "Inactivo"}
-          </span>
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+            <span style={{ fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,
+              background: selected.plan === "PREMIUM" ? "rgba(124,58,237,0.1)" : selected.plan === "GOLD" ? "rgba(244,166,35,0.1)" : "rgba(255,255,255,0.06)",
+              color: selected.plan === "PREMIUM" ? "#c084fc" : selected.plan === "GOLD" ? "#F4A623" : "#888",
+              border: `1px solid ${selected.plan === "PREMIUM" ? "rgba(124,58,237,0.2)" : selected.plan === "GOLD" ? "rgba(244,166,35,0.2)" : "rgba(255,255,255,0.1)"}`,
+            }}>
+              {selected.plan === "PREMIUM" ? "Premium" : selected.plan === "GOLD" ? "Gold" : "Free"}
+            </span>
+            <span style={{ fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20, background: selected.isActive ? "rgba(74,222,128,0.1)" : "rgba(255,100,100,0.1)", color: selected.isActive ? "#4ade80" : "#ff6b6b", border: `1px solid ${selected.isActive ? "rgba(74,222,128,0.2)" : "rgba(255,100,100,0.2)"}` }}>
+              {selected.isActive ? "Activo" : "Inactivo"}
+            </span>
+          </div>
         </div>
 
         <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
@@ -458,9 +467,14 @@ export default function AdminLocales() {
               <p style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
               <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+              <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4,
+                background: r.plan === "PREMIUM" ? "rgba(124,58,237,0.15)" : r.plan === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.06)",
+                color: r.plan === "PREMIUM" ? "#c084fc" : r.plan === "GOLD" ? "#F4A623" : "#666",
+              }}>
+                {r.plan === "PREMIUM" ? "Premium" : r.plan === "GOLD" ? "Gold" : "Free"}
+              </span>
               <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.isActive ? "#4ade80" : "#ff6b6b" }} />
-              <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#666" }}>{r.cartaTheme}</span>
             </div>
           </button>
         ))}

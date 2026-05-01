@@ -414,7 +414,7 @@ model Restaurant {
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
   waiterPanelActive  Boolean    @default(false)
-  plan               RestaurantPlan @default(FREE)
+  plan               RestaurantPlan @default(PREMIUM)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
