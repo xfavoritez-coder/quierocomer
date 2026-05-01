@@ -375,9 +375,25 @@ export default function CartaFeed({
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   useEffect(() => {
     const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    const onGenioUpdated = () => {
+      check();
+      setTimeout(() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const hasGluten = restrictions.includes("gluten");
+        let scrollId = "";
+        if (diet === "vegan") scrollId = "genio-vegan-carousel";
+        else if (diet === "vegetarian") scrollId = "genio-vegetarian-carousel";
+        else if (hasGluten) scrollId = "genio-glutenfree-carousel";
+        if (scrollId) {
+          const el = document.getElementById(scrollId);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    };
     check();
-    window.addEventListener("genio-updated", check);
-    return () => window.removeEventListener("genio-updated", check);
+    window.addEventListener("genio-updated", onGenioUpdated);
+    return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
 
   const [query, setQuery] = useState("");
@@ -523,6 +539,19 @@ export default function CartaFeed({
                 <Search size={14} color="#5a5a5a" />
               </button>
               <div ref={catScrollRef} className="hide-scrollbar" style={{ display: "flex", gap: 6, overflowX: "auto", flex: 1, scrollbarWidth: "none" }}>
+                {dietNavItem && (
+                  <button
+                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                    style={{
+                      padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: activeCategory === "diet-carousel" ? 500 : 400, whiteSpace: "nowrap",
+                      background: activeCategory === "diet-carousel" ? "rgba(239,159,39,0.12)" : "#F5F4F1",
+                      color: activeCategory === "diet-carousel" ? "#92400e" : "#5a5a5a",
+                    }}
+                  >
+                    {dietNavItem.name}
+                  </button>
+                )}
                 {hasPromos && (
                   <button
                     onClick={() => { setActiveCategory("promos"); document.getElementById("feed-cat-promos")?.scrollIntoView({ behavior: "smooth", block: "start" }); }}
@@ -546,19 +575,6 @@ export default function CartaFeed({
                     {cat.name}
                   </button>
                 ))}
-                {dietNavItem && (
-                  <button
-                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                    style={{
-                      padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
-                      fontSize: 13, fontWeight: activeCategory === "diet-carousel" ? 500 : 400, whiteSpace: "nowrap",
-                      background: activeCategory === "diet-carousel" ? "rgba(239,159,39,0.12)" : "#F5F4F1",
-                      color: activeCategory === "diet-carousel" ? "#92400e" : "#5a5a5a",
-                    }}
-                  >
-                    {dietNavItem.name}
-                  </button>
-                )}
               </div>
             </>
           )}
@@ -657,7 +673,7 @@ export default function CartaFeed({
 
       {/* ═══ MODALS ═══ */}
       {genioOpen && (
-        <GenioOnboarding restaurantId={restaurant.id} dishes={dishes} categories={categories}
+        <GenioOnboarding restaurantId={restaurant.id} dishes={dishes} categories={categories} restaurantDietType={(restaurant as any).dietType}
           onClose={() => { setGenioOpen(false); setProfileTrigger(p => p + 1); }}
           onResult={(dish) => { setGenioOpen(false); setProfileTrigger(p => p + 1); setTimeout(() => setSelectedDish(dish), 250); }}
         />

@@ -22,7 +22,8 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
 
   if (gfDishes.length === 0) return null;
 
-  const title = (t(lang, "gGlutenFreeDishesForYou" as any) || `${gfDishes.length} opciones sin gluten para ti 🌾`).replace("{n}", String(gfDishes.length));
+  const n = gfDishes.length;
+  const title = (t(lang, "gGlutenFreeDishesForYou" as any) || `${n} opciones sin gluten para ti 🌾`).replace("{n}", String(n)).replace("opciones", n === 1 ? "opción" : "opciones").replace("options", n === 1 ? "option" : "options").replace("opções", n === 1 ? "opção" : "opções").replace("opzioni", n === 1 ? "opzione" : "opzioni");
   const subtitle = t(lang, "gGlutenFreeSubtitle" as any) || "Platos libres de gluten en esta carta";
 
   return (
@@ -48,8 +49,8 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
           🧞
         </div>
         <div>
-          <p style={{ fontSize: "0.88rem", fontWeight: 600, color: "#5C3D0E", margin: 0 }}>{title}</p>
-          <p style={{ fontSize: "0.72rem", color: "#8B6914", margin: "2px 0 0" }}>{subtitle}</p>
+          <p style={{ fontSize: "0.94rem", fontWeight: 600, color: "#5C3D0E", margin: 0 }}>{title}</p>
+          <p style={{ fontSize: "0.73rem", color: "#8B6914", margin: "1px 0 0" }}>{subtitle}</p>
         </div>
       </div>
 
@@ -90,10 +91,10 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
                     SIN GLUTEN
                   </span>
                 </div>
-                <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "#5C3D0E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <p style={{ fontSize: "0.80rem", fontWeight: 600, color: "#5C3D0E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {d.name}
                 </p>
-                {d.description && <p style={{ fontSize: "0.62rem", color: "#8B7730", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
+                {d.description && <p style={{ fontSize: "0.63rem", color: "#8B7730", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
                 <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "12px", fontWeight: 500, color: "#8B6914", margin: 0 }}>
                   ${d.price.toLocaleString("es-CL")}
                 </p>

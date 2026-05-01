@@ -143,6 +143,7 @@ export default function CartaBasic({
           restaurantId={restaurant.id}
           dishes={dishes}
           categories={categories}
+          restaurantDietType={(restaurant as any).dietType}
           onClose={() => setGenioOpen(false)}
           onResult={(dish) => {
             setGenioOpen(false);

@@ -108,7 +108,7 @@ interface SessionData {
   tableId: string | null;
   isQrScan: boolean;
   usedGenio: boolean;
-  genioData: { timesUsed: number; completed: boolean; profileEdits?: number; lastStep?: string; birthdayClicked?: boolean; birthdaySaved?: boolean } | null;
+  genioData: { timesUsed: number; completed: boolean; profileEdits?: number; lastStep?: string; birthdayClicked?: boolean; birthdaySaved?: boolean; birthdayModalAutoShown?: boolean } | null;
   personalizationData: { shown: number; tapped: number; dishes: { name: string; score: number; tapped: boolean }[] } | null;
   visitDays: number;
   ipAddress: string | null;
@@ -501,6 +501,7 @@ export default function AdminSessions() {
                       {s.usedGenio && <span style={{ color: "#F4A623" }}>· 🧞 Genio</span>}
                       {s.genioData?.birthdaySaved && <span style={{ color: "#4ade80" }}>· 🎂 Cumple</span>}
                       {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ color: "#f59e0b" }}>· 🎂 Abrió</span>}
+                      {s.genioData?.birthdayModalAutoShown && !s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ color: "#a78bfa" }}>· 🎂 Modal auto</span>}
                       {s.personalizationData && s.personalizationData.shown > 0 && (
                         <span style={{ color: "#F4A623" }} title={s.personalizationData.dishes.map(d => `${d.name} (${d.score}pts)${d.tapped ? " ✓" : ""}`).join(", ")}>
                           · ✨ {s.personalizationData.tapped} de {s.personalizationData.shown} Para ti
@@ -589,15 +590,18 @@ export default function AdminSessions() {
                         {(s.genioData?.profileEdits ?? 0) > 0 && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "#F4A623", fontWeight: 500 }}>Editó perfil {s.genioData!.profileEdits}x</span>}
                         {s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🎂 Cumpleaños guardado</span>}
                         {s.genioData?.birthdayClicked && !s.genioData?.birthdaySaved && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>}
+                        {s.genioData?.birthdayModalAutoShown && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(167,139,250,0.1)", color: "#a78bfa", fontWeight: 500 }}>🎂 Modal auto (2da visita)</span>}
                       </div>
                     )}
 
                     {/* Birthday banner (without Genio) */}
-                    {!s.usedGenio && (s.genioData?.birthdayClicked || s.genioData?.birthdaySaved) && (
+                    {!s.usedGenio && (s.genioData?.birthdayClicked || s.genioData?.birthdaySaved || s.genioData?.birthdayModalAutoShown) && (
                       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
                         {s.genioData?.birthdaySaved
                           ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🎂 Cumpleaños guardado</span>
-                          : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>
+                          : s.genioData?.birthdayClicked
+                          ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b", fontWeight: 600 }}>🎂 Abrió banner pero no guardó</span>
+                          : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(167,139,250,0.1)", color: "#a78bfa", fontWeight: 500 }}>🎂 Modal auto (2da visita)</span>
                         }
                       </div>
                     )}

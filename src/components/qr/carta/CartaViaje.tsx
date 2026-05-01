@@ -237,6 +237,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             dishes={dishes}
             categories={categories}
             qrUser={qrUser}
+            restaurantDietType={(restaurant as any).dietType}
             onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
             onResult={() => {
               setGenioOpen(false);

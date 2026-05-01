@@ -386,6 +386,21 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
 
             {isOpen && (
               <div style={{ padding: "0 16px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
+                {/* Categories browsed */}
+                {s.categoriesViewed?.length > 0 && (
+                  <div style={{ marginTop: 10 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Categorías visitadas</p>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {s.categoriesViewed.map((c: any, i: number) => (
+                        <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>
+                          {c.name} {c.dwellMs > 1000 && <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-accent)" }}>({formatDuration(c.dwellMs)})</span>}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Dishes viewed */}
                 {dishes.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 4, marginTop: 10 }}>
                     <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Platos vistos (en orden)</p>
@@ -404,6 +419,65 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   </div>
                 ) : (
                   <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "10px 0 0" }}>No vio platos en detalle</p>
+                )}
+
+                {/* Hero clicks */}
+                {s.heroClicks?.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Hero clicks</p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {s.heroClicks.map((hc: any, i: number) => (
+                        <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>
+                          {hc.dishName || "—"} ({hc.view})
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Genio data */}
+                {s.genioData && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>🧞 Genio</p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {s.genioData.completed
+                        ? <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Completado</span>
+                        : <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Abandonó{s.genioData.lastStep ? ` en ${s.genioData.lastStep}` : ""}</span>
+                      }
+                      {s.genioData.timesUsed > 1 && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{s.genioData.timesUsed}x abierto</span>}
+                      {s.genioData.birthdayModalAutoShown && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(167,139,250,0.1)", color: "#a78bfa" }}>🎂 Modal auto</span>}
+                      {s.genioData.birthdaySaved && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>🎂 Cumple guardado</span>}
+                      {s.genioData.birthdayClicked && !s.genioData.birthdaySaved && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>🎂 Abrió banner</span>}
+                    </div>
+                  </div>
+                )}
+
+                {/* Personalization */}
+                {s.personalizationData && s.personalizationData.shown > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>✨ Para ti ({s.personalizationData.tapped}/{s.personalizationData.shown} tocados)</p>
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {s.personalizationData.dishes.map((d: any, i: number) => (
+                        <span key={i} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: d.tapped ? "rgba(74,222,128,0.1)" : "var(--adm-hover)", color: d.tapped ? "#4ade80" : "var(--adm-text3)" }}>
+                          {d.name} {d.tapped && "✓"}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Experience submissions */}
+                {s.experienceSubmissions?.length > 0 && (
+                  <div style={{ marginTop: 12 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>Experiencias</p>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {s.experienceSubmissions.map((exp: any) => (
+                        <span key={exp.id} style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(192,132,252,0.1)", color: "#c084fc" }}>
+                          {exp.templateEmoji} {exp.templateName}{exp.resultName ? ` → ${exp.resultName}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
 
                 {/* Waiter calls */}
@@ -432,6 +506,15 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                         </span>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* Visit badge */}
+                {s.visitDays > 1 && (
+                  <div style={{ marginTop: 10 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", padding: "2px 8px", borderRadius: 6, background: "rgba(244,166,35,0.1)", color: "#F4A623" }}>
+                      Visitante recurrente: {s.visitDays} días distintos
+                    </span>
                   </div>
                 )}
               </div>
@@ -536,7 +619,7 @@ export default function AnalyticsDashboard() {
               padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
               background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
-              color: tab === t.key ? "#0a0a0a" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+              color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
               opacity: locked ? 0.5 : 1,
               transition: "all 0.15s",
             }}>

@@ -44,6 +44,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
               setAutoModal(true);
               setModalOpen(true);
               localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+              fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
             }
             setShow(true);
           }
@@ -60,6 +61,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
                 setAutoModal(true);
                 setModalOpen(true);
                 localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+                fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
               }
               setShow(true);
             }

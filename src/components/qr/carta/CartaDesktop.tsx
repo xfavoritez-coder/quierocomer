@@ -108,9 +108,25 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
   // Check if genio was completed
   useEffect(() => {
     const check = () => setHasCompletedGenio(!!localStorage.getItem("qr_diet"));
+    const onGenioUpdated = () => {
+      check();
+      setTimeout(() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const hasGluten = restrictions.includes("gluten");
+        let scrollId = "";
+        if (diet === "vegan") scrollId = "genio-vegan-carousel";
+        else if (diet === "vegetarian") scrollId = "genio-vegetarian-carousel";
+        else if (hasGluten) scrollId = "genio-glutenfree-carousel";
+        if (scrollId) {
+          const el = document.getElementById(scrollId);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    };
     check();
-    window.addEventListener("genio-updated", check);
-    return () => window.removeEventListener("genio-updated", check);
+    window.addEventListener("genio-updated", onGenioUpdated);
+    return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
 
   // Close lang dropdown on outside click
@@ -186,6 +202,20 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
           {/* Category tabs */}
           <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}>
+            {dietNavItem && (
+              <button
+                onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
+                  fontSize: "0.85rem", fontWeight: 600, whiteSpace: "nowrap",
+                  background: activeCategory === "diet-carousel" ? "#1a1a1a" : "transparent",
+                  color: activeCategory === "diet-carousel" ? "white" : "#888",
+                  transition: "all 0.15s",
+                }}
+              >
+                {dietNavItem.name}
+              </button>
+            )}
             {categories.map(cat => {
               const isActive = activeCategory === cat.id;
               return (
@@ -204,20 +234,6 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                 </button>
               );
             })}
-            {dietNavItem && (
-              <button
-                onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                style={{
-                  padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
-                  fontSize: "0.85rem", fontWeight: 600, whiteSpace: "nowrap",
-                  background: activeCategory === "diet-carousel" ? "#1a1a1a" : "transparent",
-                  color: activeCategory === "diet-carousel" ? "white" : "#888",
-                  transition: "all 0.15s",
-                }}
-              >
-                {dietNavItem.name}
-              </button>
-            )}
           </div>
         </div>
       </header>
@@ -482,6 +498,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           restaurantId={restaurant.id}
           dishes={dishes}
           categories={categories}
+          restaurantDietType={(restaurant as any).dietType}
           onClose={() => { setGenioOpen(false); setHasCompletedGenio(!!localStorage.getItem("qr_diet")); }}
           onResult={(dish) => {
             setGenioOpen(false);

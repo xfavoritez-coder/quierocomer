@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
       where.id = { in: ids };
     } else if (activity === "cumple") {
       const birthdaySessionIds = await prisma.statEvent.findMany({
-        where: { eventType: { in: ["BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"] }, ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
+        where: { eventType: { in: ["BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN"] }, ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}), ...(where.startedAt ? { createdAt: where.startedAt } : {}) },
         select: { dbSessionId: true },
         distinct: ["dbSessionId"],
       });
@@ -170,7 +170,7 @@ export async function GET(req: NextRequest) {
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
 
     // Try dbSessionId first (new events), fall back to time range (legacy events)
-    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED"];
+    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN"];
 
     const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
       where: {
@@ -211,7 +211,7 @@ export async function GET(req: NextRequest) {
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
-      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false };
+      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false, birthdayModalAutoShown: false };
       const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES"];
       const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos" };
       let maxStep = -1;
@@ -221,6 +221,7 @@ export async function GET(req: NextRequest) {
         if (e.eventType === "GENIO_PROFILE_SAVED") { data.profileEdits++; }
         if (e.eventType === "BIRTHDAY_BANNER_CLICKED") { data.birthdayClicked = true; }
         if (e.eventType === "BIRTHDAY_SAVED") { data.birthdaySaved = true; }
+        if (e.eventType === "BIRTHDAY_MODAL_AUTO_SHOWN") { data.birthdayModalAutoShown = true; }
         const stepIdx = stepOrder.indexOf(e.eventType);
         if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
       }

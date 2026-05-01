@@ -55,18 +55,8 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
     };
   }, [open]);
 
-  // First-time tooltip: show once, auto-dismiss after 5s
-  useEffect(() => {
-    if (!localStorage.getItem(TOOLTIP_KEY)) {
-      const show = setTimeout(() => setShowTooltip(true), 1800);
-      const hide = setTimeout(() => { setShowTooltip(false); localStorage.setItem(TOOLTIP_KEY, "1"); }, 9800);
-      return () => { clearTimeout(show); clearTimeout(hide); };
-    }
-  }, []);
-
   const dismissTooltip = () => {
     setShowTooltip(false);
-    localStorage.setItem(TOOLTIP_KEY, "1");
   };
 
   const handleSelect = (next: CartaView) => {

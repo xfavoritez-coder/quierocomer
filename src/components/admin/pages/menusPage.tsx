@@ -28,7 +28,6 @@ const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e855
 const LANG_INFO: Record<string, { label: string; flag: string }> = {
   en: { label: "Inglés", flag: "🇺🇸" },
   pt: { label: "Portugués", flag: "🇧🇷" },
-  it: { label: "Italiano", flag: "🇮🇹" },
 };
 
 function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; restaurantId: string }) {
@@ -188,23 +187,22 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                         {saving === lang ? "Guardando..." : "Guardar"}
                       </button>
                     )}
-                    {tr?.description && (
-                      <button
-                        onClick={() => regenerate(lang)}
-                        disabled={!!regenerating}
-                        title="Regenerar traducción automática"
-                        style={{
-                          padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border, #eee)",
-                          background: "transparent", color: "var(--adm-text3, #999)", fontFamily: F,
-                          fontSize: "0.68rem", fontWeight: 500, cursor: "pointer",
-                          display: "flex", alignItems: "center", gap: 4,
-                          opacity: regenerating === lang ? 0.5 : 1,
-                        }}
-                      >
-                        <RefreshCw size={11} className={regenerating === lang ? "animate-spin" : ""} />
-                        {regenerating === lang ? "Regenerando..." : "Regenerar"}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => regenerate(lang)}
+                      disabled={!!regenerating}
+                      title={tr?.description ? "Regenerar traducción automática" : "Generar traducción automática"}
+                      style={{
+                        padding: "5px 10px", borderRadius: 6, border: "1px solid var(--adm-card-border, #eee)",
+                        background: !tr?.description ? "rgba(244,166,35,0.1)" : "transparent",
+                        color: !tr?.description ? "#F4A623" : "var(--adm-text3, #999)", fontFamily: F,
+                        fontSize: "0.68rem", fontWeight: !tr?.description ? 600 : 500, cursor: "pointer",
+                        display: "flex", alignItems: "center", gap: 4,
+                        opacity: regenerating === lang ? 0.5 : 1,
+                      }}
+                    >
+                      <RefreshCw size={11} className={regenerating === lang ? "animate-spin" : ""} />
+                      {regenerating === lang ? "Generando..." : !tr?.description ? "Generar auto" : "Regenerar"}
+                    </button>
                   </div>
                 </div>
               );

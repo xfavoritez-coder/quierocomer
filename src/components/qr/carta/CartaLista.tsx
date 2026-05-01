@@ -85,10 +85,29 @@ export default function CartaLista({
   const { hasNewLikes, clearNewLikes } = useFavorites();
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   useEffect(() => {
-    const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    const check = () => {
+      setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    };
+    const onGenioUpdated = () => {
+      check();
+      // Auto-scroll to diet carousel after Genio completes
+      setTimeout(() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const hasGluten = restrictions.includes("gluten");
+        let scrollId = "";
+        if (diet === "vegan") scrollId = "genio-vegan-carousel";
+        else if (diet === "vegetarian") scrollId = "genio-vegetarian-carousel";
+        else if (hasGluten) scrollId = "genio-glutenfree-carousel";
+        if (scrollId) {
+          const el = document.getElementById(scrollId);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    };
     check();
-    window.addEventListener("genio-updated", check);
-    return () => window.removeEventListener("genio-updated", check);
+    window.addEventListener("genio-updated", onGenioUpdated);
+    return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
@@ -335,6 +354,18 @@ export default function CartaLista({
               className="flex overflow-x-auto"
               style={{ flex: 1, height: "100%", paddingLeft: 12, paddingRight: 4, gap: 20, scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" }}
             >
+              {dietNavItem && (() => {
+                const isActive = "diet-carousel" === activeCategory;
+                return (
+                  <button
+                    key="diet-carousel"
+                    ref={isActive ? activeCatRef : null}
+                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                    className="shrink-0 font-[family-name:var(--font-dm)]"
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >{dietNavItem.name}</button>
+                );
+              })()}
               {hasPromos && (() => {
                 const isActive = "promos" === activeCategory;
                 return (
@@ -382,17 +413,6 @@ export default function CartaLista({
                   </button>
                 );
               })}
-              {dietNavItem && (() => {
-                const isActive = "diet-carousel" === activeCategory;
-                return (
-                  <button
-                    key="diet-carousel"
-                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                    className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "0.92rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
-                  >{dietNavItem.name}</button>
-                );
-              })()}
             </div>
             {/* Search icon */}
             <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
@@ -566,6 +586,7 @@ export default function CartaLista({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
+          restaurantDietType={(restaurant as any).dietType}
           onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);

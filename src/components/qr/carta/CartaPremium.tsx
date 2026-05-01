@@ -116,9 +116,25 @@ export default function CartaPremium({
   const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
   useEffect(() => {
     const check = () => setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions")));
+    const onGenioUpdated = () => {
+      check();
+      setTimeout(() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const hasGluten = restrictions.includes("gluten");
+        let scrollId = "";
+        if (diet === "vegan") scrollId = "genio-vegan-carousel";
+        else if (diet === "vegetarian") scrollId = "genio-vegetarian-carousel";
+        else if (hasGluten) scrollId = "genio-glutenfree-carousel";
+        if (scrollId) {
+          const el = document.getElementById(scrollId);
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 500);
+    };
     check();
-    window.addEventListener("genio-updated", check);
-    return () => window.removeEventListener("genio-updated", check);
+    window.addEventListener("genio-updated", onGenioUpdated);
+    return () => window.removeEventListener("genio-updated", onGenioUpdated);
   }, []);
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
@@ -178,14 +194,12 @@ export default function CartaPremium({
     return () => { flush(); document.removeEventListener("visibilitychange", flush); };
   }, []);
 
-  // Genio nudge — pulse the floating button after 20s (once per session)
+  // Genio nudge — show tooltip on first visit until dismissed
   useEffect(() => {
     if (hasCompletedGenio) return;
     if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
     const timer = setTimeout(() => {
-      sessionStorage.setItem("qc_genio_nudge_shown", "1");
       setShowGenioNudge(true);
-      setTimeout(() => setShowGenioNudge(false), 6000);
     }, 8_000);
     return () => clearTimeout(timer);
   }, [hasCompletedGenio]);
@@ -486,9 +500,9 @@ export default function CartaPremium({
       ) : (
         <CategoryNav
           categories={[
+            ...(dietNavItem ? [{ id: dietNavItem.id, name: dietNavItem.name, position: -2, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
             ...(hasPromos ? [{ id: "promos", name: "Ofertas", position: -1, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
             ...categories,
-            ...(dietNavItem ? [{ id: dietNavItem.id, name: dietNavItem.name, position: 9999, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
           ]}
           activeCategory={activeCategory}
           onCategoryChange={(id) => {
@@ -765,8 +779,14 @@ export default function CartaPremium({
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
         <div style={{ position: "relative" }}>
           {(showGenioNudge || showLikeGenioTip) && (
-            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
+            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 36px 8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
               {showLikeGenioTip ? "¿Ordeno la carta según tus gustos?" : "Ordeno la carta especialmente para ti"}
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowGenioNudge(false); setShowLikeGenioTip(false); sessionStorage.setItem("qc_genio_nudge_shown", "1"); }}
+                style={{ position: "absolute", top: 4, right: 6, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1, fontSize: "16px", color: "#999" }}
+              >
+                ✕
+              </button>
               <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
             </div>
           )}
@@ -812,6 +832,7 @@ export default function CartaPremium({
           dishes={dishes}
           categories={categories}
           qrUser={qrUser}
+          restaurantDietType={(restaurant as any).dietType}
           onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
           onResult={(dish) => {
             setGenioOpen(false);

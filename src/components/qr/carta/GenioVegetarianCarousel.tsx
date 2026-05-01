@@ -36,10 +36,11 @@ export default function GenioVegetarianCarousel({ dishes, categories, onDishClic
 
   if (vegDishes.length === 0) return null;
 
-  const countText = String(vegDishes.length);
+  const n = vegDishes.length;
+  const countText = String(n);
   const title = alsoGlutenFree
-    ? `${countText} opciones vegetarianas sin gluten 🥗`
-    : (t(lang, "gVegetarianDishesForYou" as any) || `${countText} opciones vegetarianas para ti 🥗`).replace("{n}", countText);
+    ? `${countText} ${n === 1 ? "opción vegetariana" : "opciones vegetarianas"} sin gluten 🥗`
+    : (t(lang, "gVegetarianDishesForYou" as any) || `${countText} opciones vegetarianas para ti 🥗`).replace("{n}", countText).replace("opciones", n === 1 ? "opción" : "opciones").replace("options", n === 1 ? "option" : "options").replace("opções", n === 1 ? "opção" : "opções").replace("opzioni", n === 1 ? "opzione" : "opzioni");
   const subtitle = t(lang, "gVegetarianSubtitle" as any) || "Incluye opciones veganas y vegetarianas";
 
   return (
@@ -51,8 +52,8 @@ export default function GenioVegetarianCarousel({ dishes, categories, onDishClic
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
         <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#fff", border: "0.5px solid rgba(107,142,35,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 }}>🧞</div>
         <div>
-          <p style={{ fontSize: "0.88rem", fontWeight: 600, color: "#2D4A0E", margin: 0 }}>{title}</p>
-          <p style={{ fontSize: "0.72rem", color: "#5A7D2B", margin: "2px 0 0" }}>{subtitle}</p>
+          <p style={{ fontSize: "0.94rem", fontWeight: 600, color: "#2D4A0E", margin: 0 }}>{title}</p>
+          <p style={{ fontSize: "0.73rem", color: "#5A7D2B", margin: "1px 0 0" }}>{subtitle}</p>
         </div>
       </div>
       <div style={{ position: "relative" }}>
@@ -69,8 +70,8 @@ export default function GenioVegetarianCarousel({ dishes, categories, onDishClic
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: isVegan ? "#3A8E68" : "#6B8E23", flexShrink: 0 }} />{isVegan ? "VEGAN" : "VEG"}
                   </span>
                 </div>
-                <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "#2D4A0E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                {d.description && <p style={{ fontSize: "0.62rem", color: "#5a7d3a", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
+                <p style={{ fontSize: "0.80rem", fontWeight: 600, color: "#2D4A0E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                {d.description && <p style={{ fontSize: "0.63rem", color: "#5a7d3a", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
                 <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "12px", fontWeight: 500, color: "#5A7D2B", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
               </button>
             );

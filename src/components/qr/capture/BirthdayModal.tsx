@@ -97,7 +97,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           maxWidth: 360,
           width: "90%",
           maxHeight: "90dvh",
-          overflowY: "auto",
+          overflowY: "hidden",
           boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
           position: "relative",
         }}

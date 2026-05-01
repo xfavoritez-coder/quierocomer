@@ -194,6 +194,19 @@ export async function POST(request: Request) {
       }
     }
 
+    // Translate all dishes with descriptions in background
+    const dishesWithDesc = createdDishes.filter(d => d.description);
+    if (dishesWithDesc.length > 0) {
+      import("@/lib/ai/translateContent").then(({ translateDish }) => {
+        (async () => {
+          for (let i = 0; i < dishesWithDesc.length; i += 3) {
+            const batch = dishesWithDesc.slice(i, i + 3);
+            await Promise.all(batch.map(d => translateDish(d.id).catch(e => console.error("[translate dish]", e))));
+          }
+        })();
+      }).catch(() => {});
+    }
+
     return NextResponse.json({
       ok: true,
       dishIds: createdDishes.map(d => d.id),

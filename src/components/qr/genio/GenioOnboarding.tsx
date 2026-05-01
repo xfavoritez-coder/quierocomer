@@ -17,6 +17,7 @@ interface GenioProps {
   onClose: () => void;
   onResult: (dish: Dish) => void;
   qrUser?: { name: string | null; email: string } | null;
+  restaurantDietType?: string | null;
 }
 
 type DietType = "omnivore" | "vegetarian" | "vegan";
@@ -157,7 +158,7 @@ function getDietColors(value: DietType, sel: boolean) {
 }
 
 
-export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp }: GenioProps) {
+export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp, restaurantDietType }: GenioProps) {
   const lang = useLang();
   const [step, setStep] = useState(0);
   const [visible, setVisible] = useState(false);
@@ -445,6 +446,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                         const dairyEggRestrictions = ["lactosa", "huevo"];
                         if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
                         if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
+                        const restDiet = restaurantDietType?.toUpperCase();
+                        if (restDiet === "VEGAN" || restDiet === "VEGETARIAN") return !["mariscos", "cerdo"].includes(r.value);
                         return true;
                       }).map(r => (
                         <button key={r.value} onClick={() => {
@@ -639,6 +642,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               const dairyEggRestrictions = ["lactosa", "huevo"];
               if (dietType === "vegan") return !animalRestrictions.includes(r.value) && !dairyEggRestrictions.includes(r.value);
               if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
+              const restDiet = restaurantDietType?.toUpperCase();
+              if (restDiet === "VEGAN" || restDiet === "VEGETARIAN") return !["mariscos", "cerdo"].includes(r.value);
               return true;
             }).map((r) => {
               const sel = r.value === "frutos secos" ? NUT_GROUP.some(n => restrictions.includes(n)) : restrictions.includes(r.value);
@@ -650,7 +655,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <span style={{ width: 16, height: 16, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: sel ? G.goldLight : G.gold, filter: sel ? "drop-shadow(0 0 4px rgba(234,88,12,0.7))" : "none" }}>
                     <Icon size={13} />
                   </span>
-                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "1rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
+                  <span style={{ flex: 1, color: sel ? G.goldText : G.textSecondary, fontSize: "1.06rem", fontWeight: 500, lineHeight: 1.3, textAlign: "left" }}>
                     {r.labelKey ? t(lang, r.labelKey as any) : r.label}
                   </span>
                   {sel && r.value !== "ninguna" && <Check size={12} color={G.gold} style={{ flexShrink: 0 }} />}
