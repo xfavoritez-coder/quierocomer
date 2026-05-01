@@ -9,6 +9,8 @@ import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
 import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw } from "lucide-react";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
+import { canAccess } from "@/lib/plans";
 
 interface Category { id: string; name: string; position: number; isActive: boolean; }
 interface Dish {
@@ -336,6 +338,8 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
 
 export default function AdminMenus() {
   const { selectedRestaurantId, restaurants, isSuper, loading: sessionLoading } = useAdminSession();
+  const { activePlan } = usePanelSession();
+  const canHighlight = canAccess(activePlan, "highlight_dishes");
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
@@ -1467,6 +1471,10 @@ export default function AdminMenus() {
                   {/* Star */}
                   <button onClick={async () => {
                     const wasRec = d.tags?.includes("RECOMMENDED");
+                    if (!wasRec && !canHighlight) {
+                      window.dispatchEvent(new CustomEvent("show-plan-modal"));
+                      return;
+                    }
                     if (!wasRec) {
                       const currentRecCount = dishes.filter(x => x.tags?.includes("RECOMMENDED") && x.isActive && x.id !== d.id).length;
                       if (currentRecCount >= 5) { alert("Máximo 5 platos destacados"); return; }

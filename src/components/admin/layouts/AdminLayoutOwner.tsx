@@ -29,6 +29,9 @@ function buildNav(base: string) {
     { icon: Users, label: "Clientes", href: `${base}/clientes` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
+    { icon: Bell, label: "Garzón", href: `${base}/garzon` },
+    { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
+    { icon: Mail, label: "Campañas", href: `${base}/campanias` },
     { icon: Store, label: "Mi Restaurante", href: `${base}/mi-restaurante` },
   ];
   const BOTTOM_TABS = [

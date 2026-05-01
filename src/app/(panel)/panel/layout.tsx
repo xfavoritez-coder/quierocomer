@@ -142,13 +142,16 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
             </div>
           )}
 
-          {/* Price */}
+          {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 12px" }}>
+              {tab === "PREMIUM" ? "Todo lo que necesitas para vender más sin mover un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+            </p>
             <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
               {tab === "PREMIUM" ? "$55.000" : "$35.000"}
             </span>
             <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
-            <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#bbb", margin: "2px 0 0" }}>Neto · Sin contratos</p>
+            <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#bbb", margin: "-2px 0 0" }}>Neto · Sin contratos</p>
           </div>
 
           {/* Features */}
@@ -170,7 +173,7 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
           {/* CTA */}
           {!isCurrentPlan ? (
             <a
-              href={`https://wa.me/56962530297?text=${encodeURIComponent(`Hola, me interesa el plan ${tab === "PREMIUM" ? "Premium" : "Gold"} para mi restaurante en QuieroComer`)}`}
+              href={`https://wa.me/56999946208?text=${encodeURIComponent(`Hola! Me gustaría saber más sobre el plan ${tab === "PREMIUM" ? "Premium" : "Gold"} de QuieroComer para mi restaurante 🍽️`)}`}
               target="_blank" rel="noopener noreferrer"
               style={{
                 display: "block", padding: "14px 20px", borderRadius: 999, textAlign: "center",

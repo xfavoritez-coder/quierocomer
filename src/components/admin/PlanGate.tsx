@@ -138,15 +138,18 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
             </div>
 
             <div style={{ padding: "20px 24px 24px" }}>
-              {/* Price */}
+              {/* Description + Price */}
               <div style={{ textAlign: "center", marginBottom: 16 }}>
+                <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 12px" }}>
+                  {modalTab === "PREMIUM" ? "Todo lo que necesitas para vender más sin mover un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+                </p>
                 <div>
                   <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
                     {modalTab === "PREMIUM" ? "$55.000" : "$35.000"}
                   </span>
                   <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
                 </div>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#bbb", margin: "2px 0 0" }}>Neto · Sin contratos</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#bbb", margin: "-2px 0 0" }}>Neto · Sin contratos</p>
               </div>
 
               {/* Features */}
@@ -168,7 +171,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
               {/* CTA */}
               <a
-                href={`https://wa.me/56962530297?text=${encodeURIComponent(`Hola, me interesa el plan ${modalTab === "PREMIUM" ? "Premium" : "Gold"} para mi restaurante en QuieroComer`)}`}
+                href={`https://wa.me/56999946208?text=${encodeURIComponent(`Hola! Me gustaría saber más sobre el plan ${modalTab === "PREMIUM" ? "Premium" : "Gold"} de QuieroComer para mi restaurante 🍽️`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
