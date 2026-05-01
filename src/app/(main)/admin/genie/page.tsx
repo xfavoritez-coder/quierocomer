@@ -358,7 +358,7 @@ export default function AdminSessions() {
                                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 8 }}>
                                     {s.genioData.completed
                                       ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Configuró preferencias</span>
-                                      : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Abandonó{s.genioData.lastStep ? ` en ${s.genioData.lastStep}` : ""}</span>
+                                      : <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 {s.genioData.lastStep ? `Abandonó en ${s.genioData.lastStep}` : "Abrió y cerró sin configurar"}</span>
                                     }
                                   </div>
                                 )}
@@ -582,7 +582,7 @@ export default function AdminSessions() {
                         {s.genioData?.completed
                           ? <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(74,222,128,0.1)", color: "#4ade80", fontWeight: 600 }}>🧞 Configuró preferencias</span>
                           : <>
-                              <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 Genio abandonado</span>
+                              <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontWeight: 600 }}>🧞 {s.genioData?.lastStep ? "Abandonó el Genio" : "Abrió y cerró sin configurar"}</span>
                               {s.genioData?.lastStep && <span style={{ fontSize: "0.68rem", padding: "3px 8px", borderRadius: 4, background: "rgba(127,191,220,0.1)", color: "#7fbfdc", fontWeight: 500 }}>Llegó a: {s.genioData.lastStep}</span>}
                             </>
                         }
