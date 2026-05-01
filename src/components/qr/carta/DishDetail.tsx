@@ -309,8 +309,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo */}
-      <div style={{ position: "relative", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo — stays behind content, covered as user scrolls */}
+      <div style={{ position: "sticky", top: 0, width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -361,7 +361,7 @@ function DishSlide({
       {/* Close button — fixed, always visible */}
       <button onClick={onClose} className="flex items-center justify-center" style={{ position: "fixed", top: 16, right: 16, zIndex: 130, width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(255,255,255,0.1)", color: "white", fontSize: "1rem" }}>✕</button>
 
-      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px" }}>
+      <div style={{ position: "relative", zIndex: 1, background: "#000", padding: "20px 20px 60px", marginTop: -24, borderRadius: "24px 24px 0 0" }}>
 
         {/* "Recomendado" explanation toggle */}
         {showRecTooltip && isRec && (
