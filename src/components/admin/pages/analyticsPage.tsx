@@ -597,7 +597,7 @@ export default function AnalyticsDashboard() {
             padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
             fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
             background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
-            color: datePreset === p ? "#0a0a0a" : "var(--adm-text3)",
+            color: datePreset === p ? "#fff" : "var(--adm-text3)",
           }}>
             {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : "Esta semana"}
           </button>
