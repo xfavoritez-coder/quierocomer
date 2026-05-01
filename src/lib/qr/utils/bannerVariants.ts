@@ -1,8 +1,15 @@
 import { prisma } from "@/lib/prisma";
+import { seedBannerVariants } from "./seedBannerVariants";
 
 export async function selectBannerVariant() {
-  const variants = await prisma.bannerVariant.findMany({ where: { isActive: true } });
-  if (variants.length === 0) return null;
+  let variants = await prisma.bannerVariant.findMany({ where: { isActive: true } });
+
+  // Auto-seed on first call if table is empty (avoids manual seed step)
+  if (variants.length === 0) {
+    await seedBannerVariants();
+    variants = await prisma.bannerVariant.findMany({ where: { isActive: true } });
+    if (variants.length === 0) return null;
+  }
 
   // If there's a winner, always return it
   const winner = variants.find((v) => v.isWinner);
