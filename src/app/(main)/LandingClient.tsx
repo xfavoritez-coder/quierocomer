@@ -157,7 +157,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
   };
 
   return (
-    <div style={{ fontFamily: B, color: "#111", overflowX: "hidden" }}>
+    <div style={{ fontFamily: B, color: "#111", overflowX: "hidden", zoom: 1.08 }}>
 
       {/* ══════ NAVBAR ══════ */}
       <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 100, background: scrolled ? "rgba(255,255,255,0.97)" : "rgba(250,249,247,0.97)", borderBottom: scrolled ? "1px solid #eeeae0" : "1px solid transparent", backdropFilter: "blur(12px)", transition: "all 0.25s" }}>
