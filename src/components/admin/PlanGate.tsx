@@ -49,7 +49,7 @@ function FeatureRow({ text, tip, color }: { text: string; tip: string; color: st
         <span style={{ width: 15, height: 15, borderRadius: "50%", background: open ? "#1a1a1a" : "#e8e3d8", color: open ? "#fff" : "#888", fontSize: "8px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
       </div>
       {open && (
-        <p style={{ margin: "4px 0 2px 20px", fontSize: "0.72rem", color: "#888", lineHeight: 1.4 }}>{tip}</p>
+        <p style={{ margin: "4px 0 2px 20px", fontSize: "0.78rem", color: "#888", lineHeight: 1.45 }}>{tip}</p>
       )}
     </div>
   );
