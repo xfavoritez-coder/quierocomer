@@ -217,7 +217,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <DesertSVG />
 
       {/* ══════ LOGOS BAR ══════ */}
-      <section id="casos" style={{ background: "#fff", borderTop: "1px solid #eeeae0", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
+      <section id="casos" style={{ background: "#FDFCFA", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
         <p style={{ fontSize: "11.5px", fontWeight: 600, color: "#999", letterSpacing: "1.5px", textTransform: "uppercase", textAlign: "center", marginBottom: 18, padding: "0 24px", fontFamily: F }}>
           Restaurantes que ya confían en QuieroComer
         </p>
