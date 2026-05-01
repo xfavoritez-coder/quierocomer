@@ -16,7 +16,7 @@ import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
 import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
 import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName } from "@/lib/qr/utils/carouselMode";
+import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes } from "@/lib/qr/utils/carouselMode";
 import VeganFloatingPill from "./VeganFloatingPill";
 import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
@@ -180,10 +180,9 @@ export default function CartaLista({
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
     if (!mode) return null;
-    const name = getCarouselNavName(mode);
-    const scrollTo = getCarouselScrollId(mode);
-    return { id: "diet-carousel", name, scrollTo };
-  }, [restaurant, hasCompletedGenio]);
+    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
+    return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
+  }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const lastScrollY = useRef(0);

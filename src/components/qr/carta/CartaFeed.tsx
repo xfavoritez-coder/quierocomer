@@ -16,7 +16,7 @@ import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
 import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
 import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName } from "@/lib/qr/utils/carouselMode";
+import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes } from "@/lib/qr/utils/carouselMode";
 import VeganFloatingPill from "./VeganFloatingPill";
 import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
@@ -448,8 +448,9 @@ export default function CartaFeed({
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
     if (!mode) return null;
+    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
     return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
-  }, [restaurant, hasCompletedGenio]);
+  }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   const grouped = useMemo(() => groupDishesByCategory(
     query ? dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query))) : dishes,

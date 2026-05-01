@@ -45,6 +45,42 @@ export function getCarouselScrollId(mode: CarouselMode): string {
   }
 }
 
+/** Quick check if any dishes match the carousel mode — avoids showing empty nav/pills */
+export function hasMatchingDishes(dishes: any[], categories: any[], mode: CarouselMode, diet?: string | null, restrictions?: string[]): boolean {
+  if (!mode) return false;
+  const noDrinkIds = new Set(categories.filter((c: any) => c.dishType !== "drink").map((c: any) => c.id));
+  const active = dishes.filter((d: any) => d.isActive && noDrinkIds.has(d.categoryId));
+
+  const checkAllergenFree = (d: any, name: string): boolean => {
+    if (name === "gluten" && d.isGlutenFree === true) return true;
+    if (name === "lactosa" && d.isLactoseFree === true) return true;
+    if (name === "soja" && d.isSoyFree === true) return true;
+    const ings = d.dishIngredients || [];
+    if (ings.length === 0) return false;
+    return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === name));
+  };
+
+  return active.some((d: any) => {
+    // Diet check
+    if (mode === "vegan" || mode === "vegan+gf") { if (d.dishDiet !== "VEGAN") return false; }
+    if (mode === "vegetarian" || mode === "vegetarian+gf") { if (d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN") return false; }
+    // Restriction checks based on mode
+    if (mode === "vegan+gf" || mode === "vegetarian+gf" || mode === "glutenfree") { if (!checkAllergenFree(d, "gluten")) return false; }
+    if (mode === "lactosefree") { if (!checkAllergenFree(d, "lactosa")) return false; }
+    if (mode === "soyfree") { if (!checkAllergenFree(d, "soja")) return false; }
+    if (mode === "smart" && restrictions) {
+      if (diet === "vegan" && d.dishDiet !== "VEGAN") return false;
+      if (diet === "vegetarian" && d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN") return false;
+      for (const r of restrictions) {
+        if (r === "_spicy" || r === "ninguna") continue;
+        if (r === "_spicy" && d.isSpicy) return false;
+        if (!checkAllergenFree(d, r)) return false;
+      }
+    }
+    return true;
+  });
+}
+
 export function getCarouselNavName(mode: CarouselMode): string {
   switch (mode) {
     case "vegan": return "🌿 Vegano";

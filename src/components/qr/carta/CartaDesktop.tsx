@@ -20,7 +20,7 @@ import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
 import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
 import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName } from "@/lib/qr/utils/carouselMode";
+import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes } from "@/lib/qr/utils/carouselMode";
 
 interface Props {
   restaurant: Restaurant;
@@ -45,8 +45,9 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
     const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
     if (!mode) return null;
+    if (!hasMatchingDishes(dishes, categories, mode, diet, restrictions.filter((r: string) => r !== "ninguna"))) return null;
     return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
-  }, [restaurant, hasCompletedGenio]);
+  }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
