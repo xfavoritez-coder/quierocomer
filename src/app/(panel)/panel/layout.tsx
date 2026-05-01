@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { SessionContext } from "@/lib/admin/SessionContext";
@@ -86,9 +86,126 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
   );
 }
 
+const PLAN_FEATURES: Record<string, { text: string; tip: string }[]> = {
+  GOLD: [
+    { text: "2 vistas de carta", tip: "Vista lista y galería" },
+    { text: "Destacar platos estrella", tip: "Aparecen primero en el hero" },
+    { text: "Ofertas y promociones", tip: "Descuentos visibles en la carta" },
+    { text: "Estadísticas básicas", tip: "Visitas, platos más vistos" },
+    { text: "Anuncios en la carta", tip: "Banner de novedades" },
+    { text: "Multilenguaje", tip: "ES · EN · PT automático" },
+  ],
+  PREMIUM: [
+    { text: "Todo del plan Gold", tip: "Incluye todas las funciones Gold" },
+    { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
+    { text: "Estadísticas avanzadas", tip: "Recorridos, filtros, clima" },
+    { text: "Llamar al garzón", tip: "Notificación push al garzón" },
+    { text: "Productos sugeridos", tip: "Cross-sell automático" },
+    { text: "Automatizaciones", tip: "Emails de cumpleaños y bienvenida" },
+    { text: "Campañas y email marketing", tip: "Envíos masivos a clientes" },
+    { text: "Clientes ilimitados + CSV", tip: "Lista completa y exportable" },
+  ],
+};
+
+function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
+  const [tab, setTab] = useState<"GOLD" | "PREMIUM">(plan === "FREE" ? "GOLD" : plan as any);
+  const FD = "var(--font-display)";
+  const FB2 = "var(--font-body)";
+  const features = PLAN_FEATURES[tab] || [];
+  const isCurrentPlan = plan === tab;
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#fff", borderRadius: 24, maxWidth: 400, width: "100%", maxHeight: "85vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #f0f0f0", position: "sticky", top: 0, background: "#fff", borderRadius: "24px 24px 0 0", zIndex: 1 }}>
+          {(["GOLD", "PREMIUM"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              flex: 1, padding: "16px 0", border: "none", cursor: "pointer",
+              fontFamily: FD, fontSize: "0.88rem", fontWeight: 700, background: "transparent",
+              color: tab === t ? (t === "PREMIUM" ? "#7c3aed" : "#92400e") : "#ccc",
+              borderBottom: tab === t ? `3px solid ${t === "PREMIUM" ? "#7c3aed" : "#F4A623"}` : "3px solid transparent",
+            }}>
+              {t === "GOLD" ? "⭐ Gold" : "💎 Premium"}
+              {plan === t && <span style={{ marginLeft: 6, fontSize: "0.6rem", fontWeight: 600, padding: "1px 6px", borderRadius: 4, background: t === "PREMIUM" ? "#F3E8FF" : "#FFF8E7", color: t === "PREMIUM" ? "#7c3aed" : "#92400e" }}>Tu plan</span>}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ padding: "20px 24px 24px" }}>
+          {/* Current plan indicator */}
+          {isCurrentPlan && (
+            <div style={{ textAlign: "center", marginBottom: 14, padding: "10px 16px", background: tab === "PREMIUM" ? "#F3E8FF" : "#FFF8E7", borderRadius: 10 }}>
+              <p style={{ fontFamily: FD, fontSize: "0.82rem", fontWeight: 600, color: tab === "PREMIUM" ? "#7c3aed" : "#92400e", margin: 0 }}>
+                ✓ Este es tu plan actual
+              </p>
+            </div>
+          )}
+
+          {/* Price */}
+          <div style={{ textAlign: "center", marginBottom: 16 }}>
+            <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
+              {tab === "PREMIUM" ? "$55.000" : "$35.000"}
+            </span>
+            <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
+            <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#bbb", margin: "2px 0 0" }}>Neto · Sin contratos</p>
+          </div>
+
+          {/* Features */}
+          <div style={{
+            background: tab === "PREMIUM" ? "#FAFAFE" : "#FFFCF5",
+            borderRadius: 12, padding: "14px 16px", marginBottom: 18,
+            border: `1px solid ${tab === "PREMIUM" ? "#e9d5ff" : "#fde68a"}`,
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {features.map(f => (
+                <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ color: tab === "PREMIUM" ? "#7c3aed" : "#F4A623", fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
+                  <span style={{ fontFamily: FB2, fontSize: "0.8rem", color: "#444", flex: 1 }}>{f.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
+          {!isCurrentPlan ? (
+            <a
+              href={`https://wa.me/56962530297?text=${encodeURIComponent(`Hola, me interesa el plan ${tab === "PREMIUM" ? "Premium" : "Gold"} para mi restaurante en QuieroComer`)}`}
+              target="_blank" rel="noopener noreferrer"
+              style={{
+                display: "block", padding: "14px 20px", borderRadius: 999, textAlign: "center",
+                background: tab === "PREMIUM" ? "#7c3aed" : "#F4A623",
+                color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
+                textDecoration: "none", marginBottom: 8,
+                boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
+              }}
+            >
+              Quiero el plan {tab === "PREMIUM" ? "Premium" : "Gold"} →
+            </a>
+          ) : (
+            <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#999", margin: 0 }}>Estás disfrutando de este plan</p>
+            </div>
+          )}
+          <button onClick={onClose} style={{ display: "block", width: "100%", background: "none", border: "none", color: "#999", fontFamily: FD, fontSize: "0.82rem", cursor: "pointer", padding: "8px 0" }}>
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setPlanModalOpen(true);
+    window.addEventListener("show-plan-modal", handler);
+    return () => window.removeEventListener("show-plan-modal", handler);
+  }, []);
 
   if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
 
@@ -175,6 +292,11 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       >
         {children}
       </AdminLayoutOwner>
+
+      {/* Plan modal — triggered from "Mi Plan" menu */}
+      {planModalOpen && (
+        <PlanModal plan={activePlan} onClose={() => setPlanModalOpen(false)} />
+      )}
     </SessionContext.Provider>
   );
 }

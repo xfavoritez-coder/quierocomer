@@ -405,7 +405,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
           <button onClick={() => { setShowCreateInput(false); setNewCatName(""); }} style={{ padding: "10px 12px", background: "transparent", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10, fontFamily: F, fontSize: 13, color: "#888", cursor: "pointer" }}>Cancelar</button>
         </div>
       ) : (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
+        <div className="lnd-desktop-only" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
           <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
             + Nueva categoría
           </button>

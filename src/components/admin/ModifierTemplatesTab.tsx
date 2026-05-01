@@ -213,7 +213,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
           <button onClick={() => { setCreating(false); setNewName(""); }} style={{ padding: "10px 14px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", cursor: "pointer" }}>X</button>
         </div>
       ) : (
-        <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+        <div className="lnd-desktop-only" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
           <button onClick={() => setCreating(true)} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo modificador</button>
         </div>
       )}
