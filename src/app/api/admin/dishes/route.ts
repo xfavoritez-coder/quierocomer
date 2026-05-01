@@ -94,6 +94,25 @@ export async function POST(req: NextRequest) {
       console.error("[AI extract]", e);
     }
 
+    // Auto-detect allergen-free flags from extracted ingredients
+    try {
+      const dishIngs = await prisma.dishIngredient.findMany({
+        where: { dishId: dish.id },
+        include: { ingredient: { include: { allergens: { select: { name: true } } } } },
+      });
+      if (dishIngs.length > 0) {
+        const allergenNames = dishIngs.flatMap(di => di.ingredient.allergens.map(a => a.name.toLowerCase()));
+        await prisma.dish.update({
+          where: { id: dish.id },
+          data: {
+            isGlutenFree: !allergenNames.includes("gluten"),
+            isLactoseFree: !allergenNames.includes("lactosa"),
+            isSoyFree: !allergenNames.includes("soja"),
+          },
+        });
+      }
+    } catch (e) { console.error("[auto-detect allergens]", e); }
+
     // Translate description to en/pt in background
     if (description) {
       translateDish(dish.id).catch((e) => console.error("[translate dish]", e));

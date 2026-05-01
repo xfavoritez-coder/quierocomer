@@ -46,6 +46,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.dishDiet !== undefined && { dishDiet: body.dishDiet }),
         ...(body.isSpicy !== undefined && { isSpicy: body.isSpicy }),
         ...(body.isGlutenFree !== undefined && { isGlutenFree: body.isGlutenFree }),
+        ...(body.isLactoseFree !== undefined && { isLactoseFree: body.isLactoseFree }),
+        ...(body.isSoyFree !== undefined && { isSoyFree: body.isSoyFree }),
         ...(body.isHighMargin !== undefined && { isHighMargin: body.isHighMargin }),
         ...(body.isFeaturedAuto !== undefined && { isFeaturedAuto: body.isFeaturedAuto }),
         ...(body.flavorTags !== undefined && { flavorTags: body.flavorTags }),
@@ -78,14 +80,20 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       const ings = await prisma.ingredient.findMany({ where: { id: { in: body.ingredientIds } }, select: { name: true } });
       await prisma.dish.update({ where: { id }, data: { ingredients: ings.map(i => i.name).join(", ") || null } });
 
-      // Auto-detect gluten-free if user didn't explicitly set it
-      if (body.isGlutenFree === undefined && body.ingredientIds.length > 0) {
+      // Auto-detect allergen-free flags from ingredients
+      if (body.ingredientIds.length > 0) {
         const allergens = await prisma.allergen.findMany({
           where: { ingredients: { some: { id: { in: body.ingredientIds } } } },
           select: { name: true },
         });
-        const hasGluten = allergens.some(a => a.name.toLowerCase() === "gluten");
-        await prisma.dish.update({ where: { id }, data: { isGlutenFree: !hasGluten } });
+        const allergenNames = allergens.map(a => a.name.toLowerCase());
+        const autoData: any = {};
+        if (body.isGlutenFree === undefined) autoData.isGlutenFree = !allergenNames.includes("gluten");
+        if (body.isLactoseFree === undefined) autoData.isLactoseFree = !allergenNames.includes("lactosa");
+        if (body.isSoyFree === undefined) autoData.isSoyFree = !allergenNames.includes("soja");
+        if (Object.keys(autoData).length > 0) {
+          await prisma.dish.update({ where: { id }, data: autoData });
+        }
       }
     }
 

@@ -79,6 +79,7 @@ export default function GenioVegetarianCarousel({ dishes, categories, onDishClic
         </div>
         <div style={{ position: "absolute", top: 0, right: 0, bottom: 4, width: 32, background: "linear-gradient(to right, transparent, #F0F5E6)", pointerEvents: "none", borderRadius: "0 12px 12px 0" }} />
       </div>
+      <p style={{ fontSize: "0.65rem", color: "rgba(0,0,0,0.3)", textAlign: "center", margin: "8px 0 0", lineHeight: 1.3 }}>Confirma ingredientes y alérgenos con el personal del local</p>
     </div>
   );
 }

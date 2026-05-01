@@ -13,6 +13,10 @@ import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
+import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
+import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
+import GenioSmartCarousel from "./GenioSmartCarousel";
+import { getCarouselMode, getCarouselScrollId, getCarouselNavName } from "@/lib/qr/utils/carouselMode";
 import VeganFloatingPill from "./VeganFloatingPill";
 import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
@@ -95,11 +99,8 @@ export default function CartaLista({
       setTimeout(() => {
         const diet = localStorage.getItem("qr_diet");
         const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const hasGluten = restrictions.includes("gluten");
-        let scrollId = "";
-        if (diet === "vegan") scrollId = "genio-vegan-carousel";
-        else if (diet === "vegetarian") scrollId = "genio-vegetarian-carousel";
-        else if (hasGluten) scrollId = "genio-glutenfree-carousel";
+        const mode = getCarouselMode(diet, restrictions);
+        const scrollId = getCarouselScrollId(mode);
         if (scrollId) {
           const el = document.getElementById(scrollId);
           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -177,13 +178,12 @@ export default function CartaLista({
     if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
-    const hasGluten = restrictions.includes("gluten");
-    if (diet === "vegan" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🌿 Vegano + GF" : "🌿 Vegano", scrollTo: "genio-vegan-carousel" };
-    if (diet === "vegetarian" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🥗 Vegetariano + GF" : "🥗 Vegetariano", scrollTo: "genio-vegetarian-carousel" };
-    if (hasGluten) return { id: "diet-carousel", name: "🌾 Sin gluten", scrollTo: "genio-glutenfree-carousel" };
-    return null;
-  }, [restaurant]);
+    const mode = getCarouselMode(diet, restrictions);
+    if (!mode) return null;
+    const name = getCarouselNavName(mode);
+    const scrollTo = getCarouselScrollId(mode);
+    return { id: "diet-carousel", name, scrollTo };
+  }, [restaurant, hasCompletedGenio]);
 
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
   const lastScrollY = useRef(0);
@@ -258,8 +258,20 @@ export default function CartaLista({
       obs.observe(el);
       observers.push(obs);
     }
+    // Observe diet carousel for active nav state
+    if (dietNavItem) {
+      const dietEl = document.getElementById(dietNavItem.scrollTo);
+      if (dietEl) {
+        const dietObs = new IntersectionObserver(
+          ([entry]) => { if (entry.isIntersecting) setActiveCategory("diet-carousel"); },
+          { rootMargin: "-45% 0px -45% 0px", threshold: 0 }
+        );
+        dietObs.observe(dietEl);
+        observers.push(dietObs);
+      }
+    }
     return () => observers.forEach(obs => obs.disconnect());
-  }, [categories, hasPromos]);
+  }, [categories, hasPromos, dietNavItem]);
 
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
@@ -462,14 +474,20 @@ export default function CartaLista({
       {typeof window !== "undefined" && (() => {
         const diet = localStorage.getItem("qr_diet");
         const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
-        const hasGluten = restrictions.includes("gluten");
+        const mode = getCarouselMode(diet, restrictions);
+        if (!mode) return null;
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
+        const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
         return (
           <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
-            {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
-            {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree={hasGluten} />}
-            {hasGluten && (diet === "omnivore" || !isOmnivoreRestaurant) && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+            {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+            {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
           </div>
         );
       })()}
