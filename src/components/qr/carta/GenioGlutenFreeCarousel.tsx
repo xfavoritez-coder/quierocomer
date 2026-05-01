@@ -17,15 +17,7 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
 
   const gfDishes = useMemo(() => {
     const noDrinkIds = new Set(categories.filter(c => (c as any).dishType !== "drink").map(c => c.id));
-    return dishes.filter(d => {
-      if (!d.isActive || !noDrinkIds.has(d.categoryId)) return false;
-      if ((d as any).isGlutenFree === true) return true;
-      const ings = (d as any).dishIngredients || [];
-      if (ings.length === 0) return false;
-      return !ings.some((di: any) =>
-        di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === "gluten")
-      );
-    });
+    return dishes.filter(d => d.isActive && noDrinkIds.has(d.categoryId) && (d as any).isGlutenFree === true);
   }, [dishes, categories]);
 
   if (gfDishes.length === 0) return null;

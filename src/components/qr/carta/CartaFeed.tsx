@@ -647,7 +647,7 @@ export default function CartaFeed({
 
       <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 24, right: 16 }}>
         <button onClick={() => setGenioOpen(true)} className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 52, width: 52, background: "#E8B828", boxShadow: "0 4px 18px rgba(232,184,40,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
+          style={{ height: 52, width: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
           <span style={{ fontSize: "22px", lineHeight: 1 }}>🧞</span>
           {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "white", fontWeight: 700 }}>✓</span>}
         </button>

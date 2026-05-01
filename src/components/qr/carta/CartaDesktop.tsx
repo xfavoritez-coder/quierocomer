@@ -381,14 +381,14 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           title="Genio - Te recomiendo algo"
           style={{
             width: 48, height: 48, borderRadius: "50%",
-            background: "#E8B828", border: "none", cursor: "pointer",
-            boxShadow: "0 4px 18px rgba(232,184,40,0.35)",
+            background: "#F4A623", border: "none", cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(244,166,35,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center",
             position: "relative",
             transition: "all 0.2s ease",
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(232,184,40,0.5)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(232,184,40,0.35)"; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(244,166,35,0.5)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(244,166,35,0.35)"; }}
         >
           <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
           {hasCompletedGenio && (

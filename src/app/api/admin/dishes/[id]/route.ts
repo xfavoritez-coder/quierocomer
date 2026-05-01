@@ -77,6 +77,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       }
       const ings = await prisma.ingredient.findMany({ where: { id: { in: body.ingredientIds } }, select: { name: true } });
       await prisma.dish.update({ where: { id }, data: { ingredients: ings.map(i => i.name).join(", ") || null } });
+
+      // Auto-detect gluten-free if user didn't explicitly set it
+      if (body.isGlutenFree === undefined && body.ingredientIds.length > 0) {
+        const allergens = await prisma.allergen.findMany({
+          where: { ingredients: { some: { ingredientId: { in: body.ingredientIds } } } },
+          select: { name: true },
+        });
+        const hasGluten = allergens.some(a => a.name.toLowerCase() === "gluten");
+        await prisma.dish.update({ where: { id }, data: { isGlutenFree: !hasGluten } });
+      }
     }
 
     return NextResponse.json(dish);
