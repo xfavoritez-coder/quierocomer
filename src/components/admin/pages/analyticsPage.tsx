@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -563,12 +564,32 @@ export default function AnalyticsDashboard() {
   const { restaurants, isSuper, selectedRestaurantId } = useAdminSession();
   const { activePlan } = usePanelSession();
   const hasAdvanced = isSuper || canAccess(activePlan, "stats_advanced");
-  const [restaurantId, setRestaurantId] = useState("");
-  const [tab, setTab] = useState<Tab>("resumen");
-  const [datePreset, setDatePreset] = useState<DatePreset>("semana");
-  const [customFrom, setCustomFrom] = useState("");
-  const [customTo, setCustomTo] = useState("");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+
+  // Read state from URL params
+  const restaurantId = searchParams.get("restaurantId") || "";
+  const tab = (searchParams.get("tab") as Tab) || "resumen";
+  const datePreset = (searchParams.get("preset") as DatePreset) || "semana";
+  const customFrom = searchParams.get("from") || "";
+  const customTo = searchParams.get("to") || "";
+
+  const updateParams = useCallback((updates: Record<string, string | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [k, v] of Object.entries(updates)) {
+      if (v === null || v === "") params.delete(k);
+      else params.set(k, v);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `?${qs}` : "?", { scroll: false });
+  }, [searchParams, router]);
+
+  const setRestaurantId = (v: string) => updateParams({ restaurantId: v || null });
+  const setTab = (v: Tab) => updateParams({ tab: v === "resumen" ? null : v });
+  const setDatePreset = (v: DatePreset) => updateParams({ preset: v === "semana" ? null : v, from: null, to: null });
+  const setCustomFrom = (v: string) => updateParams({ from: v || null, preset: "custom" });
+  const setCustomTo = (v: string) => updateParams({ to: v || null, preset: "custom" });
 
   const effectiveRid = isSuper ? restaurantId : (selectedRestaurantId || "");
   const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
@@ -603,9 +624,9 @@ export default function AnalyticsDashboard() {
           </button>
         ))}
         <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <input type="date" value={customFrom} onChange={e => { setCustomFrom(e.target.value); setDatePreset("custom"); }} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
+          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
           <span style={{ color: "var(--adm-text3)", fontSize: "0.68rem" }}>—</span>
-          <input type="date" value={customTo} onChange={e => { setCustomTo(e.target.value); setDatePreset("custom"); }} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
+          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
         </div>
       </div>
 

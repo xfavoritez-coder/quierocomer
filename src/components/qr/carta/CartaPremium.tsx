@@ -11,6 +11,7 @@ import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles, Search, X } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
+import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
@@ -825,6 +826,8 @@ export default function CartaPremium({
         />
         </DishDetailErrorBoundary>
       )}
+
+      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} />
 
       {genioOpen && (
         <GenioOnboarding

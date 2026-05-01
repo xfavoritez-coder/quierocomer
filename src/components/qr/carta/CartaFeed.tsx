@@ -23,6 +23,7 @@ import { groupDishesByCategory } from "./utils/dishHelpers";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayBanner from "../capture/BirthdayBanner";
+import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
@@ -670,6 +671,8 @@ export default function CartaFeed({
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>
+
+      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} />
 
       {/* ═══ MODALS ═══ */}
       {genioOpen && (

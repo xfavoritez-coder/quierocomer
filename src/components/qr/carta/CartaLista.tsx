@@ -25,6 +25,7 @@ import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayBanner from "../capture/BirthdayBanner";
+import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
@@ -578,6 +579,8 @@ export default function CartaLista({
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
+
+      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} />
 
       {/* Genio */}
       {genioOpen && (
