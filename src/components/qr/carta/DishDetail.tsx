@@ -315,7 +315,12 @@ function DishSlide({
       }}
     >
       {/* Photo */}
-      <div ref={photoRef} style={{ position: "relative", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "60vh" : "30vh", overflow: "hidden", zIndex: 0 }}>
+        {photos.length === 0 && (
+          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
+          </div>
+        )}
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
