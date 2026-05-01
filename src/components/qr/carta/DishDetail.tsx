@@ -283,28 +283,8 @@ function DishSlide({
   const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
   const photoRef = useRef<HTMLDivElement>(null);
 
-  // iOS: simulate parallax with scroll listener + transform
-  useEffect(() => {
-    if (!isIOS || !isActive) return;
-    const container = slideRef.current;
-    if (!container) return;
-    let ticking = false;
-    const handleScroll = () => {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => {
-        const scrollTop = container.scrollTop;
-        const maxScroll = container.clientHeight * 0.35; // stop moving before fully covered
-        if (photoRef.current) {
-          const offset = Math.min(scrollTop * 0.4, maxScroll);
-          photoRef.current.style.transform = scrollTop > 0 ? `translateY(${offset}px)` : "translateY(0)";
-        }
-        ticking = false;
-      });
-    };
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [isIOS, isActive]);
+  // Reset photo ref on iOS (no JS parallax — causes flicker on Safari)
+  const _ = photoRef; // keep ref for potential future use
   const ingredientNames = dishIngs.map((di: any) => {
     const ing = di.ingredient;
     if (!ing) return null;
@@ -334,8 +314,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — sticky on desktop, JS parallax on iOS */}
-      <div ref={photoRef} style={{ position: isIOS ? "relative" : "sticky", top: isIOS ? undefined : "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0, willChange: isIOS ? "transform" : undefined }}>
+      {/* Photo — sticky parallax on desktop, clean scroll on iOS */}
+      <div ref={photoRef} style={{ position: isIOS ? "relative" : "sticky", top: isIOS ? undefined : "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
