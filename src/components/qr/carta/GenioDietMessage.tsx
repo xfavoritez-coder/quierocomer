@@ -8,7 +8,7 @@ interface Props {
 }
 
 const MESSAGES: Record<Props["type"], string> = {
-  "no-results": "Este local aún no tiene platos marcados con tus preferencias, pero seguro encuentras algo que te guste 🧞",
+  "no-results": "Este local aún no tiene platos marcados con tus preferencias, pero seguro encuentras algo que te guste",
   "redundant-vegan": "¡Todo el menú es vegano! 🌿",
   "redundant-vegetarian": "¡Todo el menú es vegetariano! 🥗",
 };
