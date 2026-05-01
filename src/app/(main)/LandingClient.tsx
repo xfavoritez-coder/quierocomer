@@ -172,8 +172,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
 
       {/* ══════ HERO ══════ */}
       <section style={{ background: `linear-gradient(to bottom, #CFE2EC 0%, #E8E0CC 55%, ${BG_WARM} 100%)`, paddingTop: 56, position: "relative", overflow: "hidden" }}>
-        {/* Sol con halo */}
-        <div aria-hidden style={{ position: "absolute", top: 70, right: "10%", width: 90, height: 90, borderRadius: "50%", background: "radial-gradient(circle, #FCD34D 0%, #F59E0B 55%, rgba(245,158,11,0) 75%)", boxShadow: "0 0 80px 20px rgba(252,211,77,0.45)", pointerEvents: "none" }} />
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 48px", textAlign: "center", position: "relative" }}>
           <div>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(239,159,39,0.1)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#92400e", fontWeight: 600, marginBottom: 20, fontFamily: F }}>
