@@ -5,7 +5,7 @@ import { adminEmailTemplate } from "@/lib/email/sendAdminEmail";
 
 export async function POST(request: Request) {
   try {
-    const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId, sessionId } = await request.json();
+    const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId, sessionId, dbSessionId } = await request.json();
 
     if (!email || !name || !restaurantId) {
       return NextResponse.json({ error: "Nombre, email y restaurantId son requeridos" }, { status: 400 });
@@ -91,6 +91,7 @@ export async function POST(request: Request) {
       restaurantId,
       sessionId: sessionId || null,
       triggeredBy: (triggeredByMap[source || ""] || "conversion_cta") as any,
+      dbSessionId: dbSessionId || null,
     });
 
     // Migrate dish favorites from guest to user

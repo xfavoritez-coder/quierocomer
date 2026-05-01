@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
+import { getDbSessionId } from "@/lib/sessionTracker";
 import EmailTypoHint from "./EmailTypoHint";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
@@ -56,6 +57,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           source: "birthday_banner",
           guestId: getGuestId(),
           sessionId: getSessionId(),
+          dbSessionId: getDbSessionId(),
           bannerVariantId: bannerVariantId || null,
         }),
       });
@@ -75,7 +77,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "BIRTHDAY_SAVED", restaurantId, guestId: getGuestId(), sessionId: getSessionId() }),
+      body: JSON.stringify({ eventType: "BIRTHDAY_SAVED", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
     }).catch(() => {});
 
     setStatus("success");

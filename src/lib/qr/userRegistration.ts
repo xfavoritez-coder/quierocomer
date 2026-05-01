@@ -9,6 +9,7 @@ interface TrackRegistrationParams {
   sessionId: string | null;
   triggeredBy: TriggeredBy;
   genioSessionId?: string | null;
+  dbSessionId?: string | null;
 }
 
 /**
@@ -25,6 +26,7 @@ export async function trackUserRegistration({
   sessionId,
   triggeredBy,
   genioSessionId,
+  dbSessionId,
 }: TrackRegistrationParams) {
   try {
     await prisma.$transaction(async (tx) => {
@@ -37,6 +39,7 @@ export async function trackUserRegistration({
           guestId: guestId || undefined,
           qrUserId,
           genioSessionId: genioSessionId || undefined,
+          dbSessionId: dbSessionId || undefined,
           metadata: {
             triggered_by: triggeredBy,
             previous_guest_id: guestId,

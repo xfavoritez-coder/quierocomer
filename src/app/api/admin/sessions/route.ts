@@ -201,13 +201,26 @@ export async function GET(req: NextRequest) {
     const genioDataByDbSession: Record<string, { timesUsed: number; completed: boolean; lastStep: string }> = {};
     const dbSessionsWithGenio = new Set<string>();
 
+    // Track which events are already claimed by dbSessionId to avoid duplicates
+    const claimedEventIds = new Set<string>();
+    // First pass: collect events with explicit dbSessionId
+    for (const e of genioEvents) {
+      if (e.dbSessionId && sessionIds.includes(e.dbSessionId)) {
+        claimedEventIds.add(`${e.eventType}_${e.createdAt.getTime()}`);
+      }
+    }
+
     for (const s of sessions) {
       const start = s.startedAt.getTime();
       const end = s.endedAt ? s.endedAt.getTime() : Date.now();
-      const matching = genioEvents.filter((e) =>
-        e.dbSessionId === s.id ||
-        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
-      );
+      const matching = genioEvents.filter((e) => {
+        if (e.dbSessionId === s.id) return true;
+        if (e.dbSessionId) return false; // belongs to another session
+        // Legacy fallback: only if not already claimed
+        const key = `${e.eventType}_${e.createdAt.getTime()}`;
+        if (claimedEventIds.has(key)) return false;
+        return e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000;
+      });
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
@@ -252,10 +265,11 @@ export async function GET(req: NextRequest) {
     for (const s of sessions) {
       const start = s.startedAt.getTime();
       const end = s.endedAt ? s.endedAt.getTime() : Date.now();
-      const matching = recEvents.filter((e) =>
-        e.dbSessionId === s.id ||
-        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
-      );
+      const matching = recEvents.filter((e) => {
+        if (e.dbSessionId === s.id) return true;
+        if (e.dbSessionId) return false;
+        return e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000;
+      });
       if (matching.length === 0) continue;
 
       const seenDishes = new Set<string>();
@@ -346,10 +360,11 @@ export async function GET(req: NextRequest) {
     for (const s of sessions) {
       const start = s.startedAt.getTime();
       const end = s.endedAt ? s.endedAt.getTime() : Date.now();
-      const matching = heroClickEvents.filter((e) =>
-        e.dbSessionId === s.id ||
-        (!e.dbSessionId && e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000)
-      );
+      const matching = heroClickEvents.filter((e) => {
+        if (e.dbSessionId === s.id) return true;
+        if (e.dbSessionId) return false;
+        return e.guestId === s.guestId && e.createdAt.getTime() >= start - 60_000 && e.createdAt.getTime() <= end + 60_000;
+      });
       if (matching.length === 0) continue;
       heroClicksBySession[s.id] = matching.map((e) => {
         const dish = e.dishId ? dishMap[e.dishId] : null;
