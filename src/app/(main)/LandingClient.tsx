@@ -333,8 +333,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Estadísticas avanzadas", tip: "Ve qué platos se miran más, cuáles se piden, a qué horas y en qué clima" },
                   { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
-                  { t: "Automatizaciones", tip: "Reglas que se ejecutan solas: subir el almuerzo al mediodía, platos calientes cuando llueve" },
-                  { t: "Campañas y email marketing", tip: "Mensajes automáticos en cumpleaños, reactivación de clientes y envío de novedades" },
+                  { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
+                  { t: "Campañas y email marketing", tip: "Envía novedades, promociones y comunicaciones a tu lista de clientes registrados" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
