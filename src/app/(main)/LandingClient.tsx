@@ -199,7 +199,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
             </span>
             <h1 style={{ fontFamily: F, fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
-              La carta digital que sube el ticket de cada mesa
+              Una carta QR bonita que sube el ticket de cada mesa
             </h1>
             <p style={{ fontFamily: B, fontSize: "clamp(15px, 2vw, 17px)", color: "#555", lineHeight: 1.6, maxWidth: 520, marginBottom: 28, marginLeft: "auto", marginRight: "auto" }}>
               Tu carta se reordena para cada cliente según sus gustos. Sugiere acompañamientos. Llama al garzón cuando hace falta. Sin que tu equipo haga nada
