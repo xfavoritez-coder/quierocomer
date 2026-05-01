@@ -64,8 +64,9 @@ const BG_WARM = "#FAF9F7";
 /* ─── Desert SVG (separator) ─── */
 function DesertSVG() {
   return (
-    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: -1 }}>
+    <div style={{ width: "100vw", marginLeft: "calc(-50vw + 50%)", marginTop: -1, background: BG_WARM }}>
       <svg viewBox="0 0 1440 260" preserveAspectRatio="none" style={{ display: "block", width: "100%", height: "auto" }}>
+        <rect width="1440" height="260" fill={BG_WARM} />
         <circle cx="1150" cy="60" r="26" fill="#fcd34d" opacity="0.85" />
         <path d="M0 180 L120 100 L240 160 L360 80 L480 140 L600 70 L720 130 L840 85 L960 150 L1080 75 L1200 120 L1320 90 L1440 110 L1440 260 L0 260Z" fill="#f59e0b" opacity="0.35" />
         <path d="M0 200 L160 140 L320 185 L480 130 L640 170 L800 120 L960 160 L1120 125 L1280 155 L1440 135 L1440 260 L0 260Z" fill="#d97706" opacity="0.45" />
@@ -84,9 +85,27 @@ function DesertSVG() {
 
 /* ─── Night Footer Dunes SVG ─── */
 function FooterDunesSVG() {
+  // Random but deterministic stars
+  const stars = [
+    { x: 50, y: 30, r: 1.2 }, { x: 120, y: 15, r: 0.8 }, { x: 200, y: 45, r: 1 },
+    { x: 280, y: 20, r: 0.6 }, { x: 350, y: 35, r: 1.1 }, { x: 420, y: 12, r: 0.7 },
+    { x: 500, y: 40, r: 0.9 }, { x: 580, y: 25, r: 1.3 }, { x: 650, y: 18, r: 0.8 },
+    { x: 720, y: 38, r: 1 }, { x: 100, y: 50, r: 0.5 }, { x: 300, y: 55, r: 0.6 },
+    { x: 550, y: 8, r: 0.7 }, { x: 700, y: 48, r: 0.9 }, { x: 180, y: 60, r: 0.5 },
+    { x: 450, y: 58, r: 0.8 }, { x: 600, y: 52, r: 0.6 }, { x: 750, y: 10, r: 1.1 },
+  ];
   return (
     <>
-      <div style={{ position: "absolute", right: "15%", bottom: 110, width: 48, height: 48, zIndex: 2 }}>
+      {/* Stars */}
+      <svg viewBox="0 0 800 70" preserveAspectRatio="xMidYMid slice" style={{ position: "absolute", left: 0, right: 0, bottom: 100, width: "100%", height: 70, opacity: 0.6 }}>
+        {stars.map((s, i) => (
+          <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="#fff" opacity={0.4 + (i % 3) * 0.2}>
+            <animate attributeName="opacity" values={`${0.3 + (i % 3) * 0.2};${0.7 + (i % 2) * 0.3};${0.3 + (i % 3) * 0.2}`} dur={`${2 + (i % 4)}s`} repeatCount="indefinite" />
+          </circle>
+        ))}
+      </svg>
+      {/* Moon */}
+      <div style={{ position: "absolute", right: "15%", bottom: 120, width: 48, height: 48, zIndex: 2 }}>
         <svg viewBox="0 0 48 48" style={{ width: "100%", height: "100%" }}>
           <circle cx="24" cy="24" r="22" fill="#fef3c7" opacity="0.95" />
           <circle cx="24" cy="24" r="22" fill="url(#moonGlow)" opacity="0.3" />
