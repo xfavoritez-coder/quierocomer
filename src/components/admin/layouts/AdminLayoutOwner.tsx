@@ -8,7 +8,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; }
+interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; plan?: string; }
 
 interface Props {
   name: string;
@@ -17,6 +17,7 @@ interface Props {
   setSelectedRestaurant: (id: string) => void;
   logout: () => void;
   basePath?: string; // "/admin" or "/panel"
+  activePlan?: string;
   children: React.ReactNode;
 }
 
@@ -39,7 +40,7 @@ function buildNav(base: string) {
   return { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS };
 }
 
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, children }: Props) {
   const pathname = usePathname();
   const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath);
   const [moreOpen, setMoreOpen] = useState(false);
@@ -111,7 +112,17 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <RestLogo size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
-              <p style={{ fontFamily: F, fontSize: "11.5px", color: "#888", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 1 }}>
+                <p style={{ fontFamily: F, fontSize: "11.5px", color: "#888", fontWeight: 500, margin: 0 }}>QuieroComer</p>
+                {activePlan && basePath === "/panel" && (
+                  <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px",
+                    background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
+                    color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
+                  }}>
+                    {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : "Free"}
+                  </span>
+                )}
+              </div>
             </div>
           </Link>
           {restaurants.length > 1 && (

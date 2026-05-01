@@ -88,7 +88,7 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
 
 export default function PanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword } = usePanelSession();
+  const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
 
   if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
 
@@ -171,6 +171,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         setSelectedRestaurant={setSelectedRestaurant}
         logout={logout}
         basePath="/panel"
+        activePlan={activePlan}
       >
         {children}
       </AdminLayoutOwner>

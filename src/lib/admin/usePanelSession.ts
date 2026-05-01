@@ -7,6 +7,7 @@ interface PanelRestaurant {
   name: string;
   slug: string;
   qrToken?: string | null;
+  plan?: string;
 }
 
 export interface PanelSession {
@@ -126,5 +127,7 @@ export function usePanelSession() {
     notify();
   }, []);
 
-  return { ...session, setSelectedRestaurant, logout, clearMustChangePassword };
+  const activePlan = session.restaurants.find(r => r.id === session.selectedRestaurantId)?.plan || "FREE";
+
+  return { ...session, setSelectedRestaurant, logout, clearMustChangePassword, activePlan };
 }

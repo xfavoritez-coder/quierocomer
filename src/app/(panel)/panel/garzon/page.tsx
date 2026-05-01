@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import PlanPageGate from "@/components/admin/PlanPageGate";
 import { Bell, Smartphone, CheckCircle, Copy, Check, Shield, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import QRCode from "qrcode";
@@ -35,6 +36,7 @@ export default function GarzonPage() {
   }
 
   return (
+    <PlanPageGate feature="waiter">
     <div style={{ maxWidth: 640 }}>
       <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.78rem", marginBottom: 12 }}>
         <ArrowLeft size={16} /> Volver al inicio
@@ -181,5 +183,6 @@ export default function GarzonPage() {
         </div>
       </div>
     </div>
+    </PlanPageGate>
   );
 }
