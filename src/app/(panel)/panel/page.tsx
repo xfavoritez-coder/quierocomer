@@ -154,7 +154,7 @@ export default function PanelDashboard() {
         <Stat icon="🔔" label="Llamados garzón" value={data.weekWaiterCalls || 0} />
         <Stat icon="👍" label="Me gusta" value={data.weekFavorites} />
       </div>
-
+      </PlanGate>
 
       {/* Abandonment */}
       {data.abandonedThisWeek > 0 && (
@@ -192,7 +192,6 @@ export default function PanelDashboard() {
           </div>
         </div>
       )}
-      </PlanGate>
     </div>
   );
 }
