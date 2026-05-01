@@ -74,9 +74,35 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
   const isRegistered = !!user;
   const prefs = guest.preferences as any;
 
+  const handleDeleteUser = async () => {
+    if (!user) return;
+    const confirmed = window.confirm(`¿Eliminar registro de ${user.name || user.email}? Las sesiones se mantendrán pero el usuario quedará desvinculado y los datos personales (email, fecha de nacimiento, dietas) se borrarán.`);
+    if (!confirmed) return;
+    const res = await fetch(`/api/admin/qr-user/${user.id}`, { method: "DELETE" });
+    const result = await res.json();
+    if (res.ok) {
+      alert("Usuario eliminado");
+      router.refresh();
+      router.back();
+    } else {
+      alert(result.error || "Error al eliminar");
+    }
+  };
+
   return (
     <div style={{ maxWidth: 800 }}>
-      <button onClick={() => router.back()} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer", marginBottom: 20 }}>&larr; Volver</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <button onClick={() => router.back()} style={{ background: "none", border: "none", color: "#F4A623", fontFamily: F, fontSize: "0.85rem", cursor: "pointer" }}>&larr; Volver</button>
+        {isRegistered && (
+          <button
+            onClick={handleDeleteUser}
+            style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", color: "#ef4444", fontFamily: F, fontSize: "0.78rem", cursor: "pointer", padding: "6px 12px", borderRadius: 8, fontWeight: 600 }}
+            title="Elimina el QRUser y desvincula la GuestProfile"
+          >
+            Eliminar usuario registrado
+          </button>
+        )}
+      </div>
 
       {/* Header */}
       <div style={{ background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 16, padding: 24, marginBottom: 20 }}>
