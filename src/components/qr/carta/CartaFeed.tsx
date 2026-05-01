@@ -482,7 +482,7 @@ export default function CartaFeed({
 
       {/* ═══ STICKY BAR ═══ */}
       <div style={{
-        position: "sticky", top: 0, zIndex: 40, background: "#fff",
+        position: "sticky", top: 0, zIndex: 20, background: "#fff",
         borderBottom: "0.5px solid rgba(0,0,0,0.06)", padding: "12px 14px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -572,7 +572,8 @@ export default function CartaFeed({
         <section key={category.id} id={`feed-cat-${category.id}`}>
           {/* Interstitial banners */}
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 10px 8px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
-          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-8px 0 8px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} /></div>}
+          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-8px 0 8px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name}
+            restaurantPlan={(restaurant as any).plan} /></div>}
 
           {/* Section header */}
           <div style={{ padding: "28px 16px 14px" }}>
@@ -639,6 +640,7 @@ export default function CartaFeed({
             onChangeDish={(d) => { setDishFromHero(false); setSelectedDish(d); }}
             personalizationMap={pMap}
             restaurantName={restaurant.name}
+            restaurantPlan={(restaurant as any).plan}
             popularDishIds={popularDishIds}
           />
         </DishDetailErrorBoundary>

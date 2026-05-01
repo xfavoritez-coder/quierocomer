@@ -224,6 +224,7 @@ function DishSlide({
   onClose: () => void;
   personalizationEntry?: PersonalizationEntry;
   restaurantName?: string;
+  restaurantPlan?: string;
   restaurantAllergens?: Set<string>;
   popularDishIds?: Set<string>;
   allPhotosReferential?: boolean;
@@ -526,8 +527,9 @@ function DishSlide({
           );
         })()}
 
-        {/* Cross-sell suggestions */}
+        {/* Cross-sell suggestions — PREMIUM only */}
         {(() => {
+          if (props.restaurantPlan && props.restaurantPlan !== "PREMIUM") return null;
           const { title, items: suggestions } = crossSell;
           if (suggestions.length === 0) return null;
           return (
