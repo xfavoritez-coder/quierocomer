@@ -64,6 +64,13 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     return () => document.removeEventListener("mousedown", handler);
   }, [dishPickerFor]);
 
+  // Listen for FAB click from parent
+  useEffect(() => {
+    const handler = () => setCreating(true);
+    window.addEventListener("mod-fab-click", handler);
+    return () => window.removeEventListener("mod-fab-click", handler);
+  }, []);
+
   useEffect(() => {
     if (!restaurantId) return;
     fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`)

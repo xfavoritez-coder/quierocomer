@@ -298,6 +298,13 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
+  // Listen for FAB click from parent
+  useEffect(() => {
+    const handler = () => setShowCreateInput(true);
+    window.addEventListener("cat-fab-click", handler);
+    return () => window.removeEventListener("cat-fab-click", handler);
+  }, []);
+
   useEffect(() => {
     fetch(`/api/admin/categories?restaurantId=${restaurantId}`)
       .then(r => r.json())

@@ -1608,9 +1608,19 @@ export default function AdminMenus() {
       {menuTab === "horarios" && selectedRestaurantId && (
         <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
       )}
-      {/* FAB — mobile only, Productos tab only */}
+      {/* FAB — mobile only */}
       {menuTab === "productos" && !creatingDish && !editMode && (
         <button className="mcarta-fab" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
+          <Plus size={24} />
+        </button>
+      )}
+      {menuTab === "categorias" && (
+        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("cat-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
+          <Plus size={24} />
+        </button>
+      )}
+      {menuTab === "modificadores" && (
+        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("mod-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
           <Plus size={24} />
         </button>
       )}
