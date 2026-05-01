@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
 
@@ -52,6 +52,17 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
     setSavedMsg(msg);
     setTimeout(() => setSavedMsg(null), 2000);
   };
+
+  // Close dish picker on outside click
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!dishPickerFor) return;
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) setDishPickerFor(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [dishPickerFor]);
 
   useEffect(() => {
     if (!restaurantId) return;
@@ -248,7 +259,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                     </div>
 
                     {/* Add dish button */}
-                    <div style={{ position: "relative" }}>
+                    <div ref={dishPickerFor === template.id ? pickerRef : undefined} style={{ position: "relative" }}>
                       <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setPickerMode("dish"); setDishSearch(""); }}
                         style={{ fontSize: "0.78rem", padding: "6px 14px", borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: GOLD, cursor: "pointer", fontFamily: F, fontWeight: 600 }}>
                         + Agregar platos
