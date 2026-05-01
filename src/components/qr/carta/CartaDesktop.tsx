@@ -13,6 +13,7 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
+import GenioFab from "./GenioFab";
 import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
@@ -399,28 +400,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
       {/* Floating buttons — bottom right */}
       <div style={{ position: "fixed", bottom: 28, right: 28, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        {/* Genio button */}
-        <button
-          onClick={() => setGenioOpen(true)}
-          title="Genio - Te recomiendo algo"
-          style={{
-            width: 48, height: 48, borderRadius: "50%",
-            background: "#F4A623", border: "none", cursor: "pointer",
-            boxShadow: "0 4px 18px rgba(244,166,35,0.35)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            position: "relative",
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(244,166,35,0.5)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(244,166,35,0.35)"; }}
-        >
-          <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
-          {hasCompletedGenio && (
-            <span style={{ position: "absolute", top: 1, right: 1, width: 15, height: 15, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: 700, border: "2px solid white" }}>
-              ✓
-            </span>
-          )}
-        </button>
+        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
 
         {/* Waiter button */}
         {showWaiter && (

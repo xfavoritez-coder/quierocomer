@@ -16,6 +16,7 @@ import { norm } from "@/lib/normalize";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
+import GenioFab from "./GenioFab";
 import { getGuestId } from "@/lib/guestId";
 import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
@@ -153,8 +154,6 @@ export default function CartaPremium({
   }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
-  const [showGenioNudge, setShowGenioNudge] = useState(false);
-  const [showLikeGenioTip, setShowLikeGenioTip] = useState(false);
   const lastScrollY = useRef(0);
   useEffect(() => {
     let ticking = false;
@@ -195,16 +194,6 @@ export default function CartaPremium({
     return () => { flush(); document.removeEventListener("visibilitychange", flush); };
   }, []);
 
-  // Genio nudge — show tooltip on first visit until dismissed
-  useEffect(() => {
-    if (hasCompletedGenio) return;
-    if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
-    const timer = setTimeout(() => {
-      setShowGenioNudge(true);
-    }, 8_000);
-    return () => clearTimeout(timer);
-  }, [hasCompletedGenio]);
-
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [dishFromHero, setDishFromHero] = useState(false);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -213,15 +202,6 @@ export default function CartaPremium({
   const qrUser = qrUserProp ?? qrUserLocal;
   const profileOpen = onProfileOpenProp ? false : profileOpenLocal;
   const handleProfileOpen = onProfileOpenProp ?? (() => setProfileOpenLocal(true));
-
-  // After first like, nudge to use Genio (once per session)
-  useEffect(() => {
-    if (!hasNewLikes || hasCompletedGenio) return;
-    if (sessionStorage.getItem("qc_like_genio_tip")) return;
-    sessionStorage.setItem("qc_like_genio_tip", "1");
-    setShowLikeGenioTip(true);
-    setTimeout(() => setShowLikeGenioTip(false), 6000);
-  }, [hasNewLikes, hasCompletedGenio]);
 
   const [showVerifiedModal, setShowVerifiedModal] = useState(false);
   useEffect(() => {
@@ -798,28 +778,7 @@ export default function CartaPremium({
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
-        <div style={{ position: "relative" }}>
-          {(showGenioNudge || showLikeGenioTip) && (
-            <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 36px 8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
-              {showLikeGenioTip ? "¿Ordeno la carta según tus gustos?" : "Ordeno la carta especialmente para ti"}
-              <button
-                onClick={(e) => { e.stopPropagation(); setShowGenioNudge(false); setShowLikeGenioTip(false); sessionStorage.setItem("qc_genio_nudge_shown", "1"); }}
-                style={{ position: "absolute", top: 4, right: 6, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1, fontSize: "16px", color: "#999" }}
-              >
-                ✕
-              </button>
-              <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
-            </div>
-          )}
-          <button
-            onClick={() => { setShowGenioNudge(false); setGenioOpen(true); }}
-            className="flex items-center justify-center rounded-full active:scale-95"
-            style={{ height: 52, width: 52, background: "#F4A623", boxShadow: (showGenioNudge || showLikeGenioTip) ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
-          >
-            <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: (showGenioNudge || showLikeGenioTip) ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
-            {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
-          </button>
-        </div>
+        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>
