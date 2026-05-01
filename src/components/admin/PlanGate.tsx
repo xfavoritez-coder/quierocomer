@@ -23,14 +23,14 @@ const PLAN_FEATURES_WITH_TIPS: Record<string, { text: string; tip: string }[]> =
     { text: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
     { text: "Destacar platos estrella", tip: "Marca tus mejores platos para que aparezcan primero en el hero" },
     { text: "Ofertas y promociones", tip: "Publica descuentos que se muestran automáticamente en la carta" },
-    { text: "Estadísticas básicas", tip: "Visitas, platos más vistos, horarios de mayor tráfico" },
+    { text: "Estadísticas básicas", tip: "Visitantes, sesiones, platos más vistos y duración promedio" },
     { text: "Anuncios en la carta", tip: "Banner de novedades visible al abrir la carta" },
     { text: "Multilenguaje", tip: "Carta traducida automáticamente a inglés y portugués" },
   ],
   PREMIUM: [
     { text: "Todo del plan Gold", tip: "Incluye todas las funciones del plan Gold" },
     { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
-    { text: "Estadísticas avanzadas", tip: "Recorrido por sesión, filtros por clima, horarios pico" },
+    { text: "Estadísticas avanzadas", tip: "Embudo de conversión, impacto del Genio, búsquedas de clientes y estadísticas del garzón" },
     { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe notificación push" },
     { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket" },
     { text: "Automatizaciones", tip: "Emails automáticos de bienvenida, cumpleaños y reactivación" },
@@ -83,11 +83,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
   return (
     <>
       <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
-        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 420, overflow: "hidden" }}>
+        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 420, overflow: "hidden", minHeight: 340 }}>
           {children}
         </div>
         <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "100%", maxHeight: 420,
+          position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", gap: 12,
           background: "rgba(255,255,255,0.6)", borderRadius: 16, padding: 32,

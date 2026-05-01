@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { usePanelSession } from "@/lib/admin/usePanelSession";
+import { canAccess } from "@/lib/plans";
+import PlanGate from "@/components/admin/PlanGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
@@ -319,9 +322,12 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 }
 
 /* ═══ MAIN ═══ */
-const TABS: { key: Tab; label: string; icon: string }[] = [
+const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
   { key: "resumen", label: "Resumen", icon: "📊" },
   { key: "platos", label: "Platos", icon: "🍽️" },
+];
+
+const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
   { key: "clientes", label: "Clientes", icon: "👥" },
   { key: "garzon", label: "Garzón", icon: "🔔" },
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
@@ -340,6 +346,8 @@ function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string
 
 export default function AnalyticsDashboard() {
   const { restaurants, isSuper, selectedRestaurantId } = useAdminSession();
+  const { activePlan } = usePanelSession();
+  const hasAdvanced = isSuper || canAccess(activePlan, "stats_advanced");
   const [restaurantId, setRestaurantId] = useState("");
   const [tab, setTab] = useState<Tab>("resumen");
   const [datePreset, setDatePreset] = useState<DatePreset>("semana");
@@ -348,6 +356,8 @@ export default function AnalyticsDashboard() {
 
   const effectiveRid = isSuper ? restaurantId : (selectedRestaurantId || "");
   const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
+
+  const allTabs = [...TABS_BASIC, ...TABS_ADVANCED];
 
   return (
     <div style={{ maxWidth: 800 }}>
@@ -385,25 +395,62 @@ export default function AnalyticsDashboard() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" }}>
-        {TABS.map(t => (
-          <button key={t.key} onClick={() => setTab(t.key)} style={{
-            padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
-            background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
-            color: tab === t.key ? "#0a0a0a" : "var(--adm-text2)",
-            transition: "all 0.15s",
-          }}>
-            {t.icon} {t.label}
-          </button>
-        ))}
+        {allTabs.map(t => {
+          const isAdvanced = TABS_ADVANCED.some(a => a.key === t.key);
+          const locked = isAdvanced && !hasAdvanced;
+          return (
+            <button key={t.key} onClick={() => { if (!locked) setTab(t.key); }} style={{
+              padding: "8px 16px", borderRadius: 10, border: "none", cursor: locked ? "default" : "pointer",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
+              background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
+              color: tab === t.key ? "#0a0a0a" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+              opacity: locked ? 0.5 : 1,
+              transition: "all 0.15s",
+            }}>
+              {t.icon} {t.label} {locked && "🔒"}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
       {tab === "resumen" && <TabResumen rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "platos" && <TabPlatos rid={effectiveRid} from={dateFrom} to={dateTo} />}
-      {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
-      {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
-      {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "clientes" && (
+        hasAdvanced
+          ? <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />
+          : <PlanGate plan={activePlan} feature="stats_advanced"><TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} /></PlanGate>
+      )}
+      {tab === "garzon" && (
+        hasAdvanced
+          ? <TabGarzon rid={effectiveRid} isSuper={isSuper} />
+          : <PlanGate plan={activePlan} feature="stats_advanced"><TabGarzon rid={effectiveRid} isSuper={isSuper} /></PlanGate>
+      )}
+      {tab === "busquedas" && (
+        hasAdvanced
+          ? <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />
+          : <PlanGate plan={activePlan} feature="stats_advanced"><TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} /></PlanGate>
+      )}
+
+      {/* Upgrade teaser for Gold users */}
+      {!hasAdvanced && tab !== "clientes" && tab !== "garzon" && tab !== "busquedas" && (
+        <div style={{ marginTop: 32, background: "linear-gradient(135deg, rgba(124,58,237,0.08), rgba(124,58,237,0.04))", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 16, padding: "24px 28px", textAlign: "center" }}>
+          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
+            💎 Desbloquea estadísticas avanzadas
+          </p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Embudo de conversión, impacto del Genio, búsquedas de clientes y estadísticas del garzón
+          </p>
+          <a
+            href={`https://wa.me/56999946208?text=${encodeURIComponent("Hola! Me gustaría saber más sobre el plan Premium de QuieroComer para mi restaurante 🍽️")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ display: "inline-block", padding: "10px 24px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, textDecoration: "none", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
+          >
+            Ver plan Premium →
+          </a>
+        </div>
+      )}
     </div>
   );
 }

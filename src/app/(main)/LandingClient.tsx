@@ -379,7 +379,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
                   { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
                   { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },
-                  { t: "Estadísticas básicas", tip: "Ve cuántas personas visitan tu carta y qué platos ven más" },
+                  { t: "Estadísticas básicas", tip: "Ve cuántas personas visitan tu carta, qué platos ven más y cuánto tiempo pasan" },
                   { t: "Multilenguaje (ES · EN · PT)", tip: "Tu carta se traduce automáticamente al idioma del cliente" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
@@ -400,7 +400,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> Todo del plan Gold</div>
                 {[
                   { t: "4 vistas de carta", tip: "Lista, galería, feed y espacial — elige la que mejor represente tu local" },
-                  { t: "Estadísticas avanzadas", tip: "Ve qué platos se miran más, cuáles se piden, a qué horas y en qué clima" },
+                  { t: "Estadísticas avanzadas", tip: "Embudo de conversión, impacto del Genio, búsquedas de clientes, estadísticas del garzón y más" },
                   { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
