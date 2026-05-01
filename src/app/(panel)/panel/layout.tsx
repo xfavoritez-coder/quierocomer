@@ -159,7 +159,7 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
-              {tab === "PREMIUM" ? "Todo lo que necesitas para vender más sin mover un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+              {tab === "PREMIUM" ? "Para vender más sin levantar un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
             </p>
             <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
               {tab === "PREMIUM" ? "$55.000" : "$35.000"}

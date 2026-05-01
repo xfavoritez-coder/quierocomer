@@ -143,7 +143,7 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
               {/* Description + Price */}
               <div style={{ textAlign: "center", marginBottom: 16 }}>
                 <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
-                  {modalTab === "PREMIUM" ? "Todo lo que necesitas para vender más sin mover un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+                  {modalTab === "PREMIUM" ? "Para vender más sin levantar un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
                 </p>
                 <div>
                   <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
