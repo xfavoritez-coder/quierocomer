@@ -133,7 +133,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: María"
+                  placeholder={t(lang, "bdayPlaceholderName")}
                   style={{
                     width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
                     padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
@@ -147,7 +147,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="tu@email.com"
+                  placeholder={t(lang, "bdayPlaceholderEmail")}
                   style={{
                     width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
                     padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
@@ -172,7 +172,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
             />
             {!birthDate && (
               <span style={{ position: "absolute", left: 16, top: 34, fontSize: "0.92rem", color: "#999", pointerEvents: "none" }}>
-                Selecciona tu fecha
+                {t(lang, "bdayPlaceholderDate")}
               </span>
             )}
           </div>
