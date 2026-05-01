@@ -345,7 +345,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           onClick={() => setGenioOpen(true)}
           title="Genio - Te recomiendo algo"
           style={{
-            width: hasCompletedGenio ? 48 : 56, height: hasCompletedGenio ? 48 : 56, borderRadius: "50%",
+            width: 48, height: 48, borderRadius: "50%",
             background: "#F4A623", border: "none", cursor: "pointer",
             boxShadow: "0 4px 18px rgba(244,166,35,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center",
@@ -355,7 +355,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(244,166,35,0.5)"; }}
           onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(244,166,35,0.35)"; }}
         >
-          <span style={{ fontSize: hasCompletedGenio ? "20px" : "24px", lineHeight: 1 }}>🧞</span>
+          <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
           {hasCompletedGenio && (
             <span style={{ position: "absolute", top: 1, right: 1, width: 15, height: 15, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "8px", color: "white", fontWeight: 700, border: "2px solid white" }}>
               ✓

@@ -116,9 +116,9 @@ export default function CartaBasic({
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 60, height: 60, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
         >
-          <Sparkles size={26} color="white" />
+          <Sparkles size={22} color="white" />
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} />}
       </div>

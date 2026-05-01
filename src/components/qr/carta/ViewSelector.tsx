@@ -23,9 +23,10 @@ const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "vie
 interface Props {
   restaurantId: string;
   enabledLangs?: string[];
+  plan?: string;
 }
 
-export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
+export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props) {
   const { view, setView } = useCartaView();
   const lang = useLang();
   const router = useRouter();
@@ -120,7 +121,7 @@ export default function ViewSelector({ restaurantId, enabledLangs }: Props) {
         >
           {/* View options grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 2px" }}>
-            {VIEW_KEYS.map(({ value, labelKey, Icon }) => {
+            {VIEW_KEYS.filter(v => plan !== "GOLD" || v.value === "lista" || v.value === "premium").map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
               return (
