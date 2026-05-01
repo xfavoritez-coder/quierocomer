@@ -126,7 +126,7 @@ export default function CartaPremium({
       setTimeout(() => {
         const diet = localStorage.getItem("qr_diet");
         const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-        const mode = getCarouselMode(diet, restrictions);
+        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
         const scrollId = getCarouselScrollId(mode);
         if (scrollId) {
           const el = document.getElementById(scrollId);
@@ -145,7 +145,7 @@ export default function CartaPremium({
     if (typeof window === "undefined") return null;
     const diet = localStorage.getItem("qr_diet");
     const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-    const mode = getCarouselMode(diet, restrictions);
+    const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
     if (!mode) return null;
     return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
   }, [restaurant, hasCompletedGenio]);
@@ -574,7 +574,7 @@ export default function CartaPremium({
         {typeof window !== "undefined" && (() => {
           const diet = localStorage.getItem("qr_diet");
           const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
-          const mode = getCarouselMode(diet, restrictions);
+          const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
           if (!mode) return null;
           const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
           const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");

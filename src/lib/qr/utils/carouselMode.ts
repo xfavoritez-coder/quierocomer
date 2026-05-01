@@ -1,8 +1,12 @@
 export type CarouselMode = "vegan" | "vegetarian" | "glutenfree" | "lactosefree" | "soyfree" | "vegan+gf" | "vegetarian+gf" | "smart" | null;
 
-export function getCarouselMode(diet: string | null, restrictions: string[]): CarouselMode {
+export function getCarouselMode(diet: string | null, restrictions: string[], restaurantDietType?: string | null): CarouselMode {
   const active = restrictions.filter(r => r !== "ninguna");
-  const hasDiet = diet === "vegan" || diet === "vegetarian";
+  // If restaurant is already vegan/vegetarian, showing that diet banner is redundant
+  const restDiet = (restaurantDietType || "").toUpperCase();
+  const dietRedundant = (diet === "vegan" && restDiet === "VEGAN") || (diet === "vegetarian" && (restDiet === "VEGETARIAN" || restDiet === "VEGAN"));
+  const effectiveDiet = dietRedundant ? null : diet;
+  const hasDiet = effectiveDiet === "vegan" || effectiveDiet === "vegetarian";
   const hasGluten = active.includes("gluten");
   const hasLactosa = active.includes("lactosa");
   const hasSoja = active.includes("soja");
@@ -11,8 +15,8 @@ export function getCarouselMode(diet: string | null, restrictions: string[]): Ca
 
   // Single selection → individual banner
   if (totalThings === 1) {
-    if (diet === "vegan") return "vegan";
-    if (diet === "vegetarian") return "vegetarian";
+    if (effectiveDiet === "vegan") return "vegan";
+    if (effectiveDiet === "vegetarian") return "vegetarian";
     if (hasGluten) return "glutenfree";
     if (hasLactosa) return "lactosefree";
     if (hasSoja) return "soyfree";
@@ -20,7 +24,7 @@ export function getCarouselMode(diet: string | null, restrictions: string[]): Ca
 
   // Diet + only gluten → existing combo
   if (hasDiet && active.length === 1 && hasGluten) {
-    return diet === "vegan" ? "vegan+gf" : "vegetarian+gf";
+    return effectiveDiet === "vegan" ? "vegan+gf" : "vegetarian+gf";
   }
 
   // Any other combination of 2+ → smart
