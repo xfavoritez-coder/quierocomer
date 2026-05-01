@@ -678,52 +678,6 @@ export default function CartaPremium({
           </div>
         )}
 
-        {hasCompletedGenio ? (
-          <button
-            onClick={() => setGenioOpen(true)}
-            className="font-[family-name:var(--font-dm)] active:scale-[0.98] transition-transform"
-            style={{
-              margin: "32px 20px 16px", padding: "14px 20px", display: "flex", alignItems: "center", gap: 12,
-              background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 40px)",
-            }}
-          >
-            <span style={{ fontSize: "1.3rem" }}>🧞</span>
-            <div style={{ flex: 1, textAlign: "left" }}>
-              <span style={{ fontSize: "0.88rem", fontWeight: 600, color: "#0e0e0e" }}>Tu carta está personalizada ✓</span>
-              <span style={{ fontSize: "0.72rem", color: "#8a5a2c", marginLeft: 8 }}>Editar gustos</span>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F4A623" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-          </button>
-        ) : (
-          <div
-            className="font-[family-name:var(--font-dm)]"
-            style={{
-              margin: "32px 20px 16px", padding: "20px", textAlign: "center",
-              background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-              border: "1px solid rgba(244,166,35,0.2)", borderRadius: 20,
-            }}
-          >
-            <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "17px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 2px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <span>🧞</span> {t(lang, "dontKnowWhat")} {restaurant.name}?
-            </h3>
-            <p style={{ fontSize: "14.5px", color: "#8a5a2c", margin: "0 0 16px" }}>{t(lang, "gBannerSub")}</p>
-            <button
-              onClick={() => setGenioOpen(true)}
-              className="active:scale-[0.97] transition-transform"
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                background: "#F4A623",
-                color: "white", padding: "12px 24px", borderRadius: 100,
-                fontSize: "13.5px", fontWeight: 600, border: "none", cursor: "pointer",
-                boxShadow: "0 8px 20px rgba(244,166,35,0.3)", fontFamily: "inherit",
-              }}
-            >
-              {t(lang, "askGenieShort")}
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-            </button>
-          </div>
-        )}
       </main>
 
       {/* Powered by footer */}

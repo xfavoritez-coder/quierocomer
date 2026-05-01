@@ -597,29 +597,6 @@ export default function CartaFeed({
         </section>
       ))}
 
-      {/* ═══ GENIO NUDGE ═══ */}
-      {hasCompletedGenio ? (
-        <button onClick={() => setGenioOpen(true)} className="active:scale-[0.98] transition-transform"
-          style={{ display: "flex", alignItems: "center", gap: 10, margin: "12px 14px", padding: "12px 16px", background: "#FFFBF0", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 14, cursor: "pointer", width: "calc(100% - 28px)" }}>
-          <span style={{ fontSize: "1.3rem" }}>🧞</span>
-          <div style={{ textAlign: "left" }}>
-            <p style={{ fontSize: "0.82rem", fontWeight: 600, color: "#92400e", margin: 0 }}>Tu carta personalizada</p>
-            <p style={{ fontSize: "0.72rem", color: "#b45309", margin: "1px 0 0", opacity: 0.7 }}>Toca para ajustar tus preferencias</p>
-          </div>
-          <span style={{ marginLeft: "auto", width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "white", fontWeight: 700 }}>✓</span>
-        </button>
-      ) : (
-        <button onClick={() => setGenioOpen(true)} className="active:scale-[0.98] transition-transform"
-          style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 14px", padding: "16px 18px", background: "linear-gradient(135deg, #FFFBF0 0%, #FFF5E0 100%)", border: "1.5px solid rgba(244,166,35,0.25)", borderRadius: 16, cursor: "pointer", width: "calc(100% - 28px)" }}>
-          <span style={{ fontSize: "1.8rem" }}>🧞</span>
-          <div style={{ textAlign: "left", flex: 1 }}>
-            <p style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e", margin: 0 }}>Personaliza tu carta</p>
-            <p style={{ fontSize: "0.78rem", color: "#b45309", margin: "3px 0 0", opacity: 0.7, lineHeight: 1.35 }}>El Genio reordena los platos según tus gustos</p>
-          </div>
-          <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600 }}>→</span>
-        </button>
-      )}
-
       {/* Footer */}
       <div style={{ textAlign: "center", padding: "24px 0 16px" }}>
         <span style={{ fontSize: "0.72rem", color: "#ccc" }}>Powered by </span>
