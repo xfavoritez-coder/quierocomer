@@ -165,7 +165,18 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 0 }}>
           <RestLogo size={32} />
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "#1a1a1a", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
+              {activePlan && basePath === "/panel" && (
+                <span style={{ fontFamily: F, fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: 3, letterSpacing: "0.3px",
+                  background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
+                  color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
+                  flexShrink: 0,
+                }}>
+                  {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : "FREE"}
+                </span>
+              )}
+            </div>
             <p style={{ fontFamily: F, fontSize: "10.5px", color: "#888", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
