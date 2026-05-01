@@ -339,7 +339,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                       </div>
                       <div style={{ padding: "6px 12px 10px" }}>
                         {group.options.map(opt => (
-                          <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid var(--adm-card-border)", opacity: opt.isHidden ? 0.4 : 1, transition: "opacity 0.2s" }}>
+                          <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", borderBottom: "1px solid var(--adm-card-border)", opacity: opt.isHidden ? 0.4 : 1, transition: "opacity 0.2s" }}>
                             {editingOption === opt.id ? (
                               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
                                 <div style={{ display: "flex", gap: 6 }}>
@@ -415,7 +415,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                   {opt.isHidden ? "Mostrar" : "Ocultar"}
                                 </button>
                                 <button onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ padding: "2px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
-                                <button onClick={() => deleteOption(template.id, group.id, opt.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
+                                <button onClick={() => { if (confirm(`¿Eliminar "${opt.name}"?`)) deleteOption(template.id, group.id, opt.id); }} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
                               </>
                             )}
                           </div>
