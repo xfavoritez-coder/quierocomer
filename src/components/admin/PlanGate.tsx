@@ -81,11 +81,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
   return (
     <>
       <div style={{ position: "relative", cursor: "pointer" }} onClick={openModal}>
-        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", minHeight: 280 }}>
+        <div style={{ filter: "blur(4px)", opacity: 0.5, pointerEvents: "none", userSelect: "none", maxHeight: 350, overflow: "hidden" }}>
           {children}
         </div>
         <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, bottom: 0,
+          position: "absolute", top: 0, left: 0, right: 0, height: "100%", maxHeight: 350,
           display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", gap: 12,
           background: "rgba(255,255,255,0.6)", borderRadius: 16, padding: 32,
