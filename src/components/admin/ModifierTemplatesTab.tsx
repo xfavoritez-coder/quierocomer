@@ -355,18 +355,24 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                       const file = e.target.files?.[0];
                                       if (!file) return;
                                       setEoUploading(true);
-                                      const fd = new FormData();
-                                      fd.append("file", file);
-                                      fd.append("localId", restaurantId);
-                                      fd.append("dishName", eoName || "opcion");
-                                      const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
-                                      const data = await res.json();
-                                      if (data.url) {
-                                        setEoImage(data.url);
-                                        // Auto-save photo to DB immediately
-                                        await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, imageUrl: data.url }) });
-                                        setTemplates(prev => prev.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, options: g.options.map(o => o.id === editingOption ? { ...o, imageUrl: data.url } : o) })) })));
-                                        showSaved("Foto guardada");
+                                      try {
+                                        const fd = new FormData();
+                                        fd.append("file", file);
+                                        fd.append("localId", restaurantId);
+                                        fd.append("dishName", eoName || "opcion");
+                                        const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
+                                        const data = await res.json();
+                                        if (data.url) {
+                                          setEoImage(data.url);
+                                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, imageUrl: data.url }) });
+                                          setTemplates(prev => prev.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, options: g.options.map(o => o.id === editingOption ? { ...o, imageUrl: data.url } : o) })) })));
+                                          showSaved("Foto guardada");
+                                        } else {
+                                          showSaved("Error al subir");
+                                        }
+                                      } catch (err) {
+                                        console.error("Upload error:", err);
+                                        showSaved("Error al subir");
                                       }
                                       setEoUploading(false);
                                     }} />
