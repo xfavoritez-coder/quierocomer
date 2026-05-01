@@ -345,6 +345,8 @@ export default function AdminMenus() {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [dietFilter, setDietFilter] = useState<string>("all");
+  const [spicyFilter, setSpicyFilter] = useState(false);
+  const [glutenFreeFilter, setGlutenFreeFilter] = useState(false);
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkActionValue, setBulkActionValue] = useState<string>("");
@@ -490,6 +492,8 @@ export default function AdminMenus() {
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     if (dietFilter !== "all") list = list.filter(d => (d.dishDiet || "OMNIVORE") === dietFilter);
+    if (spicyFilter) list = list.filter(d => (d as any).isSpicy);
+    if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree);
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
@@ -500,10 +504,10 @@ export default function AdminMenus() {
       if (aRec !== bRec) return aRec - bRec;
       return a.name.localeCompare(b.name, "es");
     });
-  }, [dishes, search, catFilter, dietFilter]);
+  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, selectedRestaurantId]);
+  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, selectedRestaurantId]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -1313,6 +1317,12 @@ export default function AdminMenus() {
           </select>
           <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
         </div>
+        <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
+          🌶️ Picante
+        </button>
+        <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "#F5F4F1", color: glutenFreeFilter ? "#8B6914" : "#1a1a1a" }}>
+          🌾 Sin gluten
+        </button>
         {/* Desktop-only + Nuevo inline */}
         {!creatingDish && (
           <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>

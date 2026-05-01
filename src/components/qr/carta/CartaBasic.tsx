@@ -116,7 +116,7 @@ export default function CartaBasic({
         <button
           onClick={() => setGenioOpen(true)}
           className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
-          style={{ width: 52, height: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)" }}
+          style={{ width: 52, height: 52, background: "#E8B828", boxShadow: "0 4px 18px rgba(232,184,40,0.35)" }}
         >
           <Sparkles size={22} color="white" />
         </button>

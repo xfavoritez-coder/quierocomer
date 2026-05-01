@@ -33,6 +33,19 @@ const LANG_STORAGE_KEY = "qc_lang";
 
 export default function CartaDesktop({ restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang: initialLang, marketingPromos }: Props) {
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+
+  const dietNavItem = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+    const hasGluten = restrictions.includes("gluten");
+    if (diet === "vegan" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🌿 Vegano + GF" : "🌿 Vegano", scrollTo: "genio-vegan-carousel" };
+    if (diet === "vegetarian" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🥗 Vegetariano + GF" : "🥗 Vegetariano", scrollTo: "genio-vegetarian-carousel" };
+    if (hasGluten) return { id: "diet-carousel", name: "🌾 Sin gluten", scrollTo: "genio-glutenfree-carousel" };
+    return null;
+  }, [restaurant]);
+
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
@@ -191,6 +204,20 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                 </button>
               );
             })}
+            {dietNavItem && (
+              <button
+                onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                style={{
+                  padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
+                  fontSize: "0.85rem", fontWeight: 600, whiteSpace: "nowrap",
+                  background: activeCategory === "diet-carousel" ? "#1a1a1a" : "transparent",
+                  color: activeCategory === "diet-carousel" ? "white" : "#888",
+                  transition: "all 0.15s",
+                }}
+              >
+                {dietNavItem.name}
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -354,14 +381,14 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           title="Genio - Te recomiendo algo"
           style={{
             width: 48, height: 48, borderRadius: "50%",
-            background: "#F4A623", border: "none", cursor: "pointer",
-            boxShadow: "0 4px 18px rgba(244,166,35,0.35)",
+            background: "#E8B828", border: "none", cursor: "pointer",
+            boxShadow: "0 4px 18px rgba(232,184,40,0.35)",
             display: "flex", alignItems: "center", justifyContent: "center",
             position: "relative",
             transition: "all 0.2s ease",
           }}
-          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(244,166,35,0.5)"; }}
-          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(244,166,35,0.35)"; }}
+          onMouseEnter={e => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 6px 24px rgba(232,184,40,0.5)"; }}
+          onMouseLeave={e => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(232,184,40,0.35)"; }}
         >
           <span style={{ fontSize: "20px", lineHeight: 1 }}>🧞</span>
           {hasCompletedGenio && (

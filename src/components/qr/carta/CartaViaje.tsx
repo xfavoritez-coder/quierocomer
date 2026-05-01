@@ -174,9 +174,9 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"
             style={{
               width: 52, height: 52, position: "relative",
-              background: "rgba(244,166,35,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-              border: "1px solid rgba(244,166,35,0.3)",
-              boxShadow: "0 0 20px rgba(244,166,35,0.15)",
+              background: "rgba(232,184,40,0.2)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+              border: "1px solid rgba(232,184,40,0.3)",
+              boxShadow: "0 0 20px rgba(232,184,40,0.15)",
               transition: "all 0.3s ease",
             }}
           >

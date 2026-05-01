@@ -424,6 +424,18 @@ export default function CartaFeed({
 
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
+  const dietNavItem = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    const diet = localStorage.getItem("qr_diet");
+    const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+    const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+    const hasGluten = restrictions.includes("gluten");
+    if (diet === "vegan" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🌿 Vegano + GF" : "🌿 Vegano", scrollTo: "genio-vegan-carousel" };
+    if (diet === "vegetarian" && isOmnivoreRestaurant) return { id: "diet-carousel", name: hasGluten ? "🥗 Vegetariano + GF" : "🥗 Vegetariano", scrollTo: "genio-vegetarian-carousel" };
+    if (hasGluten) return { id: "diet-carousel", name: "🌾 Sin gluten", scrollTo: "genio-glutenfree-carousel" };
+    return null;
+  }, [restaurant]);
+
   const grouped = useMemo(() => groupDishesByCategory(
     query ? dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query))) : dishes,
     categories,
@@ -534,6 +546,19 @@ export default function CartaFeed({
                     {cat.name}
                   </button>
                 ))}
+                {dietNavItem && (
+                  <button
+                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                    style={{
+                      padding: "7px 12px", borderRadius: 999, border: "none", cursor: "pointer",
+                      fontSize: 13, fontWeight: activeCategory === "diet-carousel" ? 500 : 400, whiteSpace: "nowrap",
+                      background: activeCategory === "diet-carousel" ? "rgba(239,159,39,0.12)" : "#F5F4F1",
+                      color: activeCategory === "diet-carousel" ? "#92400e" : "#5a5a5a",
+                    }}
+                  >
+                    {dietNavItem.name}
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -622,7 +647,7 @@ export default function CartaFeed({
 
       <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 24, right: 16 }}>
         <button onClick={() => setGenioOpen(true)} className="flex items-center justify-center rounded-full active:scale-95"
-          style={{ height: 52, width: 52, background: "#F4A623", boxShadow: "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
+          style={{ height: 52, width: 52, background: "#E8B828", boxShadow: "0 4px 18px rgba(232,184,40,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative", border: "none", cursor: "pointer" }}>
           <span style={{ fontSize: "22px", lineHeight: 1 }}>🧞</span>
           {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "white", fontWeight: 700 }}>✓</span>}
         </button>
