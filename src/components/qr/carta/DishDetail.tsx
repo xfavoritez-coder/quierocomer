@@ -281,6 +281,27 @@ function DishSlide({
 
   const lang = useLang();
   const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const photoRef = useRef<HTMLDivElement>(null);
+
+  // iOS: simulate sticky with scroll listener + transform
+  useEffect(() => {
+    if (!isIOS || !isActive) return;
+    const container = slideRef.current;
+    if (!container) return;
+    const handleScroll = () => {
+      const scrollTop = container.scrollTop;
+      const photoH = container.clientHeight * 0.6; // 60vh
+      if (photoRef.current) {
+        if (scrollTop > 0 && scrollTop < photoH) {
+          photoRef.current.style.transform = `translateY(${scrollTop * 0.5}px)`;
+        } else if (scrollTop <= 0) {
+          photoRef.current.style.transform = "translateY(0)";
+        }
+      }
+    };
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [isIOS, isActive]);
   const ingredientNames = dishIngs.map((di: any) => {
     const ing = di.ingredient;
     if (!ing) return null;
@@ -310,8 +331,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — sticky parallax on desktop, relative on iOS (WebKit breaks sticky in overflow:auto) */}
-      <div style={{ position: isIOS ? "relative" : "sticky", top: isIOS ? undefined : "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo — sticky on desktop, JS parallax on iOS */}
+      <div ref={photoRef} style={{ position: isIOS ? "relative" : "sticky", top: isIOS ? undefined : "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0, willChange: isIOS ? "transform" : undefined }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
