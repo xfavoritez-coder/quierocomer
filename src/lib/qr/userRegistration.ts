@@ -29,6 +29,25 @@ export async function trackUserRegistration({
   dbSessionId,
 }: TrackRegistrationParams) {
   try {
+    // Resolve dbSessionId server-side if the client hadn't created it yet
+    // (sessionTracker delays Session row creation by ~3s after first interaction).
+    let resolvedDbSessionId = dbSessionId || null;
+    if (!resolvedDbSessionId && guestId) {
+      const recent = await prisma.session.findFirst({
+        where: {
+          guestId,
+          restaurantId,
+          OR: [
+            { endedAt: null },
+            { endedAt: { gte: new Date(Date.now() - 5 * 60_000) } },
+          ],
+        },
+        orderBy: { startedAt: "desc" },
+        select: { id: true },
+      });
+      if (recent) resolvedDbSessionId = recent.id;
+    }
+
     await prisma.$transaction(async (tx) => {
       // 1. Create USER_REGISTERED stat event
       await tx.statEvent.create({
@@ -39,7 +58,7 @@ export async function trackUserRegistration({
           guestId: guestId || undefined,
           qrUserId,
           genioSessionId: genioSessionId || undefined,
-          dbSessionId: dbSessionId || undefined,
+          dbSessionId: resolvedDbSessionId || undefined,
           metadata: {
             triggered_by: triggeredBy,
             previous_guest_id: guestId,
@@ -55,34 +74,12 @@ export async function trackUserRegistration({
         });
       }
 
-      // 3. Mark current session as converted.
-      // Prefer the actual DB session id; only fall back to "most recent active" so
-      // we don't accidentally tag an old visit when the current one's session row
-      // hasn't been created yet (sessionTracker delays creation by ~3s).
-      if (dbSessionId) {
+      // 3. Mark current session as converted using the resolved dbSessionId.
+      if (resolvedDbSessionId) {
         await tx.session.updateMany({
-          where: { id: dbSessionId },
+          where: { id: resolvedDbSessionId },
           data: { converted: true },
         });
-      } else if (guestId) {
-        const recentOpenSession = await tx.session.findFirst({
-          where: {
-            guestId,
-            restaurantId,
-            OR: [
-              { endedAt: null },
-              { endedAt: { gte: new Date(Date.now() - 5 * 60_000) } },
-            ],
-          },
-          orderBy: { startedAt: "desc" },
-          select: { id: true },
-        });
-        if (recentOpenSession) {
-          await tx.session.update({
-            where: { id: recentOpenSession.id },
-            data: { converted: true },
-          });
-        }
       }
     });
   } catch (error) {

@@ -97,11 +97,43 @@ export async function POST(request: Request) {
       });
     }
 
+    // Resolve dbSessionId for events that came in with it null but where we can
+    // confidently match a recent open session for the same guest+restaurant.
+    // This fixes the case where the user takes an action (e.g. saves birthday)
+    // before sessionTracker has created the DB row for the current visit.
+    const needsResolution = events.some((e: any) => !e.dbSessionId && e.guestId && e.restaurantId);
+    let resolvedDbSessionByRestaurant: Record<string, string> = {};
+    if (needsResolution && effectiveGuestId) {
+      const restaurantIds: string[] = [...new Set(events.map((e: any) => e.restaurantId).filter(Boolean) as string[])];
+      const recentSessions = await prisma.session.findMany({
+        where: {
+          guestId: effectiveGuestId,
+          restaurantId: { in: restaurantIds },
+          OR: [
+            { endedAt: null },
+            { endedAt: { gte: new Date(Date.now() - 2 * 60_000) } },
+          ],
+        },
+        orderBy: { startedAt: "desc" },
+        select: { id: true, restaurantId: true },
+      });
+      for (const s of recentSessions) {
+        if (!resolvedDbSessionByRestaurant[s.restaurantId]) {
+          resolvedDbSessionByRestaurant[s.restaurantId] = s.id;
+        }
+      }
+    }
+
     // Process all events
     const records = [];
     for (const event of events) {
       const record = await processEvent(event, qrUserId, weather, timeOfDay);
-      if (record) records.push(record);
+      if (record) {
+        if (!record.dbSessionId && record.restaurantId && resolvedDbSessionByRestaurant[record.restaurantId]) {
+          record.dbSessionId = resolvedDbSessionByRestaurant[record.restaurantId];
+        }
+        records.push(record);
+      }
     }
 
     // Batch insert
