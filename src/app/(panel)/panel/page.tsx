@@ -155,13 +155,6 @@ export default function PanelDashboard() {
         <Stat icon="👍" label="Me gusta" value={data.weekFavorites} />
       </div>
 
-      {/* Abandonment */}
-      {data.abandonedThisWeek > 0 && (
-        <div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 12, padding: "12px 16px", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-          <span>📉</span>
-          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#b45309", margin: 0 }}>{data.abandonedThisWeek} persona{data.abandonedThisWeek > 1 ? "s" : ""} abrieron la carta pero se fueron sin explorar.</p>
-        </div>
-      )}
 
       {/* Rankings */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }} className="adm-grid-2">

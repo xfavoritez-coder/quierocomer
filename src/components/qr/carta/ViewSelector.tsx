@@ -59,7 +59,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
   useEffect(() => {
     if (!localStorage.getItem(TOOLTIP_KEY)) {
       const show = setTimeout(() => setShowTooltip(true), 1800);
-      const hide = setTimeout(() => { setShowTooltip(false); localStorage.setItem(TOOLTIP_KEY, "1"); }, 5800);
+      const hide = setTimeout(() => { setShowTooltip(false); localStorage.setItem(TOOLTIP_KEY, "1"); }, 9800);
       return () => { clearTimeout(show); clearTimeout(hide); };
     }
   }, []);
