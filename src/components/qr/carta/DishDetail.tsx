@@ -283,21 +283,24 @@ function DishSlide({
   const isIOS = typeof navigator !== "undefined" && /iPhone|iPad|iPod/.test(navigator.userAgent);
   const photoRef = useRef<HTMLDivElement>(null);
 
-  // iOS: simulate sticky with scroll listener + transform
+  // iOS: simulate parallax with scroll listener + transform
   useEffect(() => {
     if (!isIOS || !isActive) return;
     const container = slideRef.current;
     if (!container) return;
+    let ticking = false;
     const handleScroll = () => {
-      const scrollTop = container.scrollTop;
-      const photoH = container.clientHeight * 0.6; // 60vh
-      if (photoRef.current) {
-        if (scrollTop > 0 && scrollTop < photoH) {
-          photoRef.current.style.transform = `translateY(${scrollTop * 0.5}px)`;
-        } else if (scrollTop <= 0) {
-          photoRef.current.style.transform = "translateY(0)";
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollTop = container.scrollTop;
+        const maxScroll = container.clientHeight * 0.35; // stop moving before fully covered
+        if (photoRef.current) {
+          const offset = Math.min(scrollTop * 0.4, maxScroll);
+          photoRef.current.style.transform = scrollTop > 0 ? `translateY(${offset}px)` : "translateY(0)";
         }
-      }
+        ticking = false;
+      });
     };
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
