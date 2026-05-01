@@ -21,33 +21,52 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
   const [status, setStatus] = useState<"idle" | "success">("idle");
   const [show, setShow] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
+  const [autoModal, setAutoModal] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
+
+    // Track visit count per restaurant
+    const visitKey = `qc_visit_count_${restaurantId}`;
+    const visits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
+    localStorage.setItem(visitKey, String(visits));
+    const isSecondVisit = visits === 2;
+    const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
 
     fetch("/api/qr/user/me")
       .then((r) => r.json())
       .then((d) => {
         if (d.user) {
-          // Logged in — show only if no birthday saved
           if (!d.user.birthDate) {
             setExistingUser({ name: d.user.name, email: d.user.email });
+            // Second visit + never showed modal → auto-open modal
+            if (isSecondVisit && !alreadyShowedModal) {
+              setAutoModal(true);
+              setModalOpen(true);
+              localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+            }
             setShow(true);
           }
           return;
         }
-        // Not logged in — show banner with variant
+        // Not logged in
         fetch("/api/qr/banner/select")
           .then((r) => r.json())
           .then((d) => {
             if (d.variant) {
               setVariant(d.variant);
+              // Second visit + never showed modal → auto-open modal
+              if (isSecondVisit && !alreadyShowedModal) {
+                setAutoModal(true);
+                setModalOpen(true);
+                localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+              }
               setShow(true);
             }
           });
       })
       .catch(() => {});
-  }, []);
+  }, [restaurantId]);
 
   if (!show || dismissed) return null;
 
