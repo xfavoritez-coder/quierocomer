@@ -306,11 +306,11 @@ function DishSlide({
         if (el && el.scrollTop <= 0 && dy > 100) onClose();
       }}
       style={{
-        flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
+        flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — stays behind content, covered as user scrolls */}
-      <div style={{ position: "sticky", top: 0, width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo — sticky: stays while content scrolls over it */}
+      <div style={{ position: "sticky", top: "-25vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
@@ -504,7 +504,7 @@ function DishSlide({
                             )}
                           </div>
                           {row.description && (
-                            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", margin: "4px 0 0", lineHeight: 1.4, paddingLeft: row.imageUrl ? 46 : 0 }}>{row.description}</p>
+                            <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", margin: "4px 0 0", lineHeight: 1.4 }}>{row.description}</p>
                           )}
                         </div>
                       ))}

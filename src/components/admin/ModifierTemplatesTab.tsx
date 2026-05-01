@@ -359,53 +359,6 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                                 </div>
                                 <input value={eoDesc} onChange={e => setEoDesc(e.target.value)} placeholder="Descripción (opcional)" style={INP} />
                                 <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                                  {eoImage && <img src={eoImage} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover" }} />}
-                                  <label style={{ padding: "5px 10px", background: eoUploading ? "rgba(244,166,35,0.1)" : "var(--adm-input)", border: `1px solid ${eoUploading ? GOLD : "var(--adm-card-border)"}`, borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: eoUploading ? GOLD : "var(--adm-text2)", cursor: eoUploading ? "wait" : "pointer", transition: "all 0.2s" }}>
-                                    {eoUploading ? "Subiendo foto..." : eoImage ? "Cambiar foto" : "Foto (opcional)"}
-                                    <input type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => {
-                                      const file = e.target.files?.[0];
-                                      if (!file) return;
-                                      setEoUploading(true);
-                                      try {
-                                        // Pre-compress to fit Vercel's 4.5MB body limit
-                                        let uploadFile: File | Blob = file;
-                                        if (file.size > 2 * 1024 * 1024) {
-                                          const img = new window.Image();
-                                          const url = URL.createObjectURL(file);
-                                          await new Promise<void>(r => { img.onload = () => r(); img.src = url; });
-                                          const canvas = document.createElement("canvas");
-                                          const MAX = 1600;
-                                          let w = img.width, h = img.height;
-                                          if (w > MAX || h > MAX) { const ratio = Math.min(MAX / w, MAX / h); w = Math.round(w * ratio); h = Math.round(h * ratio); }
-                                          canvas.width = w; canvas.height = h;
-                                          canvas.getContext("2d")!.drawImage(img, 0, 0, w, h);
-                                          URL.revokeObjectURL(url);
-                                          uploadFile = await new Promise<Blob>(r => canvas.toBlob(b => r(b!), "image/webp", 0.85));
-                                        }
-                                        const fd = new FormData();
-                                        fd.append("file", uploadFile, file.name);
-                                        fd.append("localId", restaurantId);
-                                        fd.append("dishName", eoName || "opcion");
-                                        const res = await fetch("/api/admin/upload-dish-image", { method: "POST", body: fd });
-                                        if (!res.ok && res.status === 413) { showSaved("Foto muy grande"); setEoUploading(false); return; }
-                                        const data = await res.json();
-                                        if (data.url) {
-                                          setEoImage(data.url);
-                                          await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: editingOption, imageUrl: data.url }) });
-                                          setTemplates(prev => prev.map(t => ({ ...t, groups: t.groups.map(g => ({ ...g, options: g.options.map(o => o.id === editingOption ? { ...o, imageUrl: data.url } : o) })) })));
-                                          showSaved("Foto guardada");
-                                        } else {
-                                          console.error("Upload response:", data);
-                                          showSaved(data.error || "Error al subir");
-                                        }
-                                      } catch (err) {
-                                        console.error("Upload error:", err);
-                                        showSaved("Error de conexión");
-                                      }
-                                      setEoUploading(false);
-                                    }} />
-                                  </label>
-                                  {eoImage && <button onClick={() => setEoImage("")} style={{ padding: "3px 6px", background: "none", border: "none", fontSize: "0.6rem", color: "#ef4444", cursor: "pointer" }}>×</button>}
                                   <div style={{ flex: 1 }} />
                                   <button onClick={() => saveOption(template.id, group.id)} style={{ padding: "5px 12px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: "pointer" }}>Guardar</button>
                                   <button onClick={() => setEditingOption(null)} style={{ padding: "5px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", cursor: "pointer" }}>X</button>
@@ -413,20 +366,16 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                               </div>
                             ) : (
                               <>
-                                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: opt.isHidden ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, textDecoration: opt.isHidden ? "line-through" : "none" }}>{opt.name}</span>
-                                {opt.isHidden && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600 }}>Oculto</span>}
-                                {opt.imageUrl && <span style={{ fontSize: "0.6rem" }}>📷</span>}
-                                {opt.description && <span style={{ fontSize: "0.6rem" }}>📝</span>}
-                                {opt.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.75rem", color: opt.priceAdjustment > 0 ? GOLD : "#4ade80", fontWeight: 600 }}>{opt.priceAdjustment > 0 ? "+" : ""}${Math.abs(opt.priceAdjustment).toLocaleString("es-CL")}</span>}
-                                <button onClick={async () => {
-                                  const newHidden = !opt.isHidden;
-                                  await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: opt.id, isHidden: newHidden }) });
-                                  setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, groups: t.groups.map(g => g.id === group.id ? { ...g, options: g.options.map(o => o.id === opt.id ? { ...o, isHidden: newHidden } : o) } : g) } : t));
-                                }} style={{ padding: "2px 8px", background: opt.isHidden ? "rgba(74,222,128,0.1)" : "rgba(255,170,0,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: opt.isHidden ? "#4ade80" : "#b88a00", cursor: "pointer", fontWeight: 600 }}>
+                                <div onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, cursor: "pointer", minWidth: 0 }}>
+                                  <span style={{ fontFamily: FB, fontSize: "0.82rem", color: opt.isHidden ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, textDecoration: opt.isHidden ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.name}</span>
+                                  {opt.isHidden && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600, flexShrink: 0 }}>Oculto</span>}
+                                  {opt.description && <span style={{ fontSize: "0.6rem", flexShrink: 0 }}>📝</span>}
+                                  {opt.priceAdjustment !== 0 && <span style={{ fontFamily: F, fontSize: "0.75rem", color: opt.priceAdjustment > 0 ? GOLD : "#4ade80", fontWeight: 600, flexShrink: 0 }}>{opt.priceAdjustment > 0 ? "+" : ""}${Math.abs(opt.priceAdjustment).toLocaleString("es-CL")}</span>}
+                                </div>
+                                <button onClick={async (e) => { e.stopPropagation(); const newHidden = !opt.isHidden; await fetch("/api/admin/modifier-templates", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ optionId: opt.id, isHidden: newHidden }) }); setTemplates(prev => prev.map(t => t.id === template.id ? { ...t, groups: t.groups.map(g => g.id === group.id ? { ...g, options: g.options.map(o => o.id === opt.id ? { ...o, isHidden: newHidden } : o) } : g) } : t)); }} style={{ padding: "2px 8px", background: opt.isHidden ? "rgba(74,222,128,0.1)" : "rgba(255,170,0,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: opt.isHidden ? "#4ade80" : "#b88a00", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>
                                   {opt.isHidden ? "Mostrar" : "Ocultar"}
                                 </button>
-                                <button onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ padding: "2px 8px", background: "rgba(127,191,220,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600 }}>Editar</button>
-                                <button onClick={() => { if (confirm(`¿Eliminar "${opt.name}"?`)) deleteOption(template.id, group.id, opt.id); }} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer" }}>×</button>
+                                <button onClick={(e) => { e.stopPropagation(); if (confirm(`¿Eliminar "${opt.name}"?`)) deleteOption(template.id, group.id, opt.id); }} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#ef4444", cursor: "pointer", flexShrink: 0 }}>×</button>
                               </>
                             )}
                           </div>
