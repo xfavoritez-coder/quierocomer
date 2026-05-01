@@ -6,16 +6,16 @@ import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan } from "@/l
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: string }>> = {
-  promotions: { title: "Ofertas del día", desc: "Publica promociones y descuentos que se muestran en tu carta digital." },
-  announcements: { title: "Anuncios", desc: "Comunica novedades, horarios especiales o eventos a tus clientes." },
-  stats_basic: { title: "Estadísticas", desc: "Ve cuántas personas visitan tu carta, qué platos ven más y cuándo." },
-  stats_advanced: { title: "Estadísticas avanzadas", desc: "Recorrido de cada sesión, filtros por fecha, clima, horarios pico y más." },
-  waiter: { title: "Panel de garzón", desc: "Tu cliente toca un botón y el garzón recibe notificación al instante." },
-  automations: { title: "Automatizaciones", desc: "Emails automáticos de bienvenida, cumpleaños y reactivación de clientes." },
-  campaigns: { title: "Campañas", desc: "Crea y envía emails con novedades y promociones a tus clientes registrados." },
-  multilang: { title: "Multilenguaje", desc: "Tu carta se traduce automáticamente al idioma del cliente." },
-  clients_full: { title: "Todos los clientes", desc: "Ve el listado completo de clientes registrados con sus datos." },
+const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: string; cta: string }>> = {
+  promotions: { title: "Ofertas del día", desc: "Publica promociones y descuentos que se muestran en tu carta digital.", cta: "Empieza a publicar ofertas" },
+  announcements: { title: "Anuncios", desc: "Comunica novedades, horarios especiales o eventos directamente en tu carta.", cta: "Activa los anuncios" },
+  stats_basic: { title: "Descubre qué pasa en tu carta", desc: "Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios. Información que te ayuda a tomar mejores decisiones.", cta: "Accede a tus estadísticas" },
+  stats_advanced: { title: "Estadísticas avanzadas", desc: "Recorrido de cada cliente, filtros por fecha, clima, horarios pico y mucho más. Entiende a fondo el comportamiento de tus clientes.", cta: "Desbloquea el análisis completo" },
+  waiter: { title: "Llamar al garzón", desc: "Tu cliente toca un botón en la carta y el garzón recibe la notificación al instante. Menos esperas, mejor servicio.", cta: "Activa el garzón digital" },
+  automations: { title: "Automatizaciones", desc: "Emails que se envían solos: bienvenida al registrarse, saludo de cumpleaños, reactivación cuando no vuelven. Sin mover un dedo.", cta: "Automatiza tu comunicación" },
+  campaigns: { title: "Campañas y email marketing", desc: "Envía novedades, promociones y comunicaciones a todos tus clientes registrados con un solo click.", cta: "Empieza a comunicarte" },
+  multilang: { title: "Multilenguaje", desc: "Tu carta se traduce automáticamente al idioma del cliente. Turistas y extranjeros entienden tu menú sin problemas.", cta: "Traduce tu carta" },
+  clients_full: { title: "Todos tus clientes", desc: "Accede al listado completo de clientes registrados, con emails, cumpleaños y preferencias. Exporta a CSV para usar donde quieras.", cta: "Ve todos tus clientes" },
 };
 
 const PLAN_FEATURES_LIST: Record<string, string[]> = {
@@ -60,38 +60,42 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
   return (
     <>
-      <div style={{ position: "relative", cursor: "pointer", minHeight: 200 }} onClick={() => setShowModal(true)}>
-        <div style={{ filter: "blur(5px)", opacity: 0.4, pointerEvents: "none", userSelect: "none" }}>
+      <div style={{ position: "relative", cursor: "pointer" }} onClick={() => setShowModal(true)}>
+        <div style={{ filter: "blur(5px)", opacity: 0.3, pointerEvents: "none", userSelect: "none", maxHeight: "60vh", overflow: "hidden" }}>
           {children}
         </div>
         <div style={{
-          position: "absolute", inset: 0, display: "flex", flexDirection: "column",
-          alignItems: "center", justifyContent: "center", gap: 10,
-          background: "rgba(255,255,255,0.6)",
-          borderRadius: 16,
+          position: "absolute", top: 0, left: 0, right: 0,
+          minHeight: "min(100%, 60vh)", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: 12,
+          background: "rgba(255,255,255,0.85)",
+          borderRadius: 16, padding: 40,
         }}>
           <div style={{
-            width: 64, height: 64, borderRadius: "50%",
+            width: 72, height: 72, borderRadius: "50%",
             background: needed === "PREMIUM" ? "linear-gradient(135deg, #F3E8FF, #E9D5FF)" : "linear-gradient(135deg, #FFF8E7, #FFEDD0)",
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem",
+            boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
           }}>
             {needed === "PREMIUM" ? "💎" : "⭐"}
           </div>
-          <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
+          <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "#1a1a1a", margin: 0, textAlign: "center" }}>
             {featureInfo?.title || `Plan ${info.label}`}
           </p>
-          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "#888", margin: 0 }}>
-            Disponible en el plan {info.label}
+          <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#666", margin: 0, textAlign: "center", maxWidth: 300, lineHeight: 1.5 }}>
+            {featureInfo?.cta || `Disponible en el plan ${info.label}`}
           </p>
           <button style={{
-            marginTop: 4, padding: "10px 24px", borderRadius: 999, border: "none",
+            marginTop: 6, padding: "12px 28px", borderRadius: 999, border: "none",
             background: needed === "PREMIUM" ? "#7c3aed" : "#F4A623",
-            color: "#fff", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer",
-            boxShadow: needed === "PREMIUM" ? "0 4px 14px rgba(124,58,237,0.25)" : "0 4px 14px rgba(244,166,35,0.25)",
+            color: "#fff", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
+            boxShadow: needed === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
           }}>
-            Ver plan {info.label} →
+            Mejorar a {info.label} →
           </button>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#aaa", margin: 0 }}>
+            Desde {needed === "PREMIUM" ? "$55.000" : "$35.000"}/mes
+          </p>
         </div>
       </div>
 
