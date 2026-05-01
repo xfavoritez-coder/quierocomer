@@ -649,6 +649,7 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [eGlutenFree, setEGlutenFree] = useState(false);
   const [ePhotoRef, setEPhotoRef] = useState(false);
   const [eFlavorTags, setEFlavorTags] = useState<string[]>([]);
   const [eCategoryId, setECategoryId] = useState("");
@@ -719,6 +720,7 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setEGlutenFree((d as any).isGlutenFree || false);
     setEPhotoRef((d as any).isPhotoReferential || false);
     setEFlavorTags((d as any).flavorTags || []);
     setECategoryId(d.categoryId);
@@ -758,6 +760,7 @@ export default function AdminMenus() {
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
+      isGlutenFree: eGlutenFree,
       isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
@@ -861,6 +864,7 @@ export default function AdminMenus() {
               <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
                 {(selectedDish as any).dishDiet && (() => { const dc = DIET_COLORS[(selectedDish as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(d => d.value === (selectedDish as any).dishDiet); return <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
+                {(selectedDish as any).isGlutenFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(139,105,20,0.1)", color: "#8B6914" }}>🌾 Sin gluten</span>}
                 {((selectedDish as any).flavorTags || []).map((f: string) => {
                   const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
                   const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
@@ -1009,6 +1013,9 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
+                  </button>
+                  <button onClick={() => setEGlutenFree(!eGlutenFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eGlutenFree ? "1.5px solid rgba(139,105,20,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eGlutenFree ? "rgba(139,105,20,0.1)" : "transparent", color: eGlutenFree ? "#8B6914" : "var(--adm-text3)" }}>
+                    🌾 Sin gluten
                   </button>
                 </div>
               </div>
@@ -1516,10 +1523,11 @@ export default function AdminMenus() {
                 <div style={{ padding: "0 14px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
                   {/* Description */}
                   {/* Diet + Spicy */}
-                  {((d as any).dishDiet || (d as any).isSpicy || ((d as any).flavorTags || []).length > 0) && (
+                  {((d as any).dishDiet || (d as any).isSpicy || (d as any).isGlutenFree || ((d as any).flavorTags || []).length > 0) && (
                     <div style={{ display: "flex", gap: 6, margin: "10px 0 8px", flexWrap: "wrap" }}>
                       {(d as any).dishDiet && (() => { const dc = DIET_COLORS[(d as any).dishDiet] || DIET_COLORS.OMNIVORE; const opt = DIET_OPTIONS.find(o => o.value === (d as any).dishDiet); return <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: dc.bg, color: dc.color }}>{opt?.icon} {opt?.label}</span>; })()}
                       {(d as any).isSpicy && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
+                      {(d as any).isGlutenFree && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(139,105,20,0.1)", color: "#8B6914" }}>🌾 Sin gluten</span>}
                       {((d as any).flavorTags || []).map((f: string) => {
                         const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
                         const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };

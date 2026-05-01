@@ -528,6 +528,7 @@ model Dish {
   allergens      String?      // legacy text field
   dishDiet       DishDietType @default(OMNIVORE)
   isSpicy        Boolean      @default(false)
+  isGlutenFree   Boolean      @default(false)
   isHighMargin   Boolean      @default(false)
   isPhotoReferential Boolean  @default(false)
   isFeaturedAuto Boolean      @default(false)

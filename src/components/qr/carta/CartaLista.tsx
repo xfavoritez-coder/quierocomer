@@ -11,7 +11,11 @@ import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
 import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
+import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
+import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import VeganFloatingPill from "./VeganFloatingPill";
+import VegetarianFloatingPill from "./VegetarianFloatingPill";
+import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
 import ViewSelector from "./ViewSelector";
@@ -409,15 +413,20 @@ export default function CartaLista({
         </section>
       )}
 
-      {/* Genio vegan carousel */}
-      {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-        <div style={{ paddingTop: hasPromos ? 16 : 10, paddingLeft: 0, paddingRight: 0 }}>
-          <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
-            const dish = dishes.find(d => d.id === dishId);
-            if (dish) setSelectedDish(dish);
-          }} />
-        </div>
-      )}
+      {/* Genio diet carousels */}
+      {typeof window !== "undefined" && (() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+        const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
+        return (
+          <div style={{ paddingTop: hasPromos ? 16 : 10, display: "flex", flexDirection: "column", gap: 8 }}>
+            {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {restrictions.includes("gluten") && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+          </div>
+        );
+      })()}
 
       {/* CATEGORIES */}
       {grouped.map(({ category, dishes: catDishes }, index) => (
@@ -493,10 +502,19 @@ export default function CartaLista({
         <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
-      {/* Floating vegan pill — only shows after scrolling */}
-      {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && dishes.some(d => (d as any).dishDiet === "VEGAN") && (
-        <VeganFloatingPill />
-      )}
+      {/* Floating diet pills */}
+      {typeof window !== "undefined" && (() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+        return (
+          <>
+            {diet === "vegan" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGAN") && <VeganFloatingPill />}
+            {diet === "vegetarian" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGETARIAN" || (d as any).dishDiet === "VEGAN") && <VegetarianFloatingPill />}
+            {restrictions.includes("gluten") && dishes.some(d => (d as any).isGlutenFree) && <GlutenFreeFloatingPill />}
+          </>
+        );
+      })()}
 
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>

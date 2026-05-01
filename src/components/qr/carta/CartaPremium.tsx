@@ -28,7 +28,11 @@ import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 import AnnouncementBanner from "./AnnouncementBanner";
 import GenioVeganCarousel from "./GenioVeganCarousel";
+import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
+import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import VeganFloatingPill from "./VeganFloatingPill";
+import VegetarianFloatingPill from "./VegetarianFloatingPill";
+import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
 
 interface Review {
   id: string;
@@ -519,15 +523,20 @@ export default function CartaPremium({
           </div>
         )}
 
-        {/* Genio vegan carousel — only for omnivore restaurants when user is vegan */}
-        {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-          <div style={{ paddingTop: hasPromos ? 16 : 10 }}>
-            <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
-              const dish = dishes.find(d => d.id === dishId);
-              if (dish) setSelectedDish(dish);
-            }} />
-          </div>
-        )}
+        {/* Genio diet carousels */}
+        {typeof window !== "undefined" && (() => {
+          const diet = localStorage.getItem("qr_diet");
+          const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+          const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+          const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
+          return (
+            <div style={{ paddingTop: hasPromos ? 16 : 10, display: "flex", flexDirection: "column", gap: 8 }}>
+              {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {restrictions.includes("gluten") && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            </div>
+          );
+        })()}
 
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (norm(d.name || "").includes(norm(searchQuery.trim())) || norm(d.description || "").includes(norm(searchQuery.trim())) || norm(d.ingredients || "").includes(norm(searchQuery.trim()))))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
@@ -714,10 +723,19 @@ export default function CartaPremium({
         <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
-      {/* Floating vegan pill — only shows after scrolling */}
-      {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && dishes.some(d => (d as any).dishDiet === "VEGAN") && (
-        <VeganFloatingPill />
-      )}
+      {/* Floating diet pills — only show after scrolling */}
+      {typeof window !== "undefined" && (() => {
+        const diet = localStorage.getItem("qr_diet");
+        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+        const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+        return (
+          <>
+            {diet === "vegan" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGAN") && <VeganFloatingPill />}
+            {diet === "vegetarian" && isOmnivoreRestaurant && dishes.some(d => (d as any).dishDiet === "VEGETARIAN" || (d as any).dishDiet === "VEGAN") && <VegetarianFloatingPill />}
+            {restrictions.includes("gluten") && dishes.some(d => (d as any).isGlutenFree) && <GlutenFreeFloatingPill />}
+          </>
+        );
+      })()}
 
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}

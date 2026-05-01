@@ -100,6 +100,8 @@ const dict = {
     gStepOf: "Paso {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Quitar selección", gLikeBtn: "Me gusta 👆",
     gVeganDishesForYou: "{n} opciones veganas para ti 🌿", gVeganSubtitle: "Toca un plato para verlo en la carta", gMyVeganOptions: "Mis platos veganos ↑",
+    gVegetarianDishesForYou: "{n} opciones vegetarianas para ti 🥗", gVegetarianSubtitle: "Incluye opciones veganas y vegetarianas", gMyVegetarianOptions: "Mis platos vegetarianos ↑",
+    gGlutenFreeDishesForYou: "{n} opciones sin gluten para ti 🌾", gGlutenFreeSubtitle: "Platos libres de gluten en esta carta", gMyGlutenFreeOptions: "Mis platos sin gluten ↑",
   },
   en: {
     search: "Search dish...",
@@ -184,6 +186,8 @@ const dict = {
     gStepOf: "Step {step} of 3", gResult: "✨ Result",
     gRemoveSelection: "Remove selection", gLikeBtn: "I like this 👆",
     gVeganDishesForYou: "{n} vegan options for you 🌿", gVeganSubtitle: "Tap a dish to see it on the menu", gMyVeganOptions: "My vegan dishes ↑",
+    gVegetarianDishesForYou: "{n} vegetarian options for you 🥗", gVegetarianSubtitle: "Includes vegan and vegetarian options", gMyVegetarianOptions: "My vegetarian dishes ↑",
+    gGlutenFreeDishesForYou: "{n} gluten-free options for you 🌾", gGlutenFreeSubtitle: "Gluten-free dishes on this menu", gMyGlutenFreeOptions: "My gluten-free dishes ↑",
   },
   pt: {
     search: "Buscar prato...",
@@ -268,6 +272,8 @@ const dict = {
     gStepOf: "Passo {step} de 3", gResult: "✨ Resultado",
     gRemoveSelection: "Remover seleção", gLikeBtn: "Gostei 👆",
     gVeganDishesForYou: "{n} opções veganas para você 🌿", gVeganSubtitle: "Toque em um prato para ver no cardápio", gMyVeganOptions: "Meus pratos veganos ↑",
+    gVegetarianDishesForYou: "{n} opções vegetarianas para você 🥗", gVegetarianSubtitle: "Inclui opções veganas e vegetarianas", gMyVegetarianOptions: "Meus pratos vegetarianos ↑",
+    gGlutenFreeDishesForYou: "{n} opções sem glúten para você 🌾", gGlutenFreeSubtitle: "Pratos sem glúten neste cardápio", gMyGlutenFreeOptions: "Meus pratos sem glúten ↑",
   },
   it: {
     search: "Cerca piatto...",
@@ -352,6 +358,8 @@ const dict = {
     gStepOf: "Passo {step} di 3", gResult: "✨ Risultato",
     gRemoveSelection: "Rimuovi selezione", gLikeBtn: "Mi piace 👆",
     gVeganDishesForYou: "{n} opzioni vegane per te 🌿", gVeganSubtitle: "Tocca un piatto per vederlo nel menù", gMyVeganOptions: "I miei piatti vegani ↑",
+    gVegetarianDishesForYou: "{n} opzioni vegetariane per te 🥗", gVegetarianSubtitle: "Include opzioni vegane e vegetariane", gMyVegetarianOptions: "I miei piatti vegetariani ↑",
+    gGlutenFreeDishesForYou: "{n} opzioni senza glutine per te 🌾", gGlutenFreeSubtitle: "Piatti senza glutine in questo menù", gMyGlutenFreeOptions: "I miei piatti senza glutine ↑",
   },
 } as const;
 

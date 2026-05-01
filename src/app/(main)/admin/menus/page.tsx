@@ -91,6 +91,7 @@ export default function AdminMenus() {
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
   const [eSpicy, setESpicy] = useState(false);
+  const [eGlutenFree, setEGlutenFree] = useState(false);
   const [eHighMargin, setEHighMargin] = useState(false);
   const [eFeaturedAuto, setEFeaturedAuto] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -119,6 +120,7 @@ export default function AdminMenus() {
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
     setESpicy((d as any).isSpicy || false);
+    setEGlutenFree((d as any).isGlutenFree || false);
     setEHighMargin((d as any).isHighMargin || false);
     setEFeaturedAuto((d as any).isFeaturedAuto || false);
     setIngSearch("");
@@ -144,6 +146,7 @@ export default function AdminMenus() {
       isHero: eTags.includes("RECOMMENDED"),
       dishDiet: eDiet,
       isSpicy: eSpicy,
+      isGlutenFree: eGlutenFree,
       isHighMargin: eHighMargin,
       isFeaturedAuto: eFeaturedAuto,
       ingredientIds: eIngredientIds,
@@ -272,6 +275,9 @@ export default function AdminMenus() {
                 <div style={{ display: "flex", gap: 6 }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.15)" : "var(--adm-hover)", color: eSpicy ? "#e85530" : "var(--adm-text2)" }}>
                     🌶️ Picante
+                  </button>
+                  <button onClick={() => setEGlutenFree(!eGlutenFree)} style={{ padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eGlutenFree ? "rgba(139,105,20,0.15)" : "var(--adm-hover)", color: eGlutenFree ? "#8B6914" : "var(--adm-text2)" }}>
+                    🌾 Sin gluten
                   </button>
                 </div>
               </div>

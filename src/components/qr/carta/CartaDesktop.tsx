@@ -15,6 +15,8 @@ import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
+import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
+import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 
 interface Props {
   restaurant: Restaurant;
@@ -205,15 +207,20 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           </div>
         )}
 
-        {/* Vegan carousel */}
-        {typeof window !== "undefined" && localStorage.getItem("qr_diet") === "vegan" && (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN" && (
-          <div style={{ marginBottom: 32 }}>
-            <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={(dishId) => {
-              const dish = dishes.find(d => d.id === dishId);
-              if (dish) setSelectedDish(dish);
-            }} />
-          </div>
-        )}
+        {/* Diet carousels */}
+        {typeof window !== "undefined" && (() => {
+          const diet = localStorage.getItem("qr_diet");
+          const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+          const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+          const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
+          return (
+            <div style={{ marginBottom: 32, display: "flex", flexDirection: "column", gap: 8 }}>
+              {diet === "vegan" && isOmnivoreRestaurant && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {diet === "vegetarian" && isOmnivoreRestaurant && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {restrictions.includes("gluten") && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            </div>
+          );
+        })()}
 
         {grouped.map(group => {
           if (group.dishes.length === 0) return null;
