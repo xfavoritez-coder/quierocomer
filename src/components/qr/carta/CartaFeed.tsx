@@ -615,7 +615,7 @@ export default function CartaFeed({
           {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", color: "white", fontWeight: 700 }}>✓</span>}
         </button>
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-        <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} />
+        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} />}
       </div>
 
       {/* ═══ MODALS ═══ */}

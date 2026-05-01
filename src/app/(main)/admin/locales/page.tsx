@@ -298,6 +298,34 @@ export default function AdminLocales() {
               ))}
             </div>
           </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+            <span>Plan:</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[
+                { value: "FREE", label: "Gratis", color: "#888", bg: "rgba(255,255,255,0.06)" },
+                { value: "GOLD", label: "Gold", color: "#F4A623", bg: "rgba(244,166,35,0.15)" },
+                { value: "PREMIUM", label: "Premium", color: "#c084fc", bg: "rgba(192,132,252,0.15)" },
+              ].map((p) => (
+                <button
+                  key={p.value}
+                  onClick={async () => {
+                    await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ plan: p.value }) });
+                    const updated = { ...selected, plan: p.value };
+                    setSelected(updated);
+                    setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                  }}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                    background: (selected as any).plan === p.value ? p.bg : "rgba(255,255,255,0.06)",
+                    color: (selected as any).plan === p.value ? p.color : "#888",
+                  }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <p style={{ margin: 0 }}>Owner: {selected.owner ? `${selected.owner.name} (${selected.owner.email})` : <span style={{ color: "#666" }}>Sin asignar</span>}</p>
           <p style={{ margin: 0 }}>Creado: {new Date(selected.createdAt).toLocaleDateString("es-CL")}</p>
         </div>

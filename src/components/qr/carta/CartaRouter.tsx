@@ -6,6 +6,7 @@ import { useCartaView } from "./hooks/useCartaView";
 import { useViewTransition, hideViewTransition } from "./hooks/useViewTransition";
 import { startSession, trackViewSelected, setCartaLang } from "@/lib/sessionTracker";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
+import { canAccess } from "@/lib/plans";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaViaje from "./CartaViaje";
@@ -165,16 +166,27 @@ export default function CartaRouter(props: Props) {
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
   const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
-  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current };
+  const plan = (props.restaurant as any).plan || "FREE";
+  const showViewSelector = canAccess(plan, "view_selector");
+
+  // Force view based on plan
+  const effectiveView = (() => {
+    if (view === "premium" && !canAccess(plan, "view_gallery")) return "lista";
+    if (view === "feed" && !canAccess(plan, "view_feed")) return "lista";
+    if (view === "viaje" && !canAccess(plan, "view_space")) return "lista";
+    return view;
+  })();
+
+  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current, showViewSelector };
 
   return (
     <LangProvider value={lang}>
       <FavoritesProvider>
         <HappyHourBanner happyHours={props.happyHours || []} />
-        {view === "premium" && <CartaPremium {...sharedProps} />}
-        {view === "lista" && <CartaLista {...sharedProps} />}
-        {view === "feed" && <CartaFeed {...sharedProps} />}
-        {view === "viaje" && <CartaViaje {...sharedProps} />}
+        {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
+        {effectiveView === "lista" && <CartaLista {...sharedProps} />}
+        {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
+        {effectiveView === "viaje" && <CartaViaje {...sharedProps} />}
 
         {overlay && (
           <div
