@@ -309,8 +309,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", WebkitOverflowScrolling: "touch", scrollbarWidth: "none", background: "#000",
       }}
     >
-      {/* Photo — sticky, stays at half height when scrolling down */}
-      <div style={{ position: "sticky", top: "-30vh", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
+      {/* Photo */}
+      <div style={{ position: "relative", width: "100%", height: "60vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length > 0 && (
           <Image
             src={photos[photoIndex]}
