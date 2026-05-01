@@ -16,7 +16,8 @@ import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
 import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
 import GenioSmartCarousel from "./GenioSmartCarousel";
-import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes } from "@/lib/qr/utils/carouselMode";
+import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
+import GenioDietMessage from "./GenioDietMessage";
 import VeganFloatingPill from "./VeganFloatingPill";
 import VegetarianFloatingPill from "./VegetarianFloatingPill";
 import GlutenFreeFloatingPill from "./GlutenFreeFloatingPill";
@@ -474,9 +475,11 @@ export default function CartaLista({
         const diet = localStorage.getItem("qr_diet");
         const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
         const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        if (!mode) return null;
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
         const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
+        const msgType = !mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions) ? getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories) : null;
+        if (msgType) return <div style={{ paddingTop: 20 }}><GenioDietMessage type={msgType} /></div>;
+        if (!mode) return null;
         return (
           <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
             {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}

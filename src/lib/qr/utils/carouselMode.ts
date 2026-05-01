@@ -81,6 +81,34 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
   });
 }
 
+export type DietMessageType = "no-results" | "redundant-vegan" | "redundant-vegetarian" | null;
+
+/** Determine which fallback message to show when there's no carousel */
+export function getDietMessage(diet: string | null, restrictions: string[], restaurantDietType?: string | null, dishes?: any[], categories?: any[]): DietMessageType {
+  const active = restrictions.filter(r => r !== "ninguna");
+  const hasPrefs = (diet && diet !== "omnivore") || active.length > 0;
+  if (!hasPrefs) return null;
+
+  const restDiet = (restaurantDietType || "").toUpperCase();
+
+  // Check if diet is redundant AND there are no other restrictions that would show a carousel
+  const dietRedundant = (diet === "vegan" && restDiet === "VEGAN") || (diet === "vegetarian" && (restDiet === "VEGETARIAN" || restDiet === "VEGAN"));
+
+  // If there's a carousel mode, the carousel handles it — no message needed
+  const mode = getCarouselMode(diet, restrictions, restaurantDietType);
+  if (mode && dishes && categories && hasMatchingDishes(dishes, categories, mode, diet, active)) return null;
+
+  // Redundant diet with no extra restrictions
+  if (dietRedundant && active.length === 0) {
+    return restDiet === "VEGAN" ? "redundant-vegan" : "redundant-vegetarian";
+  }
+
+  // Has preferences but no matching dishes
+  if (hasPrefs) return "no-results";
+
+  return null;
+}
+
 export function getCarouselNavName(mode: CarouselMode): string {
   switch (mode) {
     case "vegan": return "🌿 Vegano";
