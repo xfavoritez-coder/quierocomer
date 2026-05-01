@@ -9,7 +9,7 @@ const FB = "var(--font-body)";
 const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: string; cta: string }>> = {
   promotions: { title: "Ofertas que venden solas", desc: "Descuentos que aparecen justo cuando el cliente está decidiendo qué pedir.", cta: "Haz que tus promos se vean" },
   announcements: { title: "Habla directo con tu cliente", desc: "Lo primero que ven al abrir la carta. Novedades, eventos, horarios.", cta: "Tu mensaje en la carta" },
-  stats_basic: { title: "¿Qué plato deberías empujar?", desc: "Qué miran, qué ignoran y a qué hora llega más gente. Datos reales.", cta: "Entiende a tus clientes" },
+  stats_basic: { title: "¿Qué plato deberías empujar?", desc: "Qué miran, qué ignoran y a qué hora llega más gente. Datos reales.", cta: "Descubre qué funciona y qué no" },
   stats_advanced: { title: "El recorrido completo", desc: "Cada sesión, cada plato visto. Filtra por clima, horario, dispositivo.", cta: "Ve lo que otros no ven" },
   waiter: { title: "Sin levantar la mano", desc: "Tu cliente toca un botón y el garzón lo sabe al instante. Cero esperas.", cta: "El garzón siempre atento" },
   automations: { title: "Emails que trabajan por ti", desc: "Bienvenida, cumpleaños, reactivación. Se envían solos, tú no haces nada.", cta: "Haz que tus clientes vuelvan sin esfuerzo" },

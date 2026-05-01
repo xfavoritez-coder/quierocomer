@@ -107,6 +107,20 @@ const PLAN_FEATURES: Record<string, { text: string; tip: string }[]> = {
   ],
 };
 
+function PlanFeatureRow({ text, tip, color }: { text: string; tip: string; color: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }} onClick={(e) => { e.stopPropagation(); setOpen(!open); }}>
+        <span style={{ color, fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
+        <span style={{ fontFamily: "var(--font-body)", fontSize: "0.8rem", color: "#444", flex: 1 }}>{text}</span>
+        <span style={{ width: 15, height: 15, borderRadius: "50%", background: open ? "#1a1a1a" : "#e8e3d8", color: open ? "#fff" : "#888", fontSize: "8px", fontWeight: 700, fontStyle: "italic", fontFamily: "Georgia,serif", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>i</span>
+      </div>
+      {open && <p style={{ margin: "4px 0 2px 20px", fontSize: "0.78rem", color: "#888", lineHeight: 1.45 }}>{tip}</p>}
+    </div>
+  );
+}
+
 function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
   const [tab, setTab] = useState<"GOLD" | "PREMIUM">(plan === "FREE" ? "GOLD" : plan as any);
   const FD = "var(--font-display)";
@@ -162,10 +176,7 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {features.map(f => (
-                <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ color: tab === "PREMIUM" ? "#7c3aed" : "#F4A623", fontSize: "0.82rem", flexShrink: 0 }}>✓</span>
-                  <span style={{ fontFamily: FB2, fontSize: "0.8rem", color: "#444", flex: 1 }}>{f.text}</span>
-                </div>
+                <PlanFeatureRow key={f.text} text={f.text} tip={f.tip} color={tab === "PREMIUM" ? "#7c3aed" : "#F4A623"} />
               ))}
             </div>
           </div>
