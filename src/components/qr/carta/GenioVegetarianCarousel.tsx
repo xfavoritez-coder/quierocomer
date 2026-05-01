@@ -69,7 +69,8 @@ export default function GenioVegetarianCarousel({ dishes, categories, onDishClic
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: isVegan ? "#3A8E68" : "#6B8E23", flexShrink: 0 }} />{isVegan ? "VEGAN" : "VEG"}
                   </span>
                 </div>
-                <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "#2D4A0E", margin: "0 0 2px", minHeight: 30, lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden" }}>{d.name}</p>
+                <p style={{ fontSize: "0.78rem", fontWeight: 600, color: "#2D4A0E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                {d.description && <p style={{ fontSize: "0.62rem", color: "#5a7d3a", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
                 <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "12px", fontWeight: 500, color: "#5A7D2B", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
               </button>
             );
