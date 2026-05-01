@@ -1,12 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import LandingClient from "./LandingClient";
 
-const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "vegan-mobile"];
+const FEATURED_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "nascosto-pizzeria"];
 const FALLBACK_COLORS: Record<string, string> = {
   "hand-roll": "#dc2626",
   "horusvegan": "#1a5f3f",
   "juana-la-brava": "#7c2d12",
-  "vegan-mobile": "#16a34a",
+  "alleria-pizza": "#c0392b",
+  "nascosto-pizzeria": "#e85530",
 };
 
 export default async function LandingPage() {
