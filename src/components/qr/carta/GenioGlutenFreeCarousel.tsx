@@ -16,18 +16,17 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
   const lang = useLang();
 
   const gfDishes = useMemo(() => {
+    const noDrinkIds = new Set(categories.filter(c => (c as any).dishType !== "drink").map(c => c.id));
     return dishes.filter(d => {
-      if (!d.isActive) return false;
-      // Explicit flag takes priority
+      if (!d.isActive || !noDrinkIds.has(d.categoryId)) return false;
       if ((d as any).isGlutenFree === true) return true;
-      // Fallback: auto-detect from ingredients (has ingredients loaded, none with gluten allergen)
       const ings = (d as any).dishIngredients || [];
       if (ings.length === 0) return false;
       return !ings.some((di: any) =>
         di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === "gluten")
       );
     });
-  }, [dishes]);
+  }, [dishes, categories]);
 
   if (gfDishes.length === 0) return null;
 

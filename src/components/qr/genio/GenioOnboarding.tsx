@@ -181,7 +181,19 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         { icon: Check, labelKey: "gNone" as const, value: "ninguna" },
         { icon: Flame, labelKey: "gWithoutSpicy" as const, value: "_spicy" },
       ];
+      const nutNames = ["maní", "nueces", "almendras"];
+      let hasNuts = false;
       for (const item of items) {
+        // Skip alcohol
+        if (item.name === "alcohol") continue;
+        // Unify nuts into "frutos secos"
+        if (nutNames.includes(item.name)) {
+          if (!hasNuts) {
+            hasNuts = true;
+            opts.push({ icon: Ban, label: "Sin frutos secos", value: "frutos secos" });
+          }
+          continue;
+        }
         opts.push({
           icon: RESTRICTION_ICON_MAP[item.name] || Ban,
           label: `Sin ${item.name}`,
@@ -276,6 +288,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     return nextStep;
   });
 
+  const NUT_GROUP = ["maní", "nueces", "almendras"];
   const toggleRestriction = (r: string) => {
     if (r === "ninguna") {
       setRestrictions(["ninguna"]);
@@ -283,9 +296,13 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setTimeout(next, 400);
       return;
     }
+    // "frutos secos" expands to individual nut allergens
+    const values = r === "frutos secos" ? NUT_GROUP : [r];
     setRestrictions((prev) => {
       const without = prev.filter((x) => x !== "ninguna");
-      return without.includes(r) ? without.filter((x) => x !== r) : [...without, r];
+      const hasAll = values.every(v => without.includes(v));
+      if (hasAll) return without.filter(x => !values.includes(x));
+      return [...without.filter(x => !values.includes(x)), ...values];
     });
   };
 
@@ -566,7 +583,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                 <h1 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "2rem", fontWeight: 900, color: G.orange }}>
                   {t(lang, "gHelloGenius")}
                 </h1>
-                <p className="text-center" style={{ color: G.textSecondary, fontSize: "1rem", maxWidth: 280, lineHeight: 1.5 }}>
+                <p className="text-center" style={{ color: G.textSecondary, fontSize: "1.12rem", maxWidth: 300, lineHeight: 1.5, fontWeight: 500 }}>
                   {t(lang, "gTellMeRecommend")}
                 </p>
                 <button onClick={() => { trackStat(restaurantId, "GENIO_START", undefined, genioSessionId); trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId); setStep(1); }} className="active:scale-95 transition-transform" style={{ ...CTA_STYLE, marginTop: 8, maxWidth: 260 }}>
@@ -624,7 +641,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               if (dietType === "vegetarian") return !animalRestrictions.includes(r.value);
               return true;
             }).map((r) => {
-              const sel = restrictions.includes(r.value);
+              const sel = r.value === "frutos secos" ? NUT_GROUP.some(n => restrictions.includes(n)) : restrictions.includes(r.value);
               const Icon = r.icon;
               return (
                 <button key={r.value} onClick={() => toggleRestriction(r.value)}
@@ -670,7 +687,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
           {/* Popular dislikes — unified render, toggle in place */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-            {popularDislikes.filter(p => !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 5).map(item => {
+            {popularDislikes.filter(p => !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 4).map(item => {
               const sel = dislikes.includes(item);
               const label = lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item;
               return (

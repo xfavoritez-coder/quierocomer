@@ -594,30 +594,35 @@ function DishSlide({
             )}
             {(() => {
               const d = dish as any;
-              const traits: { label: string; positive: boolean }[] = [];
+              const traits: { label: string; icon: string; color: string; bg: string }[] = [];
               // Allergen-free traits — only show for allergens the user has as restrictions
               const allergenLower = derivedAllergens.map(a => a.toLowerCase());
-              // Get user restrictions from localStorage
               let userRestrictions: string[] = [];
               try { userRestrictions = JSON.parse(localStorage.getItem("qr_restrictions") || "[]").filter((r: string) => r !== "ninguna" && r !== "_spicy"); } catch {}
               for (const r of userRestrictions) {
                 if (!allergenLower.includes(r.toLowerCase())) {
-                  traits.push({ label: `Sin ${r}`, positive: true });
+                  traits.push({ label: `Sin ${r}`, icon: "✓", color: "#4ade80", bg: "rgba(74,222,128,0.1)" });
+                }
+              }
+              // Gluten-free
+              if (d.isGlutenFree || (userRestrictions.some(r => r === "gluten") && !allergenLower.includes("gluten"))) {
+                if (!traits.some(t => t.label === "Sin gluten")) {
+                  traits.push({ label: "Sin gluten", icon: "🌾", color: "#d4a017", bg: "rgba(212,160,23,0.12)" });
                 }
               }
               // Diet
-              if (d.dishDiet === "VEGAN") traits.push({ label: "Vegano", positive: true });
-              else if (d.dishDiet === "VEGETARIAN") traits.push({ label: "Vegetariano", positive: true });
-              // Spicy — only show when it IS spicy
-              if (d.isSpicy) traits.push({ label: "Picante 🌶️", positive: false });
+              if (d.dishDiet === "VEGAN") traits.push({ label: "Vegano", icon: "🌿", color: "#4ade80", bg: "rgba(74,222,128,0.1)" });
+              else if (d.dishDiet === "VEGETARIAN") traits.push({ label: "Vegetariano", icon: "🥗", color: "#86efac", bg: "rgba(134,239,172,0.1)" });
+              // Spicy
+              if (d.isSpicy) traits.push({ label: "Picante", icon: "🌶️", color: "#e85530", bg: "rgba(232,85,48,0.1)" });
               if (traits.length === 0) return null;
               return (
                 <div style={{ marginTop: 16 }}>
                   <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Características</p>
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     {traits.map(t => (
-                      <span key={t.label} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: t.positive ? "rgba(74,222,128,0.1)" : "rgba(255,255,255,0.07)", color: t.positive ? "#4ade80" : "#d4d4d4" }}>
-                        {t.positive ? "✓ " : ""}{t.label}
+                      <span key={t.label} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: t.bg, color: t.color }}>
+                        {t.icon} {t.label}
                       </span>
                     ))}
                   </div>
