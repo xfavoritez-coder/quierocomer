@@ -28,6 +28,7 @@ export default function QRPageClient({ restaurant }: Props) {
   const [generating, setGenerating] = useState(false);
   const [qrPreview, setQrPreview] = useState<string>("");
   const [qrWithLogo, setQrWithLogo] = useState<string>("");
+  const [showLabel, setShowLabel] = useState(true);
 
   const qrUrl = restaurant.qrToken
     ? `${BASE_URL}/qr/${restaurant.slug}?t=${restaurant.qrToken}`
@@ -87,7 +88,8 @@ export default function QRPageClient({ restaurant }: Props) {
     try {
       const cfg = SIZE_CONFIG[size];
       const qrMm = cfg.qrMm;
-      const cellMm = qrMm + PADDING_MM * 2; // total cell = QR + padding on each side
+      const labelHeight = showLabel ? 6 : 0;
+      const cellMm = qrMm + PADDING_MM * 2 + labelHeight; // total cell = QR + padding + label
       const pageW = 210, pageH = 297, margin = 10;
       const cols = Math.floor((pageW - margin * 2) / cellMm);
       const rows = Math.floor((pageH - margin * 2) / cellMm);
@@ -137,6 +139,14 @@ export default function QRPageClient({ restaurant }: Props) {
             // QR code centered inside the cell with padding
             pdf.addImage(qrFinal, "PNG", x + PADDING_MM, y + PADDING_MM, qrMm, qrMm);
 
+            // "Ver carta" label below QR
+            if (showLabel) {
+              pdf.setFont("helvetica", "normal");
+              pdf.setFontSize(qrMm >= 80 ? 10 : 8);
+              pdf.setTextColor(100);
+              pdf.text("Ver carta", x + cellMm / 2, y + PADDING_MM + qrMm + labelHeight - 1, { align: "center" });
+            }
+
             placed++;
           }
         }
@@ -148,7 +158,7 @@ export default function QRPageClient({ restaurant }: Props) {
 
   const perPage = (() => {
     const cfg = SIZE_CONFIG[size];
-    const cellMm = cfg.qrMm + PADDING_MM * 2;
+    const cellMm = cfg.qrMm + PADDING_MM * 2 + (showLabel ? 6 : 0);
     return Math.floor((210 - 20) / cellMm) * Math.floor((297 - 20) / cellMm);
   })();
 
@@ -205,6 +215,20 @@ export default function QRPageClient({ restaurant }: Props) {
         <p style={{ fontFamily: "var(--font-display)", fontSize: "0.72rem", color: "#bbb", textAlign: "center", marginTop: 6 }}>
           {perPage} por hoja · {Math.ceil(quantity / perPage)} {Math.ceil(quantity / perPage) === 1 ? "página" : "páginas"} A4
         </p>
+
+        {/* Show label toggle */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 20, padding: "12px 16px", background: "white", borderRadius: 12, border: "1px solid #eee" }}>
+          <div>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.85rem", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Texto &ldquo;Ver carta&rdquo;</p>
+            <p style={{ fontFamily: "var(--font-display)", fontSize: "0.68rem", color: "#999", margin: "2px 0 0" }}>Aparece debajo del QR</p>
+          </div>
+          <button onClick={() => setShowLabel(!showLabel)} style={{
+            width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+            background: showLabel ? "#F4A623" : "#ddd", transition: "background 0.2s",
+          }}>
+            <div style={{ width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3, left: showLabel ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+          </button>
+        </div>
 
         <button onClick={generatePDF} disabled={generating} style={{ width: "100%", marginTop: 20, padding: 14, background: "#F4A623", color: "white", border: "none", borderRadius: 50, fontFamily: "var(--font-display)", fontSize: "0.95rem", fontWeight: 700, cursor: generating ? "wait" : "pointer", boxShadow: "0 4px 14px rgba(244,166,35,0.25)", opacity: generating ? 0.6 : 1 }}>
           {generating ? "Generando..." : "Descargar PDF"}
