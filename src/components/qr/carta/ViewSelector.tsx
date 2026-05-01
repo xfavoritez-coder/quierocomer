@@ -179,8 +179,8 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           <div style={{
             position: "absolute",
             right: -5,
-            top: "50%",
-            transform: "translateY(-50%) rotate(45deg)",
+            bottom: 20,
+            transform: "rotate(45deg)",
             width: 10,
             height: 10,
             background: "rgba(0,0,0,0.75)",
