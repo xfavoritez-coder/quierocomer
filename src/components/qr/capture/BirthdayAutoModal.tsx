@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import BirthdayModal from "./BirthdayModal";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface Props {
   restaurantId: string;
@@ -16,9 +18,11 @@ interface Props {
  * Owns the visit counter (increments on mount, checks >= 2).
  */
 export default function BirthdayAutoModal({ restaurantId, restaurantName }: Props) {
+  const lang = useLang();
   const [modalOpen, setModalOpen] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
@@ -74,16 +78,54 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       .catch(() => {});
   }, [restaurantId]);
 
-  if (!modalOpen) return null;
-
   return (
-    <BirthdayModal
-      restaurantId={restaurantId}
-      restaurantName={restaurantName}
-      existingUser={existingUser}
-      bannerVariantId={variant?.id}
-      onClose={() => { setModalOpen(false); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
-      onSuccess={() => sessionStorage.setItem("qr_birthday_dismissed", "1")}
-    />
+    <>
+      {modalOpen && (
+        <BirthdayModal
+          restaurantId={restaurantId}
+          restaurantName={restaurantName}
+          existingUser={existingUser}
+          bannerVariantId={variant?.id}
+          onClose={() => { setModalOpen(false); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
+          onSuccess={() => {
+            sessionStorage.setItem("qr_birthday_dismissed", "1");
+            setShowSuccessToast(true);
+            // Notify any other birthday components (inline banner) to hide themselves
+            window.dispatchEvent(new CustomEvent("qc:birthday-saved"));
+            setTimeout(() => setShowSuccessToast(false), 4500);
+          }}
+        />
+      )}
+      {showSuccessToast && (
+        <div
+          aria-live="polite"
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            position: "fixed",
+            bottom: 24,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 250,
+            background: "linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)",
+            border: "1px solid rgba(244,166,35,0.35)",
+            borderRadius: 14,
+            padding: "14px 18px",
+            maxWidth: "calc(100vw - 32px)",
+            boxShadow: "0 10px 30px rgba(0,0,0,0.18)",
+            animation: "bdayToastIn 0.32s ease-out",
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+          }}
+        >
+          <span style={{ fontSize: "1.4rem", lineHeight: 1 }}>🎉</span>
+          <div>
+            <p style={{ margin: 0, fontSize: "0.92rem", fontWeight: 700, color: "#92400e" }}>{t(lang, "bdaySuccessTitle")}</p>
+            <p style={{ margin: "2px 0 0", fontSize: "0.78rem", color: "#b45309", opacity: 0.85 }}>{t(lang, "bdaySuccessSub")}</p>
+          </div>
+          <style>{`@keyframes bdayToastIn { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }`}</style>
+        </div>
+      )}
+    </>
   );
 }

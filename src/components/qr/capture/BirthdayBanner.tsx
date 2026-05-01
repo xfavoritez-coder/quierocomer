@@ -26,10 +26,6 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
 
-    // Visit count is now managed by BirthdayAutoModal
-    const visitKey = `qc_visit_count_${restaurantId}`;
-    const visits = parseInt(localStorage.getItem(visitKey) || "0");
-
     // Auto-modal logic is now in BirthdayAutoModal — banner only shows inline
     fetch("/api/qr/user/me")
       .then((r) => r.json())
@@ -49,6 +45,13 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
       })
       .catch(() => {});
   }, [restaurantId]);
+
+  // Hide banner if birthday was saved elsewhere (e.g. auto-modal)
+  useEffect(() => {
+    const handler = () => { setShow(false); setDismissed(true); };
+    window.addEventListener("qc:birthday-saved", handler);
+    return () => window.removeEventListener("qc:birthday-saved", handler);
+  }, []);
 
   if (!show || dismissed) return null;
 

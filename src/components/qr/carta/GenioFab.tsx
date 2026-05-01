@@ -16,14 +16,14 @@ export default function GenioFab({ hasCompletedGenio, onOpen }: Props) {
 
   useEffect(() => {
     if (hasCompletedGenio) return;
-    if (sessionStorage.getItem("qc_genio_nudge_shown")) return;
+    if (localStorage.getItem("qc_genio_nudge_shown")) return;
     const timer = setTimeout(() => setShowNudge(true), 8_000);
     return () => clearTimeout(timer);
   }, [hasCompletedGenio]);
 
   const dismiss = () => {
     setShowNudge(false);
-    sessionStorage.setItem("qc_genio_nudge_shown", "1");
+    localStorage.setItem("qc_genio_nudge_shown", "1");
   };
 
   return (
