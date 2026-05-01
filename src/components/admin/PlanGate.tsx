@@ -11,7 +11,7 @@ const FEATURE_DESCRIPTIONS: Partial<Record<Feature, { title: string; desc: strin
   announcements: { title: "Anuncios en tu carta", desc: "Comunica novedades, horarios especiales o eventos directamente a tus clientes.", cta: "Activa los anuncios" },
   stats_basic: { title: "Descubre qué pasa en tu carta", desc: "Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios.", cta: "Accede a tus estadísticas" },
   stats_advanced: { title: "Estadísticas avanzadas", desc: "Recorrido de cada cliente, filtros por fecha, clima, horarios pico y mucho más.", cta: "Desbloquea el análisis completo" },
-  waiter: { title: "Llamar al garzón", desc: "Tu cliente toca un botón y el garzón recibe la notificación al instante.", cta: "Activa el garzón digital" },
+  waiter: { title: "Llamar al garzón", desc: "Tus clientes tocan un botón en la carta y el garzón recibe la notificación al instante en su celular. Menos esperas, mejor servicio.", cta: "Que tus clientes llamen al garzón desde la mesa" },
   automations: { title: "Automatizaciones", desc: "Emails que se envían solos: bienvenida, cumpleaños, reactivación. Sin mover un dedo.", cta: "Automatiza tu comunicación" },
   campaigns: { title: "Campañas y email marketing", desc: "Envía novedades y promociones a tus clientes registrados con un solo click.", cta: "Empieza a comunicarte con tus clientes" },
   multilang: { title: "Multilenguaje", desc: "Tu carta se traduce automáticamente al idioma del cliente.", cta: "Traduce tu carta" },
