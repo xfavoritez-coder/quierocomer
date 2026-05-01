@@ -370,8 +370,8 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           />
         )}
 
-        {/* Language selector */}
-        <div ref={langRef} style={{ position: "relative" }}>
+        {/* Language selector — hidden for FREE plan */}
+        {(restaurant as any).plan !== "FREE" && <div ref={langRef} style={{ position: "relative" }}>
           <button
             onClick={() => setLangOpen(!langOpen)}
             title="Cambiar idioma"
@@ -435,7 +435,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               }} />
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* Genio modal */}
