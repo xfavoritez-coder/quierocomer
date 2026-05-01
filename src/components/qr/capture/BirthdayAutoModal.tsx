@@ -13,6 +13,7 @@ interface Props {
 /**
  * Auto-shows the birthday modal on the 2nd visit if user hasn't saved birthday yet.
  * Mounted at top level of carta — doesn't depend on scroll position.
+ * Owns the visit counter (increments on mount, checks >= 2).
  */
 export default function BirthdayAutoModal({ restaurantId, restaurantName }: Props) {
   const [modalOpen, setModalOpen] = useState(false);
@@ -21,10 +22,14 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
+    if (sessionStorage.getItem("qc_bday_auto_checked")) return;
+    sessionStorage.setItem("qc_bday_auto_checked", "1");
 
+    // Increment visit count (owned here, not in BirthdayBanner)
     const visitKey = `qc_visit_count_${restaurantId}`;
-    const visits = parseInt(localStorage.getItem(visitKey) || "0");
-    // visits already incremented by BirthdayBanner, so check >= 2
+    const visits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
+    localStorage.setItem(visitKey, String(visits));
+
     const isSecondVisit = visits >= 2;
     const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
 

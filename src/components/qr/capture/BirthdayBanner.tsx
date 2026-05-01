@@ -26,45 +26,25 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
 
-    // Track visit count per restaurant
+    // Visit count is now managed by BirthdayAutoModal
     const visitKey = `qc_visit_count_${restaurantId}`;
-    const visits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
-    localStorage.setItem(visitKey, String(visits));
-    const isSecondVisit = visits === 2;
-    const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
+    const visits = parseInt(localStorage.getItem(visitKey) || "0");
 
+    // Auto-modal logic is now in BirthdayAutoModal — banner only shows inline
     fetch("/api/qr/user/me")
       .then((r) => r.json())
       .then((d) => {
         if (d.user) {
           if (!d.user.birthDate) {
             setExistingUser({ name: d.user.name, email: d.user.email });
-            // Second visit + never showed modal → auto-open modal
-            if (isSecondVisit && !alreadyShowedModal) {
-              setAutoModal(true);
-              setModalOpen(true);
-              localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-              fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
-            }
             setShow(true);
           }
           return;
         }
-        // Not logged in
         fetch("/api/qr/banner/select")
           .then((r) => r.json())
           .then((d) => {
-            if (d.variant) {
-              setVariant(d.variant);
-              // Second visit + never showed modal → auto-open modal
-              if (isSecondVisit && !alreadyShowedModal) {
-                setAutoModal(true);
-                setModalOpen(true);
-                localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-                fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
-              }
-              setShow(true);
-            }
+            if (d.variant) { setVariant(d.variant); setShow(true); }
           });
       })
       .catch(() => {});
