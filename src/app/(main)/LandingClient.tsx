@@ -273,7 +273,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <section id="funcionalidades" style={{ background: BG_WARM, padding: "64px 24px" }}>
         <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Vendedor silencioso</p>
-          <h3 style={{ fontFamily: F, fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 10, color: "#111" }}>Sugiere lo que falta. Sube el ticket sin pedir nada</h3>
+          <h3 style={{ fontFamily: F, fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 10, color: "#111" }}>Sugiere el acompañamiento perfecto en el momento justo</h3>
           <p style={{ fontSize: 15, color: "#666", lineHeight: 1.55, maxWidth: 540, margin: "0 auto 32px" }}>Cuando el cliente está mirando un plato, el Genio le muestra qué acompañamiento, postre o bebida combina mejor</p>
 
           {/* Cross-sell mock card */}
@@ -314,7 +314,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Lo que dicen los restaurantes</p>
-            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Hecho para gente que cocina</h2>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Pensado por y para restauranteros</h2>
           </div>
           <div className="lnd-testimonials-grid" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
             {[
