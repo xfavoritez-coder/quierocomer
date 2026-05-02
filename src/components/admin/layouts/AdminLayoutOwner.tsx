@@ -34,7 +34,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
   const showLive = opts.hasToteat && opts.plan === "PREMIUM";
   const SIDEBAR_NAV = [
     { icon: Home, label: "Inicio", href: base },
-    ...(showLive ? [{ icon: LiveIcon, label: "En vivo", href: `${base}/live` }] : []),
+    ...(showLive ? [{ icon: LiveIcon, label: "Venta en vivo", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Users, label: "Clientes", href: `${base}/clientes` },
