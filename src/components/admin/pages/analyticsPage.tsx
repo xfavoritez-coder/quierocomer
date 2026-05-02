@@ -488,20 +488,29 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
             <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: accent, margin: 0 }}>
               {data.hitRate !== null ? `${data.hitRate}%` : "—"}
             </p>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Acierto</p>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+              <span>Acierto</span>
+              <InfoTip text="De los platos que mostramos con este badge, qué porcentaje también estuvo entre los más vendidos. Si dice 67%, 2 de cada 3 platos destacados sí vendieron bien — el badge está acertando. Si dice 0%, ningún plato destacado fue de los más vendidos." />
+            </p>
           </div>
           <div>
             <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: data.salesLift !== null && data.salesLift > 0 ? accent : "var(--adm-text2)", margin: 0 }}>
               {data.salesLift !== null ? (data.salesLift > 0 ? `+${data.salesLift}%` : `${data.salesLift}%`) : "—"}
             </p>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Más ventas que el resto</p>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
+              <span>Más ventas que el resto</span>
+              <InfoTip text="Comparación de ventas entre platos destacados y no destacados. Si dice +50%, los platos con badge vendieron en promedio 50% más unidades que los que no tuvieron badge. Si es negativo, los platos sin badge vendieron más." />
+            </p>
           </div>
         </div>
 
         {/* Top items */}
         {data.topItems?.length > 0 && (
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Platos destacados</p>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>Platos que tuvieron este badge</span>
+              <InfoTip text="Lista los platos que tuvieron el badge en el período. La estrella ⭐ marca los que también fueron de los más vendidos — eso significa que el badge acertó." />
+            </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {data.topItems.map((it: any) => (
                 <div key={it.dishId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontFamily: FB, fontSize: "0.74rem", padding: "4px 0", borderBottom: `1px dashed rgba(${bgRgb},0.15)` }}>
@@ -509,8 +518,8 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
                     {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}
                     {it.name}
                   </span>
-                  <span style={{ flexShrink: 0, color: "var(--adm-text3)", fontSize: "0.7rem" }}>
-                    <span style={{ color: accent, fontWeight: 600 }}>{it.coveragePct}%</span> del tiempo · {it.sales} {it.sales === 1 ? "venta" : "ventas"}
+                  <span style={{ flexShrink: 0, color: accent, fontSize: "0.74rem", fontWeight: 600 }}>
+                    {it.sales} {it.sales === 1 ? "venta" : "ventas"}
                   </span>
                 </div>
               ))}
@@ -539,7 +548,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
           "#ef4444",
           "239,68,68",
           badges.popular,
-          "El acierto es qué porcentaje de los platos que tuvieron este badge también estuvieron entre los más vendidos. 'Más ventas que el resto' compara las ventas promedio de los platos badgeados contra los que no tuvieron el badge. Si dice +50%, los platos con badge vendieron en promedio 50% más unidades.",
+          "Mide si los platos que destacamos automáticamente con 🔥 son los que realmente venden bien. Si el acierto es alto, el algoritmo está acertando.",
         )}
         {renderCard(
           "⭐ Recomendado",
@@ -547,7 +556,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
           "#F4A623",
           "244,166,35",
           badges.recommended,
-          "Mismo cálculo que Popular pero para los platos que vos marcaste como Recomendados. Si el acierto y el lift son altos, tu intuición de qué destacar coincide con lo que la gente pide. Si son bajos, capaz convenga revisar la selección.",
+          "Mide si los platos que vos eligiste destacar son los que la gente pide. Si el acierto es alto, tu selección está dando en el clavo. Si es bajo, capaz convenga revisar qué destacás.",
         )}
       </div>
     </div>
