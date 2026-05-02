@@ -46,6 +46,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [dishPickerFor, setDishPickerFor] = useState<string | null>(null);
   const [dishSearch, setDishSearch] = useState("");
   const [pickerMode, setPickerMode] = useState<"dish" | "category">("dish");
+  const [pickerOpensUp, setPickerOpensUp] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const showSaved = (msg = "Guardado") => {
@@ -267,14 +268,26 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
 
                     {/* Add dish button */}
                     <div ref={dishPickerFor === template.id ? pickerRef : undefined} style={{ position: "relative" }}>
-                      <button onClick={() => { setDishPickerFor(dishPickerFor === template.id ? null : template.id); setPickerMode("dish"); setDishSearch(""); }}
+                      <button onClick={(e) => {
+                        if (dishPickerFor === template.id) { setDishPickerFor(null); return; }
+                        // Decide whether to open the dropdown above or below based
+                        // on remaining space — at the bottom of a long list, the
+                        // default "below" position would clip the dropdown.
+                        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                        const dropdownH = 320; // approx height (input + list + tabs)
+                        const spaceBelow = window.innerHeight - rect.bottom;
+                        setPickerOpensUp(spaceBelow < dropdownH && rect.top > spaceBelow);
+                        setDishPickerFor(template.id);
+                        setPickerMode("dish");
+                        setDishSearch("");
+                      }}
                         style={{ fontSize: "0.78rem", padding: "6px 14px", borderRadius: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", color: GOLD, cursor: "pointer", fontFamily: F, fontWeight: 600 }}>
                         + Agregar platos
                       </button>
 
                       {/* Picker dropdown */}
                       {dishPickerFor === template.id && (
-                        <div style={{ position: "absolute", top: "100%", left: 0, marginTop: 4, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 260, overflow: "hidden" }}>
+                        <div style={{ position: "absolute", ...(pickerOpensUp ? { bottom: "100%", marginBottom: 4 } : { top: "100%", marginTop: 4 }), left: 0, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 260, overflow: "hidden" }}>
                           {/* Mode tabs */}
                           <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border)" }}>
                             <button onClick={() => setPickerMode("dish")} style={{ flex: 1, padding: "8px", background: pickerMode === "dish" ? "var(--adm-hover)" : "none", border: "none", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: pickerMode === "dish" ? GOLD : "var(--adm-text3)", cursor: "pointer" }}>Platos</button>

@@ -3,12 +3,16 @@ import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
 
 /**
- * Cross-system analysis: how QC-side interest (views + detail dwells)
+ * Cross-system analysis: how QC-side interest (modal opens + detail time)
  * relates to Toteat-side reality (units actually sold).
  *
- * Per dish: views, detail opens, sold, conversionPct (sold / views).
- * Insights: 👻 fantasma (highly viewed, never sold), 🎯 estrella (high conv),
+ * Per dish: opens (modal opened), avgDetailMs, sold, conversionPct (sold / opens).
+ * Insights: 👻 fantasma (opened but never bought), 🎯 estrella (high conv),
  * 📦 huérfanos (sold in Toteat but not in QC menu).
+ *
+ * "Opens" replaces the legacy "views" metric, which counted any time a dish
+ * appeared in a session — including scroll-throughs that didn't reflect real
+ * intent. We now only count entries with detailMs > 0 (user opened the modal).
  *
  * Query params: ?restaurantId=...&from=YYYY-MM-DD&to=YYYY-MM-DD
  */
@@ -52,51 +56,95 @@ export async function GET(req: NextRequest) {
     else toteatByCode.set(p.toteatProductId, { id: p.toteatProductId, name: p.productName, quantity: p.quantity || 0, revenue: p.payed || 0, category: p.hierarchyName });
   }
 
-  // 2. QC dishes with mapping
+  // 2. QC dishes with mapping (+ modifier mappings — when a parent like
+  // "Limonada Artesanal" doesn't have its own Toteat code but each flavor
+  // does, we sum the modifier sales into the parent.)
   const dishes = await prisma.dish.findMany({
     where: { restaurantId, isActive: true, deletedAt: null },
-    select: { id: true, name: true, photos: true, toteatProductId: true, category: { select: { name: true } } },
+    select: {
+      id: true, name: true, photos: true, toteatProductId: true,
+      category: { select: { name: true } },
+      modifierTemplates: {
+        select: {
+          groups: {
+            select: {
+              options: {
+                where: { toteatProductId: { not: null } },
+                select: { toteatProductId: true },
+              },
+            },
+          },
+        },
+      },
+    },
   });
 
-  // 3. QC views in window
+  // 3. QC opens in window — only count modal opens that lasted long enough
+  // to reflect real interest. Entries under 3s are taps that closed almost
+  // immediately and don't represent intent.
+  const MIN_DETAIL_MS = 3000;
   const sessions = await prisma.session.findMany({
     where: { restaurantId, startedAt: { gte: from, lte: to } },
     select: { dishesViewed: true },
   });
-  const qcByDishId = new Map<string, { views: number; details: number; totalDetailMs: number }>();
+  const qcByDishId = new Map<string, { opens: number; totalDetailMs: number }>();
   for (const s of sessions) {
     const viewed = s.dishesViewed as any[];
     if (!Array.isArray(viewed)) continue;
     for (const d of viewed) {
       if (!d.dishId) continue;
-      const ex = qcByDishId.get(d.dishId) || { views: 0, details: 0, totalDetailMs: 0 };
-      ex.views++;
-      if (d.detailMs && d.detailMs > 0) {
-        ex.details++;
-        ex.totalDetailMs += d.detailMs;
-      }
+      if (!d.detailMs || d.detailMs < MIN_DETAIL_MS) continue;
+      const ex = qcByDishId.get(d.dishId) || { opens: 0, totalDetailMs: 0 };
+      ex.opens++;
+      ex.totalDetailMs += d.detailMs;
       qcByDishId.set(d.dishId, ex);
     }
   }
 
-  // 4. Cross via toteatProductId
+  // 4. Cross via toteatProductId — direct match on the dish + summed sales
+  // from any modifier options that have their own Toteat codes.
   const matchedToteatIds = new Set<string>();
   const rows = dishes.map((dish) => {
-    const matched = dish.toteatProductId ? toteatByCode.get(dish.toteatProductId) : null;
-    if (matched) matchedToteatIds.add(matched.id);
-    const qc = qcByDishId.get(dish.id) || { views: 0, details: 0, totalDetailMs: 0 };
+    let totalQty = 0;
+    let totalRevenue = 0;
+    if (dish.toteatProductId) {
+      const direct = toteatByCode.get(dish.toteatProductId);
+      if (direct) {
+        totalQty += direct.quantity;
+        totalRevenue += direct.revenue;
+        matchedToteatIds.add(direct.id);
+      }
+    }
+    let modifierMatchCount = 0;
+    for (const tpl of dish.modifierTemplates) {
+      for (const grp of tpl.groups) {
+        for (const opt of grp.options) {
+          if (!opt.toteatProductId) continue;
+          const modSale = toteatByCode.get(opt.toteatProductId);
+          if (modSale) {
+            totalQty += modSale.quantity;
+            totalRevenue += modSale.revenue;
+            matchedToteatIds.add(modSale.id);
+            modifierMatchCount++;
+          }
+        }
+      }
+    }
+    const qc = qcByDishId.get(dish.id) || { opens: 0, totalDetailMs: 0 };
+    // A dish counts as "mapped" if it has either a direct Toteat code or at
+    // least one mapped modifier option contributing sales.
+    const mapped = !!dish.toteatProductId || modifierMatchCount > 0;
     return {
       dishId: dish.id,
       name: dish.name,
       category: dish.category?.name || null,
       photo: dish.photos?.[0] || null,
-      mapped: !!dish.toteatProductId,
-      qcViews: qc.views,
-      qcDetails: qc.details,
-      avgDetailMs: qc.details > 0 ? Math.round(qc.totalDetailMs / qc.details) : 0,
-      sales: matched?.quantity || 0,
-      revenue: matched?.revenue || 0,
-      conversionPct: qc.views > 0 ? Math.round(((matched?.quantity || 0) / qc.views) * 100) : null,
+      mapped,
+      opens: qc.opens,
+      avgDetailMs: qc.opens > 0 ? Math.round(qc.totalDetailMs / qc.opens) : 0,
+      sales: totalQty,
+      revenue: totalRevenue,
+      conversionPct: qc.opens > 0 ? Math.round((totalQty / qc.opens) * 100) : null,
     };
   });
 
@@ -107,28 +155,33 @@ export async function GET(req: NextRequest) {
     .map((p) => ({ toteatId: p.id, name: p.name, category: p.category, sales: p.quantity, revenue: p.revenue }));
 
   // 6. Insights
-  // Fantasmas: dishes with high view count but very low conversion (0 sales OR
-  // <5% conversion). The "0 sales only" criterion was too strict — a dish with
-  // 50 views and 1 sale (2%) is still a clear case of "look but don't buy".
-  // Only consider mapped dishes so we know the sales count is reliable.
+  // Fantasmas: dishes opened with real intent (≥3 long opens) but rarely (or
+  // never) bought. Conversion on opens is the honest metric — "of those who
+  // actually looked at the detail, how many ordered". 15% is the threshold
+  // because below that, the dish is clearly losing the close: people see it,
+  // get interested enough to read it, and then choose something else.
   const fantasmas = rows
-    .filter((r) => r.mapped && r.qcViews >= 5 && (r.sales === 0 || (r.conversionPct ?? 0) < 5))
+    .filter((r) => r.mapped && r.opens >= 3 && (r.sales === 0 || (r.conversionPct ?? 0) <= 15))
     .sort((a, b) => {
-      // Surface the most-viewed-yet-unsold dishes first
       if (a.sales === 0 && b.sales > 0) return -1;
       if (b.sales === 0 && a.sales > 0) return 1;
-      return b.qcViews - a.qcViews;
+      return b.opens - a.opens;
     })
     .slice(0, 8);
-  // Top 5 best converters of the period. Use a relative ranking instead of a
-  // fixed % threshold so longer windows (more accumulated views) still surface
-  // their stars — a dish with 30 views and 3 sales (10%) is still the period's
-  // top converter if the others are at 5% or 0%.
+  // Sospechosos: unmapped dishes with real interest. We can't tell if they
+  // sold (no Toteat link), so we surface them as "map to confirm".
+  const sospechosos = rows
+    .filter((r) => !r.mapped && r.opens >= 3)
+    .sort((a, b) => b.opens - a.opens)
+    .slice(0, 8);
+  // Top 10 best converters: opened ≥ 3 times and at least 2 sales, ranked by
+  // conv on opens. Relative ranking so longer windows still surface stars.
+  // 10 fits nicely on desktop next to the orphans block.
   const estrellas = rows
-    .filter((r) => r.qcViews >= 5 && r.sales >= 2)
+    .filter((r) => r.opens >= 3 && r.sales >= 2)
     .sort((a, b) => (b.conversionPct ?? 0) - (a.conversionPct ?? 0))
-    .slice(0, 5);
-  const totalQcViews = rows.reduce((s, r) => s + r.qcViews, 0);
+    .slice(0, 10);
+  const totalOpens = rows.reduce((s, r) => s + r.opens, 0);
   const totalSales = rows.reduce((s, r) => s + r.sales, 0);
   const totalRevenue = rows.reduce((s, r) => s + r.revenue, 0);
   const matchedCount = rows.filter((r) => r.mapped).length;
@@ -141,12 +194,12 @@ export async function GET(req: NextRequest) {
       totalDishes: rows.length,
       mappedDishes: matchedCount,
       mappedPct: rows.length > 0 ? Math.round((matchedCount / rows.length) * 100) : 0,
-      totalQcViews,
+      totalOpens,
       totalSales,
       totalRevenue,
       orphanCount: orphans.length,
     },
-    insights: { fantasmas, estrellas },
+    insights: { fantasmas, sospechosos, estrellas },
     rows,
     orphans,
   });

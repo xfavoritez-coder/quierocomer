@@ -6,13 +6,15 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
 interface CatalogEntry { toteatProductId: string; name: string; hierarchyName: string | null; totalSold?: number; }
-interface MappedDish { id: string; name: string; photo: string | null; category: string | null; toteatProductId: string; toteatName: string | null; mappedBy: string; mappedAt: string | null; }
-interface UnmappedDish { id: string; name: string; photo: string | null; category: string | null; suggestion: { score: number; toteatProductId: string; name: string } | null; }
+interface ModifierInfo { id: string; name: string; group: string; template: string; toteatProductId: string | null; toteatName: string | null; mappedBy: string | null; }
+interface MappedDish { id: string; name: string; photo: string | null; category: string | null; toteatProductId: string; toteatName: string | null; mappedBy: string; mappedAt: string | null; modifiers: ModifierInfo[]; }
+interface UnmappedDish { id: string; name: string; photo: string | null; category: string | null; suggestion: { score: number; toteatProductId: string; name: string } | null; modifiers: ModifierInfo[]; }
 interface ToteatStatus {
   summary: { total: number; mapped: number; unmapped: number; mappedPct: number; catalogSize: number };
   mapped: MappedDish[];
   unmapped: UnmappedDish[];
   catalog: CatalogEntry[];
+  modifierCatalog: CatalogEntry[];
   error?: string;
 }
 
@@ -27,7 +29,7 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
     setLoading(true);
     fetch(`/api/admin/dishes/toteat-status?restaurantId=${restaurantId}`)
       .then((r) => r.json())
-      .then((d) => { if (d.error) setData({ ...d, summary: { total: 0, mapped: 0, unmapped: 0, mappedPct: 0, catalogSize: 0 }, mapped: [], unmapped: [], catalog: [] }); else setData(d); })
+      .then((d) => { if (d.error) setData({ ...d, summary: { total: 0, mapped: 0, unmapped: 0, mappedPct: 0, catalogSize: 0 }, mapped: [], unmapped: [], catalog: [], modifierCatalog: [] }); else setData(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [restaurantId]);
@@ -37,22 +39,33 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   const runAutoMap = async () => {
     setBusy(true); setMsg(null);
     try {
-      const res = await fetch("/api/admin/dishes/auto-map-toteat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId }),
-      });
-      const d = await res.json();
-      if (d.ok) setMsg(`Auto-mapeo: ${d.summary.matched} matcheados · ${d.summary.candidates} candidatos · ${d.summary.unmapped} sin coincidencia`);
-      else setMsg(`Error: ${d.error || "desconocido"}`);
+      const [resDishes, resMods] = await Promise.all([
+        fetch("/api/admin/dishes/auto-map-toteat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) }).then(r => r.json()),
+        fetch("/api/admin/modifiers/auto-map-toteat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }) }).then(r => r.json()),
+      ]);
+      const dishMatches = resDishes?.summary?.matched ?? 0;
+      const modMatches = resMods?.summary?.matched ?? 0;
+      setMsg(`Auto-mapeo: ${dishMatches} platos · ${modMatches} modificadores matcheados`);
       load();
     } finally { setBusy(false); }
   };
 
-  const setMapping = async (dishId: string, toteatProductId: string | null) => {
+  const setDishMapping = async (dishId: string, toteatProductId: string | null) => {
     setBusy(true);
     try {
       const res = await fetch(`/api/admin/dishes/${dishId}/map-toteat`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ toteatProductId }),
+      });
+      if (res.ok) load();
+    } finally { setBusy(false); }
+  };
+
+  const setModifierMapping = async (modifierId: string, toteatProductId: string | null) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/modifiers/${modifierId}/map-toteat`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toteatProductId }),
@@ -87,6 +100,11 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
     ? data.mapped.filter((d) => d.name.toLowerCase().includes(filterText) || (d.toteatName || "").toLowerCase().includes(filterText))
     : data.mapped;
 
+  // Total modifier mapping stats across all dishes
+  const allMods = [...data.mapped, ...data.unmapped].flatMap((d) => d.modifiers);
+  const mappedMods = allMods.filter((m) => m.toteatProductId).length;
+  const totalMods = allMods.length;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* Summary card */}
@@ -100,8 +118,13 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
                 ({data.summary.mappedPct}%)
               </span>
             </p>
+            {totalMods > 0 && (
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
+                {mappedMods} / {totalMods} modificadores mapeados
+              </p>
+            )}
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-              {data.summary.catalogSize} productos Toteat disponibles (vendidos en los últimos 30 días)
+              {data.summary.catalogSize} productos Toteat disponibles
             </p>
           </div>
           <button
@@ -140,12 +163,15 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {filteredUnmapped.map((d) => (
-              <DishMapRow
+              <DishWithModifiers
                 key={d.id}
                 dish={d}
+                mappedKind="unmapped"
                 catalog={data.catalog}
+                modifierCatalog={data.modifierCatalog}
                 disabled={busy}
-                onSelect={(toteatId) => setMapping(d.id, toteatId)}
+                onDishMap={(toteatId) => setDishMapping(d.id, toteatId)}
+                onModifierMap={setModifierMapping}
               />
             ))}
           </div>
@@ -160,22 +186,16 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {filteredMapped.map((d) => (
-              <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(0,0,0,0.02)", borderRadius: 8, border: "1px solid var(--adm-card-border)" }}>
-                {d.photo ? <img src={d.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)" }} />}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0, fontWeight: 600 }}>{d.name}</p>
-                  <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
-                    → {d.toteatName || d.toteatProductId} <span style={{ color: "#16a34a", marginLeft: 6 }}>({d.mappedBy})</span>
-                  </p>
-                </div>
-                <button
-                  onClick={() => setMapping(d.id, null)}
-                  disabled={busy}
-                  style={{ padding: "4px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}
-                >
-                  Desvincular
-                </button>
-              </div>
+              <DishWithModifiers
+                key={d.id}
+                dish={d}
+                mappedKind="mapped"
+                catalog={data.catalog}
+                modifierCatalog={data.modifierCatalog}
+                disabled={busy}
+                onDishMap={(toteatId) => setDishMapping(d.id, toteatId)}
+                onModifierMap={setModifierMapping}
+              />
             ))}
           </div>
         </div>
@@ -184,7 +204,89 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   );
 }
 
-function DishMapRow({ dish, catalog, disabled, onSelect }: { dish: UnmappedDish; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string) => void }) {
+interface DishWithModsProps {
+  dish: MappedDish | UnmappedDish;
+  mappedKind: "mapped" | "unmapped";
+  catalog: CatalogEntry[];
+  modifierCatalog: CatalogEntry[];
+  disabled: boolean;
+  onDishMap: (toteatId: string | null) => void;
+  onModifierMap: (modifierId: string, toteatId: string | null) => void;
+}
+
+function DishWithModifiers({ dish, mappedKind, catalog, modifierCatalog, disabled, onDishMap, onModifierMap }: DishWithModsProps) {
+  const hasMods = dish.modifiers.length > 0;
+  const mappedMods = dish.modifiers.filter((m) => m.toteatProductId).length;
+  const [showMods, setShowMods] = useState(false);
+  const [editingDish, setEditingDish] = useState(false);
+
+  return (
+    <div>
+      {mappedKind === "unmapped" || editingDish ? (
+        <DishMapRow
+          dish={mappedKind === "unmapped"
+            ? (dish as UnmappedDish)
+            : { ...(dish as MappedDish), suggestion: { score: 100, toteatProductId: (dish as MappedDish).toteatProductId, name: (dish as MappedDish).toteatName || "" } }
+          }
+          catalog={catalog}
+          disabled={disabled}
+          onSelect={(id) => { onDishMap(id); setEditingDish(false); }}
+          onCancel={editingDish ? () => setEditingDish(false) : undefined}
+        />
+      ) : (
+        <MappedDishRow dish={dish as MappedDish} disabled={disabled} onEdit={() => setEditingDish(true)} onUnmap={() => onDishMap(null)} />
+      )}
+      {hasMods && (
+        <div style={{ marginTop: 6, marginLeft: 14, paddingLeft: 12, borderLeft: "2px solid var(--adm-card-border)" }}>
+          <button
+            onClick={() => setShowMods(!showMods)}
+            style={{ padding: "4px 8px", background: "transparent", border: "none", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer", fontWeight: 600 }}
+          >
+            {showMods ? "▾" : "▸"} {dish.modifiers.length} modificador{dish.modifiers.length !== 1 ? "es" : ""} <span style={{ color: mappedMods === dish.modifiers.length ? "#16a34a" : "#F4A623", marginLeft: 4 }}>({mappedMods}/{dish.modifiers.length} mapeados)</span>
+          </button>
+          {showMods && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 6 }}>
+              {dish.modifiers.map((m) => (
+                <ModifierMapRow key={m.id} modifier={m} catalog={modifierCatalog} disabled={disabled} onSelect={(id) => onModifierMap(m.id, id)} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MappedDishRow({ dish, disabled, onEdit, onUnmap }: { dish: MappedDish; disabled: boolean; onEdit: () => void; onUnmap: () => void }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(0,0,0,0.02)", borderRadius: 8, border: "1px solid var(--adm-card-border)" }}>
+      {dish.photo ? <img src={dish.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} /> : <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)" }} />}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", margin: 0, fontWeight: 600 }}>{dish.name}</p>
+        <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+          → {dish.toteatName || dish.toteatProductId} <span style={{ color: "#16a34a", marginLeft: 6 }}>({dish.mappedBy})</span>
+        </p>
+      </div>
+      <button
+        onClick={onEdit}
+        disabled={disabled}
+        title="Cambiar mapeo"
+        style={{ padding: "4px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", cursor: "pointer" }}
+      >
+        ✎ Editar
+      </button>
+      <button
+        onClick={onUnmap}
+        disabled={disabled}
+        style={{ padding: "4px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}
+      >
+        Desvincular
+      </button>
+    </div>
+  );
+}
+
+function DishMapRow({ dish, catalog, disabled, onSelect, onCancel }: { dish: UnmappedDish; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string) => void; onCancel?: () => void }) {
   const [value, setValue] = useState(dish.suggestion?.toteatProductId || "");
   const [customMode, setCustomMode] = useState(false);
   const [customId, setCustomId] = useState("");
@@ -240,8 +342,110 @@ function DishMapRow({ dish, catalog, disabled, onSelect }: { dish: UnmappedDish;
         disabled={!idToSubmit || disabled}
         style={{ padding: "6px 14px", background: "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: !idToSubmit || disabled ? "not-allowed" : "pointer", opacity: !idToSubmit || disabled ? 0.5 : 1 }}
       >
-        Mapear
+        {onCancel ? "Guardar" : "Mapear"}
       </button>
+      {onCancel && (
+        <button
+          onClick={onCancel}
+          disabled={disabled}
+          style={{ padding: "6px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}
+        >
+          Cancelar
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ModifierMapRow({ modifier, catalog, disabled, onSelect }: { modifier: ModifierInfo; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string | null) => void }) {
+  const [value, setValue] = useState(modifier.toteatProductId || "");
+  const [customMode, setCustomMode] = useState(false);
+  const [customId, setCustomId] = useState("");
+  const [editing, setEditing] = useState(false);
+  const isMapped = !!modifier.toteatProductId;
+  const idToSubmit = customMode ? customId.trim() : value;
+
+  if (isMapped && !editing) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(34,197,94,0.04)", borderRadius: 8, border: "1px solid rgba(34,197,94,0.15)" }}>
+        <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>
+          {modifier.name} <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 4 }}>· {modifier.group}</span>
+        </span>
+        <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "#16a34a" }}>
+          → {modifier.toteatName || modifier.toteatProductId} {modifier.mappedBy && <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>({modifier.mappedBy})</span>}
+        </span>
+        <button
+          onClick={() => { setValue(modifier.toteatProductId || ""); setCustomMode(false); setCustomId(""); setEditing(true); }}
+          disabled={disabled}
+          title="Cambiar mapeo"
+          style={{ padding: "3px 8px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", cursor: "pointer" }}
+        >
+          ✎
+        </button>
+        <button
+          onClick={() => onSelect(null)}
+          disabled={disabled}
+          title="Desvincular"
+          style={{ padding: "3px 8px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}
+        >
+          ×
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px", background: "rgba(239,68,68,0.03)", borderRadius: 8, border: "1px solid rgba(239,68,68,0.1)", flexWrap: "wrap" }}>
+      <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text)", flex: "0 1 auto", minWidth: 100 }}>
+        {modifier.name}<span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 4 }}>· {modifier.group}</span>
+      </span>
+      {customMode ? (
+        <input
+          type="text"
+          value={customId}
+          onChange={(e) => setCustomId(e.target.value)}
+          disabled={disabled}
+          placeholder="HV0301"
+          style={{ flex: "1 1 140px", padding: "5px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", minWidth: 140 }}
+        />
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={disabled}
+          style={{ flex: "1 1 160px", padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", minWidth: 160 }}
+        >
+          <option value="">Producto Toteat...</option>
+          {catalog.map((c) => (
+            <option key={c.toteatProductId} value={c.toteatProductId}>
+              {c.name}
+            </option>
+          ))}
+        </select>
+      )}
+      <button
+        onClick={() => setCustomMode((m) => !m)}
+        disabled={disabled}
+        style={{ padding: "4px 8px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}
+      >
+        {customMode ? "↩" : "✎"}
+      </button>
+      <button
+        onClick={() => { if (idToSubmit) { onSelect(idToSubmit); setEditing(false); } }}
+        disabled={!idToSubmit || disabled}
+        style={{ padding: "4px 10px", background: "#F4A623", color: "#fff", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 700, cursor: !idToSubmit || disabled ? "not-allowed" : "pointer", opacity: !idToSubmit || disabled ? 0.5 : 1 }}
+      >
+        {editing ? "Guardar" : "Mapear"}
+      </button>
+      {editing && (
+        <button
+          onClick={() => setEditing(false)}
+          disabled={disabled}
+          style={{ padding: "4px 8px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", cursor: "pointer" }}
+        >
+          Cancelar
+        </button>
+      )}
     </div>
   );
 }

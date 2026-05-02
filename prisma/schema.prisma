@@ -710,11 +710,18 @@ model ModifierTemplateOption {
   isDefault       Boolean @default(false)
   isHidden        Boolean @default(false)
   position        Int     @default(0)
+  // Toteat mapping — when this modifier is sold under a distinct Toteat code
+  // (e.g. "Limonada Menta" = HV0301, "Limonada Jengibre" = HV0302), we map
+  // each option to its code so the parent dish's sales are correctly summed.
+  toteatProductId String?
+  toteatMappedAt  DateTime?
+  toteatMappedBy  String?  // "auto" | "manual"
 
   group        ModifierTemplateGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
   translations ModifierOptionTranslation[]
 
   @@index([groupId])
+  @@index([toteatProductId])
 }
 
 model ModifierGroupTranslation {
