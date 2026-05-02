@@ -107,9 +107,18 @@ export async function GET(req: NextRequest) {
     .map((p) => ({ toteatId: p.id, name: p.name, category: p.category, sales: p.quantity, revenue: p.revenue }));
 
   // 6. Insights
+  // Fantasmas: dishes with high view count but very low conversion (0 sales OR
+  // <5% conversion). The "0 sales only" criterion was too strict — a dish with
+  // 50 views and 1 sale (2%) is still a clear case of "look but don't buy".
+  // Only consider mapped dishes so we know the sales count is reliable.
   const fantasmas = rows
-    .filter((r) => r.qcViews >= 5 && r.sales === 0 && r.mapped) // mapped but never sold
-    .sort((a, b) => b.qcViews - a.qcViews)
+    .filter((r) => r.mapped && r.qcViews >= 5 && (r.sales === 0 || (r.conversionPct ?? 0) < 5))
+    .sort((a, b) => {
+      // Surface the most-viewed-yet-unsold dishes first
+      if (a.sales === 0 && b.sales > 0) return -1;
+      if (b.sales === 0 && a.sales > 0) return 1;
+      return b.qcViews - a.qcViews;
+    })
     .slice(0, 8);
   // Top 5 best converters of the period. Use a relative ranking instead of a
   // fixed % threshold so longer windows (more accumulated views) still surface

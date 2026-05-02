@@ -241,7 +241,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 </thead>
                 <tbody>
                   {sortedRows.map((r: any) => {
-                    const flag = r.qcViews >= 5 && r.sales === 0 ? "👻" : r.sales > 0 && (r.conversionPct ?? 0) >= 25 ? "🎯" : "";
+                    const isFantasma = r.mapped && r.qcViews >= 5 && (r.sales === 0 || (r.conversionPct ?? 0) < 5);
+                    const isStar = r.sales > 0 && (r.conversionPct ?? 0) >= 25;
+                    const flag = isFantasma ? "👻" : isStar ? "🎯" : "";
                     return (
                       <tr key={r.dishId} style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
                         <td style={{ padding: "6px" }}>
