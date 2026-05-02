@@ -11,6 +11,8 @@
  */
 
 import { prisma } from "@/lib/prisma";
+import { fetchToteatProducts } from "./fetchProducts";
+import { ToteatCredentials } from "./fetchSales";
 
 const STOPWORDS = [
   "roll", "rolls", "sushi", "extra", "porcion", "porción",
@@ -53,26 +55,65 @@ export interface ToteatProductCandidate {
   totalSold?: number;
 }
 
+async function loadCredentialsFromRestaurant(restaurantId: string): Promise<ToteatCredentials | null> {
+  const r = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { toteatRestaurantId: true, toteatLocalId: true, toteatUserId: true, toteatApiToken: true },
+  });
+  if (r?.toteatRestaurantId && r.toteatLocalId !== null && r.toteatUserId !== null && r.toteatApiToken) {
+    return {
+      base: process.env.TOTEAT_API_BASE || "https://api.toteat.com/mw/or/1.0",
+      xir: r.toteatRestaurantId,
+      xil: r.toteatLocalId!,
+      xiu: r.toteatUserId!,
+      token: r.toteatApiToken,
+    };
+  }
+  // Dev fallback to env vars
+  const base = process.env.TOTEAT_API_BASE;
+  const xir = process.env.TOTEAT_RESTAURANT_ID;
+  const xil = process.env.TOTEAT_LOCAL_ID;
+  const xiu = process.env.TOTEAT_USER_ID;
+  const token = process.env.TOTEAT_API_TOKEN;
+  if (base && xir && xil && xiu && token) return { base, xir, xil, xiu, token };
+  return null;
+}
+
 /**
- * Returns the universe of Toteat products we can map to, derived from
- * cached ToteatSaleProduct rows. Limited to products sold within the last
- * 30 days unless `windowDays` overridden.
+ * Returns the FULL Toteat product catalog (all active products in the POS)
+ * by hitting /products live, with the cached ToteatSaleProduct rows used
+ * as a fallback if the live call fails. This is the complete universe of
+ * dishes the restaurant has set up — not just those that have sold recently.
+ *
+ * Modifiers are excluded by default so we don't pollute the dropdown with
+ * "Envuelto en palta" style options that the QC dish-level UI doesn't expose.
  */
 export async function getToteatProductCatalog(
   restaurantId: string,
-  windowDays: number = 30
+  opts: { includeModifiers?: boolean; windowDaysFallback?: number } = {}
 ): Promise<ToteatProductCandidate[]> {
+  const credentials = await loadCredentialsFromRestaurant(restaurantId);
+  if (credentials) {
+    const live = await fetchToteatProducts({ credentials, activeOnly: true });
+    if (live.data && live.data.length > 0) {
+      return live.data
+        .filter((p) => opts.includeModifiers || !p.isModifier)
+        .map((p) => ({
+          toteatProductId: p.id,
+          name: p.name,
+          hierarchyName: p.category || null,
+        }));
+    }
+  }
+
+  // Fallback: derive catalog from sales we've cached locally
+  const windowDays = opts.windowDaysFallback ?? 90;
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
   const grouped = await prisma.toteatSaleProduct.groupBy({
     by: ["toteatProductId", "productName", "hierarchyName"],
-    where: {
-      sale: { restaurantId, dateClosed: { gte: since } },
-    },
+    where: { sale: { restaurantId, dateClosed: { gte: since } } },
     _count: { _all: true },
-    _max: { id: true },
   });
-
-  // For "lastSold", a separate findMany would be needed; skip for v1 (we use _count as proxy).
   return grouped.map((g) => ({
     toteatProductId: g.toteatProductId,
     name: g.productName,
