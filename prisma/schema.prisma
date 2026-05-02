@@ -612,6 +612,13 @@ model Dish {
   isFeaturedAuto Boolean      @default(false)
   flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
   position       Int
+
+  // Toteat POS link — set when this dish has been mapped to a Toteat product code
+  // (e.g. "HV0010"). Used to attribute Toteat sales back to QC dishes.
+  toteatProductId String?
+  toteatMappedAt  DateTime?  // when the mapping was set (manual or auto)
+  toteatMappedBy  String?    // "auto" | "manual" — for audit
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
 
@@ -625,6 +632,8 @@ model Dish {
   suggestedWith       DishSuggestion[]       @relation("SuggestionFrom")
   suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
   badgeSnapshots      BadgeSnapshot[]
+
+  @@index([restaurantId, toteatProductId])
 
   @@index([restaurantId])
   @@index([categoryId])

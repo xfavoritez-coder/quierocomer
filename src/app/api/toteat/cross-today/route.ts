@@ -57,7 +57,7 @@ export async function GET() {
   }
   const dishes = await prisma.dish.findMany({
     where: { restaurantId: restaurant.id, isActive: true, deletedAt: null },
-    select: { id: true, name: true, price: true, photos: true, category: { select: { name: true } } },
+    select: { id: true, name: true, price: true, photos: true, toteatProductId: true, category: { select: { name: true } } },
   });
 
   // Aggregate QC views from today's sessions
@@ -89,20 +89,37 @@ export async function GET() {
     toteatByNorm.push({ norm: normalize(entry.name), entry });
   }
 
-  // Match each QC dish to best Toteat product
+  // Match each QC dish to a Toteat product. Prefer the explicit
+  // toteatProductId (set via the mapping panel); fall back to fuzzy name
+  // match for dishes that haven't been mapped yet.
   const matchedToteatIds = new Set<string>();
   const rows = dishes.map((dish) => {
-    const dishNorm = normalize(dish.name);
-    let best: { norm: string; entry: any } | null = null;
+    let matched: { id: string; name: string; quantity: number; revenue: number; category: string | null } | null = null;
     let bestScore = 0;
-    for (const t of toteatByNorm) {
-      const s = score(dishNorm, t.norm);
-      if (s > bestScore) {
-        bestScore = s;
-        best = t;
+    let matchSource: "explicit" | "fuzzy" | null = null;
+
+    if (dish.toteatProductId) {
+      const explicit = toteatByCode.get(dish.toteatProductId);
+      if (explicit) {
+        matched = explicit;
+        bestScore = 100;
+        matchSource = "explicit";
       }
     }
-    const matched = bestScore >= 60 ? best!.entry : null;
+
+    if (!matched) {
+      const dishNorm = normalize(dish.name);
+      let best: { norm: string; entry: any } | null = null;
+      for (const t of toteatByNorm) {
+        const s = score(dishNorm, t.norm);
+        if (s > bestScore) { bestScore = s; best = t; }
+      }
+      if (best && bestScore >= 60) {
+        matched = best.entry;
+        matchSource = "fuzzy";
+      }
+    }
+
     if (matched) matchedToteatIds.add(matched.id);
     const qc = qcByDishId.get(dish.id) || { views: 0, details: 0, totalDetailMs: 0 };
     return {
@@ -116,6 +133,7 @@ export async function GET() {
       toteatId: matched?.id || null,
       toteatName: matched?.name || null,
       matchScore: bestScore,
+      matchSource,
       sales: matched?.quantity || 0,
       revenue: matched?.revenue || 0,
       conversionPct: qc.views > 0 && matched ? Math.round(((matched.quantity || 0) / qc.views) * 100) : null,

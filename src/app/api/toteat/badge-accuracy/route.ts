@@ -36,7 +36,7 @@ export async function GET() {
   // 2. Get all active dishes + which are RECOMMENDED
   const dishes = await prisma.dish.findMany({
     where: { restaurantId: restaurant.id, isActive: true, deletedAt: null },
-    select: { id: true, name: true, photos: true, tags: true, category: { select: { name: true } } },
+    select: { id: true, name: true, photos: true, tags: true, toteatProductId: true, category: { select: { name: true } } },
   });
   const recommendedIds = new Set(dishes.filter((d) => d.tags.includes("RECOMMENDED")).map((d) => d.id));
 
@@ -53,16 +53,24 @@ export async function GET() {
   }
   const toteatNorm = Array.from(byCode.values()).map((e) => ({ norm: normalize(e.name), entry: e }));
 
-  // 5. Match each QC dish to Toteat name → get sales
+  // 5. Match each QC dish to Toteat: prefer explicit toteatProductId,
+  // fall back to fuzzy name match for unmapped dishes.
   const enriched = dishes.map((dish) => {
-    const dnorm = normalize(dish.name);
-    let best: { norm: string; entry: any } | null = null;
-    let bestScore = 0;
-    for (const t of toteatNorm) {
-      const s = score(dnorm, t.norm);
-      if (s > bestScore) { bestScore = s; best = t; }
+    let matched: { id: string; name: string; quantity: number; revenue: number } | null = null;
+    if (dish.toteatProductId) {
+      const explicit = byCode.get(dish.toteatProductId);
+      if (explicit) matched = explicit;
     }
-    const matched = bestScore >= 60 ? best!.entry : null;
+    if (!matched) {
+      const dnorm = normalize(dish.name);
+      let best: { norm: string; entry: any } | null = null;
+      let bestScore = 0;
+      for (const t of toteatNorm) {
+        const s = score(dnorm, t.norm);
+        if (s > bestScore) { bestScore = s; best = t; }
+      }
+      if (best && bestScore >= 60) matched = best.entry;
+    }
     return {
       qcDishId: dish.id,
       name: dish.name,

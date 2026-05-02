@@ -5,6 +5,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import RestaurantPicker from "@/lib/admin/RestaurantPicker";
 import ModifierTemplatesTab from "@/components/admin/ModifierTemplatesTab";
 import CategoriesManager from "@/components/admin/CategoriesManager";
+import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
@@ -360,7 +361,7 @@ export default function AdminMenus() {
   const PAGE_SIZE = 20;
   const router = useRouter();
   const searchParams = useSearchParams();
-  const validTabs = ["productos", "categorias", "modificadores", "horarios"] as const;
+  const validTabs = ["productos", "categorias", "modificadores", "horarios", "toteat"] as const;
   type MenuTab = typeof validTabs[number];
   const tabFromUrl = searchParams.get("tab") as MenuTab | null;
   const [menuTab, setMenuTabState] = useState<MenuTab>(tabFromUrl && validTabs.includes(tabFromUrl) ? tabFromUrl : "productos");
@@ -1296,6 +1297,7 @@ export default function AdminMenus() {
           { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
           { key: "horarios" as const, label: "Horarios" },
+          { key: "toteat" as const, label: "Toteat" },
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
@@ -1701,6 +1703,10 @@ export default function AdminMenus() {
       {/* ── Horarios tab ── */}
       {menuTab === "horarios" && selectedRestaurantId && (
         <HappyHoursTab restaurantId={selectedRestaurantId} categories={categories} />
+      )}
+      {/* ── Toteat tab ── */}
+      {menuTab === "toteat" && selectedRestaurantId && (
+        <ToteatMappingPanel restaurantId={selectedRestaurantId} />
       )}
       {/* FAB — mobile only */}
       {menuTab === "productos" && !creatingDish && !editMode && (
