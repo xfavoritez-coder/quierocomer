@@ -56,11 +56,48 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 }
 
 /* ═══ TAB: Platos ═══ */
+type CrossSortKey = "name" | "qcViews" | "qcDetails" | "sales" | "conversionPct";
+type CrossSortDir = "asc" | "desc";
+
+function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
+  return (
+    <span aria-hidden style={{ display: "inline-flex", flexDirection: "column", lineHeight: 0.7, fontSize: 9, opacity: active ? 1 : 0.4 }}>
+      <span style={{ color: active && dir === "asc" ? "var(--adm-accent)" : "currentColor" }}>▲</span>
+      <span style={{ color: active && dir === "desc" ? "var(--adm-accent)" : "currentColor" }}>▼</span>
+    </span>
+  );
+}
+
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tableOpen, setTableOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<CrossSortKey>("sales");
+  const [sortDir, setSortDir] = useState<CrossSortDir>("desc");
+
+  const toggleSort = (key: CrossSortKey) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir(key === "name" ? "asc" : "desc"); }
+  };
+
+  const sortedRows = (() => {
+    if (!cross?.rows) return [];
+    const rows = [...cross.rows];
+    rows.sort((a: any, b: any) => {
+      let av: any = a[sortKey];
+      let bv: any = b[sortKey];
+      // null / undefined go last
+      if (av === null || av === undefined) av = sortDir === "desc" ? -Infinity : Infinity;
+      if (bv === null || bv === undefined) bv = sortDir === "desc" ? -Infinity : Infinity;
+      if (typeof av === "string" && typeof bv === "string") {
+        const cmp = av.localeCompare(bv, "es");
+        return sortDir === "asc" ? cmp : -cmp;
+      }
+      return sortDir === "asc" ? (av as number) - (bv as number) : (bv as number) - (av as number);
+    });
+    return rows;
+  })();
 
   useEffect(() => {
     setLoading(true);
@@ -171,15 +208,39 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
               <table style={{ width: "100%", fontFamily: FB, fontSize: "0.74rem", borderCollapse: "collapse" }}>
                 <thead>
                   <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
-                    <th style={{ padding: "8px 6px", fontWeight: 600 }}>Plato</th>
-                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Vistas</th>
-                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Detalles</th>
-                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Ventas</th>
-                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Conv.</th>
+                    {([
+                      { key: "name", label: "Plato", align: "left" as const },
+                      { key: "qcViews", label: "Vistas", align: "right" as const },
+                      { key: "qcDetails", label: "Detalles", align: "right" as const },
+                      { key: "sales", label: "Ventas", align: "right" as const },
+                      { key: "conversionPct", label: "Conv.", align: "right" as const },
+                    ] as { key: CrossSortKey; label: string; align: "left" | "right" }[]).map((col) => {
+                      const active = sortKey === col.key;
+                      return (
+                        <th
+                          key={col.key}
+                          onClick={() => toggleSort(col.key)}
+                          style={{ padding: "8px 6px", fontWeight: 600, textAlign: col.align, cursor: "pointer", userSelect: "none", color: active ? "var(--adm-text)" : "var(--adm-text3)" }}
+                          title={`Ordenar por ${col.label}`}
+                        >
+                          {col.align === "right" ? (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              {col.label}
+                              <SortIcon active={active} dir={sortDir} />
+                            </span>
+                          ) : (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                              <SortIcon active={active} dir={sortDir} />
+                              {col.label}
+                            </span>
+                          )}
+                        </th>
+                      );
+                    })}
                   </tr>
                 </thead>
                 <tbody>
-                  {cross.rows.map((r: any) => {
+                  {sortedRows.map((r: any) => {
                     const flag = r.qcViews >= 5 && r.sales === 0 ? "👻" : r.sales > 0 && (r.conversionPct ?? 0) >= 25 ? "🎯" : "";
                     return (
                       <tr key={r.dishId} style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
