@@ -443,10 +443,11 @@ export default function AdminSessions() {
           )}
           {sessions.map(s => {
             const isOpen = expanded === s.id;
-            const day = new Date(s.startedAt).toISOString().split("T")[0];
-            const sameDaySessions = sessions.filter(x => x.guest.id === s.guest.id && new Date(x.startedAt).toISOString().split("T")[0] === day);
-            const visitNum = sameDaySessions.length > 1 ? sameDaySessions.sort((a, b) => new Date(a.startedAt).getTime() - new Date(b.startedAt).getTime()).findIndex(x => x.id === s.id) + 1 : 0;
-            const totalVisitsToday = sameDaySessions.length;
+            // visitsToday/visitNumToday come from the server now — they count
+            // ALL sessions in DB for that guest+day, not just ones in this
+            // paginated list. See /api/admin/sessions visitsTodayBySession.
+            const totalVisitsToday = (s as any).visitsToday ?? 1;
+            const visitNum = (s as any).visitNumToday ?? 1;
             return (
               <div key={s.id} style={{ background: bulkSelected.has(s.id) ? "rgba(244,166,35,0.04)" : "#1A1A1A", border: `1px solid ${bulkSelected.has(s.id) ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "#2A2A2A"}`, borderRadius: 14, overflow: "hidden", transition: "border-color 0.2s", position: "relative" }}>
                 {/* Header row */}

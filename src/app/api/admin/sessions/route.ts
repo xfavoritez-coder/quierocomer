@@ -313,7 +313,7 @@ export async function GET(req: NextRequest) {
     // ── Visit days (for badge, stays per guest) ──
     const allGuestSessions = sessionGuestIds.length ? await prisma.session.findMany({
       where: { guestId: { in: sessionGuestIds } },
-      select: { guestId: true, startedAt: true },
+      select: { id: true, guestId: true, startedAt: true },
     }) : [];
     const visitDaysByGuest: Record<string, number> = {};
     for (const s of allGuestSessions) {
@@ -321,6 +321,22 @@ export async function GET(req: NextRequest) {
         const days = new Set(allGuestSessions.filter((x) => x.guestId === s.guestId).map((x) => x.startedAt.toISOString().split("T")[0]));
         visitDaysByGuest[s.guestId] = days.size;
       }
+    }
+    // Per-session "visit N of M today" — calculated against ALL sessions in
+    // the DB for that guest+day, not just the ones loaded in the current
+    // admin page. Without this, paginated listings hide the prior visits and
+    // the blue "Xª visita hoy" tag goes missing inconsistently.
+    const visitsTodayBySession: Record<string, { numToday: number; totalToday: number }> = {};
+    for (const target of sessions) {
+      const day = target.startedAt.toISOString().split("T")[0];
+      const sameDay = allGuestSessions
+        .filter((x) => x.guestId === target.guestId && x.startedAt.toISOString().split("T")[0] === day)
+        .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+      const idx = sameDay.findIndex((x) => x.id === target.id);
+      visitsTodayBySession[target.id] = {
+        numToday: idx >= 0 ? idx + 1 : 1,
+        totalToday: sameDay.length,
+      };
     }
 
     // ── Waiter calls by session ──
@@ -454,6 +470,8 @@ export async function GET(req: NextRequest) {
         genioData: genioDataByDbSession[s.id] || null,
         personalizationData: recDataBySession[s.id] || null,
         visitDays: visitDaysByGuest[s.guestId] || 1,
+        visitsToday: visitsTodayBySession[s.id]?.totalToday || 1,
+        visitNumToday: visitsTodayBySession[s.id]?.numToday || 1,
         dishFavorites: sessionFavs.map(f => ({
           id: f.id,
           dishId: f.dishId,
