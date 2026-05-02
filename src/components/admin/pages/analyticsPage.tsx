@@ -973,7 +973,7 @@ export default function AnalyticsDashboard() {
   const allTabs = [...TABS_BASIC, ...TABS_ADVANCED];
 
   return (
-    <div style={{ maxWidth: 1100 }}>
+    <div style={{ maxWidth: 760 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "var(--adm-accent)", margin: 0 }}>Analytics</h1>
