@@ -126,6 +126,29 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Sort selector usage per session — fetch FILTER_APPLIED stats with
+    // metadata.filterType === "sort" and key by dbSessionId so each session
+    // can show what sort the user picked (if any).
+    const sessionIds = sessions.map((s) => s.id);
+    const sortEvents = sessionIds.length > 0
+      ? await prisma.statEvent.findMany({
+          where: {
+            dbSessionId: { in: sessionIds },
+            eventType: "FILTER_APPLIED",
+            metadata: { path: ["filterType"], equals: "sort" },
+          },
+          select: { dbSessionId: true, metadata: true, createdAt: true },
+          orderBy: { createdAt: "asc" },
+        })
+      : [];
+    // Last sort wins per session (the user might toggle several times)
+    const sortBySession = new Map<string, string>();
+    for (const e of sortEvents) {
+      if (!e.dbSessionId) continue;
+      const m = e.metadata as any;
+      if (m?.filterValue) sortBySession.set(e.dbSessionId, m.filterValue);
+    }
+
     // Enrich sessions
     const enrichedSessions = sessions.map((s) => ({
       ...s,
@@ -136,6 +159,7 @@ export async function GET(req: NextRequest) {
         ...c, name: catMap[c.categoryId] || c.categoryId,
       })),
       pickedDish: s.pickedDishId ? dishMap[s.pickedDishId] || null : null,
+      sortUsed: sortBySession.get(s.id) || null,
     }));
 
     return NextResponse.json({

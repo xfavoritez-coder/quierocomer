@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 
 const F = "var(--font-display)";
 const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
+const SORT_LABELS: Record<string, string> = { views: "Lo más visto", sales: "Lo más pedido", "price-asc": "Precio ↑", "price-desc": "Precio ↓" };
 const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
 
 function formatDuration(ms: number | null) {
@@ -321,6 +322,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                     {s.viewUsed && <span>· {VIEW_LABELS[s.viewUsed] || s.viewUsed}</span>}
                     <span>· {formatDuration(s.durationMs)}</span>
                     {s.dishesViewed?.length > 0 && <span>· {s.dishesViewed.length} platos</span>}
+                    {s.sortUsed && s.sortUsed !== "default" && <span>· ↕ {SORT_LABELS[s.sortUsed] || s.sortUsed}</span>}
                   </div>
                 </div>
                 <span style={{ fontFamily: F, fontSize: "0.7rem", color: "#555" }}>{isOpen ? "▲" : "▼"}</span>

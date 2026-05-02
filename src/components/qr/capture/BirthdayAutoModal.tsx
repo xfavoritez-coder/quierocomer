@@ -29,9 +29,18 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     if (sessionStorage.getItem("qc_bday_auto_checked")) return;
     sessionStorage.setItem("qc_bday_auto_checked", "1");
 
+    // Count visits as DAYS, not page mounts — refreshing the page or being
+    // idle for >5 min would otherwise wrongly bump the counter mid-visit.
     const visitKey = `qc_visit_count_${restaurantId}`;
-    const localVisits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
-    localStorage.setItem(visitKey, String(localVisits));
+    const lastDayKey = `qc_visit_last_day_${restaurantId}`;
+    const today = new Date().toISOString().split("T")[0];
+    const lastDay = localStorage.getItem(lastDayKey);
+    let localVisits = parseInt(localStorage.getItem(visitKey) || "0");
+    if (lastDay !== today) {
+      localVisits++;
+      localStorage.setItem(visitKey, String(localVisits));
+      localStorage.setItem(lastDayKey, today);
+    }
 
     const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
     if (alreadyShowedModal) return;
@@ -54,14 +63,15 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       } catch {}
     };
 
-    // Server-side visit check (per-guest, survives localStorage clears / different browsers)
-    // restaurantSessions is the count BEFORE this visit's session-start fires,
-    // so >= 1 means at least one prior session → this is at least the 2nd visit.
+    // Server-side visit check (per-guest, survives localStorage clears /
+    // different browsers). priorDays counts distinct days the guest has had
+    // a session at this restaurant, excluding today. ≥1 prior day = at least
+    // the 2nd actual visit.
     fetch(`/api/qr/guest/visit-info?guestId=${encodeURIComponent(guestId)}&restaurantId=${encodeURIComponent(restaurantId)}`)
       .then((r) => r.json())
       .then((info) => {
-        const serverPriorSessions = info.restaurantSessions || 0;
-        const isSecondVisit = localVisits >= 2 || serverPriorSessions >= 1;
+        const priorDays = info.priorDays || 0;
+        const isSecondVisit = localVisits >= 2 || priorDays >= 1;
         if (!isSecondVisit) return;
 
         // Check if user needs birthday
