@@ -106,6 +106,25 @@ textarea::placeholder {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* Masonry layout for insights blocks — each card flows to its natural height
+   and fills available column space without forcing equal-height rows. Used
+   when blocks have very different content sizes (e.g. 1-item Fantasmas next
+   to 10-item Estrellas). */
+.adm-masonry-2 {
+  column-count: 2;
+  column-gap: 10px;
+}
+.adm-masonry-2 > * {
+  break-inside: avoid;
+  display: block;
+  margin-bottom: 10px;
+}
+@media (max-width: 768px) {
+  .adm-masonry-2 {
+    column-count: 1;
+  }
+}
+
 /* Subtle row highlight for analytics tables — no cursor change, no link feel */
 .adm-table-row {
   transition: background 0.12s ease;

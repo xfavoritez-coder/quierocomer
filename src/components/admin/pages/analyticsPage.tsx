@@ -166,8 +166,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             </span>
           </div>
 
-          {/* Insights — grid 2x2 fijo */}
-          <div className="adm-cols-2" style={{ marginBottom: 10 }}>
+          {/* Insights — masonry 2 cols (cada bloque toma su alto natural) */}
+          <div className="adm-masonry-2" style={{ marginBottom: 10 }}>
             {cross.insights.fantasmas.length > 0 && (
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px" }}>👻 Platos fantasma</p>
