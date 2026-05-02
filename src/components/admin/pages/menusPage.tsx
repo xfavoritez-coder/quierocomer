@@ -609,18 +609,9 @@ export default function AdminMenus() {
           await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishDiet: bulkActionValue }) });
         } else if (bulkAction === "category" && bulkActionValue) {
           await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryId: bulkActionValue }) });
-        } else if (bulkAction === "addAllergen" && bulkActionValue) {
-          const current = (dishById[id]?.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-          if (!current.includes(bulkActionValue.toLowerCase())) {
-            const next = [...current.filter(a => a !== "ninguno"), bulkActionValue.toLowerCase()].join(", ");
-            await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergens: next }) });
-          }
-        } else if (bulkAction === "removeAllergen" && bulkActionValue) {
-          const current = (dishById[id]?.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-          if (current.includes(bulkActionValue.toLowerCase())) {
-            const next = current.filter(a => a !== bulkActionValue.toLowerCase());
-            await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergens: next.length > 0 ? next.join(", ") : null }) });
-          }
+        } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
+          const isAdd = bulkAction === "addCharacteristic";
+          await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ [bulkActionValue]: isAdd }) });
         }
       }
       // Update local state
@@ -635,24 +626,9 @@ export default function AdminMenus() {
       } else if (bulkAction === "category" && bulkActionValue) {
         const cat = categories.find(c => c.id === bulkActionValue);
         setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, categoryId: bulkActionValue, category: { id: bulkActionValue, name: cat?.name || "" } } : d));
-      } else if (bulkAction === "addAllergen" && bulkActionValue) {
-        const v = bulkActionValue.toLowerCase();
-        setDishes(prev => prev.map(d => {
-          if (!bulkSelected.has(d.id)) return d;
-          const current = (d.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-          if (current.includes(v)) return d;
-          const next = [...current.filter(a => a !== "ninguno"), v].join(", ");
-          return { ...d, allergens: next };
-        }));
-      } else if (bulkAction === "removeAllergen" && bulkActionValue) {
-        const v = bulkActionValue.toLowerCase();
-        setDishes(prev => prev.map(d => {
-          if (!bulkSelected.has(d.id)) return d;
-          const current = (d.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
-          if (!current.includes(v)) return d;
-          const next = current.filter(a => a !== v);
-          return { ...d, allergens: next.length > 0 ? next.join(", ") : null };
-        }));
+      } else if ((bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && bulkActionValue) {
+        const isAdd = bulkAction === "addCharacteristic";
+        setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, [bulkActionValue]: isAdd } : d));
       }
       setBulkSelected(new Set());
       setBulkAction("");
@@ -1396,8 +1372,8 @@ export default function AdminMenus() {
             <option value="show">Mostrar</option>
             <option value="diet">Cambiar tipo dieta</option>
             <option value="category">Cambiar categoría</option>
-            <option value="addAllergen">Agregar alérgeno</option>
-            <option value="removeAllergen">Quitar alérgeno</option>
+            <option value="addCharacteristic">Marcar característica</option>
+            <option value="removeCharacteristic">Quitar característica</option>
             <option value="delete">Eliminar</option>
           </select>
           {bulkAction === "diet" && (
@@ -1412,16 +1388,19 @@ export default function AdminMenus() {
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
-          {(bulkAction === "addAllergen" || bulkAction === "removeAllergen") && (
+          {(bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
-              <option value="">Seleccionar alérgeno...</option>
-              {allAllergens.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+              <option value="">Seleccionar característica...</option>
+              <option value="isGlutenFree">🌾 Sin gluten</option>
+              <option value="isLactoseFree">🥛 Sin lactosa</option>
+              <option value="isSoyFree">🌱 Sin soya</option>
+              <option value="isSpicy">🌶️ Picante</option>
             </select>
           )}
           <button
             onClick={executeBulkAction}
-            disabled={!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addAllergen" || bulkAction === "removeAllergen") && !bulkActionValue) || bulkProcessing}
-            style={{ padding: "6px 14px", background: bulkAction === "delete" ? "#ef4444" : "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", opacity: (!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addAllergen" || bulkAction === "removeAllergen") && !bulkActionValue) || bulkProcessing) ? 0.5 : 1 }}
+            disabled={!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && !bulkActionValue) || bulkProcessing}
+            style={{ padding: "6px 14px", background: bulkAction === "delete" ? "#ef4444" : "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", opacity: (!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && !bulkActionValue) || bulkProcessing) ? 0.5 : 1 }}
           >
             {bulkProcessing ? "Aplicando..." : "Aplicar"}
           </button>
