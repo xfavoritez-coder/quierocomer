@@ -255,8 +255,18 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     tooltip: "Qué sección de la carta engancha más a los clientes. Si dice 'Sushi 35%', los clientes pasan el 35% del tiempo navegando esa sección.",
   };
 
+  // Premium-only insights (Toteat connected): show only when there are real
+  // sales in the period — otherwise the metrics are misleading (e.g. "today"
+  // before the lunch rush has snapshots but 0 sales, so badge accuracy reads
+  // "0% acierto" which is a bug, not a finding).
+  const hasToteatData = !!(cross && cross.summary?.totalSales > 0);
+  const showBadgeAccuracy = hasToteatData && badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0);
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* 🎖️ Acierto de los badges — premium + sales in window */}
+      {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
+
       {/* Grid 2x2 con los 4 bloques principales */}
       <div className="adm-cols-2">
         {renderSection(mostViewed)}
@@ -450,10 +460,6 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
         </div>
       )}
 
-      {/* 🎖️ Acierto de los badges — only when there's snapshot data */}
-      {badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0) && (
-        <BadgeAccuracySection badges={badges} />
-      )}
     </div>
   );
 }
@@ -517,7 +523,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
   };
 
   return (
-    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", marginTop: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
         <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🎖️ Acierto de los badges</p>
         <InfoTip text="¿Los badges que mostramos en la carta están funcionando? Comparamos los platos que tuvieron badge contra los que más se vendieron." />
