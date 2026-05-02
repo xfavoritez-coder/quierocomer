@@ -167,20 +167,20 @@ export async function GET(req: NextRequest) {
       if (b.sales === 0 && a.sales > 0) return 1;
       return b.opens - a.opens;
     })
-    .slice(0, 8);
+    .slice(0, 5);
   // Sospechosos: unmapped dishes with real interest. We can't tell if they
   // sold (no Toteat link), so we surface them as "map to confirm".
   const sospechosos = rows
     .filter((r) => !r.mapped && r.opens >= 3)
     .sort((a, b) => b.opens - a.opens)
-    .slice(0, 8);
-  // Top 10 best converters: opened ≥ 3 times and at least 2 sales, ranked by
+    .slice(0, 5);
+  // Top 5 best converters: opened ≥ 3 times and at least 2 sales, ranked by
   // conv on opens. Relative ranking so longer windows still surface stars.
-  // 10 fits nicely on desktop next to the orphans block.
+  // Capping at 5 keeps the block visually balanced next to Fantasmas.
   const estrellas = rows
     .filter((r) => r.opens >= 3 && r.sales >= 2)
     .sort((a, b) => (b.conversionPct ?? 0) - (a.conversionPct ?? 0))
-    .slice(0, 10);
+    .slice(0, 5);
   const totalOpens = rows.reduce((s, r) => s + r.opens, 0);
   const totalSales = rows.reduce((s, r) => s + r.sales, 0);
   const totalRevenue = rows.reduce((s, r) => s + r.revenue, 0);

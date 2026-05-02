@@ -162,12 +162,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
             <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
+              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas
             </span>
           </div>
 
-          {/* Insights — masonry 2 cols (cada bloque toma su alto natural) */}
-          <div className="adm-masonry-2" style={{ marginBottom: 10 }}>
+          {/* Insights principales — Fantasmas + Estrellas, 5 platos cada uno */}
+          <div className="adm-cols-2" style={{ marginBottom: 10, alignItems: "start" }}>
             {cross.insights.fantasmas.length > 0 && (
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px" }}>👻 Platos fantasma</p>
@@ -208,44 +208,30 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 ))}
               </div>
             )}
-
-            {cross.insights.sospechosos?.length > 0 && (
-              <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>🟡 Sin mapear</p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
-                {cross.insights.sospechosos.map((p: any) => (
-                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
-                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                      <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
-                        {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
-                      </span>
-                    </div>
-                    {p.avgDetailMs > 0 && (
-                      <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                        {Math.round(p.avgDetailMs / 1000)}s en detalle
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {cross.orphans.length > 0 && (
-              <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>📦 Fuera de la carta digital ({cross.orphans.length})</p>
-                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat sin mapeo. Probable: combos, salsas, extras o sin mapear.</p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                  {cross.orphans.slice(0, 12).map((o: any) => (
-                    <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
-                      {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
-                    </span>
-                  ))}
-                  {cross.orphans.length > 12 && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", fontFamily: FB }}>+{cross.orphans.length - 12} más</span>}
-                </div>
-              </div>
-            )}
           </div>
+
+          {/* Sospechosos sin mapear — abajo, full-width compacto, solo si existen */}
+          {cross.insights.sospechosos?.length > 0 && (
+            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>🟡 Sin mapear</p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
+              {cross.insights.sospechosos.map((p: any) => (
+                <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
+                      {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                    </span>
+                  </div>
+                  {p.avgDetailMs > 0 && (
+                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
+                      {Math.round(p.avgDetailMs / 1000)}s en detalle
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Full table — collapsible */}
           <button
