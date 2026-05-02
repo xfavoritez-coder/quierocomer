@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
@@ -11,32 +11,81 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-/** Inline info icon with native title tooltip — click/hover reveals an
- * explanation of what the metric means. Uses HTML `title` for simplicity. */
+/** Inline info icon — click/tap toggles a popover with the explanation.
+ * Works on both desktop and mobile (HTML `title` only triggers on mouse
+ * hover so it was invisible on touch devices). */
 function InfoTip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    document.addEventListener("touchstart", handler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      document.removeEventListener("touchstart", handler);
+    };
+  }, [open]);
+
   return (
-    <span
-      title={text}
-      role="button"
-      tabIndex={0}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 14,
-        height: 14,
-        borderRadius: "50%",
-        background: "var(--adm-text3)",
-        color: "var(--adm-card)",
-        fontSize: "0.6rem",
-        fontWeight: 700,
-        fontFamily: "var(--font-display)",
-        cursor: "help",
-        flexShrink: 0,
-        userSelect: "none",
-      }}
-    >
-      i
+    <span ref={wrapRef} style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+      <span
+        onClick={(e) => { e.stopPropagation(); setOpen(v => !v); }}
+        role="button"
+        tabIndex={0}
+        aria-label="Mostrar explicación"
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: 16,
+          height: 16,
+          borderRadius: "50%",
+          background: open ? "var(--adm-accent)" : "var(--adm-text3)",
+          color: open ? "#fff" : "var(--adm-card)",
+          fontSize: "0.62rem",
+          fontWeight: 700,
+          fontFamily: "var(--font-display)",
+          cursor: "pointer",
+          flexShrink: 0,
+          userSelect: "none",
+          transition: "background 0.15s",
+        }}
+      >
+        i
+      </span>
+      {open && (
+        <div
+          role="tooltip"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 6px)",
+            left: 0,
+            background: "var(--adm-card)",
+            border: "1px solid var(--adm-card-border)",
+            borderRadius: 8,
+            padding: "10px 12px",
+            fontSize: "0.74rem",
+            lineHeight: 1.45,
+            color: "var(--adm-text)",
+            fontFamily: "var(--font-body)",
+            fontWeight: 400,
+            letterSpacing: 0,
+            textTransform: "none",
+            width: 280,
+            maxWidth: "90vw",
+            zIndex: 100,
+            boxShadow: "0 6px 24px rgba(0,0,0,0.18)",
+            whiteSpace: "normal",
+          }}
+        >
+          {text}
+        </div>
+      )}
     </span>
   );
 }
@@ -279,17 +328,17 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
               </p>
               <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat sin mapeo. Probable: combos, salsas, extras o sin mapear.</p>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {(showAllOrphans ? cross.orphans : cross.orphans.slice(0, 20)).map((o: any) => (
+                {(showAllOrphans ? cross.orphans : cross.orphans.slice(0, 10)).map((o: any) => (
                   <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
                     {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
                   </span>
                 ))}
-                {cross.orphans.length > 20 && (
+                {cross.orphans.length > 10 && (
                   <button
                     onClick={() => setShowAllOrphans(v => !v)}
                     style={{ background: "transparent", border: "1px dashed var(--adm-card-border)", color: "#F4A623", fontSize: "0.7rem", padding: "3px 10px", borderRadius: 6, fontFamily: FB, fontWeight: 600, cursor: "pointer" }}
                   >
-                    {showAllOrphans ? "Ver menos" : `+${cross.orphans.length - 20} más`}
+                    {showAllOrphans ? "Ver menos" : `+${cross.orphans.length - 10} más`}
                   </button>
                 )}
               </div>
