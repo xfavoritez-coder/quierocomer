@@ -29,18 +29,20 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     if (sessionStorage.getItem("qc_bday_auto_checked")) return;
     sessionStorage.setItem("qc_bday_auto_checked", "1");
 
-    // Count visits as DAYS, not page mounts — refreshing the page or being
-    // idle for >5 min would otherwise wrongly bump the counter mid-visit.
+    // Count visits with a 1-hour gap rule — refreshes / idle resumes / a
+    // typical meal stay are one visit; coming back after dinner for dessert
+    // (~1h+ later) is a new visit. Mirrors the server-side logic.
+    const VISIT_GAP_MS = 60 * 60 * 1000;
     const visitKey = `qc_visit_count_${restaurantId}`;
-    const lastDayKey = `qc_visit_last_day_${restaurantId}`;
-    const today = new Date().toISOString().split("T")[0];
-    const lastDay = localStorage.getItem(lastDayKey);
+    const lastSeenKey = `qc_visit_last_seen_${restaurantId}`;
+    const now = Date.now();
+    const lastSeen = parseInt(localStorage.getItem(lastSeenKey) || "0");
     let localVisits = parseInt(localStorage.getItem(visitKey) || "0");
-    if (lastDay !== today) {
+    if (!lastSeen || now - lastSeen > VISIT_GAP_MS) {
       localVisits++;
       localStorage.setItem(visitKey, String(localVisits));
-      localStorage.setItem(lastDayKey, today);
     }
+    localStorage.setItem(lastSeenKey, String(now));
 
     const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
     if (alreadyShowedModal) return;
@@ -64,14 +66,13 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     };
 
     // Server-side visit check (per-guest, survives localStorage clears /
-    // different browsers). priorDays counts distinct days the guest has had
-    // a session at this restaurant, excluding today. ≥1 prior day = at least
-    // the 2nd actual visit.
+    // different browsers). priorVisits clusters sessions into visits with a
+    // 1-hour gap rule — ≥1 prior visit = at least the 2nd actual visit.
     fetch(`/api/qr/guest/visit-info?guestId=${encodeURIComponent(guestId)}&restaurantId=${encodeURIComponent(restaurantId)}`)
       .then((r) => r.json())
       .then((info) => {
-        const priorDays = info.priorDays || 0;
-        const isSecondVisit = localVisits >= 2 || priorDays >= 1;
+        const priorVisits = info.priorVisits || 0;
+        const isSecondVisit = localVisits >= 2 || priorVisits >= 1;
         if (!isSecondVisit) return;
 
         // Check if user needs birthday
