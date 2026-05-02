@@ -55,7 +55,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
             )}
             {isPopular && (
               <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                🔥 Popular hoy
+                🔥 Top hoy
               </span>
             )}
           </div>
@@ -113,7 +113,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
 
   const badges: string[] = [];
   if (isRec) badges.push("⭐ Recomendado");
-  if (isPopular) badges.push("🔥 Popular hoy");
+  if (isPopular) badges.push("🔥 Top hoy");
 
   return (
     <button

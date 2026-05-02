@@ -451,7 +451,7 @@ function DishSlide({
                   onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
                   style={{ background: "rgba(244,166,35,0.2)", border: "1px solid rgba(244,166,35,0.3)", color: "#fbbf24", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
-                  🔥 Popular hoy
+                  🔥 Top hoy
                 </button>
               )}
             </div>
@@ -554,7 +554,7 @@ function DishSlide({
                       {(s.dish.tags?.includes("RECOMMENDED") || popularDishIds?.has(s.dish.id)) && (
                         <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
                           {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(244,166,35,0.2)", color: "#fbbf24" }}>⭐ Recomendado</span>}
-                          {popularDishIds?.has(s.dish.id) && !s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171" }}>🔥 Popular hoy</span>}
+                          {popularDishIds?.has(s.dish.id) && !s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#f87171" }}>🔥 Top hoy</span>}
                         </div>
                       )}
                       <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "white", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>

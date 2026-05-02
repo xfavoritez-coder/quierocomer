@@ -70,3 +70,27 @@ export function chileHourOf(d: Date): number {
   const v = parseInt(hourFormatter.format(d), 10);
   return Number.isNaN(v) ? 0 : v;
 }
+
+/** UTC instant representing 00:00:00 Chile time today. */
+export function chileStartOfTodayUTC(): Date {
+  // Chile is UTC-4 (no DST in May). For other months we compute via Intl.
+  const todayISO = chileTodayISODate(); // "YYYY-MM-DD" Chile
+  // Extract Chile UTC offset for now to handle DST safely
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date());
+  const offsetStr = parts.find((p) => p.type === "timeZoneName")?.value || "GMT-4";
+  const m = offsetStr.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  const sign = m && m[1] === "-" ? -1 : 1;
+  const hh = m ? parseInt(m[2], 10) : 4;
+  const mm = m && m[3] ? parseInt(m[3], 10) : 0;
+  const offset = sign * (hh * 60 + mm); // minutes; e.g. -240 for UTC-4
+  // Chile midnight in UTC = chile_midnight - offset minutes
+  const [y, mo, d] = todayISO.split("-").map(Number);
+  const utcMs = Date.UTC(y, mo - 1, d, 0, 0, 0) - offset * 60_000;
+  return new Date(utcMs);
+}

@@ -14,7 +14,7 @@ import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import { prisma } from "@/lib/prisma";
-import { getPopularDishes } from "@/lib/qr/utils/getPopularDishes";
+import { getTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 
 // Deduplicate: both generateMetadata and page use the same query
 // Metadata always uses Spanish (restaurant name doesn't change)
@@ -87,8 +87,8 @@ export default async function CartaPage({
   );
 
   // Fetch popular dishes, marketing promos, and announcements in parallel
-  const [popularDishes, activePromos, rawAnnouncements] = await Promise.all([
-    getPopularDishes(restaurant.id).catch(() => ({ global: [], byCategory: [] })),
+  const [topDishesResult, activePromos, rawAnnouncements] = await Promise.all([
+    getTopDishIds(restaurant.id).catch(() => ({ dishIds: new Set<string>(), source: "none" as const, totalSalesToday: 0 })),
     prisma.promotion.findMany({
     where: { restaurantId: restaurant.id, status: "ACTIVE", OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }] },
     orderBy: { createdAt: "desc" },
@@ -145,7 +145,7 @@ export default async function CartaPage({
     happyHours: (restaurant as any).happyHours || [],
     timeOfDay,
     weather,
-    popularDishIds: [...(popularDishes.global || []), ...(popularDishes.byCategory || [])].map(p => p.dishId),
+    popularDishIds: Array.from(topDishesResult.dishIds),
     announcements: activeAnnouncements,
   };
 

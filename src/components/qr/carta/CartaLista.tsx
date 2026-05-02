@@ -703,7 +703,7 @@ function DishListCard({
             )}
             {isPopular && (
               <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
-                🔥 Popular hoy
+                🔥 Top hoy
               </span>
             )}
           </div>
