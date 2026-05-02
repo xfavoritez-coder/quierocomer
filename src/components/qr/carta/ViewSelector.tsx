@@ -109,6 +109,11 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
             whiteSpace: "nowrap",
           }}
         >
+          {/* Views section header */}
+          <div style={{ padding: "6px 10px 4px" }}>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.03em" }}>Vistas</span>
+          </div>
+
           {/* View options grid */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "2px 2px" }}>
             {VIEW_KEYS.filter(v => plan !== "GOLD" || v.value === "lista" || v.value === "premium").map(({ value, labelKey, Icon }) => {
