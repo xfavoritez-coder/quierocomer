@@ -16,12 +16,12 @@ interface DashData {
   avgSessionDuration: number; genioUsedThisWeek: number;
   viewDistribution: Record<string, number>; deviceDistribution: Record<string, number>;
   topDishesViewed: { name: string; count: number }[];
-  topDishesGenio: { name: string; count: number }[];
+  topDishesByDetailTime: { name: string; count: string }[];
   dietDistribution: { type: string; count: number }[];
   abandonedThisWeek: number; activeThisWeek: number;
   activeRestaurantsCount: number; topRestaurants: { name: string; visits: number }[];
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
-  lastScanAt: string | null; activePromos: number; weekFavorites: number;
+  lastScanAt: string | null; activePromos: number; weekDetailViews: number;
   weekWaiterCalls: number;
 }
 
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
         <Stat label="🔔 Llamadas garzón" value={data.weekWaiterCalls ?? 0} sub="esta semana" />
-        <Stat label="👍 Me gusta nuevos" value={data.weekFavorites ?? 0} sub="esta semana" />
+        <Stat label="🔍 Detalles abiertos" value={data.weekDetailViews ?? 0} sub="esta semana" />
         <Stat label="📢 Promos activas" value={data.activePromos ?? 0} />
       </div>
 
@@ -181,7 +181,7 @@ export default function AdminDashboard() {
 
       <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
         <RankList title="🔥 Platos más vistos" items={data.topDishesViewed} />
-        <RankList title="🧞 Más recomendados por Genio" items={data.topDishesGenio} />
+        <RankList title="⏱️ Más tiempo en detalle" items={data.topDishesByDetailTime} />
       </div>
 
       <DistributionBar title="Tipo de dieta de los clientes" data={Object.fromEntries(data.dietDistribution.map(d => [d.type, d.count]))} labels={DIET_LABELS} />

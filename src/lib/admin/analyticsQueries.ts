@@ -358,25 +358,53 @@ export async function getTopAttentionDishes(restaurantId: string | null, from: D
   };
 }
 
-export async function getMostFavoritedDishes(restaurantId: string | null, from: Date, to: Date) {
-  const where: any = { createdAt: { gte: from, lte: to } };
-  if (restaurantId) where.restaurantId = restaurantId;
-  const grouped = await prisma.dishFavorite.groupBy({
-    by: ["dishId"],
-    where,
-    _count: { dishId: true },
-    orderBy: { _count: { dishId: "desc" } },
-    take: 10,
+/**
+ * Least-viewed active dishes — useful to surface "abandoned" dishes that
+ * customers rarely see. Excludes brand-new dishes (created in the last 7 days)
+ * to avoid penalizing dishes that haven't had a chance to be seen.
+ */
+export async function getLeastViewedDishes(restaurantId: string | null, from: Date, to: Date) {
+  const rf = restaurantFilter(restaurantId);
+  if (!restaurantId) return [];
+
+  const sessions = await prisma.session.findMany({
+    where: { ...rf, startedAt: { gte: from, lte: to } },
+    select: { id: true, dishesViewed: true },
+    take: 5000,
   });
-  if (grouped.length === 0) return [];
-  const dishes = await prisma.dish.findMany({
-    where: { id: { in: grouped.map(g => g.dishId) } },
+  const totalSessions = sessions.length;
+
+  // Count uniqueSessions that saw each dish in carta
+  const seen: Record<string, number> = {};
+  for (const s of sessions) {
+    const viewed = s.dishesViewed as any[];
+    if (!Array.isArray(viewed)) continue;
+    const inThis = new Set<string>();
+    for (const d of viewed) {
+      if (d.dishId) inThis.add(d.dishId);
+    }
+    for (const id of inThis) seen[id] = (seen[id] || 0) + 1;
+  }
+
+  // Pull all active dishes for this restaurant, ignore the brand new ones
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const allDishes = await prisma.dish.findMany({
+    where: {
+      restaurantId,
+      isActive: true,
+      createdAt: { lt: sevenDaysAgo },
+    },
     select: { id: true, name: true, photos: true },
   });
-  const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
-  return grouped.map(g => ({
-    name: dishMap[g.dishId]?.name || g.dishId,
-    photo: dishMap[g.dishId]?.photos?.[0] || null,
-    count: g._count.dishId,
-  }));
+  if (allDishes.length === 0) return [];
+
+  return allDishes
+    .map(d => ({ id: d.id, name: d.name, photo: d.photos?.[0] || null, count: seen[d.id] || 0 }))
+    .sort((a, b) => a.count - b.count)
+    .slice(0, 10)
+    .map(d => ({
+      name: d.name,
+      photo: d.photo,
+      count: totalSessions > 0 ? `${Math.round((d.count / totalSessions) * 100)}%` : `${d.count}`,
+    }));
 }

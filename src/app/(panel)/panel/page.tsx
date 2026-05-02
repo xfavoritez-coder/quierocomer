@@ -16,10 +16,10 @@ interface DashData {
   visitsThisWeek: number; visitsDelta: number | null;
   avgSessionDuration: number; genioUsedThisWeek: number;
   topDishesViewed: { name: string; count: number }[];
-  topDishesGenio: { name: string; count: number }[];
+  topDishesByDetailTime: { name: string; count: string }[];
   abandonedThisWeek: number;
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
-  lastScanAt: string | null; activePromos: number; weekFavorites: number; weekWaiterCalls: number;
+  lastScanAt: string | null; activePromos: number; weekDetailViews: number; weekWaiterCalls: number;
   todayUniqueVisitors: number;
 }
 
@@ -152,14 +152,14 @@ export default function PanelDashboard() {
         <Stat icon="⏱️" label="Duración promedio" value={avgText} />
         <Stat icon="🧞" label="Usaron el Genio" value={data.genioUsedThisWeek} color={GOLD} />
         <Stat icon="🔔" label="Llamados garzón" value={data.weekWaiterCalls || 0} />
-        <Stat icon="👍" label="Me gusta" value={data.weekFavorites} />
+        <Stat icon="🔍" label="Detalles abiertos" value={data.weekDetailViews} />
       </div>
 
 
       {/* Rankings */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }} className="adm-grid-2">
         <RankList title="🔥 Más vistos" items={data.topDishesViewed} />
-        <RankList title="🧞 Recomendados" items={data.topDishesGenio} />
+        <RankList title="⏱️ Más tiempo en detalle" items={data.topDishesByDetailTime} />
       </div>
 
       {/* Insights */}

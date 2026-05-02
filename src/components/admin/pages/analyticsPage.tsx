@@ -73,7 +73,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   const sections = [
     { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀", unit: "veces" },
     { title: "Más tiempo en detalle", items: data.mostDetailed || [], icon: "🔍", unit: "" },
-    { title: "Más agregados a favoritos", items: data.mostFavorited || [], icon: "❤️", unit: "veces" },
+    { title: "Platos abandonados", items: data.leastViewed || [], icon: "🌱", unit: "% sesiones que los vieron" },
   ];
 
   return (

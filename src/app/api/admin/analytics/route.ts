@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getMostFavoritedDishes } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -53,8 +53,8 @@ export async function GET(req: NextRequest) {
           .sort((a: any, b: any) => b.avgDetailMs - a.avgDetailMs)
           .slice(0, 10)
           .map((d: any) => ({ name: d.name, photo: d.photo, count: Math.round(d.avgDetailMs / 1000) + "s" }));
-        const mostFavorited = await getMostFavoritedDishes(restaurantId, from, to);
-        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, mostFavorited });
+        const leastViewed = await getLeastViewedDishes(restaurantId, from, to);
+        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, leastViewed });
       }
       return NextResponse.json(data);
     }

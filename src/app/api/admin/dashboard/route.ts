@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
       sessionsThisWeek,
       genioUsedThisWeek,
       topDishesViewed,
-      topDishesGenio,
+      sessionsForDetailTime,
       dietDistribution,
       sessionEngagement,
       activeRestaurants,
@@ -67,7 +67,7 @@ export async function GET(req: NextRequest) {
       todayWaiterPending,
       lastScan,
       activePromos,
-      weekFavorites,
+      weekDetailViews,
       weekWaiterCalls,
       uniqueVisitorsToday,
     ] = await Promise.all([
@@ -104,12 +104,11 @@ export async function GET(req: NextRequest) {
         orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
-      prisma.statEvent.groupBy({
-        by: ["dishId"],
-        where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", dishId: { not: null }, createdAt: { gte: monthAgo } },
-        _count: { id: true },
-        orderBy: { _count: { id: "desc" } },
-        take: 5,
+      // Sessions this month for "Más tiempo en detalle" ranking (detailMs from dishesViewed JSON)
+      prisma.session.findMany({
+        where: { ...restaurantFilter, startedAt: { gte: monthAgo } },
+        select: { dishesViewed: true },
+        take: 5000,
       }),
       prisma.qRUser.groupBy({
         by: ["dietType"],
@@ -163,9 +162,9 @@ export async function GET(req: NextRequest) {
       prisma.promotion.count({
         where: { ...restaurantFilter, status: "ACTIVE" },
       }),
-      // Favorites this week
-      prisma.dishFavorite.count({
-        where: { ...restaurantFilter, createdAt: { gte: weekAgo } },
+      // Detail modal opens this week (DISH_VIEW = popup opened)
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "DISH_VIEW", createdAt: { gte: weekAgo } },
       }),
       // Waiter calls this week
       prisma.waiterCall.count({
@@ -179,10 +178,27 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
+    // Aggregate detailMs from sessions JSON for "Más tiempo en detalle" ranking
+    const detailDwell: Record<string, { totalMs: number; views: number }> = {};
+    for (const s of sessionsForDetailTime) {
+      const viewed = s.dishesViewed as any[];
+      if (!Array.isArray(viewed)) continue;
+      for (const d of viewed) {
+        if (!d.dishId || !d.detailMs || d.detailMs <= 0) continue;
+        if (!detailDwell[d.dishId]) detailDwell[d.dishId] = { totalMs: 0, views: 0 };
+        detailDwell[d.dishId].totalMs += d.detailMs;
+        detailDwell[d.dishId].views++;
+      }
+    }
+    const topDishesByDetailTime = Object.entries(detailDwell)
+      .map(([dishId, d]) => ({ dishId, avgMs: Math.round(d.totalMs / d.views) }))
+      .sort((a, b) => b.avgMs - a.avgMs)
+      .slice(0, 5);
+
     // Resolve dish names
     const dishIds = [...new Set([
       ...topDishesViewed.filter((d) => d.dishId).map((d) => d.dishId!),
-      ...topDishesGenio.filter((d) => d.dishId).map((d) => d.dishId!),
+      ...topDishesByDetailTime.map((d) => d.dishId),
     ])];
     const dishNames = dishIds.length
       ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true } })
@@ -225,7 +241,7 @@ export async function GET(req: NextRequest) {
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
       topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
-      topDishesGenio: topDishesGenio.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
+      topDishesByDetailTime: topDishesByDetailTime.map((d) => ({ name: dishMap[d.dishId] || d.dishId, count: `${Math.round(d.avgMs / 1000)}s` })),
       dietDistribution: dietDistribution.map((d) => ({ type: d.dietType || "Sin definir", count: d._count.id })),
       abandonedThisWeek: abandoned,
       activeThisWeek: active,
@@ -237,7 +253,7 @@ export async function GET(req: NextRequest) {
       todayWaiterPending,
       lastScanAt: lastScan?.startedAt || null,
       activePromos,
-      weekFavorites,
+      weekDetailViews,
       weekWaiterCalls,
       todayUniqueVisitors: uniqueVisitorsToday.length,
     });

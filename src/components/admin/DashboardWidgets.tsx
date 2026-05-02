@@ -15,9 +15,10 @@ export function Stat({ label, value, sub, color, icon }: { label: string; value:
   );
 }
 
-export function RankList({ title, items, valueLabel = "" }: { title: string; items: { name: string; count: number }[]; valueLabel?: string }) {
+export function RankList({ title, items, valueLabel = "" }: { title: string; items: { name: string; count: number | string; display?: string }[]; valueLabel?: string }) {
   if (!items.length) return null;
-  const max = items[0]?.count || 1;
+  const numericCounts = items.map(i => typeof i.count === "number" ? i.count : Number(String(i.count).match(/\d+/)?.[0] || 0));
+  const max = numericCounts[0] || 1;
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
       <h3 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", textTransform: "uppercase", letterSpacing: "0.06em" }}>{title}</h3>
@@ -25,10 +26,10 @@ export function RankList({ title, items, valueLabel = "" }: { title: string; ite
         <div key={i} style={{ marginBottom: 10 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: 4 }}>
             <span style={{ color: "var(--adm-text)", fontFamily: F }}>{item.name}</span>
-            <span style={{ color: "var(--adm-text2)", fontFamily: F }}>{item.count}{valueLabel}</span>
+            <span style={{ color: "var(--adm-text2)", fontFamily: F }}>{item.display ?? item.count}{valueLabel}</span>
           </div>
           <div style={{ height: 4, borderRadius: 2, background: "var(--adm-card-border)" }}>
-            <div style={{ width: `${(item.count / max) * 100}%`, height: "100%", background: i === 0 ? "var(--adm-accent)" : "rgba(244,166,35,0.4)", borderRadius: 2 }} />
+            <div style={{ width: `${(numericCounts[i] / max) * 100}%`, height: "100%", background: i === 0 ? "var(--adm-accent)" : "rgba(244,166,35,0.4)", borderRadius: 2 }} />
           </div>
         </div>
       ))}
