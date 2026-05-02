@@ -111,8 +111,12 @@ export async function GET(req: NextRequest) {
     .filter((r) => r.qcViews >= 5 && r.sales === 0 && r.mapped) // mapped but never sold
     .sort((a, b) => b.qcViews - a.qcViews)
     .slice(0, 8);
+  // Top 5 best converters of the period. Use a relative ranking instead of a
+  // fixed % threshold so longer windows (more accumulated views) still surface
+  // their stars — a dish with 30 views and 3 sales (10%) is still the period's
+  // top converter if the others are at 5% or 0%.
   const estrellas = rows
-    .filter((r) => r.qcViews >= 5 && r.sales > 0 && (r.conversionPct ?? 0) >= 25)
+    .filter((r) => r.qcViews >= 5 && r.sales >= 2)
     .sort((a, b) => (b.conversionPct ?? 0) - (a.conversionPct ?? 0))
     .slice(0, 5);
   const totalQcViews = rows.reduce((s, r) => s + r.qcViews, 0);
