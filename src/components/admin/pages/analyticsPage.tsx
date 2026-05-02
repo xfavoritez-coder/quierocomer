@@ -58,13 +58,19 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 /* ═══ TAB: Platos ═══ */
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any>(null);
+  const [cross, setCross] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [tableOpen, setTableOpen] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    const p = new URLSearchParams({ type: "dishes", from, to });
-    if (rid) p.set("restaurantId", rid);
-    fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
+    const p1 = new URLSearchParams({ type: "dishes", from, to });
+    const p2 = new URLSearchParams({ from, to });
+    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); }
+    Promise.all([
+      fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
+      fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
+    ]).then(([d, c]) => { setData(d); if (c && !c.error) setCross(c); }).catch(() => {}).finally(() => setLoading(false));
   }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
@@ -97,6 +103,106 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           )}
         </div>
       ))}
+
+      {/* 🔀 Carta vs Caja — only shown if Toteat data exists */}
+      {cross && cross.summary?.totalSales > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
+            <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
+              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalQcViews} vistas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
+            </span>
+          </div>
+
+          {/* Insights */}
+          {cross.insights.fantasmas.length > 0 && (
+            <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 8px" }}>👻 Platos fantasma — los miran y no los compran</p>
+              {cross.insights.fantasmas.map((p: any) => (
+                <div key={p.dishId} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>
+                  <span>{p.name}{p.category && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", marginLeft: 6 }}>· {p.category}</span>}</span>
+                  <span style={{ color: "#ef4444", fontWeight: 600 }}>
+                    {p.qcViews} vistas
+                    {p.avgDetailMs > 0 && <span style={{ color: "var(--adm-text3)", marginLeft: 8, fontWeight: 400 }}>{Math.round(p.avgDetailMs / 1000)}s en detalle</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {cross.insights.estrellas.length > 0 && (
+            <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 8px" }}>🎯 Estrellas — los ven y los piden</p>
+              {cross.insights.estrellas.map((p: any) => (
+                <div key={p.dishId} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>
+                  <span>{p.name}{p.category && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", marginLeft: 6 }}>· {p.category}</span>}</span>
+                  <span style={{ color: "#16a34a", fontWeight: 600 }}>
+                    {p.conversionPct}% conversión <span style={{ color: "var(--adm-text3)", marginLeft: 6, fontWeight: 400 }}>{p.sales} de {p.qcViews}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {cross.orphans.length > 0 && (
+            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>📦 Vendidos fuera de la carta digital ({cross.orphans.length})</p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat que no tienen mapeo a un plato de QC. Probable: combos, salsas/extras, o platos sin mapear todavía.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {cross.orphans.slice(0, 12).map((o: any) => (
+                  <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
+                    {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
+                  </span>
+                ))}
+                {cross.orphans.length > 12 && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", fontFamily: FB }}>+{cross.orphans.length - 12} más</span>}
+              </div>
+            </div>
+          )}
+
+          {/* Full table — collapsible */}
+          <button
+            onClick={() => setTableOpen(!tableOpen)}
+            style={{ width: "100%", padding: "8px 10px", background: "transparent", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer", textAlign: "left" }}
+          >
+            {tableOpen ? "▼" : "▶"} Tabla completa por plato ({cross.rows.length})
+          </button>
+          {tableOpen && (
+            <div style={{ marginTop: 10, overflowX: "auto" }}>
+              <table style={{ width: "100%", fontFamily: FB, fontSize: "0.74rem", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
+                    <th style={{ padding: "8px 6px", fontWeight: 600 }}>Plato</th>
+                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Vistas</th>
+                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Detalles</th>
+                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Ventas</th>
+                    <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Conv.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cross.rows.map((r: any) => {
+                    const flag = r.qcViews >= 5 && r.sales === 0 ? "👻" : r.sales > 0 && (r.conversionPct ?? 0) >= 25 ? "🎯" : "";
+                    return (
+                      <tr key={r.dishId} style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
+                        <td style={{ padding: "6px" }}>
+                          {flag && <span style={{ marginRight: 4 }}>{flag}</span>}
+                          {r.name}
+                          {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>(sin mapear)</span>}
+                        </td>
+                        <td style={{ padding: "6px", textAlign: "right" }}>{r.qcViews}</td>
+                        <td style={{ padding: "6px", textAlign: "right" }}>{r.qcDetails}</td>
+                        <td style={{ padding: "6px", textAlign: "right", color: r.sales > 0 ? "var(--adm-accent)" : "var(--adm-text3)", fontWeight: 700 }}>{r.sales}</td>
+                        <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 25 ? "#16a34a" : r.conversionPct >= 10 ? "var(--adm-text2)" : "#ef4444") : "var(--adm-text3)" }}>
+                          {r.conversionPct !== null ? `${r.conversionPct}%` : "—"}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
