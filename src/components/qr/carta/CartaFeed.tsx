@@ -4,6 +4,8 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Search, X, Globe } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
+import SortChip from "./SortChip";
+import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import { trackSearchPerformed, trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -401,6 +403,7 @@ export default function CartaFeed({
 
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!query || query.length < 2) return;
@@ -453,10 +456,14 @@ export default function CartaFeed({
     return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
   }, [restaurant, hasCompletedGenio, dishes, categories]);
 
-  const grouped = useMemo(() => groupDishesByCategory(
-    query ? dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query))) : dishes,
-    categories,
-  ), [dishes, categories, query]);
+  const grouped = useMemo(() => {
+    const base = groupDishesByCategory(
+      query ? dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query))) : dishes,
+      categories,
+    );
+    if (sortKey === "default") return base;
+    return base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
+  }, [dishes, categories, query, sortKey, rankings]);
 
   const sortedDishes = useMemo(() => grouped.flatMap(g => g.dishes), [grouped]);
 
@@ -539,6 +546,7 @@ export default function CartaFeed({
               <button onClick={() => setSearchOpen(true)} style={{ width: 32, height: 32, borderRadius: "50%", background: "#F5F4F1", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <Search size={14} color="#5a5a5a" />
               </button>
+              <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
               <div ref={catScrollRef} className="hide-scrollbar" style={{ display: "flex", gap: 6, overflowX: "auto", flex: 1, scrollbarWidth: "none" }}>
                 {dietNavItem && (
                   <button

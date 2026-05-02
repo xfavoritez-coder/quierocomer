@@ -19,6 +19,8 @@ import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
 import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
+import SortChip from "./SortChip";
+import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
@@ -221,6 +223,7 @@ export default function CartaPremium({
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
@@ -348,9 +351,13 @@ export default function CartaPremium({
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
     for (const cat of categories) {
-      const catDishes = dishes
-        .filter((d) => d.categoryId === cat.id && d.isActive)
-        .sort((a, b) => {
+      const catDishes = dishes.filter((d) => d.categoryId === cat.id && d.isActive);
+      // Manual sort selector overrides Genio personalization for this category.
+      if (sortKey !== "default") {
+        result.push(...applyCartaSort(catDishes, sortKey, rankings));
+        continue;
+      }
+      catDishes.sort((a, b) => {
           if (pMap) {
             const aScore = pMap.get(a.id)?.score ?? 50;
             const bScore = pMap.get(b.id)?.score ?? 50;
@@ -374,7 +381,7 @@ export default function CartaPremium({
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap]);
+  }, [categories, dishes, pMap, sortKey, rankings]);
 
   // Reset horizontal scroll containers when personalization order changes
   useEffect(() => {
@@ -503,22 +510,25 @@ export default function CartaPremium({
             if (id === "diet-carousel" && dietNavItem) { const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }
           }}
           rightSlot={
-            <button
-              onClick={() => setSearchOpen(true)}
-              className="flex items-center justify-center"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: "50%",
-                background: "rgba(14,14,14,0.06)",
-                border: "none",
-                cursor: "pointer",
-                transition: "background 0.15s",
-              }}
-              aria-label="Buscar"
-            >
-              <Search size={19} color="#666" />
-            </button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <button
+                onClick={() => setSearchOpen(true)}
+                className="flex items-center justify-center"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "rgba(14,14,14,0.06)",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "background 0.15s",
+                }}
+                aria-label="Buscar"
+              >
+                <Search size={19} color="#666" />
+              </button>
+              <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
+            </div>
           }
         />
       )}

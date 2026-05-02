@@ -33,6 +33,8 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
+import SortChip from "./SortChip";
+import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
 import { useLang } from "@/contexts/LangContext";
@@ -114,6 +116,7 @@ export default function CartaLista({
   }, []);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!query || query.length < 2) return;
@@ -313,6 +316,11 @@ export default function CartaLista({
 
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(filtered, categories);
+    // When the user picked a non-default sort, override the per-category
+    // ordering — Genio personalization is the default behavior.
+    if (sortKey !== "default") {
+      return base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
+    }
     if (!pMap) return base;
     return base.map((g) => ({
       ...g,
@@ -329,7 +337,7 @@ export default function CartaLista({
         return a.position - b.position;
       }),
     }));
-  }, [filtered, categories, pMap]);
+  }, [filtered, categories, pMap, sortKey, rankings]);
 
   const handleDishClick = (dish: Dish) => {
     setSelectedDish(dish);
@@ -427,8 +435,8 @@ export default function CartaLista({
                 );
               })}
             </div>
-            {/* Search icon */}
-            <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", height: "100%" }}>
+            {/* Search + Sort */}
+            <div style={{ flexShrink: 0, paddingRight: 12, paddingLeft: 4, display: "flex", alignItems: "center", gap: 6, height: "100%" }}>
               <button
                 onClick={() => setSearchOpen(true)}
                 className="flex items-center justify-center"
@@ -437,6 +445,7 @@ export default function CartaLista({
               >
                 <Search size={19} color="#666" />
               </button>
+              <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
           </nav>
         )}
