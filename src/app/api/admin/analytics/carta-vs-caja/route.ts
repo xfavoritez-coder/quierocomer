@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
+import { chileDayBoundsUTC } from "@/lib/toteat/timezone";
 
 /**
  * Cross-system analysis: how QC-side interest (modal opens + detail time)
@@ -40,8 +41,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "restaurantId requerido (modo super-admin)" }, { status: 400 });
   }
 
-  const to = toStr ? new Date(toStr + "T23:59:59.999Z") : new Date();
-  const from = fromStr ? new Date(fromStr + "T00:00:00.000Z") : new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Interpret the YYYY-MM-DD strings as Chile-local days so "Hoy" means
+  // today in Chile (not UTC). Without this, UTC midnight to UTC midnight
+  // includes last night's sales as "today".
+  const from = fromStr ? chileDayBoundsUTC(fromStr).from : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const to = toStr ? chileDayBoundsUTC(toStr).to : new Date();
 
   // 1. Cached Toteat sales for the window
   const sales = await prisma.toteatSale.findMany({

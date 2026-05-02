@@ -71,6 +71,36 @@ export function chileHourOf(d: Date): number {
   return Number.isNaN(v) ? 0 : v;
 }
 
+/**
+ * Convert a YYYY-MM-DD date string (intended as a Chile-local day) into the
+ * pair of UTC instants that bound that day in Chile.
+ *
+ * Why this exists: the analytics frontend sends `from=YYYY-MM-DD&to=...` and
+ * naively constructing `new Date(str + "T00:00:00.000Z")` interprets it as UTC.
+ * For "Hoy" that means the range is 00:00–23:59 UTC, which in Chile is the
+ * previous evening 20:00 → today 19:59 — so sales from anoche Chile leak in.
+ * This helper builds the actual Chile-local day in UTC.
+ */
+export function chileDayBoundsUTC(ymd: string): { from: Date; to: Date } {
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: TZ,
+    timeZoneName: "shortOffset",
+    hour: "2-digit",
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date(ymd + "T12:00:00.000Z"));
+  const offsetStr = parts.find((p) => p.type === "timeZoneName")?.value || "GMT-4";
+  const m = offsetStr.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  const sign = m && m[1] === "-" ? -1 : 1;
+  const hh = m ? parseInt(m[2], 10) : 4;
+  const mm = m && m[3] ? parseInt(m[3], 10) : 0;
+  const offsetMin = sign * (hh * 60 + mm);
+  const [y, mo, d] = ymd.split("-").map(Number);
+  const fromUtcMs = Date.UTC(y, mo - 1, d, 0, 0, 0) - offsetMin * 60_000;
+  const toUtcMs = Date.UTC(y, mo - 1, d, 23, 59, 59, 999) - offsetMin * 60_000;
+  return { from: new Date(fromUtcMs), to: new Date(toUtcMs) };
+}
+
 /** UTC instant representing 00:00:00 Chile time today. */
 export function chileStartOfTodayUTC(): Date {
   // Chile is UTC-4 (no DST in May). For other months we compute via Intl.

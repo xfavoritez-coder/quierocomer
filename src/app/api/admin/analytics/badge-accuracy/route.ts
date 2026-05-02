@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
+import { chileDayBoundsUTC } from "@/lib/toteat/timezone";
 
 /**
  * Did our badges actually drive sales?
@@ -34,8 +35,10 @@ export async function GET(req: NextRequest) {
   }
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
-  const to = toStr ? new Date(toStr + "T23:59:59.999Z") : new Date();
-  const from = fromStr ? new Date(fromStr + "T00:00:00.000Z") : new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000);
+  // Interpret the YYYY-MM-DD strings as Chile-local days so "Hoy" means
+  // today in Chile (not in UTC, which leaks last night's sales in).
+  const from = fromStr ? chileDayBoundsUTC(fromStr).from : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const to = toStr ? chileDayBoundsUTC(toStr).to : new Date();
 
   // 1. Snapshots in window — count per (dish, badgeType)
   const snapshots = await prisma.badgeSnapshot.findMany({
