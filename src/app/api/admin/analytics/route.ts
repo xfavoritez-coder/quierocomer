@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes, getClientesAnalytics } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes, getClientesAnalytics, getTopCategoriesByDwell } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -53,12 +53,15 @@ export async function GET(req: NextRequest) {
         const dishes = data.dishes || [];
         const byViews = [...dishes].sort((a: any, b: any) => b.uniqueSessions - a.uniqueSessions).slice(0, 10).map((d: any) => ({ name: d.name, photo: d.photo, count: d.uniqueSessions }));
         const byDetail = [...dishes]
-          .filter((d: any) => d.detailViews > 0 && d.avgDetailMs >= 1000)
+          .filter((d: any) => d.opens > 0 && d.avgDetailMs >= 1000)
           .sort((a: any, b: any) => b.avgDetailMs - a.avgDetailMs)
           .slice(0, 10)
           .map((d: any) => ({ name: d.name, photo: d.photo, count: Math.round(d.avgDetailMs / 1000) + "s" }));
-        const leastViewed = await getLeastViewedDishes(restaurantId, from, to);
-        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, leastViewed });
+        const [leastViewed, topCategories] = await Promise.all([
+          getLeastViewedDishes(restaurantId, from, to),
+          getTopCategoriesByDwell(restaurantId, from, to),
+        ]);
+        return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, leastViewed, topCategories });
       }
       return NextResponse.json(data);
     }

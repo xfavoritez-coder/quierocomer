@@ -86,19 +86,19 @@ export async function GET(req: NextRequest) {
     const totalDuration = sessions.reduce((a, s) => a + (s.durationMs || 0), 0);
     const avgDuration = sessions.length ? Math.round(totalDuration / sessions.length / 1000) : 0;
 
-    // Most viewed dishes
-    const dishViews: Record<string, { name: string; count: number; totalMs: number }> = {};
+    // Most opened dishes — modal opens with detail time
+    const dishOpens: Record<string, { name: string; count: number; totalMs: number }> = {};
     for (const s of sessions) {
       const viewed = s.dishesViewed as any[];
       if (!Array.isArray(viewed)) continue;
       for (const d of viewed) {
-        if (!d.dishId) continue;
-        if (!dishViews[d.dishId]) dishViews[d.dishId] = { name: dishMap[d.dishId]?.name || d.dishId, count: 0, totalMs: 0 };
-        dishViews[d.dishId].count++;
-        dishViews[d.dishId].totalMs += d.dwellMs || 0;
+        if (!d.dishId || !d.detailMs || d.detailMs <= 0) continue;
+        if (!dishOpens[d.dishId]) dishOpens[d.dishId] = { name: dishMap[d.dishId]?.name || d.dishId, count: 0, totalMs: 0 };
+        dishOpens[d.dishId].count++;
+        dishOpens[d.dishId].totalMs += d.detailMs;
       }
     }
-    const topDishes = Object.values(dishViews).sort((a, b) => b.totalMs - a.totalMs).slice(0, 10);
+    const topDishes = Object.values(dishOpens).sort((a, b) => b.totalMs - a.totalMs).slice(0, 10);
 
     // View preferences
     const viewCounts: Record<string, number> = {};
@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
       ...s,
       dishesViewed: (Array.isArray(s.dishesViewed) ? s.dishesViewed : []).map((d: any) => ({
         ...d, dish: dishMap[d.dishId] || null,
-      })).sort((a: any, b: any) => (b.dwellMs || 0) - (a.dwellMs || 0)),
+      })).sort((a: any, b: any) => (b.detailMs || 0) - (a.detailMs || 0)),
       categoriesViewed: (Array.isArray(s.categoriesViewed) ? s.categoriesViewed : []).map((c: any) => ({
         ...c, name: catMap[c.categoryId] || c.categoryId,
       })),

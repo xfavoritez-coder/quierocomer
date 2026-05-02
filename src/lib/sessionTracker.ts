@@ -13,12 +13,10 @@ import { getGuestId, getSessionId } from "./guestId";
 
 const HEARTBEAT_INTERVAL = 15_000; // 15 seconds — Pro tier DB handles this fine at 80+ concurrent users
 const INACTIVITY_TIMEOUT = 45_000; // 45 seconds — gives more breathing room before closing
-const DWELL_THRESHOLD = 3_000; // 3 seconds to count as "viewed"
 
-interface DishDwell {
+interface DishView {
   dishId: string;
-  dwellMs: number;
-  detailMs?: number;
+  detailMs: number;
 }
 
 interface CategoryDwell {
@@ -40,7 +38,7 @@ interface SessionData {
   viewUsed: string | null;
   viewHistory: ViewEntry[];
   currentViewStart: number;
-  dishDwells: Map<string, DishDwell>;
+  dishViews: Map<string, DishView>;
   categoryDwells: Map<string, CategoryDwell>;
   pickedDishId: string | null;
   cartaLang: string | null;
@@ -50,8 +48,6 @@ interface SessionData {
 let session: SessionData | null = null;
 let inactivityTimer: ReturnType<typeof setTimeout> | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-let currentDishId: string | null = null;
-let currentDishStart: number | null = null;
 let detailDishId: string | null = null;
 let detailStart: number | null = null;
 let lastRestaurantId: string | undefined;
@@ -161,7 +157,6 @@ function bindActivityListeners() {
 
 function getPayload(isFinal: boolean) {
   if (!session) return null;
-  flushCurrentDish();
   flushDetail();
 
   // Flush current view time into history
@@ -197,7 +192,7 @@ function getPayload(isFinal: boolean) {
     preferences,
     viewUsed: session.viewUsed,
     viewHistory: history.map(v => ({ view: v.view, durationMs: v.durationMs })),
-    dishesViewed: Array.from(session.dishDwells.values()),
+    dishesViewed: Array.from(session.dishViews.values()),
     categoriesViewed: Array.from(session.categoryDwells.values()),
     pickedDishId: session.pickedDishId,
     cartaLang: session.cartaLang,
@@ -353,7 +348,7 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
           viewUsed: null,
           viewHistory: [],
           currentViewStart: Date.now(),
-          dishDwells: new Map(),
+          dishViews: new Map(),
           categoryDwells: new Map(),
           pickedDishId: null,
           cartaLang: pendingLang,
@@ -390,7 +385,7 @@ export function startSession(restaurantId: string, tableId?: string, isQrScan?: 
     viewUsed: null,
     viewHistory: [],
     currentViewStart: Date.now(),
-    dishDwells: new Map(),
+    dishViews: new Map(),
     categoryDwells: new Map(),
     pickedDishId: null,
     cartaLang: pendingLang,
@@ -424,51 +419,6 @@ export function trackViewSelected(view: string) {
   session.currentViewStart = Date.now();
 }
 
-/** Call when a dish becomes visible */
-export function trackDishEnter(dishId: string) {
-  if (!session) return;
-  flushCurrentDish();
-  currentDishId = dishId;
-  currentDishStart = Date.now();
-  resetInactivityTimer();
-}
-
-/** Call when a dish leaves view */
-export function trackDishLeave() {
-  flushCurrentDish();
-}
-
-function flushCurrentDish() {
-  if (!session || !currentDishId || !currentDishStart) return;
-  const elapsed = Date.now() - currentDishStart;
-
-  const existing = session.dishDwells.get(currentDishId);
-  if (existing) {
-    existing.dwellMs += elapsed;
-  } else {
-    session.dishDwells.set(currentDishId, { dishId: currentDishId, dwellMs: elapsed });
-  }
-
-  // Fire DISH_DWELL stat event if 3s+ (once per dish)
-  const total = session.dishDwells.get(currentDishId)!;
-  if (total.dwellMs >= DWELL_THRESHOLD && elapsed >= DWELL_THRESHOLD) {
-    fetch("/api/qr/stats", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        eventType: "DISH_DWELL",
-        restaurantId: session.restaurantId,
-        dishId: currentDishId,
-        guestId: getGuestId(),
-        sessionId: getSessionId(),
-        dbSessionId: session.dbSessionId,
-      }),
-    }).catch(() => {});
-  }
-
-  currentDishId = null;
-  currentDishStart = null;
-}
 
 /** Track category viewing time */
 export function trackCategoryDwell(categoryId: string, dwellMs: number) {
@@ -550,11 +500,11 @@ export function trackDetailClose() {
 function flushDetail() {
   if (!session || !detailDishId || !detailStart) return;
   const elapsed = Date.now() - detailStart;
-  const existing = session.dishDwells.get(detailDishId);
+  const existing = session.dishViews.get(detailDishId);
   if (existing) {
-    existing.detailMs = (existing.detailMs || 0) + elapsed;
+    existing.detailMs += elapsed;
   } else {
-    session.dishDwells.set(detailDishId, { dishId: detailDishId, dwellMs: 0, detailMs: elapsed });
+    session.dishViews.set(detailDishId, { dishId: detailDishId, detailMs: elapsed });
   }
   detailDishId = null;
   detailStart = null;

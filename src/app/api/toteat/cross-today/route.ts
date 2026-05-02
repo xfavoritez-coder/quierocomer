@@ -67,18 +67,16 @@ export async function GET() {
     where: { restaurantId: restaurant.id, startedAt: { gte: startOfDay } },
     select: { dishesViewed: true },
   });
-  const qcByDishId = new Map<string, { views: number; details: number; totalDetailMs: number }>();
+  const qcByDishId = new Map<string, { opens: number; totalDetailMs: number }>();
   for (const s of sessions) {
     const viewed = s.dishesViewed as any[];
     if (!Array.isArray(viewed)) continue;
     for (const d of viewed) {
       if (!d.dishId) continue;
-      const ex = qcByDishId.get(d.dishId) || { views: 0, details: 0, totalDetailMs: 0 };
-      ex.views++;
-      if (d.detailMs && d.detailMs > 0) {
-        ex.details++;
-        ex.totalDetailMs += d.detailMs;
-      }
+      if (!d.detailMs || d.detailMs <= 0) continue;
+      const ex = qcByDishId.get(d.dishId) || { opens: 0, totalDetailMs: 0 };
+      ex.opens++;
+      ex.totalDetailMs += d.detailMs;
       qcByDishId.set(d.dishId, ex);
     }
   }
@@ -121,22 +119,21 @@ export async function GET() {
     }
 
     if (matched) matchedToteatIds.add(matched.id);
-    const qc = qcByDishId.get(dish.id) || { views: 0, details: 0, totalDetailMs: 0 };
+    const qc = qcByDishId.get(dish.id) || { opens: 0, totalDetailMs: 0 };
     return {
       qcDishId: dish.id,
       name: dish.name,
       category: dish.category?.name || null,
       photo: dish.photos?.[0] || null,
-      qcViews: qc.views,
-      qcDetails: qc.details,
-      avgDetailMs: qc.details > 0 ? Math.round(qc.totalDetailMs / qc.details) : 0,
+      opens: qc.opens,
+      avgDetailMs: qc.opens > 0 ? Math.round(qc.totalDetailMs / qc.opens) : 0,
       toteatId: matched?.id || null,
       toteatName: matched?.name || null,
       matchScore: bestScore,
       matchSource,
       sales: matched?.quantity || 0,
       revenue: matched?.revenue || 0,
-      conversionPct: qc.views > 0 && matched ? Math.round(((matched.quantity || 0) / qc.views) * 100) : null,
+      conversionPct: qc.opens > 0 && matched ? Math.round(((matched.quantity || 0) / qc.opens) * 100) : null,
     };
   });
 
@@ -146,12 +143,12 @@ export async function GET() {
     .map((p) => ({ toteatId: p.id, name: p.name, category: p.category, sales: p.quantity, revenue: p.revenue }));
 
   // Standout categories
-  const totalQcViews = rows.reduce((s, r) => s + r.qcViews, 0);
+  const totalOpens = rows.reduce((s, r) => s + r.opens, 0);
   const totalSales = rows.reduce((s, r) => s + r.sales, 0);
-  const seenNotSold = rows.filter((r) => r.qcViews >= 3 && r.sales === 0).sort((a, b) => b.qcViews - a.qcViews).slice(0, 8);
-  const soldNotSeen = rows.filter((r) => r.sales > 0 && r.qcViews === 0).sort((a, b) => b.sales - a.sales).slice(0, 8);
+  const seenNotSold = rows.filter((r) => r.opens >= 3 && r.sales === 0).sort((a, b) => b.opens - a.opens).slice(0, 8);
+  const soldNotSeen = rows.filter((r) => r.sales > 0 && r.opens === 0).sort((a, b) => b.sales - a.sales).slice(0, 8);
   const bestConverters = rows
-    .filter((r) => r.qcViews >= 3 && r.sales > 0)
+    .filter((r) => r.opens >= 3 && r.sales > 0)
     .sort((a, b) => (b.conversionPct || 0) - (a.conversionPct || 0))
     .slice(0, 5);
 
@@ -162,7 +159,7 @@ export async function GET() {
     restaurant: restaurant.name,
     summary: {
       qcSessions: sessions.length,
-      totalQcViews,
+      totalOpens,
       totalSales,
       matched: rows.filter((r) => r.toteatId).length,
       qcDishesNotMatched: rows.filter((r) => !r.toteatId).length,

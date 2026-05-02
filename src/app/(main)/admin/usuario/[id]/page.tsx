@@ -342,7 +342,7 @@ export default function GuestProfile({ params }: { params: Promise<{ id: string 
                           <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 700, color: "#7fbfdc", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>
                           {d.dish?.photos?.[0] && <img src={d.dish.photos[0]} alt="" style={{ width: 24, height: 24, borderRadius: 4, objectFit: "cover" }} />}
                           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#ccc", flex: 1 }}>{d.dish?.name || d.dishId?.slice(0, 8)}</span>
-                          <span style={{ fontFamily: F, fontSize: "0.7rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.dwellMs)}</span>
+                          <span style={{ fontFamily: F, fontSize: "0.7rem", color: (d.detailMs || 0) > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.detailMs || 0)}</span>
                         </div>
                       ))}
                     </div>

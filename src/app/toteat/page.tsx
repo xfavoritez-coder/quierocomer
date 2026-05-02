@@ -32,8 +32,7 @@ interface CrossRow {
   name: string;
   category: string | null;
   photo: string | null;
-  qcViews: number;
-  qcDetails: number;
+  opens: number;
   avgDetailMs: number;
   toteatId: string | null;
   toteatName: string | null;
@@ -56,7 +55,7 @@ interface CrossData {
   restaurant: string;
   summary: {
     qcSessions: number;
-    totalQcViews: number;
+    totalOpens: number;
     totalSales: number;
     matched: number;
     qcDishesNotMatched: number;
@@ -211,13 +210,13 @@ export default function ToteatPage() {
               <>
                 <h2 style={{ fontSize: 18, marginTop: 32, marginBottom: 6 }}>🔀 Carta vs Caja (hoy)</h2>
                 <p style={{ color: "#888", fontSize: 12, margin: "0 0 14px" }}>
-                  {cross.summary.qcSessions} sesiones · {cross.summary.totalQcViews} vistas en carta · {cross.summary.totalSales} unidades vendidas · {cross.summary.matched} platos cruzados, {cross.summary.qcDishesNotMatched} sin venta · {cross.summary.orphanToteatProducts} productos vendidos fuera del menú QC
+                  {cross.summary.qcSessions} sesiones · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} unidades vendidas · {cross.summary.matched} platos cruzados, {cross.summary.qcDishesNotMatched} sin venta · {cross.summary.orphanToteatProducts} productos vendidos fuera del menú QC
                 </p>
 
                 {/* Insights cards */}
                 {cross.insights.seenNotSold.length > 0 && (
                   <div style={{ background: "#291816", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
-                    <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "#fca5a5" }}>👻 Platos fantasma — los miran pero no los compran</p>
+                    <p style={{ margin: "0 0 10px", fontSize: 13, fontWeight: 700, color: "#fca5a5" }}>👻 Platos fantasma — los abren pero no los compran</p>
                     {cross.insights.seenNotSold.map((p) => (
                       <div key={p.qcDishId} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", fontSize: 13, borderBottom: "1px dashed #3a2826" }}>
                         <span>
@@ -225,8 +224,8 @@ export default function ToteatPage() {
                           {p.category && <span style={{ color: "#666", fontSize: 11, marginLeft: 6 }}>· {p.category}</span>}
                         </span>
                         <span style={{ color: "#fca5a5" }}>
-                          <span style={{ fontWeight: 700 }}>{p.qcViews}</span> vistas
-                          {p.avgDetailMs > 0 && <span style={{ color: "#888", marginLeft: 8 }}>{Math.round(p.avgDetailMs / 1000)}s en detalle</span>}
+                          <span style={{ fontWeight: 700 }}>{p.opens}</span> aperturas
+                          {p.avgDetailMs > 0 && <span style={{ color: "#888", marginLeft: 8 }}>{Math.round(p.avgDetailMs / 1000)}s promedio</span>}
                         </span>
                       </div>
                     ))}
@@ -244,7 +243,7 @@ export default function ToteatPage() {
                         </span>
                         <span style={{ color: "#86efac" }}>
                           <span style={{ fontWeight: 700 }}>{p.conversionPct}%</span>
-                          <span style={{ color: "#888", marginLeft: 8 }}>{p.sales} de {p.qcViews} vistas</span>
+                          <span style={{ color: "#888", marginLeft: 8 }}>{p.sales} de {p.opens} aperturas</span>
                         </span>
                       </div>
                     ))}
@@ -276,8 +275,8 @@ export default function ToteatPage() {
                       <thead>
                         <tr style={{ color: "#888", textAlign: "left", borderBottom: "1px solid #2a2a2d" }}>
                           <th style={{ padding: "8px 6px", fontWeight: 600 }}>Plato</th>
-                          <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Vistas</th>
-                          <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Detalles</th>
+                          <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Aperturas</th>
+                          <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>T. detalle</th>
                           <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Ventas</th>
                           <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Conv.</th>
                           <th style={{ padding: "8px 6px", fontWeight: 600, textAlign: "right" }}>Ingreso</th>
@@ -285,7 +284,7 @@ export default function ToteatPage() {
                       </thead>
                       <tbody>
                         {cross.rows.map((r) => {
-                          const flag = r.qcViews >= 3 && r.sales === 0 ? "👻" : r.sales > 0 && (r.conversionPct || 0) >= 30 ? "🎯" : "";
+                          const flag = r.opens >= 3 && (r.sales === 0 || (r.conversionPct ?? 0) < 20) ? "👻" : r.opens >= 3 && r.sales >= 2 && (r.conversionPct || 0) >= 50 ? "🎯" : "";
                           return (
                             <tr key={r.qcDishId} style={{ borderBottom: "1px dashed #2a2a2d" }}>
                               <td style={{ padding: "6px" }}>
@@ -293,10 +292,10 @@ export default function ToteatPage() {
                                 {r.name}
                                 {r.category && <div style={{ color: "#555", fontSize: 10 }}>{r.category}</div>}
                               </td>
-                              <td style={{ padding: "6px", textAlign: "right" }}>{r.qcViews}</td>
-                              <td style={{ padding: "6px", textAlign: "right" }}>{r.qcDetails}</td>
+                              <td style={{ padding: "6px", textAlign: "right" }}>{r.opens}</td>
+                              <td style={{ padding: "6px", textAlign: "right" }}>{r.avgDetailMs > 0 ? `${Math.round(r.avgDetailMs / 1000)}s` : "—"}</td>
                               <td style={{ padding: "6px", textAlign: "right", color: r.sales > 0 ? "#F4A623" : "#444", fontWeight: 700 }}>{r.sales}</td>
-                              <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 30 ? "#86efac" : r.conversionPct >= 10 ? "#bbb" : "#fca5a5") : "#444" }}>
+                              <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 50 ? "#86efac" : r.conversionPct >= 20 ? "#bbb" : "#fca5a5") : "#444" }}>
                                 {r.conversionPct !== null ? `${r.conversionPct}%` : "—"}
                               </td>
                               <td style={{ padding: "6px", textAlign: "right", color: "#888" }}>{r.revenue > 0 ? CLP(r.revenue) : "—"}</td>

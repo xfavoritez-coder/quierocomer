@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState, useEffect, useCallback, type CSSProperties } from "react";
 import Image from "next/image";
 import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/client";
-import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
+import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
@@ -349,16 +349,6 @@ function CategoryTrack({
 
   useInView(wrapRef, (inView) => { if (inView) onActive(); });
 
-  // Track dish dwell when slide changes
-  useEffect(() => {
-    if (activeSlide > 0) {
-      const dish = group.dishes[activeSlide - 1];
-      if (dish) trackDishEnter(dish.id);
-    } else {
-      trackDishLeave();
-    }
-  }, [activeSlide, group.dishes]);
-
   // Horizontal observer
   useEffect(() => {
     const track = trackRef.current;
@@ -502,7 +492,7 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
       {d.isSpicy && <span style={{ fontSize: "15px" }}>🌶️</span>}
       {isNew && <VjNewBadge inline />}
       {isRec ? <span onClick={() => handleBadgeClick("rec")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>⭐ Recomendado</span>
-      : hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Top hoy</span>}
+      : hasPopularBadge && <span onClick={() => handleBadgeClick("popular")} style={{ fontSize: "13px", fontFamily: "var(--font-dm)", fontWeight: 600, background: "rgba(0,0,0,0.4)", backdropFilter: "blur(4px)", padding: "3px 10px", borderRadius: 50, color: "white", cursor: "pointer" }}>🔥 Popular hoy</span>}
     </span>
   ) : null;
   const accentColor = "#F4A623";

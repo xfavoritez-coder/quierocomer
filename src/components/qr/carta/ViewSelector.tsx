@@ -93,7 +93,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           role="menu"
           style={{
             position: "absolute",
-            right: 62,
+            right: 56,
             bottom: 0,
             display: "flex",
             flexDirection: "column",
@@ -101,8 +101,8 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
             background: "rgba(0,0,0,0.78)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderRadius: 22,
-            padding: "10px 10px",
+            borderRadius: 18,
+            padding: "6px 14px 8px",
             boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
             border: "1px solid rgba(255,255,255,0.1)",
             animation: "vsSlideIn 0.25s cubic-bezier(0.16,1,0.3,1)",
@@ -110,12 +110,12 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           }}
         >
           {/* Views section header */}
-          <div style={{ padding: "6px 10px 4px" }}>
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 600, letterSpacing: "0.03em" }}>Vistas</span>
+          <div style={{ padding: "2px 8px 2px" }}>
+            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.03em" }}>Vistas</span>
           </div>
 
           {/* View options grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "2px 2px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px" }}>
             {VIEW_KEYS.filter(v => plan !== "GOLD" || v.value === "lista" || v.value === "premium").map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
@@ -126,13 +126,13 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
                   onClick={() => handleSelect(value)}
                   className="flex items-center justify-center active:scale-95 transition-transform"
                   style={{
-                    gap: 7,
-                    padding: "11px 18px",
+                    gap: 6,
+                    padding: "8px 14px",
                     borderRadius: 50,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    fontSize: "0.92rem",
+                    fontSize: "0.8rem",
                     fontWeight: 600,
                     transition: "all 0.15s",
                     background: isActive ? "white" : "transparent",
@@ -140,7 +140,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <Icon size={16} strokeWidth={1.75} />
+                  <Icon size={14} strokeWidth={1.75} />
                   {label}
                 </button>
               );
@@ -148,11 +148,11 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "8px 10px" }} />
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "6px 8px" }} />
 
           {/* Language selector row */}
-          <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
-            <span style={{ marginLeft: 10, marginRight: 8, color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px" }}>
+            <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
             {(enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : SUPPORTED_LANGS).map((l) => {
               const isActive = activeLang === l;
               return (
@@ -161,12 +161,12 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
                   onClick={() => handleLangChange(l)}
                   className="active:scale-95 transition-transform"
                   style={{
-                    padding: "8px 14px",
+                    padding: "6px 11px",
                     borderRadius: 50,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    fontSize: "0.92rem",
+                    fontSize: "0.82rem",
                     fontWeight: 600,
                     letterSpacing: "0.05em",
                     transition: "all 0.15s",
@@ -184,7 +184,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           <div style={{
             position: "absolute",
             right: -5,
-            bottom: 20,
+            bottom: 18,
             transform: "rotate(45deg)",
             width: 10,
             height: 10,
@@ -203,8 +203,8 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
         aria-expanded={open}
         className="flex items-center justify-center active:scale-90"
         style={{
-          width: 52,
-          height: 52,
+          width: 46,
+          height: 46,
           borderRadius: "50%",
           background: open ? "rgba(244,166,35,0.2)" : "rgba(0,0,0,0.4)",
           backdropFilter: "blur(12px)",
@@ -215,7 +215,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           boxShadow: open ? "0 0 16px rgba(244,166,35,0.2)" : "0 4px 18px rgba(0,0,0,0.25)",
         }}
       >
-        <Layers size={22} strokeWidth={1.75} />
+        <Layers size={20} strokeWidth={1.75} />
       </button>
 
       {/* First-time tip del Genio */}

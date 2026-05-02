@@ -117,7 +117,7 @@ interface SessionData {
   externalReferer: string | null;
   language: string | null;
   cartaLang: string | null;
-  dishesViewed: { dishId: string; dwellMs: number; detailMs?: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null; isPopular?: boolean; isRecommended?: boolean; isNew?: boolean }[];
+  dishesViewed: { dishId: string; detailMs: number; order?: number; dish: { id: string; name: string; photos: string[]; price: number } | null; isPopular?: boolean; isRecommended?: boolean; isNew?: boolean }[];
   categoriesViewed: { categoryId: string; dwellMs: number; name: string }[];
   dishFavorites: { id: string; dishId: string; dish: { id: string; name: string; photos: string[] } | null; createdAt: string }[];
   experienceSubmissions: { id: string; templateName: string; templateEmoji: string; resultName: string | null; resultTraits: string[]; status: string; submittedAt: string }[];
@@ -366,7 +366,7 @@ export default function AdminSessions() {
                                   <div style={{ marginBottom: 8 }}>
                                     <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Platos ({s.dishesViewed.length})</p>
                                     <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                                      {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
+                                      {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.detailMs || 0) - (a.detailMs || 0)) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, padding: "4px 8px", background: "rgba(255,255,255,0.02)", borderRadius: 6, fontSize: "0.75rem", fontFamily: F }}>
                                           {dishSort === "order" && <span style={{ fontSize: "0.6rem", fontWeight: 700, color: "#7fbfdc", minWidth: 16, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>}
                                           <span style={{ color: "#ccc", flex: 1 }}>
@@ -375,8 +375,7 @@ export default function AdminSessions() {
                                             {d.isPopular && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(239,68,68,0.12)", color: "#f87171", fontWeight: 600 }}>POP</span>}
                                             {d.isNew && <span style={{ fontSize: "0.55rem", marginLeft: 4, padding: "1px 4px", borderRadius: 3, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600 }}>NEW</span>}
                                           </span>
-                                          <span style={{ color: d.dwellMs > 5000 ? "#F4A623" : "#555" }}>{formatDuration(d.dwellMs)} carta</span>
-                                          {(d.detailMs ?? 0) > 0 && <span style={{ color: "#4ade80" }}>{formatDuration(d.detailMs!)} detalle</span>}
+                                          <span style={{ color: (d.detailMs || 0) > 5000 ? "#4ade80" : "#555" }}>{formatDuration(d.detailMs || 0)} en detalle</span>
                                         </div>
                                       ))}
                                     </div>
@@ -751,7 +750,7 @@ export default function AdminSessions() {
                           </div>
                         </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                          {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.dwellMs + (b.detailMs || 0)) - (a.dwellMs + (a.detailMs || 0))) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
+                          {[...s.dishesViewed].sort((a, b) => dishSort === "time" ? ((b.detailMs || 0) - (a.detailMs || 0)) : ((a.order ?? 0) - (b.order ?? 0))).map((d, i) => (
                             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: "rgba(255,255,255,0.02)", borderRadius: 8 }}>
                               {dishSort === "order" && <span style={{ fontFamily: F, fontSize: "0.62rem", fontWeight: 700, color: "#7fbfdc", minWidth: 18, textAlign: "center", flexShrink: 0 }}>{i + 1}°</span>}
                               {d.dish?.photos?.[0] ? (
@@ -765,8 +764,7 @@ export default function AdminSessions() {
                                 {d.isPopular && <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: "rgba(239,68,68,0.12)", color: "#f87171", fontWeight: 600, verticalAlign: "middle" }}>POPULAR</span>}
                                 {d.isNew && <span style={{ fontSize: "0.58rem", marginLeft: 5, padding: "1px 5px", borderRadius: 3, background: "rgba(96,165,250,0.12)", color: "#60a5fa", fontWeight: 600, verticalAlign: "middle" }}>NUEVO</span>}
                               </span>
-                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: d.dwellMs > 5000 ? "#F4A623" : "#555", fontWeight: d.dwellMs > 5000 ? 600 : 400 }}>{formatDuration(d.dwellMs)} en carta</span>
-                              {(d.detailMs ?? 0) > 0 && <span style={{ fontFamily: F, fontSize: "0.72rem", color: "#4ade80", fontWeight: 600 }}>{formatDuration(d.detailMs!)} en detalle</span>}
+                              <span style={{ fontFamily: F, fontSize: "0.72rem", color: (d.detailMs || 0) > 5000 ? "#4ade80" : "#555", fontWeight: (d.detailMs || 0) > 5000 ? 600 : 400 }}>{formatDuration(d.detailMs || 0)} en detalle</span>
                             </div>
                           ))}
                         </div>

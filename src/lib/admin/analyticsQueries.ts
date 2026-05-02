@@ -303,26 +303,24 @@ export async function getTopAttentionDishes(restaurantId: string | null, from: D
     take: 5000,
   });
 
-  // Aggregate dwell time per dish (carta) and detail time (popup)
-  const dwells: Record<string, { totalMs: number; detailMs: number; detailViews: number; views: number; uniqueSessions: number }> = {};
+  // Aggregate modal opens per dish — only entries with detailMs > 0 count.
+  // Legacy "views" (any dish that appeared in a session, including scroll
+  // throughs) is no longer tracked.
+  const stats: Record<string, { opens: number; totalDetailMs: number; uniqueSessions: number }> = {};
   for (const s of sessions) {
     const viewed = s.dishesViewed as any[];
     if (!Array.isArray(viewed)) continue;
     const seenInSession = new Set<string>();
     for (const d of viewed) {
-      if (!d.dishId) continue;
-      if (!dwells[d.dishId]) dwells[d.dishId] = { totalMs: 0, detailMs: 0, detailViews: 0, views: 0, uniqueSessions: 0 };
-      dwells[d.dishId].totalMs += d.dwellMs || 0;
-      if (d.detailMs && d.detailMs > 0) {
-        dwells[d.dishId].detailMs += d.detailMs;
-        dwells[d.dishId].detailViews++;
-      }
-      dwells[d.dishId].views++;
-      if (!seenInSession.has(d.dishId)) { dwells[d.dishId].uniqueSessions++; seenInSession.add(d.dishId); }
+      if (!d.dishId || !d.detailMs || d.detailMs <= 0) continue;
+      if (!stats[d.dishId]) stats[d.dishId] = { opens: 0, totalDetailMs: 0, uniqueSessions: 0 };
+      stats[d.dishId].opens++;
+      stats[d.dishId].totalDetailMs += d.detailMs;
+      if (!seenInSession.has(d.dishId)) { stats[d.dishId].uniqueSessions++; seenInSession.add(d.dishId); }
     }
   }
 
-  const topIds = Object.entries(dwells)
+  const topIds = Object.entries(stats)
     .sort((a, b) => b[1].uniqueSessions - a[1].uniqueSessions)
     .slice(0, 15)
     .map(([id]) => id);
@@ -339,20 +337,17 @@ export async function getTopAttentionDishes(restaurantId: string | null, from: D
     totalSessions: sessions.length,
     dishes: topIds.map(id => {
       const dish = dishMap[id];
-      const data = dwells[id];
+      const data = stats[id];
       return {
         name: dish?.name || id,
         price: dish?.price || 0,
         photo: dish?.photos?.[0] || null,
         category: dish?.category?.name || "",
-        views: data.views,
+        opens: data.opens,
         uniqueSessions: data.uniqueSessions,
-        avgDwellMs: Math.round(data.totalMs / data.views),
-        avgDetailMs: data.detailViews > 0 ? Math.round(data.detailMs / data.detailViews) : 0,
-        detailViews: data.detailViews,
-        totalDwellMs: data.totalMs,
-        totalDetailMs: data.detailMs,
-        viewPct: sessions.length > 0 ? Math.round((data.uniqueSessions / sessions.length) * 100) : 0,
+        avgDetailMs: data.opens > 0 ? Math.round(data.totalDetailMs / data.opens) : 0,
+        totalDetailMs: data.totalDetailMs,
+        openPct: sessions.length > 0 ? Math.round((data.uniqueSessions / sessions.length) * 100) : 0,
       };
     }),
   };
@@ -374,14 +369,15 @@ export async function getLeastViewedDishes(restaurantId: string | null, from: Da
   });
   const totalSessions = sessions.length;
 
-  // Count uniqueSessions that saw each dish in carta
+  // Count unique sessions that opened each dish's modal — entries without
+  // detailMs > 0 represent legacy scroll-through and are not tracked anymore.
   const seen: Record<string, number> = {};
   for (const s of sessions) {
     const viewed = s.dishesViewed as any[];
     if (!Array.isArray(viewed)) continue;
     const inThis = new Set<string>();
     for (const d of viewed) {
-      if (d.dishId) inThis.add(d.dishId);
+      if (d.dishId && d.detailMs && d.detailMs > 0) inThis.add(d.dishId);
     }
     for (const id of inThis) seen[id] = (seen[id] || 0) + 1;
   }
@@ -407,6 +403,61 @@ export async function getLeastViewedDishes(restaurantId: string | null, from: Da
       photo: d.photo,
       count: totalSessions > 0 ? `${Math.round((d.count / totalSessions) * 100)}%` : `${d.count}`,
     }));
+}
+
+/**
+ * Top categories by total dwell time across all sessions in the window.
+ * Each category appears once per session in `categoriesViewed` with the time
+ * the user spent on that section. Useful to know which carta sections drive
+ * attention regardless of dish-level performance — e.g. "Sushi" might capture
+ * 40% of time even if individual sushi dishes don't top the dish ranking.
+ */
+export async function getTopCategoriesByDwell(restaurantId: string | null, from: Date, to: Date) {
+  const rf = restaurantFilter(restaurantId);
+  if (!restaurantId) return [];
+
+  const sessions = await prisma.session.findMany({
+    where: { ...rf, startedAt: { gte: from, lte: to } },
+    select: { categoriesViewed: true },
+    take: 5000,
+  });
+
+  const byCat: Record<string, { totalMs: number; sessions: number }> = {};
+  for (const s of sessions) {
+    const cats = s.categoriesViewed as any[];
+    if (!Array.isArray(cats)) continue;
+    const seenInSession = new Set<string>();
+    for (const c of cats) {
+      if (!c.categoryId || !c.dwellMs || c.dwellMs <= 0) continue;
+      if (!byCat[c.categoryId]) byCat[c.categoryId] = { totalMs: 0, sessions: 0 };
+      byCat[c.categoryId].totalMs += c.dwellMs;
+      if (!seenInSession.has(c.categoryId)) {
+        byCat[c.categoryId].sessions++;
+        seenInSession.add(c.categoryId);
+      }
+    }
+  }
+
+  const ids = Object.keys(byCat);
+  if (ids.length === 0) return [];
+
+  const cats = await prisma.category.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, name: true },
+  });
+  const nameMap = Object.fromEntries(cats.map(c => [c.id, c.name]));
+
+  const totalMsAll = Object.values(byCat).reduce((s, x) => s + x.totalMs, 0);
+  return ids
+    .map(id => ({
+      id,
+      name: nameMap[id] || "Sin categoría",
+      totalMs: byCat[id].totalMs,
+      sessions: byCat[id].sessions,
+      pct: totalMsAll > 0 ? Math.round((byCat[id].totalMs / totalMsAll) * 100) : 0,
+    }))
+    .sort((a, b) => b.totalMs - a.totalMs)
+    .slice(0, 10);
 }
 
 const TIME_OF_DAY_LABELS: Record<string, { label: string; hint: string }> = {

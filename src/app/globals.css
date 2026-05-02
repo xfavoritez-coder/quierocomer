@@ -106,6 +106,32 @@ textarea::placeholder {
   animation: shimmer 1.5s ease-in-out infinite;
 }
 
+/* Subtle row highlight for analytics tables — no cursor change, no link feel */
+.adm-table-row {
+  transition: background 0.12s ease;
+}
+.adm-table-row:hover {
+  background: var(--adm-hover);
+}
+
+/* Analytics grid utilities — fixed cols on wide screens, 1 col on mobile */
+.adm-cols-2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.adm-cols-3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+@media (max-width: 768px) {
+  .adm-cols-2,
+  .adm-cols-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

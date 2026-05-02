@@ -179,19 +179,19 @@ export async function GET(req: NextRequest) {
     ]);
 
     // Aggregate detailMs from sessions JSON for "Más tiempo en detalle" ranking
-    const detailDwell: Record<string, { totalMs: number; views: number }> = {};
+    const detailDwell: Record<string, { totalMs: number; opens: number }> = {};
     for (const s of sessionsForDetailTime) {
       const viewed = s.dishesViewed as any[];
       if (!Array.isArray(viewed)) continue;
       for (const d of viewed) {
         if (!d.dishId || !d.detailMs || d.detailMs <= 0) continue;
-        if (!detailDwell[d.dishId]) detailDwell[d.dishId] = { totalMs: 0, views: 0 };
+        if (!detailDwell[d.dishId]) detailDwell[d.dishId] = { totalMs: 0, opens: 0 };
         detailDwell[d.dishId].totalMs += d.detailMs;
-        detailDwell[d.dishId].views++;
+        detailDwell[d.dishId].opens++;
       }
     }
     const topDishesByDetailTime = Object.entries(detailDwell)
-      .map(([dishId, d]) => ({ dishId, avgMs: Math.round(d.totalMs / d.views) }))
+      .map(([dishId, d]) => ({ dishId, avgMs: Math.round(d.totalMs / d.opens) }))
       .sort((a, b) => b.avgMs - a.avgMs)
       .slice(0, 5);
 

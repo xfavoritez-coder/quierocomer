@@ -5,7 +5,7 @@ export interface CompiledProfile {
   restrictions: string[];
   likedIngredients: Record<string, number>;
   dislikedIngredients: string[];
-  viewHistory: { dishId: string; dwellMs: number }[];
+  viewHistory: { dishId: string; detailMs: number }[];
   visitCount: number;
   visitedCategoryIds: string[];
   lastSessionDate: Date | null;
@@ -92,18 +92,18 @@ export async function compileProfile(
     ]),
   ];
 
-  // Flatten viewHistory from sessions, deduplicate keeping max dwellMs
+  // Flatten viewHistory from sessions — only count dishes the user actually
+  // opened the modal for (detailMs > 0). Keep the longest detail time per dish.
   const viewMap = new Map<string, number>();
   for (const session of sessions) {
     const viewed = (session.dishesViewed as any[]) || [];
     for (const v of viewed) {
-      if (v?.dishId) {
-        const existing = viewMap.get(v.dishId) || 0;
-        viewMap.set(v.dishId, Math.max(existing, v.dwellMs || 0));
-      }
+      if (!v?.dishId || !v.detailMs || v.detailMs <= 0) continue;
+      const existing = viewMap.get(v.dishId) || 0;
+      viewMap.set(v.dishId, Math.max(existing, v.detailMs));
     }
   }
-  const viewHistory = Array.from(viewMap, ([dishId, dwellMs]) => ({ dishId, dwellMs }));
+  const viewHistory = Array.from(viewMap, ([dishId, detailMs]) => ({ dishId, detailMs }));
 
   // Extract visited category IDs from sessions
   const catSet = new Set<string>();

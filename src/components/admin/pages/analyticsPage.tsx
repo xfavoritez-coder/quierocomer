@@ -56,7 +56,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 }
 
 /* ═══ TAB: Platos ═══ */
-type CrossSortKey = "name" | "qcViews" | "avgDetailMs" | "sales" | "conversionPct";
+type CrossSortKey = "name" | "opens" | "avgDetailMs" | "sales" | "conversionPct";
 type CrossSortDir = "asc" | "desc";
 
 function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
@@ -72,7 +72,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   const [data, setData] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tableOpen, setTableOpen] = useState(false);
+  const [tableOpen, setTableOpen] = useState(true);
   const [sortKey, setSortKey] = useState<CrossSortKey>("sales");
   const [sortDir, setSortDir] = useState<CrossSortDir>("desc");
 
@@ -113,33 +113,48 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
 
-  const sections = [
-    { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀", unit: "veces" },
-    { title: "Más tiempo en detalle", items: data.mostDetailed || [], icon: "🔍", unit: "" },
-    { title: "Platos abandonados", items: data.leastViewed || [], icon: "🌱", unit: "% sesiones que los vieron" },
-  ];
+  const renderSection = (s: { title: string; items: any[]; icon: string; unit: string }) => (
+    <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{s.icon} {s.title} {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}</p>
+      {s.items.length === 0 ? (
+        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {s.items.slice(0, 10).map((d: any, i: number) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
+              {d.photo && <img src={d.photo} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
+              <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-accent)", fontWeight: 600, flexShrink: 0 }}>{d.count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  const mostViewed = { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀", unit: "veces" };
+  const mostDetailed = { title: "Más tiempo en detalle", items: data.mostDetailed || [], icon: "🔍", unit: "" };
+  const leastViewed = { title: "Platos abandonados", items: data.leastViewed || [], icon: "🌱", unit: "% sesiones que los vieron" };
+  const topCategories = {
+    title: "Categorías más exploradas",
+    items: (data.topCategories || []).map((c: any) => ({
+      name: c.name,
+      count: `${c.pct}% · ${formatDuration(c.totalMs)}`,
+    })),
+    icon: "🗂️",
+    unit: "% del tiempo en carta",
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {sections.map(s => (
-        <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{s.icon} {s.title} {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}</p>
-          {s.items.length === 0 ? (
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {s.items.slice(0, 10).map((d: any, i: number) => (
-                <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", width: 18, textAlign: "right", flexShrink: 0 }}>{i + 1}.</span>
-                  {d.photo && <img src={d.photo} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />}
-                  <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.75rem", color: "var(--adm-accent)", fontWeight: 600, flexShrink: 0 }}>{d.count}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+      {/* Grid 2x2 con los 4 bloques principales */}
+      <div className="adm-cols-2">
+        {renderSection(mostViewed)}
+        {renderSection(leastViewed)}
+        {renderSection(mostDetailed)}
+        {renderSection(topCategories)}
+      </div>
 
       {/* 🔀 Carta vs Caja — only shown if Toteat data exists */}
       {cross && cross.summary?.totalSales > 0 && (
@@ -147,54 +162,90 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
             <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalQcViews} vistas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
+              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
             </span>
           </div>
 
-          {/* Insights */}
-          {cross.insights.fantasmas.length > 0 && (
-            <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 8px" }}>👻 Platos fantasma — los miran y no los compran</p>
-              {cross.insights.fantasmas.map((p: any) => (
-                <div key={p.dishId} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>
-                  <span>{p.name}{p.category && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", marginLeft: 6 }}>· {p.category}</span>}</span>
-                  <span style={{ color: "#ef4444", fontWeight: 600 }}>
-                    {p.qcViews} vistas
-                    {p.avgDetailMs > 0 && <span style={{ color: "var(--adm-text3)", marginLeft: 8, fontWeight: 400 }}>{Math.round(p.avgDetailMs / 1000)}s en detalle</span>}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {cross.insights.estrellas.length > 0 && (
-            <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 8px" }}>🎯 Estrellas — los ven y los piden</p>
-              {cross.insights.estrellas.map((p: any) => (
-                <div key={p.dishId} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>
-                  <span>{p.name}{p.category && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", marginLeft: 6 }}>· {p.category}</span>}</span>
-                  <span style={{ color: "#16a34a", fontWeight: 600 }}>
-                    {p.conversionPct}% conversión <span style={{ color: "var(--adm-text3)", marginLeft: 6, fontWeight: 400 }}>{p.sales} de {p.qcViews}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {cross.orphans.length > 0 && (
-            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>📦 Vendidos fuera de la carta digital ({cross.orphans.length})</p>
-              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat que no tienen mapeo a un plato de QC. Probable: combos, salsas/extras, o platos sin mapear todavía.</p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {cross.orphans.slice(0, 12).map((o: any) => (
-                  <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
-                    {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
-                  </span>
+          {/* Insights — grid 2x2 fijo */}
+          <div className="adm-cols-2" style={{ marginBottom: 10 }}>
+            {cross.insights.fantasmas.length > 0 && (
+              <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px" }}>👻 Platos fantasma</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren pero no los compran.</p>
+                {cross.insights.fantasmas.map((p: any) => (
+                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(239,68,68,0.15)", fontFamily: FB }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize: "0.78rem", color: "#ef4444", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
+                        {p.conversionPct ?? 0}% conv
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
+                      {p.sales} {p.sales === 1 ? "venta" : "ventas"} · {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}s en detalle`}
+                    </div>
+                  </div>
                 ))}
-                {cross.orphans.length > 12 && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", fontFamily: FB }}>+{cross.orphans.length - 12} más</span>}
               </div>
-            </div>
-          )}
+            )}
+
+            {cross.insights.estrellas.length > 0 && (
+              <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px" }}>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px" }}>🎯 Estrellas</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren y los piden.</p>
+                {cross.insights.estrellas.map((p: any) => (
+                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(34,197,94,0.15)", fontFamily: FB }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize: "0.78rem", color: "#16a34a", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
+                        {p.conversionPct}% conv
+                      </span>
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
+                      {p.sales} {p.sales === 1 ? "venta" : "ventas"} · {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {cross.insights.sospechosos?.length > 0 && (
+              <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px" }}>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>🟡 Sin mapear</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
+                {cross.insights.sospechosos.map((p: any) => (
+                  <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+                      <span style={{ fontSize: "0.78rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize: "0.78rem", color: "#F4A623", fontWeight: 600, flexShrink: 0, whiteSpace: "nowrap" }}>
+                        {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
+                      </span>
+                    </div>
+                    {p.avgDetailMs > 0 && (
+                      <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
+                        {Math.round(p.avgDetailMs / 1000)}s en detalle
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {cross.orphans.length > 0 && (
+              <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px" }}>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>📦 Fuera de la carta digital ({cross.orphans.length})</p>
+                <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat sin mapeo. Probable: combos, salsas, extras o sin mapear.</p>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {cross.orphans.slice(0, 12).map((o: any) => (
+                    <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
+                      {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
+                    </span>
+                  ))}
+                  {cross.orphans.length > 12 && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", fontFamily: FB }}>+{cross.orphans.length - 12} más</span>}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Full table — collapsible */}
           <button
@@ -210,10 +261,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                   <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
                     {([
                       { key: "name", label: "Plato", align: "left" as const, tooltip: undefined },
-                      { key: "qcViews", label: "Vistas", align: "right" as const, tooltip: "Veces que el plato apareció en una sesión" },
-                      { key: "avgDetailMs", label: "T. detalle", align: "right" as const, tooltip: "Segundos promedio que pasaron en el detalle del plato (cuando lo abrieron)" },
+                      { key: "opens", label: "Aperturas", align: "right" as const, tooltip: "Veces que alguien tocó el plato y abrió su detalle" },
+                      { key: "avgDetailMs", label: "T. detalle", align: "right" as const, tooltip: "Segundos promedio dentro del detalle del plato" },
                       { key: "sales", label: "Ventas", align: "right" as const, tooltip: "Unidades vendidas en el período" },
-                      { key: "conversionPct", label: "Conv.", align: "right" as const, tooltip: "Porcentaje de vistas que terminaron en venta" },
+                      { key: "conversionPct", label: "Conv.", align: "right" as const, tooltip: "Porcentaje de aperturas que terminaron en venta" },
                     ] as { key: CrossSortKey; label: string; align: "left" | "right"; tooltip?: string }[]).map((col) => {
                       const active = sortKey === col.key;
                       return (
@@ -241,22 +292,22 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 </thead>
                 <tbody>
                   {sortedRows.map((r: any) => {
-                    const isFantasma = r.mapped && r.qcViews >= 5 && (r.sales === 0 || (r.conversionPct ?? 0) < 5);
-                    const isStar = r.sales > 0 && (r.conversionPct ?? 0) >= 25;
+                    const isFantasma = r.mapped && r.opens >= 3 && (r.sales === 0 || (r.conversionPct ?? 0) < 20);
+                    const isStar = r.opens >= 3 && r.sales >= 2 && (r.conversionPct ?? 0) >= 50;
                     const flag = isFantasma ? "👻" : isStar ? "🎯" : "";
                     return (
-                      <tr key={r.dishId} style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
+                      <tr key={r.dishId} className="adm-table-row" style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
                         <td style={{ padding: "6px" }}>
                           {flag && <span style={{ marginRight: 4 }}>{flag}</span>}
                           {r.name}
                           {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>(sin mapear)</span>}
                         </td>
-                        <td style={{ padding: "6px", textAlign: "right" }}>{r.qcViews}</td>
+                        <td style={{ padding: "6px", textAlign: "right" }}>{r.opens}</td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.avgDetailMs > 0 ? "var(--adm-text2)" : "var(--adm-text3)" }}>
                           {r.avgDetailMs > 0 ? `${Math.round(r.avgDetailMs / 1000)}s` : "—"}
                         </td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.sales > 0 ? "var(--adm-accent)" : "var(--adm-text3)", fontWeight: 700 }}>{r.sales}</td>
-                        <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 25 ? "#16a34a" : r.conversionPct >= 10 ? "var(--adm-text2)" : "#ef4444") : "var(--adm-text3)" }}>
+                        <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 50 ? "#16a34a" : r.conversionPct >= 20 ? "var(--adm-text2)" : "#ef4444") : "var(--adm-text3)" }}>
                           {r.conversionPct !== null ? `${r.conversionPct}%` : "—"}
                         </td>
                       </tr>
@@ -855,7 +906,7 @@ export default function AnalyticsDashboard() {
   const allTabs = [...TABS_BASIC, ...TABS_ADVANCED];
 
   return (
-    <div style={{ maxWidth: 800 }}>
+    <div style={{ maxWidth: 1100 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "var(--adm-accent)", margin: 0 }}>Analytics</h1>

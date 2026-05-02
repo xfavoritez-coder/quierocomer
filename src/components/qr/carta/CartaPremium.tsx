@@ -18,7 +18,7 @@ import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
 import { getGuestId } from "@/lib/guestId";
-import { trackDishEnter, trackDishLeave, trackCategoryDwell } from "@/lib/sessionTracker";
+import { trackCategoryDwell } from "@/lib/sessionTracker";
 import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
