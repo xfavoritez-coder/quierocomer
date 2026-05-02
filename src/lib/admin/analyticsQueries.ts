@@ -408,3 +408,103 @@ export async function getLeastViewedDishes(restaurantId: string | null, from: Da
       count: totalSessions > 0 ? `${Math.round((d.count / totalSessions) * 100)}%` : `${d.count}`,
     }));
 }
+
+const TIME_OF_DAY_LABELS: Record<string, { label: string; hint: string }> = {
+  MORNING: { label: "Mañana", hint: "6–11" },
+  LUNCH: { label: "Almuerzo", hint: "11–15" },
+  AFTERNOON: { label: "Tarde", hint: "15–19" },
+  DINNER: { label: "Cena", hint: "19–23" },
+  LATE: { label: "Noche", hint: "23–6" },
+};
+const DIET_LABELS: Record<string, string> = {
+  OMNIVORE: "Carnívoro",
+  VEGAN: "Vegano",
+  VEGETARIAN: "Vegetariano",
+  PESCETARIAN: "Pescetariano",
+};
+
+/**
+ * Aggregated customer-profile data for the /panel/analytics Clientes tab:
+ * timeOfDay distribution, acquisition (QR vs direct + device split) and
+ * dietary profile (declared diets, restrictions, allergens) of guests.
+ */
+export async function getClientesAnalytics(restaurantId: string | null, from: Date, to: Date) {
+  const rf = restaurantFilter(restaurantId);
+  const where = { ...rf, startedAt: { gte: from, lte: to } };
+
+  const [timeGroups, qrScanCount, totalSessionsCount, deviceGroups, langGroups, sessions] = await Promise.all([
+    prisma.session.groupBy({ by: ["timeOfDay"], where, _count: true }),
+    prisma.session.count({ where: { ...where, isQrScan: true } }),
+    prisma.session.count({ where }),
+    prisma.session.groupBy({ by: ["deviceType"], where: { ...where, deviceType: { not: null } }, _count: true }),
+    prisma.session.groupBy({ by: ["cartaLang"], where: { ...where, cartaLang: { not: null } }, _count: true }),
+    prisma.session.findMany({
+      where,
+      select: {
+        guestId: true,
+        guest: { select: { preferences: true } },
+        qrUser: { select: { dietType: true, restrictions: true } },
+      },
+      take: 5000,
+    }),
+  ]);
+
+  const timeOfDay = (["MORNING", "LUNCH", "AFTERNOON", "DINNER", "LATE"]).map((key) => {
+    const g = timeGroups.find((t) => t.timeOfDay === key);
+    return {
+      key,
+      label: TIME_OF_DAY_LABELS[key]?.label || key,
+      hint: TIME_OF_DAY_LABELS[key]?.hint || "",
+      count: g?._count || 0,
+    };
+  });
+
+  const directCount = Math.max(totalSessionsCount - qrScanCount, 0);
+  const acquisition = {
+    qrScans: qrScanCount,
+    direct: directCount,
+    qrPct: totalSessionsCount > 0 ? Math.round((qrScanCount / totalSessionsCount) * 100) : 0,
+    directPct: totalSessionsCount > 0 ? Math.round((directCount / totalSessionsCount) * 100) : 0,
+    devices: deviceGroups
+      .map((d) => ({ name: d.deviceType || "unknown", count: d._count }))
+      .sort((a, b) => b.count - a.count),
+  };
+
+  // Dietary profile — dedupe by guestId so we count one declaration per visitor
+  const seenGuests = new Set<string>();
+  const dietCount: Record<string, number> = {};
+  const restrictionCount: Record<string, number> = {};
+  for (const s of sessions) {
+    if (seenGuests.has(s.guestId)) continue;
+    seenGuests.add(s.guestId);
+    const prefs = (s.guest?.preferences as any) || {};
+    const diet = s.qrUser?.dietType || prefs?.dietType;
+    if (diet) dietCount[diet] = (dietCount[diet] || 0) + 1;
+    const restrictions = (s.qrUser?.restrictions || prefs?.restrictions || []) as string[];
+    for (const r of restrictions) {
+      const key = r.toLowerCase();
+      if (!key || key === "ninguna" || key === "ninguno") continue;
+      restrictionCount[key] = (restrictionCount[key] || 0) + 1;
+    }
+  }
+  const diets = Object.entries(dietCount)
+    .map(([key, count]) => ({ key, label: DIET_LABELS[key] || key, count }))
+    .sort((a, b) => b.count - a.count);
+  const restrictions = Object.entries(restrictionCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 6);
+  const totalDietGuests = diets.reduce((s, d) => s + d.count, 0);
+
+  const languages = langGroups
+    .map((l) => ({ code: l.cartaLang || "es", count: l._count }))
+    .sort((a, b) => b.count - a.count);
+
+  return {
+    timeOfDay,
+    acquisition,
+    dietProfile: { diets, totalDietGuests, restrictions },
+    languages,
+    totalSessions: totalSessionsCount,
+  };
+}

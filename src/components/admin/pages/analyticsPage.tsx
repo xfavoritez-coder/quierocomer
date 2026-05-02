@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Calendar } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -105,21 +104,30 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
 /* ═══ TAB: Clientes ═══ */
 function TabClientes({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [funnel, setFunnel] = useState<any>(null);
-  const [genio, setGenio] = useState<any>(null);
+  const [clientes, setClientes] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
     const p1 = new URLSearchParams({ type: "funnel", from, to });
-    const p2 = new URLSearchParams({ type: "genio", from, to });
+    const p2 = new URLSearchParams({ type: "clientes", from, to });
     if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); }
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p2}`).then(r => r.json()),
-    ]).then(([f, g]) => { setFunnel(f); setGenio(g); }).catch(() => {}).finally(() => setLoading(false));
+    ]).then(([f, c]) => { setFunnel(f); setClientes(c); }).catch(() => {}).finally(() => setLoading(false));
   }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
+
+  const maxTime = clientes?.timeOfDay ? Math.max(...clientes.timeOfDay.map((t: any) => t.count), 1) : 1;
+  const dietColors: Record<string, string> = { OMNIVORE: "#F4A623", VEGAN: "#4ade80", VEGETARIAN: "#16a34a", PESCETARIAN: "#7fbfdc" };
+  const deviceLabels: Record<string, { label: string; icon: string }> = {
+    mobile: { label: "Móvil", icon: "📱" },
+    tablet: { label: "Tablet", icon: "📲" },
+    desktop: { label: "Desktop", icon: "🖥️" },
+    unknown: { label: "Otro", icon: "❔" },
+  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -145,39 +153,117 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
         </div>
       )}
 
-      {/* Genio impact */}
-      {genio && (
+      {/* Cuándo vienen */}
+      {clientes?.timeOfDay && clientes.totalSessions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🧞 Impacto del Genio</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "8px 12px", alignItems: "center" }}>
-            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}></span>
-            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textAlign: "center" }}>Sin Genio</span>
-            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textAlign: "center" }}>Con Genio</span>
-            <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textAlign: "center" }}>Cambio</span>
-            {[
-              { label: "Platos vistos", without: genio.withoutGenio?.avgDishes, with: genio.withGenio?.avgDishes },
-              { label: "Duración", without: genio.withoutGenio?.avgDurationMs ? formatDuration(genio.withoutGenio.avgDurationMs) : "-", with: genio.withGenio?.avgDurationMs ? formatDuration(genio.withGenio.avgDurationMs) : "-" },
-              { label: "Conversión", without: `${genio.withoutGenio?.conversionPct || 0}%`, with: `${genio.withGenio?.conversionPct || 0}%` },
-            ].map((row, i) => {
-              const wVal = typeof row.without === "number" ? row.without : parseFloat(String(row.without));
-              const cVal = typeof row.with === "number" ? row.with : parseFloat(String(row.with));
-              const change = !isNaN(wVal) && !isNaN(cVal) && wVal > 0 ? Math.round(((cVal - wVal) / wVal) * 100) : null;
-              return [
-                <span key={`l${i}`} style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>{row.label}</span>,
-                <span key={`w${i}`} style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", textAlign: "center" }}>{row.without}</span>,
-                <span key={`c${i}`} style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-accent)", textAlign: "center", fontWeight: 600 }}>{row.with}</span>,
-                <span key={`d${i}`} style={{ fontFamily: F, fontSize: "0.75rem", textAlign: "center", fontWeight: 600, color: change !== null && change >= 0 ? "#4ade80" : "#ef4444" }}>{change !== null ? `${change > 0 ? "+" : ""}${change}%` : "-"}</span>,
-              ];
-            })}
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🕐 Cuándo vienen tus clientes</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
+            {clientes.timeOfDay.map((t: any) => (
+              <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t.count}</span>
+                <div style={{ width: "100%", height: Math.max(4, (t.count / maxTime) * 80), background: t.count > 0 ? "var(--adm-accent)" : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease" }} />
+                <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
+                <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Vista preferences */}
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-        <Card label="Idioma más usado" value={funnel?.topLang || "es"} color="var(--adm-text)" />
-        <Card label="Usaron el Genio" value={genio?.withGenio?.count || 0} sub={genio?.totalSessions ? `de ${genio.totalSessions} sesiones` : undefined} color="var(--adm-accent)" />
-      </div>
+      {/* Cómo llegan */}
+      {clientes?.acquisition && clientes.totalSessions > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🚪 Cómo llegan</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Origen</p>
+              {[
+                { label: "📷 QR escaneado", count: clientes.acquisition.qrScans, pct: clientes.acquisition.qrPct, color: "var(--adm-accent)" },
+                { label: "🔗 Link directo", count: clientes.acquisition.direct, pct: clientes.acquisition.directPct, color: "#7fbfdc" },
+              ].map((row) => (
+                <div key={row.label} style={{ marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                    <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{row.label}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: row.color, fontWeight: 600 }}>{row.count} ({row.pct}%)</span>
+                  </div>
+                  <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
+                    <div style={{ height: "100%", width: `${row.pct}%`, borderRadius: 3, background: row.color, transition: "width 0.4s ease" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Dispositivo</p>
+              {clientes.acquisition.devices.length === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Sin datos</p>
+              ) : (
+                clientes.acquisition.devices.map((d: any) => {
+                  const meta = deviceLabels[d.name] || deviceLabels.unknown;
+                  const totalDev = clientes.acquisition.devices.reduce((s: number, x: any) => s + x.count, 0);
+                  const pct = totalDev > 0 ? Math.round((d.count / totalDev) * 100) : 0;
+                  return (
+                    <div key={d.name} style={{ marginBottom: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                        <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{meta.icon} {meta.label}</span>
+                        <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>{d.count} ({pct}%)</span>
+                      </div>
+                      <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: "var(--adm-accent)", opacity: 0.65, transition: "width 0.4s ease" }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Perfil dietético */}
+      {clientes?.dietProfile && (clientes.dietProfile.totalDietGuests > 0 || clientes.dietProfile.restrictions.length > 0) && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🥗 Perfil dietético de tus clientes</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Tipo de dieta declarado</p>
+              {clientes.dietProfile.diets.length === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Aún no declaran</p>
+              ) : (
+                clientes.dietProfile.diets.map((d: any) => {
+                  const pct = clientes.dietProfile.totalDietGuests > 0 ? Math.round((d.count / clientes.dietProfile.totalDietGuests) * 100) : 0;
+                  return (
+                    <div key={d.key} style={{ marginBottom: 8 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                        <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{d.label}</span>
+                        <span style={{ fontFamily: F, fontSize: "0.72rem", color: dietColors[d.key] || "var(--adm-text2)", fontWeight: 600 }}>{d.count} ({pct}%)</span>
+                      </div>
+                      <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
+                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: dietColors[d.key] || "var(--adm-accent)", transition: "width 0.4s ease" }} />
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Restricciones más comunes</p>
+              {clientes.dietProfile.restrictions.length === 0 ? (
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Sin restricciones declaradas</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {clientes.dietProfile.restrictions.map((r: any, i: number) => (
+                    <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", fontWeight: 700, width: 14 }}>{i + 1}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, textTransform: "capitalize" }}>{r.name}</span>
+                      <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{r.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -637,7 +723,7 @@ export default function AnalyticsDashboard() {
               color: datePreset === "custom" ? "#fff" : "var(--adm-text3)",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
-            <Calendar size={14} />
+            <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>📅</span>
             Personalizado
           </button>
         </div>

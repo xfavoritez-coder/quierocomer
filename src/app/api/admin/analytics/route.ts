@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes, getClientesAnalytics } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -36,6 +36,10 @@ export async function GET(req: NextRequest) {
     }
     if (type === "genio") {
       const data = await getGenioImpact(restaurantId, from, to);
+      return NextResponse.json(data);
+    }
+    if (type === "clientes") {
+      const data = await getClientesAnalytics(restaurantId, from, to);
       return NextResponse.json(data);
     }
     if (type === "personalization") {
