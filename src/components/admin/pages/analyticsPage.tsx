@@ -11,6 +11,36 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
+/** Inline info icon with native title tooltip — click/hover reveals an
+ * explanation of what the metric means. Uses HTML `title` for simplicity. */
+function InfoTip({ text }: { text: string }) {
+  return (
+    <span
+      title={text}
+      role="button"
+      tabIndex={0}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: 14,
+        height: 14,
+        borderRadius: "50%",
+        background: "var(--adm-text3)",
+        color: "var(--adm-card)",
+        fontSize: "0.6rem",
+        fontWeight: 700,
+        fontFamily: "var(--font-display)",
+        cursor: "help",
+        flexShrink: 0,
+        userSelect: "none",
+      }}
+    >
+      i
+    </span>
+  );
+}
+
 function Card({ label, value, sub, color = "var(--adm-accent)" }: { label: string; value: string | number; sub?: string; color?: string }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -113,9 +143,13 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
 
-  const renderSection = (s: { title: string; items: any[]; icon: string; unit: string }) => (
+  const renderSection = (s: { title: string; items: any[]; icon: string; unit: string; tooltip?: string }) => (
     <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>{s.icon} {s.title} {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}</p>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+        <span>{s.icon} {s.title}</span>
+        {s.tooltip && <InfoTip text={s.tooltip} />}
+        {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}
+      </p>
       {s.items.length === 0 ? (
         <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
       ) : (
@@ -133,9 +167,27 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     </div>
   );
 
-  const mostViewed = { title: "Más vistos en la carta", items: data.mostViewed || [], icon: "👀", unit: "veces" };
-  const mostDetailed = { title: "Más tiempo en detalle", items: data.mostDetailed || [], icon: "🔍", unit: "" };
-  const leastViewed = { title: "Platos abandonados", items: data.leastViewed || [], icon: "🌱", unit: "% sesiones que los vieron" };
+  const mostViewed = {
+    title: "Más vistos en la carta",
+    items: data.mostViewed || [],
+    icon: "👀",
+    unit: "sesiones",
+    tooltip: "Cantidad de sesiones distintas que abrieron el detalle de cada plato. Una sesión = un cliente. Un plato con '25' significa que 25 clientes abrieron ese plato durante el período seleccionado.",
+  };
+  const mostDetailed = {
+    title: "Más tiempo en detalle",
+    items: data.mostDetailed || [],
+    icon: "🔍",
+    unit: "promedio",
+    tooltip: "Promedio de segundos que cada cliente pasó dentro del modal del plato. Más tiempo suele indicar curiosidad o interés alto. Solo se cuentan platos con al menos 1 segundo en detalle.",
+  };
+  const leastViewed = {
+    title: "Platos abandonados",
+    items: data.leastViewed || [],
+    icon: "🌱",
+    unit: "% sesiones que los abrieron",
+    tooltip: "Platos que pocos clientes abrieron en detalle. El % muestra qué porcentaje del total de sesiones del período abrió el modal de ese plato. Si dice '3%', solo 3 de cada 100 clientes lo miraron. Excluye platos creados en los últimos 7 días.",
+  };
   const topCategories = {
     title: "Categorías más exploradas",
     items: (data.topCategories || []).map((c: any) => ({
@@ -144,6 +196,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     })),
     icon: "🗂️",
     unit: "% del tiempo en carta",
+    tooltip: "Tiempo total que los clientes pasaron en cada sección de la carta (haciendo scroll por la categoría). El % es respecto a la suma total de tiempo en categorías. Útil para saber qué sección tiene más tracción aunque no se vea reflejado en aperturas individuales de platos.",
   };
 
   return (
@@ -170,7 +223,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           <div className="adm-cols-2" style={{ marginBottom: 10, alignItems: "start" }}>
             {cross.insights.fantasmas.length > 0 && (
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px" }}>👻 Platos fantasma</p>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>👻 Platos fantasma</span>
+                  <InfoTip text="Platos mapeados a Toteat con interés real (al menos 3 aperturas del modal) pero baja conversión: 0 ventas o conversión ≤ 15%. Ojo: las ventas vienen de Toteat e incluyen pedidos por garzón sin escaneo de QR; si alguien pide directo al mozo no cuenta como apertura QC." />
+                </p>
                 <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren pero no los compran.</p>
                 {cross.insights.fantasmas.map((p: any) => (
                   <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(239,68,68,0.15)", fontFamily: FB }}>
@@ -191,7 +247,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
 
             {cross.insights.estrellas.length > 0 && (
               <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px" }}>
-                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px" }}>🎯 Estrellas</p>
+                <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+                  <span>🎯 Estrellas</span>
+                  <InfoTip text="Platos que la gente abre y termina comprando. Ranking por conversión (ventas / aperturas). Top 5 con al menos 3 aperturas y 2 ventas. Una conversión > 100% indica que se vendieron más unidades de las que se abrieron en QC — eso es normal cuando hay pedidos por garzón." />
+                </p>
                 <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren y los piden.</p>
                 {cross.insights.estrellas.map((p: any) => (
                   <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(34,197,94,0.15)", fontFamily: FB }}>
@@ -213,7 +272,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           {/* Sospechosos sin mapear — abajo, full-width compacto, solo si existen */}
           {cross.insights.sospechosos?.length > 0 && (
             <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px" }}>🟡 Sin mapear</p>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>🟡 Sin mapear</span>
+                <InfoTip text="Platos con al menos 3 aperturas en QC que no están mapeados a un producto Toteat (ni directo, ni vía modificadores). No podemos saber si vendieron o no. Andá a /panel/menus → Toteat para mapearlos." />
+              </p>
               <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
               {cross.insights.sospechosos.map((p: any) => (
                 <div key={p.dishId} style={{ display: "flex", flexDirection: "column", padding: "6px 0", borderBottom: "1px dashed rgba(244,166,35,0.15)", fontFamily: FB }}>
