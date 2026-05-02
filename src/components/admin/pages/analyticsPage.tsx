@@ -150,6 +150,7 @@ function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
   const [data, setData] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
+  const [badges, setBadges] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tableOpen, setTableOpen] = useState(true);
   const [showAllOrphans, setShowAllOrphans] = useState(false);
@@ -187,7 +188,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
-    ]).then(([d, c]) => { setData(d); if (c && !c.error) setCross(c); }).catch(() => {}).finally(() => setLoading(false));
+      fetch(`/api/admin/analytics/badge-accuracy?${p2}`).then(r => r.json()).catch(() => null),
+    ]).then(([d, c, b]) => {
+      setData(d);
+      if (c && !c.error) setCross(c);
+      if (b && !b.error) setBadges(b);
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
@@ -443,6 +449,102 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           )}
         </div>
       )}
+
+      {/* 🎖️ Acierto de los badges — only when there's snapshot data */}
+      {badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0) && (
+        <BadgeAccuracySection badges={badges} />
+      )}
+    </div>
+  );
+}
+
+/* ═══ Badge accuracy section ═══ */
+function BadgeAccuracySection({ badges }: { badges: any }) {
+  const renderCard = (
+    title: string,
+    subtitle: string,
+    accent: string,
+    bgRgb: string,
+    data: any,
+    tooltip: string,
+  ) => {
+    if (!data || data.distinctDishes === 0) return null;
+    return (
+      <div style={{ background: `rgba(${bgRgb},0.05)`, border: `1px solid rgba(${bgRgb},0.2)`, borderRadius: 10, padding: "14px 16px" }}>
+        <p style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: accent, margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+          <span>{title}</span>
+          <InfoTip text={tooltip} />
+        </p>
+        <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>{subtitle}</p>
+
+        {/* Big numbers row */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: accent, margin: 0 }}>
+              {data.hitRate !== null ? `${data.hitRate}%` : "—"}
+            </p>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Acierto</p>
+          </div>
+          <div>
+            <p style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 700, color: data.salesLift !== null && data.salesLift > 0 ? accent : "var(--adm-text2)", margin: 0 }}>
+              {data.salesLift !== null ? (data.salesLift > 0 ? `+${data.salesLift}%` : `${data.salesLift}%`) : "—"}
+            </p>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0" }}>Más ventas que el resto</p>
+          </div>
+        </div>
+
+        {/* Top items */}
+        {data.topItems?.length > 0 && (
+          <div>
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5 }}>Platos destacados</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              {data.topItems.map((it: any) => (
+                <div key={it.dishId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontFamily: FB, fontSize: "0.74rem", padding: "4px 0", borderBottom: `1px dashed rgba(${bgRgb},0.15)` }}>
+                  <span style={{ color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
+                    {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}
+                    {it.name}
+                  </span>
+                  <span style={{ flexShrink: 0, color: "var(--adm-text3)", fontSize: "0.7rem" }}>
+                    <span style={{ color: accent, fontWeight: 600 }}>{it.coveragePct}%</span> del tiempo · {it.sales} {it.sales === 1 ? "venta" : "ventas"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", marginTop: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🎖️ Acierto de los badges</p>
+        <InfoTip text="¿Los badges que mostramos en la carta están funcionando? Comparamos los platos que tuvieron badge contra los que más se vendieron." />
+        <span style={{ flex: 1 }} />
+        <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
+          Capturado cada 30 min · {badges.summary.popularRuns} corridas
+        </span>
+      </div>
+
+      <div className="adm-cols-2" style={{ alignItems: "start" }}>
+        {renderCard(
+          "🔥 Popular hoy",
+          "Calculado por algoritmo (los más abiertos en las últimas 48h).",
+          "#ef4444",
+          "239,68,68",
+          badges.popular,
+          "El acierto es qué porcentaje de los platos que tuvieron este badge también estuvieron entre los más vendidos. 'Más ventas que el resto' compara las ventas promedio de los platos badgeados contra los que no tuvieron el badge. Si dice +50%, los platos con badge vendieron en promedio 50% más unidades.",
+        )}
+        {renderCard(
+          "⭐ Recomendado",
+          "Tu selección manual de platos a destacar.",
+          "#F4A623",
+          "244,166,35",
+          badges.recommended,
+          "Mismo cálculo que Popular pero para los platos que vos marcaste como Recomendados. Si el acierto y el lift son altos, tu intuición de qué destacar coincide con lo que la gente pide. Si son bajos, capaz convenga revisar la selección.",
+        )}
+      </div>
     </div>
   );
 }
