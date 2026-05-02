@@ -255,12 +255,11 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     tooltip: "Qué sección de la carta engancha más a los clientes. Si dice 'Sushi 35%', los clientes pasan el 35% del tiempo navegando esa sección.",
   };
 
-  // Premium-only insights (Toteat connected): show only when there are real
-  // sales in the period — otherwise the metrics are misleading (e.g. "today"
-  // before the lunch rush has snapshots but 0 sales, so badge accuracy reads
-  // "0% acierto" which is a bug, not a finding).
-  const hasToteatData = !!(cross && cross.summary?.totalSales > 0);
-  const showBadgeAccuracy = hasToteatData && badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0);
+  // Premium-only insights — gated by "Toteat connected" (mapped dishes
+  // exist), not by "sales in the period". A day with 0 sales is valid
+  // data: the block shows 0% acierto / 0 ventas, which is honest reporting.
+  const hasToteat = !!(cross && cross.summary?.mappedDishes && cross.summary.mappedDishes > 0);
+  const showBadgeAccuracy = hasToteat && badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -275,8 +274,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
         {renderSection(topCategories)}
       </div>
 
-      {/* 🔀 Carta vs Caja — only shown if Toteat data exists */}
-      {cross && cross.summary?.totalSales > 0 && (
+      {/* 🔀 Carta vs Caja — only shown when local has Toteat connected */}
+      {hasToteat && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
