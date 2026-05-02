@@ -20,14 +20,18 @@ function InfoTip({ text }: { text: string }) {
 
   useEffect(() => {
     if (!open) return;
+    // Use click (not mousedown) so the close happens AFTER any click on a
+    // sibling element propagates to its onClick handler. mousedown closing
+    // first was suspected of intermittently swallowing date-preset / tab
+    // clicks for users who left an info tooltip open before navigating.
     const handler = (e: MouseEvent | TouchEvent) => {
       if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
     };
-    document.addEventListener("mousedown", handler);
-    document.addEventListener("touchstart", handler);
+    document.addEventListener("click", handler);
+    document.addEventListener("touchend", handler);
     return () => {
-      document.removeEventListener("mousedown", handler);
-      document.removeEventListener("touchstart", handler);
+      document.removeEventListener("click", handler);
+      document.removeEventListener("touchend", handler);
     };
   }, [open]);
 
