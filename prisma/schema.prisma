@@ -419,6 +419,14 @@ model Restaurant {
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
   ownerId     String?
+
+  // Toteat POS integration (per-restaurant credentials)
+  toteatRestaurantId String?    // xir
+  toteatLocalId      Int?       // xil
+  toteatUserId       Int?       // xiu
+  toteatApiToken     String?    // xapitoken — stored plaintext for now, encrypt before onboarding 2nd client
+  toteatLastSyncAt   DateTime?
+
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
 
@@ -447,11 +455,79 @@ model Restaurant {
   dishFavorites         DishFavorite[]
   happyHours            HappyHour[]
   createdIngredients    Ingredient[]   @relation("CreatedIngredients")
+  toteatSales           ToteatSale[]
+  badgeSnapshots        BadgeSnapshot[]
 
   announcements         Announcement[]
   dishSuggestions        DishSuggestion[]
 
   @@index([ownerId])
+}
+
+// ─── Toteat POS integration ─────────────────────────────────────────────
+
+model ToteatSale {
+  id              String   @id @default(cuid())
+  restaurantId    String
+  toteatOrderId   BigInt   @unique  // sale.orderId from Toteat
+  toteatTableId   Int?
+  toteatTableName String?
+  numberClients   Int?
+  toteatWaiterId  BigInt?
+  waiterName      String?
+  dateOpen        DateTime
+  dateClosed      DateTime
+  total           Float
+  payed           Float
+  gratuity        Float    @default(0)
+  subtotal        Float
+  taxes           Float    @default(0)
+  fiscalType      String?
+  paymentMethod   String?  // first paymentForms[0].method, simplified
+  rawJson         Json     // full raw sale for fields we haven't extracted
+  syncedAt        DateTime @default(now())
+
+  restaurant      Restaurant          @relation(fields: [restaurantId], references: [id])
+  products        ToteatSaleProduct[]
+
+  @@index([restaurantId, dateClosed])
+  @@index([restaurantId, toteatTableId])
+}
+
+model ToteatSaleProduct {
+  id              String  @id @default(cuid())
+  saleId          String
+  toteatProductId String  // e.g. "HV0010"
+  productName     String
+  hierarchyId     String?
+  hierarchyName   String? // category name in Toteat
+  quantity        Float
+  netPrice        Float
+  payed           Float
+  taxes           Float   @default(0)
+  discounts       Float   @default(0)
+
+  sale            ToteatSale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+
+  @@index([saleId])
+  @@index([toteatProductId])
+}
+
+// Periodic snapshot of which dishes had which badges, for retroactive analysis
+model BadgeSnapshot {
+  id           String   @id @default(cuid())
+  restaurantId String
+  dishId       String
+  badgeType    String   // "POPULAR" | "RECOMMENDED" | future
+  score        Float?   // for POPULAR: algorithm score
+  position     Int?     // for POPULAR: ranking position (1..N)
+  capturedAt   DateTime @default(now())
+
+  restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
+  dish         Dish       @relation(fields: [dishId], references: [id], onDelete: Cascade)
+
+  @@index([restaurantId, badgeType, capturedAt])
+  @@index([dishId, capturedAt])
 }
 
 model Announcement {
@@ -548,6 +624,7 @@ model Dish {
   translations        DishTranslation[]
   suggestedWith       DishSuggestion[]       @relation("SuggestionFrom")
   suggestedBy         DishSuggestion[]       @relation("SuggestionTo")
+  badgeSnapshots      BadgeSnapshot[]
 
   @@index([restaurantId])
   @@index([categoryId])

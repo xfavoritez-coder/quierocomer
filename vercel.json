@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/cleanup?key=__SEED_SECRET__",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/toteat-sync",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/badge-snapshot",
+      "schedule": "*/30 * * * *"
     }
   ]
 }
