@@ -270,17 +270,17 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           {(isRec || isPopular || pEntry?.autoRecommended) && (
             <div style={{ position: "absolute", top: 10, left: 10, display: "flex", gap: 5, flexWrap: "wrap", maxWidth: "calc(100% - 60px)" }}>
               {isRec && (
-                <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, padding: "5px 11px", borderRadius: 7, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
                   ⭐ {t(lang, "recommended" as any) || "Recomendado"}
                 </span>
               )}
               {isPopular && (
-                <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(250,238,218,0.95)", color: "#C04A1B" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, padding: "5px 11px", borderRadius: 7, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(250,238,218,0.95)", color: "#C04A1B" }}>
                   🔥 {t(lang, "feedPopular" as any) || "Popular hoy"}
                 </span>
               )}
               {pEntry?.autoRecommended && (
-                <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 5, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, padding: "5px 11px", borderRadius: 7, letterSpacing: "0.2px", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", background: "rgba(255,244,221,0.95)", color: "#854F0B" }}>
                   🧞 Para ti
                 </span>
               )}

@@ -98,7 +98,16 @@
       "Bash(ls src/app/\\\\\\(main\\\\\\)/layout.tsx)",
       "Bash(mkdir -p src/app/preview-diet)",
       "Bash(mv src/app/\\\\\\(main\\\\\\)/preview-diet/page.tsx src/app/preview-diet/page.tsx)",
-      "Bash(rmdir src/app/\\\\\\(main\\\\\\)/preview-diet)"
+      "Bash(rmdir src/app/\\\\\\(main\\\\\\)/preview-diet)",
+      "WebFetch(domain:developers.toteat.com)",
+      "Bash(netstat -ano)",
+      "Bash(lsof -nP -iTCP -sTCP:LISTEN)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(cmd.exe /c \"taskkill /F /IM node.exe\")",
+      "Bash(powershell.exe -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host done\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d.get\\('data',[]\\)[0] if d.get\\('data'\\) else None; print\\('first order: opened',s.get\\('dateOpen'\\),'closed',s.get\\('dateClosed'\\)\\) if s else print\\('no data'\\)\")",
+      "Bash(powershell.exe -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")"
     ]
   }
 }

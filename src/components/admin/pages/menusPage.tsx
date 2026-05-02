@@ -684,7 +684,7 @@ export default function AdminMenus() {
   const [allAllergens, setAllAllergens] = useState<{ id: string; name: string; type: string }[]>([]);
   // Load allergens once for bulk actions (and reuse in editor)
   useEffect(() => {
-    fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(d.allergens || [])).catch(() => {});
+    fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(Array.isArray(d) ? d : (d.allergens || []))).catch(() => {});
   }, []);
   const [eTags, setETags] = useState<string[]>([]);
   const [eIsHero, setEIsHero] = useState(false);
@@ -787,7 +787,7 @@ export default function AdminMenus() {
         setEIngredientIds(data.linkedIds || []);
       }).catch(() => {});
     if (allAllergens.length === 0) {
-      fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(d.allergens || [])).catch(() => {});
+      fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(Array.isArray(d) ? d : (d.allergens || []))).catch(() => {});
     }
   };
 
@@ -1711,7 +1711,7 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; setSelectedDish(dish); startEditDish(dish); handleTabChange("productos"); window.scrollTo({ top: 0 }); }} />
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} />
       )}
 
       {/* ── Modificadores tab ── */}

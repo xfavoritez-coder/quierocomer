@@ -37,13 +37,14 @@ interface Props {
   popularDishIds?: Set<string>;
 }
 
-type SlideVariant = "hero" | "split" | "light" | "spotlight";
+type SlideVariant = "hero" | "split" | "light" | "spotlight" | "stage";
 type Palette = "ocean" | "earth" | "fire" | "cream";
 
 
 function getVariant(dish: Dish, idx: number): SlideVariant {
   if (isGeniePick(dish)) return "spotlight";
-  const rotation: SlideVariant[] = ["hero", "light"];
+  // Alternate between two full-screen photo layouts (no more round-photo split).
+  const rotation: SlideVariant[] = ["hero", "stage"];
   return rotation[idx % 2];
 }
 
@@ -567,6 +568,30 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
     );
   }
 
+  if (variant === "stage") {
+    const eyebrow = dish.ingredients?.split(/[,;]/)[0]?.trim() || "";
+    return (
+      <div className="vj-slide-item vj-dish vj-v-stage" data-slide-idx={index}>
+        {toastEl}
+        <div className="vj-stage-photo"><PhotoBg dish={dish} /></div>
+        <div className="vj-stage-overlay" />
+        <div className="vj-stage-top">
+          {eyebrow && <span className="vj-stage-eyebrow font-[family-name:var(--font-dm)]">{eyebrow.toUpperCase()}</span>}
+          <h3 className="vj-stage-title font-[family-name:var(--font-fraunces)]">
+            <span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", justifyContent: "center" }}>
+              <span>{dish.name}</span>{vjBadges}
+            </span>
+          </h3>
+        </div>
+        <div className="vj-stage-bottom">
+          {pitch && <VjPitch text={pitch} />}
+          <span className="vj-stage-price font-[family-name:var(--font-fraunces)]">${dish.price?.toLocaleString("es-CL")}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Legacy round-photo layout (no longer in rotation, kept for backwards compat)
   if (variant === "light") return (
     <div
       className="vj-slide-item vj-dish vj-v-light"
@@ -812,6 +837,21 @@ const CSS = `
   .vj-v-hero.in-view .vj-hero-photo { transform: scale(1); }
   .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.75) 100%); }
   .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; max-width: calc(100% - 70px); }
+
+  /* STAGE — full-screen photo with title centered top + price bottom-right */
+  .vj-v-stage { flex-direction: column; justify-content: space-between; align-items: stretch; padding: 0; }
+  .vj-stage-photo { position: absolute; inset: 0; transform: scale(1.1); transition: transform 14s var(--vj-ease); }
+  .vj-stage-photo img { object-fit: cover; }
+  .vj-v-stage.in-view .vj-stage-photo { transform: scale(1); }
+  .vj-stage-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.85) 100%); }
+  .vj-stage-top { position: relative; z-index: 3; padding: calc(110px + env(safe-area-inset-top)) 28px 0; text-align: center; opacity: 0; transform: translateY(-12px); transition: all 1.1s var(--vj-ease) 0.3s; }
+  .vj-v-stage.in-view .vj-stage-top { opacity: 1; transform: translateY(0); }
+  .vj-stage-eyebrow { display: inline-block; font-size: 10px; letter-spacing: 0.4em; color: rgba(255,255,255,0.75); margin-bottom: 14px; font-weight: 500; }
+  .vj-stage-title { font-weight: 300; font-style: italic; font-size: clamp(36px, 11vw, 54px); line-height: 1; letter-spacing: -0.02em; color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,0.5); }
+  .vj-stage-bottom { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+  .vj-v-stage .vj-pitch { color: rgba(255,255,255,0.92); margin-bottom: 4px; max-width: min(36ch, calc(100vw - 56px)); }
+  .vj-stage-price { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 500; padding: 10px 22px; background: rgba(244,166,35,0.92); color: #1a0a04; border-radius: 100px; box-shadow: 0 8px 24px -6px rgba(244,166,35,0.4); opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
+  .vj-v-stage.in-view .vj-stage-price { opacity: 1; transform: translateY(0); }
 
   /* SPLIT */
   .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }
