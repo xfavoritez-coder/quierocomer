@@ -54,8 +54,8 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const popularByDish = new Map<string, number>();
-  const recommendedByDish = new Map<string, number>();
+  const popularByDishRaw = new Map<string, number>();
+  const recommendedByDishRaw = new Map<string, number>();
   // Distinct snapshot runs (timestamps rounded to nearest minute) — used as
   // total denominator so a dish that was badged in every run gets 100%.
   const popularRuns = new Set<number>();
@@ -64,10 +64,10 @@ export async function GET(req: NextRequest) {
   for (const s of snapshots) {
     const runKey = Math.floor(s.capturedAt.getTime() / 60000) * 60000;
     if (s.badgeType === "POPULAR") {
-      popularByDish.set(s.dishId, (popularByDish.get(s.dishId) || 0) + 1);
+      popularByDishRaw.set(s.dishId, (popularByDishRaw.get(s.dishId) || 0) + 1);
       popularRuns.add(runKey);
     } else if (s.badgeType === "RECOMMENDED") {
-      recommendedByDish.set(s.dishId, (recommendedByDish.get(s.dishId) || 0) + 1);
+      recommendedByDishRaw.set(s.dishId, (recommendedByDishRaw.get(s.dishId) || 0) + 1);
       recommendedRuns.add(runKey);
     }
   }
@@ -122,6 +122,14 @@ export async function GET(req: NextRequest) {
   const sortedBySales = [...salesByDish.entries()].sort((a, b) => b[1] - a[1]);
   const topSellerCount = Math.min(10, Math.max(3, Math.round(dishes.length * 0.3)));
   const topSellerIds = new Set(sortedBySales.slice(0, topSellerCount).filter(([, q]) => q > 0).map(([id]) => id));
+
+  // Drop snapshots that point to dishes that are no longer active (hidden or
+  // deleted). A badge that was on a dish the owner has since removed isn't
+  // a fair input to "did the badge work" — exclude from both counts and from
+  // the displayed top items list.
+  const activeDishIds = new Set(dishes.map((d) => d.id));
+  const popularByDish = new Map([...popularByDishRaw.entries()].filter(([id]) => activeDishIds.has(id)));
+  const recommendedByDish = new Map([...recommendedByDishRaw.entries()].filter(([id]) => activeDishIds.has(id)));
 
   // 4. Build stats per badge type
   const computeStats = (badgedByDish: Map<string, number>, totalRuns: number) => {
