@@ -1329,7 +1329,7 @@ export default function AdminMenus() {
             onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
             style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
           >
-            + Nuevo
+            + Nuevo producto
           </button>
         )}
       </div>
