@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Calendar } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -612,22 +613,41 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Date filters */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 16, flexWrap: "wrap", alignItems: "center" }}>
-        {(["hoy", "ayer", "semana"] as DatePreset[]).map(p => (
-          <button key={p} onClick={() => setDatePreset(p)} style={{
-            padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-            background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
-            color: datePreset === p ? "#fff" : "var(--adm-text3)",
-          }}>
-            {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : "Esta semana"}
+      <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+          {(["hoy", "ayer", "semana"] as DatePreset[]).map(p => (
+            <button key={p} onClick={() => setDatePreset(p)} style={{
+              padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+              background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
+              color: datePreset === p ? "#fff" : "var(--adm-text3)",
+            }}>
+              {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : "Esta semana"}
+            </button>
+          ))}
+          <button
+            onClick={() => {
+              if (datePreset === "custom") setDatePreset("semana");
+              else updateParams({ preset: "custom" });
+            }}
+            style={{
+              padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+              background: datePreset === "custom" ? "var(--adm-accent)" : "var(--adm-hover)",
+              color: datePreset === "custom" ? "#fff" : "var(--adm-text3)",
+              display: "inline-flex", alignItems: "center", gap: 6,
+            }}>
+            <Calendar size={14} />
+            Personalizado
           </button>
-        ))}
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
-          <span style={{ color: "var(--adm-text3)", fontSize: "0.68rem" }}>—</span>
-          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: "4px 6px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.68rem", outline: "none", colorScheme: "dark", maxWidth: 120 }} />
         </div>
+        {datePreset === "custom" && (
+          <div style={{ display: "flex", gap: 6, alignItems: "center", paddingLeft: 2 }}>
+            <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none", colorScheme: "dark" }} />
+            <span style={{ color: "var(--adm-text3)", fontSize: "0.78rem" }}>—</span>
+            <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", outline: "none", colorScheme: "dark" }} />
+          </div>
+        )}
       </div>
 
       {/* Tabs */}

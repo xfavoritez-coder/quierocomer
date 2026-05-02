@@ -597,6 +597,7 @@ export default function AdminMenus() {
     if (bulkAction === "delete" && !confirm(`¿Eliminar ${ids.length} producto${ids.length > 1 ? "s" : ""}?`)) return;
     setBulkProcessing(true);
     try {
+      const dishById = Object.fromEntries(dishes.map(d => [d.id, d]));
       for (const id of ids) {
         if (bulkAction === "delete") {
           await fetch(`/api/admin/dishes/${id}`, { method: "DELETE" });
@@ -608,6 +609,18 @@ export default function AdminMenus() {
           await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dishDiet: bulkActionValue }) });
         } else if (bulkAction === "category" && bulkActionValue) {
           await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ categoryId: bulkActionValue }) });
+        } else if (bulkAction === "addAllergen" && bulkActionValue) {
+          const current = (dishById[id]?.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          if (!current.includes(bulkActionValue.toLowerCase())) {
+            const next = [...current.filter(a => a !== "ninguno"), bulkActionValue.toLowerCase()].join(", ");
+            await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergens: next }) });
+          }
+        } else if (bulkAction === "removeAllergen" && bulkActionValue) {
+          const current = (dishById[id]?.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          if (current.includes(bulkActionValue.toLowerCase())) {
+            const next = current.filter(a => a !== bulkActionValue.toLowerCase());
+            await fetch(`/api/admin/dishes/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ allergens: next.length > 0 ? next.join(", ") : null }) });
+          }
         }
       }
       // Update local state
@@ -622,6 +635,24 @@ export default function AdminMenus() {
       } else if (bulkAction === "category" && bulkActionValue) {
         const cat = categories.find(c => c.id === bulkActionValue);
         setDishes(prev => prev.map(d => bulkSelected.has(d.id) ? { ...d, categoryId: bulkActionValue, category: { id: bulkActionValue, name: cat?.name || "" } } : d));
+      } else if (bulkAction === "addAllergen" && bulkActionValue) {
+        const v = bulkActionValue.toLowerCase();
+        setDishes(prev => prev.map(d => {
+          if (!bulkSelected.has(d.id)) return d;
+          const current = (d.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          if (current.includes(v)) return d;
+          const next = [...current.filter(a => a !== "ninguno"), v].join(", ");
+          return { ...d, allergens: next };
+        }));
+      } else if (bulkAction === "removeAllergen" && bulkActionValue) {
+        const v = bulkActionValue.toLowerCase();
+        setDishes(prev => prev.map(d => {
+          if (!bulkSelected.has(d.id)) return d;
+          const current = (d.allergens || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+          if (!current.includes(v)) return d;
+          const next = current.filter(a => a !== v);
+          return { ...d, allergens: next.length > 0 ? next.join(", ") : null };
+        }));
       }
       setBulkSelected(new Set());
       setBulkAction("");
@@ -651,6 +682,10 @@ export default function AdminMenus() {
   const [ingSearch, setIngSearch] = useState("");
   const [eAllergens, setEAllergens] = useState<string[]>([]);
   const [allAllergens, setAllAllergens] = useState<{ id: string; name: string; type: string }[]>([]);
+  // Load allergens once for bulk actions (and reuse in editor)
+  useEffect(() => {
+    fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(d.allergens || [])).catch(() => {});
+  }, []);
   const [eTags, setETags] = useState<string[]>([]);
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
@@ -1361,6 +1396,8 @@ export default function AdminMenus() {
             <option value="show">Mostrar</option>
             <option value="diet">Cambiar tipo dieta</option>
             <option value="category">Cambiar categoría</option>
+            <option value="addAllergen">Agregar alérgeno</option>
+            <option value="removeAllergen">Quitar alérgeno</option>
             <option value="delete">Eliminar</option>
           </select>
           {bulkAction === "diet" && (
@@ -1375,10 +1412,16 @@ export default function AdminMenus() {
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
+          {(bulkAction === "addAllergen" || bulkAction === "removeAllergen") && (
+            <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
+              <option value="">Seleccionar alérgeno...</option>
+              {allAllergens.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+            </select>
+          )}
           <button
             onClick={executeBulkAction}
-            disabled={!bulkAction || ((bulkAction === "diet" || bulkAction === "category") && !bulkActionValue) || bulkProcessing}
-            style={{ padding: "6px 14px", background: bulkAction === "delete" ? "#ef4444" : "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", opacity: (!bulkAction || ((bulkAction === "diet" || bulkAction === "category") && !bulkActionValue) || bulkProcessing) ? 0.5 : 1 }}
+            disabled={!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addAllergen" || bulkAction === "removeAllergen") && !bulkActionValue) || bulkProcessing}
+            style={{ padding: "6px 14px", background: bulkAction === "delete" ? "#ef4444" : "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 700, cursor: "pointer", opacity: (!bulkAction || ((bulkAction === "diet" || bulkAction === "category" || bulkAction === "addAllergen" || bulkAction === "removeAllergen") && !bulkActionValue) || bulkProcessing) ? 0.5 : 1 }}
           >
             {bulkProcessing ? "Aplicando..." : "Aplicar"}
           </button>
@@ -1477,6 +1520,19 @@ export default function AdminMenus() {
         <SkeletonLoading type="list" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {paginated.length > 0 && (
+            <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 10px", cursor: "pointer", userSelect: "none" }}>
+              <input
+                type="checkbox"
+                checked={paginated.length > 0 && paginated.every(d => bulkSelected.has(d.id))}
+                onChange={toggleBulkAll}
+                style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
+              />
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                {paginated.every(d => bulkSelected.has(d.id)) ? "Deseleccionar todos" : "Seleccionar todos"}
+              </span>
+            </label>
+          )}
           {paginated.map(d => {
             const isRec = d.tags?.includes("RECOMMENDED");
             const isExpanded = expandedDishId === d.id;
@@ -1491,6 +1547,15 @@ export default function AdminMenus() {
             }}>
               {/* Row */}
               <div style={{ display: "flex", gap: 12, padding: 10, alignItems: "center" }}>
+                {/* Bulk checkbox */}
+                <input
+                  type="checkbox"
+                  checked={bulkSelected.has(d.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={() => toggleBulk(d.id)}
+                  aria-label={`Seleccionar ${d.name}`}
+                  style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
+                />
                 {/* Photo */}
                 {d.photos?.[0] ? (
                   <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
