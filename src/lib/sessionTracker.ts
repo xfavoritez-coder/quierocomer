@@ -497,14 +497,23 @@ export function getDbSessionId(): string | null {
 export async function ensureDbSessionAsync(timeoutMs: number = 3000): Promise<string | null> {
   if (typeof window === "undefined") return null;
   if (session?.dbSessionId) return session.dbSessionId;
+
+  const deadline = Date.now() + timeoutMs;
+
+  // Wait for startSession() to initialize. React child effects run before
+  // parent effects, so callers (like BirthdayAutoModal) may invoke us before
+  // CartaRouter has had a chance to call startSession.
+  while (!session && Date.now() < deadline) {
+    await new Promise((r) => setTimeout(r, 50));
+  }
   if (!session) return null;
+  if (session.dbSessionId) return session.dbSessionId;
 
   // Cancel the anti-bot delay if it's pending and force creation now
   if (dbSessionDelay) { clearTimeout(dbSessionDelay); dbSessionDelay = null; }
   ensureDbSession();
 
   // Poll until the dbSessionId is populated or we hit the timeout
-  const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     if (session?.dbSessionId) return session.dbSessionId;
     await new Promise((r) => setTimeout(r, 80));
