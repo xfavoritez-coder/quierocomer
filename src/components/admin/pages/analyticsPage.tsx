@@ -215,12 +215,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🔀 Carta vs Caja</p>
             <span style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas
+              {cross.summary.mappedDishes}/{cross.summary.totalDishes} mapeados · {cross.summary.totalOpens} aperturas · {cross.summary.totalSales} ventas · {cross.summary.orphanCount} fuera de carta
             </span>
           </div>
 
-          {/* Insights principales — Fantasmas + Estrellas, 5 platos cada uno */}
-          <div className="adm-cols-2" style={{ marginBottom: 10, alignItems: "start" }}>
+          {/* Insights principales — Fantasmas + Estrellas full-width cada uno */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 10 }}>
             {cross.insights.fantasmas.length > 0 && (
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
@@ -268,6 +268,25 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
               </div>
             )}
           </div>
+
+          {/* Vendidos fuera de la carta digital (orphans) — full width */}
+          {cross.orphans.length > 0 && (
+            <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
+                <span>📦 Vendidos fuera de la carta digital ({cross.orphans.length})</span>
+                <InfoTip text="Productos vendidos en Toteat que no tienen mapeo a un plato QC ni vía modificadores. Suelen ser combos, salsas, extras, costos de delivery o productos del menú físico que no están en el digital. El número '×N' es la cantidad vendida en el período." />
+              </p>
+              <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Productos vendidos en Toteat sin mapeo. Probable: combos, salsas, extras o sin mapear.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                {cross.orphans.slice(0, 20).map((o: any) => (
+                  <span key={o.toteatId} style={{ background: "var(--adm-input)", color: "var(--adm-text2)", fontSize: "0.7rem", padding: "3px 8px", borderRadius: 6, fontFamily: FB }}>
+                    {o.name} <span style={{ color: "var(--adm-text3)", marginLeft: 4 }}>×{o.sales}</span>
+                  </span>
+                ))}
+                {cross.orphans.length > 20 && <span style={{ color: "var(--adm-text3)", fontSize: "0.7rem", fontFamily: FB }}>+{cross.orphans.length - 20} más</span>}
+              </div>
+            </div>
+          )}
 
           {/* Sospechosos sin mapear — abajo, full-width compacto, solo si existen */}
           {cross.insights.sospechosos?.length > 0 && (
