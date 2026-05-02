@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true } } },
     });
 
     if (!owner) {
@@ -22,11 +22,17 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
     }
 
+    // Don't leak the API token to the client; just expose a boolean
+    const restaurants = owner.restaurants.map(({ toteatApiToken, ...rest }) => ({
+      ...rest,
+      hasToteat: !!toteatApiToken,
+    }));
+
     return NextResponse.json({
       role: owner.role,
       name: owner.name,
-      restaurants: owner.restaurants,
-      selectedRestaurantId: owner.restaurants[0]?.id || null,
+      restaurants,
+      selectedRestaurantId: restaurants[0]?.id || null,
       mustChangePassword: owner.mustChangePassword,
     });
   } catch (error) {

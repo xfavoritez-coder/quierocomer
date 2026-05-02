@@ -382,6 +382,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
                   { t: "Campañas y email marketing", tip: "Crea y envía emails con novedades, promociones o comunicaciones a tus clientes registrados" },
+                  { t: "Integración con Toteat", tip: "Si tu local ya usa Toteat, sincronizamos las ventas reales con la carta digital. Verás qué platos se ven y se piden, dashboard en vivo de tu negocio, y badges como 'lo más pedido hoy' basado en ventas reales." },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}

@@ -12,11 +12,12 @@ export async function GET(req: NextRequest) {
 
     // Superadmin
     if (adminId === "superadmin" && adminRole === "SUPERADMIN") {
-      const restaurants = await prisma.restaurant.findMany({
+      const rows = await prisma.restaurant.findMany({
         where: { isActive: true },
-        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, toteatApiToken: true },
         orderBy: { name: "asc" },
       });
+      const restaurants = rows.map(({ toteatApiToken, ...rest }) => ({ ...rest, hasToteat: !!toteatApiToken }));
       return NextResponse.json({
         role: "SUPERADMIN",
         name: "Super Admin",
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     // Owner
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: adminId! },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, toteatApiToken: true } } },
     });
 
     if (!owner) {
@@ -40,11 +41,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
     }
 
+    const restaurants = owner.restaurants.map(({ toteatApiToken, ...rest }) => ({ ...rest, hasToteat: !!toteatApiToken }));
     return NextResponse.json({
       role: owner.role,
       name: owner.name,
-      restaurants: owner.restaurants,
-      selectedRestaurantId: owner.restaurants[0]?.id || null,
+      restaurants,
+      selectedRestaurantId: restaurants[0]?.id || null,
     });
   } catch (error) {
     console.error("Admin me error:", error);

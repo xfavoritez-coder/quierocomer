@@ -8,7 +8,7 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; plan?: string; }
+interface Restaurant { id: string; name: string; slug: string; logoUrl?: string | null; plan?: string; hasToteat?: boolean; }
 
 interface Props {
   name: string;
@@ -30,10 +30,11 @@ function LiveIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-function buildNav(base: string) {
+function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | null } = {}) {
+  const showLive = opts.hasToteat && opts.plan === "PREMIUM";
   const SIDEBAR_NAV = [
     { icon: Home, label: "Inicio", href: base },
-    { icon: LiveIcon, label: "En vivo", href: `${base}/live` },
+    ...(showLive ? [{ icon: LiveIcon, label: "En vivo", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Users, label: "Clientes", href: `${base}/clientes` },
@@ -55,7 +56,10 @@ function buildNav(base: string) {
 
 export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, children }: Props) {
   const pathname = usePathname();
-  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath);
+  const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
+  const hasToteat = !!(selected as any)?.hasToteat;
+  const plan = (selected as any)?.plan || activePlan;
+  const { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS } = buildNav(basePath, { hasToteat, plan });
   const [moreOpen, setMoreOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [moreVisible, setMoreVisible] = useState(false);

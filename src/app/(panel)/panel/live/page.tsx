@@ -6,6 +6,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const REFRESH_MS = 60_000;
+const SYNC_INTERVAL_MS = 2 * 60_000; // 2 min — matches the server-side debounce
 
 interface LiveData {
   now: string;
@@ -33,7 +34,10 @@ export default function LiveDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
+  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
+  const [syncing, setSyncing] = useState(false);
   const tickRef = useRef<number | null>(null);
+  const syncTickRef = useRef<number | null>(null);
 
   const load = () => {
     if (!selectedRestaurantId) return;
@@ -47,14 +51,48 @@ export default function LiveDashboard() {
       .finally(() => setLoading(false));
   };
 
+  // Sync triggers a fresh fetch from Toteat (debounced server-side at 2 min)
+  // and then re-loads the dashboard to show the new data.
+  const triggerSync = async (force = false) => {
+    if (!selectedRestaurantId) return;
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/admin/toteat/sync-now", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId: selectedRestaurantId, days: 1, force }),
+      });
+      const d = await res.json();
+      if (d.lastSyncAt) setLastSyncAt(new Date(d.lastSyncAt));
+      else if (d.ok) setLastSyncAt(new Date());
+    } catch {}
+    setSyncing(false);
+    load();
+  };
+
   useEffect(() => {
     setLoading(true);
-    load();
+    triggerSync();   // Initial sync on load
+    // Cheap dashboard refresh every 60s (re-reads cache, no Toteat hit)
     if (tickRef.current) window.clearInterval(tickRef.current);
     tickRef.current = window.setInterval(load, REFRESH_MS);
-    return () => { if (tickRef.current) window.clearInterval(tickRef.current); };
+    // Real Toteat sync every 2 min (matches server-side debounce)
+    if (syncTickRef.current) window.clearInterval(syncTickRef.current);
+    syncTickRef.current = window.setInterval(() => triggerSync(false), SYNC_INTERVAL_MS);
+    return () => {
+      if (tickRef.current) window.clearInterval(tickRef.current);
+      if (syncTickRef.current) window.clearInterval(syncTickRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
+
+  const minutesAgo = (d: Date | null) => {
+    if (!d) return null;
+    const m = Math.floor((Date.now() - d.getTime()) / 60_000);
+    if (m < 1) return "ahora mismo";
+    if (m === 1) return "hace 1 min";
+    return `hace ${m} min`;
+  };
 
   if (!selectedRestaurantId) {
     return <div style={{ padding: 24, color: "var(--adm-text2)", fontFamily: F }}>Selecciona un local en el sidebar para ver su dashboard en vivo.</div>;
@@ -83,15 +121,16 @@ export default function LiveDashboard() {
             En vivo
           </h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-            {updatedAt ? `Actualizado a las ${updatedAt.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
-            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 60s</span>
+            {lastSyncAt ? `Última sincronización con Toteat: ${minutesAgo(lastSyncAt)}` : "Sincronizando con Toteat..."}
+            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 2 min</span>
           </p>
         </div>
         <button
-          onClick={load}
-          style={{ padding: "8px 14px", background: "var(--adm-accent)", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}
+          onClick={() => triggerSync(true)}
+          disabled={syncing}
+          style={{ padding: "8px 14px", background: syncing ? "var(--adm-card-border)" : "var(--adm-accent)", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: syncing ? "wait" : "pointer", opacity: syncing ? 0.6 : 1 }}
         >
-          Actualizar
+          {syncing ? "Sincronizando..." : "Sincronizar ahora"}
         </button>
       </div>
 

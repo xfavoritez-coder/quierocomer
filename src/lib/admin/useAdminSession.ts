@@ -9,6 +9,8 @@ interface AdminRestaurant {
   slug: string;
   logoUrl?: string | null;
   qrToken?: string | null;
+  plan?: string | null;
+  hasToteat?: boolean;
 }
 
 export interface AdminSession {

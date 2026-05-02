@@ -24,7 +24,9 @@ export type Feature =
   | "announcements"     // Anuncios en la carta
   | "modifiers"         // Modificadores de platos
   | "clients_full"      // Ver todos los clientes
-  | "clients_export";   // Exportar clientes a CSV
+  | "clients_export"    // Exportar clientes a CSV
+  | "toteat_integration" // Integración con Toteat POS (cruce vista vs venta, dashboard live)
+  | "live_dashboard";   // Dashboard en vivo del local (requiere Toteat)
 
 const PLAN_FEATURES: Record<Plan, Set<Feature>> = {
   FREE: new Set([
@@ -58,6 +60,8 @@ const PLAN_FEATURES: Record<Plan, Set<Feature>> = {
     "announcements",
     "clients_full",
     "clients_export",
+    "toteat_integration",
+    "live_dashboard",
   ]),
 };
 
