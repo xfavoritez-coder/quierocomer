@@ -10,6 +10,8 @@ import { SUPPORTED_LANGS, LANG_FLAGS } from "@/lib/qr/i18n";
 import { norm } from "@/lib/normalize";
 import { getDishPhoto, groupDishesByCategory } from "./utils/dishHelpers";
 import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
+import SortChip from "./SortChip";
+import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, setCartaLang } from "@/lib/sessionTracker";
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
@@ -53,6 +55,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
   const [query, setQuery] = useState("");
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "desktop");
   const [genioOpen, setGenioOpen] = useState(false);
   const [modalImgLoaded, setModalImgLoaded] = useState(false);
   useEffect(() => { setModalImgLoaded(false); }, [selectedDish?.id]);
@@ -157,7 +160,11 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
     return dishes.filter(d => norm(d.name || "").includes(q) || norm(d.description || "").includes(q));
   }, [dishes, query]);
 
-  const grouped = useMemo(() => groupDishesByCategory(filtered, categories), [filtered, categories]);
+  const grouped = useMemo(() => {
+    const base = groupDishesByCategory(filtered, categories);
+    if (sortKey === "default") return base;
+    return base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
+  }, [filtered, categories, sortKey, rankings]);
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
@@ -198,6 +205,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
             </div>
+            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
 
           {/* Category tabs */}

@@ -223,7 +223,7 @@ export default function CartaPremium({
   const [captureStatus, setCaptureStatus] = useState<"idle" | "loading" | "success">("idle");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "premium");
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);

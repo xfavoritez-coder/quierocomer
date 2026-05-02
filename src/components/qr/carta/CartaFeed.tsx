@@ -403,7 +403,7 @@ export default function CartaFeed({
 
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
-  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "feed");
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (!query || query.length < 2) return;

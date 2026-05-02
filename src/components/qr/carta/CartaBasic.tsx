@@ -9,6 +9,8 @@ import DishDetail from "./DishDetail";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { Sparkles } from "lucide-react";
 import WaiterButton from "../garzon/WaiterButton";
+import SortChip from "./SortChip";
+import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 
 interface Review {
   id: string;
@@ -42,6 +44,7 @@ export default function CartaBasic({
   const [selectedDish, setSelectedDish] = useState<Dish | null>(null);
   const [genioOpen, setGenioOpen] = useState(false);
   const showWaiter = !!(tableId || isQrScan);
+  const { sortKey, setSortKey, rankings } = useCartaSort(restaurant.id, "basic");
 
   const heroDishes = useMemo(() => {
     const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
@@ -75,15 +78,19 @@ export default function CartaBasic({
         categories={categories}
         activeCategory={activeCategory}
         onCategoryChange={setActiveCategory}
+        rightSlot={<SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />}
       />
 
       <main className="px-4 pb-28">
         {categories.map((cat) => {
-          const catDishes = dishes.filter((d) => d.categoryId === cat.id).sort((a, b) => {
-            const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
-            const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
-            return aRec - bRec;
-          });
+          const catDishesRaw = dishes.filter((d) => d.categoryId === cat.id);
+          const catDishes = sortKey !== "default"
+            ? applyCartaSort(catDishesRaw, sortKey, rankings)
+            : [...catDishesRaw].sort((a, b) => {
+                const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
+                const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+                return aRec - bRec;
+              });
           if (!catDishes.length) return null;
           return (
             <section key={cat.id} id={`cat-${cat.id}`} className="pt-8">

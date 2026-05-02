@@ -77,7 +77,7 @@ const dict = {
     bdaySuccessSub: "Te tendremos un regalito esperando 🎁✨",
     bdayModalTitle: "¡Queremos celebrar contigo!",
     bdayModalTitleRestaurant: "En {name} queremos celebrar contigo",
-    bdayModalSub: "Déjanos tu cumpleaños y te tendremos una sorpresa especial",
+    bdayModalSub: "Déjanos tu cumpleaños y te tendremos una sorpresa ese día especial",
     bdayLabelName: "Tu nombre",
     bdayLabelEmail: "Tu email",
     bdayLabelDate: "Fecha de nacimiento",

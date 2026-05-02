@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { trackCartaSortApplied } from "../utils/cartaAnalytics";
 
 export type SortKey = "default" | "views" | "sales" | "price-asc" | "price-desc";
 
@@ -15,7 +16,7 @@ const SORT_STORAGE_PREFIX = "qc_carta_sort:";
  * sessionStorage so the choice survives navigation but resets on a fresh
  * tab. Also fetches the per-dish rankings (views + adaptive sales) on mount.
  */
-export function useCartaSort(restaurantId: string) {
+export function useCartaSort(restaurantId: string, view: string = "unknown") {
   const storageKey = `${SORT_STORAGE_PREFIX}${restaurantId}`;
   const [sortKey, setSortKeyState] = useState<SortKey>("default");
   const [rankings, setRankings] = useState<Rankings | null>(null);
@@ -36,7 +37,13 @@ export function useCartaSort(restaurantId: string) {
     try {
       if (typeof window !== "undefined") sessionStorage.setItem(storageKey, key);
     } catch {}
-  }, [storageKey]);
+    // Only track explicit non-default selections — the default state is the
+    // baseline and would create noise if every fresh session emitted a "sort
+    // applied: default" event.
+    if (key !== "default") {
+      try { trackCartaSortApplied(restaurantId, key, view); } catch {}
+    }
+  }, [storageKey, restaurantId, view]);
 
   // Fetch rankings once per restaurantId (endpoint is cached server-side).
   useEffect(() => {

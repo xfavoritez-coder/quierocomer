@@ -96,6 +96,11 @@ export function trackFilterApplied(restaurantId: string, filterType: string, fil
   track(restaurantId, "FILTER_APPLIED", { resultsCount, metadata: { filterType, filterValue } });
 }
 
+/** Track which sort the customer chose (default, views, sales, price-asc, price-desc). */
+export function trackCartaSortApplied(restaurantId: string, sortKey: string, view: string) {
+  track(restaurantId, "FILTER_APPLIED", { metadata: { filterType: "sort", filterValue: sortKey, view } });
+}
+
 // ── Hero click tracking ──
 
 export function trackHeroClick(restaurantId: string, dishId: string, view: "premium" | "lista") {
