@@ -179,7 +179,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     items: data.mostDetailed || [],
     icon: "🔍",
     unit: "promedio",
-    tooltip: "Promedio de segundos que cada cliente pasó dentro del modal del plato. Más tiempo suele indicar curiosidad o interés alto. Solo se cuentan platos con al menos 1 segundo en detalle.",
+    tooltip: "Promedio de segundos que cada cliente pasó dentro del modal del plato. Si un plato dice '12s', cada cliente que lo abrió se quedó en promedio 12 segundos mirándolo. Más tiempo suele indicar curiosidad o interés alto.",
   };
   const leastViewed = {
     title: "Platos abandonados",
@@ -196,7 +196,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     })),
     icon: "🗂️",
     unit: "% del tiempo en carta",
-    tooltip: "Tiempo total que los clientes pasaron en cada sección de la carta (haciendo scroll por la categoría). El % es respecto a la suma total de tiempo en categorías. Útil para saber qué sección tiene más tracción aunque no se vea reflejado en aperturas individuales de platos.",
+    tooltip: "Tiempo total que los clientes pasaron en cada sección de la carta haciendo scroll. Si dice 'Sushi 35% · 8min', los clientes pasaron el 35% del tiempo total (8 min sumando todas las sesiones) explorando esa sección. Útil para saber qué sección tiene más tracción aunque no se vea reflejado en aperturas de platos.",
   };
 
   return (
@@ -225,7 +225,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
               <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#ef4444", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
                   <span>👻 Platos fantasma</span>
-                  <InfoTip text="Platos mapeados a Toteat con interés real (al menos 3 aperturas del modal) pero baja conversión: 0 ventas o conversión ≤ 15%. Ojo: las ventas vienen de Toteat e incluyen pedidos por garzón sin escaneo de QR; si alguien pide directo al mozo no cuenta como apertura QC." />
+                  <InfoTip text="Platos mapeados a Toteat con interés real (al menos 3 aperturas del modal) pero baja conversión: 0 ventas o conversión ≤ 15%. Ejemplo: 'Gran Flor: 0 ventas de 6 aperturas, 0% conv' significa que 6 clientes lo abrieron en QC y nadie lo pidió. Ojo: las ventas Toteat incluyen pedidos por garzón sin escaneo de QR." />
                 </p>
                 <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren pero no los compran.</p>
                 {cross.insights.fantasmas.map((p: any) => (
@@ -249,7 +249,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
               <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: 10, padding: "12px 14px" }}>
                 <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#16a34a", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
                   <span>🎯 Estrellas</span>
-                  <InfoTip text="Platos que la gente abre y termina comprando. Ranking por conversión (ventas / aperturas). Top 5 con al menos 3 aperturas y 2 ventas. Una conversión > 100% indica que se vendieron más unidades de las que se abrieron en QC — eso es normal cuando hay pedidos por garzón." />
+                  <InfoTip text="Platos que la gente abre y termina comprando. Top 5 ordenados por conversión (ventas / aperturas), con al menos 3 aperturas y 2 ventas. Ejemplo: 'Champi furai: 9 ventas de 3 aperturas, 300% conv' significa que se vendieron 9 unidades pero solo 3 personas lo abrieron en QC — el resto pidió por garzón. Conversión > 100% es normal cuando hay pedidos al mozo." />
                 </p>
                 <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Los abren y los piden.</p>
                 {cross.insights.estrellas.map((p: any) => (
@@ -274,7 +274,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, padding: "12px 14px", marginBottom: 10 }}>
               <p style={{ fontFamily: F, fontSize: "0.74rem", fontWeight: 700, color: "#F4A623", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 6 }}>
                 <span>🟡 Sin mapear</span>
-                <InfoTip text="Platos con al menos 3 aperturas en QC que no están mapeados a un producto Toteat (ni directo, ni vía modificadores). No podemos saber si vendieron o no. Andá a /panel/menus → Toteat para mapearlos." />
+                <InfoTip text="Platos con al menos 3 aperturas en QC que no están mapeados a un producto Toteat (ni directo, ni vía modificadores). Ejemplo: 'Limonada Artesanal: 6 aperturas' aparece acá si nadie de sus modificadores tiene código Toteat. No podemos saber si vendieron o no — andá a /panel/menus → Toteat para mapearlos." />
               </p>
               <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 8px" }}>Tienen interés real pero no podemos cruzarlos contra ventas. Mapéalos para confirmar.</p>
               {cross.insights.sospechosos.map((p: any) => (
