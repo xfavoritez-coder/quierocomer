@@ -6,7 +6,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const REFRESH_MS = 60_000;
-const SYNC_INTERVAL_MS = 2 * 60_000; // 2 min — matches the server-side debounce
+const SYNC_INTERVAL_MS = 10 * 60_000; // 10 min — matches the server-side debounce
 
 interface LiveData {
   now: string;
@@ -122,7 +122,7 @@ export default function LiveDashboard() {
           </h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
             {lastSyncAt ? `Última sincronización con Toteat: ${minutesAgo(lastSyncAt)}` : "Sincronizando con Toteat..."}
-            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 2 min</span>
+            <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 10 min</span>
           </p>
         </div>
         <button

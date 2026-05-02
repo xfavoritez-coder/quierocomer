@@ -8,10 +8,12 @@ import { syncRestaurantSales, loadCredentialsFromRestaurant } from "@/lib/toteat
  * Body: { restaurantId: string, days?: number, force?: boolean }
  *
  * Server-side debounce: ignores requests if the restaurant was synced in
- * the last 2 minutes (to protect Toteat's 3 req/min rate limit when several
- * dashboards/users trigger this at once). `force: true` bypasses the debounce.
+ * the last 10 minutes. This protects the DB at scale (50+ clients with active
+ * live dashboards would otherwise generate huge write volume) without losing
+ * the "live" feel — owners get fresh data when they open the dashboard or
+ * after staying on it for 10 min, plus a manual force-sync button.
  */
-const DEBOUNCE_MS = 2 * 60_000;
+const DEBOUNCE_MS = 10 * 60_000;
 
 export async function POST(req: NextRequest) {
   const authErr = checkAdminAuth(req);
