@@ -186,7 +186,10 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
 
 function DishMapRow({ dish, catalog, disabled, onSelect }: { dish: UnmappedDish; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string) => void }) {
   const [value, setValue] = useState(dish.suggestion?.toteatProductId || "");
+  const [customMode, setCustomMode] = useState(false);
+  const [customId, setCustomId] = useState("");
   const sugg = dish.suggestion;
+  const idToSubmit = customMode ? customId.trim() : value;
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(239,68,68,0.04)", borderRadius: 10, border: "1px solid rgba(239,68,68,0.15)", flexWrap: "wrap" }}>
@@ -195,28 +198,47 @@ function DishMapRow({ dish, catalog, disabled, onSelect }: { dish: UnmappedDish;
         <p style={{ fontFamily: F, fontSize: "0.84rem", color: "var(--adm-text)", margin: 0, fontWeight: 600 }}>{dish.name}</p>
         {dish.category && <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{dish.category}</p>}
       </div>
-      <select
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
+      {customMode ? (
+        <input
+          type="text"
+          value={customId}
+          onChange={(e) => setCustomId(e.target.value)}
+          disabled={disabled}
+          placeholder="Código Toteat (ej. HV0230)"
+          style={{ flex: "1 1 200px", padding: "7px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", minWidth: 200 }}
+        />
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={disabled}
+          style={{ flex: "1 1 200px", padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", minWidth: 200 }}
+        >
+          <option value="">Seleccionar producto Toteat...</option>
+          {catalog.map((c) => (
+            <option key={c.toteatProductId} value={c.toteatProductId}>
+              {c.name} {c.hierarchyName ? `· ${c.hierarchyName}` : ""}
+            </option>
+          ))}
+        </select>
+      )}
+      <button
+        onClick={() => setCustomMode((m) => !m)}
         disabled={disabled}
-        style={{ flex: "1 1 200px", padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", minWidth: 200 }}
+        title={customMode ? "Volver a la lista" : "Escribir código manualmente (si no aparece en la lista)"}
+        style={{ padding: "6px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}
       >
-        <option value="">Seleccionar producto Toteat...</option>
-        {catalog.map((c) => (
-          <option key={c.toteatProductId} value={c.toteatProductId}>
-            {c.name} {c.hierarchyName ? `· ${c.hierarchyName}` : ""}
-          </option>
-        ))}
-      </select>
-      {sugg && sugg.toteatProductId && (
+        {customMode ? "↩ Lista" : "✎ Código"}
+      </button>
+      {!customMode && sugg && sugg.toteatProductId && (
         <span style={{ fontFamily: F, fontSize: "0.68rem", color: "#F4A623", fontWeight: 600 }}>
           Sugerencia: {sugg.name} ({sugg.score}%)
         </span>
       )}
       <button
-        onClick={() => value && onSelect(value)}
-        disabled={!value || disabled}
-        style={{ padding: "6px 14px", background: "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: !value || disabled ? "not-allowed" : "pointer", opacity: !value || disabled ? 0.5 : 1 }}
+        onClick={() => idToSubmit && onSelect(idToSubmit)}
+        disabled={!idToSubmit || disabled}
+        style={{ padding: "6px 14px", background: "#F4A623", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.74rem", fontWeight: 700, cursor: !idToSubmit || disabled ? "not-allowed" : "pointer", opacity: !idToSubmit || disabled ? 0.5 : 1 }}
       >
         Mapear
       </button>

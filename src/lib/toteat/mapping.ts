@@ -94,7 +94,11 @@ export async function getToteatProductCatalog(
 ): Promise<ToteatProductCandidate[]> {
   const credentials = await loadCredentialsFromRestaurant(restaurantId);
   if (credentials) {
-    const live = await fetchToteatProducts({ credentials, activeOnly: true });
+    // activeOnly: false → returns the full catalog including products that
+    // Toteat has flagged inactive but that the restaurant still has on its
+    // carta. Owner reported HV0230 ("Brownie con helado") missing because
+    // the activeOnly=true endpoint omitted it.
+    const live = await fetchToteatProducts({ credentials, activeOnly: false });
     if (live.data && live.data.length > 0) {
       return live.data
         .filter((p) => opts.includeModifiers || !p.isModifier)
