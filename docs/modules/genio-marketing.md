@@ -80,7 +80,7 @@ Cuando un fantasma vuelve, la app muestra promos relevantes para su perfil sin e
 ## Estrategia de conversion fantasma → registrado
 
 3 momentos para pedir registro:
-1. **Post-Genio**: "Te gusto la recomendacion? Guarda tus favoritos"
+1. **Post-Genio**: "Tu carta ya esta lista — guarda tus preferencias para tu proxima visita"
 2. **Visitas repetidas**: "Te interesa este plato. Te avisamos cuando este en promo"
 3. **Promo personalizada**: "Desbloquea una oferta basada en tus gustos"
 

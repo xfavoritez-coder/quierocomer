@@ -38,8 +38,8 @@ Metricas reales desde la BD:
 - Distribucion de vista preferida (Lista/Clasica/Espacial)
 - Distribucion por dispositivo (mobile/tablet/desktop)
 - Top 5 platos mas vistos
-- Top 5 platos mas recomendados por Genio
-- Distribucion de dieta de clientes
+- Top 5 platos por mayor tiempo en detalle
+- Distribucion de dieta declarada por clientes
 - (Superadmin) Top locales por visitas, locales activos
 
 ### /admin/locales

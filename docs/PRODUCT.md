@@ -2,14 +2,14 @@
 
 ## Vision
 
-La primera carta QR que aprende los gustos de tus clientes, recomienda platos con IA, y convierte visitantes anonimos en clientes recurrentes.
+La primera carta QR que aprende los gustos de tus clientes, personaliza el menu en tiempo real, y convierte visitantes anonimos en clientes recurrentes.
 
 ## Usuarios
 
 ### Comensal (B2C)
 - Escanea el QR en la mesa del restaurante
 - Explora la carta en 3 vistas distintas
-- Recibe recomendaciones personalizadas del Genio
+- Configura sus preferencias en el Genio para que la carta se adapte a el
 - Puede registrarse para guardar preferencias
 - Llama al garzon desde su celular
 
@@ -29,11 +29,10 @@ La primera carta QR que aprende los gustos de tus clientes, recomienda platos co
 - Adaptacion por horario y clima (reglas configurables)
 - Banner de cumpleanos con A/B testing
 
-### El Genio (recomendador IA)
-- Onboarding en 5 pasos: dieta, restricciones, dislikes, hambre, gustos visuales
-- Algoritmo de scoring por afinidad
-- Modo grupal (toda la mesa participa)
-- Recuerda preferencias entre visitas (localStorage)
+### El Genio (personalizador de carta)
+- Onboarding en 4 pasos: dieta, restricciones, dislikes, listo
+- No sugiere un plato especifico — reordena y filtra la carta segun el perfil
+- Recuerda preferencias entre visitas (localStorage) y se sincroniza con QRUser si el cliente se registra
 
 ### Llamada al garzon
 - Boton en la carta QR
@@ -57,7 +56,7 @@ La primera carta QR que aprende los gustos de tus clientes, recomienda platos co
 
 | Fase | Estado | Descripcion |
 |------|--------|-------------|
-| Carta QR + Genio | ✅ Live | 3 vistas, recomendador, garzon |
+| Carta QR + Genio | ✅ Live | 3 vistas, personalizador de carta, garzon |
 | Tracking + GuestProfile | ✅ Live | Sesiones, dwell times, weather, merge |
 | Admin multi-tenant | ✅ Live | Owners con auth, dashboard con metricas |
 | Cron diario | ✅ Live | Cleanup, snapshots, tokens |

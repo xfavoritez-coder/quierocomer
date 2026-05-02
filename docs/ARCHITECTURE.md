@@ -47,7 +47,7 @@ src/components/qr/
   capture/
     BirthdayBanner.tsx   # Banner de captura de cumpleanos
     BirthdayModal.tsx    # Modal de cumpleanos (reutilizable)
-    PostGenioCapture.tsx # Captura post-recomendacion
+    PostGenioCapture.tsx # Captura post-onboarding del Genio
 
 src/lib/
   prisma.ts              # Singleton Prisma client

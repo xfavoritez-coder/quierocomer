@@ -1,6 +1,6 @@
 # QuieroComer
 
-Plataforma de cartas QR inteligentes para restaurantes en Chile. Cada local obtiene una carta digital con recomendaciones personalizadas por IA, llamada al garzon sin hardware, y estadisticas de comportamiento de sus clientes.
+Plataforma de cartas QR inteligentes para restaurantes en Chile. Cada local obtiene una carta digital que se adapta a las preferencias de cada comensal, llamada al garzon sin hardware, y estadisticas de comportamiento de sus clientes.
 
 ## Quien lo hace
 
@@ -71,7 +71,7 @@ src/
   components/
     qr/
       carta/          # 3 vistas de la carta (Lista, Clasica, Espacial)
-      genio/          # Motor de recomendacion
+      genio/          # Onboarding de preferencias (personaliza la carta)
       garzon/         # Sistema de llamada al garzon
       capture/        # Banners de captura (cumpleanos, etc)
       auth/           # Login/perfil del comensal

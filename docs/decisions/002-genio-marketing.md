@@ -5,7 +5,7 @@
 
 ## Contexto
 
-QuieroComer ya captura datos valiosos de cada comensal a traves del Genio: dieta, restricciones, platos preferidos, horarios, clima. Estos datos estan subutilizados — solo se usan para la recomendacion inmediata.
+QuieroComer ya captura datos valiosos de cada comensal a traves del Genio: dieta, restricciones, dislikes, horarios, clima. Estos datos estan subutilizados — solo se usan para personalizar la carta en la sesion actual.
 
 Los duenos de local quieren saber quienes son sus clientes, que buscan, y como traerlos de vuelta. Hoy no tienen herramientas para esto.
 
