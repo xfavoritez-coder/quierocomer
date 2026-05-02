@@ -225,11 +225,11 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     tooltip: "Cuántos clientes abrieron la ficha del plato. Si dice '25', significa que 25 personas lo miraron.",
   };
   const mostDetailed = {
-    title: "Más tiempo en detalle",
+    title: "Más tiempo viéndolos",
     items: data.mostDetailed || [],
     icon: "🔍",
     unit: "promedio",
-    tooltip: "Cuántos segundos en promedio se quedó cada cliente mirando la ficha del plato. Más tiempo = más interés.",
+    tooltip: "Cuántos segundos en promedio pasó cada cliente mirando la foto y descripción del plato (al hacer click sobre él). Más tiempo = más interés.",
   };
   const leastViewed = {
     title: "Platos abandonados",
@@ -288,7 +288,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                     </div>
                     <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
                       {p.sales} {p.sales === 1 ? "venta" : "ventas"} · {p.opens} {p.opens === 1 ? "apertura" : "aperturas"}
-                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}s en detalle`}
+                      {p.avgDetailMs > 0 && ` · ${Math.round(p.avgDetailMs / 1000)}s viéndolo`}
                     </div>
                   </div>
                 ))}
@@ -363,7 +363,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                   </div>
                   {p.avgDetailMs > 0 && (
                     <div style={{ fontSize: "0.7rem", color: "var(--adm-text3)", marginTop: 2 }}>
-                      {Math.round(p.avgDetailMs / 1000)}s en detalle
+                      {Math.round(p.avgDetailMs / 1000)}s viéndolo
                     </div>
                   )}
                 </div>
@@ -385,8 +385,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                   <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
                     {([
                       { key: "name", label: "Plato", align: "left" as const, tooltip: undefined },
-                      { key: "opens", label: "Aperturas", align: "right" as const, tooltip: "Veces que alguien tocó el plato y abrió su detalle" },
-                      { key: "avgDetailMs", label: "T. detalle", align: "right" as const, tooltip: "Segundos promedio dentro del detalle del plato" },
+                      { key: "opens", label: "Aperturas", align: "right" as const, tooltip: "Cuántos clientes abrieron el plato para verlo" },
+                      { key: "avgDetailMs", label: "T. viendo", align: "right" as const, tooltip: "Segundos promedio que pasaron mirando el plato" },
                       { key: "sales", label: "Ventas", align: "right" as const, tooltip: "Unidades vendidas en el período" },
                       { key: "conversionPct", label: "Conv.", align: "right" as const, tooltip: "Porcentaje de aperturas que terminaron en venta" },
                     ] as { key: CrossSortKey; label: string; align: "left" | "right"; tooltip?: string }[]).map((col) => {
