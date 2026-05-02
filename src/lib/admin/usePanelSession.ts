@@ -8,6 +8,7 @@ interface PanelRestaurant {
   slug: string;
   qrToken?: string | null;
   plan?: string;
+  hasToteat?: boolean;
 }
 
 export interface PanelSession {

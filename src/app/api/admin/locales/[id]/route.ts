@@ -74,6 +74,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.dietType !== undefined && { dietType: body.dietType }),
         ...(body.enabledLangs !== undefined && { enabledLangs: body.enabledLangs }),
         ...(body.plan !== undefined && { plan: body.plan }),
+        // Toteat POS integration fields (super-admin only)
+        ...(body.toteatRestaurantId !== undefined && { toteatRestaurantId: body.toteatRestaurantId || null }),
+        ...(body.toteatLocalId !== undefined && { toteatLocalId: body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId) }),
+        ...(body.toteatUserId !== undefined && { toteatUserId: body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId) }),
+        ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
       };
     } else {
       // Owner: silently filter to allowed fields only
