@@ -98,11 +98,11 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
             display: "flex",
             flexDirection: "column",
             gap: 0,
-            background: "rgba(0,0,0,0.75)",
+            background: "rgba(0,0,0,0.78)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            borderRadius: 20,
-            padding: "6px 6px",
+            borderRadius: 22,
+            padding: "10px 10px",
             boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
             border: "1px solid rgba(255,255,255,0.1)",
             animation: "vsSlideIn 0.25s cubic-bezier(0.16,1,0.3,1)",
@@ -110,7 +110,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           }}
         >
           {/* View options grid */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "2px 2px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, padding: "2px 2px" }}>
             {VIEW_KEYS.filter(v => plan !== "GOLD" || v.value === "lista" || v.value === "premium").map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
@@ -121,21 +121,21 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
                   onClick={() => handleSelect(value)}
                   className="flex items-center justify-center active:scale-95 transition-transform"
                   style={{
-                    gap: 5,
-                    padding: "8px 12px",
+                    gap: 7,
+                    padding: "11px 18px",
                     borderRadius: 50,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    fontSize: "0.75rem",
+                    fontSize: "0.92rem",
                     fontWeight: 600,
                     transition: "all 0.15s",
                     background: isActive ? "white" : "transparent",
-                    color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.75)",
+                    color: isActive ? "#0e0e0e" : "rgba(255,255,255,0.78)",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  <Icon size={13} strokeWidth={1.75} />
+                  <Icon size={16} strokeWidth={1.75} />
                   {label}
                 </button>
               );
@@ -143,11 +143,11 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           </div>
 
           {/* Divider */}
-          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 8px" }} />
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "8px 10px" }} />
 
           {/* Language selector row */}
           <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 2px" }}>
-            <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.4)", fontSize: "0.72rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
+            <span style={{ marginLeft: 10, marginRight: 8, color: "rgba(255,255,255,0.5)", fontSize: "0.85rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
             {(enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : SUPPORTED_LANGS).map((l) => {
               const isActive = activeLang === l;
               return (
@@ -156,17 +156,17 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
                   onClick={() => handleLangChange(l)}
                   className="active:scale-95 transition-transform"
                   style={{
-                    padding: "6px 12px",
+                    padding: "8px 14px",
                     borderRadius: 50,
                     border: "none",
                     cursor: "pointer",
                     fontFamily: "inherit",
-                    fontSize: "0.72rem",
+                    fontSize: "0.92rem",
                     fontWeight: 600,
                     letterSpacing: "0.05em",
                     transition: "all 0.15s",
                     background: isActive ? "rgba(244,166,35,0.2)" : "transparent",
-                    color: isActive ? "#F4A623" : "rgba(255,255,255,0.5)",
+                    color: isActive ? "#F4A623" : "rgba(255,255,255,0.55)",
                   }}
                 >
                   {LANG_FLAGS[l]}
@@ -183,7 +183,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
             transform: "rotate(45deg)",
             width: 10,
             height: 10,
-            background: "rgba(0,0,0,0.75)",
+            background: "rgba(0,0,0,0.78)",
             border: "1px solid rgba(255,255,255,0.1)",
             borderLeft: "none",
             borderBottom: "none",
