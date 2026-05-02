@@ -56,7 +56,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 }
 
 /* ═══ TAB: Platos ═══ */
-type CrossSortKey = "name" | "qcViews" | "qcDetails" | "sales" | "conversionPct";
+type CrossSortKey = "name" | "qcViews" | "avgDetailMs" | "sales" | "conversionPct";
 type CrossSortDir = "asc" | "desc";
 
 function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
@@ -209,19 +209,19 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                 <thead>
                   <tr style={{ color: "var(--adm-text3)", textAlign: "left", borderBottom: "1px solid var(--adm-card-border)" }}>
                     {([
-                      { key: "name", label: "Plato", align: "left" as const },
-                      { key: "qcViews", label: "Vistas", align: "right" as const },
-                      { key: "qcDetails", label: "Detalles", align: "right" as const },
-                      { key: "sales", label: "Ventas", align: "right" as const },
-                      { key: "conversionPct", label: "Conv.", align: "right" as const },
-                    ] as { key: CrossSortKey; label: string; align: "left" | "right" }[]).map((col) => {
+                      { key: "name", label: "Plato", align: "left" as const, tooltip: undefined },
+                      { key: "qcViews", label: "Vistas", align: "right" as const, tooltip: "Veces que el plato apareció en una sesión" },
+                      { key: "avgDetailMs", label: "T. detalle", align: "right" as const, tooltip: "Segundos promedio que pasaron en el detalle del plato (cuando lo abrieron)" },
+                      { key: "sales", label: "Ventas", align: "right" as const, tooltip: "Unidades vendidas en el período" },
+                      { key: "conversionPct", label: "Conv.", align: "right" as const, tooltip: "Porcentaje de vistas que terminaron en venta" },
+                    ] as { key: CrossSortKey; label: string; align: "left" | "right"; tooltip?: string }[]).map((col) => {
                       const active = sortKey === col.key;
                       return (
                         <th
                           key={col.key}
                           onClick={() => toggleSort(col.key)}
                           style={{ padding: "8px 6px", fontWeight: 600, textAlign: col.align, cursor: "pointer", userSelect: "none", color: active ? "var(--adm-text)" : "var(--adm-text3)" }}
-                          title={`Ordenar por ${col.label}`}
+                          title={col.tooltip ? `${col.tooltip} · Click para ordenar` : `Ordenar por ${col.label}`}
                         >
                           {col.align === "right" ? (
                             <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
@@ -250,7 +250,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                           {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>(sin mapear)</span>}
                         </td>
                         <td style={{ padding: "6px", textAlign: "right" }}>{r.qcViews}</td>
-                        <td style={{ padding: "6px", textAlign: "right" }}>{r.qcDetails}</td>
+                        <td style={{ padding: "6px", textAlign: "right", color: r.avgDetailMs > 0 ? "var(--adm-text2)" : "var(--adm-text3)" }}>
+                          {r.avgDetailMs > 0 ? `${Math.round(r.avgDetailMs / 1000)}s` : "—"}
+                        </td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.sales > 0 ? "var(--adm-accent)" : "var(--adm-text3)", fontWeight: 700 }}>{r.sales}</td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.conversionPct !== null ? (r.conversionPct >= 25 ? "#16a34a" : r.conversionPct >= 10 ? "var(--adm-text2)" : "#ef4444") : "var(--adm-text3)" }}>
                           {r.conversionPct !== null ? `${r.conversionPct}%` : "—"}

@@ -37,9 +37,19 @@ export async function GET(req: Request) {
   const results = [];
   for (const r of restaurants) {
     const last = r.toteatLastSyncAt;
-    const fromDate = last
+    let fromDate = last
       ? new Date(Math.max(last.getTime() - 5 * 60_000, Date.now() - 24 * 60 * 60 * 1000)) // 5min overlap, max 24h back
       : new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+    // Never go before the first QC session of the local — pre-QC Toteat sales
+    // can't be cross-referenced with carta data and pollute analytics.
+    const firstSession = await prisma.session.findFirst({
+      where: { restaurantId: r.id },
+      orderBy: { startedAt: "asc" },
+      select: { startedAt: true },
+    });
+    if (firstSession && firstSession.startedAt > fromDate) fromDate = firstSession.startedAt;
+
     const result = await syncRestaurantSales({
       restaurantId: r.id,
       credentials: {

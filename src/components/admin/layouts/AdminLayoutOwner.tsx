@@ -21,9 +21,19 @@ interface Props {
   children: React.ReactNode;
 }
 
+function LiveIcon({ size = 18 }: { size?: number }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: size, height: size, position: "relative" }}>
+      <span style={{ width: size * 0.45, height: size * 0.45, borderRadius: "50%", background: "#16a34a", boxShadow: "0 0 6px rgba(22,163,74,0.6)", animation: "navLivePulse 2s infinite" }} />
+      <style>{`@keyframes navLivePulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(1.25)} }`}</style>
+    </span>
+  );
+}
+
 function buildNav(base: string) {
   const SIDEBAR_NAV = [
     { icon: Home, label: "Inicio", href: base },
+    { icon: LiveIcon, label: "En vivo", href: `${base}/live` },
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
     { icon: Users, label: "Clientes", href: `${base}/clientes` },
