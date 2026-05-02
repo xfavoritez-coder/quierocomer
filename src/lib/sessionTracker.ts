@@ -486,6 +486,32 @@ export function getDbSessionId(): string | null {
   return session?.dbSessionId ?? null;
 }
 
+/**
+ * Force the DB session row to exist NOW, bypassing the 3s anti-bot delay used
+ * by the regular interaction-based path. Returns the resolved dbSessionId once
+ * it's persisted, or null if it can't be created within `timeoutMs`.
+ *
+ * Intended for events that need a session id immediately (e.g. the birthday
+ * auto-modal tracking BIRTHDAY_MODAL_AUTO_SHOWN before any user interaction).
+ */
+export async function ensureDbSessionAsync(timeoutMs: number = 3000): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  if (session?.dbSessionId) return session.dbSessionId;
+  if (!session) return null;
+
+  // Cancel the anti-bot delay if it's pending and force creation now
+  if (dbSessionDelay) { clearTimeout(dbSessionDelay); dbSessionDelay = null; }
+  ensureDbSession();
+
+  // Poll until the dbSessionId is populated or we hit the timeout
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (session?.dbSessionId) return session.dbSessionId;
+    await new Promise((r) => setTimeout(r, 80));
+  }
+  return session?.dbSessionId ?? null;
+}
+
 /** Set the language the carta was displayed in */
 let pendingLang: string | null = null;
 export function setCartaLang(lang: string) {

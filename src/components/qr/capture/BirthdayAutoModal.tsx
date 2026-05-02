@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import BirthdayModal from "./BirthdayModal";
 import { getGuestId, getSessionId } from "@/lib/guestId";
-import { getDbSessionId } from "@/lib/sessionTracker";
+import { getDbSessionId, ensureDbSessionAsync } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
@@ -38,6 +38,22 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
 
     const guestId = getGuestId();
 
+    // Track BIRTHDAY_MODAL_AUTO_SHOWN with a properly resolved dbSessionId.
+    // Forces the DB session to exist (bypassing the anti-bot delay) so the
+    // event lands on the right session in /admin/sesiones, and uses keepalive
+    // so the request survives if the user closes the page right away.
+    const trackAutoShown = async () => {
+      const dbSessionId = (await ensureDbSessionAsync(3000)) || getDbSessionId();
+      try {
+        await fetch("/api/qr/stats", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId }),
+          keepalive: true,
+        });
+      } catch {}
+    };
+
     // Server-side visit check (per-guest, survives localStorage clears / different browsers)
     // restaurantSessions is the count BEFORE this visit's session-start fires,
     // so >= 1 means at least one prior session → this is at least the 2nd visit.
@@ -57,7 +73,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
                 setExistingUser({ name: d.user.name, email: d.user.email });
                 setModalOpen(true);
                 localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-                fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
+                trackAutoShown();
               }
               return;
             }
@@ -69,7 +85,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
                   setVariant(d.variant);
                   setModalOpen(true);
                   localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-                  fetch("/api/qr/stats", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId: getDbSessionId() }) }).catch(() => {});
+                  trackAutoShown();
                 }
               });
           })
