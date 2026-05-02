@@ -1309,17 +1309,28 @@ export default function AdminMenus() {
       </div>
 
       {menuTab === "productos" && (<>
-      {/* Search */}
-      <div style={{ position: "relative", marginBottom: 10 }}>
-        <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#999", pointerEvents: "none" }} />
-        <input
-          placeholder="Buscar plato..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
-        />
-        {search && (
-          <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", fontSize: "0.85rem", padding: 2 }}>✕</button>
+      {/* Search + Nuevo (desktop) */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+          <Search size={16} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#999", pointerEvents: "none" }} />
+          <input
+            placeholder="Buscar plato..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+          />
+          {search && (
+            <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", fontSize: "0.85rem", padding: 2 }}>✕</button>
+          )}
+        </div>
+        {!creatingDish && (
+          <button
+            className="lnd-desktop-only"
+            onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
+            style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+          >
+            + Nuevo
+          </button>
         )}
       </div>
       {/* Filter chips */}
@@ -1358,10 +1369,6 @@ export default function AdminMenus() {
         <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
           🫘 Sin soya
         </button>
-        {/* Desktop-only + Nuevo inline */}
-        {!creatingDish && (
-          <button className="lnd-desktop-only" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "12px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>+ Nuevo</button>
-        )}
       </div>
 
       {/* Bulk actions bar */}
