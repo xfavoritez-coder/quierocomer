@@ -221,8 +221,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     title: "Más vistos en la carta",
     items: data.mostViewed || [],
     icon: "👀",
-    unit: "visitas",
-    tooltip: "Cuántas visitas distintas a la carta abrieron el plato. Si dice '25', el plato fue abierto en 25 visitas. Si la misma persona vuelve otro día y lo abre otra vez, cuenta como 2 visitas. Dentro de una misma visita, abrirlo varias veces cuenta como 1.",
+    unit: "veces",
+    tooltip: "Cuántas veces se abrió el plato. Si dice '25', el plato fue abierto 25 veces en el período seleccionado.",
   };
   const mostDetailed = {
     title: "Más tiempo viéndolos",
@@ -235,8 +235,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     title: "Platos abandonados",
     items: data.leastViewed || [],
     icon: "🌱",
-    unit: "% visitas que lo abrieron",
-    tooltip: "Platos que casi nadie está mirando. Si dice '3%', solo en 3 de cada 100 visitas a la carta alguien lo abrió.",
+    unit: "% de veces abierto",
+    tooltip: "Platos que casi nadie está mirando. Si dice '3%', solo se abrió en el 3% de las veces que alguien entró a la carta.",
   };
   const topCategories = {
     title: "Categorías más exploradas",
