@@ -8,17 +8,29 @@ import EmailTypoHint from "./EmailTypoHint";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
+export interface AbVariant {
+  experimentSlug: string;
+  titleId?: string;
+  titleText?: string;
+  subtitleId?: string;
+  subtitleText?: string;
+  ctaId?: string;
+  ctaText?: string;
+}
+
 interface Props {
   restaurantId: string;
   restaurantName?: string;
   /** If user is already logged in, pass their data to update instead of register */
   existingUser?: { name: string | null; email: string } | null;
   bannerVariantId?: string;
+  /** Active multi-armed bandit variant — overrides default i18n copy. */
+  abVariant?: AbVariant | null;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, onClose, onSuccess }: Props) {
+export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, abVariant, onClose, onSuccess }: Props) {
   const lang = useLang();
   const [name, setName] = useState(existingUser?.name || "");
   const [email, setEmail] = useState(existingUser?.email || "");
@@ -73,11 +85,22 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
       await res.json();
     }
 
-    // Track birthday saved
+    // Track birthday saved (with A/B metadata so the bandit can credit the
+    // exact variant combination shown to this user).
+    const abMetadata = abVariant
+      ? { abExperiment: abVariant.experimentSlug, titleId: abVariant.titleId, subtitleId: abVariant.subtitleId, ctaId: abVariant.ctaId }
+      : undefined;
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ eventType: "BIRTHDAY_SAVED", restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId() }),
+      body: JSON.stringify({
+        eventType: "BIRTHDAY_SAVED",
+        restaurantId,
+        guestId: getGuestId(),
+        sessionId: getSessionId(),
+        dbSessionId: getDbSessionId(),
+        ...(abMetadata ? { metadata: abMetadata } : {}),
+      }),
     }).catch(() => {});
 
     setStatus("success");
@@ -117,10 +140,11 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
             className="font-[family-name:var(--font-playfair)]"
             style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
           >
-            {restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle")}
+            {abVariant?.titleText
+              || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
           </h3>
           <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
-            {t(lang, "bdayModalSub")}
+            {abVariant?.subtitleText || t(lang, "bdayModalSub")}
           </p>
         </div>
 
@@ -187,7 +211,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
               opacity: status === "loading" ? 0.6 : 1,
             }}
           >
-            {status === "loading" ? t(lang, "bdaySaving") : t(lang, "bdayButton")}
+            {status === "loading" ? t(lang, "bdaySaving") : (abVariant?.ctaText || t(lang, "bdayButton"))}
           </button>
         </div>
 

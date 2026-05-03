@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import BirthdayModal from "./BirthdayModal";
+import BirthdayModal, { type AbVariant } from "./BirthdayModal";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
@@ -22,25 +22,33 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
   const [show, setShow] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
   const [autoModal, setAutoModal] = useState(false);
+  const [abVariant, setAbVariant] = useState<AbVariant | null>(null);
 
   useEffect(() => {
     if (sessionStorage.getItem("qr_birthday_dismissed")) return;
 
-    // Auto-modal logic is now in BirthdayAutoModal — banner only shows inline
+    // Auto-modal logic is now in BirthdayAutoModal — banner only shows inline.
+    // El banner aún abre el mismo BirthdayModal — pasamos la variante A/B
+    // para que el experimento del bandit cubra las dos rutas (auto y banner).
     fetch("/api/qr/user/me")
       .then((r) => r.json())
       .then((d) => {
+        const fetchAb = () => fetch("/api/qr/ab/birthday-modal")
+          .then((r) => r.json())
+          .then((ab) => { if (ab?.hasVariants) setAbVariant(ab); })
+          .catch(() => {});
         if (d.user) {
           if (!d.user.birthDate) {
             setExistingUser({ name: d.user.name, email: d.user.email });
             setShow(true);
+            fetchAb();
           }
           return;
         }
         fetch("/api/qr/banner/select")
           .then((r) => r.json())
           .then((d) => {
-            if (d.variant) { setVariant(d.variant); setShow(true); }
+            if (d.variant) { setVariant(d.variant); setShow(true); fetchAb(); }
           });
       })
       .catch(() => {});
@@ -149,6 +157,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
           restaurantName={restaurantName}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
+          abVariant={abVariant}
           onClose={() => setModalOpen(false)}
           onSuccess={() => { setStatus("success"); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
         />

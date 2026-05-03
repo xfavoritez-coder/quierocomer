@@ -530,6 +530,41 @@ model BadgeSnapshot {
   @@index([dishId, capturedAt])
 }
 
+// ─── A/B testing (factorial multi-armed bandit) ───────────────────
+// Each experiment has variants split by "slot" (e.g. title / subtitle /
+// cta). The serving endpoint samples one variant per slot using Thompson
+// Sampling — no fixed traffic split, the algorithm explores while
+// exploiting the best performers as data accumulates. Stats live in
+// StatEvent.metadata so we don't need a counters table.
+
+model AbExperiment {
+  id          String       @id @default(cuid())
+  slug        String       @unique          // e.g. "birthday-modal"
+  name        String                          // human label for the dashboard
+  description String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  variants    AbVariant[]
+
+  @@index([slug])
+}
+
+model AbVariant {
+  id           String       @id @default(cuid())
+  experimentId String
+  slot         String                         // "title" | "subtitle" | "cta" (free-form so future experiments can add slots)
+  text         String                         // the actual copy shown to the user
+  isActive     Boolean      @default(true)    // soft-disable without losing history
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  experiment   AbExperiment @relation(fields: [experimentId], references: [id], onDelete: Cascade)
+
+  @@index([experimentId, slot, isActive])
+}
+
 model Announcement {
   id           String    @id @default(cuid())
   restaurantId String

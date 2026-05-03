@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import BirthdayModal from "./BirthdayModal";
+import BirthdayModal, { type AbVariant } from "./BirthdayModal";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId, ensureDbSessionAsync } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
@@ -22,6 +22,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
   const [modalOpen, setModalOpen] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
+  const [abVariant, setAbVariant] = useState<AbVariant | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
@@ -34,13 +35,25 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
 
     const guestId = getGuestId();
 
-    // Track BIRTHDAY_MODAL_AUTO_SHOWN con un dbSessionId ya resuelto.
-    const trackAutoShown = async (dbSessionId: string | null) => {
+    // Track BIRTHDAY_MODAL_AUTO_SHOWN con un dbSessionId ya resuelto y la
+    // variante A/B servida — esto le permite al bandit atribuir cada
+    // impresión al título/subtítulo/CTA exactos que se mostraron.
+    const trackAutoShown = async (dbSessionId: string | null, ab: AbVariant | null) => {
+      const metadata = ab
+        ? { abExperiment: ab.experimentSlug, titleId: ab.titleId, subtitleId: ab.subtitleId, ctaId: ab.ctaId }
+        : undefined;
       try {
         await fetch("/api/qr/stats", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any, restaurantId, guestId, sessionId: getSessionId(), dbSessionId }),
+          body: JSON.stringify({
+            eventType: "BIRTHDAY_MODAL_AUTO_SHOWN" as any,
+            restaurantId,
+            guestId,
+            sessionId: getSessionId(),
+            dbSessionId,
+            ...(metadata ? { metadata } : {}),
+          }),
           keepalive: true,
         });
       } catch {}
@@ -64,6 +77,14 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
         // positivos por refreshes que incrementaban un contador local.
         if (serverPriorSessions < 1) return;
 
+        // Resolver la variante A/B en paralelo. Si falla o no hay
+        // experimento configurado, el modal cae a los textos por defecto.
+        const ab: AbVariant | null = await fetch("/api/qr/ab/birthday-modal")
+          .then((r) => r.json())
+          .then((d) => d?.hasVariants ? d : null)
+          .catch(() => null);
+        if (ab) setAbVariant(ab);
+
         // Verificar si el usuario ya tiene cumple guardado
         const me = await fetch("/api/qr/user/me").then((r) => r.json());
         if (me.user) {
@@ -71,7 +92,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
             setExistingUser({ name: me.user.name, email: me.user.email });
             setModalOpen(true);
             localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-            trackAutoShown(dbSessionId);
+            trackAutoShown(dbSessionId, ab);
           }
           return;
         }
@@ -81,7 +102,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
           setVariant(banner.variant);
           setModalOpen(true);
           localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-          trackAutoShown(dbSessionId);
+          trackAutoShown(dbSessionId, ab);
         }
       } catch {}
     })();
@@ -95,6 +116,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
           restaurantName={restaurantName}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
+          abVariant={abVariant}
           onClose={() => { setModalOpen(false); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
           onSuccess={() => {
             sessionStorage.setItem("qr_birthday_dismissed", "1");
