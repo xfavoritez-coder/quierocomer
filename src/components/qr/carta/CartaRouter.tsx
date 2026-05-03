@@ -102,24 +102,29 @@ export default function CartaRouter(props: Props) {
     return false;
   })();
 
-  // Set mesa token if arriving from table QR or general QR with token
+  // Botón de Garzón: siempre visible para locales Premium con la feature
+  // habilitada — el botón abre un modal que pregunta el número de mesa si
+  // el cliente no llegó por QR escaneado. Antes el botón sólo aparecía
+  // bajo condiciones específicas (QR scan, ?mesa=, token persistido), y
+  // los clientes que entraban por link directo no podían llamar al mozo
+  // aunque el local lo tuviera contratado.
   const waiterEnabled = (props.restaurant as any).waiterPanelActive !== false;
+  const restaurantPlan = (props.restaurant as any).plan;
+  const hasWaiterFeature = canAccess(restaurantPlan, "waiter");
   const [showWaiter, setShowWaiter] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!waiterEnabled) { setShowWaiter(false); return; }
+    if (!waiterEnabled || !hasWaiterFeature) { setShowWaiter(false); return; }
+
+    // Persistir mesa token si llegó vía URL con ?mesa= (efecto separado del
+    // gating del botón).
     const params = new URLSearchParams(window.location.search);
     const mesa = params.get("mesa");
     const isDemo = params.get("demo") === "true";
-    if (mesa) {
-      setMesaToken(props.restaurant.id, mesa, isDemo);
-      setShowWaiter(true);
-    } else if (isQrScan) {
-      setShowWaiter(true);
-    } else {
-      setShowWaiter(hasMesaToken(props.restaurant.id));
-    }
-  }, [props.restaurant.id, isQrScan, waiterEnabled]);
+    if (mesa) setMesaToken(props.restaurant.id, mesa, isDemo);
+
+    setShowWaiter(true);
+  }, [props.restaurant.id, isQrScan, waiterEnabled, hasWaiterFeature]);
 
   // Start session tracking
   useEffect(() => {
