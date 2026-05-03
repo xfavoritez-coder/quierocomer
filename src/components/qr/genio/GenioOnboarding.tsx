@@ -617,9 +617,22 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", padding: "100px 36px 40px", position: "relative" }}>
           <AmbientHaze />
           <AmbientSparks count={3} />
-          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: 28, position: "relative", zIndex: 2 }}>
+          {/* Eyebrow + intro: solo cuando es nuevo usuario para suavizar la
+              entrada al primer paso. Returning users (que vienen del step 0
+              a editar) no necesitan este saludo. */}
+          {!hasSaved && (
+            <p className="text-center" style={{ color: G.orange, fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", margin: "0 0 14px", position: "relative", zIndex: 2 }}>
+              {t(lang, "gDietEyebrow" as any)}
+            </p>
+          )}
+          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.6rem", fontWeight: 900, color: "white", marginBottom: hasSaved ? 28 : 14, position: "relative", zIndex: 2 }}>
             {t(lang, "gDietQuestion")}
           </h2>
+          {!hasSaved && (
+            <p className="text-center" style={{ color: G.textSecondary, fontSize: "0.92rem", lineHeight: 1.5, margin: "0 auto 24px", maxWidth: 280, position: "relative", zIndex: 2 }}>
+              {t(lang, "gDietIntro" as any)}
+            </p>
+          )}
           <div className="flex flex-col items-center" style={{ gap: 12, position: "relative", zIndex: 2, width: "100%", maxWidth: 320, alignSelf: "center" }}>
             {DIET_OPTIONS.map((opt) => {
               const sel = dietType === opt.value;
