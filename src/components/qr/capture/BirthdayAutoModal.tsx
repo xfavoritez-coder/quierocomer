@@ -117,9 +117,16 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // Re-evaluar inmediatamente cuando el sessionTracker crea una sesión
+    // nueva en DB. Este es el caso de "cliente con tab vieja abierta + se
+    // cumplió el SESSION_MAX_AGE": antes el modal nunca se enteraba.
+    const onSessionCreated = () => evaluate();
+    window.addEventListener("qc:session-created", onSessionCreated);
+
     return () => {
       cancelled = true;
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("qc:session-created", onSessionCreated);
     };
   }, [restaurantId]);
 

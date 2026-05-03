@@ -301,6 +301,12 @@ function ensureDbSession() {
       if (target && !target.dbSessionId) {
         target.dbSessionId = data.sessionId;
         persistSession(data.sessionId, target.restaurantId, target.startedAt);
+        // Notificar a otros componentes (BirthdayAutoModal, etc.) que se
+        // creó una sesión nueva en DB. Sirve para re-evaluar lógica que
+        // depende del dbSessionId actual sin tener que recargar la página.
+        try {
+          window.dispatchEvent(new CustomEvent("qc:session-created", { detail: { dbSessionId: data.sessionId } }));
+        } catch {}
         // Flush any pending final heartbeat that was queued during creation
         if (pendingFinalHeartbeat) {
           const { closeReason } = pendingFinalHeartbeat;
