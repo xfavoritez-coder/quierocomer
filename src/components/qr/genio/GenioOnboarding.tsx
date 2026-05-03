@@ -160,8 +160,6 @@ function getDietColors(value: DietType, sel: boolean) {
 
 export default function GenioOnboarding({ restaurantId, dishes, categories, onClose, onResult, qrUser: qrUserProp, restaurantDietType }: GenioProps) {
   const lang = useLang();
-  const [step, setStep] = useState(0);
-  const [visible, setVisible] = useState(false);
   const genioSessionId = useRef(crypto.randomUUID()).current;
 
   // Load saved preferences from localStorage
@@ -169,6 +167,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   const savedRestrictions = typeof window !== "undefined" ? localStorage.getItem("qr_restrictions") : null;
   const savedDislikes = typeof window !== "undefined" ? localStorage.getItem("qr_dislikes") : null;
   const hasSaved = !!(savedDiet && savedRestrictions);
+
+  // Nuevos usuarios arrancan directo en el paso de dieta (paso 1) — el step 0
+  // de bienvenida agregaba fricción innecesaria. Returning users siguen viendo
+  // el step 0 con su perfil para poder modificarlo.
+  const [step, setStep] = useState(hasSaved ? 0 : 1);
+  const [visible, setVisible] = useState(false);
 
   const userName = qrUserProp?.name?.split(" ")[0] || null;
 
@@ -272,9 +276,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     document.body.style.overflow = "hidden";
-    // GENIO_START only fires when user advances to step 1 (new) or modifies profile (returning)
-    // — not on mount, to avoid false "abandoned" stats from users who just peek
+    // Para usuarios nuevos disparamos GENIO_START + GENIO_STEP_DIET al mount
+    // (antes se hacía al hacer click en "Comenzar" del step 0 de bienvenida).
+    // Returning users no disparan GENIO_START hasta que efectivamente
+    // modifican su perfil — eso evita inflar las stats con quienes solo
+    // abren el modal para curiosear.
+    if (!hasSaved) {
+      trackStat(restaurantId, "GENIO_START", undefined, genioSessionId);
+      trackStat(restaurantId, "GENIO_STEP_DIET", undefined, genioSessionId);
+    }
     return () => { document.body.style.overflow = ""; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restaurantId]);
 
   const close = useCallback(() => {
@@ -356,7 +368,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     >
       {/* Header */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {step > 0 && step < 4 ? (
+        {step > (hasSaved ? 0 : 1) && step < 4 ? (
           <button onClick={() => setStep((s) => s - 1)} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: G.surfaceHover, border: "none" }}>
             <ChevronLeft size={18} color="white" />
           </button>
