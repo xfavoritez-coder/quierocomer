@@ -26,19 +26,12 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   useEffect(() => {
-    if (sessionStorage.getItem("qr_birthday_dismissed")) return;
-    if (sessionStorage.getItem("qc_bday_auto_checked")) return;
-    sessionStorage.setItem("qc_bday_auto_checked", "1");
+    let cancelled = false;
 
-    const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
-    if (alreadyShowedModal) return;
-
-    const guestId = getGuestId();
-
-    // Track BIRTHDAY_MODAL_AUTO_SHOWN con un dbSessionId ya resuelto y la
-    // variante A/B servida — esto le permite al bandit atribuir cada
-    // impresión al título/subtítulo/CTA exactos que se mostraron.
-    const trackAutoShown = async (dbSessionId: string | null, ab: AbVariant | null) => {
+    // Track BIRTHDAY_MODAL_AUTO_SHOWN con dbSessionId resuelto y variante
+    // A/B — el bandit atribuye cada impresión al título/subtítulo/CTA
+    // exactos que se mostraron.
+    const trackAutoShown = async (guestId: string, dbSessionId: string | null, ab: AbVariant | null) => {
       const metadata = ab
         ? { abExperiment: ab.experimentSlug, titleId: ab.titleId, subtitleId: ab.subtitleId, ctaId: ab.ctaId }
         : undefined;
@@ -59,53 +52,75 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       } catch {}
     };
 
-    // Resolvemos primero el dbSessionId del cliente actual. Lo pasamos al
-    // endpoint para que NO cuente la sesión actual como una visita previa
-    // (importante cuando el cliente cierra la pestaña y vuelve a abrir
-    // dentro del SESSION_REUSE_WINDOW de 2 min: la sesión persistida queda
-    // en DB y el conteo crudo la trataría como "1 visita previa" — falso).
-    (async () => {
+    const evaluate = async () => {
+      if (cancelled) return;
+      if (sessionStorage.getItem("qr_birthday_dismissed")) return;
+      if (localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1") return;
+
+      const guestId = getGuestId();
       const dbSessionId = (await ensureDbSessionAsync(3000)) || getDbSessionId();
+      if (cancelled) return;
+
+      // El flag de "ya evaluado" se ata al dbSessionId real de la DB. Cuando
+      // el sessionTracker crea una sesión nueva (cliente come 30+ min y
+      // vuelve), el marker cambia y volvemos a evaluar — antes el flag era
+      // per-tab y se quedaba pegado entre sesiones.
+      const checkedKey = `qc_bday_checked_${restaurantId}`;
+      const sessionMarker = dbSessionId || "pre-session";
+      if (sessionStorage.getItem(checkedKey) === sessionMarker) return;
+      sessionStorage.setItem(checkedKey, sessionMarker);
+
       const params = new URLSearchParams({ guestId, restaurantId });
       if (dbSessionId) params.set("excludeSessionId", dbSessionId);
 
       try {
         const info = await fetch(`/api/qr/guest/visit-info?${params}`).then((r) => r.json());
-        const serverPriorSessions = info.restaurantSessions || 0;
-        // El modal sólo se muestra si hay al menos una sesión real previa.
-        // Confiar sólo en el server (no en localStorage) elimina los falsos
-        // positivos por refreshes que incrementaban un contador local.
-        if (serverPriorSessions < 1) return;
+        if (cancelled) return;
+        if ((info.restaurantSessions || 0) < 1) return;
 
-        // Resolver la variante A/B en paralelo. Si falla o no hay
-        // experimento configurado, el modal cae a los textos por defecto.
         const ab: AbVariant | null = await fetch("/api/qr/ab/birthday-modal")
           .then((r) => r.json())
           .then((d) => d?.hasVariants ? d : null)
           .catch(() => null);
+        if (cancelled) return;
         if (ab) setAbVariant(ab);
 
-        // Verificar si el usuario ya tiene cumple guardado
         const me = await fetch("/api/qr/user/me").then((r) => r.json());
+        if (cancelled) return;
         if (me.user) {
           if (!me.user.birthDate) {
             setExistingUser({ name: me.user.name, email: me.user.email });
             setModalOpen(true);
             localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-            trackAutoShown(dbSessionId, ab);
+            trackAutoShown(guestId, dbSessionId, ab);
           }
           return;
         }
-        // Sin login — usar variante de banner
         const banner = await fetch("/api/qr/banner/select").then((r) => r.json());
+        if (cancelled) return;
         if (banner.variant) {
           setVariant(banner.variant);
           setModalOpen(true);
           localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-          trackAutoShown(dbSessionId, ab);
+          trackAutoShown(guestId, dbSessionId, ab);
         }
       } catch {}
-    })();
+    };
+
+    evaluate();
+
+    // Re-evaluar cuando el cliente regresa a la pestaña — sessionTracker
+    // suele crear sesión nueva si estuvo inactivo >5 min, así que el ID
+    // marker cambiará y la evaluación pasará el guard.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") evaluate();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, [restaurantId]);
 
   return (
