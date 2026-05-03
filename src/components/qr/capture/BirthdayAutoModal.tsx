@@ -29,21 +29,13 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
     if (sessionStorage.getItem("qc_bday_auto_checked")) return;
     sessionStorage.setItem("qc_bday_auto_checked", "1");
 
-    const visitKey = `qc_visit_count_${restaurantId}`;
-    const localVisits = parseInt(localStorage.getItem(visitKey) || "0") + 1;
-    localStorage.setItem(visitKey, String(localVisits));
-
     const alreadyShowedModal = localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1";
     if (alreadyShowedModal) return;
 
     const guestId = getGuestId();
 
-    // Track BIRTHDAY_MODAL_AUTO_SHOWN with a properly resolved dbSessionId.
-    // Forces the DB session to exist (bypassing the anti-bot delay) so the
-    // event lands on the right session in /admin/sesiones, and uses keepalive
-    // so the request survives if the user closes the page right away.
-    const trackAutoShown = async () => {
-      const dbSessionId = (await ensureDbSessionAsync(3000)) || getDbSessionId();
+    // Track BIRTHDAY_MODAL_AUTO_SHOWN con un dbSessionId ya resuelto.
+    const trackAutoShown = async (dbSessionId: string | null) => {
       try {
         await fetch("/api/qr/stats", {
           method: "POST",
@@ -54,45 +46,45 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       } catch {}
     };
 
-    // Server-side visit check (per-guest, survives localStorage clears /
-    // different browsers). restaurantSessions is the count of sessions on
-    // this restaurant; ≥1 means the guest already entered the carta at
-    // least once before — this is the 2nd visit or later.
-    fetch(`/api/qr/guest/visit-info?guestId=${encodeURIComponent(guestId)}&restaurantId=${encodeURIComponent(restaurantId)}`)
-      .then((r) => r.json())
-      .then((info) => {
-        const serverPriorSessions = info.restaurantSessions || 0;
-        const isSecondVisit = localVisits >= 2 || serverPriorSessions >= 1;
-        if (!isSecondVisit) return;
+    // Resolvemos primero el dbSessionId del cliente actual. Lo pasamos al
+    // endpoint para que NO cuente la sesión actual como una visita previa
+    // (importante cuando el cliente cierra la pestaña y vuelve a abrir
+    // dentro del SESSION_REUSE_WINDOW de 2 min: la sesión persistida queda
+    // en DB y el conteo crudo la trataría como "1 visita previa" — falso).
+    (async () => {
+      const dbSessionId = (await ensureDbSessionAsync(3000)) || getDbSessionId();
+      const params = new URLSearchParams({ guestId, restaurantId });
+      if (dbSessionId) params.set("excludeSessionId", dbSessionId);
 
-        // Check if user needs birthday
-        fetch("/api/qr/user/me")
-          .then((r) => r.json())
-          .then((d) => {
-            if (d.user) {
-              if (!d.user.birthDate) {
-                setExistingUser({ name: d.user.name, email: d.user.email });
-                setModalOpen(true);
-                localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-                trackAutoShown();
-              }
-              return;
-            }
-            // Not logged in — use banner variant
-            fetch("/api/qr/banner/select")
-              .then((r) => r.json())
-              .then((d) => {
-                if (d.variant) {
-                  setVariant(d.variant);
-                  setModalOpen(true);
-                  localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
-                  trackAutoShown();
-                }
-              });
-          })
-          .catch(() => {});
-      })
-      .catch(() => {});
+      try {
+        const info = await fetch(`/api/qr/guest/visit-info?${params}`).then((r) => r.json());
+        const serverPriorSessions = info.restaurantSessions || 0;
+        // El modal sólo se muestra si hay al menos una sesión real previa.
+        // Confiar sólo en el server (no en localStorage) elimina los falsos
+        // positivos por refreshes que incrementaban un contador local.
+        if (serverPriorSessions < 1) return;
+
+        // Verificar si el usuario ya tiene cumple guardado
+        const me = await fetch("/api/qr/user/me").then((r) => r.json());
+        if (me.user) {
+          if (!me.user.birthDate) {
+            setExistingUser({ name: me.user.name, email: me.user.email });
+            setModalOpen(true);
+            localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+            trackAutoShown(dbSessionId);
+          }
+          return;
+        }
+        // Sin login — usar variante de banner
+        const banner = await fetch("/api/qr/banner/select").then((r) => r.json());
+        if (banner.variant) {
+          setVariant(banner.variant);
+          setModalOpen(true);
+          localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
+          trackAutoShown(dbSessionId);
+        }
+      } catch {}
+    })();
   }, [restaurantId]);
 
   return (
