@@ -39,7 +39,8 @@ const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }>
 };
 
 export default function SuscripcionPage() {
-  const { selectedRestaurantId } = useContext(SessionContext);
+  const ctx = useContext(SessionContext);
+  const selectedRestaurantId = ctx?.selectedRestaurantId || null;
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [actioning, setActioning] = useState(false);
