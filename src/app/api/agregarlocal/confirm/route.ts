@@ -98,6 +98,8 @@ export async function POST(request: Request) {
         isActive: true,
         qrToken,
         qrActivatedAt: new Date(),
+        plan: "PREMIUM",                 // arranca en PREMIUM para la demo en vivo; el admin lo baja a FREE al entregar al duenio
+        subscriptionStatus: "NONE",
       },
     });
 

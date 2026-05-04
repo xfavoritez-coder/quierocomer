@@ -318,16 +318,16 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
         <div style={{ maxWidth: 1060, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 44 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
-            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 8 }}>Parte gratis. Crece cuando quieras</h2>
-            <p style={{ fontSize: 15, color: "#666" }}>Implementación gratis en los tres planes. Sin contratos</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 3.5vw, 34px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111", marginBottom: 8 }}>Empieza gratis. Crece cuando quieras</h2>
+            <p style={{ fontSize: 15, color: "#666" }}>Implementación gratis. 7 días de prueba en planes pagos. Cancela cuando quieras</p>
           </div>
           <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
-            {/* FREE */}
+            {/* GRATIS */}
             <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: 28 }}>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
               <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
               <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Para siempre</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para probar cómo se ve tu carta digital</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Carta digital con QR para empezar a vender</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
@@ -344,14 +344,14 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: BRAND, color: "#fff", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 12px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$35.000</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$29.900</span>
                 <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
               </div>
               <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Neto · Sin contratos</p>
               <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para destacar tus platos y entender a tus clientes</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Quiero el plan Gold →</a>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar prueba gratis 7 días</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan gratis</div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
                 {[
                   { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
                   { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
@@ -367,19 +367,19 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <div style={{ background: "linear-gradient(180deg, #F5F0FF 0%, #EDE5FF 100%)", border: "2px solid #c4b5fd", borderRadius: 16, padding: 28 }}>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>$55.000</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>$49.900</span>
                 <span style={{ fontSize: 16, color: "#6b7280", fontWeight: 500 }}>/mes</span>
               </div>
               <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>Neto · Sin contratos</p>
               <p style={{ fontFamily: F, fontSize: 13, color: "#555", marginBottom: 20, lineHeight: 1.4 }}>Para vender más sin levantar un dedo</p>
-              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Quiero el Premium →</a>
+              <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar prueba gratis 7 días</a>
               <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> Todo del plan Gold</div>
                 {[
                   { t: "4 vistas de carta", tip: "Lista, galería, feed y espacial — elige la que mejor represente tu local" },
                   { t: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, qué buscan en tu carta y estadísticas del garzón" },
                   { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
-                  { t: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa" },
+                  { t: "Venta cruzada", tip: "El Genio sugiere acompañamientos al cliente para subir el ticket de cada mesa" },
                   { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
                   { t: "Campañas y email marketing", tip: "Crea y envía emails con novedades, promociones o comunicaciones a tus clientes registrados" },
                   { t: "Integración con Toteat", tip: "Si tu local ya usa Toteat, sincronizamos las ventas reales con la carta digital. Verás qué platos se ven y se piden, dashboard en vivo de tu negocio, y badges como 'lo más pedido hoy' basado en ventas reales." },

@@ -118,6 +118,13 @@ ${step(1, "Revisa tu carta", `Mira cómo se ve tu menú y que esté todo bien en
 
 ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e imprimir el código QR. Ponlo en cada mesa y listo.")}
 
+<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 8px">🎁 Bonus</p>
+  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0">
+    Estás en el plan <strong>Gratis</strong>. Cuando quieras, prueba <strong>7 días gratis</strong> el plan Gold o Premium para desbloquear estadísticas, ofertas, multilenguaje y más. Sin compromiso. Cancelas cuando quieras.
+  </p>
+</div>
+
 <div style="text-align:center">
   <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
     Entrar a mi panel →

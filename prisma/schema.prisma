@@ -384,6 +384,15 @@ enum RestaurantPlan {
   PREMIUM
 }
 
+enum SubscriptionStatus {
+  NONE       // nunca se inscribió a una suscripción
+  TRIALING   // en periodo de prueba (14 días)
+  ACTIVE     // pagando normal
+  PAST_DUE   // último cobro falló, en reintentos
+  CANCELED   // canceló la suscripción
+  UNPAID     // reintentos agotados, sin cobro
+}
+
 enum OwnerRole {
   OWNER
   SUPERADMIN
@@ -414,8 +423,21 @@ model Restaurant {
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
   waiterPanelActive  Boolean    @default(false)
-  plan               RestaurantPlan @default(PREMIUM)
+  plan               RestaurantPlan @default(FREE)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
+
+  // Billing (Flow.cl)
+  flowCustomerId       String?            @unique
+  flowSubscriptionId   String?            @unique
+  flowPlanId           String?            // identificador del plan en Flow (varía por tier)
+  pendingFlowPlanId    String?            // plan al que se está inscribiendo (durante el flujo de tarjeta)
+  flowRegisterToken    String?            // token de /customer/register en curso
+  subscriptionStatus   SubscriptionStatus @default(NONE)
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  lastPaymentAt        DateTime?
+  billingExempt        Boolean            @default(false)  // legacy clients que no pagan via Flow
+  billingAnchorDay     Int?               // dia del mes del ciclo de cobro (1-28); ancla cuando reactivan tras gap
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
   ownerId     String?

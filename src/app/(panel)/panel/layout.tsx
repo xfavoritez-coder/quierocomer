@@ -100,7 +100,7 @@ const PLAN_FEATURES: Record<string, { text: string; tip: string }[]> = {
     { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
     { text: "Estadísticas avanzadas", tip: "Recorridos, filtros, clima" },
     { text: "Llamar al garzón", tip: "Notificación push al garzón" },
-    { text: "Productos sugeridos", tip: "Cross-sell automático" },
+    { text: "Venta cruzada", tip: "El Genio sugiere acompañamientos para subir el ticket" },
     { text: "Automatizaciones", tip: "Emails de cumpleaños y bienvenida" },
     { text: "Campañas y email marketing", tip: "Envíos masivos a clientes" },
     { text: "Clientes ilimitados + CSV", tip: "Lista completa y exportable" },
@@ -121,12 +121,136 @@ function PlanFeatureRow({ text, tip, color }: { text: string; tip: string; color
   );
 }
 
-function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
+type BillingStatus = {
+  plan: string;
+  subscriptionStatus: string;
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  hasSubscription: boolean;
+  activeFlowPlan: string | null;
+  billingExempt?: boolean;
+};
+
+function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
+  const [status, setStatus] = useState<BillingStatus | null>(null);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    const stored = sessionStorage.getItem("upgrade-banner-dismissed");
+    if (stored === restaurantId) { setDismissed(true); return; }
+    fetch(`/api/billing/status?restaurantId=${restaurantId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStatus(d))
+      .catch(() => {});
+  }, [restaurantId]);
+
+  if (dismissed || !status) return null;
+  if (status.plan !== "FREE" || status.billingExempt || status.subscriptionStatus !== "NONE") return null;
+
+  const handleClick = () => window.dispatchEvent(new CustomEvent("show-plan-modal"));
+  const handleDismiss = () => {
+    if (restaurantId) sessionStorage.setItem("upgrade-banner-dismissed", restaurantId);
+    setDismissed(true);
+  };
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "10px 14px",
+      background: "linear-gradient(90deg, #FFF8E7 0%, #FFFCF5 100%)",
+      border: "1px solid #fde68a", borderRadius: 10, margin: "12px 16px 0",
+      fontFamily: "var(--font-body)", fontSize: "0.82rem", color: "#92400e",
+    }}>
+      <span style={{ fontSize: 18 }}>🎁</span>
+      <span style={{ flex: 1 }}>
+        Prueba <strong>Gold gratis por 7 días</strong> y desbloquea estadísticas, ofertas, multilenguaje y más.
+      </span>
+      <button onClick={handleClick} style={{
+        padding: "6px 14px", border: "none", borderRadius: 999,
+        background: "#F4A623", color: "#fff", fontFamily: "var(--font-display)",
+        fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+      }}>Probar ahora</button>
+      <button onClick={handleDismiss} aria-label="Cerrar" style={{
+        background: "none", border: "none", color: "#92400e", fontSize: 18, cursor: "pointer", padding: 0, lineHeight: 1,
+      }}>×</button>
+    </div>
+  );
+}
+
+function formatDateCL(d: string | null) {
+  if (!d) return "";
+  const date = new Date(d);
+  return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
+}
+
+function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId: string | null; onClose: () => void }) {
   const [tab, setTab] = useState<"GOLD" | "PREMIUM">(plan === "FREE" ? "GOLD" : plan as any);
+  const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [status, setStatus] = useState<BillingStatus | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
   const features = PLAN_FEATURES[tab] || [];
   const isCurrentPlan = plan === tab;
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/billing/status?restaurantId=${restaurantId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStatus(d))
+      .catch(() => {});
+  }, [restaurantId]);
+
+  const handleSubscribe = async () => {
+    if (!restaurantId || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/billing/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, plan: tab }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.url) {
+        toast.error(data.error || "No se pudo iniciar la suscripcion");
+        setSubmitting(false);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      toast.error("Error de conexion");
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!restaurantId || cancelling) return;
+    if (!window.confirm("¿Seguro que quieres cancelar tu suscripción? Mantendrás acceso hasta el final del periodo pagado.")) return;
+    setCancelling(true);
+    try {
+      const res = await fetch("/api/billing/cancel", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, atPeriodEnd: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "No se pudo cancelar");
+        setCancelling(false);
+        return;
+      }
+      toast.success("Suscripción cancelada. Mantienes acceso hasta el final del periodo.");
+      setTimeout(() => window.location.reload(), 1200);
+    } catch {
+      toast.error("Error de conexión");
+      setCancelling(false);
+    }
+  };
+
+  const inTrial = status?.subscriptionStatus === "TRIALING";
+  const isActive = status?.subscriptionStatus === "ACTIVE";
+  const isCanceled = status?.subscriptionStatus === "CANCELED";
+  const showCancelButton = isCurrentPlan && (inTrial || isActive) && status?.hasSubscription;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -147,12 +271,27 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
         </div>
 
         <div style={{ padding: "20px 24px 24px" }}>
-          {/* Current plan indicator */}
+          {/* Current plan indicator + billing status */}
           {isCurrentPlan && (
             <div style={{ textAlign: "center", marginBottom: 14, padding: "10px 16px", background: tab === "PREMIUM" ? "#F3E8FF" : "#FFF8E7", borderRadius: 10 }}>
               <p style={{ fontFamily: FD, fontSize: "0.82rem", fontWeight: 600, color: tab === "PREMIUM" ? "#7c3aed" : "#92400e", margin: 0 }}>
                 ✓ Este es tu plan actual
               </p>
+              {inTrial && status?.trialEndsAt && (
+                <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#666", margin: "4px 0 0" }}>
+                  Estás en prueba gratis · Primer cobro: {formatDateCL(status.trialEndsAt)}
+                </p>
+              )}
+              {isActive && status?.currentPeriodEnd && (
+                <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#666", margin: "4px 0 0" }}>
+                  Próximo cobro: {formatDateCL(status.currentPeriodEnd)}
+                </p>
+              )}
+              {isCanceled && status?.currentPeriodEnd && (
+                <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#dc2626", margin: "4px 0 0" }}>
+                  Cancelada · Termina el {formatDateCL(status.currentPeriodEnd)}
+                </p>
+              )}
             </div>
           )}
 
@@ -162,7 +301,7 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
               {tab === "PREMIUM" ? "Para vender más sin levantar un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
             </p>
             <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
-              {tab === "PREMIUM" ? "$55.000" : "$35.000"}
+              {tab === "PREMIUM" ? "$49.900" : "$29.900"}
             </span>
             <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
             <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#bbb", margin: "-2px 0 0" }}>Neto · Sin contratos</p>
@@ -183,23 +322,37 @@ function PlanModal({ plan, onClose }: { plan: string; onClose: () => void }) {
 
           {/* CTA */}
           {!isCurrentPlan ? (
-            <a
-              href={`https://wa.me/56999946208?text=${encodeURIComponent(`Hola! Me gustaría saber más sobre el plan ${tab === "PREMIUM" ? "Premium" : "Gold"} de QuieroComer para mi restaurante 🍽️`)}`}
-              target="_blank" rel="noopener noreferrer"
+            <button
+              onClick={handleSubscribe}
+              disabled={submitting || !restaurantId}
               style={{
-                display: "block", padding: "14px 20px", borderRadius: 999, textAlign: "center",
-                background: tab === "PREMIUM" ? "#7c3aed" : "#F4A623",
+                display: "block", width: "100%", padding: "14px 20px", borderRadius: 999, textAlign: "center",
+                background: submitting ? "#ccc" : tab === "PREMIUM" ? "#7c3aed" : "#F4A623",
                 color: "#fff", fontFamily: FD, fontSize: "0.92rem", fontWeight: 700,
-                textDecoration: "none", marginBottom: 8,
+                textDecoration: "none", marginBottom: 8, border: "none",
+                cursor: submitting ? "wait" : "pointer",
                 boxShadow: tab === "PREMIUM" ? "0 4px 16px rgba(124,58,237,0.3)" : "0 4px 16px rgba(244,166,35,0.3)",
               }}
             >
-              Quiero el plan {tab === "PREMIUM" ? "Premium" : "Gold"} →
-            </a>
+              {submitting ? "Redirigiendo a Webpay…" : "Empezar prueba gratis 7 días"}
+            </button>
           ) : (
             <div style={{ textAlign: "center", marginBottom: 8 }}>
               <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#999", margin: 0 }}>Estás disfrutando de este plan</p>
             </div>
+          )}
+          {showCancelButton && (
+            <button
+              onClick={handleCancel}
+              disabled={cancelling}
+              style={{
+                display: "block", width: "100%", background: "transparent", color: "#dc2626",
+                fontFamily: FD, fontSize: "0.82rem", fontWeight: 600, cursor: cancelling ? "wait" : "pointer",
+                padding: "10px 0", border: "1px solid #fca5a5", borderRadius: 999, marginBottom: 8,
+              }}
+            >
+              {cancelling ? "Cancelando…" : "Cancelar suscripción"}
+            </button>
           )}
           <button onClick={onClose} style={{ display: "block", width: "100%", background: "none", border: "none", color: "#999", fontFamily: FD, fontSize: "0.82rem", cursor: "pointer", padding: "8px 0" }}>
             Cerrar
@@ -219,6 +372,25 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     const handler = () => setPlanModalOpen(true);
     window.addEventListener("show-plan-modal", handler);
     return () => window.removeEventListener("show-plan-modal", handler);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const billing = params.get("billing");
+    if (!billing) return;
+    if (billing === "success") {
+      const plan = params.get("plan");
+      toast.success(`Suscripción activada${plan ? ` (${plan})` : ""} · 7 días gratis`);
+    } else if (billing === "error") {
+      const reason = params.get("reason");
+      toast.error(`No se pudo completar la inscripción${reason ? ` (${reason})` : ""}. Intenta de nuevo.`);
+    }
+    params.delete("billing");
+    params.delete("plan");
+    params.delete("reason");
+    const newSearch = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${newSearch ? `?${newSearch}` : ""}`);
   }, []);
 
   if (PUBLIC_PATHS.includes(pathname)) return <>{children}</>;
@@ -304,12 +476,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         basePath="/panel"
         activePlan={activePlan}
       >
+        <UpgradeBanner restaurantId={selectedRestaurantId} />
         {children}
       </AdminLayoutOwner>
 
       {/* Plan modal — triggered from "Mi Plan" menu */}
       {planModalOpen && (
-        <PlanModal plan={activePlan} onClose={() => setPlanModalOpen(false)} />
+        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} onClose={() => setPlanModalOpen(false)} />
       )}
     </SessionContext.Provider>
   );

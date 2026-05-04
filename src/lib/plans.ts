@@ -65,10 +65,28 @@ const PLAN_FEATURES: Record<Plan, Set<Feature>> = {
   ]),
 };
 
+function normalizePlan(plan: Plan | string | undefined | null): Plan {
+  if (plan === "GOLD" || plan === "PREMIUM" || plan === "FREE") return plan;
+  return "FREE";
+}
+
+/**
+ * Plan efectivo segun el estado de la suscripcion.
+ * Si la suscripcion esta impaga o cancelada, el local pierde acceso a
+ * features de plan superior y queda en FREE hasta que regularice.
+ */
+export function effectivePlan(
+  plan: Plan | string | undefined | null,
+  subscriptionStatus?: string | null
+): Plan {
+  const p = normalizePlan(plan);
+  if (subscriptionStatus === "UNPAID" || subscriptionStatus === "CANCELED") return "FREE";
+  return p;
+}
+
 /** Check if a plan has access to a feature */
 export function canAccess(plan: Plan | string | undefined | null, feature: Feature): boolean {
-  const p = (plan || "FREE") as Plan;
-  return PLAN_FEATURES[p]?.has(feature) ?? false;
+  return PLAN_FEATURES[normalizePlan(plan)].has(feature);
 }
 
 /** Get the minimum plan required for a feature */
@@ -87,7 +105,7 @@ export const PLAN_INFO: Record<Plan, { label: string; color: string; bg: string;
 
 /** Max visible clients per plan */
 export function maxVisibleClients(plan: Plan | string | undefined | null): number {
-  const p = (plan || "FREE") as Plan;
+  const p = normalizePlan(plan);
   if (p === "PREMIUM") return Infinity;
   if (p === "GOLD") return 15;
   return 5;

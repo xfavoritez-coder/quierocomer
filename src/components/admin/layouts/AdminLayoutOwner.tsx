@@ -189,7 +189,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                   color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
                   flexShrink: 0,
                 }}>
-                  {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : "FREE"}
+                  {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : "GRATIS"}
                 </span>
               )}
             </div>

@@ -364,6 +364,28 @@ export default function AdminLocales() {
           <button onClick={() => { toggleActive(selected); setSelected({ ...selected, isActive: !selected.isActive }); }} style={{ flex: 1, padding: "10px", background: selected.isActive ? "rgba(255,100,100,0.1)" : "rgba(74,222,128,0.1)", border: `1px solid ${selected.isActive ? "rgba(255,100,100,0.2)" : "rgba(74,222,128,0.2)"}`, borderRadius: 10, color: selected.isActive ? "#ff6b6b" : "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
             {selected.isActive ? "Desactivar" : "Activar"}
           </button>
+          {selected.plan === "PREMIUM" && !(selected as any).billingExempt && (
+            <button
+              onClick={async () => {
+                if (!confirm(`¿Pasar "${selected.name}" a plan FREE?\n\nEl dueño verá el plan Gratis al entrar al panel y podrá activar el trial Gold/Premium cuando quiera.`)) return;
+                const res = await fetch(`/api/admin/locales/${selected.id}`, {
+                  method: "PUT", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ plan: "FREE" }),
+                });
+                if (res.ok) {
+                  const updated = { ...selected, plan: "FREE" };
+                  setSelected(updated);
+                  setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                } else {
+                  const d = await res.json().catch(() => ({}));
+                  alert(d.error || "Error");
+                }
+              }}
+              style={{ flex: 1, padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
+            >
+              ✅ Entregar al dueño (FREE)
+            </button>
+          )}
           <button onClick={() => deleteRestaurant(selected)} style={{ flex: 1, padding: "10px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 10, color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
             🗑 Eliminar local
           </button>
