@@ -43,7 +43,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Bell, label: "Garzón", href: `${base}/garzon` },
     { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
     { icon: Mail, label: "Campañas", href: `${base}/campanias` },
-    ...(base === "/panel" ? [{ icon: CreditCard, label: "Mi suscripción", href: `${base}/suscripcion` }] : []),
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },
@@ -295,16 +294,16 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <UserCog size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi perfil</span>
             </a>
             {basePath === "/panel" && (
-              <button onClick={() => { closeAccount(); setTimeout(() => window.dispatchEvent(new CustomEvent("show-plan-modal")), 300); }} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>
-                <Zap size={18} color={activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888"} />
-                <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi plan</span>
+              <a href="/panel/suscripcion" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
+                <CreditCard size={18} color={activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888"} />
+                <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Mi suscripción</span>
                 <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4,
                   background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
                   color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
                 }}>
                   {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : "Free"}
                 </span>
-              </button>
+              </a>
             )}
             {basePath === "/panel" && (
               <a href="/panel/mi-restaurante" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
