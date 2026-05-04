@@ -363,6 +363,7 @@ model RestaurantOwner {
   email        String      @unique
   passwordHash String
   name         String
+  whatsapp     String?     // formato +56 9 1234 5678
   role         OwnerRole   @default(OWNER)
   status       OwnerStatus @default(ACTIVE)
   lastLoginAt  DateTime?

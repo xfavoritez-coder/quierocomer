@@ -35,7 +35,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const { id } = await params;
-    const { email, name, status, restaurantIds } = await req.json();
+    const { email, name, whatsapp, status, restaurantIds } = await req.json();
 
     const existing = await prisma.restaurantOwner.findUnique({ where: { id }, select: { id: true } });
     if (!existing) return NextResponse.json({ error: "Owner no encontrado" }, { status: 404 });
@@ -44,6 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const data: any = {};
     if (email !== undefined) data.email = email;
     if (name !== undefined) data.name = name;
+    if (whatsapp !== undefined) data.whatsapp = whatsapp || null;
     if (status !== undefined) data.status = status;
 
     // Handle restaurant assignment
@@ -69,7 +70,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({
       owner: {
-        id: owner.id, email: owner.email, name: owner.name,
+        id: owner.id, email: owner.email, name: owner.name, whatsapp: owner.whatsapp,
         role: owner.role, status: owner.status,
         lastLoginAt: owner.lastLoginAt, restaurants: owner.restaurants,
       },

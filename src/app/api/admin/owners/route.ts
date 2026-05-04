@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { email, password, name, restaurantIds } = await req.json();
+    const { email, password, name, whatsapp, restaurantIds } = await req.json();
     if (!email || !password || !name) {
       return NextResponse.json({ error: "Email, password y nombre requeridos" }, { status: 400 });
     }
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
         email,
         passwordHash,
         name,
+        whatsapp: whatsapp ? String(whatsapp).trim() : null,
         status: "ACTIVE",
         restaurants: restaurantIds?.length
           ? { connect: restaurantIds.map((id: string) => ({ id })) }
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ok: true,
-      owner: { id: owner.id, email: owner.email, name: owner.name, status: owner.status, restaurants: owner.restaurants },
+      owner: { id: owner.id, email: owner.email, name: owner.name, whatsapp: owner.whatsapp, status: owner.status, restaurants: owner.restaurants },
     });
   } catch (error: any) {
     if (error?.code === "P2002") {
@@ -66,9 +67,11 @@ export async function GET(req: NextRequest) {
         id: o.id,
         email: o.email,
         name: o.name,
+        whatsapp: o.whatsapp,
         role: o.role,
         status: o.status,
         lastLoginAt: o.lastLoginAt,
+        createdAt: o.createdAt,
         restaurants: o.restaurants,
       })),
     });

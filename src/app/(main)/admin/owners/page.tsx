@@ -7,8 +7,8 @@ const GOLD = "#F4A623";
 
 interface Restaurant { id: string; name: string; slug: string; }
 interface Owner {
-  id: string; email: string; name: string; role: string;
-  status: string; lastLoginAt: string | null; restaurants: Restaurant[];
+  id: string; email: string; name: string; whatsapp: string | null; role: string;
+  status: string; lastLoginAt: string | null; createdAt?: string; restaurants: Restaurant[];
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string; label: string }> = {
@@ -31,6 +31,7 @@ export default function OwnersPage() {
   // Form state
   const [formEmail, setFormEmail] = useState("");
   const [formName, setFormName] = useState("");
+  const [formWhatsapp, setFormWhatsapp] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [formStatus, setFormStatus] = useState("ACTIVE");
   const [formRestaurantIds, setFormRestaurantIds] = useState<string[]>([]);
@@ -64,14 +65,14 @@ export default function OwnersPage() {
   if (!isSuper) return <p style={{ color: "#888", fontFamily: F }}>Solo superadmin puede acceder a esta página.</p>;
 
   const openCreate = () => {
-    setFormEmail(""); setFormName(""); setFormPassword(""); setFormStatus("ACTIVE");
+    setFormEmail(""); setFormName(""); setFormWhatsapp(""); setFormPassword(""); setFormStatus("ACTIVE");
     setFormRestaurantIds([]); setFormSendWelcome(false); setFormError("");
     setModal("create");
   };
 
   const openEdit = (o: Owner) => {
     setSelectedOwner(o);
-    setFormEmail(o.email); setFormName(o.name); setFormStatus(o.status);
+    setFormEmail(o.email); setFormName(o.name); setFormWhatsapp(o.whatsapp || ""); setFormStatus(o.status);
     setFormRestaurantIds(o.restaurants.map(r => r.id)); setFormError("");
     setModal("edit");
   };
@@ -89,7 +90,7 @@ export default function OwnersPage() {
       const res = await fetch("/api/admin/owners", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formEmail, password: formPassword, name: formName, restaurantIds: formRestaurantIds }),
+        body: JSON.stringify({ email: formEmail, password: formPassword, name: formName, whatsapp: formWhatsapp.trim() || null, restaurantIds: formRestaurantIds }),
       });
       const data = await res.json();
       if (!res.ok) { setFormError(data.error); setFormLoading(false); return; }
@@ -111,7 +112,7 @@ export default function OwnersPage() {
       const res = await fetch(`/api/admin/owners/${selectedOwner.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: formEmail, name: formName, status: formStatus, restaurantIds: formRestaurantIds }),
+        body: JSON.stringify({ email: formEmail, name: formName, whatsapp: formWhatsapp.trim() || null, status: formStatus, restaurantIds: formRestaurantIds }),
       });
       const data = await res.json();
       if (!res.ok) { setFormError(data.error); setFormLoading(false); return; }
@@ -216,7 +217,7 @@ export default function OwnersPage() {
           <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: F, fontSize: "0.82rem" }}>
             <thead>
               <tr style={{ borderBottom: "1px solid #2A2A2A" }}>
-                {["Nombre", "Email", "Status", "Restaurants", "Último login", "Acciones"].map(h => (
+                {["Nombre", "Email", "WhatsApp", "Status", "Restaurants", "Último login", "Acciones"].map(h => (
                   <th key={h} style={{ padding: "10px 12px", textAlign: "left", color: "#666", fontWeight: 500, fontSize: "0.72rem", textTransform: "uppercase", letterSpacing: "0.5px" }}>{h}</th>
                 ))}
               </tr>
@@ -227,7 +228,18 @@ export default function OwnersPage() {
                 return (
                   <tr key={o.id} style={{ borderBottom: "1px solid #1A1A1A" }}>
                     <td style={{ padding: "10px 12px", color: "#ddd" }}>{o.name}</td>
-                    <td style={{ padding: "10px 12px", color: "#aaa" }}>{o.email}</td>
+                    <td style={{ padding: "10px 12px", color: "#aaa" }}>
+                      <a href={`mailto:${o.email}`} style={{ color: "#aaa", textDecoration: "none" }}>{o.email}</a>
+                    </td>
+                    <td style={{ padding: "10px 12px", color: "#aaa", fontSize: "0.78rem" }}>
+                      {o.whatsapp ? (
+                        <a href={`https://wa.me/${o.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" style={{ color: "#22c55e", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          💬 {o.whatsapp}
+                        </a>
+                      ) : (
+                        <span style={{ color: "#555" }}>—</span>
+                      )}
+                    </td>
                     <td style={{ padding: "10px 12px" }}>
                       <select
                         value={o.status}
@@ -303,6 +315,10 @@ export default function OwnersPage() {
                   <div>
                     <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 4 }}>Email</label>
                     <input type="email" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="owner@email.com" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "#888", marginBottom: 4 }}>WhatsApp <span style={{ color: "#555", fontSize: "0.65rem" }}>(opcional)</span></label>
+                    <input type="tel" value={formWhatsapp} onChange={e => setFormWhatsapp(e.target.value)} placeholder="+56 9 1234 5678" style={inputStyle} />
                   </div>
                   {modal === "create" && (
                     <div>

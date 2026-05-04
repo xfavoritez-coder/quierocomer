@@ -33,13 +33,17 @@ export async function POST(request: Request) {
     // Check if owner already exists with this email
     const existing = await prisma.restaurantOwner.findUnique({ where: { email: email.trim().toLowerCase() } });
 
+    const whatsappClean = whatsapp ? String(whatsapp).trim() : null;
+
     let owner;
     if (existing) {
-      // Link restaurant to existing owner
+      // Link restaurant to existing owner. Si el whatsapp llega y antes no
+      // tenia, lo guardamos (no lo sobrescribimos si ya tenia uno).
       owner = await prisma.restaurantOwner.update({
         where: { id: existing.id },
         data: {
           restaurants: { connect: { id: restaurantId } },
+          ...(whatsappClean && !existing.whatsapp ? { whatsapp: whatsappClean } : {}),
         },
         include: { restaurants: { select: { id: true, name: true } } },
       });
@@ -49,6 +53,7 @@ export async function POST(request: Request) {
           email: email.trim().toLowerCase(),
           passwordHash,
           name: name.trim(),
+          whatsapp: whatsappClean,
           status: "ACTIVE",
           mustChangePassword: true,
           restaurants: { connect: { id: restaurantId } },
