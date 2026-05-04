@@ -58,6 +58,14 @@ export async function GET(req: NextRequest) {
   }
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
+  // Gate por plan: dashboard en vivo de Toteat solo PREMIUM (super-admin pasa)
+  if (!isSuperAdmin(req)) {
+    const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { plan: true } });
+    if (r?.plan !== "PREMIUM") {
+      return NextResponse.json({ error: "Funcion solo disponible en plan Premium" }, { status: 403 });
+    }
+  }
+
   const todayStart = chileStartOfTodayUTC();
   const now = new Date();
   const elapsedMs = now.getTime() - todayStart.getTime();

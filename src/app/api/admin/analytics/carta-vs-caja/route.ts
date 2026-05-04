@@ -41,6 +41,14 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "restaurantId requerido (modo super-admin)" }, { status: 400 });
   }
 
+  // Gate por plan: integracion Toteat solo PREMIUM (los super-admin pasan)
+  if (!isSuperAdmin(req)) {
+    const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { plan: true } });
+    if (r?.plan !== "PREMIUM") {
+      return NextResponse.json({ error: "Funcion solo disponible en plan Premium" }, { status: 403 });
+    }
+  }
+
   // Interpret the YYYY-MM-DD strings as Chile-local days so "Hoy" means
   // today in Chile (not UTC). Without this, UTC midnight to UTC midnight
   // includes last night's sales as "today".

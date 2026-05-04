@@ -35,6 +35,14 @@ export async function GET(req: NextRequest) {
   }
   if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
 
+  // Gate por plan: integracion Toteat solo PREMIUM (super-admin pasa)
+  if (!isSuperAdmin(req)) {
+    const r = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { plan: true } });
+    if (r?.plan !== "PREMIUM") {
+      return NextResponse.json({ error: "Funcion solo disponible en plan Premium" }, { status: 403 });
+    }
+  }
+
   // Interpret the YYYY-MM-DD strings as Chile-local days so "Hoy" means
   // today in Chile (not in UTC, which leaks last night's sales in).
   const from = fromStr ? chileDayBoundsUTC(fromStr).from : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);

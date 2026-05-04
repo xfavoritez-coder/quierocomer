@@ -152,6 +152,8 @@ function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
 }
 
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { activePlan } = usePanelSession();
+  const hasToteatAccess = canAccess(activePlan, "toteat_integration");
   const [data, setData] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
   const [badges, setBadges] = useState<any>(null);
@@ -189,16 +191,22 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     const p1 = new URLSearchParams({ type: "dishes", from, to });
     const p2 = new URLSearchParams({ from, to });
     if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); }
+    // Solo PREMIUM ve la integración Toteat (carta vs caja, badges)
+    const toteatRequests = hasToteatAccess
+      ? [
+          fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
+          fetch(`/api/admin/analytics/badge-accuracy?${p2}`).then(r => r.json()).catch(() => null),
+        ]
+      : [Promise.resolve(null), Promise.resolve(null)];
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
-      fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
-      fetch(`/api/admin/analytics/badge-accuracy?${p2}`).then(r => r.json()).catch(() => null),
+      ...toteatRequests,
     ]).then(([d, c, b]) => {
       setData(d);
       if (c && !c.error) setCross(c);
       if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, hasToteatAccess]);
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
@@ -259,10 +267,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     tooltip: "Qué sección de la carta engancha más a los clientes. Si dice 'Sushi 35%', los clientes pasan el 35% del tiempo navegando esa sección.",
   };
 
-  // Premium-only insights — gated by "Toteat connected" (mapped dishes
-  // exist), not by "sales in the period". A day with 0 sales is valid
-  // data: the block shows 0% acierto / 0 ventas, which is honest reporting.
-  const hasToteat = !!(cross && cross.summary?.mappedDishes && cross.summary.mappedDishes > 0);
+  // Premium-only insights — gated tanto por plan como por "Toteat connected".
+  // En planes inferiores nunca se muestran (ni se piden los datos al backend).
+  const hasToteat = hasToteatAccess && !!(cross && cross.summary?.mappedDishes && cross.summary.mappedDishes > 0);
   const showBadgeAccuracy = hasToteat && badges?.hasData && (badges.popular?.distinctDishes > 0 || badges.recommended?.distinctDishes > 0);
 
   return (
