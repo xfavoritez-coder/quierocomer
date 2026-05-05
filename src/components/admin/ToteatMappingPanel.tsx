@@ -116,13 +116,27 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
           return;
         }
         setCredsOk(true);
-        setMsg("Credenciales guardadas. Iniciando primer sync...");
+        setMsg("Credenciales guardadas. Sincronizando catalogo y mapeando platos...");
         // Disparar primer sync para cargar el catálogo
         await fetch("/api/admin/toteat/sync-now", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restaurantId }),
         }).catch(() => {});
+        // Auto-mapear automaticamente despues del sync
+        await Promise.all([
+          fetch("/api/admin/dishes/auto-map-toteat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ restaurantId }),
+          }).catch(() => {}),
+          fetch("/api/admin/modifiers/auto-map-toteat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ restaurantId }),
+          }).catch(() => {}),
+        ]);
+        setMsg("✓ Conexion lista. Revisa abajo cuantos platos quedaron mapeados automaticamente.");
         load();
       } finally {
         setSavingCreds(false);
@@ -219,8 +233,47 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   const mappedMods = allMods.filter((m) => m.toteatProductId).length;
   const totalMods = allMods.length;
 
+  // Paso del wizard segun el estado actual del mapeo
+  const allMapped = data.summary.unmapped === 0 && data.summary.mapped > 0;
+  const someMapped = data.summary.mapped > 0 && data.summary.unmapped > 0;
+  const noneMapped = data.summary.mapped === 0;
+  const lowMapping = data.summary.mappedPct < 50 && data.summary.mapped > 0;
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* Wizard didactico de estado */}
+      <div style={{
+        background: allMapped ? "rgba(22,163,74,0.08)" : "rgba(244,166,35,0.08)",
+        border: `1px solid ${allMapped ? "rgba(22,163,74,0.3)" : "rgba(244,166,35,0.3)"}`,
+        borderRadius: 12, padding: "14px 16px",
+      }}>
+        <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: allMapped ? "#16a34a" : "#92400e", margin: "0 0 6px" }}>
+          {allMapped ? "✓ Todo listo" : noneMapped ? "⚠ Faltan platos por conectar" : "🔧 Casi listo, te falta poco"}
+        </p>
+        {allMapped && (
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Tus {data.summary.mapped} platos están conectados a Toteat. En unos minutos vas a ver estadísticas cruzadas (vistas vs ventas reales) en la sección <strong>Analytics</strong>.
+          </p>
+        )}
+        {someMapped && !allMapped && (
+          <>
+            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 6px", lineHeight: 1.5 }}>
+              Conectamos automáticamente <strong>{data.summary.mapped} de {data.summary.total} platos</strong>. Los <strong>{data.summary.unmapped}</strong> que faltan los puedes mapear a mano abajo (sección "Sin mapear"): hacemos match cuando los nombres coinciden, así que si tu plato se llama distinto en Toteat vas a tener que elegir el match manual.
+            </p>
+            {lowMapping && (
+              <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "6px 0 0", lineHeight: 1.5 }}>
+                💡 <strong>Tip:</strong> coincidieron pocos. Probablemente los nombres son muy distintos entre tu carta y Toteat. Revisa que estén bien escritos, o usa "Auto-mapear" otra vez después de ajustar.
+              </p>
+            )}
+          </>
+        )}
+        {noneMapped && (
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            La conexión con Toteat está lista pero <strong>ninguno</strong> de tus {data.summary.total} platos coincidió automáticamente con tu catálogo Toteat (tenemos {data.summary.catalogSize} productos disponibles). Mapea cada plato a su producto Toteat abajo, o usa "Auto-mapear" si ajustaste nombres.
+          </p>
+        )}
+      </div>
+
       {/* Summary card */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "16px 18px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
