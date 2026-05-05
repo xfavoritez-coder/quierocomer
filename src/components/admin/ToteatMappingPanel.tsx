@@ -399,8 +399,67 @@ Quedo atento. Gracias.`;
   const noneMapped = data.summary.mapped === 0;
   const lowMapping = data.summary.mappedPct < 50 && data.summary.mapped > 0;
 
+  // Header de seccion reutilizable
+  const SectionHeader = ({ title, subtitle }: { title: string; subtitle?: string }) => (
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8, padding: "8px 0 4px", borderBottom: "1px solid var(--adm-card-border)", marginBottom: 4 }}>
+      <p style={{ fontFamily: F, fontSize: "0.7rem", fontWeight: 700, color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em", margin: 0 }}>{title}</p>
+      {subtitle && <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>· {subtitle}</p>}
+    </div>
+  );
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* ──────────── 1. CONFIGURACIÓN: Webhook URL para sync instantaneo ──────────── */}
+      {data.webhookSecret && (() => {
+        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.cl";
+        const webhookUrl = `${baseUrl}/api/toteat/webhook?secret=${data.webhookSecret}`;
+        const copy = async () => {
+          try {
+            await navigator.clipboard.writeText(webhookUrl);
+            setWebhookCopied(true);
+            setTimeout(() => setWebhookCopied(false), 2500);
+          } catch {}
+        };
+        return (
+          <div style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 12, padding: "14px 16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+              <span style={{ fontSize: "0.95rem" }}>⚡</span>
+              <p style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Sincronizacion instantanea (recomendado)</p>
+            </div>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
+              Pega esta URL en Toteat → <strong>Configuración → Webhooks → menu_changed</strong> para que cualquier cambio (ocultar, agregar, modificar) se refleje en tu carta digital al instante.
+            </p>
+            <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+              <code style={{ flex: 1, minWidth: 200, padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: "ui-monospace, monospace", fontSize: "0.72rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {webhookUrl}
+              </code>
+              <button onClick={copy} style={{ padding: "8px 14px", background: webhookCopied ? "#16a34a" : "#7c3aed", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
+                {webhookCopied ? "✓ Copiado" : "📋 Copiar URL"}
+              </button>
+              <button onClick={() => setShowWebhookHelp((v) => !v)} style={{ padding: "8px 12px", background: "transparent", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+                {showWebhookHelp ? "Ocultar" : "¿Cómo lo configuro?"}
+              </button>
+            </div>
+            {showWebhookHelp && (
+              <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.6 }}>
+                <p style={{ margin: "0 0 6px", fontWeight: 600, color: "var(--adm-text)" }}>Pasos en Toteat:</p>
+                <ol style={{ margin: 0, paddingLeft: 18 }}>
+                  <li>Entra a tu panel de Toteat con tu usuario administrador</li>
+                  <li>Ve a <strong>Configuración → Integraciones → Webhooks</strong> (o "API Webhooks")</li>
+                  <li>Crea un nuevo webhook con tipo <strong>menu_changed</strong></li>
+                  <li>Pega la URL de arriba en el campo de URL destino</li>
+                  <li>Guarda. ¡Listo!</li>
+                </ol>
+                <p style={{ margin: "8px 0 0", fontSize: "0.74rem" }}>Si no encuentras la sección de webhooks, contacta a Toteat (clientes@toteat.com) y pídele que te activen los webhooks de tipo <code style={{ background: "var(--adm-input)", padding: "1px 4px", borderRadius: 3 }}>menu_changed</code>. Mientras tanto, sin webhook configurado, el sistema sigue sincronizando automáticamente cada 30 minutos.</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ──────────── 2. ESTADO DE LA INTEGRACIÓN ──────────── */}
+      <SectionHeader title="Estado de la integración" subtitle="Cómo va el mapeo de tu carta con Toteat" />
+
       {/* Wizard didactico de estado */}
       <div style={{
         background: allMapped ? "rgba(22,163,74,0.08)" : "rgba(244,166,35,0.08)",
@@ -473,54 +532,6 @@ Quedo atento. Gracias.`;
         )}
       </div>
 
-      {/* Webhook URL para sync instantaneo */}
-      {data.webhookSecret && (() => {
-        const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://quierocomer.cl";
-        const webhookUrl = `${baseUrl}/api/toteat/webhook?secret=${data.webhookSecret}`;
-        const copy = async () => {
-          try {
-            await navigator.clipboard.writeText(webhookUrl);
-            setWebhookCopied(true);
-            setTimeout(() => setWebhookCopied(false), 2500);
-          } catch {}
-        };
-        return (
-          <div style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 12, padding: "14px 16px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <span style={{ fontSize: "0.95rem" }}>⚡</span>
-              <p style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Sincronizacion instantanea (recomendado)</p>
-            </div>
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 10px", lineHeight: 1.5 }}>
-              Pega esta URL en Toteat → <strong>Configuración → Webhooks → menu_changed</strong> para que cualquier cambio (ocultar, agregar, modificar) se refleje en tu carta digital al instante.
-            </p>
-            <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
-              <code style={{ flex: 1, minWidth: 200, padding: "8px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: "ui-monospace, monospace", fontSize: "0.72rem", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {webhookUrl}
-              </code>
-              <button onClick={copy} style={{ padding: "8px 14px", background: webhookCopied ? "#16a34a" : "#7c3aed", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer" }}>
-                {webhookCopied ? "✓ Copiado" : "📋 Copiar URL"}
-              </button>
-              <button onClick={() => setShowWebhookHelp((v) => !v)} style={{ padding: "8px 12px", background: "transparent", color: "#7c3aed", border: "1px solid rgba(124,58,237,0.3)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-                {showWebhookHelp ? "Ocultar" : "¿Cómo lo configuro?"}
-              </button>
-            </div>
-            {showWebhookHelp && (
-              <div style={{ marginTop: 10, padding: "10px 12px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.6 }}>
-                <p style={{ margin: "0 0 6px", fontWeight: 600, color: "var(--adm-text)" }}>Pasos en Toteat:</p>
-                <ol style={{ margin: 0, paddingLeft: 18 }}>
-                  <li>Entra a tu panel de Toteat con tu usuario administrador</li>
-                  <li>Ve a <strong>Configuración → Integraciones → Webhooks</strong> (o "API Webhooks")</li>
-                  <li>Crea un nuevo webhook con tipo <strong>menu_changed</strong></li>
-                  <li>Pega la URL de arriba en el campo de URL destino</li>
-                  <li>Guarda. ¡Listo!</li>
-                </ol>
-                <p style={{ margin: "8px 0 0", fontSize: "0.74rem" }}>Si no encuentras la sección de webhooks, contacta a Toteat (clientes@toteat.com) y pídele que te activen los webhooks de tipo <code style={{ background: "var(--adm-input)", padding: "1px 4px", borderRadius: 3 }}>menu_changed</code>. Mientras tanto, sin webhook configurado, el sistema sigue sincronizando automáticamente cada 30 minutos.</p>
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
       {/* Boton para re-abrir wizard */}
       {data.summary.total > 0 && (
         <button
@@ -531,6 +542,11 @@ Quedo atento. Gracias.`;
           {wizardLoading ? "Cargando..." : "🔄 Comparar con mi carta de Toteat"}
         </button>
       )}
+
+      {/* ──────────── 3. DETALLE DE MAPEOS ──────────── */}
+      <div style={{ marginTop: 8 }}>
+        <SectionHeader title="Detalle de mapeos" subtitle="Busca y ajusta platos uno por uno" />
+      </div>
 
       {/* Search */}
       <input
