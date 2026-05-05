@@ -86,8 +86,7 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
     if (mode === "vegan+gf" || mode === "vegetarian+gf" || mode === "glutenfree") { if (!checkAllergenFree(d, "gluten")) return false; }
     if (mode === "lactosefree") { if (!checkAllergenFree(d, "lactosa")) return false; }
     if (mode === "soyfree") { if (!checkAllergenFree(d, "soja")) return false; }
-    // "nuts" siempre muestra el banner: o lista los platos con frutos secos, o avisa "toda la carta a salvo"
-    if (mode === "nuts") return true;
+    if (mode === "nuts") { if (!checkNutsFree(d)) return false; }
     if (mode === "smart" && restrictions) {
       if (diet === "vegan" && d.dishDiet !== "VEGAN") return false;
       if (diet === "vegetarian" && d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN") return false;
@@ -139,7 +138,7 @@ export function getCarouselNavName(mode: CarouselMode): string {
     case "glutenfree": return "🌾 Sin gluten";
     case "lactosefree": return "🥛 Sin lactosa";
     case "soyfree": return "🫘 Sin soya";
-    case "nuts": return "🥜 Frutos secos";
+    case "nuts": return "🥜 Sin frutos secos";
     case "smart": return "🧞 Mi dieta";
     default: return "";
   }
