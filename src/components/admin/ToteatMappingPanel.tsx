@@ -263,15 +263,16 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
             onClick={() => setRequestModalOpen(true)}
             style={{
               display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "6px 12px", marginBottom: 16,
-              background: "rgba(244,166,35,0.1)",
-              border: "1px solid rgba(244,166,35,0.3)",
+              padding: "7px 14px", marginBottom: 16,
+              background: "rgba(244,166,35,0.12)",
+              border: "1px solid rgba(244,166,35,0.4)",
               borderRadius: 999, cursor: "pointer",
-              fontFamily: F, fontSize: "0.74rem", fontWeight: 600, color: "#92400e",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "#92400e",
             }}
           >
             <span>📧</span>
-            <span>¿No las tienes? Pídelas a Toteat</span>
+            <span>¿No las tienes? Te ayudamos a pedirlas a Toteat</span>
+            <span style={{ fontSize: "0.85rem", marginLeft: 2 }}>→</span>
           </button>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
