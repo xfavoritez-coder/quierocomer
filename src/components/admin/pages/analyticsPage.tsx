@@ -938,7 +938,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{duration}</span>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} plato{dishes.length !== 1 ? "s" : ""}</span>
                   {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
-                  {s.usedGenio && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.15)", color: "#F4A623" }}>🧞 Genio</span>}
+                  {s.genioData?.birthdaySaved && <span title="El comensal registró su cumpleaños" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Cumple</span>}
                   {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>🔔 Garzón</span>}
                 </div>
               </div>
@@ -996,20 +996,10 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   </div>
                 )}
 
-                {/* Genio data */}
-                {s.genioData && (
+                {/* Cumple guardado — solo se muestra si registró fecha */}
+                {s.genioData?.birthdaySaved && (
                   <div style={{ marginTop: 12 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 600 }}>🧞 Genio</p>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {s.genioData.completed
-                        ? <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>Completado</span>
-                        : <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Abandonó{s.genioData.lastStep ? ` en ${s.genioData.lastStep}` : ""}</span>
-                      }
-                      {s.genioData.timesUsed > 1 && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{s.genioData.timesUsed}x abierto</span>}
-                      {s.genioData.birthdayModalAutoShown && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(167,139,250,0.1)", color: "#a78bfa" }}>🎂 Modal auto</span>}
-                      {s.genioData.birthdaySaved && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(74,222,128,0.1)", color: "#4ade80" }}>🎂 Cumple guardado</span>}
-                      {s.genioData.birthdayClicked && !s.genioData.birthdaySaved && <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "2px 8px", borderRadius: 6, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>🎂 Abrió banner</span>}
-                    </div>
+                    <span style={{ fontFamily: FB, fontSize: "0.72rem", padding: "4px 10px", borderRadius: 6, background: "rgba(167,139,250,0.12)", color: "#a78bfa" }}>🎂 Registró su cumpleaños</span>
                   </div>
                 )}
 

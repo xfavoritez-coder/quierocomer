@@ -498,7 +498,25 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ sessions: enriched, total, page, totalPages: Math.ceil(total / limit) });
+    // Filtrar sesiones "verdaderamente vacias" (escaneo sin actividad alguna)
+    // a menos que el caller pida explicitamente verlas con includeEmpty=true.
+    const includeEmpty = url.searchParams.get("includeEmpty") === "true";
+    const filtered = includeEmpty ? enriched : enriched.filter((s: any) => {
+      const dishes = (s.dishesViewed as any[]) || [];
+      const cats = (s.categoriesViewed as any[]) || [];
+      const hasDishes = dishes.length > 0;
+      const hasCats = cats.length > 0;
+      const hasWaiter = (s.waiterCalls?.length || 0) > 0;
+      const hasFavs = (s.dishFavorites?.length || 0) > 0;
+      const hasBirthday = !!s.genioData?.birthdaySaved;
+      const hasHero = (s.heroClicks?.length || 0) > 0;
+      const hasExp = (s.experienceSubmissions?.length || 0) > 0;
+      const hasUser = !!s.qrUserId;
+      return hasDishes || hasCats || hasWaiter || hasFavs || hasBirthday || hasHero || hasExp || hasUser;
+    });
+    const hiddenCount = enriched.length - filtered.length;
+
+    return NextResponse.json({ sessions: filtered, total: total - hiddenCount, page, totalPages: Math.ceil((total - hiddenCount) / limit), hiddenEmptyCount: hiddenCount });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
     console.error("Sessions error:", e);

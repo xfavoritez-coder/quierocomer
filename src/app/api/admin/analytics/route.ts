@@ -27,7 +27,10 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(data);
     }
     if (type === "funnel") {
-      const data = await getFunnelConversion(restaurantId, from, to);
+      // El frontend espera totalVisitors/returningVisitors/convertedCount con
+      // sus pcts. getVisitorMetrics ya devuelve esos campos correctamente.
+      // (getFunnelConversion existia para otra UI con campos distintos.)
+      const data = await getVisitorMetrics(restaurantId, from, to);
       return NextResponse.json(data);
     }
     if (type === "searches") {
