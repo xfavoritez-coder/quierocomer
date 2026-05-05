@@ -246,7 +246,7 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
           const subject = "Solicitud de credenciales API";
           const body = `Hola,
 
-Soy el administrador del local ${localName} y necesito las credenciales de API de mi cuenta:
+Soy el administrador del local ${localName} (RUT [REEMPLAZAR CON RUT DE LA EMPRESA]) y necesito las credenciales de API de mi cuenta:
 
 - Restaurant ID (xir)
 - Local ID (xil)
