@@ -47,6 +47,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [dishSearch, setDishSearch] = useState("");
   const [pickerMode, setPickerMode] = useState<"dish" | "category">("dish");
   const [pickerOpensUp, setPickerOpensUp] = useState(false);
+  const [pickerAlignRight, setPickerAlignRight] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
   const showSaved = (msg = "Guardado") => {
@@ -270,13 +271,17 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                     <div ref={dishPickerFor === template.id ? pickerRef : undefined} style={{ position: "relative" }}>
                       <button onClick={(e) => {
                         if (dishPickerFor === template.id) { setDishPickerFor(null); return; }
-                        // Decide whether to open the dropdown above or below based
-                        // on remaining space — at the bottom of a long list, the
-                        // default "below" position would clip the dropdown.
+                        // Decide whether to open the dropdown above or below, and
+                        // whether to align left or right, based on remaining space.
+                        // Esto evita que el picker se corte fuera de la pantalla
+                        // en moviles o cuando el boton esta cerca del borde.
                         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-                        const dropdownH = 320; // approx height (input + list + tabs)
+                        const dropdownH = 320;
+                        const dropdownW = 260;
                         const spaceBelow = window.innerHeight - rect.bottom;
+                        const spaceRight = window.innerWidth - rect.left;
                         setPickerOpensUp(spaceBelow < dropdownH && rect.top > spaceBelow);
+                        setPickerAlignRight(spaceRight < dropdownW + 16);
                         setDishPickerFor(template.id);
                         setPickerMode("dish");
                         setDishSearch("");
@@ -287,7 +292,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
 
                       {/* Picker dropdown */}
                       {dishPickerFor === template.id && (
-                        <div style={{ position: "absolute", ...(pickerOpensUp ? { bottom: "100%", marginBottom: 4 } : { top: "100%", marginTop: 4 }), left: 0, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: 260, overflow: "hidden" }}>
+                        <div style={{ position: "absolute", ...(pickerOpensUp ? { bottom: "100%", marginBottom: 4 } : { top: "100%", marginTop: 4 }), ...(pickerAlignRight ? { right: 0 } : { left: 0 }), background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 10, boxShadow: "0 8px 24px rgba(0,0,0,0.15)", zIndex: 100, width: "min(260px, calc(100vw - 32px))", overflow: "hidden" }}>
                           {/* Mode tabs */}
                           <div style={{ display: "flex", borderBottom: "1px solid var(--adm-card-border)" }}>
                             <button onClick={() => setPickerMode("dish")} style={{ flex: 1, padding: "8px", background: pickerMode === "dish" ? "var(--adm-hover)" : "none", border: "none", fontFamily: F, fontSize: "0.72rem", fontWeight: 600, color: pickerMode === "dish" ? GOLD : "var(--adm-text3)", cursor: "pointer" }}>Platos</button>
