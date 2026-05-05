@@ -9,10 +9,6 @@
       "schedule": "0 8 * * *"
     },
     {
-      "path": "/api/cron/weekly",
-      "schedule": "0 12 * * 1"
-    },
-    {
       "path": "/api/cron/experience",
       "schedule": "*/5 * * * *"
     },

@@ -3,12 +3,17 @@ import { prisma } from "@/lib/prisma";
 import { buildWeeklyDigest } from "@/lib/email/templates/weeklyDigest";
 
 /**
- * Weekly cron — runs Mondays 9 AM (configured in vercel.json)
- * Sends digest email to each owner with active restaurants.
+ * Weekly cron DESHABILITADO — el dueño pidio quitar el digest semanal.
+ * Removido de vercel.json. El endpoint queda como 410 Gone para que si por
+ * algun motivo se invoca, no envie correos. Para reactivar: agregar la
+ * entrada en vercel.json y quitar el guard de abajo.
  */
 export const maxDuration = 120;
 
 export async function GET(req: NextRequest) {
+  return NextResponse.json({ ok: false, disabled: true, message: "Weekly digest disabled" }, { status: 410 });
+
+  // eslint-disable-next-line no-unreachable
   const start = Date.now();
 
   const authHeader = req.headers.get("authorization");
