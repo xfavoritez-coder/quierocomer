@@ -17,7 +17,7 @@ import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
 import GenioLactoseFreeCarousel from "./GenioLactoseFreeCarousel";
 import GenioSoyFreeCarousel from "./GenioSoyFreeCarousel";
-import GenioNutsFreeCarousel from "./GenioNutsFreeCarousel";
+import GenioNutsCarousel from "./GenioNutsCarousel";
 import GenioSmartCarousel from "./GenioSmartCarousel";
 import { getCarouselMode, getCarouselScrollId, getCarouselNavName, hasMatchingDishes, getDietMessage } from "@/lib/qr/utils/carouselMode";
 import GenioDietMessage from "./GenioDietMessage";
@@ -631,7 +631,7 @@ export default function CartaFeed({
             {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "nutsfree" && <GenioNutsFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
           </div>
         );
