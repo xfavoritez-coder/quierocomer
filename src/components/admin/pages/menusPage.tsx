@@ -348,6 +348,7 @@ export default function AdminMenus() {
   const [glutenFreeFilter, setGlutenFreeFilter] = useState(false);
   const [lactoseFreeFilter, setLactoseFreeFilter] = useState(false);
   const [soyFreeFilter, setSoyFreeFilter] = useState(false);
+  const [nutsFilter, setNutsFilter] = useState(false);
   const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
   const [bulkAction, setBulkAction] = useState<string>("");
   const [bulkActionValue, setBulkActionValue] = useState<string>("");
@@ -497,6 +498,7 @@ export default function AdminMenus() {
     if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree);
     if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree);
     if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree);
+    if (nutsFilter) list = list.filter(d => (d as any).containsNuts);
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
@@ -507,10 +509,10 @@ export default function AdminMenus() {
       if (aRec !== bRec) return aRec - bRec;
       return a.name.localeCompare(b.name, "es");
     });
-  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter]);
+  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, selectedRestaurantId]);
+  useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
 
   const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -588,8 +590,11 @@ export default function AdminMenus() {
     });
   };
   const toggleBulkAll = () => {
-    if (bulkSelected.size === paginated.length) setBulkSelected(new Set());
-    else setBulkSelected(new Set(paginated.map(d => d.id)));
+    // Si hay mas productos en otras paginas, seleccionar TODOS los filtrados (no solo la pagina visible)
+    const target = filtered.length > paginated.length ? filtered : paginated;
+    const allSelected = target.length > 0 && target.every(d => bulkSelected.has(d.id));
+    if (allSelected) setBulkSelected(new Set());
+    else setBulkSelected(new Set(target.map(d => d.id)));
   };
 
   const executeBulkAction = async () => {
@@ -1376,6 +1381,9 @@ export default function AdminMenus() {
         <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
           🫘 Sin soya
         </button>
+        <button onClick={() => setNutsFilter(!nutsFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: nutsFilter ? "rgba(160,106,58,0.15)" : "#F5F4F1", color: nutsFilter ? "#a06a3a" : "#1a1a1a" }}>
+          🥜 Frutos secos
+        </button>
       </div>
 
       {/* Bulk actions bar */}
@@ -1516,38 +1524,32 @@ export default function AdminMenus() {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {paginated.length > 0 && (() => {
-            const hasFilters = !!search || catFilter !== "all" || dietFilter !== "all" || spicyFilter || glutenFreeFilter || lactoseFreeFilter || soyFreeFilter;
-            const allPageSelected = paginated.every(d => bulkSelected.has(d.id));
+            const hasFilters = !!search || catFilter !== "all" || dietFilter !== "all" || spicyFilter || glutenFreeFilter || lactoseFreeFilter || soyFreeFilter || nutsFilter;
             const allFilteredSelected = filtered.length > 0 && filtered.every(d => bulkSelected.has(d.id));
             const moreInOtherPages = filtered.length > paginated.length;
+            const target = moreInOtherPages ? filtered : paginated;
+            const label = allFilteredSelected
+              ? "Deseleccionar todos"
+              : moreInOtherPages
+                ? `Seleccionar los ${filtered.length} ${hasFilters ? "filtrados" : "de toda la carta"}`
+                : "Seleccionar todos";
             return (
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 10px", flexWrap: "wrap" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
-                    <input
-                      type="checkbox"
-                      checked={allPageSelected}
-                      onChange={toggleBulkAll}
-                      style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
-                    />
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                      {allPageSelected ? "Deseleccionar todos" : "Seleccionar todos"}
-                    </span>
-                  </label>
-                  {hasFilters && (
-                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
-                      · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length}</strong> producto{filtered.length !== 1 ? "s" : ""} filtrado{filtered.length !== 1 ? "s" : ""}
-                    </span>
-                  )}
-                </div>
-                {/* Boton "seleccionar TODOS los X de la carta/filtrados" — aparece siempre que haya mas productos para abarcar */}
-                {moreInOtherPages && !allFilteredSelected && (
-                  <button
-                    onClick={() => setBulkSelected(new Set(filtered.map(d => d.id)))}
-                    style={{ alignSelf: "flex-start", marginLeft: 30, padding: "5px 10px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", fontFamily: F, fontSize: "0.7rem", fontWeight: 600, cursor: "pointer" }}
-                  >
-                    Seleccionar los {filtered.length} {hasFilters ? "productos filtrados" : "productos de toda la carta"} →
-                  </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 10px", flexWrap: "wrap" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+                  <input
+                    type="checkbox"
+                    checked={target.length > 0 && target.every(d => bulkSelected.has(d.id))}
+                    onChange={toggleBulkAll}
+                    style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
+                  />
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                    {label}
+                  </span>
+                </label>
+                {hasFilters && (
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
+                    · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length}</strong> producto{filtered.length !== 1 ? "s" : ""} filtrado{filtered.length !== 1 ? "s" : ""}
+                  </span>
                 )}
               </div>
             );
