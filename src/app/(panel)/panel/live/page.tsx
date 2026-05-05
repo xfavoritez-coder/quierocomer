@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
+import { supabase } from "@/lib/supabase";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
-const REFRESH_MS = 60_000;
+const REFRESH_MS = 5 * 60_000; // fallback de 5 min (Realtime hace el trabajo principal)
 const SYNC_INTERVAL_MS = 10 * 60_000; // 10 min — matches the server-side debounce
 
 interface LiveData {
@@ -73,15 +74,36 @@ export default function LiveDashboard() {
   useEffect(() => {
     setLoading(true);
     triggerSync();   // Initial sync on load
-    // Cheap dashboard refresh every 60s (re-reads cache, no Toteat hit)
+    // Fallback refresh every 5 min (Realtime hace el trabajo principal)
     if (tickRef.current) window.clearInterval(tickRef.current);
     tickRef.current = window.setInterval(load, REFRESH_MS);
-    // Real Toteat sync every 2 min (matches server-side debounce)
+    // Real Toteat sync every 10 min (matches server-side debounce)
     if (syncTickRef.current) window.clearInterval(syncTickRef.current);
     syncTickRef.current = window.setInterval(() => triggerSync(false), SYNC_INTERVAL_MS);
     return () => {
       if (tickRef.current) window.clearInterval(tickRef.current);
       if (syncTickRef.current) window.clearInterval(syncTickRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedRestaurantId]);
+
+  // Supabase Realtime: cuando llega una venta nueva (INSERT en ToteatSale)
+  // del restaurant actual, refrescamos el dashboard automaticamente. Latencia ~200ms.
+  useEffect(() => {
+    if (!supabase || !selectedRestaurantId) return;
+    const channel = supabase
+      .channel(`toteat-sales-${selectedRestaurantId}`)
+      .on("postgres_changes", {
+        event: "INSERT",
+        schema: "public",
+        table: "ToteatSale",
+        filter: `restaurantId=eq.${selectedRestaurantId}`,
+      }, () => {
+        load();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
