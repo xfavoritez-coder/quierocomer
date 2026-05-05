@@ -653,7 +653,7 @@ export default function CartaPremium({
                 )}
               </div>
 
-              {/* Scroll with fade */}
+              {/* Scroll with fade — degradado en el borde derecho indica que hay mas cartas */}
               <div className="relative">
                 <div
                   data-scroll-container
@@ -664,6 +664,18 @@ export default function CartaPremium({
                     scrollbarWidth: "none",
                     msOverflowStyle: "none",
                     WebkitOverflowScrolling: "touch",
+                  }}
+                  ref={(el) => {
+                    if (!el) return;
+                    // Detecta si hay scroll disponible y agrega/quita la clase para mostrar el fade
+                    const update = () => {
+                      const hasMore = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+                      el.parentElement?.toggleAttribute("data-has-more", hasMore);
+                    };
+                    update();
+                    el.addEventListener("scroll", update, { passive: true });
+                    const ro = new ResizeObserver(update);
+                    ro.observe(el);
                   }}
                 >
                   {catDishes.map((dish, i) => {
@@ -712,6 +724,17 @@ export default function CartaPremium({
                     );
                   })}
                 </div>
+                {/* Fade overlay del borde derecho — visible solo cuando hay scroll restante */}
+                <div
+                  aria-hidden
+                  className="cp-scroll-fade"
+                  style={{
+                    position: "absolute", right: 0, top: 0, bottom: 8, width: 56,
+                    pointerEvents: "none",
+                    background: "linear-gradient(to right, rgba(247,247,245,0) 0%, rgba(247,247,245,0.85) 70%, rgba(247,247,245,1) 100%)",
+                    opacity: 0, transition: "opacity 0.18s ease",
+                  }}
+                />
               </div>
             </section>
             </div>
@@ -796,6 +819,8 @@ export default function CartaPremium({
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes genioNudgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+        /* Fade del borde derecho del scroll de cada categoria — solo cuando hay mas cartas */
+        [data-has-more] > .cp-scroll-fade { opacity: 1 !important; }
       `}</style>
 
       {selectedDish && (
