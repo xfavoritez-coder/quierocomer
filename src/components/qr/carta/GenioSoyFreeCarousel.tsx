@@ -11,10 +11,8 @@ interface Props {
 }
 
 function isSoyFree(d: any): boolean {
-  if (d.isSoyFree === true) return true;
-  const ings = d.dishIngredients || [];
-  if (ings.length === 0) return false;
-  return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === "soja"));
+  // Estricto: solo platos marcados explicitamente como sin soya
+  return d.isSoyFree === true;
 }
 
 export default function GenioSoyFreeCarousel({ dishes, categories, onDishClick }: Props) {

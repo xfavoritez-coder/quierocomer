@@ -484,10 +484,14 @@ function DishSlide({
             );
           };
 
-          const glutenFree = d.isGlutenFree === true || isFreeOf(["gluten"]);
-          const lactoseFree = d.isLactoseFree === true || isFreeOf(["lactosa", "lacteos", "lácteos"]);
-          const soyFree = d.isSoyFree === true || isFreeOf(["soya", "soja"]);
+          // SEGURO ("sin X"): exige flag explicito === true. No inferimos.
+          const glutenFree = d.isGlutenFree === true;
+          const lactoseFree = d.isLactoseFree === true;
+          const soyFree = d.isSoyFree === true;
+          // WARNING ("contiene frutos secos"): cualquier señal — flag o alérgeno en ingredientes
           const containsNuts = d.containsNuts === true || hasAny(/man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i);
+          // SEGURO frutos secos para badge condicional: requiere flag explicito === false (no null)
+          const explicitlyNutsFree = d.containsNuts === false && !hasAny(/man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i);
 
           // Genio restrictions del usuario (acepta valores legacy y nuevos)
           const userR = genioRestrictions.map(r => r.toLowerCase());
@@ -510,8 +514,8 @@ function DishSlide({
           if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.18)", color: "#60a5fa", forYou: true });
           // CONDICIONAL: sin soya
           if (soyFree && userWantsSoy) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.18)", color: "#34d399", forYou: true });
-          // CONDICIONAL: sin frutos secos (solo si usuario tiene la restriccion y el plato es safe)
-          if (!containsNuts && userWantsNutsFree) seals.push({ emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.12)", color: "#a06a3a", forYou: true });
+          // CONDICIONAL: sin frutos secos (solo si usuario tiene la restriccion Y el plato lo confirma explicito)
+          if (explicitlyNutsFree && userWantsNutsFree) seals.push({ emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.12)", color: "#a06a3a", forYou: true });
 
           if (seals.length === 0) return null;
           return (

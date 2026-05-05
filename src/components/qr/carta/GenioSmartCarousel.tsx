@@ -16,19 +16,19 @@ const NUT_ALIASES = ["maní", "mani", "nueces", "almendras", "frutos secos", "nu
 const isNutRestriction = (r: string) => NUT_ALIASES.includes(r.toLowerCase());
 
 function checkFree(d: any, allergenName: string): boolean {
-  if (allergenName === "gluten" && d.isGlutenFree === true) return true;
-  if (allergenName === "lactosa" && d.isLactoseFree === true) return true;
-  if (allergenName === "soja" && d.isSoyFree === true) return true;
-  // "frutos secos" usa containsNuts y los alergenos individuales
+  // Estricto: exige flag explicito. No inferimos por ausencia de alergeno en ingredientes.
+  if (allergenName === "gluten") return d.isGlutenFree === true;
+  if (allergenName === "lactosa") return d.isLactoseFree === true;
+  if (allergenName === "soja" || allergenName === "soya") return d.isSoyFree === true;
+  // Frutos secos: containsNuts === false explicito + sin alergeno en ingredientes
   if (isNutRestriction(allergenName)) {
-    if (d.containsNuts === true) return false;
+    if (d.containsNuts !== false) return false;
     const ings = d.dishIngredients || [];
-    if (ings.length === 0) return d.containsNuts === false;
+    if (ings.length === 0) return true;
     return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => NUT_ALIASES.includes((a.name || "").toLowerCase())));
   }
-  const ings = d.dishIngredients || [];
-  if (ings.length === 0) return false;
-  return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === allergenName));
+  // Otros alergenos (mariscos, huevo, cerdo, pescado): sin flag, no podemos asegurar
+  return false;
 }
 
 const RESTRICTION_LABELS: Record<string, string> = {

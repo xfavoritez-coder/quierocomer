@@ -13,10 +13,11 @@ interface Props {
 const NUT_ALLERGENS = ["mani", "maní", "nueces", "almendras", "frutos secos", "nuez", "almendra"];
 
 function isNutsFree(d: any): boolean {
-  if (d.containsNuts === true) return false;
+  // Estricto: requiere flag explicito === false (no null/undefined)
+  if (d.containsNuts !== false) return false;
+  // Verifica que no haya ingrediente con alergeno de nuts (defensa adicional)
   const ings = d.dishIngredients || [];
-  // Sin ingredientes listados: confiar en containsNuts === false
-  if (ings.length === 0) return d.containsNuts === false || d.containsNuts == null;
+  if (ings.length === 0) return true;
   return !ings.some((di: any) =>
     di.ingredient?.allergens?.some((a: any) => NUT_ALLERGENS.includes((a.name || "").toLowerCase()))
   );

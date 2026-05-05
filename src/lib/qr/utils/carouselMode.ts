@@ -62,19 +62,19 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
   const noDrinkIds = new Set(categories.filter((c: any) => c.dishType !== "drink").map((c: any) => c.id));
   const active = dishes.filter((d: any) => d.isActive && noDrinkIds.has(d.categoryId));
 
+  // Estricto: para considerar "sin X", exige flag explicito === true
   const checkAllergenFree = (d: any, name: string): boolean => {
-    if (name === "gluten" && d.isGlutenFree === true) return true;
-    if (name === "lactosa" && d.isLactoseFree === true) return true;
-    if (name === "soja" && d.isSoyFree === true) return true;
-    const ings = d.dishIngredients || [];
-    if (ings.length === 0) return false;
-    return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === name));
+    if (name === "gluten") return d.isGlutenFree === true;
+    if (name === "lactosa") return d.isLactoseFree === true;
+    if (name === "soja") return d.isSoyFree === true;
+    return false;
   };
 
+  // Estricto: containsNuts === false explicito + sin alergeno en ingredientes
   const checkNutsFree = (d: any): boolean => {
-    if (d.containsNuts === true) return false;
+    if (d.containsNuts !== false) return false;
     const ings = d.dishIngredients || [];
-    if (ings.length === 0) return d.containsNuts === false;
+    if (ings.length === 0) return true;
     return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => NUT_RESTRICTIONS.includes((a.name || "").toLowerCase())));
   };
 

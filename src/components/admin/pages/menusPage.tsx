@@ -494,15 +494,17 @@ export default function AdminMenus() {
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     if (dietFilter !== "all") list = list.filter(d => (d.dishDiet || "OMNIVORE") === dietFilter);
-    // Helpers: flag explicito O ausencia de alergeno relevante en allergens (string CSV)
+    // Helper: alguna señal de alergeno (string CSV)
     const allergensHas = (d: any, names: string[]) => {
       const allergens = (d.allergens || "").toLowerCase();
       return names.some(n => allergens.includes(n));
     };
-    if (spicyFilter) list = list.filter(d => (d as any).isSpicy);
-    if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree === true || !allergensHas(d, ["gluten"]));
-    if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree === true || !allergensHas(d, ["lactosa", "lacteo", "lácteo"]));
-    if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree === true || !allergensHas(d, ["soja", "soya"]));
+    if (spicyFilter) list = list.filter(d => (d as any).isSpicy === true);
+    // Filtros "sin X": exigen flag explicito === true. No inferimos por ausencia (peligroso).
+    if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree === true);
+    if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree === true);
+    if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree === true);
+    // Filtro warning "Frutos secos": cualquier señal positiva (containsNuts O alergeno)
     if (nutsFilter) list = list.filter(d => (d as any).containsNuts === true || allergensHas(d, ["maní", "mani", "nuez", "nueces", "almendra", "frutos secos"]));
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
