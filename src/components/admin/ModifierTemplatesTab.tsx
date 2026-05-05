@@ -53,6 +53,58 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const [pickerAlignRight, setPickerAlignRight] = useState(false);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
 
+  // Picker para importar opciones desde Toteat
+  type ToteatModifierItem = { toteatId: string; name: string; price: number; category: string | null };
+  const [importPickerFor, setImportPickerFor] = useState<{ templateId: string; groupId: string } | null>(null);
+  const [toteatAvailable, setToteatAvailable] = useState<ToteatModifierItem[]>([]);
+  const [toteatLoading, setToteatLoading] = useState(false);
+  const [toteatSelected, setToteatSelected] = useState<Set<string>>(new Set());
+  const [toteatSearch, setToteatSearch] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  const openImportPicker = async (templateId: string, groupId: string) => {
+    setImportPickerFor({ templateId, groupId });
+    setToteatLoading(true);
+    setToteatSelected(new Set());
+    setToteatSearch("");
+    try {
+      const res = await fetch(`/api/admin/modifier-templates/toteat-available?restaurantId=${restaurantId}`);
+      const data = await res.json();
+      setToteatAvailable(Array.isArray(data.items) ? data.items : []);
+    } finally {
+      setToteatLoading(false);
+    }
+  };
+
+  const applyImport = async () => {
+    if (!importPickerFor || toteatSelected.size === 0) return;
+    setImporting(true);
+    try {
+      const items = toteatAvailable.filter((m) => toteatSelected.has(m.toteatId));
+      const res = await fetch("/api/admin/modifier-templates", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          importToteatToGroup: { groupId: importPickerFor.groupId, items },
+        }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        showSaved(`Error: ${d.error || "no se pudo importar"}`);
+        return;
+      }
+      const data = await res.json();
+      // Recargar templates para ver las nuevas options
+      const tplRes = await fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`);
+      const tplData = await tplRes.json();
+      if (Array.isArray(tplData)) setTemplates(tplData);
+      showSaved(`${data.created} opciones importadas de Toteat`);
+      setImportPickerFor(null);
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const showSaved = (msg = "Guardado") => {
     setSavedMsg(msg);
     setTimeout(() => setSavedMsg(null), 2000);
@@ -467,7 +519,10 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                             <button onClick={() => { setAddingOptionTo(null); setNewOptName(""); setNewOptPrice(""); }} style={{ padding: "4px 8px", background: "none", border: "none", color: "var(--adm-text3)", cursor: "pointer", fontSize: "0.65rem" }}>×</button>
                           </div>
                         ) : (
-                          <button onClick={() => setAddingOptionTo(group.id)} style={{ marginTop: 8, padding: "5px 12px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: GOLD, cursor: "pointer", width: "100%" }}>+ Agregar opción</button>
+                          <div style={{ display: "flex", gap: 6, marginTop: 8 }}>
+                            <button onClick={() => setAddingOptionTo(group.id)} style={{ flex: 1, padding: "5px 12px", background: "none", border: "1px dashed var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: GOLD, cursor: "pointer" }}>+ Agregar opción</button>
+                            <button onClick={() => openImportPicker(template.id, group.id)} style={{ padding: "5px 12px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 8, fontFamily: F, fontSize: "0.72rem", color: "#7c3aed", cursor: "pointer", fontWeight: 600 }}>📥 Importar de Toteat</button>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -508,6 +563,103 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
           </div>
         )}
       </div>
+
+      {/* Modal: importar opciones desde Toteat */}
+      {importPickerFor && (() => {
+        const filtered = toteatSearch.trim()
+          ? toteatAvailable.filter((m) => norm(m.name).includes(norm(toteatSearch)) || (m.category && norm(m.category).includes(norm(toteatSearch))))
+          : toteatAvailable;
+        const allSelected = filtered.length > 0 && filtered.every((m) => toteatSelected.has(m.toteatId));
+        const toggleAll = () => {
+          if (allSelected) {
+            const next = new Set(toteatSelected);
+            for (const m of filtered) next.delete(m.toteatId);
+            setToteatSelected(next);
+          } else {
+            const next = new Set(toteatSelected);
+            for (const m of filtered) next.add(m.toteatId);
+            setToteatSelected(next);
+          }
+        };
+        return (
+          <div onClick={() => setImportPickerFor(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+            <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 540, width: "100%", maxHeight: "85vh", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "18px 20px 12px", borderBottom: "1px solid var(--adm-card-border)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <div>
+                    <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Importar opciones desde Toteat</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+                      Selecciona los modificadores que quieres agregar a este grupo. Quedarán mapeados a su código Toteat automáticamente.
+                    </p>
+                  </div>
+                  <button onClick={() => setImportPickerFor(null)} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "1.2rem", cursor: "pointer", lineHeight: 1, padding: 0, marginLeft: 12 }}>✕</button>
+                </div>
+                <input
+                  type="text" value={toteatSearch} onChange={(e) => setToteatSearch(e.target.value)}
+                  placeholder="Buscar..."
+                  style={{ width: "100%", padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }}
+                />
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto", padding: "8px 20px" }}>
+                {toteatLoading ? (
+                  <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)", textAlign: "center", padding: "30px 0" }}>Cargando catalogo de Toteat...</p>
+                ) : toteatAvailable.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "30px 0" }}>
+                    <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px" }}>Sin modificadores disponibles</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0 }}>Todos los modificadores de tu Toteat ya están asignados, o tu local no tiene modificadores en Toteat aún.</p>
+                  </div>
+                ) : filtered.length === 0 ? (
+                  <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: "30px 0" }}>Sin resultados para "{toteatSearch}"</p>
+                ) : (
+                  <>
+                    <button onClick={toggleAll} style={{ background: "none", border: "none", color: GOLD, fontFamily: F, fontSize: "0.74rem", fontWeight: 600, cursor: "pointer", padding: "6px 0" }}>
+                      {allSelected ? "Deseleccionar todos" : `Seleccionar todos (${filtered.length})`}
+                    </button>
+                    {filtered.map((m) => {
+                      const checked = toteatSelected.has(m.toteatId);
+                      return (
+                        <label key={m.toteatId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 0", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer" }}>
+                          <input
+                            type="checkbox" checked={checked}
+                            onChange={() => {
+                              const next = new Set(toteatSelected);
+                              if (checked) next.delete(m.toteatId); else next.add(m.toteatId);
+                              setToteatSelected(next);
+                            }}
+                            style={{ width: 16, height: 16, accentColor: GOLD, cursor: "pointer", flexShrink: 0 }}
+                          />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>{m.name}</p>
+                            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                              {m.category && `${m.category} · `}código {m.toteatId}
+                            </p>
+                          </div>
+                          {m.price !== 0 && (
+                            <span style={{ fontFamily: F, fontSize: "0.78rem", color: m.price > 0 ? GOLD : "#16a34a", fontWeight: 600, flexShrink: 0 }}>
+                              {m.price > 0 ? "+" : ""}${Math.abs(m.price).toLocaleString("es-CL")}
+                            </span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </>
+                )}
+              </div>
+
+              <div style={{ padding: "12px 20px", borderTop: "1px solid var(--adm-card-border)", display: "flex", gap: 10, alignItems: "center" }}>
+                <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, flex: 1 }}>
+                  {toteatSelected.size === 0 ? "Selecciona al menos uno" : `${toteatSelected.size} seleccionado${toteatSelected.size !== 1 ? "s" : ""}`}
+                </p>
+                <button onClick={() => setImportPickerFor(null)} disabled={importing} style={{ padding: "8px 14px", background: "var(--adm-hover)", color: "var(--adm-text2)", border: "1px solid var(--adm-card-border)", borderRadius: 999, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: importing ? "wait" : "pointer" }}>Cancelar</button>
+                <button onClick={applyImport} disabled={importing || toteatSelected.size === 0} style={{ padding: "8px 18px", background: importing || toteatSelected.size === 0 ? "#ccc" : GOLD, color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: importing ? "wait" : toteatSelected.size === 0 ? "not-allowed" : "pointer" }}>
+                  {importing ? "Importando..." : `Importar ${toteatSelected.size > 0 ? toteatSelected.size : ""}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <style>{`
         @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }

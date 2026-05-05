@@ -212,6 +212,39 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(updated);
     }
 
+    // Bulk import de options desde Toteat a un grupo existente
+    if (body.importToteatToGroup && body.importToteatToGroup.groupId && Array.isArray(body.importToteatToGroup.items)) {
+      const groupId = body.importToteatToGroup.groupId as string;
+      const items = body.importToteatToGroup.items as Array<{ toteatId: string; name: string; price: number }>;
+
+      const group = await prisma.modifierTemplateGroup.findUnique({
+        where: { id: groupId },
+        include: { template: { select: { restaurantId: true } }, options: { orderBy: { position: "desc" }, take: 1 } },
+      });
+      if (!group) return NextResponse.json({ error: "Grupo no encontrado" }, { status: 404 });
+      await requireRestaurantForOwner(req, group.template.restaurantId);
+
+      let nextPos = (group.options[0]?.position ?? -1) + 1;
+      const created = [];
+      for (const it of items) {
+        const opt = await prisma.modifierTemplateOption.create({
+          data: {
+            groupId,
+            name: it.name || "Opcion",
+            priceAdjustment: typeof it.price === "number" ? it.price : 0,
+            position: nextPos++,
+            toteatProductId: it.toteatId,
+            toteatMappedAt: new Date(),
+            toteatMappedBy: "manual",
+          },
+        });
+        created.push(opt);
+      }
+      // Disparar traduccion en background del grupo (los nuevos options entran)
+      import("@/lib/ai/translateContent").then(m => m.translateModifierGroup(groupId)).catch(() => {});
+      return NextResponse.json({ created: created.length, options: created });
+    }
+
     // Reorder groups within a template
     if (body.reorderGroups && Array.isArray(body.reorderGroups.ids) && body.reorderGroups.templateId) {
       const template = await prisma.modifierTemplate.findUnique({ where: { id: body.reorderGroups.templateId }, select: { restaurantId: true } });
