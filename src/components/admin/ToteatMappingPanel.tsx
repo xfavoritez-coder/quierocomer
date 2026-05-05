@@ -33,6 +33,79 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   const [emailCopied, setEmailCopied] = useState(false);
   const [restaurantName, setRestaurantName] = useState("");
 
+  // Wizard de import: cuando el dueno conecta Toteat por primera vez
+  type WizardItem = {
+    toteatId: string; toteatName: string; toteatPrice: number; toteatCategory: string | null;
+    action: "already-mapped" | "match-found" | "new";
+    suggestedDishId: string | null; suggestedDishName: string | null;
+    chosen: "map" | "create" | "skip"; // decision del owner
+  };
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardLoading, setWizardLoading] = useState(false);
+  const [wizardItems, setWizardItems] = useState<WizardItem[] | null>(null);
+  const [wizardSummary, setWizardSummary] = useState<any>(null);
+  const [wizardQcOnly, setWizardQcOnly] = useState<{ id: string; name: string }[]>([]);
+  const [wizardApplying, setWizardApplying] = useState(false);
+
+  const loadWizard = async () => {
+    setWizardLoading(true);
+    try {
+      const res = await fetch("/api/admin/toteat/import-preview", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error");
+      const items: WizardItem[] = data.items.map((i: any) => ({
+        ...i,
+        chosen: i.action === "already-mapped" ? "skip" : i.action === "match-found" ? "map" : "create",
+      }));
+      setWizardItems(items);
+      setWizardSummary(data.summary);
+      setWizardQcOnly(data.qcOnly || []);
+      setWizardOpen(true);
+    } finally {
+      setWizardLoading(false);
+    }
+  };
+
+  const applyWizard = async () => {
+    if (!wizardItems) return;
+    setWizardApplying(true);
+    try {
+      const actions = wizardItems
+        .filter((i) => i.action !== "already-mapped")
+        .map((i) => ({
+          toteatId: i.toteatId,
+          action: i.chosen,
+          dishId: i.chosen === "map" ? i.suggestedDishId : undefined,
+          name: i.chosen === "create" ? i.toteatName : undefined,
+          price: i.chosen === "create" ? i.toteatPrice : undefined,
+          category: i.chosen === "create" ? i.toteatCategory : undefined,
+        }));
+      const res = await fetch("/api/admin/toteat/import-apply", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ restaurantId, actions }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMsg("Error: " + (data.error || ""));
+        return;
+      }
+      const s = data.summary;
+      setMsg(`✓ Importacion completa: ${s.mapped} mapeados, ${s.created} creados, ${s.skipped} saltados`);
+      // Mapear modificadores automaticamente despues
+      await fetch("/api/admin/modifiers/auto-map-toteat", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restaurantId }),
+      }).catch(() => {});
+      setWizardOpen(false);
+      setWizardItems(null);
+      load();
+    } finally {
+      setWizardApplying(false);
+    }
+  };
+
   useEffect(() => {
     fetch(`/api/admin/locales/${restaurantId}`).then(r => r.ok ? r.json() : null).then(d => { if (d?.name) setRestaurantName(d.name); }).catch(() => {});
   }, [restaurantId]);
@@ -123,28 +196,17 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
           return;
         }
         setCredsOk(true);
-        setMsg("Credenciales guardadas. Sincronizando catalogo y mapeando platos...");
-        // Disparar primer sync para cargar el catálogo
+        setMsg("Credenciales guardadas. Cargando tu catalogo de Toteat...");
+        // Cargar catalogo de Toteat (la primera consulta puede tardar unos segundos)
         await fetch("/api/admin/toteat/sync-now", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ restaurantId }),
         }).catch(() => {});
-        // Auto-mapear automaticamente despues del sync
-        await Promise.all([
-          fetch("/api/admin/dishes/auto-map-toteat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ restaurantId }),
-          }).catch(() => {}),
-          fetch("/api/admin/modifiers/auto-map-toteat", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ restaurantId }),
-          }).catch(() => {}),
-        ]);
-        setMsg("✓ Conexion lista. Revisa abajo cuantos platos quedaron mapeados automaticamente.");
+        setMsg(null);
+        // Forzar re-render al estado normal y abrir wizard
         load();
+        await loadWizard();
       } finally {
         setSavingCreds(false);
       }
@@ -445,6 +507,89 @@ Quedo atento. Gracias.`;
                 onModifierMap={setModifierMapping}
               />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Wizard de import — modal */}
+      {wizardOpen && wizardItems && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 720, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24 }}>
+            <div style={{ marginBottom: 16 }}>
+              <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
+                Importar tu carta desde Toteat
+              </p>
+              <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+                Encontramos <strong>{wizardSummary?.toteatTotal} productos</strong> en tu Toteat.
+                Decide qué hacer con cada uno. Los platos que ya tienes en QuieroComer <strong>no se sobrescriben</strong> (foto, descripción y modificadores quedan intactos).
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+              <span style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 50, background: "rgba(74,222,128,0.12)", color: "#16a34a", fontFamily: F, fontWeight: 600 }}>
+                {wizardSummary?.alreadyMapped || 0} ya mapeados
+              </span>
+              <span style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 50, background: "rgba(244,166,35,0.12)", color: "#92400e", fontFamily: F, fontWeight: 600 }}>
+                {wizardSummary?.matchFound || 0} para mapear
+              </span>
+              <span style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 50, background: "rgba(124,58,237,0.12)", color: "#7c3aed", fontFamily: F, fontWeight: 600 }}>
+                {wizardSummary?.newToCreate || 0} nuevos por crear
+              </span>
+              {wizardQcOnly.length > 0 && (
+                <span style={{ fontSize: "0.78rem", padding: "4px 10px", borderRadius: 50, background: "var(--adm-input)", color: "var(--adm-text3)", fontFamily: F, fontWeight: 600 }}>
+                  {wizardQcOnly.length} solo en QuieroComer (no se tocan)
+                </span>
+              )}
+            </div>
+
+            <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 10, marginBottom: 16 }}>
+              {wizardItems.map((it, idx) => {
+                const isAlreadyMapped = it.action === "already-mapped";
+                return (
+                  <div key={it.toteatId} style={{ padding: "10px 14px", borderBottom: idx < wizardItems.length - 1 ? "1px solid var(--adm-card-border)" : "none", display: "flex", alignItems: "center", gap: 12, opacity: isAlreadyMapped ? 0.55 : 1 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.toteatName}</p>
+                      <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                        {it.toteatCategory && `${it.toteatCategory} · `}${it.toteatPrice.toLocaleString("es-CL")}
+                        {isAlreadyMapped && <> · ya mapeado a "{it.suggestedDishName}"</>}
+                        {it.action === "match-found" && it.suggestedDishName && <> · sugerencia: "{it.suggestedDishName}"</>}
+                      </p>
+                    </div>
+                    {!isAlreadyMapped && (
+                      <select
+                        value={it.chosen}
+                        onChange={(e) => {
+                          const newVal = e.target.value as "map" | "create" | "skip";
+                          setWizardItems((prev) => prev?.map((p) => p.toteatId === it.toteatId ? { ...p, chosen: newVal } : p) || null);
+                        }}
+                        style={{ padding: "6px 10px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, color: "var(--adm-text)", fontFamily: F, fontSize: "0.78rem", cursor: "pointer", flexShrink: 0 }}
+                      >
+                        {it.action === "match-found" && <option value="map">Mapear a "{it.suggestedDishName}"</option>}
+                        <option value="create">Crear nuevo plato</option>
+                        <option value="skip">Saltar</option>
+                      </select>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+              <button
+                onClick={() => { setWizardOpen(false); setWizardItems(null); }}
+                disabled={wizardApplying}
+                style={{ padding: "10px 18px", background: "var(--adm-hover)", color: "var(--adm-text2)", border: "1px solid var(--adm-card-border)", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: wizardApplying ? "wait" : "pointer" }}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={applyWizard}
+                disabled={wizardApplying}
+                style={{ padding: "10px 22px", background: wizardApplying ? "#ccc" : "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: wizardApplying ? "wait" : "pointer" }}
+              >
+                {wizardApplying ? "Aplicando..." : "Aplicar"}
+              </button>
+            </div>
           </div>
         </div>
       )}
