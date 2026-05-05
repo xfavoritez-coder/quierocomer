@@ -595,12 +595,6 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
 
   const maxTime = clientes?.timeOfDay ? Math.max(...clientes.timeOfDay.map((t: any) => t.count), 1) : 1;
   const dietColors: Record<string, string> = { OMNIVORE: "#F4A623", VEGAN: "#4ade80", VEGETARIAN: "#16a34a", PESCETARIAN: "#7fbfdc" };
-  const deviceLabels: Record<string, { label: string; icon: string }> = {
-    mobile: { label: "Móvil", icon: "📱" },
-    tablet: { label: "Tablet", icon: "📲" },
-    desktop: { label: "Desktop", icon: "🖥️" },
-    unknown: { label: "Otro", icon: "❔" },
-  };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -639,55 +633,6 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
                 <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* Cómo llegan */}
-      {clientes?.acquisition && clientes.totalSessions > 0 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🚪 Cómo llegan</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Origen</p>
-              {[
-                { label: "📷 QR escaneado", count: clientes.acquisition.qrScans, pct: clientes.acquisition.qrPct, color: "var(--adm-accent)" },
-                { label: "🔗 Link directo", count: clientes.acquisition.direct, pct: clientes.acquisition.directPct, color: "#7fbfdc" },
-              ].map((row) => (
-                <div key={row.label} style={{ marginBottom: 8 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{row.label}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: row.color, fontWeight: 600 }}>{row.count} ({row.pct}%)</span>
-                  </div>
-                  <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
-                    <div style={{ height: "100%", width: `${row.pct}%`, borderRadius: 3, background: row.color, transition: "width 0.4s ease" }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Dispositivo</p>
-              {clientes.acquisition.devices.length === 0 ? (
-                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)" }}>Sin datos</p>
-              ) : (
-                clientes.acquisition.devices.map((d: any) => {
-                  const meta = deviceLabels[d.name] || deviceLabels.unknown;
-                  const totalDev = clientes.acquisition.devices.reduce((s: number, x: any) => s + x.count, 0);
-                  const pct = totalDev > 0 ? Math.round((d.count / totalDev) * 100) : 0;
-                  return (
-                    <div key={d.name} style={{ marginBottom: 8 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                        <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{meta.icon} {meta.label}</span>
-                        <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 600 }}>{d.count} ({pct}%)</span>
-                      </div>
-                      <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, borderRadius: 3, background: "var(--adm-accent)", opacity: 0.65, transition: "width 0.4s ease" }} />
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
           </div>
         </div>
       )}
