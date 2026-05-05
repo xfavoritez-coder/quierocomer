@@ -731,7 +731,7 @@ export default function CartaPremium({
                   style={{
                     position: "absolute", right: 0, top: 0, bottom: 8, width: 56,
                     pointerEvents: "none",
-                    background: "linear-gradient(to right, rgba(247,247,245,0) 0%, rgba(247,247,245,0.85) 70%, rgba(247,247,245,1) 100%)",
+                    background: "linear-gradient(to right, rgba(247,247,245,0) 0%, rgba(247,247,245,0.4) 70%, rgba(247,247,245,0.6) 100%)",
                     opacity: 0, transition: "opacity 0.18s ease",
                   }}
                 />
