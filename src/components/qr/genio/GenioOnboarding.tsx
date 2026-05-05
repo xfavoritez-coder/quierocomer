@@ -187,10 +187,11 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         { icon: Flame, labelKey: "gWithoutSpicy" as const, value: "_spicy" },
       ];
       const nutNames = ["maní", "nueces", "almendras"];
+      // Restricciones que NO mostramos en Genio (no son alergenos, son preferencias culturales/dieta)
+      const HIDDEN_RESTRICTIONS = ["alcohol", "mariscos", "cerdo", "pescado", "huevo"];
       let hasNuts = false;
       for (const item of items) {
-        // Skip alcohol
-        if (item.name === "alcohol") continue;
+        if (HIDDEN_RESTRICTIONS.includes(item.name)) continue;
         // Unify nuts into "frutos secos"
         if (nutNames.includes(item.name)) {
           if (!hasNuts) {
