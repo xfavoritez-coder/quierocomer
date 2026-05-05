@@ -400,6 +400,46 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
                 {(selectedDish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(34,197,94,0.1)", color: "#16a34a" }}>🥗 Vegetariano</span>}
                 {(selectedDish as any).isSpicy && <span style={{ fontSize: "0.82rem", padding: "4px 12px", borderRadius: 50, background: "rgba(232,85,48,0.1)", color: "#e85530" }}>🌶️ Picante</span>}
               </div>
+
+              {/* Modifier groups & options (todos los grupos del template, ordenados por position) */}
+              {(() => {
+                const templates = (selectedDish as any).modifierTemplates || [];
+                const allGroups = templates.flatMap((t: any) => t.groups || []);
+                if (allGroups.length === 0) return null;
+                return (
+                  <div style={{ marginTop: 24 }}>
+                    {allGroups.map((g: any) => {
+                      const options = g.options || [];
+                      if (options.length === 0) return null;
+                      return (
+                        <div key={g.id} style={{ marginBottom: 18 }}>
+                          <p style={{ color: "#888", fontSize: "0.78rem", fontWeight: 600, margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
+                          <div>
+                            {options.map((opt: any, i: number) => (
+                              <div key={opt.id} style={{ padding: "10px 0", borderBottom: i < options.length - 1 ? "1px solid #eee" : "none" }}>
+                                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                                  {opt.imageUrl && (
+                                    <img src={opt.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                                  )}
+                                  <span style={{ color: "#333", fontSize: "0.95rem", fontWeight: 600, flex: 1 }}>{opt.name}</span>
+                                  {opt.priceAdjustment !== 0 && (
+                                    <span style={{ color: "#999", fontSize: "0.88rem", fontWeight: 500, flexShrink: 0, marginLeft: 12 }}>
+                                      {opt.priceAdjustment > 0 ? "+" : "-"}${Math.abs(opt.priceAdjustment).toLocaleString("es-CL")}
+                                    </span>
+                                  )}
+                                </div>
+                                {opt.description && (
+                                  <p style={{ color: "#999", fontSize: "0.85rem", margin: "4px 0 0", lineHeight: 1.4 }}>{opt.description}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
