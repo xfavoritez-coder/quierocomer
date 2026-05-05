@@ -520,7 +520,7 @@ function DishSlide({
 
                 return (
                   <div key={g.id} style={{ marginBottom: 16 }}>
-                    <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.78rem", fontWeight: 600, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
+                    <p style={{ color: "#999", fontSize: "13.5px", fontWeight: 500, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
                     <div>
                       {rows.map((row, i) => (
                         <div key={i} style={{ padding: "10px 0", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.08)" : "none" }}>
@@ -555,7 +555,7 @@ function DishSlide({
           if (suggestions.length === 0) return null;
           return (
             <div style={{ marginTop: 32 }}>
-              <p style={{ fontSize: "0.82rem", color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
+              <p style={{ color: "#999", fontSize: "13.5px", fontWeight: 500, margin: "0 0 10px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{title}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {suggestions.map((s) => (
                   <div
