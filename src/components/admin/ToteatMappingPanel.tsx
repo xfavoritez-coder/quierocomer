@@ -182,12 +182,18 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
             type="button"
             onClick={() => setRequestModalOpen(true)}
             style={{
-              background: "none", border: "none", color: "#F4A623", padding: 0,
-              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
-              textDecoration: "underline", marginBottom: 16,
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 16px", marginBottom: 16,
+              background: "linear-gradient(90deg, rgba(244,166,35,0.12), rgba(244,166,35,0.04))",
+              border: "1.5px solid rgba(244,166,35,0.4)",
+              borderRadius: 10, cursor: "pointer", width: "100%",
+              fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: "#92400e",
+              textAlign: "left",
             }}
           >
-            ¿No las tienes? Solicítalas a Toteat aquí →
+            <span style={{ fontSize: "1.2rem" }}>📧</span>
+            <span style={{ flex: 1 }}>¿No tienes las credenciales? Te ayudamos a pedirlas a Toteat</span>
+            <span style={{ fontSize: "0.85rem", opacity: 0.7 }}>→</span>
           </button>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
@@ -237,35 +243,21 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
 
         {requestModalOpen && (() => {
           const localName = restaurantName || "[NOMBRE DEL RESTAURANTE]";
-          const subject = "Solicitud de credenciales API para integración con QuieroComer";
-          const body = `Hola equipo Toteat,
+          const subject = "Solicitud de credenciales API";
+          const body = `Hola,
 
-Soy el dueño/administrador del local ${localName} y me contacto para solicitar las credenciales de API. Vamos a integrarnos con QuieroComer (carta digital QR) que se conecta a Toteat para sincronizar las ventas reales con la carta y entregarme estadísticas cruzadas.
+Soy el administrador del local ${localName} y necesito las credenciales de API de mi cuenta:
 
-Datos del local:
-- Nombre del restaurante: ${localName}
-- RUT del local: [RUT DE LA EMPRESA]
-- Usuario administrador en Toteat: [TU EMAIL CON EL QUE ENTRAS A TOTEAT]
-
-Credenciales que necesito:
 - Restaurant ID (xir)
 - Local ID (xil)
 - User ID (xiu)
 - API Token (xapitoken)
 
-Estas credenciales las usará QuieroComer únicamente para leer las ventas vía la API de Toteat (no se modifica ni se escribe nada en mi cuenta).
-
-Quedo atento. Muchas gracias.
-
-Saludos,
-[TU NOMBRE]
-[TU CARGO — Dueño / Administrador]
-[TU TELÉFONO DE CONTACTO]`;
-          const mailto = `mailto:clientes@toteat.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+Quedo atento. Gracias.`;
 
           const handleCopy = async () => {
             try {
-              await navigator.clipboard.writeText(`Para: clientes@toteat.com\nAsunto: ${subject}\n\n${body}`);
+              await navigator.clipboard.writeText(body);
               setEmailCopied(true);
               setTimeout(() => setEmailCopied(false), 2500);
             } catch {}
@@ -273,47 +265,34 @@ Saludos,
 
           return (
             <div onClick={() => setRequestModalOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-              <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 560, width: "100%", maxHeight: "85vh", overflowY: "auto", padding: 24 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
-                  <div>
-                    <p style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>📩 Solicitar credenciales a Toteat</p>
-                    <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
-                      Envía este correo a <strong>clientes@toteat.com</strong>. Reemplaza los <code style={{ background: "rgba(244,166,35,0.15)", color: "#92400e", padding: "1px 5px", borderRadius: 3, fontSize: "0.78rem" }}>[entre corchetes]</code> con tus datos.
-                    </p>
-                  </div>
-                  <button onClick={() => setRequestModalOpen(false)} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "1.2rem", cursor: "pointer", lineHeight: 1, padding: 0, marginLeft: 12 }}>✕</button>
+              <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 460, width: "100%", padding: 22 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>Solicitar credenciales a Toteat</p>
+                  <button onClick={() => setRequestModalOpen(false)} style={{ background: "none", border: "none", color: "var(--adm-text3)", fontSize: "1.2rem", cursor: "pointer", lineHeight: 1, padding: 0 }}>✕</button>
                 </div>
 
-                <div style={{ background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 14px", marginBottom: 14, fontSize: "0.78rem", color: "var(--adm-text2)", fontFamily: FB }}>
-                  <p style={{ margin: 0 }}><strong style={{ color: "var(--adm-text)" }}>Para:</strong> clientes@toteat.com</p>
-                  <p style={{ margin: "4px 0 0" }}><strong style={{ color: "var(--adm-text)" }}>Asunto:</strong> {subject}</p>
-                </div>
+                <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
+                  Envía este mensaje a <strong style={{ color: "var(--adm-text)" }}>clientes@toteat.com</strong>:
+                </p>
 
                 <pre style={{
                   background: "var(--adm-input)", border: "1px solid var(--adm-card-border)",
-                  borderRadius: 10, padding: 14, fontFamily: "ui-monospace, SFMono-Regular, monospace",
-                  fontSize: "0.78rem", color: "var(--adm-text)", lineHeight: 1.55,
-                  whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0, marginBottom: 14, maxHeight: 320, overflowY: "auto",
+                  borderRadius: 10, padding: 14, fontFamily: FB,
+                  fontSize: "0.82rem", color: "var(--adm-text)", lineHeight: 1.55,
+                  whiteSpace: "pre-wrap", wordBreak: "break-word", margin: 0, marginBottom: 14,
                 }}>{body}</pre>
 
-                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                  <button
-                    onClick={handleCopy}
-                    style={{ flex: 1, minWidth: 180, padding: "10px 16px", background: emailCopied ? "#16a34a" : "var(--adm-hover)", color: emailCopied ? "white" : "var(--adm-text)", border: "1px solid var(--adm-card-border)", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", transition: "all 0.15s" }}
-                  >
-                    {emailCopied ? "✓ Copiado" : "📋 Copiar texto"}
-                  </button>
-                  <a
-                    href={mailto}
-                    style={{ flex: 1, minWidth: 180, padding: "10px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 999, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer", textAlign: "center", textDecoration: "none" }}
-                  >
-                    ✉ Abrir mi correo
-                  </a>
-                </div>
-
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "14px 0 0", lineHeight: 1.5 }}>
-                  💡 Toteat suele responder en 1-2 días hábiles. Cuando recibas las credenciales, vuelve a esta misma pantalla y pégalas en el formulario de arriba.
-                </p>
+                <button
+                  onClick={handleCopy}
+                  style={{
+                    width: "100%", padding: "11px 16px",
+                    background: emailCopied ? "#16a34a" : "#F4A623", color: "white",
+                    border: "none", borderRadius: 999, fontFamily: F, fontSize: "0.85rem",
+                    fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
+                  }}
+                >
+                  {emailCopied ? "✓ Copiado" : "📋 Copiar texto"}
+                </button>
               </div>
             </div>
           );

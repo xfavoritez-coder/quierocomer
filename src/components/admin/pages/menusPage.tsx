@@ -1297,7 +1297,7 @@ export default function AdminMenus() {
           { key: "categorias" as const, label: "Categorías" },
           { key: "modificadores" as const, label: "Modificadores" },
           { key: "horarios" as const, label: "Horarios" },
-          { key: "toteat" as const, label: "Toteat" },
+          ...(canAccess(activePlan, "toteat_integration") ? [{ key: "toteat" as const, label: "Toteat" }] : []),
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
