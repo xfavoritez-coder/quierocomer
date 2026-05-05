@@ -87,10 +87,17 @@ export default function LiveDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
 
-  // Supabase Realtime: cuando llega una venta nueva (INSERT en ToteatSale)
-  // del restaurant actual, refrescamos el dashboard automaticamente. Latencia ~200ms.
+  // Supabase Realtime con debounce: cuando llega una venta nueva (INSERT en
+  // ToteatSale) del restaurant, refrescamos el dashboard. El debounce evita
+  // bursts de queries cuando un sync de Toteat trae muchas ventas a la vez:
+  // todos los eventos en una ventana de 1.5s se colapsan en un solo load().
   useEffect(() => {
     if (!supabase || !selectedRestaurantId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedLoad = () => {
+      if (timer) return; // ya hay uno agendado
+      timer = setTimeout(() => { load(); timer = null; }, 1500);
+    };
     const channel = supabase
       .channel(`toteat-sales-${selectedRestaurantId}`)
       .on("postgres_changes", {
@@ -98,11 +105,10 @@ export default function LiveDashboard() {
         schema: "public",
         table: "ToteatSale",
         filter: `restaurantId=eq.${selectedRestaurantId}`,
-      }, () => {
-        load();
-      })
+      }, debouncedLoad)
       .subscribe();
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

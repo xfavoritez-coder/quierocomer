@@ -178,10 +178,16 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     return () => clearInterval(interval);
   }, [refetchCalls, shiftEnded]);
 
-  // Supabase Realtime: escucha INSERTs y UPDATEs en WaiterCall del restaurant
-  // y recarga las llamadas activas. Latencia ~200ms.
+  // Supabase Realtime con debounce: escucha INSERTs y UPDATEs en WaiterCall
+  // y recarga las llamadas. Debounce de 800ms para colapsar eventos cercanos
+  // (ej. dos comensales que llaman casi a la vez) en un solo refetch.
   useEffect(() => {
     if (shiftEnded || !supabase || !restaurantId) return;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const debouncedRefetch = () => {
+      if (timer) return;
+      timer = setTimeout(() => { refetchCalls(); timer = null; }, 800);
+    };
     const channel = supabase
       .channel(`waiter-calls-${restaurantId}`)
       .on("postgres_changes", {
@@ -189,12 +195,11 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
         schema: "public",
         table: "WaiterCall",
         filter: `restaurantId=eq.${restaurantId}`,
-      }, () => {
-        refetchCalls();
-      })
+      }, debouncedRefetch)
       .subscribe();
 
     return () => {
+      if (timer) clearTimeout(timer);
       supabase.removeChannel(channel);
     };
   }, [restaurantId, shiftEnded, refetchCalls]);
