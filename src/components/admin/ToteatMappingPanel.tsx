@@ -8,10 +8,12 @@ const FB = "var(--font-body)";
 interface CatalogEntry { toteatProductId: string; name: string; hierarchyName: string | null; totalSold?: number; }
 interface ModifierInfo { id: string; name: string; group: string; template: string; toteatProductId: string | null; toteatName: string | null; mappedBy: string | null; }
 interface MappedDish { id: string; name: string; photo: string | null; category: string | null; toteatProductId: string; toteatName: string | null; mappedBy: string; mappedAt: string | null; modifiers: ModifierInfo[]; }
-interface UnmappedDish { id: string; name: string; photo: string | null; category: string | null; suggestion: { score: number; toteatProductId: string; name: string } | null; modifiers: ModifierInfo[]; }
+interface ViaModifiersDish { id: string; name: string; photo: string | null; category: string | null; isManualOverride?: boolean; modifiers: ModifierInfo[]; }
+interface UnmappedDish { id: string; name: string; photo: string | null; category: string | null; suggestion: { score: number; toteatProductId: string; name: string } | null; hasMappedModifiers?: boolean; modifiers: ModifierInfo[]; }
 interface ToteatStatus {
-  summary: { total: number; mapped: number; unmapped: number; mappedPct: number; catalogSize: number };
+  summary: { total: number; mapped: number; mappedDirectly?: number; mappedViaModifiers?: number; unmapped: number; mappedPct: number; catalogSize: number };
   mapped: MappedDish[];
+  viaModifiers?: ViaModifiersDish[];
   unmapped: UnmappedDish[];
   catalog: CatalogEntry[];
   modifierCatalog: CatalogEntry[];
@@ -146,6 +148,18 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ toteatProductId }),
+      });
+      if (res.ok) load();
+    } finally { setBusy(false); }
+  };
+
+  const markDishAsComposite = async (dishId: string) => {
+    setBusy(true);
+    try {
+      const res = await fetch(`/api/admin/dishes/${dishId}/map-toteat`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ noDirectMapping: true }),
       });
       if (res.ok) load();
     } finally { setBusy(false); }
@@ -543,17 +557,68 @@ Quedo atento. Gracias.`;
                 disabled={busy}
                 onDishMap={(toteatId) => setDishMapping(d.id, toteatId)}
                 onModifierMap={setModifierMapping}
+                onMarkComposite={() => markDishAsComposite(d.id)}
               />
             ))}
           </div>
         </div>
       )}
 
+      {/* Via modifiers list */}
+      {data.viaModifiers && data.viaModifiers.length > 0 && (() => {
+        const filteredVia = filterText
+          ? data.viaModifiers.filter((d) => d.name.toLowerCase().includes(filterText) || (d.category || "").toLowerCase().includes(filterText))
+          : data.viaModifiers;
+        if (filteredVia.length === 0) return null;
+        return (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "14px 16px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "#7c3aed", margin: "0 0 4px" }}>
+              ✓ Mapeados vía modificadores ({filteredVia.length})
+            </p>
+            <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 12px", lineHeight: 1.4 }}>
+              Estos son platos "compuestos" en tu carta: la atribución de ventas pasa por sus modificadores (que ya están conectados a Toteat), no por el plato padre. Ejemplo típico: una "Limonada Artesanal" con varios sabores como modifiers.
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {filteredVia.map((d) => (
+                <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "rgba(124,58,237,0.04)", border: "1px solid rgba(124,58,237,0.15)", borderRadius: 8 }}>
+                  {d.photo ? (
+                    <img src={d.photo} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 36, height: 36, borderRadius: 6, background: "var(--adm-input)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "1rem", opacity: 0.4 }}>🍽️</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>{d.name}</p>
+                    <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                      {d.category && `${d.category} · `}{d.modifiers.filter((m) => m.toteatProductId).length} modifier{d.modifiers.filter((m) => m.toteatProductId).length !== 1 ? "s" : ""} mapeado{d.modifiers.filter((m) => m.toteatProductId).length !== 1 ? "s" : ""}
+                      {d.isManualOverride && " · marcado manualmente"}
+                    </p>
+                  </div>
+                  {d.isManualOverride && (
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/admin/dishes/${d.id}/map-toteat`, {
+                          method: "PATCH", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ noDirectMapping: false }),
+                        });
+                        load();
+                      }}
+                      style={{ padding: "4px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text3)", fontFamily: F, fontSize: "0.68rem", cursor: "pointer" }}
+                    >
+                      Quitar override
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Mapped list */}
       {filteredMapped.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "14px 16px" }}>
           <p style={{ fontFamily: F, fontSize: "0.84rem", fontWeight: 700, color: "#16a34a", margin: "0 0 12px" }}>
-            ✓ Mapeados ({filteredMapped.length})
+            ✓ Mapeados directo ({filteredMapped.length})
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {filteredMapped.map((d) => (
@@ -574,9 +639,15 @@ Quedo atento. Gracias.`;
 
       {/* Wizard de import — modal */}
       {wizardOpen && wizardItems && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 720, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24 }}>
-            <div style={{ marginBottom: 16 }}>
+        <div onClick={() => { if (!wizardApplying) { setWizardOpen(false); setWizardItems(null); } }} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, maxWidth: 720, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 24, position: "relative" }}>
+            <button
+              onClick={() => { setWizardOpen(false); setWizardItems(null); }}
+              disabled={wizardApplying}
+              aria-label="Cerrar"
+              style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "var(--adm-text3)", fontSize: "1.4rem", cursor: wizardApplying ? "wait" : "pointer", lineHeight: 1, padding: 4 }}
+            >✕</button>
+            <div style={{ marginBottom: 16, paddingRight: 24 }}>
               <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
                 Importar tu carta desde Toteat
               </p>
@@ -674,9 +745,10 @@ interface DishWithModsProps {
   disabled: boolean;
   onDishMap: (toteatId: string | null) => void;
   onModifierMap: (modifierId: string, toteatId: string | null) => void;
+  onMarkComposite?: () => void;
 }
 
-function DishWithModifiers({ dish, mappedKind, catalog, modifierCatalog, disabled, onDishMap, onModifierMap }: DishWithModsProps) {
+function DishWithModifiers({ dish, mappedKind, catalog, modifierCatalog, disabled, onDishMap, onModifierMap, onMarkComposite }: DishWithModsProps) {
   const hasMods = dish.modifiers.length > 0;
   const mappedMods = dish.modifiers.filter((m) => m.toteatProductId).length;
   const [showMods, setShowMods] = useState(false);
@@ -692,6 +764,7 @@ function DishWithModifiers({ dish, mappedKind, catalog, modifierCatalog, disable
           }
           catalog={catalog}
           disabled={disabled}
+          onMarkComposite={mappedKind === "unmapped" ? onMarkComposite : undefined}
           onSelect={(id) => { onDishMap(id); setEditingDish(false); }}
           onCancel={editingDish ? () => setEditingDish(false) : undefined}
         />
@@ -748,7 +821,7 @@ function MappedDishRow({ dish, disabled, onEdit, onUnmap }: { dish: MappedDish; 
   );
 }
 
-function DishMapRow({ dish, catalog, disabled, onSelect, onCancel }: { dish: UnmappedDish; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string) => void; onCancel?: () => void }) {
+function DishMapRow({ dish, catalog, disabled, onSelect, onCancel, onMarkComposite }: { dish: UnmappedDish; catalog: CatalogEntry[]; disabled: boolean; onSelect: (toteatId: string) => void; onCancel?: () => void; onMarkComposite?: () => void }) {
   const [value, setValue] = useState(dish.suggestion?.toteatProductId || "");
   const [customMode, setCustomMode] = useState(false);
   const [customId, setCustomId] = useState("");
@@ -813,6 +886,16 @@ function DishMapRow({ dish, catalog, disabled, onSelect, onCancel }: { dish: Unm
           style={{ padding: "6px 10px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}
         >
           Cancelar
+        </button>
+      )}
+      {onMarkComposite && (
+        <button
+          onClick={onMarkComposite}
+          disabled={disabled}
+          title="Este plato no tiene contraparte directa en Toteat porque sus modificadores son los que efectivamente se venden (ej. Limonada Artesanal con varios sabores)"
+          style={{ padding: "6px 10px", background: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.25)", borderRadius: 8, fontFamily: F, fontSize: "0.7rem", color: "#7c3aed", cursor: "pointer", fontWeight: 600 }}
+        >
+          🧩 Es plato compuesto
         </button>
       )}
     </div>

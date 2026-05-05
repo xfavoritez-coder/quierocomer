@@ -681,6 +681,7 @@ model Dish {
   toteatMappedBy  String?    // "auto" | "manual" — for audit
   toteatHidden    Boolean    @default(false)  // Toteat marca el producto como inactivo/oculto → no se muestra en la carta
   toteatSynced    Boolean    @default(false)  // true si este plato vino de Toteat (creado en import o detectado automaticamente)
+  toteatNoDirectMapping Boolean @default(false)  // true si el plato es un "agrupador" (ej. Limonada Artesanal con varios sabores como modifiers): la atribucion de ventas pasa por los modifiers, no por el plato padre
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
