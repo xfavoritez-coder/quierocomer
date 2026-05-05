@@ -1515,19 +1515,43 @@ export default function AdminMenus() {
         <SkeletonLoading type="list" />
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {paginated.length > 0 && (
-            <label style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 10px", cursor: "pointer", userSelect: "none" }}>
-              <input
-                type="checkbox"
-                checked={paginated.length > 0 && paginated.every(d => bulkSelected.has(d.id))}
-                onChange={toggleBulkAll}
-                style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
-              />
-              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
-                {paginated.every(d => bulkSelected.has(d.id)) ? "Deseleccionar todos" : "Seleccionar todos"}
-              </span>
-            </label>
-          )}
+          {paginated.length > 0 && (() => {
+            const hasFilters = !!search || catFilter !== "all" || dietFilter !== "all" || spicyFilter || glutenFreeFilter || lactoseFreeFilter || soyFreeFilter;
+            const allPageSelected = paginated.every(d => bulkSelected.has(d.id));
+            const allFilteredSelected = filtered.length > 0 && filtered.every(d => bulkSelected.has(d.id));
+            const moreInOtherPages = filtered.length > paginated.length;
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 10px", flexWrap: "wrap" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none" }}>
+                    <input
+                      type="checkbox"
+                      checked={allPageSelected}
+                      onChange={toggleBulkAll}
+                      style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
+                    />
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>
+                      {allPageSelected ? "Deseleccionar todos" : "Seleccionar todos"}
+                    </span>
+                  </label>
+                  {hasFilters && (
+                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>
+                      · <strong style={{ color: "var(--adm-text2)" }}>{filtered.length}</strong> producto{filtered.length !== 1 ? "s" : ""} filtrado{filtered.length !== 1 ? "s" : ""}
+                    </span>
+                  )}
+                </div>
+                {/* Boton "seleccionar TODOS los X de la carta/filtrados" — aparece siempre que haya mas productos para abarcar */}
+                {moreInOtherPages && !allFilteredSelected && (
+                  <button
+                    onClick={() => setBulkSelected(new Set(filtered.map(d => d.id)))}
+                    style={{ alignSelf: "flex-start", marginLeft: 30, padding: "5px 10px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", fontFamily: F, fontSize: "0.7rem", fontWeight: 600, cursor: "pointer" }}
+                  >
+                    Seleccionar los {filtered.length} {hasFilters ? "productos filtrados" : "productos de toda la carta"} →
+                  </button>
+                )}
+              </div>
+            );
+          })()}
           {paginated.map(d => {
             const isRec = d.tags?.includes("RECOMMENDED");
             const isExpanded = expandedDishId === d.id;
