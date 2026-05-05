@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/adminAuth";
 import { getToteatProductCatalog, suggestCandidatesForDishes } from "@/lib/toteat/mapping";
+import crypto from "crypto";
 
 /**
  * Returns the mapping status for a restaurant's dishes:
@@ -23,10 +24,20 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const restaurantInfo = await prisma.restaurant.findUnique({
+  let restaurantInfo = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { toteatWebhookSecret: true, toteatImportDone: true },
+    select: { toteatWebhookSecret: true, toteatImportDone: true, toteatApiToken: true },
   });
+
+  // Auto-generar webhookSecret si tiene credenciales pero no secret (legacy)
+  if (restaurantInfo?.toteatApiToken && !restaurantInfo.toteatWebhookSecret) {
+    const newSecret = crypto.randomBytes(24).toString("hex");
+    await prisma.restaurant.update({
+      where: { id: restaurantId },
+      data: { toteatWebhookSecret: newSecret },
+    });
+    restaurantInfo = { ...restaurantInfo, toteatWebhookSecret: newSecret };
+  }
 
   const dishes = await prisma.dish.findMany({
     where: { restaurantId, isActive: true, deletedAt: null },
