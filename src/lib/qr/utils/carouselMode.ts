@@ -1,4 +1,13 @@
-export type CarouselMode = "vegan" | "vegetarian" | "glutenfree" | "lactosefree" | "soyfree" | "vegan+gf" | "vegetarian+gf" | "smart" | null;
+export type CarouselMode = "vegan" | "vegetarian" | "glutenfree" | "lactosefree" | "soyfree" | "nutsfree" | "vegan+gf" | "vegetarian+gf" | "smart" | null;
+
+const NUT_RESTRICTIONS = ["maní", "mani", "nueces", "almendras", "frutos secos", "nuez", "almendra"];
+const isNutRestriction = (r: string) => NUT_RESTRICTIONS.includes(r.toLowerCase());
+// Frutos secos se almacena expandido (mani/nueces/almendras) — collapse a un solo "thing" para el conteo
+const collapseNuts = (active: string[]): { hasNuts: boolean; nonNutCount: number } => {
+  const hasNuts = active.some(isNutRestriction);
+  const nonNutCount = active.filter(r => !isNutRestriction(r)).length;
+  return { hasNuts, nonNutCount };
+};
 
 export function getCarouselMode(diet: string | null, restrictions: string[], restaurantDietType?: string | null): CarouselMode {
   const active = restrictions.filter(r => r !== "ninguna");
@@ -10,8 +19,8 @@ export function getCarouselMode(diet: string | null, restrictions: string[], res
   const hasGluten = active.includes("gluten");
   const hasLactosa = active.includes("lactosa");
   const hasSoja = active.includes("soja");
-  const otherRestrictions = active.filter(r => !["gluten", "lactosa", "soja"].includes(r));
-  const totalThings = (hasDiet ? 1 : 0) + active.length;
+  const { hasNuts, nonNutCount } = collapseNuts(active);
+  const totalThings = (hasDiet ? 1 : 0) + nonNutCount + (hasNuts ? 1 : 0);
 
   // Single selection → individual banner
   if (totalThings === 1) {
@@ -20,6 +29,7 @@ export function getCarouselMode(diet: string | null, restrictions: string[], res
     if (hasGluten) return "glutenfree";
     if (hasLactosa) return "lactosefree";
     if (hasSoja) return "soyfree";
+    if (hasNuts) return "nutsfree";
   }
 
   // Diet + only gluten → existing combo
@@ -40,6 +50,7 @@ export function getCarouselScrollId(mode: CarouselMode): string {
     case "glutenfree": return "genio-glutenfree-carousel";
     case "lactosefree": return "genio-lactosefree-carousel";
     case "soyfree": return "genio-soyfree-carousel";
+    case "nutsfree": return "genio-nutsfree-carousel";
     case "smart": return "genio-smart-carousel";
     default: return "";
   }
@@ -60,6 +71,13 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
     return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === name));
   };
 
+  const checkNutsFree = (d: any): boolean => {
+    if (d.containsNuts === true) return false;
+    const ings = d.dishIngredients || [];
+    if (ings.length === 0) return d.containsNuts === false;
+    return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => NUT_RESTRICTIONS.includes((a.name || "").toLowerCase())));
+  };
+
   return active.some((d: any) => {
     // Diet check
     if (mode === "vegan" || mode === "vegan+gf") { if (d.dishDiet !== "VEGAN") return false; }
@@ -68,12 +86,14 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
     if (mode === "vegan+gf" || mode === "vegetarian+gf" || mode === "glutenfree") { if (!checkAllergenFree(d, "gluten")) return false; }
     if (mode === "lactosefree") { if (!checkAllergenFree(d, "lactosa")) return false; }
     if (mode === "soyfree") { if (!checkAllergenFree(d, "soja")) return false; }
+    if (mode === "nutsfree") { if (!checkNutsFree(d)) return false; }
     if (mode === "smart" && restrictions) {
       if (diet === "vegan" && d.dishDiet !== "VEGAN") return false;
       if (diet === "vegetarian" && d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN") return false;
       for (const r of restrictions) {
         if (r === "_spicy" || r === "ninguna") continue;
         if (r === "_spicy" && d.isSpicy) return false;
+        if (isNutRestriction(r)) { if (!checkNutsFree(d)) return false; continue; }
         if (!checkAllergenFree(d, r)) return false;
       }
     }
@@ -118,6 +138,7 @@ export function getCarouselNavName(mode: CarouselMode): string {
     case "glutenfree": return "🌾 Sin gluten";
     case "lactosefree": return "🥛 Sin lactosa";
     case "soyfree": return "🫘 Sin soya";
+    case "nutsfree": return "🥜 Sin frutos secos";
     case "smart": return "🧞 Mi dieta";
     default: return "";
   }
