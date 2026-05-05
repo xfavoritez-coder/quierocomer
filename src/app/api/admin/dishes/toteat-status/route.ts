@@ -23,6 +23,11 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  const restaurantInfo = await prisma.restaurant.findUnique({
+    where: { id: restaurantId },
+    select: { toteatWebhookSecret: true, toteatImportDone: true },
+  });
+
   const dishes = await prisma.dish.findMany({
     where: { restaurantId, isActive: true, deletedAt: null },
     select: {
@@ -121,5 +126,7 @@ export async function GET(req: NextRequest) {
     })),
     catalog,
     modifierCatalog,
+    webhookSecret: restaurantInfo?.toteatWebhookSecret || null,
+    importDone: restaurantInfo?.toteatImportDone || false,
   });
 }

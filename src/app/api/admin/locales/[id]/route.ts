@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, assertOwnsRestaurant, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
+import crypto from "crypto";
 
 const OWNER_EDITABLE_FIELDS = [
   "name", "description", "logoUrl", "bannerUrl",
@@ -87,12 +88,16 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
       // Toteat credentials: solo owners de locales PREMIUM pueden editarlos
       const wantsToteat = body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
       if (wantsToteat) {
-        const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true } });
+        const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true, toteatWebhookSecret: true } });
         if (r?.plan === "PREMIUM") {
           if (body.toteatRestaurantId !== undefined) data.toteatRestaurantId = body.toteatRestaurantId || null;
           if (body.toteatLocalId !== undefined) data.toteatLocalId = body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId);
           if (body.toteatUserId !== undefined) data.toteatUserId = body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId);
           if (body.toteatApiToken !== undefined) data.toteatApiToken = body.toteatApiToken || null;
+          // Generar secret de webhook la primera vez
+          if (!r.toteatWebhookSecret && body.toteatApiToken) {
+            data.toteatWebhookSecret = crypto.randomBytes(24).toString("hex");
+          }
         }
       }
     }

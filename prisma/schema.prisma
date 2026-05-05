@@ -451,6 +451,7 @@ model Restaurant {
   toteatLastSyncAt   DateTime?
   toteatImportDone   Boolean    @default(false)  // true cuando el dueño completo el wizard de importacion inicial
   toteatLastVisibilitySyncAt DateTime?           // ultima vez que sincronizamos visibilidad (separado de ventas)
+  toteatWebhookSecret String?   @unique          // secret aleatorio por local — el dueño lo pega en webhook URL de Toteat
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
