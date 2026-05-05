@@ -670,6 +670,7 @@ export default function AdminMenus() {
   const [eGlutenFree, setEGlutenFree] = useState(false);
   const [eLactoseFree, setELactoseFree] = useState(false);
   const [eSoyFree, setESoyFree] = useState(false);
+  const [eContainsNuts, setEContainsNuts] = useState(false);
   const [ePhotoRef, setEPhotoRef] = useState(false);
   const [eFlavorTags, setEFlavorTags] = useState<string[]>([]);
   const [eCategoryId, setECategoryId] = useState("");
@@ -743,6 +744,7 @@ export default function AdminMenus() {
     setEGlutenFree((d as any).isGlutenFree || false);
     setELactoseFree((d as any).isLactoseFree || false);
     setESoyFree((d as any).isSoyFree || false);
+    setEContainsNuts((d as any).containsNuts || false);
     setEPhotoRef((d as any).isPhotoReferential || false);
     setEFlavorTags((d as any).flavorTags || []);
     setECategoryId(d.categoryId);
@@ -785,6 +787,7 @@ export default function AdminMenus() {
       isGlutenFree: eGlutenFree,
       isLactoseFree: eLactoseFree,
       isSoyFree: eSoyFree,
+      containsNuts: eContainsNuts,
       isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
@@ -891,6 +894,7 @@ export default function AdminMenus() {
                 {(selectedDish as any).isGlutenFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(139,105,20,0.1)", color: "#8B6914" }}>🌾 Sin gluten</span>}
                 {(selectedDish as any).isLactoseFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(59,130,246,0.1)", color: "#2563EB" }}>🥛 Sin lactosa</span>}
                 {(selectedDish as any).isSoyFree && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#059669" }}>🫘 Sin soya</span>}
+                {(selectedDish as any).containsNuts && <span style={{ fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: "rgba(192,138,91,0.12)", color: "#a06a3a" }}>🥜 Frutos secos</span>}
                 {((selectedDish as any).flavorTags || []).map((f: string) => {
                   const icons: Record<string, string> = { dulce: "🍯", agridulce: "🍊", "ácido": "🍋", umami: "🍄", ahumado: "🔥" };
                   const colors: Record<string, string> = { dulce: "#f59e0b", agridulce: "#fb923c", "ácido": "#a3e635", umami: "#c084fc", ahumado: "#a78bfa" };
@@ -1048,6 +1052,9 @@ export default function AdminMenus() {
                   </button>
                   <button onClick={() => setESoyFree(!eSoyFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eSoyFree ? "1.5px solid rgba(16,185,129,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSoyFree ? "rgba(16,185,129,0.1)" : "transparent", color: eSoyFree ? "#059669" : "var(--adm-text3)" }}>
                     🫘 Sin soya
+                  </button>
+                  <button onClick={() => setEContainsNuts(!eContainsNuts)} style={{ padding: "6px 12px", borderRadius: 8, border: eContainsNuts ? "1.5px solid rgba(192,138,91,0.4)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eContainsNuts ? "rgba(192,138,91,0.12)" : "transparent", color: eContainsNuts ? "#a06a3a" : "var(--adm-text3)" }}>
+                    🥜 Frutos secos
                   </button>
                 </div>
               </div>

@@ -668,6 +668,7 @@ model Dish {
   isGlutenFree   Boolean      @default(false)
   isLactoseFree  Boolean      @default(false)
   isSoyFree      Boolean      @default(false)
+  containsNuts   Boolean      @default(false)  // contiene frutos secos (mani, almendras, nueces, etc)
   isHighMargin   Boolean      @default(false)
   isPhotoReferential Boolean  @default(false)
   isFeaturedAuto Boolean      @default(false)

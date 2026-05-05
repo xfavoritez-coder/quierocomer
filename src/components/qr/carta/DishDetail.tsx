@@ -60,7 +60,6 @@ export default function DishDetail({
   }, [allDishes]);
 
   const [visible, setVisible] = useState(true);
-  const [showInfo, setShowInfo] = useState(false);
   const [expandedDescs, setExpandedDescs] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const currentIndex = allDishes.findIndex((d) => d.id === dish.id);
@@ -186,8 +185,6 @@ export default function DishDetail({
             isActive={idx === activeIdx}
             expandedDescs={expandedDescs}
             setExpandedDescs={setExpandedDescs}
-            showInfo={showInfo && idx === activeIdx}
-            setShowInfo={setShowInfo}
             onClose={close}
             personalizationEntry={personalizationMap?.get(d.id)}
             restaurantName={restaurantName}
@@ -214,7 +211,7 @@ export default function DishDetail({
 /* ── Individual dish slide ── */
 function DishSlide({
   dish, index, total, categories, restaurantId, ratingMap, isActive,
-  expandedDescs, setExpandedDescs, showInfo, setShowInfo, onClose,
+  expandedDescs, setExpandedDescs, onClose,
   personalizationEntry, restaurantName, restaurantPlan, restaurantAllergens, popularDishIds, allPhotosReferential,
   allDishes, onChangeDish,
 }: {
@@ -223,7 +220,6 @@ function DishSlide({
   ratingMap: Record<string, { avg: number; count: number }>;
   isActive: boolean;
   expandedDescs: Set<string>; setExpandedDescs: (fn: (s: Set<string>) => Set<string>) => void;
-  showInfo: boolean; setShowInfo: (v: boolean) => void;
   onClose: () => void;
   personalizationEntry?: PersonalizationEntry;
   restaurantName?: string;
@@ -237,7 +233,6 @@ function DishSlide({
   const [showParaTiTooltip, setShowParaTiTooltip] = useState(false);
   const [showRecTooltip, setShowRecTooltip] = useState(false);
   const [showPopularTooltip, setShowPopularTooltip] = useState(false);
-  const [showDietTooltip, setShowDietTooltip] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   // Memoize cross-sell so it doesn't reshuffle on every re-render
@@ -319,7 +314,7 @@ function DishSlide({
       }}
     >
       {/* Photo */}
-      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "50vh" : "26vh", overflow: "hidden", zIndex: 0 }}>
+      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length === 0 && (
           <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
@@ -405,26 +400,9 @@ function DishSlide({
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {categoryName && <span style={{ color: "#999", fontSize: "13.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            <div>
-              <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px", display: "inline" }}>
-                {dish.name}
-              </h2>
-              {(dish as any).dishDiet === "VEGAN" && (
-                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, verticalAlign: "middle" }}>
-                  🌿 {showDietTooltip && "Vegano"}
-                </button></>
-              )}
-              {(dish as any).dishDiet === "VEGETARIAN" && (
-                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(34,197,94,0.15)", color: "#4ade80", fontWeight: 600, verticalAlign: "middle" }}>
-                  🥗 {showDietTooltip && "Vegetariano"}
-                </button></>
-              )}
-              {(dish as any).isSpicy && (
-                <>{" "}<button onClick={() => { setShowDietTooltip(v => !v); setTimeout(() => setShowDietTooltip(false), 2000); }} style={{ fontSize: "0.85rem", padding: "3px 8px", borderRadius: 50, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", fontWeight: 600, verticalAlign: "middle" }}>
-                  🌶️ {showDietTooltip && "Picante"}
-                </button></>
-              )}
-            </div>
+            <h2 style={{ fontSize: "32px", fontWeight: 800, color: "white", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+              {dish.name}
+            </h2>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
                 <>
@@ -475,13 +453,53 @@ function DishSlide({
           >{desc}</p>
         )}
 
-        {/* Link ingredientes — before modifiers */}
-        {hasInfo && (
-          <button onClick={() => setShowInfo(true)} style={{ display: "inline-flex", alignItems: "center", gap: 5, marginTop: 16, background: "rgba(255,255,255,0.12)", border: "none", color: "rgba(255,255,255,0.55)", fontSize: "13px", fontWeight: 500, padding: "6px 14px", borderRadius: 50, cursor: "pointer" }}>
-            Ver ingredientes
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6"/></svg>
-          </button>
-        )}
+        {/* Sellos: dieta, alergenos, picante. Sustituyen al boton "Ver ingredientes". */}
+        {(() => {
+          const d = dish as any;
+          const ingsList: any[] = d.dishIngredients || [];
+          // Helper: true si NINGUN ingrediente tiene este allergen
+          const isFreeOf = (names: string[]) => {
+            if (ingsList.length === 0) return false;
+            return !ingsList.some((di: any) =>
+              di.ingredient?.allergens?.some((a: any) =>
+                names.includes(a.name?.toLowerCase?.())
+              )
+            );
+          };
+          // Helper: true si ALGUN ingrediente tiene este allergen
+          const hasAny = (regex: RegExp) => {
+            if (ingsList.length === 0) return false;
+            return ingsList.some((di: any) =>
+              di.ingredient?.allergens?.some((a: any) => regex.test(a.name || ""))
+            );
+          };
+
+          const glutenFree = d.isGlutenFree === true || isFreeOf(["gluten"]);
+          const lactoseFree = d.isLactoseFree === true || isFreeOf(["lactosa", "lacteos", "lácteos"]);
+          const soyFree = d.isSoyFree === true || isFreeOf(["soya", "soja"]);
+          const containsNuts = d.containsNuts === true || hasAny(/man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i);
+
+          const seals: { emoji: string; label: string; bg: string; color: string }[] = [];
+          if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.18)", color: "#4ade80" });
+          else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(134,239,172,0.18)", color: "#86efac" });
+          if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.18)", color: "#f87171" });
+          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.18)", color: "#d4a647" });
+          if (lactoseFree) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.18)", color: "#60a5fa" });
+          if (soyFree) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.18)", color: "#34d399" });
+          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(192,138,91,0.18)", color: "#c08a5b" });
+
+          if (seals.length === 0) return null;
+          return (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 16 }}>
+              {seals.map((s) => (
+                <span key={s.label} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 50, background: s.bg, color: s.color, fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap" }}>
+                  <span aria-hidden>{s.emoji}</span>
+                  <span>{s.label}</span>
+                </span>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Modifier options */}
         {(() => {
@@ -576,62 +594,6 @@ function DishSlide({
         })()}
       </div>
 
-      {/* Ingredients panel */}
-      {showInfo && (
-        <>
-          <div onClick={() => setShowInfo(false)} style={{ position: "fixed", inset: 0, zIndex: 119 }} />
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 120, background: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: 20, borderRadius: "16px 16px 0 0", animation: "slideUp 0.2s ease-out" }}>
-            <button onClick={() => setShowInfo(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(255,255,255,0.15)", border: "none", color: "white", width: 28, height: 28, borderRadius: "50%", fontSize: "0.9rem", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
-            {ingredientNames.length > 0 && (
-              <div style={{ marginBottom: 0 }}>
-                <h4 style={{ color: "white", fontSize: "0.98rem", fontWeight: 700, marginBottom: 10 }}>Ingredientes</h4>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {ingredientNames.map((i: string) => (
-                    <span key={i} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: "rgba(255,255,255,0.07)", color: "#d4d4d4" }}>{i}</span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {(() => {
-              const d = dish as any;
-              const traits: { label: string; icon: string; color: string; bg: string }[] = [];
-              // Allergen-free traits — only show for allergens the user has as restrictions
-              const allergenLower = derivedAllergens.map(a => a.toLowerCase());
-              let userRestrictions: string[] = [];
-              try { userRestrictions = JSON.parse(localStorage.getItem("qr_restrictions") || "[]").filter((r: string) => r !== "ninguna" && r !== "_spicy"); } catch {}
-              for (const r of userRestrictions) {
-                if (!allergenLower.includes(r.toLowerCase())) {
-                  traits.push({ label: `Sin ${r}`, icon: "✓", color: "#4ade80", bg: "rgba(74,222,128,0.1)" });
-                }
-              }
-              // Gluten-free
-              if (d.isGlutenFree || (userRestrictions.some(r => r === "gluten") && !allergenLower.includes("gluten"))) {
-                if (!traits.some(t => t.label === "Sin gluten")) {
-                  traits.push({ label: "Sin gluten", icon: "🌾", color: "#d4a017", bg: "rgba(212,160,23,0.12)" });
-                }
-              }
-              // Diet
-              if (d.dishDiet === "VEGAN") traits.push({ label: "Vegano", icon: "🌿", color: "#4ade80", bg: "rgba(74,222,128,0.1)" });
-              else if (d.dishDiet === "VEGETARIAN") traits.push({ label: "Vegetariano", icon: "🥗", color: "#86efac", bg: "rgba(134,239,172,0.1)" });
-              // Spicy
-              if (d.isSpicy) traits.push({ label: "Picante", icon: "🌶️", color: "#e85530", bg: "rgba(232,85,48,0.1)" });
-              if (traits.length === 0) return null;
-              return (
-                <div style={{ marginTop: 16 }}>
-                  <p style={{ fontSize: "12px", color: "#888", fontWeight: 500, marginBottom: 10 }}>Características</p>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {traits.map(t => (
-                      <span key={t.label} style={{ fontSize: "12.5px", padding: "6px 13px", borderRadius: 999, background: t.bg, color: t.color }}>
-                        {t.icon} {t.label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-        </>
-      )}
     </div>
   );
 }

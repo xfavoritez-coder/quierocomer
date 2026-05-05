@@ -48,6 +48,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.isGlutenFree !== undefined && { isGlutenFree: body.isGlutenFree }),
         ...(body.isLactoseFree !== undefined && { isLactoseFree: body.isLactoseFree }),
         ...(body.isSoyFree !== undefined && { isSoyFree: body.isSoyFree }),
+        ...(body.containsNuts !== undefined && { containsNuts: body.containsNuts }),
         ...(body.isHighMargin !== undefined && { isHighMargin: body.isHighMargin }),
         ...(body.isFeaturedAuto !== undefined && { isFeaturedAuto: body.isFeaturedAuto }),
         ...(body.flavorTags !== undefined && { flavorTags: body.flavorTags }),
@@ -91,6 +92,10 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         if (body.isGlutenFree === undefined) autoData.isGlutenFree = !allergenNames.includes("gluten");
         if (body.isLactoseFree === undefined) autoData.isLactoseFree = !allergenNames.includes("lactosa");
         if (body.isSoyFree === undefined) autoData.isSoyFree = !allergenNames.includes("soja");
+        // Frutos secos: al reves — true si hay ingredientes con allergen tipo mani/nuez/almendra/etc.
+        if (body.containsNuts === undefined) {
+          autoData.containsNuts = allergenNames.some(a => /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|maranón|maranon|cashew/i.test(a));
+        }
         if (Object.keys(autoData).length > 0) {
           await prisma.dish.update({ where: { id }, data: autoData });
         }
