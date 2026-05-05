@@ -189,6 +189,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       const nutNames = ["maní", "nueces", "almendras"];
       // Restricciones que NO mostramos en Genio (no son alergenos, son preferencias culturales/dieta)
       const HIDDEN_RESTRICTIONS = ["alcohol", "mariscos", "cerdo", "pescado", "huevo"];
+      // Labels custom: el value se queda como esta en DB (canonical), pero la etiqueta visible cambia
+      const LABEL_OVERRIDE: Record<string, string> = { soja: "Sin soya" };
       let hasNuts = false;
       for (const item of items) {
         if (HIDDEN_RESTRICTIONS.includes(item.name)) continue;
@@ -202,7 +204,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
         }
         opts.push({
           icon: RESTRICTION_ICON_MAP[item.name] || Ban,
-          label: `Sin ${item.name}`,
+          label: LABEL_OVERRIDE[item.name] || `Sin ${item.name}`,
           value: item.name,
         });
       }
@@ -238,12 +240,18 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, []);
 
   // Migración legacy: si hay valores expandidos de nuts (mani/nueces/almendras), colapsar a "frutos secos"
+  // y normalizar "soya" → "soja" (canonical)
   const NUT_LEGACY_INIT = ["maní", "mani", "nueces", "almendras", "nuez", "almendra"];
   useEffect(() => {
-    const hasLegacy = restrictions.some(r => NUT_LEGACY_INIT.includes(r));
-    if (!hasLegacy) return;
-    const cleaned = restrictions.filter(r => !NUT_LEGACY_INIT.includes(r));
-    if (!cleaned.includes("frutos secos")) cleaned.push("frutos secos");
+    const hasLegacyNuts = restrictions.some(r => NUT_LEGACY_INIT.includes(r));
+    const hasSoya = restrictions.includes("soya");
+    if (!hasLegacyNuts && !hasSoya) return;
+    let cleaned = restrictions.filter(r => !NUT_LEGACY_INIT.includes(r));
+    if (hasLegacyNuts && !cleaned.includes("frutos secos")) cleaned.push("frutos secos");
+    if (hasSoya) {
+      cleaned = cleaned.filter(r => r !== "soya");
+      if (!cleaned.includes("soja")) cleaned.push("soja");
+    }
     setRestrictions(cleaned);
     localStorage.setItem("qr_restrictions", JSON.stringify(cleaned));
     if (document.cookie.includes("qr_user_id")) {
