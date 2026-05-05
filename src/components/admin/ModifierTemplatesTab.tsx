@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -53,6 +56,42 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
   const showSaved = (msg = "Guardado") => {
     setSavedMsg(msg);
     setTimeout(() => setSavedMsg(null), 2000);
+  };
+
+  // Sensors compartidos para drag and drop (PointerSensor con threshold para no romper clicks)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const onGroupDragEnd = async (templateId: string, e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const tpl = templates.find(t => t.id === templateId);
+    if (!tpl) return;
+    const oldIdx = tpl.groups.findIndex(g => g.id === active.id);
+    const newIdx = tpl.groups.findIndex(g => g.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const newGroups = arrayMove(tpl.groups, oldIdx, newIdx).map((g, i) => ({ ...g, position: i }));
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: newGroups } : t));
+    await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reorderGroups: { templateId, ids: newGroups.map(g => g.id) } }),
+    }).catch(() => {});
+  };
+
+  const onOptionDragEnd = async (templateId: string, groupId: string, e: DragEndEvent) => {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const tpl = templates.find(t => t.id === templateId);
+    const grp = tpl?.groups.find(g => g.id === groupId);
+    if (!tpl || !grp) return;
+    const oldIdx = grp.options.findIndex(o => o.id === active.id);
+    const newIdx = grp.options.findIndex(o => o.id === over.id);
+    if (oldIdx === -1 || newIdx === -1) return;
+    const newOpts = arrayMove(grp.options, oldIdx, newIdx).map((o, i) => ({ ...o, position: i }));
+    setTemplates(prev => prev.map(t => t.id === templateId ? { ...t, groups: t.groups.map(g => g.id === groupId ? { ...g, options: newOpts } : g) } : t));
+    await fetch("/api/admin/modifier-templates", {
+      method: "PUT", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reorderOptions: { groupId, ids: newOpts.map(o => o.id) } }),
+    }).catch(() => {});
   };
 
   // Close dish picker on outside click
@@ -349,10 +388,14 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                     {template.dishes.length === 0 && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "8px 0 0" }}>Sin platos asignados</p>}
                   </div>
 
-                  {/* Groups */}
+                  {/* Groups (drag and drop) */}
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onGroupDragEnd(template.id, e)}>
+                    <SortableContext items={template.groups.map(g => g.id)} strategy={verticalListSortingStrategy}>
                   {template.groups.map(group => (
-                    <div key={group.id} style={{ border: "1px solid var(--adm-card-border)", borderRadius: 10, marginTop: 12, overflow: "hidden" }}>
+                    <SortableItemWrapper key={group.id} id={group.id}>{({ listeners, attributes }) => (
+                    <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 10, marginTop: 12, overflow: "hidden", background: "var(--adm-card)" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 12px", background: "var(--adm-hover)" }}>
+                        <span className="qc-drag-handle" {...listeners} {...attributes} title="Arrastra para reordenar" style={{ fontSize: "0.95rem", color: "var(--adm-text3)", padding: "0 2px", lineHeight: 1 }}>⋮⋮</span>
                         {editingGroup === group.id ? (
                           <>
                             <input value={egName} onChange={e => setEgName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { updateGroup(template.id, group.id, { name: egName.trim() }); setEditingGroup(null); } }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 6, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, outline: "none" }} autoFocus />
@@ -374,8 +417,11 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         <button onClick={() => deleteGroup(template.id, group.id)} style={{ padding: "2px 8px", background: "rgba(239,68,68,0.06)", border: "none", borderRadius: 6, fontSize: "0.62rem", fontFamily: F, color: "#ef4444", cursor: "pointer", fontWeight: 600 }}>Eliminar</button>
                       </div>
                       <div style={{ padding: "6px 12px 10px" }}>
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onOptionDragEnd(template.id, group.id, e)}>
+                          <SortableContext items={group.options.map(o => o.id)} strategy={verticalListSortingStrategy}>
                         {group.options.map(opt => (
-                          <div key={opt.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", borderBottom: "1px solid var(--adm-card-border)", opacity: opt.isHidden ? 0.4 : 1, transition: "opacity 0.2s" }}>
+                          <SortableItemWrapper key={opt.id} id={opt.id}>{({ listeners: optListeners, attributes: optAttrs }) => (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", borderBottom: "1px solid var(--adm-card-border)", opacity: opt.isHidden ? 0.4 : 1, transition: "opacity 0.2s", background: "var(--adm-card)" }}>
                             {editingOption === opt.id ? (
                               <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 6 }}>
                                 <div style={{ display: "flex", gap: 6 }}>
@@ -391,6 +437,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                               </div>
                             ) : (
                               <>
+                                <span className="qc-drag-handle" {...optListeners} {...optAttrs} title="Arrastra para reordenar" style={{ fontSize: "0.85rem", color: "var(--adm-text3)", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}>⋮⋮</span>
                                 <div onClick={() => { setEditingOption(opt.id); setEoName(opt.name); setEoPrice(String(opt.priceAdjustment)); setEoDesc(opt.description || ""); setEoImage(opt.imageUrl || ""); }} style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, cursor: "pointer", minWidth: 0 }}>
                                   <span style={{ fontFamily: FB, fontSize: "0.82rem", color: opt.isHidden ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, textDecoration: opt.isHidden ? "line-through" : "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{opt.name}</span>
                                   {opt.isHidden && <span style={{ fontSize: "0.58rem", padding: "1px 6px", borderRadius: 4, background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontWeight: 600, flexShrink: 0 }}>Oculto</span>}
@@ -404,7 +451,10 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                               </>
                             )}
                           </div>
+                        )}</SortableItemWrapper>
                         ))}
+                          </SortableContext>
+                        </DndContext>
                         {addingOptionTo === group.id ? (
                           <div style={{ marginTop: 8, display: "flex", gap: 6, alignItems: "center" }}>
                             <input value={newOptName} onChange={e => setNewOptName(e.target.value)} onKeyDown={e => e.key === "Enter" && addOption(template.id, group.id, newOptName, newOptPrice)}
@@ -421,7 +471,10 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
                         )}
                       </div>
                     </div>
+                  )}</SortableItemWrapper>
                   ))}
+                    </SortableContext>
+                  </DndContext>
 
                   <div style={{ marginTop: 12 }}>
                     {addingGroupTo === template.id ? (
@@ -458,7 +511,27 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
 
       <style>{`
         @keyframes fadeInDown { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        .qc-drag-handle { cursor: grab; user-select: none; touch-action: none; }
+        .qc-drag-handle:active { cursor: grabbing; }
       `}</style>
+    </div>
+  );
+}
+
+// Wrapper sortable: expone listeners y attributes via render-prop para que el
+// hijo pueda colocarlos en el drag handle especifico (no toda la card).
+function SortableItemWrapper({ id, children }: { id: string; children: (handle: { listeners: any; attributes: any; isDragging: boolean }) => React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging ? 10 : "auto",
+    position: "relative",
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ listeners, attributes, isDragging })}
     </div>
   );
 }

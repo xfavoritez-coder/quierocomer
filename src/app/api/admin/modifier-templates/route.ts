@@ -212,6 +212,37 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json(updated);
     }
 
+    // Reorder groups within a template
+    if (body.reorderGroups && Array.isArray(body.reorderGroups.ids) && body.reorderGroups.templateId) {
+      const template = await prisma.modifierTemplate.findUnique({ where: { id: body.reorderGroups.templateId }, select: { restaurantId: true } });
+      if (!template) return NextResponse.json({ error: "Template no encontrado" }, { status: 404 });
+      await requireRestaurantForOwner(req, template.restaurantId);
+
+      await prisma.$transaction(
+        body.reorderGroups.ids.map((id: string, position: number) =>
+          prisma.modifierTemplateGroup.update({ where: { id }, data: { position } })
+        )
+      );
+      return NextResponse.json({ success: true });
+    }
+
+    // Reorder options within a group
+    if (body.reorderOptions && Array.isArray(body.reorderOptions.ids) && body.reorderOptions.groupId) {
+      const group = await prisma.modifierTemplateGroup.findUnique({
+        where: { id: body.reorderOptions.groupId },
+        include: { template: { select: { restaurantId: true } } },
+      });
+      if (!group) return NextResponse.json({ error: "Grupo no encontrado" }, { status: 404 });
+      await requireRestaurantForOwner(req, group.template.restaurantId);
+
+      await prisma.$transaction(
+        body.reorderOptions.ids.map((id: string, position: number) =>
+          prisma.modifierTemplateOption.update({ where: { id }, data: { position } })
+        )
+      );
+      return NextResponse.json({ success: true });
+    }
+
     return NextResponse.json({ error: "Parámetros inválidos" }, { status: 400 });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);
