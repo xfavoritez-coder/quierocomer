@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Bell, Check, WifiOff, Wifi } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 interface WaiterCallData {
   id: string;
@@ -153,26 +154,50 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
     }
   }, [subscribe, shiftEnded]);
 
-  // Poll active calls — only when shift is active
+  // Refetch calls — usado tanto para sync inicial, fallback periodico,
+  // como para resync ante eventos Realtime (como gating evita perder data)
+  const refetchCalls = useCallback(() => {
+    fetch(`/api/qr/waiter/active-calls?restaurantId=${restaurantId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        const newCalls: WaiterCallData[] = data.calls || [];
+        newCalls.forEach((c) => {
+          if (!prevCallIds.current.has(c.id)) playBeep();
+        });
+        prevCallIds.current = new Set(newCalls.map((c) => c.id));
+        setCalls(newCalls);
+      })
+      .catch(() => {});
+  }, [restaurantId]);
+
+  // Sync inicial + polling de respaldo cada 60s (por si Realtime se desconecto)
   useEffect(() => {
     if (shiftEnded) return;
-    const poll = () => {
-      fetch(`/api/qr/waiter/active-calls?restaurantId=${restaurantId}`)
-        .then((r) => r.json())
-        .then((data) => {
-          const newCalls: WaiterCallData[] = data.calls || [];
-          newCalls.forEach((c) => {
-            if (!prevCallIds.current.has(c.id)) playBeep();
-          });
-          prevCallIds.current = new Set(newCalls.map((c) => c.id));
-          setCalls(newCalls);
-        })
-        .catch(() => {});
-    };
-    poll();
-    const interval = setInterval(poll, 10000);
+    refetchCalls();
+    const interval = setInterval(refetchCalls, 60_000);
     return () => clearInterval(interval);
-  }, [restaurantId, shiftEnded]);
+  }, [refetchCalls, shiftEnded]);
+
+  // Supabase Realtime: escucha INSERTs y UPDATEs en WaiterCall del restaurant
+  // y recarga las llamadas activas. Latencia ~200ms.
+  useEffect(() => {
+    if (shiftEnded || !supabase || !restaurantId) return;
+    const channel = supabase
+      .channel(`waiter-calls-${restaurantId}`)
+      .on("postgres_changes", {
+        event: "*",
+        schema: "public",
+        table: "WaiterCall",
+        filter: `restaurantId=eq.${restaurantId}`,
+      }, () => {
+        refetchCalls();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [restaurantId, shiftEnded, refetchCalls]);
 
   // Update "ago" timer
   useEffect(() => {
