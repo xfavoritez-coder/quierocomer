@@ -1555,7 +1555,7 @@ export default function AdminMenus() {
                   <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {d.name}
                   </p>
-                  <span style={{ display: "inline-block", fontSize: "11px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999, marginTop: 4 }}>{d.category.name}</span>
+                  <span style={{ display: "inline-block", fontFamily: F, fontSize: "11px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999, marginTop: 4 }}>{d.category.name}</span>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                 </div>
                 {/* Actions */}
