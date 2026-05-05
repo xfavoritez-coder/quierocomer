@@ -84,6 +84,17 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     } else {
       // Owner: silently filter to allowed fields only
       data = pickFields(body, OWNER_EDITABLE_FIELDS);
+      // Toteat credentials: solo owners de locales PREMIUM pueden editarlos
+      const wantsToteat = body.toteatRestaurantId !== undefined || body.toteatLocalId !== undefined || body.toteatUserId !== undefined || body.toteatApiToken !== undefined;
+      if (wantsToteat) {
+        const r = await prisma.restaurant.findUnique({ where: { id }, select: { plan: true } });
+        if (r?.plan === "PREMIUM") {
+          if (body.toteatRestaurantId !== undefined) data.toteatRestaurantId = body.toteatRestaurantId || null;
+          if (body.toteatLocalId !== undefined) data.toteatLocalId = body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId);
+          if (body.toteatUserId !== undefined) data.toteatUserId = body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId);
+          if (body.toteatApiToken !== undefined) data.toteatApiToken = body.toteatApiToken || null;
+        }
+      }
     }
 
     const restaurant = await prisma.restaurant.update({ where: { id }, data });

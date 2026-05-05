@@ -24,6 +24,11 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  // Form para que el dueño cargue sus credenciales Toteat directamente
+  const [credForm, setCredForm] = useState({ restaurantId: "", localId: "", userId: "", apiToken: "" });
+  const [savingCreds, setSavingCreds] = useState(false);
+  const [credsErr, setCredsErr] = useState<string | null>(null);
+  const [credsOk, setCredsOk] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -80,14 +85,123 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   const noToteat = data.summary.catalogSize === 0;
 
   if (noToteat) {
+    const handleSaveCreds = async () => {
+      setCredsErr(null); setCredsOk(false);
+      if (!credForm.restaurantId.trim() || !credForm.localId.trim() || !credForm.userId.trim() || !credForm.apiToken.trim()) {
+        setCredsErr("Completa los 4 campos");
+        return;
+      }
+      setSavingCreds(true);
+      try {
+        const res = await fetch(`/api/admin/locales/${restaurantId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            toteatRestaurantId: credForm.restaurantId.trim(),
+            toteatLocalId: credForm.localId.trim(),
+            toteatUserId: credForm.userId.trim(),
+            toteatApiToken: credForm.apiToken.trim(),
+          }),
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          setCredsErr(out.error || "Error al guardar");
+          setSavingCreds(false);
+          return;
+        }
+        // Verifica que los campos quedaron guardados (si plan no es PREMIUM, el server los descarta)
+        if (!out.toteatApiToken) {
+          setCredsErr("Las credenciales no se guardaron. Esta integración requiere plan Premium.");
+          setSavingCreds(false);
+          return;
+        }
+        setCredsOk(true);
+        setMsg("Credenciales guardadas. Iniciando primer sync...");
+        // Disparar primer sync para cargar el catálogo
+        await fetch("/api/admin/toteat/sync-now", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId }),
+        }).catch(() => {});
+        load();
+      } finally {
+        setSavingCreds(false);
+      }
+    };
+
+    const inputStyle: React.CSSProperties = {
+      width: "100%", padding: "10px 12px", background: "var(--adm-input)",
+      border: "1px solid var(--adm-card-border)", borderRadius: 8,
+      color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box",
+    };
+    const labelStyle: React.CSSProperties = {
+      display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)",
+      textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6,
+    };
+
     return (
-      <div style={{ padding: 24, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textAlign: "center" }}>
-        <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
-          🔌 Integración con Toteat no configurada
-        </p>
-        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0 }}>
-          Este local todavía no tiene credenciales de Toteat. Una vez configuradas y después del primer sync de ventas, vas a poder mapear automáticamente cada plato a su producto Toteat para tener métricas cruzadas (vistas vs ventas reales).
-        </p>
+      <div style={{ padding: 24, background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12 }}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <p style={{ fontFamily: F, fontSize: "0.95rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>
+            🔌 Integración con Toteat no configurada
+          </p>
+          <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Una vez ingresadas las credenciales y después del primer sync de ventas, vas a poder mapear cada plato a su producto Toteat para tener métricas cruzadas (vistas vs ventas reales).
+          </p>
+        </div>
+
+        <div style={{ marginTop: 20, paddingTop: 20, borderTop: "1px solid var(--adm-card-border)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>
+            ¿Tienes tus credenciales? Cárgalas acá
+          </p>
+          <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: "0 0 16px", lineHeight: 1.5 }}>
+            Las puedes encontrar en tu panel de Toteat → Integraciones → API. Si no las tienes, escríbenos y te ayudamos a obtenerlas.
+          </p>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 12 }}>
+            <div>
+              <label style={labelStyle}>Restaurant ID (xir)</label>
+              <input value={credForm.restaurantId} onChange={(e) => setCredForm((f) => ({ ...f, restaurantId: e.target.value }))} placeholder="Ej: 1234" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Local ID (xil)</label>
+              <input value={credForm.localId} onChange={(e) => setCredForm((f) => ({ ...f, localId: e.target.value }))} placeholder="Ej: 567" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>User ID (xiu)</label>
+              <input value={credForm.userId} onChange={(e) => setCredForm((f) => ({ ...f, userId: e.target.value }))} placeholder="Ej: 89" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>API Token (xapitoken)</label>
+              <input type="password" value={credForm.apiToken} onChange={(e) => setCredForm((f) => ({ ...f, apiToken: e.target.value }))} placeholder="••••••••" style={inputStyle} />
+            </div>
+          </div>
+
+          {credsErr && (
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 12px" }}>{credsErr}</p>
+          )}
+          {credsOk && (
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", margin: "0 0 12px" }}>✓ Credenciales guardadas</p>
+          )}
+
+          <button
+            onClick={handleSaveCreds}
+            disabled={savingCreds}
+            style={{
+              padding: "10px 22px",
+              background: savingCreds ? "#ccc" : "#F4A623",
+              color: "white",
+              border: "none",
+              borderRadius: 999,
+              fontFamily: F,
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: savingCreds ? "wait" : "pointer",
+            }}
+          >
+            {savingCreds ? "Guardando…" : "Guardar y conectar"}
+          </button>
+        </div>
       </div>
     );
   }
