@@ -225,7 +225,7 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
         {templates.map(template => {
           const isExpanded = expanded === template.id;
           return (
-            <div key={template.id} style={{ border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", background: "var(--adm-card)" }}>
+            <div key={template.id} style={{ border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: dishPickerFor === template.id ? "visible" : "hidden", background: "var(--adm-card)" }}>
               {/* Header */}
               <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px" }}>
                 {editingTemplate === template.id ? (
