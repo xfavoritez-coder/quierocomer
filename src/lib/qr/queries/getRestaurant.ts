@@ -15,7 +15,7 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
         }),
       },
       dishes: {
-        where: { isActive: true, deletedAt: null },
+        where: { isActive: true, deletedAt: null, toteatHidden: false },
         orderBy: { position: "asc" },
         include: {
           modifierTemplates: {

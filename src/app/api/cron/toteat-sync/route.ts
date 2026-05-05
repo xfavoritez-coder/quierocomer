@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncRestaurantSales } from "@/lib/toteat/sync";
+import { syncRestaurantVisibility } from "@/lib/toteat/syncVisibility";
 
 /**
  * Periodic sync of Toteat sales for every restaurant configured with
@@ -50,19 +51,28 @@ export async function GET(req: Request) {
     });
     if (firstSession && firstSession.startedAt > fromDate) fromDate = firstSession.startedAt;
 
+    const credentials = {
+      base: process.env.TOTEAT_API_BASE || "https://api.toteat.com/mw/or/1.0",
+      xir: r.toteatRestaurantId!,
+      xil: r.toteatLocalId!,
+      xiu: r.toteatUserId!,
+      token: r.toteatApiToken!,
+    };
+
     const result = await syncRestaurantSales({
       restaurantId: r.id,
-      credentials: {
-        base: process.env.TOTEAT_API_BASE || "https://api.toteat.com/mw/or/1.0",
-        xir: r.toteatRestaurantId!,
-        xil: r.toteatLocalId!,
-        xiu: r.toteatUserId!,
-        token: r.toteatApiToken!,
-      },
+      credentials,
       from: fromDate,
       to: new Date(),
     });
-    results.push({ slug: r.slug, ...result });
+
+    // Sincronizar visibilidad de productos (oculto/visible) — operacion ligera
+    const visibilityResult = await syncRestaurantVisibility({
+      restaurantId: r.id,
+      credentials,
+    }).catch((e) => ({ ok: false, error: e?.message, hidden: 0, shown: 0, unchanged: 0 }));
+
+    results.push({ slug: r.slug, ...result, visibility: visibilityResult });
   }
 
   return NextResponse.json({ ok: true, syncedAt: new Date().toISOString(), restaurants: results });

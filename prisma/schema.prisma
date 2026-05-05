@@ -449,6 +449,8 @@ model Restaurant {
   toteatUserId       Int?       // xiu
   toteatApiToken     String?    // xapitoken — stored plaintext for now, encrypt before onboarding 2nd client
   toteatLastSyncAt   DateTime?
+  toteatImportDone   Boolean    @default(false)  // true cuando el dueño completo el wizard de importacion inicial
+  toteatLastVisibilitySyncAt DateTime?           // ultima vez que sincronizamos visibilidad (separado de ventas)
 
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
@@ -676,6 +678,8 @@ model Dish {
   toteatProductId String?
   toteatMappedAt  DateTime?  // when the mapping was set (manual or auto)
   toteatMappedBy  String?    // "auto" | "manual" — for audit
+  toteatHidden    Boolean    @default(false)  // Toteat marca el producto como inactivo/oculto → no se muestra en la carta
+  toteatSynced    Boolean    @default(false)  // true si este plato vino de Toteat (creado en import o detectado automaticamente)
 
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
