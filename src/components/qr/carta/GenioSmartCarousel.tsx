@@ -12,10 +12,20 @@ interface Props {
   restrictions: string[];
 }
 
+const NUT_ALIASES = ["maní", "mani", "nueces", "almendras", "frutos secos", "nuez", "almendra"];
+const isNutRestriction = (r: string) => NUT_ALIASES.includes(r.toLowerCase());
+
 function checkFree(d: any, allergenName: string): boolean {
   if (allergenName === "gluten" && d.isGlutenFree === true) return true;
   if (allergenName === "lactosa" && d.isLactoseFree === true) return true;
   if (allergenName === "soja" && d.isSoyFree === true) return true;
+  // "frutos secos" usa containsNuts y los alergenos individuales
+  if (isNutRestriction(allergenName)) {
+    if (d.containsNuts === true) return false;
+    const ings = d.dishIngredients || [];
+    if (ings.length === 0) return d.containsNuts === false;
+    return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => NUT_ALIASES.includes((a.name || "").toLowerCase())));
+  }
   const ings = d.dishIngredients || [];
   if (ings.length === 0) return false;
   return !ings.some((di: any) => di.ingredient?.allergens?.some((a: any) => a.name.toLowerCase() === allergenName));
@@ -27,6 +37,17 @@ const RESTRICTION_LABELS: Record<string, string> = {
   huevo: "sin huevo", "frutos secos": "sin frutos secos",
 };
 const DIET_LABELS: Record<string, string> = { vegan: "Vegano", vegetarian: "Vegetariano" };
+
+function pickEmoji(diet: string, restrictions: string[]): string {
+  if (diet === "vegan") return "🌿";
+  if (diet === "vegetarian") return "🥗";
+  if (restrictions.some(isNutRestriction)) return "🥜";
+  if (restrictions.includes("gluten")) return "🌾";
+  if (restrictions.includes("lactosa")) return "🥛";
+  if (restrictions.includes("soja")) return "🫘";
+  if (restrictions.includes("_spicy")) return "🌶️";
+  return "🧞";
+}
 
 export default function GenioSmartCarousel({ dishes, categories, onDishClick, diet, restrictions }: Props) {
   const smartDishes = useMemo(() => {
@@ -50,18 +71,25 @@ export default function GenioSmartCarousel({ dishes, categories, onDishClick, di
   if (smartDishes.length === 0) return null;
 
   const n = smartDishes.length;
-  const title = `${n} ${n === 1 ? "opción" : "opciones"} para ti 🧞`;
+  const titleEmoji = pickEmoji(diet, restrictions);
+  const title = `${n} ${n === 1 ? "opción" : "opciones"} para ti ${titleEmoji}`;
   const parts: string[] = [];
   if (diet !== "omnivore" && DIET_LABELS[diet]) parts.push(DIET_LABELS[diet]);
+  // Colapsa nuts legacy (mani/nueces/almendras) en un solo "sin frutos secos"
+  let nutAdded = false;
   for (const r of restrictions) {
     if (r === "ninguna" || r === "_spicy") continue;
+    if (isNutRestriction(r)) {
+      if (!nutAdded) { parts.push("sin frutos secos"); nutAdded = true; }
+      continue;
+    }
     parts.push(RESTRICTION_LABELS[r] || `sin ${r}`);
   }
   if (restrictions.includes("_spicy")) parts.push("sin picante");
   const subtitle = parts.join(" · ");
 
-  // Determine badge label
-  const badgeLabel = diet === "vegan" ? "VEGAN" : diet === "vegetarian" ? "VEG" : parts[0]?.toUpperCase() || "DIETA";
+  // Badge: prioriza dieta, sino primer restriccion
+  const badgeLabel = diet === "vegan" ? "VEGAN" : diet === "vegetarian" ? "VEG" : (parts[0]?.toUpperCase() || "DIETA");
 
   return (
     <div
@@ -85,8 +113,8 @@ export default function GenioSmartCarousel({ dishes, categories, onDishClick, di
                 style={{ flexShrink: 0, width: 130, background: "#fff", border: "0.5px solid rgba(128,90,213,0.15)", borderRadius: 12, padding: 6, cursor: "pointer", textAlign: "left", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
                 <div style={{ position: "relative", width: "100%", height: 72, borderRadius: 8, overflow: "hidden", background: "#f0f0f0", marginBottom: 5 }}>
                   {photo ? <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" /> : <div style={{ width: "100%", height: "100%", background: "#e8e8e8", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>}
-                  <span style={{ position: "absolute", top: 6, left: 6, background: "rgba(255,255,255,0.95)", color: "#7C3AED", fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", display: "flex", alignItems: "center", gap: 3 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#7C3AED", flexShrink: 0 }} />{badgeLabel}
+                  <span style={{ position: "absolute", top: 6, left: 6, maxWidth: "calc(100% - 12px)", background: "rgba(255,255,255,0.95)", color: "#7C3AED", fontSize: "8.5px", fontWeight: 600, padding: "2px 5px", borderRadius: 4, letterSpacing: "0.2px", display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#7C3AED", flexShrink: 0 }} />{badgeLabel}
                   </span>
                 </div>
                 <p style={{ fontSize: "0.80rem", fontWeight: 600, color: "#3B1F6E", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>

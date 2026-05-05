@@ -236,6 +236,20 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }).catch(() => {});
   }, []);
 
+  // Migración legacy: si hay valores expandidos de nuts (mani/nueces/almendras), colapsar a "frutos secos"
+  const NUT_LEGACY_INIT = ["maní", "mani", "nueces", "almendras", "nuez", "almendra"];
+  useEffect(() => {
+    const hasLegacy = restrictions.some(r => NUT_LEGACY_INIT.includes(r));
+    if (!hasLegacy) return;
+    const cleaned = restrictions.filter(r => !NUT_LEGACY_INIT.includes(r));
+    if (!cleaned.includes("frutos secos")) cleaned.push("frutos secos");
+    setRestrictions(cleaned);
+    localStorage.setItem("qr_restrictions", JSON.stringify(cleaned));
+    if (document.cookie.includes("qr_user_id")) {
+      fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ restrictions: cleaned.filter(x => x !== "ninguna") }) }).catch(() => {});
+    }
+  }, []);
+
   const [dislikeNoResults, setDislikeNoResults] = useState(false);
 
   // Search dislikes with debounce
@@ -302,7 +316,8 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     return nextStep;
   });
 
-  const NUT_GROUP = ["maní", "nueces", "almendras"];
+  // Limpiar valores legacy expandidos (mani/nueces/almendras) → "frutos secos"
+  const NUT_LEGACY = ["maní", "mani", "nueces", "almendras", "nuez", "almendra"];
   const toggleRestriction = (r: string) => {
     if (r === "ninguna") {
       setRestrictions(["ninguna"]);
@@ -310,13 +325,12 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       setTimeout(next, 400);
       return;
     }
-    // "frutos secos" expands to individual nut allergens
-    const values = r === "frutos secos" ? NUT_GROUP : [r];
     setRestrictions((prev) => {
-      const without = prev.filter((x) => x !== "ninguna");
-      const hasAll = values.every(v => without.includes(v));
-      if (hasAll) return without.filter(x => !values.includes(x));
-      return [...without.filter(x => !values.includes(x)), ...values];
+      // Limpia valores legacy de nuts antes de operar
+      const cleaned = prev.filter(x => x !== "ninguna" && !NUT_LEGACY.includes(x));
+      const has = cleaned.includes(r);
+      if (has) return cleaned.filter(x => x !== r);
+      return [...cleaned, r];
     });
   };
 
@@ -675,7 +689,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               if (restDiet === "VEGAN" || restDiet === "VEGETARIAN") return !["mariscos", "cerdo"].includes(r.value);
               return true;
             }).map((r) => {
-              const sel = r.value === "frutos secos" ? NUT_GROUP.some(n => restrictions.includes(n)) : restrictions.includes(r.value);
+              const sel = r.value === "frutos secos" ? (restrictions.includes("frutos secos") || NUT_LEGACY.some(n => restrictions.includes(n))) : restrictions.includes(r.value);
               const Icon = r.icon;
               return (
                 <button key={r.value} onClick={() => toggleRestriction(r.value)}

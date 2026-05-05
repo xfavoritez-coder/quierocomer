@@ -494,11 +494,16 @@ export default function AdminMenus() {
     }
     if (catFilter !== "all") list = list.filter(d => d.categoryId === catFilter);
     if (dietFilter !== "all") list = list.filter(d => (d.dishDiet || "OMNIVORE") === dietFilter);
+    // Helpers: flag explicito O ausencia de alergeno relevante en allergens (string CSV)
+    const allergensHas = (d: any, names: string[]) => {
+      const allergens = (d.allergens || "").toLowerCase();
+      return names.some(n => allergens.includes(n));
+    };
     if (spicyFilter) list = list.filter(d => (d as any).isSpicy);
-    if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree);
-    if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree);
-    if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree);
-    if (nutsFilter) list = list.filter(d => (d as any).containsNuts);
+    if (glutenFreeFilter) list = list.filter(d => (d as any).isGlutenFree === true || !allergensHas(d, ["gluten"]));
+    if (lactoseFreeFilter) list = list.filter(d => (d as any).isLactoseFree === true || !allergensHas(d, ["lactosa", "lacteo", "lácteo"]));
+    if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree === true || !allergensHas(d, ["soja", "soya"]));
+    if (nutsFilter) list = list.filter(d => (d as any).containsNuts === true || allergensHas(d, ["maní", "mani", "nuez", "nueces", "almendra", "frutos secos"]));
     // Recently created first, then recommended, then alphabetical
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
@@ -1345,8 +1350,8 @@ export default function AdminMenus() {
           </button>
         )}
       </div>
-      {/* Filter chips */}
-      <div style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any }}>
+      {/* Filter chips — scroll horizontal en mobile, wrap en desktop */}
+      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <select
             value={dietFilter}
@@ -1780,6 +1785,8 @@ export default function AdminMenus() {
         @media (max-width: 768px) { .mcarta-fab { display: flex !important; } .lnd-desktop-only { display: none !important; } }
         @media (min-width: 769px) { .mcarta-fab { display: none !important; } }
         .adm-dish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
+        /* En desktop, los chips de filtro hacen wrap en vez de cortarse */
+        @media (min-width: 769px) { .adm-filter-chips { flex-wrap: wrap !important; overflow-x: visible !important; } }
       `}</style>
     </div>
   );

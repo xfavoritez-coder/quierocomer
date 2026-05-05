@@ -33,15 +33,17 @@ export interface DishScore {
 }
 
 // Restriction keywords mapped to allergen/ingredient patterns
+// Las claves son los valores que vienen de profile.restrictions (sin prefijo "sin ")
 const RESTRICTION_MAP: Record<string, string[]> = {
-  "sin gluten": ["gluten", "trigo", "wheat"],
-  "sin lactosa": ["lactosa", "lácteo", "leche", "dairy", "queso", "crema"],
-  "sin mariscos": ["mariscos", "shellfish", "camarón", "langosta"],
-  "sin frutos secos": ["frutos secos", "nuez", "almendra", "maní", "nuts"],
-  "sin huevo": ["huevo", "egg"],
-  "sin cerdo": ["cerdo", "pork", "tocino", "jamón", "bacon"],
-  "sin soja": ["soja", "soy"],
+  gluten: ["gluten", "trigo", "wheat"],
+  lactosa: ["lactosa", "lácteo", "leche", "dairy", "queso", "crema"],
+  mariscos: ["mariscos", "shellfish", "camarón", "langosta"],
+  "frutos secos": ["frutos secos", "nuez", "almendra", "maní", "mani", "nueces", "almendras", "nuts"],
+  huevo: ["huevo", "egg"],
+  cerdo: ["cerdo", "pork", "tocino", "jamón", "bacon"],
+  soja: ["soja", "soy"],
 };
+const NUT_ALIASES_SCORING = ["frutos secos", "maní", "mani", "nueces", "almendras", "nuez", "almendra"];
 
 // Categories that match time of day (by keyword in name)
 const TIME_CATEGORY_KEYWORDS: Record<string, string[]> = {
@@ -81,6 +83,12 @@ export function scoreDish(
     if (normRestriction === "_spicy") {
       if (dish.isSpicy) { hasRestrictionHit = true; score -= 50; break; }
       continue;
+    }
+    // Para frutos secos: prioriza el flag containsNuts
+    if (NUT_ALIASES_SCORING.includes(normRestriction) && (dish as any).containsNuts === true) {
+      hasRestrictionHit = true;
+      score -= 50;
+      break;
     }
     const patterns = RESTRICTION_MAP[normRestriction] || [normRestriction];
     const hit = patterns.some((p) => allDishTerms.some((t) => t.includes(p)));
