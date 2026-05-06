@@ -7,8 +7,11 @@ export async function POST(request: Request) {
   try {
     const { email, name, birthDate, dietType, restrictions, dislikes, restaurantId, source, bannerVariantId, guestId, sessionId, dbSessionId } = await request.json();
 
-    if (!email || !name || !restaurantId) {
-      return NextResponse.json({ error: "Nombre, email y restaurantId son requeridos" }, { status: 400 });
+    // El nombre ya no es requerido aca — el flow del modal de cumple lo pide
+    // en un step posterior ('Una cosita mas') y lo guarda con PATCH /api/qr/user/update.
+    // Solo validamos email y restaurantId, que son los datos imprescindibles para crear la cuenta.
+    if (!email || !restaurantId) {
+      return NextResponse.json({ error: "Email y restaurantId son requeridos" }, { status: 400 });
     }
 
     // Upsert user
