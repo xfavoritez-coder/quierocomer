@@ -123,6 +123,18 @@ export async function GET(req: NextRequest) {
       prisma.session.count({ where }),
     ]);
 
+    // Calcular visitas por (guest, restaurante) — recurrente debe ser por LOCAL, no global
+    const guestRestPairs = Array.from(new Set(sessions.map(s => `${s.guestId}|${s.restaurantId}`)));
+    const restaurantVisitCounts = guestRestPairs.length > 0
+      ? await prisma.session.groupBy({
+          by: ["guestId", "restaurantId"],
+          where: { OR: guestRestPairs.map(p => { const [g, r] = p.split("|"); return { guestId: g, restaurantId: r }; }) },
+          _count: { id: true },
+        })
+      : [];
+    const visitMap = new Map<string, number>();
+    for (const rc of restaurantVisitCounts) visitMap.set(`${rc.guestId}|${rc.restaurantId}`, rc._count.id);
+
     // Resolve dish names for dishesViewed
     const allDishIds = new Set<string>();
     for (const s of sessions) {
@@ -310,17 +322,34 @@ export async function GET(req: NextRequest) {
     }) : [];
     const favDishMap = Object.fromEntries(favDishes.map(d => [d.id, d]));
 
-    // ── Visit days (for badge, stays per guest) ──
+    // ── Visit days por (guest, restaurante) — cuenta días distintos en este local, no global ──
     const allGuestSessions = sessionGuestIds.length ? await prisma.session.findMany({
-      where: { guestId: { in: sessionGuestIds } },
-      select: { id: true, guestId: true, startedAt: true },
+      where: {
+        guestId: { in: sessionGuestIds },
+        // Si el query principal filtra por restaurantId, lo aplicamos aquí también
+        ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}),
+      },
+      select: { id: true, guestId: true, restaurantId: true, startedAt: true },
     }) : [];
-    const visitDaysByGuest: Record<string, number> = {};
+    // Map por (guestId, restaurantId) → días distintos
+    const visitDaysByGuestRest: Record<string, number> = {};
     for (const s of allGuestSessions) {
-      if (!visitDaysByGuest[s.guestId]) {
-        const days = new Set(allGuestSessions.filter((x) => x.guestId === s.guestId).map((x) => x.startedAt.toISOString().split("T")[0]));
-        visitDaysByGuest[s.guestId] = days.size;
+      const key = `${s.guestId}|${s.restaurantId}`;
+      if (!visitDaysByGuestRest[key]) {
+        const days = new Set(
+          allGuestSessions
+            .filter((x) => x.guestId === s.guestId && x.restaurantId === s.restaurantId)
+            .map((x) => x.startedAt.toISOString().split("T")[0])
+        );
+        visitDaysByGuestRest[key] = days.size;
       }
+    }
+    // Fallback compat: el código viejo usaba visitDaysByGuest indexado solo por guestId
+    const visitDaysByGuest: Record<string, number> = {};
+    for (const [key, count] of Object.entries(visitDaysByGuestRest)) {
+      const guestId = key.split("|")[0];
+      // Quedarnos con el máximo entre los restaurantes del guest si aparece en varias filas
+      visitDaysByGuest[guestId] = Math.max(visitDaysByGuest[guestId] || 0, count);
     }
     // Per-session "visit N of M today" — calculated against ALL sessions in
     // the DB for that guest+day, not just the ones loaded in the current
@@ -469,9 +498,11 @@ export async function GET(req: NextRequest) {
         usedGenio: dbSessionsWithGenio.has(s.id),
         genioData: genioDataByDbSession[s.id] || null,
         personalizationData: recDataBySession[s.id] || null,
-        visitDays: visitDaysByGuest[s.guestId] || 1,
+        visitDays: visitDaysByGuestRest[`${s.guestId}|${s.restaurantId}`] || 1,
         visitsToday: visitsTodayBySession[s.id]?.totalToday || 1,
         visitNumToday: visitsTodayBySession[s.id]?.numToday || 1,
+        // Visitas totales de este guest a ESTE restaurante (no global del guest profile)
+        restaurantVisitCount: visitMap.get(`${s.guestId}|${s.restaurantId}`) || 1,
         dishFavorites: sessionFavs.map(f => ({
           id: f.id,
           dishId: f.dishId,

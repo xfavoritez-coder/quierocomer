@@ -868,7 +868,8 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         const isOpen = expanded.has(s.id);
         const dishes = s.dishesViewed || [];
         const duration = s.durationMs ? formatDuration(s.durationMs) : "—";
-        const userName = s.qrUser?.name || (s.guest?.visitCount > 1 ? `Visitante recurrente (${s.guest.visitCount}x)` : "Visitante nuevo");
+        const restVisits = s.restaurantVisitCount || 1;
+        const userName = s.qrUser?.name || (restVisits > 1 ? `Visitante recurrente (${restVisits}x)` : "Visitante nuevo");
 
         return (
           <div key={s.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", boxShadow: "var(--adm-card-shadow, none)" }}>

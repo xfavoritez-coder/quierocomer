@@ -235,6 +235,9 @@ function DishSlide({
   const [showPopularTooltip, setShowPopularTooltip] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
 
+  // Imágenes de cross-sell que fallaron al cargar (para mostrar placeholder)
+  const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
+
   // Restricciones de Genio (localStorage) — para badges condicionales
   const [genioRestrictions, setGenioRestrictions] = useState<string[]>([]);
   useEffect(() => {
@@ -604,8 +607,16 @@ function DishSlide({
                     onClick={() => onChangeDish(s.dish)}
                     style={{ display: "flex", gap: 14, padding: "16px 18px", background: "rgba(255,255,255,0.06)", borderRadius: 16, cursor: "pointer" }}
                   >
-                    {s.dish.photos?.[0] ? (
-                      <img src={s.dish.photos[0]} alt={s.dish.name} style={{ width: 78, height: 78, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                    {s.dish.photos?.[0] && !failedImages.has(s.dish.id) ? (
+                      <img
+                        src={s.dish.photos[0]}
+                        alt={s.dish.name}
+                        loading="lazy"
+                        decoding="async"
+                        referrerPolicy="no-referrer"
+                        style={{ width: 78, height: 78, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}
+                        onError={() => setFailedImages((prev) => new Set(prev).add(s.dish.id))}
+                      />
                     ) : (
                       <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
                     )}

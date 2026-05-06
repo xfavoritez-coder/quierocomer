@@ -107,7 +107,23 @@
       "Bash(cmd.exe /c \"taskkill /F /IM node.exe\")",
       "Bash(powershell.exe -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force; Write-Host done\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); s=d.get\\('data',[]\\)[0] if d.get\\('data'\\) else None; print\\('first order: opened',s.get\\('dateOpen'\\),'closed',s.get\\('dateClosed'\\)\\) if s else print\\('no data'\\)\")",
-      "Bash(powershell.exe -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")"
+      "Bash(powershell.exe -Command \"Get-Process node -ErrorAction SilentlyContinue | Stop-Process -Force\")",
+      "Bash(cp C:/Proyectos/quierocomer/.env .)",
+      "Bash(cp C:/Proyectos/quierocomer/.env.local .)",
+      "Bash(taskkill //PID 16056 //F)",
+      "WebFetch(domain:stripe.com)",
+      "Bash(FLOW_API_URL=https://www.flow.cl/api npx tsx scripts/setup-flow-plans.ts)",
+      "Bash(gh pr create --title 'Suscripciones con Flow.cl: trial 7 dias, planes Gratis/Gold/Premium' --body ' *)",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(unzip -l \"Carta alleria 2026.docx\")",
+      "WebFetch(domain:menu.fu.do)",
+      "Bash(DRY_RUN=1 npx tsx scripts/sync-alleria-full-fudo.ts)",
+      "mcp__Claude_Preview__preview_start"
     ]
   }
 }

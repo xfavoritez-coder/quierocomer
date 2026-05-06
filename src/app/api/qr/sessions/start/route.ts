@@ -33,12 +33,18 @@ export async function POST(request: Request) {
     const weatherStr = weather ? `${weather.weatherCondition}:${weather.weatherTemp}°C` : null;
     const timeOfDay = getTimeOfDay();
 
-    // Ensure GuestProfile exists and get visit count
+    // Ensure GuestProfile exists and get visit count (global across restaurantes)
     const guest = await prisma.guestProfile.upsert({
       where: { id: guestId },
       create: { id: guestId, linkedQrUserId: qrUserId, deviceType: deviceType || null },
       update: { lastSeenAt: new Date(), visitCount: { increment: 1 }, linkedQrUserId: qrUserId || undefined, deviceType: deviceType || undefined },
     });
+
+    // visitas previas en ESTE restaurante — define isReturningVisitor por local, no global
+    const priorSessionsHere = await prisma.session.count({
+      where: { guestId, restaurantId, startedAt: { lt: new Date() } },
+    });
+    const isReturningHere = priorSessionsHere >= 1;
 
     // Get IP address + browser metadata from headers
     const forwarded = request.headers.get("x-forwarded-for");
@@ -87,7 +93,7 @@ export async function POST(request: Request) {
         timeOfDay,
         isBot,
         isQrScan: isQrScan || false,
-        isReturningVisitor: guest.visitCount > 1,
+        isReturningVisitor: isReturningHere,
       },
     });
 
