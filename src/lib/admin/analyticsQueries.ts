@@ -37,7 +37,7 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
         createdAt: { gte: from, lte: to },
       },
       _count: true,
-    }).then((r) => r.map(e => e.guestId)),
+    }).then((r) => r.map(e => e.guestId).filter((id): id is string => !!id)),
   ]);
 
   // Verificacion real: del set de guests que dispararon BIRTHDAY_SAVED, contar
@@ -50,11 +50,11 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
       where: { id: { in: birthdayEventGuests } },
       select: { id: true, preferences: true, linkedQrUserId: true },
     });
-    const linkedUserIds = guests.map(g => g.linkedQrUserId).filter(Boolean) as string[];
+    const linkedUserIds = guests.map((g) => g.linkedQrUserId).filter((id): id is string => !!id);
     const users = linkedUserIds.length
-      ? await prisma.qrUser.findMany({ where: { id: { in: linkedUserIds } }, select: { id: true, birthday: true } })
+      ? await prisma.qRUser.findMany({ where: { id: { in: linkedUserIds } }, select: { id: true, birthDate: true } })
       : [];
-    const userBirthdayMap = new Map(users.map(u => [u.id, !!u.birthday]));
+    const userBirthdayMap = new Map(users.map((u) => [u.id, !!u.birthDate]));
     for (const g of guests) {
       const prefs = (g.preferences as any) || {};
       const inPrefs = !!prefs?.birthday;
