@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -830,11 +830,29 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 
 /* ═══ TAB: Sesiones ═══ */
 function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [guestFilter, setGuestFilter] = useState<{ id: string; name: string } | null>(null);
+  // El filtro por guest se sincroniza con el URL (?guestId=xxx&guestName=yyy)
+  // — así "ver historial" cambia la navegación (back button, share link, refresh).
+  const guestIdFromUrl = sp?.get("guestId") || null;
+  const guestNameFromUrl = sp?.get("guestName") || null;
+  const guestFilter = guestIdFromUrl ? { id: guestIdFromUrl, name: guestNameFromUrl || `Fantasma #${guestIdFromUrl.slice(0, 8)}` } : null;
+  const setGuestFilter = (g: { id: string; name: string } | null) => {
+    const params = new URLSearchParams(sp?.toString() || "");
+    if (g) {
+      params.set("guestId", g.id);
+      params.set("guestName", g.name);
+    } else {
+      params.delete("guestId");
+      params.delete("guestName");
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -899,7 +917,15 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         // Recurrente = días distintos que vino al local (no # de sesiones, que pueden ser scans dentro de la misma comida)
         const visitDays = s.visitDays || 1;
         const isReturningGuest = visitDays > 1;
-        const userName = s.qrUser?.name || (isReturningGuest ? `Visitante recurrente (${visitDays} ${visitDays === 1 ? "día" : "días"})` : "Visitante nuevo");
+        // Identificador anónimo: "Fantasma #abc12345" si no es usuario registrado
+        const anonName = s.anonId ? `Fantasma #${s.anonId}` : "Visitante";
+        const userName = s.qrUser?.name || anonName;
+        const visitNumToday = s.visitNumToday || 1;
+        const visitsToday = s.visitsToday || 1;
+        // Parser simple del UA para sacar nombre del browser
+        const ua = (s.userAgent || "").toLowerCase();
+        const browser = /firefox/.test(ua) ? "Firefox" : /edg\//.test(ua) ? "Edge" : /chrome|crios/.test(ua) ? "Chrome" : /safari/.test(ua) ? "Safari" : /opr|opera/.test(ua) ? "Opera" : (s.userAgent ? "Otro" : null);
+        const langShort = s.language ? s.language.split(/[-_]/)[0].toUpperCase() : null;
 
         return (
           <div key={s.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -908,9 +934,19 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
+                  {isReturningGuest && (
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600 }}>
+                      🔁 {visitDays} {visitDays === 1 ? "día" : "días"}
+                    </span>
+                  )}
+                  {visitsToday > 1 && (
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600 }} title="Esta es la N-ésima visita del mismo cliente hoy">
+                      👁 {visitNumToday} de {visitsToday} hoy
+                    </span>
+                  )}
                   {(isReturningGuest || s.qrUser?.id) && !guestFilter && (
                     <button
-                      onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || `Visitante (${visitDays}d)` }); }}
+                      onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || anonName }); }}
                       style={{ fontFamily: F, fontSize: "0.65rem", padding: "2px 8px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}
                       title="Ver todas las sesiones de este visitante"
                     >
@@ -923,6 +959,10 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{duration}</span>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} plato{dishes.length !== 1 ? "s" : ""}</span>
                   {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
+                  {s.deviceType && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>{s.deviceType === "mobile" ? "📱" : s.deviceType === "desktop" ? "💻" : "📟"} {s.deviceType}</span>}
+                  {browser && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>{browser}</span>}
+                  {langShort && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title={`Idioma del navegador: ${s.language}`}>🌐 {langShort}</span>}
+                  {s.ipAddress && <span style={{ fontFamily: FB, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title="IP del visitante">{s.ipAddress}</span>}
                   {s.genioData?.birthdaySaved && <span title="El comensal registró su cumpleaños" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Cumple</span>}
                   {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>🔔 Garzón</span>}
                 </div>

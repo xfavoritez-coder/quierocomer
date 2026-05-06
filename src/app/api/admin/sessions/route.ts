@@ -335,6 +335,14 @@ export async function GET(req: NextRequest) {
       },
       select: { id: true, guestId: true, restaurantId: true, startedAt: true },
     }) : [];
+    // Helper: fecha YYYY-MM-DD en zona Santiago (no UTC — era el bug que inflaba "días distintos")
+    const toClDate = (d: Date) => {
+      const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Santiago", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(d);
+      const y = parts.find(p => p.type === "year")?.value || "";
+      const m = parts.find(p => p.type === "month")?.value || "";
+      const dd = parts.find(p => p.type === "day")?.value || "";
+      return `${y}-${m}-${dd}`;
+    };
     // Map por (guestId, restaurantId) → días distintos
     const visitDaysByGuestRest: Record<string, number> = {};
     for (const s of allGuestSessions) {
@@ -343,7 +351,7 @@ export async function GET(req: NextRequest) {
         const days = new Set(
           allGuestSessions
             .filter((x) => x.guestId === s.guestId && x.restaurantId === s.restaurantId)
-            .map((x) => x.startedAt.toISOString().split("T")[0])
+            .map((x) => toClDate(x.startedAt))
         );
         visitDaysByGuestRest[key] = days.size;
       }
@@ -361,9 +369,9 @@ export async function GET(req: NextRequest) {
     // the blue "Xª visita hoy" tag goes missing inconsistently.
     const visitsTodayBySession: Record<string, { numToday: number; totalToday: number }> = {};
     for (const target of sessions) {
-      const day = target.startedAt.toISOString().split("T")[0];
+      const day = toClDate(target.startedAt);
       const sameDay = allGuestSessions
-        .filter((x) => x.guestId === target.guestId && x.startedAt.toISOString().split("T")[0] === day)
+        .filter((x) => x.guestId === target.guestId && x.restaurantId === target.restaurantId && toClDate(x.startedAt) === day)
         .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
       const idx = sameDay.findIndex((x) => x.id === target.id);
       visitsTodayBySession[target.id] = {
@@ -507,6 +515,13 @@ export async function GET(req: NextRequest) {
         visitNumToday: visitsTodayBySession[s.id]?.numToday || 1,
         // Visitas totales de este guest a ESTE restaurante (no global del guest profile)
         restaurantVisitCount: visitMap.get(`${s.guestId}|${s.restaurantId}`) || 1,
+        // Identificador anónimo amigable: "Fantasma #abc12345" derivado del guestId
+        anonId: s.guestId.slice(0, 8),
+        // Datos visibles del visitante para el dueño (ya en schema, ahora expuestos)
+        ipAddress: s.ipAddress,
+        language: s.language,
+        userAgent: s.userAgent,
+        deviceType: s.deviceType,
         dishFavorites: sessionFavs.map(f => ({
           id: f.id,
           dishId: f.dishId,
