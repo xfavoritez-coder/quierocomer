@@ -1289,8 +1289,8 @@ export default function AdminMenus() {
           </button>
         )}
       </div>
-      {/* Filter chips — scroll horizontal en mobile, wrap en desktop */}
-      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4 }}>
+      {/* Filter dropdowns (fila 2) */}
+      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <select
             value={dietFilter}
@@ -1313,6 +1313,9 @@ export default function AdminMenus() {
           </select>
           <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
         </div>
+      </div>
+      {/* Restricciones (fila 3) — separadas para que no compitan con los dropdowns */}
+      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4, flexWrap: "wrap" }}>
         <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
           🌶️ Picante
         </button>
