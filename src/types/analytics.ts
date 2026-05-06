@@ -7,6 +7,9 @@ export interface VisitorMetrics {
   totalSessions: number;
   avgDurationMs: number;
   avgDishesViewed: number;
+  birthdaysSaved: number;
+  birthdayPct: number;
+  avgVisitsPerGuest: number;
 }
 
 export interface FunnelData {

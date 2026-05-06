@@ -19,6 +19,8 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     durationAgg,
     // dishesViewed is JSON so we still need in-memory for avg dishes
     dishSessions,
+    // BIRTHDAY_SAVED unico por guest en periodo (alguien que guardo cumple en este local)
+    birthdayGuestsResult,
   ] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
@@ -26,6 +28,15 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     prisma.session.groupBy({ by: ["guestId"], where: { ...where, converted: true }, _count: true }).then((r) => r.length),
     prisma.session.aggregate({ where: { ...where, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
     prisma.session.findMany({ where, select: { dishesViewed: true }, take: 5000 }),
+    prisma.statEvent.groupBy({
+      by: ["guestId"],
+      where: {
+        eventType: "BIRTHDAY_SAVED" as any,
+        ...rf,
+        createdAt: { gte: from, lte: to },
+      },
+      _count: true,
+    }).then((r) => r.length),
   ]);
 
   const totalVisitors = uniqueGuestsResult;
@@ -46,6 +57,9 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     totalSessions,
     avgDurationMs: Math.round(durationAgg._avg.durationMs || 0),
     avgDishesViewed: dishCounts.length > 0 ? Math.round((dishCounts.reduce((a, b) => a + b, 0) / dishCounts.length) * 10) / 10 : 0,
+    birthdaysSaved: birthdayGuestsResult,
+    birthdayPct: totalVisitors > 0 ? Math.round((birthdayGuestsResult / totalVisitors) * 100) : 0,
+    avgVisitsPerGuest: totalVisitors > 0 ? Math.round((totalSessions / totalVisitors) * 10) / 10 : 0,
   };
 }
 
@@ -467,6 +481,72 @@ const TIME_OF_DAY_LABELS: Record<string, { label: string; hint: string }> = {
   DINNER: { label: "Cena", hint: "19–23" },
   LATE: { label: "Noche", hint: "23–6" },
 };
+
+/**
+ * Top dish por horario del día (Mañana / Almuerzo / Tarde / Cena / Noche).
+ * Cada sesion tiene un timeOfDay calculado al inicio. Para cada bucket
+ * contamos aperturas únicas de plato (detail > 0) y devolvemos el top 1.
+ * Util para que el dueño sepa "el plato estrella del almuerzo" vs "de la cena".
+ */
+export async function getPopularByTimeOfDay(restaurantId: string | null, from: Date, to: Date) {
+  if (!restaurantId) return [];
+  const rf = restaurantFilter(restaurantId);
+
+  const sessions = await prisma.session.findMany({
+    where: { ...rf, startedAt: { gte: from, lte: to }, timeOfDay: { not: null } },
+    select: { timeOfDay: true, dishesViewed: true },
+    take: 5000,
+  });
+
+  const buckets: Record<string, Map<string, number>> = {
+    MORNING: new Map(), LUNCH: new Map(), AFTERNOON: new Map(),
+    DINNER: new Map(), LATE: new Map(),
+  };
+
+  for (const s of sessions) {
+    const tod = s.timeOfDay as string | null;
+    if (!tod || !buckets[tod]) continue;
+    const viewed = s.dishesViewed as any[];
+    if (!Array.isArray(viewed)) continue;
+    const seen = new Set<string>();
+    for (const v of viewed) {
+      if (!v?.dishId || (v.detailMs ?? 0) <= 0 || seen.has(v.dishId)) continue;
+      seen.add(v.dishId);
+      const m = buckets[tod];
+      m.set(v.dishId, (m.get(v.dishId) || 0) + 1);
+    }
+  }
+
+  const top: { key: string; dishId: string; count: number }[] = [];
+  for (const [key, m] of Object.entries(buckets)) {
+    const sorted = [...m.entries()].sort((a, b) => b[1] - a[1]);
+    if (sorted.length === 0) continue;
+    top.push({ key, dishId: sorted[0][0], count: sorted[0][1] });
+  }
+
+  if (top.length === 0) return [];
+
+  const dishIds = top.map(t => t.dishId);
+  const dishes = await prisma.dish.findMany({
+    where: { id: { in: dishIds } },
+    select: { id: true, name: true, photos: true },
+  });
+  const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
+
+  const ORDER = ["MORNING", "LUNCH", "AFTERNOON", "DINNER", "LATE"];
+  return top
+    .map(t => ({
+      key: t.key,
+      label: TIME_OF_DAY_LABELS[t.key]?.label || t.key,
+      hint: TIME_OF_DAY_LABELS[t.key]?.hint || "",
+      dishId: t.dishId,
+      name: dishMap[t.dishId]?.name || "?",
+      photo: dishMap[t.dishId]?.photos?.[0] || null,
+      count: t.count,
+    }))
+    .sort((a, b) => ORDER.indexOf(a.key) - ORDER.indexOf(b.key));
+}
+
 const DIET_LABELS: Record<string, string> = {
   OMNIVORE: "Carnívoro",
   VEGAN: "Vegano",

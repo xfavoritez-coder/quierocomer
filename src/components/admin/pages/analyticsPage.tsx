@@ -128,6 +128,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   const [clientes, setClientes] = useState<any>(null);
   const [dishes, setDishes] = useState<any>(null);
   const [searches, setSearches] = useState<any[]>([]);
+  const [popularByHour, setPopularByHour] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -137,8 +138,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       if (rid) p.set("restaurantId", rid);
       return fetch(`/api/admin/analytics?${p}`).then(r => r.json()).catch(() => null);
     };
-    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches")])
-      .then(([m, c, d, s]) => { setMetrics(m); setClientes(c); setDishes(d); setSearches(Array.isArray(s) ? s : []); })
+    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour")])
+      .then(([m, c, d, s, ph]) => { setMetrics(m); setClientes(c); setDishes(d); setSearches(Array.isArray(s) ? s : []); setPopularByHour(Array.isArray(ph) ? ph : []); })
       .finally(() => setLoading(false));
   }, [rid, from, to]);
 
@@ -159,9 +160,9 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* ═══ Hero KPIs ═══ */}
       <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
-        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
-        <HeroKpi icon="🔁" value={`${metrics.returningPct}%`} label="Recurrentes" sub={`${metrics.returningVisitors} volvieron`} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
-        <HeroKpi icon="✅" value={`${metrics.conversionPct}%`} label="Se registraron" sub={`${metrics.convertedCount} crearon cuenta`} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
+        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
+        <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
+        <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
         <HeroKpi icon="⏱️" value={formatDuration(metrics.avgDurationMs)} label="Tiempo promedio" sub={`${metrics.avgDishesViewed} platos / sesión`} color="#16a34a" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)" />
       </div>
 
@@ -209,6 +210,31 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Estrellas por horario — qué plato gana en cada momento del día ═══ */}
+      {popularByHour.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600 }}>🌟 Estrella por horario</p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato más abierto en cada momento del día.</p>
+          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: `repeat(${popularByHour.length}, 1fr)`, gap: 8 }}>
+            {popularByHour.map((p: any) => (
+              <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700 }}>{p.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{p.hint}</span>
+                </div>
+                {p.photo ? (
+                  <img src={p.photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} />
+                ) : (
+                  <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
+                )}
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
+                <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count}x</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -346,11 +372,13 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     return rows;
   })();
 
+  const [popularByHour, setPopularByHour] = useState<any[]>([]);
   useEffect(() => {
     setLoading(true);
     const p1 = new URLSearchParams({ type: "dishes", from, to });
     const p2 = new URLSearchParams({ from, to });
-    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); }
+    const p3 = new URLSearchParams({ type: "popular-by-hour", from, to });
+    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); p3.set("restaurantId", rid); }
     // Solo PREMIUM ve la integración Toteat (carta vs caja, badges)
     const toteatRequests = hasToteatAccess
       ? [
@@ -360,9 +388,11 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       : [Promise.resolve(null), Promise.resolve(null)];
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
+      fetch(`/api/admin/analytics?${p3}`).then(r => r.json()).catch(() => []),
       ...toteatRequests,
-    ]).then(([d, c, b]) => {
+    ]).then(([d, ph, c, b]) => {
       setData(d);
+      setPopularByHour(Array.isArray(ph) ? ph : []);
       if (c && !c.error) setCross(c);
       if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
@@ -436,6 +466,34 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* 🎖️ Acierto de los badges — premium + sales in window */}
       {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
+
+      {/* 🌟 Estrella por horario — qué plato gana en cada momento del día */}
+      {popularByHour.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+            <span>🌟 Estrella por horario</span>
+            <InfoTip text="El plato más abierto en cada bucket horario del periodo. Útil para saber qué destacar en cada turno." />
+          </p>
+          <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato que más se abrió en cada momento del día.</p>
+          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: `repeat(${popularByHour.length}, 1fr)`, gap: 8 }}>
+            {popularByHour.map((p: any) => (
+              <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700 }}>{p.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{p.hint}</span>
+                </div>
+                {p.photo ? (
+                  <img src={p.photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} />
+                ) : (
+                  <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
+                )}
+                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
+                <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count}x</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Grid 2x2 con los 4 bloques principales */}
       <div className="adm-cols-2">

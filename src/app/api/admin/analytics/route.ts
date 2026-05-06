@@ -4,7 +4,7 @@ import {
   requireRestaurantForOwner,
   authErrorResponse,
 } from "@/lib/adminAuth";
-import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes, getClientesAnalytics, getTopCategoriesByDwell } from "@/lib/admin/analyticsQueries";
+import { getVisitorMetrics, getFunnelConversion, getFailedSearches, getGenioImpact, getAverageTicketByWeek, getPersonalizationMetrics, getTopAttentionDishes, getLeastViewedDishes, getClientesAnalytics, getTopCategoriesByDwell, getPopularByTimeOfDay } from "@/lib/admin/analyticsQueries";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -66,6 +66,10 @@ export async function GET(req: NextRequest) {
         ]);
         return NextResponse.json({ mostViewed: byViews, mostDetailed: byDetail, leastViewed, topCategories });
       }
+      return NextResponse.json(data);
+    }
+    if (type === "popular-by-hour") {
+      const data = await getPopularByTimeOfDay(restaurantId, from, to);
       return NextResponse.json(data);
     }
     if (type === "ticket-trend" && restaurantId) {
