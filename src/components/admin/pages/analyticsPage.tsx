@@ -854,6 +854,19 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
     router.push(`${pathname}?${params.toString()}`);
   };
 
+  // Si el admin cambia de restaurante mientras filtraba por guest, el filtro queda obsoleto
+  // (otro local probablemente no tiene sesiones de ese visitante). Lo limpiamos automáticamente.
+  const prevRidRef = useRef<string>(rid);
+  useEffect(() => {
+    if (prevRidRef.current !== rid && guestIdFromUrl) {
+      const params = new URLSearchParams(sp?.toString() || "");
+      params.delete("guestId");
+      params.delete("guestName");
+      router.replace(`${pathname}?${params.toString()}`);
+    }
+    prevRidRef.current = rid;
+  }, [rid]);
+
   useEffect(() => {
     setLoading(true);
     setPage(1);
@@ -885,9 +898,20 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data?.sessions?.length) return (
-    <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
-      <p>Sin sesiones en este período</p>
-      {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>← Volver a todas</button>}
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {guestFilter && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
+          <span style={{ fontSize: "0.85rem" }}>👤</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
+            Filtrando por <strong>{guestFilter.name}</strong> en este local
+          </span>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 10px", fontFamily: F, fontSize: "0.72rem", background: "transparent", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer" }}>✕ Quitar filtro</button>
+        </div>
+      )}
+      <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
+        <p>{guestFilter ? "Este visitante no tiene sesiones en este local" : "Sin sesiones en este período"}</p>
+        {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>← Ver todas las sesiones</button>}
+      </div>
     </div>
   );
 
