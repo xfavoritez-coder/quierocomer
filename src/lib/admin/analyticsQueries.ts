@@ -19,8 +19,9 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     durationAgg,
     // dishesViewed is JSON so we still need in-memory for avg dishes
     dishSessions,
-    // BIRTHDAY_SAVED unico por guest en periodo (alguien que guardo cumple en este local)
-    birthdayGuestsResult,
+    // Eventos BIRTHDAY_SAVED en periodo, distinct guestId — los validamos abajo
+    // contra la persistencia real para no contar fantasmas si el register fallo.
+    birthdayEventGuests,
   ] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
@@ -36,8 +37,31 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
         createdAt: { gte: from, lte: to },
       },
       _count: true,
-    }).then((r) => r.length),
+    }).then((r) => r.map(e => e.guestId)),
   ]);
+
+  // Verificacion real: del set de guests que dispararon BIRTHDAY_SAVED, contar
+  // solo aquellos cuyo cumple efectivamente quedo guardado (en GuestProfile.preferences
+  // .birthday O en qrUser.birthday vinculado). Si el register fallo, el evento
+  // queda huerfano y NO se cuenta — la metrica refleja la realidad.
+  let birthdayGuestsResult = 0;
+  if (birthdayEventGuests.length > 0) {
+    const guests = await prisma.guestProfile.findMany({
+      where: { id: { in: birthdayEventGuests } },
+      select: { id: true, preferences: true, linkedQrUserId: true },
+    });
+    const linkedUserIds = guests.map(g => g.linkedQrUserId).filter(Boolean) as string[];
+    const users = linkedUserIds.length
+      ? await prisma.qrUser.findMany({ where: { id: { in: linkedUserIds } }, select: { id: true, birthday: true } })
+      : [];
+    const userBirthdayMap = new Map(users.map(u => [u.id, !!u.birthday]));
+    for (const g of guests) {
+      const prefs = (g.preferences as any) || {};
+      const inPrefs = !!prefs?.birthday;
+      const inLinkedUser = !!(g.linkedQrUserId && userBirthdayMap.get(g.linkedQrUserId));
+      if (inPrefs || inLinkedUser) birthdayGuestsResult++;
+    }
+  }
 
   const totalVisitors = uniqueGuestsResult;
   const returningVisitors = returningGuestsResult;
