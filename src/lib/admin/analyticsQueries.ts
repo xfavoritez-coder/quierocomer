@@ -483,6 +483,42 @@ const TIME_OF_DAY_LABELS: Record<string, { label: string; hint: string }> = {
 };
 
 /**
+ * Salud de la carta: detecta platos activos sin foto, sin descripcion, o
+ * con descripcion floja (< 20 chars). Util para que el dueño priorice
+ * trabajo editorial en la carta.
+ */
+export async function getMenuHealth(restaurantId: string | null) {
+  if (!restaurantId) return null;
+  const dishes = await prisma.dish.findMany({
+    where: { restaurantId, isActive: true, deletedAt: null },
+    select: { id: true, name: true, photos: true, description: true, price: true },
+  });
+
+  const total = dishes.length;
+  const withoutPhoto = dishes.filter(d => !d.photos || d.photos.length === 0);
+  const withoutDescription = dishes.filter(d => !d.description || d.description.trim().length === 0);
+  const weakDescription = dishes.filter(d => {
+    const desc = (d.description || "").trim();
+    return desc.length > 0 && desc.length < 20;
+  });
+  const withoutPrice = dishes.filter(d => !d.price || Number(d.price) <= 0);
+
+  // Score 0-100: 100 = perfecto, baja por cada problema
+  const issues = withoutPhoto.length + withoutDescription.length + weakDescription.length + withoutPrice.length;
+  const denom = total * 4 || 1;
+  const healthScore = Math.max(0, Math.round(100 - (issues / denom) * 100));
+
+  return {
+    total,
+    healthScore,
+    withoutPhoto: { count: withoutPhoto.length, samples: withoutPhoto.slice(0, 5).map(d => ({ id: d.id, name: d.name })) },
+    withoutDescription: { count: withoutDescription.length, samples: withoutDescription.slice(0, 5).map(d => ({ id: d.id, name: d.name })) },
+    weakDescription: { count: weakDescription.length, samples: weakDescription.slice(0, 5).map(d => ({ id: d.id, name: d.name })) },
+    withoutPrice: { count: withoutPrice.length, samples: withoutPrice.slice(0, 5).map(d => ({ id: d.id, name: d.name })) },
+  };
+}
+
+/**
  * Top dish por horario del día (Mañana / Almuerzo / Tarde / Cena / Noche).
  * Cada sesion tiene un timeOfDay calculado al inicio. Para cada bucket
  * contamos aperturas únicas de plato (detail > 0) y devolvemos el top 1.

@@ -159,7 +159,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* ═══ Hero KPIs ═══ */}
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+      <div className="adm-kpi-grid">
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
@@ -167,7 +167,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
-      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="adm-cols-2">
         {topDish && (
           <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}>
             {topDish.photo ? (
@@ -219,7 +219,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600 }}>🌟 Estrella por horario</p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato más abierto en cada momento del día.</p>
-          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: `repeat(${popularByHour.length}, 1fr)`, gap: 8 }}>
+          <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${popularByHour.length}, minmax(0, 1fr))` }}>
             {popularByHour.map((p: any) => (
               <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -240,7 +240,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       )}
 
       {/* ═══ Top platos + Quiénes son ═══ */}
-      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12 }}>
+      <div className="adm-cols-2">
         {/* Top 3 platos vistos */}
         {dishes?.mostViewed && dishes.mostViewed.length > 0 && (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
@@ -304,7 +304,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       </div>
 
       {/* ═══ Categoría top + búsqueda top ═══ */}
-      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+      <div className="adm-cols-2">
         {topCategory && (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
             <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>📂 Categoría favorita</p>
@@ -373,12 +373,14 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   })();
 
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
+  const [menuHealth, setMenuHealth] = useState<any>(null);
   useEffect(() => {
     setLoading(true);
     const p1 = new URLSearchParams({ type: "dishes", from, to });
     const p2 = new URLSearchParams({ from, to });
     const p3 = new URLSearchParams({ type: "popular-by-hour", from, to });
-    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); p3.set("restaurantId", rid); }
+    const p4 = new URLSearchParams({ type: "menu-health" });
+    if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); p3.set("restaurantId", rid); p4.set("restaurantId", rid); }
     // Solo PREMIUM ve la integración Toteat (carta vs caja, badges)
     const toteatRequests = hasToteatAccess
       ? [
@@ -389,10 +391,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     Promise.all([
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p3}`).then(r => r.json()).catch(() => []),
+      fetch(`/api/admin/analytics?${p4}`).then(r => r.json()).catch(() => null),
       ...toteatRequests,
-    ]).then(([d, ph, c, b]) => {
+    ]).then(([d, ph, mh, c, b]) => {
       setData(d);
       setPopularByHour(Array.isArray(ph) ? ph : []);
+      setMenuHealth(mh && !mh.error ? mh : null);
       if (c && !c.error) setCross(c);
       if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
@@ -467,6 +471,41 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       {/* 🎖️ Acierto de los badges — premium + sales in window */}
       {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
 
+      {/* 🩺 Salud de tu carta — issues editoriales (sin foto, sin descripción, etc.) */}
+      {menuHealth && menuHealth.total > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>🩺 Salud de tu carta</span>
+              <InfoTip text="Detecta platos activos sin foto, sin descripción, con descripción muy corta o sin precio. El score 0-100 baja por cada problema; 100 = carta perfecta." />
+            </p>
+            <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{menuHealth.total} plato{menuHealth.total !== 1 ? "s" : ""} activo{menuHealth.total !== 1 ? "s" : ""}</span>
+            <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "1rem", fontWeight: 700, color: menuHealth.healthScore >= 80 ? "#16a34a" : menuHealth.healthScore >= 50 ? "#F4A623" : "#ef4444" }}>{menuHealth.healthScore}/100</span>
+          </div>
+          <div className="adm-kpi-grid">
+            {[
+              { key: "withoutPhoto", icon: "📷", label: "Sin foto", data: menuHealth.withoutPhoto },
+              { key: "withoutDescription", icon: "📝", label: "Sin descripción", data: menuHealth.withoutDescription },
+              { key: "weakDescription", icon: "✏️", label: "Descripción muy corta", data: menuHealth.weakDescription },
+              { key: "withoutPrice", icon: "💰", label: "Sin precio", data: menuHealth.withoutPrice },
+            ].map((item) => (
+              <div key={item.key} style={{ background: item.data.count > 0 ? "rgba(244,166,35,0.08)" : "rgba(22,163,74,0.06)", border: `1px solid ${item.data.count > 0 ? "rgba(244,166,35,0.2)" : "rgba(22,163,74,0.15)"}`, borderRadius: 10, padding: "10px 12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: "0.95rem" }}>{item.icon}</span>
+                  <span style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: item.data.count > 0 ? "#F4A623" : "#16a34a" }}>{item.data.count}</span>
+                </div>
+                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{item.label}</p>
+                {item.data.count > 0 && item.data.samples?.length > 0 && (
+                  <p style={{ fontFamily: FB, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                    Ej: {item.data.samples.slice(0, 2).map((s: any) => s.name).join(", ")}{item.data.count > 2 ? "…" : ""}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 🌟 Estrella por horario — qué plato gana en cada momento del día */}
       {popularByHour.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -475,7 +514,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
             <InfoTip text="El plato más abierto en cada bucket horario del periodo. Útil para saber qué destacar en cada turno." />
           </p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato que más se abrió en cada momento del día.</p>
-          <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: `repeat(${popularByHour.length}, 1fr)`, gap: 8 }}>
+          <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${popularByHour.length}, minmax(0, 1fr))` }}>
             {popularByHour.map((p: any) => (
               <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
@@ -859,7 +898,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {clientes?.dietProfile && (clientes.dietProfile.totalDietGuests > 0 || clientes.dietProfile.restrictions.length > 0) && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🥗 Perfil dietético de tus clientes</p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+          <div className="adm-cols-2" style={{ gap: 14 }}>
             <div>
               <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Tipo de dieta declarado</p>
               {clientes.dietProfile.diets.length === 0 ? (
@@ -929,7 +968,7 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* Summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }} className="adm-grid-2">
+      <div className="adm-kpi-grid">
         {[
           { label: "Hoy", value: data.today, color: GOLD },
           { label: "Semana", value: data.week },
@@ -960,7 +999,7 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
       )}
 
       {/* Two columns: top mesas + peak hours */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }} className="adm-grid-2">
+      <div className="adm-cols-2">
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>Mesas más activas</p>
           {(data.topMesas || []).length > 0 ? data.topMesas.map((m: any, i: number) => (

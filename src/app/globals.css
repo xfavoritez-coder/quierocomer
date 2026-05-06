@@ -125,10 +125,36 @@ textarea::placeholder {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
+/* KPI grid: 4 en desktop, 2x2 en mobile — los hero KPI quedan estirados feo si caen a 1 col */
+.adm-kpi-grid {
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 10px;
+}
+/* Carousel horizontal mobile-first: cards de ancho fijo con scroll */
+.adm-hour-grid {
+  display: grid !important;
+  gap: 8px;
+}
 @media (max-width: 768px) {
   .adm-cols-2,
   .adm-cols-3 {
     grid-template-columns: 1fr;
+  }
+  .adm-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+  .adm-hour-grid {
+    display: flex !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .adm-hour-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .adm-hour-grid > * {
+    flex: 0 0 130px;
   }
 }
 
