@@ -385,16 +385,41 @@ export async function GET(req: NextRequest) {
     // the DB for that guest+day, not just the ones loaded in the current
     // admin page. Without this, paginated listings hide the prior visits and
     // the blue "Xª visita hoy" tag goes missing inconsistently.
+    //
+    // Importante: una persona puede generar multiples sesiones por reloads,
+    // tabs duplicados o reconexion. Si hay gap < 10 min entre el fin de una
+    // sesion y el inicio de la siguiente (o solapan), las consideramos la
+    // MISMA visita. Asi "13 sesiones" se reduce a las visitas reales (~4).
+    // Cargar todas las sesiones del dia para calcular esto, no solo las que
+    // tienen guestId en el page actual.
+    const allDaySessionsByGuestRest = sessionGuestIds.length ? await prisma.session.findMany({
+      where: {
+        guestId: { in: sessionGuestIds },
+        ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}),
+      },
+      select: { id: true, guestId: true, restaurantId: true, startedAt: true, endedAt: true },
+    }) : [];
+    const VISIT_GAP_MS = 10 * 60 * 1000;
     const visitsTodayBySession: Record<string, { numToday: number; totalToday: number }> = {};
     for (const target of sessions) {
       const day = toClDate(target.startedAt);
-      const sameDay = allGuestSessions
+      const sameDay = allDaySessionsByGuestRest
         .filter((x) => x.guestId === target.guestId && x.restaurantId === target.restaurantId && toClDate(x.startedAt) === day)
         .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
-      const idx = sameDay.findIndex((x) => x.id === target.id);
+      // Agrupar sesiones consecutivas (gap <= 10 min o solapadas) como UNA visita
+      let visitIdx = 0;
+      let lastEnd = -Infinity;
+      const sessionToVisit = new Map<string, number>();
+      for (const s of sameDay) {
+        const start = s.startedAt.getTime();
+        if (start - lastEnd > VISIT_GAP_MS) visitIdx++;
+        sessionToVisit.set(s.id, visitIdx);
+        const end = s.endedAt ? s.endedAt.getTime() : start;
+        if (end > lastEnd) lastEnd = end;
+      }
       visitsTodayBySession[target.id] = {
-        numToday: idx >= 0 ? idx + 1 : 1,
-        totalToday: sameDay.length,
+        numToday: sessionToVisit.get(target.id) || 1,
+        totalToday: visitIdx,
       };
     }
 
