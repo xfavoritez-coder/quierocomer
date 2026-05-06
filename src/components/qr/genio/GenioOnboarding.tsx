@@ -294,7 +294,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).catch(() => {});
   }, [step]);
 
-  const TOTAL_STEPS = 4;
+  const TOTAL_STEPS = 3; // welcome (0) + diet (1) + restrictions (2) + done (3) — el step "dislikes" se quitó
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -318,7 +318,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     setTimeout(onClose, 200);
   }, [onClose]);
 
-  const STEP_NAMES = ["welcome", "diet", "restrictions", "dislikes", "done"];
+  const STEP_NAMES = ["welcome", "diet", "restrictions", "done"];
   const next = () => setStep((s) => {
     const nextStep = s + 1;
     trackStat(restaurantId, `GENIO_STEP_${STEP_NAMES[nextStep]?.toUpperCase() || nextStep}`, undefined, genioSessionId);
@@ -391,7 +391,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     >
       {/* Header */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 20, padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {step > (hasSaved ? 0 : 1) && step < 4 ? (
+        {step > (hasSaved ? 0 : 1) && step < 3 ? (
           <button onClick={() => setStep((s) => s - 1)} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: G.surfaceHover, border: "none" }}>
             <ChevronLeft size={18} color="white" />
           </button>
@@ -399,7 +399,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           <div style={{ width: 34 }} />
         )}
         <span style={{ color: G.textTertiary, fontSize: "0.82rem", fontWeight: 500 }}>
-          {step >= 1 && step <= 3 ? t(lang, "gStepOf").replace("{step}", String(step)) : ""}
+          {step >= 1 && step <= 2 ? t(lang, "gStepOf").replace("{step}", String(step)) : ""}
         </span>
         <button onClick={close} className="flex items-center justify-center" style={{ width: 34, height: 34, borderRadius: "50%", background: G.surfaceHover, border: "none" }}>
           <X size={16} color="white" />
@@ -407,9 +407,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       </div>
 
       {/* Progress bar */}
-      {step >= 1 && step <= 3 && (
+      {step >= 1 && step <= 2 && (
         <div style={{ position: "absolute", top: 62, left: 20, right: 20, zIndex: 20, display: "flex", gap: 4 }}>
-          {[1, 2, 3].map((i) => (
+          {[1, 2].map((i) => (
             <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= step ? G.gold : "rgba(255,255,255,0.08)", transition: "background 0.3s" }} />
           ))}
         </div>
@@ -730,112 +730,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
           )}
         </div>
 
-        {/* ═══ STEP 3 — Dislikes ═══ */}
-        <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", padding: "100px 36px 120px", position: "relative" }}>
-          <AmbientHaze bottom />
-          <AmbientSparks count={5} />
+        {/* STEP 3 (Dislikes) eliminado — quedan solo Diet (1), Restrictions (2), Done (3) */}
 
-          <h2 className="font-[family-name:var(--font-playfair)] text-center" style={{ fontSize: "1.5rem", fontWeight: 900, color: "white", marginBottom: 8, position: "relative", zIndex: 2 }}>
-            {t(lang, "gDislikesQuestion")}
-          </h2>
-          <p className="text-center" style={{ color: G.textTertiary, fontSize: "0.85rem", marginBottom: 20, lineHeight: 1.5, position: "relative", zIndex: 2 }}>
-            {t(lang, "gDislikesHint")}
-          </p>
-
-          {/* Popular dislikes — unified render, toggle in place */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-            {popularDislikes.filter(p => !["dulce", "agridulce", "ácido", "ahumado"].includes(p)).slice(0, 4).map(item => {
-              const sel = dislikes.includes(item);
-              const label = lang === "en" ? (dislikeI18n[item.toLowerCase()]?.en || item) : lang === "pt" ? (dislikeI18n[item.toLowerCase()]?.pt || item) : item;
-              return (
-                <button key={item} onClick={() => {
-                  setDislikes(prev => {
-                    const updated = sel ? prev.filter(x => x !== item) : [...prev, item];
-                    localStorage.setItem("qr_dislikes", JSON.stringify(updated));
-                    return updated;
-                  });
-                }} className="transition-all duration-200" style={sel
-                  ? { padding: "8px 16px", borderRadius: 50, border: `1px solid ${G.selectedBorder}`, background: G.selectedBg, color: G.goldText, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }
-                  : { padding: "8px 16px", borderRadius: 50, border: `0.5px solid ${G.border}`, background: G.surface, color: G.textSecondary, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer" }
-                }>
-                  {label}{sel && <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>✕</span>}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Extra dislikes added via search (not in popular list) */}
-          {dislikes.filter(d => !popularDislikes.includes(d)).length > 0 && (
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 16, position: "relative", zIndex: 2 }}>
-              {dislikes.filter(d => !popularDislikes.includes(d)).map(d => (
-                <button key={d} onClick={() => {
-                  setDislikes(prev => { const updated = prev.filter(x => x !== d); localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                }} className="transition-all duration-200" style={{ padding: "8px 16px", borderRadius: 50, border: `1px solid ${G.selectedBorder}`, background: G.selectedBg, color: G.goldText, fontSize: "0.88rem", fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-                  {d} <span style={{ fontSize: "0.75rem", opacity: 0.7 }}>✕</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Search input for more */}
-          <div style={{ position: "relative", marginBottom: 16, width: "100%", zIndex: 2 }}>
-            <input
-              value={dislikeSearch} onChange={e => setDislikeSearch(e.target.value)}
-              onFocus={() => setDislikeInputFocused(true)}
-              onBlur={() => setTimeout(() => { setDislikeInputFocused(false); setDislikeResults([]); setDislikeNoResults(false); }, 200)}
-              placeholder={t(lang, "gSearchIngredient")}
-              className="genio-input"
-              style={inputStyle}
-            />
-            {dislikeResults.length > 0 && (
-              <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, marginBottom: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, maxHeight: 180, overflowY: "auto" }}>
-                {dislikeResults.map(r => (
-                  <button key={r} onClick={() => {
-                    setDislikes(prev => { const updated = [...prev, r]; localStorage.setItem("qr_dislikes", JSON.stringify(updated)); return updated; });
-                    setDislikeSearch(""); setDislikeResults([]); setDislikeNoResults(false);
-                  }} style={{ display: "block", width: "100%", padding: "11px 16px", background: "none", border: "none", borderBottom: `1px solid ${G.border}`, textAlign: "left", color: G.textSecondary, fontSize: "0.88rem", cursor: "pointer" }}>
-                    {r}
-                  </button>
-                ))}
-              </div>
-            )}
-            {dislikeNoResults && dislikeSearch.length >= 2 && (
-              <div style={{ position: "absolute", bottom: "100%", left: 0, right: 0, marginBottom: 4, background: G.dropdown, border: `0.5px solid rgba(234,88,12,0.15)`, borderRadius: 12, overflow: "hidden", zIndex: 10, padding: "11px 16px" }}>
-                <span style={{ color: G.textTertiary, fontSize: "0.82rem" }}>No encontramos &quot;{dislikeSearch.trim()}&quot;</span>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={() => {
-              localStorage.setItem("qr_dislikes", JSON.stringify(dislikes));
-              if (document.cookie.includes("qr_user_id")) {
-                fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes }) }).catch(() => {});
-              }
-              next();
-            }}
-            className="active:scale-95 transition-transform"
-            style={{ ...CTA_STYLE, marginTop: 24, position: "relative", zIndex: 2 }}
-          >
-            {t(lang, "gContinueBtn")}
-          </button>
-          <button
-            onClick={() => {
-              setDislikes([]);
-              localStorage.setItem("qr_dislikes", JSON.stringify([]));
-              if (document.cookie.includes("qr_user_id")) {
-                fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dislikes: [] }) }).catch(() => {});
-              }
-              // TODO: track skip event
-              next();
-            }}
-            style={{ marginTop: 12, background: "none", border: "none", color: G.textTertiary, fontSize: "0.95rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3, position: "relative", zIndex: 2 }}
-          >
-            {t(lang, "gSkipStep")}
-          </button>
-        </div>
-
-        {/* ═══ STEP 4 — Done ═══ */}
+        {/* ═══ STEP 3 — Done ═══ */}
         <div style={{ minWidth: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 36px 44px", position: "relative" }}>
           <AmbientHaze bottom />
           <AmbientSparks count={5} />

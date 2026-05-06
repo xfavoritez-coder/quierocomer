@@ -76,7 +76,6 @@ export default function AgregarLocalPage() {
   const [ownerSaving, setOwnerSaving] = useState(false);
   const [ownerDone, setOwnerDone] = useState<{ password: string } | null>(null);
   const [ownerError, setOwnerError] = useState("");
-  const skipIngredientsRef = useRef(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
@@ -174,7 +173,6 @@ export default function AgregarLocalPage() {
 
   const confirm = async () => {
     setStep("saving");
-    skipIngredientsRef.current = false;
     setSavingProgress("Creando restaurante y platos...");
     try {
       // Step 1: Create restaurant + dishes
@@ -192,18 +190,7 @@ export default function AgregarLocalPage() {
 
       setResult({ slug: data.restaurant.slug, restaurantId: data.restaurant.id, totalDishes: data.totalDishes, totalCategories: data.totalCategories, url: data.url });
 
-      // Step 2: Extract ingredients with real progress (skippable)
-      const dishIds: string[] = data.dishIds || [];
-      for (let i = 0; i < dishIds.length; i++) {
-        if (skipIngredientsRef.current) break;
-        setSavingProgress(`Extrayendo ingredientes (${i + 1}/${dishIds.length})...`);
-        await fetch("/api/agregarlocal/ingredients", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ dishId: dishIds[i] }),
-        }).catch(() => {});
-      }
-
+      // Paso de extracción de ingredientes — quitado de momento (mucho leseo, nadie lo usa)
       setSavingProgress("");
       setStep("done");
     } catch (e: any) {
@@ -478,14 +465,7 @@ export default function AgregarLocalPage() {
             <div style={{ width: "100%", maxWidth: 280, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.1)", margin: "16px auto 0", overflow: "hidden" }}>
               <div style={{ width: "70%", height: "100%", background: "#F4A623", borderRadius: 2, animation: "progressIndeterminate 1.5s ease-in-out infinite" }} />
             </div>
-            {savingProgress.includes("ingredientes") && (
-              <button
-                onClick={() => { skipIngredientsRef.current = true; }}
-                style={{ marginTop: 20, background: "none", border: "1px solid rgba(255,255,255,0.2)", color: "rgba(255,255,255,0.5)", borderRadius: 50, padding: "8px 24px", fontSize: "0.82rem", cursor: "pointer", fontFamily: "inherit" }}
-              >
-                Saltar este paso
-              </button>
-            )}
+            {/* Botón "Saltar ingredientes" quitado — ya no se extraen ingredientes */}
           </div>
         )}
 

@@ -3,6 +3,7 @@ export const maxDuration = 300;
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
+import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 
 function detectDishType(categoryName: string): string {
   const n = categoryName.toLowerCase();
@@ -126,6 +127,9 @@ export async function POST(request: Request) {
         const dish = cat.dishes[j];
         if (!dish.name?.trim()) continue;
 
+        // Auto-detección de flags (picante / nuts / sin X) desde nombre + descripción
+        const detected = detectDishFlags({ name: dish.name, description: dish.description, ingredients: dish.ingredients });
+
         const created = await prisma.dish.create({
           data: {
             restaurantId: restaurant.id,
@@ -136,7 +140,12 @@ export async function POST(request: Request) {
             photos: [], // photos added after re-upload
             position: j,
             dishDiet: isDrinkCat ? "OMNIVORE" : (dish.diet || "OMNIVORE"),
-            isSpicy: dish.isSpicy || false,
+            // Para bebidas no aplican los sellos de gluten/lactosa/soya/nuts (sería ruido)
+            isSpicy: dish.isSpicy || detected.isSpicy,
+            containsNuts: isDrinkCat ? false : detected.containsNuts,
+            isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
+            isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,
+            isSoyFree: isDrinkCat ? false : detected.isSoyFree,
             isPhotoReferential: dish._unsplash || false,
             isActive: true,
           },
