@@ -562,7 +562,8 @@ export async function GET(req: NextRequest) {
         }),
         categoriesViewed: cats.map((c: any) => ({
           ...c,
-          name: catMap[c.categoryId] || c.categoryId,
+          // diet-carousel es un ID virtual del carousel Genio, no una category real
+          name: c.categoryId === "diet-carousel" ? "Recomendados Genio" : (catMap[c.categoryId] || c.categoryId),
         })),
         pickedDish: s.pickedDishId ? dishMap[s.pickedDishId] || null : null,
         usedGenio: dbSessionsWithGenio.has(s.id),

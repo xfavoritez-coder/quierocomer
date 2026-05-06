@@ -973,12 +973,12 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
                   {isReturningGuest && (
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600 }}>
+                    <span title={`Este cliente ha venido al local en ${visitDays} días distintos en total`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600, cursor: "help" }}>
                       🔁 {visitDays} {visitDays === 1 ? "día" : "días"}
                     </span>
                   )}
                   {visitsToday > 1 && (
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600 }} title="Esta es la N-ésima visita del mismo cliente hoy">
+                    <span title={`Hoy abrió la carta ${visitsToday} veces. Esta es la visita N° ${visitNumToday} (reloads y reaperturas dentro de 10 min cuentan como una sola visita)`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600, cursor: "help" }}>
                       👁 {visitNumToday} de {visitsToday} hoy
                     </span>
                   )}
