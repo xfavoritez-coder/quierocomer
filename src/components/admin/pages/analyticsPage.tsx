@@ -834,25 +834,44 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [guestFilter, setGuestFilter] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     setLoading(true);
     setPage(1);
-    const p = new URLSearchParams({ from, to, page: "1" });
+    const p = new URLSearchParams({ page: "1" });
+    if (guestFilter) {
+      // Cuando filtramos por guest, ignoramos el rango de fechas para ver TODO el historial
+      p.set("guestId", guestFilter.id);
+    } else {
+      p.set("from", from);
+      p.set("to", to);
+    }
     if (rid) p.set("restaurantId", rid);
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, guestFilter]);
 
   const loadPage = (pg: number) => {
     setLoading(true);
     setPage(pg);
-    const p = new URLSearchParams({ from, to, page: String(pg) });
+    const p = new URLSearchParams({ page: String(pg) });
+    if (guestFilter) {
+      p.set("guestId", guestFilter.id);
+    } else {
+      p.set("from", from);
+      p.set("to", to);
+    }
     if (rid) p.set("restaurantId", rid);
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
   };
 
   if (loading) return <SkeletonLoading type="list" />;
-  if (!data?.sessions?.length) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin sesiones en este período</p>;
+  if (!data?.sessions?.length) return (
+    <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
+      <p>Sin sesiones en este período</p>
+      {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>← Volver a todas</button>}
+    </div>
+  );
 
   const toggle = (id: string) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const fmtTime = (d: string) => { const t = new Date(d); return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`; };
@@ -861,6 +880,15 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      {guestFilter && (
+        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
+          <span style={{ fontSize: "0.85rem" }}>👤</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
+            Mostrando todas las sesiones de <strong>{guestFilter.name}</strong> en este local
+          </span>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 10px", fontFamily: F, fontSize: "0.72rem", background: "transparent", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer" }}>✕ Quitar</button>
+        </div>
+      )}
       <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>
         {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
       </p>
@@ -870,15 +898,25 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         const duration = s.durationMs ? formatDuration(s.durationMs) : "—";
         // Recurrente = días distintos que vino al local (no # de sesiones, que pueden ser scans dentro de la misma comida)
         const visitDays = s.visitDays || 1;
-        const userName = s.qrUser?.name || (visitDays > 1 ? `Visitante recurrente (${visitDays} ${visitDays === 1 ? "día" : "días"})` : "Visitante nuevo");
+        const isReturningGuest = visitDays > 1;
+        const userName = s.qrUser?.name || (isReturningGuest ? `Visitante recurrente (${visitDays} ${visitDays === 1 ? "día" : "días"})` : "Visitante nuevo");
 
         return (
           <div key={s.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", boxShadow: "var(--adm-card-shadow, none)" }}>
             <div onClick={() => toggle(s.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", cursor: "pointer" }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
+                  {(isReturningGuest || s.qrUser?.id) && !guestFilter && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || `Visitante (${visitDays}d)` }); }}
+                      style={{ fontFamily: F, fontSize: "0.65rem", padding: "2px 8px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}
+                      title="Ver todas las sesiones de este visitante"
+                    >
+                      ver historial →
+                    </button>
+                  )}
                 </div>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)} {fmtTime(s.startedAt)}</span>

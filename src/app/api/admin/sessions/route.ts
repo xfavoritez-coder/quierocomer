@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
     const dateFilter = url.searchParams.get("date"); // YYYY-MM-DD
     const dateFrom = url.searchParams.get("from"); // YYYY-MM-DD
     const dateTo = url.searchParams.get("to"); // YYYY-MM-DD
+    const guestIdFilter = url.searchParams.get("guestId"); // ver historial completo de un guest
     const page = parseInt(url.searchParams.get("page") || "1");
     const activity = url.searchParams.get("activity"); // genio | garzon | cumple | favoritos
     const limit = 30;
@@ -48,7 +49,10 @@ export async function GET(req: NextRequest) {
     // Build where filter with ownership enforcement
     const where: any = {};
 
-    if (dateFilter) {
+    // Si hay guestId, ignoramos el rango de fechas para mostrar TODO el historial de ese guest
+    if (guestIdFilter) {
+      where.guestId = guestIdFilter;
+    } else if (dateFilter) {
       const start = new Date(dateFilter + "T00:00:00");
       const end = new Date(dateFilter + "T23:59:59.999");
       where.startedAt = { gte: start, lte: end };
