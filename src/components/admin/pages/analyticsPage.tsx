@@ -908,9 +908,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
           <span style={{ fontSize: "0.85rem" }}>👤</span>
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
-            Filtrando por <strong>{guestFilter.name}</strong> en este local
+            Viendo solo sesiones de <strong>{guestFilter.name}</strong> en este local
           </span>
-          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 10px", fontFamily: F, fontSize: "0.72rem", background: "transparent", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer" }}>✕ Quitar filtro</button>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>← Ver todas</button>
         </div>
       )}
       <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
@@ -932,9 +932,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
           <span style={{ fontSize: "0.85rem" }}>👤</span>
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>
-            Mostrando todas las sesiones de <strong>{guestFilter.name}</strong> en este local
+            Viendo solo sesiones de <strong>{guestFilter.name}</strong> en este local
           </span>
-          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 10px", fontFamily: F, fontSize: "0.72rem", background: "transparent", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer" }}>✕ Quitar</button>
+          <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 12px", fontFamily: F, fontSize: "0.72rem", background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}>← Ver todas</button>
         </div>
       )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "0 0 4px", flexWrap: "wrap" }}>
