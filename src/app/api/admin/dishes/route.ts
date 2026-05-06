@@ -102,12 +102,16 @@ export async function POST(req: NextRequest) {
       });
       if (dishIngs.length > 0) {
         const allergenNames = dishIngs.flatMap(di => di.ingredient.allergens.map(a => a.name.toLowerCase()));
+        const NUT_REGEX = /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|mara[nñ]on|cashew/i;
+        const ingredientNames = dishIngs.map(di => di.ingredient.name.toLowerCase());
+        const hasNuts = allergenNames.some(a => NUT_REGEX.test(a)) || ingredientNames.some(n => NUT_REGEX.test(n));
         await prisma.dish.update({
           where: { id: dish.id },
           data: {
             isGlutenFree: !allergenNames.includes("gluten"),
             isLactoseFree: !allergenNames.includes("lactosa"),
             isSoyFree: !allergenNames.includes("soja") && !allergenNames.includes("soya"),
+            containsNuts: hasNuts,
           },
         });
       }

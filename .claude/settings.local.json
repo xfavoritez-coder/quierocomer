@@ -123,7 +123,8 @@
       "Bash(unzip -l \"Carta alleria 2026.docx\")",
       "WebFetch(domain:menu.fu.do)",
       "Bash(DRY_RUN=1 npx tsx scripts/sync-alleria-full-fudo.ts)",
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(DRY_RUN=1 npx tsx scripts/backfill-contains-nuts.ts)"
     ]
   }
 }

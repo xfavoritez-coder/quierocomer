@@ -1087,7 +1087,7 @@ export default function AdminMenus() {
 
               <div style={{ marginBottom: 14 }}>
                 <label style={LBL}>Restricciones alimenticias</label>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Se ajustan automáticamente al agregar ingredientes con alérgenos. Si los desmarcas manualmente, respetamos tu decisión.</p>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "-2px 0 10px", lineHeight: 1.45 }}>Se ajustan automáticamente al agregar ingredientes con alérgenos. Si los desmarcas manualmente, respetamos tu decisión.</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
@@ -1109,7 +1109,7 @@ export default function AdminMenus() {
 
               <div ref={ingRef} style={{ marginBottom: 14 }}>
                 <label style={LBL}>Ingredientes ({eIngredientIds.length} seleccionados)</label>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Personaliza la carta según gustos, alergias y restricciones de cada cliente</p>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "-2px 0 10px", lineHeight: 1.45 }}>Personaliza la carta según gustos, alergias y restricciones de cada cliente.</p>
                 {/* Selected pills */}
                 {eIngredientIds.length > 0 && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 8 }}>
