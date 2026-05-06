@@ -19,9 +19,9 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     durationAgg,
     // dishesViewed is JSON so we still need in-memory for avg dishes
     dishSessions,
-    // Eventos BIRTHDAY_SAVED en periodo, distinct guestId — los validamos abajo
-    // contra la persistencia real para no contar fantasmas si el register fallo.
-    birthdayEventGuests,
+    // Eventos BIRTHDAY_SAVED en periodo — los validamos abajo contra la
+    // persistencia real para no contar fantasmas si el register fallo.
+    birthdayEventsRaw,
   ] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
@@ -37,12 +37,20 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
         createdAt: { gte: from, lte: to },
       },
       _count: true,
-    }).then((r) => r.map(e => e.guestId).filter((id): id is string => !!id)),
+    }),
   ]);
+
+  // Saco el cast aca — Prisma puede tipar guestId como string|null en groupBy
+  // y dentro de Promise.all el type guard del .filter no se propaga bien al
+  // tipo final de la tupla.
+  const birthdayEventGuests: string[] = [];
+  for (const ev of birthdayEventsRaw) {
+    if (ev.guestId) birthdayEventGuests.push(ev.guestId);
+  }
 
   // Verificacion real: del set de guests que dispararon BIRTHDAY_SAVED, contar
   // solo aquellos cuyo cumple efectivamente quedo guardado (en GuestProfile.preferences
-  // .birthday O en qrUser.birthday vinculado). Si el register fallo, el evento
+  // .birthday O en qrUser.birthDate vinculado). Si el register fallo, el evento
   // queda huerfano y NO se cuenta — la metrica refleja la realidad.
   let birthdayGuestsResult = 0;
   if (birthdayEventGuests.length > 0) {
@@ -50,7 +58,10 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
       where: { id: { in: birthdayEventGuests } },
       select: { id: true, preferences: true, linkedQrUserId: true },
     });
-    const linkedUserIds = guests.map((g) => g.linkedQrUserId).filter((id): id is string => !!id);
+    const linkedUserIds: string[] = [];
+    for (const g of guests) {
+      if (g.linkedQrUserId) linkedUserIds.push(g.linkedQrUserId);
+    }
     const users = linkedUserIds.length
       ? await prisma.qRUser.findMany({ where: { id: { in: linkedUserIds } }, select: { id: true, birthDate: true } })
       : [];
