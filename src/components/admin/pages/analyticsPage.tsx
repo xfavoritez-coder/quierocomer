@@ -837,6 +837,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [hideEmpty, setHideEmpty] = useState(false);
   // El filtro por guest se sincroniza con el URL (?guestId=xxx&guestName=yyy)
   // — así "ver historial" cambia la navegación (back button, share link, refresh).
   const guestIdFromUrl = sp?.get("guestId") || null;
@@ -879,8 +880,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
       p.set("to", to);
     }
     if (rid) p.set("restaurantId", rid);
+    if (hideEmpty) p.set("hideEmpty", "true");
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, guestFilter]);
+  }, [rid, from, to, guestFilter, hideEmpty]);
 
   const loadPage = (pg: number) => {
     setLoading(true);
@@ -893,6 +895,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
       p.set("to", to);
     }
     if (rid) p.set("restaurantId", rid);
+    if (hideEmpty) p.set("hideEmpty", "true");
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
   };
 
@@ -909,8 +912,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         </div>
       )}
       <div style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>
-        <p>{guestFilter ? "Este visitante no tiene sesiones en este local" : "Sin sesiones en este período"}</p>
+        <p>{guestFilter ? "Este visitante no tiene sesiones en este local" : hideEmpty ? "Sin sesiones con actividad en este período" : "Sin sesiones en este período"}</p>
         {guestFilter && <button onClick={() => setGuestFilter(null)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>← Ver todas las sesiones</button>}
+        {!guestFilter && hideEmpty && <button onClick={() => setHideEmpty(false)} style={{ marginTop: 12, padding: "6px 14px", fontFamily: F, fontSize: "0.78rem", background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer" }}>Mostrar también escaneos vacíos</button>}
       </div>
     </div>
   );
@@ -931,9 +935,17 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
           <button onClick={() => setGuestFilter(null)} style={{ padding: "4px 10px", fontFamily: F, fontSize: "0.72rem", background: "transparent", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 6, color: "#F4A623", cursor: "pointer" }}>✕ Quitar</button>
         </div>
       )}
-      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>
-        {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, margin: "0 0 4px", flexWrap: "wrap" }}>
+        <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
+          {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
+        </p>
+        {!guestFilter && (
+          <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}>
+            <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} style={{ cursor: "pointer" }} />
+            Ocultar escaneos vacíos
+          </label>
+        )}
+      </div>
       {data.sessions.map((s: any) => {
         const isOpen = expanded.has(s.id);
         const dishes = s.dishesViewed || [];

@@ -586,10 +586,12 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Filtrar sesiones "verdaderamente vacias" (escaneo sin actividad alguna)
-    // a menos que el caller pida explicitamente verlas con includeEmpty=true.
-    const includeEmpty = url.searchParams.get("includeEmpty") === "true";
-    const filtered = includeEmpty ? enriched : enriched.filter((s: any) => {
+    // Por defecto MOSTRAMOS TODAS las sesiones (incluyendo escaneos sin actividad),
+    // si no la primera pagina puede quedar vacia cuando todos los registros recientes
+    // son scans rapidos y el admin no entiende por que no ve nada. Si quien llama
+    // pasa hideEmpty=true, ocultamos las que son verdaderamente vacias en post-paginacion.
+    const hideEmpty = url.searchParams.get("hideEmpty") === "true";
+    const filtered = !hideEmpty ? enriched : enriched.filter((s: any) => {
       const dishes = (s.dishesViewed as any[]) || [];
       const cats = (s.categoriesViewed as any[]) || [];
       const hasDishes = dishes.length > 0;
@@ -604,7 +606,7 @@ export async function GET(req: NextRequest) {
     });
     const hiddenCount = enriched.length - filtered.length;
 
-    return NextResponse.json({ sessions: filtered, total: total - hiddenCount, page, totalPages: Math.ceil((total - hiddenCount) / limit), hiddenEmptyCount: hiddenCount });
+    return NextResponse.json({ sessions: filtered, total: hideEmpty ? total - hiddenCount : total, page, totalPages: Math.ceil((hideEmpty ? total - hiddenCount : total) / limit), hiddenEmptyCount: hiddenCount });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
     console.error("Sessions error:", e);
