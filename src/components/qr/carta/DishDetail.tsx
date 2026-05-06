@@ -503,7 +503,7 @@ function DishSlide({
           const userWantsSoy = userR.includes("soya") || userR.includes("soja");
           const userWantsNutsFree = userR.some(r => NUT_ALIASES_DM.includes(r));
 
-          const seals: { emoji: string; label: string; bg: string; color: string; forYou?: boolean }[] = [];
+          const seals: { emoji: string; label: string; bg: string; color: string; forYou?: boolean; warning?: boolean }[] = [];
           // UNIVERSAL: dieta
           if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.18)", color: "#4ade80" });
           else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(134,239,172,0.18)", color: "#86efac" });
@@ -511,8 +511,8 @@ function DishSlide({
           if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.18)", color: "#f87171" });
           // UNIVERSAL: sin gluten
           if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.18)", color: "#d4a647" });
-          // UNIVERSAL: contiene frutos secos (warning de alergeno)
-          if (containsNuts) seals.push({ emoji: "🥜", label: "Contiene frutos secos", bg: "rgba(192,138,91,0.18)", color: "#c08a5b" });
+          // UNIVERSAL: contiene frutos secos (warning de alergeno serio — anafilaxia)
+          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.14)", color: "#fb923c", warning: true });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)
           if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.18)", color: "#60a5fa", forYou: true });
           // CONDICIONAL: sin soya
@@ -528,13 +528,17 @@ function DishSlide({
                   key={s.label}
                   style={{
                     display: "inline-flex", alignItems: "center", gap: 5,
-                    padding: s.forYou ? "4px 12px" : "5px 12px",
+                    padding: (s.forYou || s.warning) ? "4px 12px" : "5px 12px",
                     borderRadius: 50, background: s.bg, color: s.color,
                     fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
-                    border: s.forYou ? "1px solid rgba(244,166,35,0.55)" : "none",
-                    boxShadow: s.forYou ? "0 0 0 2px rgba(244,166,35,0.08)" : "none",
+                    border: s.warning
+                      ? "1px solid rgba(234,88,12,0.45)"
+                      : s.forYou ? "1px solid rgba(244,166,35,0.55)" : "none",
+                    boxShadow: s.warning
+                      ? "0 0 0 2px rgba(234,88,12,0.10)"
+                      : s.forYou ? "0 0 0 2px rgba(244,166,35,0.08)" : "none",
                   }}
-                  title={s.forYou ? "Coincide con tus preferencias de Genio" : undefined}
+                  title={s.warning ? "Este plato contiene frutos secos — confirmar con el local en caso de alergia" : (s.forYou ? "Coincide con tus preferencias de Genio" : undefined)}
                 >
                   <span aria-hidden>{s.emoji}</span>
                   <span>{s.label}</span>
