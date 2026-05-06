@@ -1,5 +1,12 @@
 export type CarouselMode = "vegan" | "vegetarian" | "glutenfree" | "lactosefree" | "soyfree" | "nuts" | "vegan+gf" | "vegetarian+gf" | "smart" | null;
 
+// Restricciones que ya no estan en Genio (eran preferencias culturales/dieta, no
+// alergenos manejables) — se filtran si quedaron en localStorage de versiones anteriores.
+export const LEGACY_HIDDEN_RESTRICTIONS = ["alcohol", "mariscos", "cerdo", "pescado", "huevo"];
+export function filterSupportedRestrictions(restrictions: string[]): string[] {
+  return restrictions.filter(r => r !== "ninguna" && !LEGACY_HIDDEN_RESTRICTIONS.includes(r));
+}
+
 const NUT_RESTRICTIONS = ["maní", "mani", "nueces", "almendras", "frutos secos", "nuez", "almendra"];
 const isNutRestriction = (r: string) => NUT_RESTRICTIONS.includes(r.toLowerCase());
 // Frutos secos se almacena expandido (mani/nueces/almendras) — collapse a un solo "thing" para el conteo
@@ -10,7 +17,7 @@ const collapseNuts = (active: string[]): { hasNuts: boolean; nonNutCount: number
 };
 
 export function getCarouselMode(diet: string | null, restrictions: string[], restaurantDietType?: string | null): CarouselMode {
-  const active = restrictions.filter(r => r !== "ninguna");
+  const active = filterSupportedRestrictions(restrictions);
   // If restaurant is already vegan/vegetarian, showing that diet banner is redundant
   const restDiet = (restaurantDietType || "").toUpperCase();
   const dietRedundant = (diet === "vegan" && restDiet === "VEGAN") || (diet === "vegetarian" && (restDiet === "VEGETARIAN" || restDiet === "VEGAN"));
@@ -90,9 +97,11 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
     if (mode === "smart" && restrictions) {
       if (diet === "vegan" && d.dishDiet !== "VEGAN") return false;
       if (diet === "vegetarian" && d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN") return false;
-      for (const r of restrictions) {
-        if (r === "_spicy" || r === "ninguna") continue;
-        if (r === "_spicy" && d.isSpicy) return false;
+      // Filtrar restricciones legacy (mariscos, alcohol, etc) que no son alergenos
+      // manejables — si quedan en localStorage, dejarian todos los platos fuera.
+      const supported = filterSupportedRestrictions(restrictions);
+      for (const r of supported) {
+        if (r === "_spicy") { if (d.isSpicy) return false; continue; }
         if (isNutRestriction(r)) { if (!checkNutsFree(d)) return false; continue; }
         // Normalizar soja → soya
         const name = r === "soja" ? "soya" : r;
@@ -107,7 +116,7 @@ export type DietMessageType = "no-results" | "redundant-vegan" | "redundant-vege
 
 /** Determine which fallback message to show when there's no carousel */
 export function getDietMessage(diet: string | null, restrictions: string[], restaurantDietType?: string | null, dishes?: any[], categories?: any[]): DietMessageType {
-  const active = restrictions.filter(r => r !== "ninguna");
+  const active = filterSupportedRestrictions(restrictions);
   const hasPrefs = (diet && diet !== "omnivore") || active.length > 0;
   if (!hasPrefs) return null;
 

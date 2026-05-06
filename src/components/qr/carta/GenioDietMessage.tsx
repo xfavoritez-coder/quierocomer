@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { X } from "lucide-react";
+import { filterSupportedRestrictions } from "@/lib/qr/utils/carouselMode";
 
 interface Props {
   type: "no-results" | "redundant-vegan" | "redundant-vegetarian";
   diet?: string | null;
   restrictions?: string[];
+  restaurantName?: string;
 }
 
 const REDUNDANT_MESSAGES: Record<"redundant-vegan" | "redundant-vegetarian", string> = {
@@ -49,7 +51,7 @@ function buildPreferenceList(diet?: string | null, restrictions: string[] = []):
 
 const DISMISS_KEY = "qc_diet_message_dismissed";
 
-export default function GenioDietMessage({ type, diet, restrictions }: Props) {
+export default function GenioDietMessage({ type, diet, restrictions, restaurantName }: Props) {
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === "1");
 
   if (dismissed) return null;
@@ -58,12 +60,17 @@ export default function GenioDietMessage({ type, diet, restrictions }: Props) {
   if (type === "redundant-vegan" || type === "redundant-vegetarian") {
     message = REDUNDANT_MESSAGES[type];
   } else {
-    // no-results: construir mensaje especifico segun lo que el usuario marco
-    const prefList = buildPreferenceList(diet, (restrictions || []).filter(r => r !== "ninguna"));
+    // no-results: construir mensaje especifico segun lo que el usuario marco.
+    // Filtra restricciones legacy (mariscos, alcohol, etc) que ya no estan en Genio
+    // pero pueden quedar en localStorage del usuario.
+    const supported = filterSupportedRestrictions(restrictions || []);
+    const prefList = buildPreferenceList(diet, supported);
+    // Nombre real del local cuando lo tenemos; sino texto generico.
+    const subject = restaurantName || "Este restaurante";
     if (prefList) {
-      message = `Este local todavía no tiene platos marcados como ${prefList}, pero seguro encuentras algo que te guste`;
+      message = `${subject} todavía no tiene platos marcados como ${prefList}, pero seguro encuentras algo que te guste`;
     } else {
-      message = "Este local todavía no tiene platos marcados con tus preferencias, pero seguro encuentras algo que te guste";
+      message = `${subject} todavía no tiene platos marcados con tus preferencias, pero seguro encuentras algo que te guste`;
     }
   }
 
