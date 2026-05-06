@@ -589,15 +589,19 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                   <div style={{ textAlign: "center", padding: "12px 0" }}>
                     <p style={{ fontSize: "12px", color: G.textSecondary, margin: "0 0 10px" }}>¿Seguro? Esto borrará todo tu perfil.</p>
                     <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
-                      <button onClick={async () => {
-                        localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
-                        setDietType(null); setRestrictions([]); setDislikes([]);
-                        // Wait for DB clear before closing, so profile fetch doesn't restore them
-                        await Promise.all([
-                          document.cookie.includes("qr_user_id") ? fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {}) : Promise.resolve(),
-                          fetch("/api/qr/profile/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guestId: getGuestId() }) }).catch(() => {}),
-                        ]);
+                      <button onClick={() => {
+                        // Cerramos PRIMERO para evitar el flash del welcome step:
+                        // si llamamos setDietType(null) antes, hasSaved cae a false y
+                        // el step 0 cambia a su rama 'no-saved' (pantalla 'Hola, soy el Genio')
+                        // que se ve por un frame antes que close() ejecute.
                         close();
+                        // Limpieza local + DB en background — al reabrir, el componente se monta
+                        // fresh con hasSaved=false y arranca directo en step 1 (dieta).
+                        localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
+                        if (document.cookie.includes("qr_user_id")) {
+                          fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {});
+                        }
+                        fetch("/api/qr/profile/clear", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ guestId: getGuestId() }) }).catch(() => {});
                       }} style={{ padding: "8px 16px", borderRadius: 50, border: "none", background: "rgba(239,68,68,0.12)", color: "#ef4444", fontSize: "12px", fontWeight: 600, cursor: "pointer" }}>
                         Sí, borrar
                       </button>
