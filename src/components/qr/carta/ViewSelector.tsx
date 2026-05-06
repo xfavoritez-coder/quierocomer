@@ -203,8 +203,8 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
         aria-expanded={open}
         className="flex items-center justify-center active:scale-90"
         style={{
-          width: 46,
-          height: 46,
+          width: 52,
+          height: 52,
           borderRadius: "50%",
           background: open ? "rgba(244,166,35,0.2)" : "rgba(0,0,0,0.4)",
           backdropFilter: "blur(12px)",
@@ -215,7 +215,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           boxShadow: open ? "0 0 16px rgba(244,166,35,0.2)" : "0 4px 18px rgba(0,0,0,0.25)",
         }}
       >
-        <Layers size={20} strokeWidth={1.75} />
+        <Layers size={22} strokeWidth={1.75} />
       </button>
 
       {/* First-time tip del Genio */}

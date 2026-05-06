@@ -120,6 +120,8 @@ export async function POST(request: Request) {
         },
       });
 
+      // Las bebidas (drinks) no se marcan con dishDiet — el sello vegano/vegetariano no aplica a bebestibles, café o té
+      const isDrinkCat = (category.dishType === "drink") || /caf[eé]|t[eé]\b|infusi[oó]n|bebida|bebestible|jugo|trago/i.test(cat.name);
       for (let j = 0; j < cat.dishes.length; j++) {
         const dish = cat.dishes[j];
         if (!dish.name?.trim()) continue;
@@ -133,7 +135,7 @@ export async function POST(request: Request) {
             price: Number(dish.price) || 0,
             photos: [], // photos added after re-upload
             position: j,
-            dishDiet: dish.diet || "OMNIVORE",
+            dishDiet: isDrinkCat ? "OMNIVORE" : (dish.diet || "OMNIVORE"),
             isSpicy: dish.isSpicy || false,
             isPhotoReferential: dish._unsplash || false,
             isActive: true,

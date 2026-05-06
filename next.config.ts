@@ -9,6 +9,8 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200, 1600],
     imageSizes: [128, 256, 384, 640],
     minimumCacheTTL: 60,
+    // Next.js 16 requiere declarar las calidades usadas en next/image
+    qualities: [75, 80, 95],
   },
   async headers() {
     return [
