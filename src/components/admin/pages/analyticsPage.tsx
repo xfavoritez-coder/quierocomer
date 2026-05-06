@@ -963,8 +963,20 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                   {browser && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>{browser}</span>}
                   {langShort && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title={`Idioma del navegador: ${s.language}`}>🌐 {langShort}</span>}
                   {s.ipAddress && <span style={{ fontFamily: FB, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title="IP del visitante">{s.ipAddress}</span>}
-                  {s.genioData?.birthdaySaved && <span title="El comensal registró su cumpleaños" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Cumple</span>}
+                  {/* Destacados vistos / total */}
+                  {(s.recommendedTotal || 0) > 0 && (
+                    <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: (s.recommendedHits || 0) > 0 ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: (s.recommendedHits || 0) > 0 ? "#F4A623" : "var(--adm-text3)", fontWeight: 600 }} title={`Vio ${s.recommendedHits} de los ${s.recommendedTotal} platos destacados de la carta`}>
+                      ⭐ {s.recommendedHits || 0}/{s.recommendedTotal} destacados
+                    </span>
+                  )}
+                  {/* Cumpleaños */}
+                  {s.genioData?.birthdaySaved && <span title="El comensal guardó su cumpleaños en esta sesión" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Guardó cumple</span>}
+                  {!s.genioData?.birthdaySaved && s.genioData?.birthdayDismissed && <span title="Vio el modal de cumple pero lo cerró sin guardar" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(155,155,155,0.15)", color: "var(--adm-text3)" }}>🎂✕ Cerró cumple</span>}
+                  {!s.genioData?.birthdaySaved && !s.genioData?.birthdayDismissed && s.genioData?.birthdayModalAutoShown && <span title="Se le mostró el modal automático de cumple" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.10)", color: "#a78bfa" }}>🎂 Modal mostrado</span>}
+                  {/* Garzón */}
                   {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>🔔 Garzón</span>}
+                  {/* Sesion sospechosa */}
+                  {s.suspicious && <span title="Patrón de bot, dev o spam: sin actividad y muy corta, o user-agent de bot" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#ef4444", fontWeight: 600 }}>⚠️ Sospechosa</span>}
                 </div>
               </div>
               <span style={{ color: "var(--adm-text3)", fontSize: "0.75rem", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}>▼</span>

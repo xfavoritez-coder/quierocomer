@@ -147,6 +147,23 @@ export async function GET(req: NextRequest) {
       if (s.pickedDishId) allDishIds.add(s.pickedDishId);
     }
 
+    // Cuenta total de platos RECOMMENDED por restaurante (para mostrar X/Y destacados vistos)
+    const restaurantIdsInPage = Array.from(new Set(sessions.map(s => s.restaurantId)));
+    const recommendedCountByRestaurant: Record<string, number> = {};
+    if (restaurantIdsInPage.length > 0) {
+      const counts = await prisma.dish.groupBy({
+        by: ["restaurantId"],
+        where: {
+          restaurantId: { in: restaurantIdsInPage },
+          deletedAt: null,
+          isActive: true,
+          tags: { has: "RECOMMENDED" },
+        },
+        _count: { id: true },
+      });
+      for (const c of counts) recommendedCountByRestaurant[c.restaurantId] = c._count.id;
+    }
+
     const dishNames = allDishIds.size > 0
       ? await prisma.dish.findMany({ where: { id: { in: Array.from(allDishIds) } }, select: { id: true, name: true, photos: true, price: true, dishDiet: true, isSpicy: true, ingredients: true, tags: true, isFeaturedAuto: true } })
       : [];
@@ -186,7 +203,7 @@ export async function GET(req: NextRequest) {
     const sessionGuestIds = [...new Set(sessions.map((s) => s.guestId))];
 
     // Try dbSessionId first (new events), fall back to time range (legacy events)
-    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN"];
+    const genioEventTypes: any[] = ["GENIO_START", "GENIO_COMPLETE", "GENIO_PROFILE_SAVED", "GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES", "GENIO_STEP_GRID", "GENIO_STEP_RESULTS", "GENIO_FEEDBACK_LIKE", "GENIO_FEEDBACK_DISLIKE", "GENIO_DISH_ACCEPTED", "GENIO_DISH_REJECTED", "BIRTHDAY_BANNER_CLICKED", "BIRTHDAY_SAVED", "BIRTHDAY_MODAL_AUTO_SHOWN", "BIRTHDAY_DISMISSED"];
 
     const genioEvents = sessionIds.length ? await prisma.statEvent.findMany({
       where: {
@@ -240,7 +257,7 @@ export async function GET(req: NextRequest) {
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
-      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false, birthdayModalAutoShown: false };
+      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false, birthdayModalAutoShown: false, birthdayDismissed: false };
       const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES"];
       const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos" };
       let maxStep = -1;
@@ -251,6 +268,7 @@ export async function GET(req: NextRequest) {
         if (e.eventType === "BIRTHDAY_BANNER_CLICKED") { data.birthdayClicked = true; }
         if (e.eventType === "BIRTHDAY_SAVED") { data.birthdaySaved = true; }
         if ((e.eventType as string) === "BIRTHDAY_MODAL_AUTO_SHOWN") { data.birthdayModalAutoShown = true; }
+        if ((e.eventType as string) === "BIRTHDAY_DISMISSED") { data.birthdayDismissed = true; }
         const stepIdx = stepOrder.indexOf(e.eventType);
         if (stepIdx > maxStep) { maxStep = stepIdx; data.lastStep = stepLabels[e.eventType] || ""; }
       }
@@ -478,6 +496,21 @@ export async function GET(req: NextRequest) {
       const start = s.startedAt.getTime();
       const end = s.endedAt ? s.endedAt.getTime() : Date.now();
 
+      // Hits sobre platos RECOMMENDED del restaurante
+      const totalRec = recommendedCountByRestaurant[s.restaurantId] || 0;
+      const recViewed = new Set<string>();
+      for (const v of viewed) {
+        const dish = dishMap[v.dishId];
+        if (dish?.tags?.includes("RECOMMENDED")) recViewed.add(v.dishId);
+      }
+      const recommendedHits = recViewed.size;
+
+      // Heurística "sesión sospechosa": bot UA, o duración corta + sin actividad
+      const durMs = s.durationMs ?? (end - start);
+      const noActivity = viewed.length === 0 && cats.length === 0;
+      const veryShort = durMs < 10_000;
+      const suspicious = !!s.isBot || (noActivity && veryShort);
+
       // Scope experiences to this session's time range
       const sessionExps = expSubmissions.filter(sub =>
         sub.guestId === s.guestId && sub.submittedAt.getTime() >= start - 60_000 && sub.submittedAt.getTime() <= end + 60_000
@@ -522,6 +555,11 @@ export async function GET(req: NextRequest) {
         language: s.language,
         userAgent: s.userAgent,
         deviceType: s.deviceType,
+        // Hits sobre platos destacados / Total destacados del local
+        recommendedHits,
+        recommendedTotal: totalRec,
+        // Sesion sospechosa (bot/dev/spam pattern)
+        suspicious,
         dishFavorites: sessionFavs.map(f => ({
           id: f.id,
           dishId: f.dishId,

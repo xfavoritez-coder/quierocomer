@@ -39,6 +39,25 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
   const [birthDate, setBirthDate] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [phase, setPhase] = useState<Phase>("form");
+
+  // Cierre sin guardar = "dismissed" (solo si todavía está en form, sin haber guardado nunca)
+  const handleDismiss = () => {
+    if (status !== "success") {
+      // No guardó → tracking de dismiss
+      fetch("/api/qr/stats", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          eventType: "BIRTHDAY_DISMISSED",
+          restaurantId,
+          guestId: getGuestId(),
+          sessionId: getSessionId(),
+          dbSessionId: getDbSessionId(),
+        }),
+      }).catch(() => {});
+    }
+    onClose();
+  };
   // Name capture state (post-success)
   const [name, setName] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
@@ -156,7 +175,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
     <div
       className="fixed inset-0 flex items-center justify-center font-[family-name:var(--font-dm)]"
       style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
-      onClick={(e) => { if (e.target === e.currentTarget && phase === "form") onClose(); }}
+      onClick={(e) => { if (e.target === e.currentTarget && phase === "form") handleDismiss(); }}
     >
       <div
         style={{
@@ -172,7 +191,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         }}
       >
         <button
-          onClick={onClose}
+          onClick={handleDismiss}
           style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
         >
           <X size={18} color="#ccc" />
