@@ -608,15 +608,17 @@ function DishSlide({
                     style={{ display: "flex", gap: 14, padding: "16px 18px", background: "rgba(255,255,255,0.06)", borderRadius: 16, cursor: "pointer" }}
                   >
                     {s.dish.photos?.[0] && !failedImages.has(s.dish.id) ? (
-                      <img
-                        src={s.dish.photos[0]}
-                        alt={s.dish.name}
-                        loading="lazy"
-                        decoding="async"
-                        referrerPolicy="no-referrer"
-                        style={{ width: 78, height: 78, borderRadius: "50%", objectFit: "cover", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}
-                        onError={() => setFailedImages((prev) => new Set(prev).add(s.dish.id))}
-                      />
+                      <div style={{ position: "relative", width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(255,255,255,0.1)" }}>
+                        <Image
+                          src={s.dish.photos[0]}
+                          alt={s.dish.name}
+                          fill
+                          sizes="78px"
+                          quality={75}
+                          className="object-cover"
+                          onError={() => setFailedImages((prev) => new Set(prev).add(s.dish.id))}
+                        />
+                      </div>
                     ) : (
                       <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(255,255,255,0.1)", flexShrink: 0 }} />
                     )}
