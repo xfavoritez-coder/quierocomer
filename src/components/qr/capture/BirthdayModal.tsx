@@ -72,12 +72,17 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
     if (!birthDate) return;
     setStatus("loading");
 
+    let persisted = false;
+    let errorMsg: string | null = null;
+
     if (existingUser) {
-      await fetch("/api/qr/user/update", {
+      const res = await fetch("/api/qr/user/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ birthDate }),
       });
+      persisted = res.ok;
+      if (!res.ok) errorMsg = "No pudimos guardar tu fecha. Intenta de nuevo.";
     } else {
       const savedDiet = localStorage.getItem("qr_diet") || null;
       const savedRestrictions = localStorage.getItem("qr_restrictions");
@@ -101,15 +106,33 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         }),
       });
 
-      if (bannerVariantId) {
-        await fetch("/api/qr/banner/convert", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ variantId: bannerVariantId }),
-        });
+      persisted = res.ok;
+      if (!res.ok) {
+        try {
+          const data = await res.json();
+          errorMsg = data?.error || "No pudimos guardar tu cumple. Verifica el email e intenta de nuevo.";
+        } catch {
+          errorMsg = "No pudimos guardar tu cumple. Intenta de nuevo.";
+        }
+      } else {
+        if (bannerVariantId) {
+          await fetch("/api/qr/banner/convert", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ variantId: bannerVariantId }),
+          });
+        }
+        await res.json();
       }
+    }
 
-      await res.json();
+    // Solo trackear BIRTHDAY_SAVED si efectivamente se persistio — evitamos
+    // contar 'cumples guardados' fantasma cuando el register fallo (email
+    // duplicado u otro error) y la metrica del panel no cuadra con clientes.
+    if (!persisted) {
+      setStatus("idle");
+      if (errorMsg) alert(errorMsg);
+      return;
     }
 
     // Track BIRTHDAY_SAVED con A/B metadata

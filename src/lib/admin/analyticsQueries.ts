@@ -47,6 +47,22 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     const dv = s.dishesViewed as any[];
     return Array.isArray(dv) ? dv.length : 0;
   });
+  // Engagement: visitantes UNICOS que abrieron al menos 1 plato (detailMs > 0).
+  // Mas accionable que 'tiempo promedio' — distingue scans pasivos de exploracion real.
+  const engagedSessionsRaw = await prisma.session.findMany({
+    where: { ...where },
+    select: { guestId: true, dishesViewed: true },
+    take: 5000,
+  });
+  const engagedGuestIds = new Set<string>();
+  for (const s of engagedSessionsRaw) {
+    const viewed = s.dishesViewed as any[];
+    if (!Array.isArray(viewed)) continue;
+    if (viewed.some((v: any) => v?.dishId && (v.detailMs ?? 0) > 0)) {
+      engagedGuestIds.add(s.guestId);
+    }
+  }
+  const engagedVisitors = engagedGuestIds.size;
 
   return {
     totalVisitors,
@@ -60,6 +76,8 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     birthdaysSaved: birthdayGuestsResult,
     birthdayPct: totalVisitors > 0 ? Math.round((birthdayGuestsResult / totalVisitors) * 100) : 0,
     avgVisitsPerGuest: totalVisitors > 0 ? Math.round((totalSessions / totalVisitors) * 10) / 10 : 0,
+    engagedVisitors,
+    engagementPct: totalVisitors > 0 ? Math.round((engagedVisitors / totalVisitors) * 100) : 0,
   };
 }
 

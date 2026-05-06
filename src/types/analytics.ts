@@ -10,6 +10,8 @@ export interface VisitorMetrics {
   birthdaysSaved: number;
   birthdayPct: number;
   avgVisitsPerGuest: number;
+  engagedVisitors: number;
+  engagementPct: number;
 }
 
 export interface FunnelData {

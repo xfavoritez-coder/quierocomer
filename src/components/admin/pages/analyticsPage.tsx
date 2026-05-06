@@ -163,7 +163,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
-        <HeroKpi icon="⏱️" value={formatDuration(metrics.avgDurationMs)} label="Tiempo promedio" sub={`${metrics.avgDishesViewed} platos / sesión`} color="#16a34a" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)" />
+        <HeroKpi icon="🍽️" value={`${metrics.engagementPct || 0}%`} label="Exploraron la carta" sub={`${metrics.engagedVisitors || 0} abrieron platos · ${metrics.avgDishesViewed} prom. por persona`} color="#16a34a" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)" />
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
