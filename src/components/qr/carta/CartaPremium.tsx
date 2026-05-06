@@ -754,7 +754,13 @@ export default function CartaPremium({
           >
             <span style={{ fontSize: "1.2rem" }}>🎁</span>
             <span style={{ fontSize: "0.82rem", color: "#92400e", fontWeight: 600 }}>
-              {birthdayCountdown === 0 ? "¡Hoy es tu cumpleaños! 🎉" : `Tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`}
+              {(() => {
+                const firstName = (qrUser?.name || "").split(" ")[0];
+                if (birthdayCountdown === 0) return firstName ? `¡Feliz cumpleaños, ${firstName}! 🎉` : "¡Hoy es tu cumpleaños! 🎉";
+                return firstName
+                  ? `${firstName}, tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`
+                  : `Tu regalo llega en ${birthdayCountdown} día${birthdayCountdown !== 1 ? "s" : ""}`;
+              })()}
             </span>
           </div>
         )}
