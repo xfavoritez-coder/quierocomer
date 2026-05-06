@@ -872,9 +872,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
     setLoading(true);
     setPage(1);
     const p = new URLSearchParams({ page: "1" });
-    if (guestFilter) {
+    if (guestIdFromUrl) {
       // Cuando filtramos por guest, ignoramos el rango de fechas para ver TODO el historial
-      p.set("guestId", guestFilter.id);
+      p.set("guestId", guestIdFromUrl);
     } else {
       p.set("from", from);
       p.set("to", to);
@@ -882,7 +882,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
     if (rid) p.set("restaurantId", rid);
     if (hideEmpty) p.set("hideEmpty", "true");
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, guestFilter, hideEmpty]);
+    // guestIdFromUrl es un string estable derivado del URL — usar guestFilter (objeto)
+    // disparaba el effect en cada render porque la identidad del objeto cambia, causando loop.
+  }, [rid, from, to, guestIdFromUrl, hideEmpty]);
 
   const loadPage = (pg: number) => {
     setLoading(true);
