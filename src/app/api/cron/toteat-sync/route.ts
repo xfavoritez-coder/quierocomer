@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { syncRestaurantSales } from "@/lib/toteat/sync";
-import { syncRestaurantVisibility } from "@/lib/toteat/syncVisibility";
 
 /**
  * Periodic sync of Toteat sales for every restaurant configured with
@@ -66,13 +65,11 @@ export async function GET(req: Request) {
       to: new Date(),
     });
 
-    // Sincronizar visibilidad de productos (oculto/visible) — operacion ligera
-    const visibilityResult = await syncRestaurantVisibility({
-      restaurantId: r.id,
-      credentials,
-    }).catch((e) => ({ ok: false, error: e?.message, hidden: 0, shown: 0, unchanged: 0 }));
+    // Sync de visibilidad removido — era peligroso porque ocultaba platos en la
+    // carta cuando Toteat los marcaba como inactivos, sin avisar al dueño.
+    // El admin maneja la visibilidad manualmente desde /panel/menus.
 
-    results.push({ slug: r.slug, ...result, visibility: visibilityResult });
+    results.push({ slug: r.slug, ...result });
   }
 
   return NextResponse.json({ ok: true, syncedAt: new Date().toISOString(), restaurants: results });

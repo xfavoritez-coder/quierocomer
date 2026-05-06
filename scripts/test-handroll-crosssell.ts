@@ -9,7 +9,7 @@ async function main() {
 
   const cats = await prisma.category.findMany({ where: { restaurantId: r.id } });
   const dishes = await prisma.dish.findMany({
-    where: { restaurantId: r.id, deletedAt: null, isActive: true, toteatHidden: false },
+    where: { restaurantId: r.id, deletedAt: null, isActive: true },
   });
 
   console.log(`Hand Roll: ${dishes.length} platos activos visibles`);
