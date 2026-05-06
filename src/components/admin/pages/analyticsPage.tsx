@@ -868,8 +868,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         const isOpen = expanded.has(s.id);
         const dishes = s.dishesViewed || [];
         const duration = s.durationMs ? formatDuration(s.durationMs) : "—";
-        const restVisits = s.restaurantVisitCount || 1;
-        const userName = s.qrUser?.name || (restVisits > 1 ? `Visitante recurrente (${restVisits}x)` : "Visitante nuevo");
+        // Recurrente = días distintos que vino al local (no # de sesiones, que pueden ser scans dentro de la misma comida)
+        const visitDays = s.visitDays || 1;
+        const userName = s.qrUser?.name || (visitDays > 1 ? `Visitante recurrente (${visitDays} ${visitDays === 1 ? "día" : "días"})` : "Visitante nuevo");
 
         return (
           <div key={s.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, overflow: "hidden", boxShadow: "var(--adm-card-shadow, none)" }}>
