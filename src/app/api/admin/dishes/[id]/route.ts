@@ -91,7 +91,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const autoData: any = {};
         if (body.isGlutenFree === undefined) autoData.isGlutenFree = !allergenNames.includes("gluten");
         if (body.isLactoseFree === undefined) autoData.isLactoseFree = !allergenNames.includes("lactosa");
-        if (body.isSoyFree === undefined) autoData.isSoyFree = !allergenNames.includes("soja");
+        if (body.isSoyFree === undefined) autoData.isSoyFree = !allergenNames.includes("soja") && !allergenNames.includes("soya");
         // Frutos secos: al reves — true si hay ingredientes con allergen tipo mani/nuez/almendra/etc.
         if (body.containsNuts === undefined) {
           autoData.containsNuts = allergenNames.some(a => /man[ií]|nuez|nueces|almendr|frutos secos|avellana|pistach|maranón|maranon|cashew/i.test(a));

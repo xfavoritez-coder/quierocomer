@@ -17,11 +17,12 @@ const isNutRestriction = (r: string) => NUT_ALIASES.includes(r.toLowerCase());
 
 function checkFree(d: any, allergenName: string): boolean {
   // Estricto: exige flag explicito. No inferimos por ausencia de alergeno en ingredientes.
-  if (allergenName === "gluten") return d.isGlutenFree === true;
-  if (allergenName === "lactosa") return d.isLactoseFree === true;
-  if (allergenName === "soja" || allergenName === "soya") return d.isSoyFree === true;
+  const name = allergenName.toLowerCase();
+  if (name === "gluten") return d.isGlutenFree === true;
+  if (name === "lactosa") return d.isLactoseFree === true;
+  if (name === "soja" || name === "soya") return d.isSoyFree === true;
   // Frutos secos: containsNuts === false explicito + sin alergeno en ingredientes
-  if (isNutRestriction(allergenName)) {
+  if (isNutRestriction(name)) {
     if (d.containsNuts !== false) return false;
     const ings = d.dishIngredients || [];
     if (ings.length === 0) return true;
@@ -32,7 +33,7 @@ function checkFree(d: any, allergenName: string): boolean {
 }
 
 const RESTRICTION_LABELS: Record<string, string> = {
-  gluten: "sin gluten", lactosa: "sin lactosa", soja: "sin soya",
+  gluten: "sin gluten", lactosa: "sin lactosa", soya: "sin soya", soja: "sin soya",
   mariscos: "sin mariscos", cerdo: "sin cerdo", pescado: "sin pescado",
   huevo: "sin huevo", "frutos secos": "sin frutos secos",
 };
@@ -44,7 +45,7 @@ function pickEmoji(diet: string, restrictions: string[]): string {
   if (restrictions.some(isNutRestriction)) return "🥜";
   if (restrictions.includes("gluten")) return "🌾";
   if (restrictions.includes("lactosa")) return "🥛";
-  if (restrictions.includes("soja")) return "🫘";
+  if (restrictions.includes("soya") || restrictions.includes("soja")) return "🫘";
   if (restrictions.includes("_spicy")) return "🌶️";
   return "🧞";
 }

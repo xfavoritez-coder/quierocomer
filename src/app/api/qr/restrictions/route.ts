@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // Mapa de sinonimos: si la DB tiene ambos, devolvemos solo el canonico
-// canonico → [synonyms]. El nombre canonico es el que usa el codigo internamente.
+// canonico → [synonyms]. Canonico = nombre que usa la UI y el codigo nuevo.
 const SYNONYMS: Record<string, string[]> = {
-  soja: ["soya"],
+  soya: ["soja"],
 };
 
 // Public endpoint: returns all allergens + restrictions for genio onboarding

@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
           data: {
             isGlutenFree: !allergenNames.includes("gluten"),
             isLactoseFree: !allergenNames.includes("lactosa"),
-            isSoyFree: !allergenNames.includes("soja"),
+            isSoyFree: !allergenNames.includes("soja") && !allergenNames.includes("soya"),
           },
         });
       }

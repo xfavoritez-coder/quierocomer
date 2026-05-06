@@ -667,14 +667,16 @@ export default function AdminMenus() {
   const [eDiscountPrice, setEDiscountPrice] = useState("");
   const [eIngredients, setEIngredients] = useState("");
   const [eIngredientIds, setEIngredientIds] = useState<string[]>([]);
-  const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string }[]>([]);
+  const [allIngredients, setAllIngredients] = useState<{ id: string; name: string; category: string; allergens?: { id: string; name: string }[] }[]>([]);
   const [ingSearch, setIngSearch] = useState("");
-  const [eAllergens, setEAllergens] = useState<string[]>([]);
   const [allAllergens, setAllAllergens] = useState<{ id: string; name: string; type: string }[]>([]);
-  // Load allergens once for bulk actions (and reuse in editor)
+  // Load allergens once para bulk actions
   useEffect(() => {
     fetch("/api/qr/restrictions").then(r => r.json()).then(d => setAllAllergens(Array.isArray(d) ? d : (d.allergens || []))).catch(() => {});
   }, []);
+  // Per-session: alergenos donde el usuario ya intervino — no auto-toggle ahi mas
+  const [respectAllergens, setRespectAllergens] = useState<Set<string>>(new Set());
+  const [allergenToast, setAllergenToast] = useState<string | null>(null);
   const [eTags, setETags] = useState<string[]>([]);
   const [eIsHero, setEIsHero] = useState(false);
   const [eDiet, setEDiet] = useState("OMNIVORE");
@@ -741,6 +743,39 @@ export default function AdminMenus() {
     { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
   ];
 
+  // Auto-toggle de sellos al agregar un ingrediente con alergenos
+  // Solo dispara una vez por alergeno por sesion de edicion (respectAllergens)
+  const NUT_NAMES_AUTO = ["maní", "mani", "nuez", "nueces", "almendra", "almendras", "frutos secos"];
+  const applyAllergenAutoToggle = (ingredient: { name: string; allergens?: { name: string }[] }) => {
+    const allergens = (ingredient.allergens || []).map(a => (a.name || "").toLowerCase());
+    if (allergens.length === 0) return;
+    const changes: string[] = [];
+    const newRespect = new Set(respectAllergens);
+    if (allergens.includes("gluten") && eGlutenFree && !respectAllergens.has("gluten")) {
+      setEGlutenFree(false); changes.push("Sin gluten"); newRespect.add("gluten");
+    }
+    if (allergens.includes("lactosa") && eLactoseFree && !respectAllergens.has("lactosa")) {
+      setELactoseFree(false); changes.push("Sin lactosa"); newRespect.add("lactosa");
+    }
+    if ((allergens.includes("soya") || allergens.includes("soja")) && eSoyFree && !respectAllergens.has("soya")) {
+      setESoyFree(false); changes.push("Sin soya"); newRespect.add("soya");
+    }
+    if (allergens.some(a => NUT_NAMES_AUTO.includes(a)) && !eContainsNuts && !respectAllergens.has("nuts")) {
+      setEContainsNuts(true); changes.push("Frutos secos (activado)"); newRespect.add("nuts");
+    }
+    if (changes.length > 0) {
+      setRespectAllergens(newRespect);
+      setAllergenToast(`${ingredient.name}: actualizamos ${changes.join(", ")}`);
+      setTimeout(() => setAllergenToast(null), 3500);
+    }
+  };
+
+  // Wrappers de los toggles: marcar como "respetado" al click manual del usuario
+  const onUserToggleGlutenFree = () => { setEGlutenFree(v => !v); setRespectAllergens(s => new Set(s).add("gluten")); };
+  const onUserToggleLactoseFree = () => { setELactoseFree(v => !v); setRespectAllergens(s => new Set(s).add("lactosa")); };
+  const onUserToggleSoyFree = () => { setESoyFree(v => !v); setRespectAllergens(s => new Set(s).add("soya")); };
+  const onUserToggleContainsNuts = () => { setEContainsNuts(v => !v); setRespectAllergens(s => new Set(s).add("nuts")); };
+
   const startEditDish = async (d: Dish) => {
     setEditMode(true);
     setEName(d.name);
@@ -748,7 +783,7 @@ export default function AdminMenus() {
     setEPrice(String(d.price));
     setEDiscountPrice(d.discountPrice ? String(d.discountPrice) : "");
     setEIngredients(d.ingredients || "");
-    setEAllergens((d.allergens || "").split(",").map(a => a.trim().toLowerCase()).filter(Boolean));
+    setRespectAllergens(new Set()); // reset al abrir un plato distinto
     setETags([...d.tags]);
     setEIsHero(d.isHero);
     setEDiet((d as any).dishDiet || "OMNIVORE");
@@ -803,7 +838,7 @@ export default function AdminMenus() {
       isPhotoReferential: ePhotoRef,
       flavorTags: eFlavorTags,
       ingredientIds: eIngredientIds,
-      allergens: eAllergens.length > 0 ? eAllergens.join(", ") : null,
+      // El campo `allergens` ya no se manda — el backend lo deriva de los ingredientes
     };
     if (eCategoryId !== selectedDish.categoryId) {
       updates.categoryId = eCategoryId;
@@ -1051,22 +1086,23 @@ export default function AdminMenus() {
               </div>
 
               <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Características</label>
+                <label style={LBL}>Restricciones alimenticias</label>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "-2px 0 8px", lineHeight: 1.4 }}>Se ajustan automáticamente al agregar ingredientes con alérgenos. Si los desmarcas manualmente, respetamos tu decisión.</p>
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   <button onClick={() => setESpicy(!eSpicy)} style={{ padding: "6px 12px", borderRadius: 8, border: eSpicy ? "1.5px solid rgba(232,85,48,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSpicy ? "rgba(232,85,48,0.1)" : "transparent", color: eSpicy ? "#e85530" : "var(--adm-text3)" }}>
                     🌶️ Picante
                   </button>
-                  <button onClick={() => setEGlutenFree(!eGlutenFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eGlutenFree ? "1.5px solid rgba(139,105,20,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eGlutenFree ? "rgba(139,105,20,0.1)" : "transparent", color: eGlutenFree ? "#8B6914" : "var(--adm-text3)" }}>
+                  <button onClick={onUserToggleGlutenFree} style={{ padding: "6px 12px", borderRadius: 8, border: eGlutenFree ? "1.5px solid rgba(139,105,20,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eGlutenFree ? "rgba(139,105,20,0.1)" : "transparent", color: eGlutenFree ? "#8B6914" : "var(--adm-text3)" }}>
                     🌾 Sin gluten
                   </button>
-                  <button onClick={() => setELactoseFree(!eLactoseFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eLactoseFree ? "1.5px solid rgba(59,130,246,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eLactoseFree ? "rgba(59,130,246,0.1)" : "transparent", color: eLactoseFree ? "#2563EB" : "var(--adm-text3)" }}>
+                  <button onClick={onUserToggleLactoseFree} style={{ padding: "6px 12px", borderRadius: 8, border: eLactoseFree ? "1.5px solid rgba(59,130,246,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eLactoseFree ? "rgba(59,130,246,0.1)" : "transparent", color: eLactoseFree ? "#2563EB" : "var(--adm-text3)" }}>
                     🥛 Sin lactosa
                   </button>
-                  <button onClick={() => setESoyFree(!eSoyFree)} style={{ padding: "6px 12px", borderRadius: 8, border: eSoyFree ? "1.5px solid rgba(16,185,129,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSoyFree ? "rgba(16,185,129,0.1)" : "transparent", color: eSoyFree ? "#059669" : "var(--adm-text3)" }}>
+                  <button onClick={onUserToggleSoyFree} style={{ padding: "6px 12px", borderRadius: 8, border: eSoyFree ? "1.5px solid rgba(16,185,129,0.3)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eSoyFree ? "rgba(16,185,129,0.1)" : "transparent", color: eSoyFree ? "#059669" : "var(--adm-text3)" }}>
                     🫘 Sin soya
                   </button>
-                  <button onClick={() => setEContainsNuts(!eContainsNuts)} style={{ padding: "6px 12px", borderRadius: 8, border: eContainsNuts ? "1.5px solid rgba(192,138,91,0.4)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eContainsNuts ? "rgba(192,138,91,0.12)" : "transparent", color: eContainsNuts ? "#a06a3a" : "var(--adm-text3)" }}>
-                    🥜 Frutos secos
+                  <button onClick={onUserToggleContainsNuts} style={{ padding: "6px 12px", borderRadius: 8, border: eContainsNuts ? "1.5px solid rgba(192,138,91,0.4)" : "1.5px solid var(--adm-card-border)", cursor: "pointer", fontFamily: F, fontSize: "0.75rem", fontWeight: 600, background: eContainsNuts ? "rgba(192,138,91,0.12)" : "transparent", color: eContainsNuts ? "#a06a3a" : "var(--adm-text3)" }}>
+                    🥜 Contiene frutos secos
                   </button>
                 </div>
               </div>
@@ -1107,7 +1143,7 @@ export default function AdminMenus() {
                       return (
                         <>
                           {available.slice(0, 30).map(i => (
-                            <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); setIngListOpen(false); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
+                            <button key={i.id} onClick={() => { setEIngredientIds(prev => [...prev, i.id]); applyAllergenAutoToggle(i); setIngListOpen(false); setIngSearch(""); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", width: "100%", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
                               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)" }}>{i.name}</span>
                             </button>
                           ))}
@@ -1125,6 +1161,7 @@ export default function AdminMenus() {
                                 if (!eIngredientIds.includes(data.ingredient.id)) {
                                   setAllIngredients(prev => prev.some(i => i.id === data.ingredient.id) ? prev : [...prev, data.ingredient]);
                                   setEIngredientIds(newIds);
+                                  applyAllergenAutoToggle(data.ingredient);
                                 }
                                 // Auto-save ingredient link to dish
                                 if (selectedDish) {
@@ -1146,31 +1183,20 @@ export default function AdminMenus() {
                 )}
               </div>
 
-              <div style={{ marginBottom: 14 }}>
-                <label style={LBL}>Alérgenos</label>
-                {(selectedDish as any)?.allergenDetails && Object.keys((selectedDish as any).allergenDetails).length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4, marginBottom: 8 }}>
-                    <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 4px" }}>Detectados por ingredientes:</p>
+              {/* Alérgenos detectados (solo lectura) — derivados de los ingredientes seleccionados */}
+              {(selectedDish as any)?.allergenDetails && Object.keys((selectedDish as any).allergenDetails).length > 0 && (
+                <div style={{ marginBottom: 14, padding: "8px 10px", background: "rgba(133,79,11,0.04)", border: "0.5px solid rgba(133,79,11,0.12)", borderRadius: 8 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>Alérgenos detectados en estos ingredientes:</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     {Object.entries((selectedDish as any).allergenDetails as Record<string, string[]>).map(([allergen, ingredients]) => (
-                      <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: "0.7rem", padding: "4px 10px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen}</span>
+                      <div key={allergen} style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "0.7rem", padding: "3px 9px", borderRadius: 50, background: "#faeeda", color: "#854f0b", fontFamily: F, fontWeight: 600 }}>⚠️ {allergen === "soja" ? "soya" : allergen}</span>
                         <span style={{ fontSize: "0.62rem", color: "var(--adm-text3)", fontFamily: F }}>por {ingredients.join(", ")}</span>
                       </div>
                     ))}
                   </div>
-                )}
-                <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px" }}>Marcar manualmente:</p>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {allAllergens.map(a => {
-                    const active = eAllergens.includes(a.name);
-                    return (
-                      <button key={a.id} onClick={() => setEAllergens(prev => active ? prev.filter(x => x !== a.name) : [...prev, a.name])} style={{ fontSize: "0.72rem", padding: "4px 12px", borderRadius: 50, border: "none", cursor: "pointer", fontFamily: F, fontWeight: 500, background: active ? "rgba(244,166,35,0.15)" : "var(--adm-input)", color: active ? "#F4A623" : "var(--adm-text3)", transition: "all 0.15s" }}>
-                        {active ? "⚠️ " : ""}{a.name}
-                      </button>
-                    );
-                  })}
                 </div>
-              </div>
+              )}
 
               {/* Modificadores — inline management */}
               <div style={{ marginBottom: 14 }}>
@@ -1523,6 +1549,13 @@ export default function AdminMenus() {
         <div style={{ padding: "10px 14px", background: "rgba(22,163,74,0.08)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 10, marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
           <span style={{ fontSize: "0.85rem" }}>✓</span>
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a" }}>{dishCreatedMsg}</span>
+        </div>
+      )}
+
+      {allergenToast && (
+        <div style={{ position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", padding: "10px 16px", background: "#fef9e7", border: "1px solid rgba(244,166,35,0.4)", borderRadius: 10, display: "flex", alignItems: "center", gap: 8, boxShadow: "0 4px 12px rgba(0,0,0,0.1)", zIndex: 200 }}>
+          <span style={{ fontSize: "0.95rem" }}>🪄</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#854f0b" }}>{allergenToast}</span>
         </div>
       )}
 

@@ -361,7 +361,7 @@ export default function GarzonPanel({ restaurantId, restaurantName }: { restaura
               const name = call.table?.name || call.tableName || "Cliente";
               const dl: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano" };
               const dietText = call.dietType ? dl[call.dietType] || null : null;
-              const resLabels: Record<string, string> = { "_spicy": "Sin picante", "gluten": "Sin gluten", "lactosa": "Sin lactosa", "mariscos": "Sin mariscos", "huevo": "Sin huevo", "cerdo": "Sin cerdo", "almendras": "Sin almendras", "soja": "Sin soja" };
+              const resLabels: Record<string, string> = { "_spicy": "Sin picante", "gluten": "Sin gluten", "lactosa": "Sin lactosa", "mariscos": "Sin mariscos", "huevo": "Sin huevo", "cerdo": "Sin cerdo", "frutos secos": "Sin frutos secos", "soya": "Sin soya", "soja": "Sin soya" };
               let resList: string[] = [];
               try { resList = call.restrictions ? JSON.parse(call.restrictions).filter((r: string) => r !== "ninguna").map((r: string) => resLabels[r] || `Sin ${r}`) : []; } catch {}
               let dislikeList: string[] = [];

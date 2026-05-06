@@ -15,6 +15,8 @@ function isSoyFree(d: any): boolean {
   return d.isSoyFree === true;
 }
 
+// "soya" canonical en codigo. Mantenemos el nombre antiguo "soja" via la migracion DB.
+
 export default function GenioSoyFreeCarousel({ dishes, categories, onDishClick }: Props) {
   const sfDishes = useMemo(() => {
     const noDrinkIds = new Set(categories.filter(c => (c as any).dishType !== "drink").map(c => c.id));

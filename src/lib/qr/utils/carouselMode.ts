@@ -18,7 +18,7 @@ export function getCarouselMode(diet: string | null, restrictions: string[], res
   const hasDiet = effectiveDiet === "vegan" || effectiveDiet === "vegetarian";
   const hasGluten = active.includes("gluten");
   const hasLactosa = active.includes("lactosa");
-  const hasSoja = active.includes("soja");
+  const hasSoja = active.includes("soya") || active.includes("soja");
   const { hasNuts, nonNutCount } = collapseNuts(active);
   const totalThings = (hasDiet ? 1 : 0) + nonNutCount + (hasNuts ? 1 : 0);
 
@@ -66,7 +66,7 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
   const checkAllergenFree = (d: any, name: string): boolean => {
     if (name === "gluten") return d.isGlutenFree === true;
     if (name === "lactosa") return d.isLactoseFree === true;
-    if (name === "soja") return d.isSoyFree === true;
+    if (name === "soja" || name === "soya") return d.isSoyFree === true;
     return false;
   };
 
@@ -85,7 +85,7 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
     // Restriction checks based on mode
     if (mode === "vegan+gf" || mode === "vegetarian+gf" || mode === "glutenfree") { if (!checkAllergenFree(d, "gluten")) return false; }
     if (mode === "lactosefree") { if (!checkAllergenFree(d, "lactosa")) return false; }
-    if (mode === "soyfree") { if (!checkAllergenFree(d, "soja")) return false; }
+    if (mode === "soyfree") { if (!checkAllergenFree(d, "soya")) return false; }
     if (mode === "nuts") { if (!checkNutsFree(d)) return false; }
     if (mode === "smart" && restrictions) {
       if (diet === "vegan" && d.dishDiet !== "VEGAN") return false;
@@ -94,7 +94,9 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
         if (r === "_spicy" || r === "ninguna") continue;
         if (r === "_spicy" && d.isSpicy) return false;
         if (isNutRestriction(r)) { if (!checkNutsFree(d)) return false; continue; }
-        if (!checkAllergenFree(d, r)) return false;
+        // Normalizar soja → soya
+        const name = r === "soja" ? "soya" : r;
+        if (!checkAllergenFree(d, name)) return false;
       }
     }
     return true;

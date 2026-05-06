@@ -32,7 +32,7 @@ const CATEGORIES = [
   { value: "OTHER", label: "Otro", icon: "📦" },
 ];
 
-const ALLERGEN_TYPES = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soja", "huevo", "sésamo", "apio", "mostaza"];
+const ALLERGEN_TYPES = ["gluten", "lactosa", "frutos secos", "maní", "mariscos", "soya", "huevo", "sésamo", "apio", "mostaza"];
 
 interface AnalysisResult {
   dishId: string;

@@ -497,7 +497,7 @@ function DishSlide({
           const userR = genioRestrictions.map(r => r.toLowerCase());
           const NUT_ALIASES_DM = ["frutos secos", "maní", "mani", "nueces", "almendras", "nuez", "almendra"];
           const userWantsLactose = userR.includes("lactosa");
-          const userWantsSoy = userR.includes("soja") || userR.includes("soya");
+          const userWantsSoy = userR.includes("soya") || userR.includes("soja");
           const userWantsNutsFree = userR.some(r => NUT_ALIASES_DM.includes(r));
 
           const seals: { emoji: string; label: string; bg: string; color: string; forYou?: boolean }[] = [];

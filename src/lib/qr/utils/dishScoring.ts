@@ -41,7 +41,8 @@ const RESTRICTION_MAP: Record<string, string[]> = {
   "frutos secos": ["frutos secos", "nuez", "almendra", "maní", "mani", "nueces", "almendras", "nuts"],
   huevo: ["huevo", "egg"],
   cerdo: ["cerdo", "pork", "tocino", "jamón", "bacon"],
-  soja: ["soja", "soy"],
+  soya: ["soya", "soja", "soy"],
+  soja: ["soya", "soja", "soy"], // alias para legacy
 };
 const NUT_ALIASES_SCORING = ["frutos secos", "maní", "mani", "nueces", "almendras", "nuez", "almendra"];
 

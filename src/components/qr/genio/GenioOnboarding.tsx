@@ -189,8 +189,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
       const nutNames = ["maní", "nueces", "almendras"];
       // Restricciones que NO mostramos en Genio (no son alergenos, son preferencias culturales/dieta)
       const HIDDEN_RESTRICTIONS = ["alcohol", "mariscos", "cerdo", "pescado", "huevo"];
-      // Labels custom: el value se queda como esta en DB (canonical), pero la etiqueta visible cambia
-      const LABEL_OVERRIDE: Record<string, string> = { soja: "Sin soya" };
+      // Labels custom: el value se queda como esta en DB (canonical), pero la etiqueta visible cambia.
+      // soja se renombró a "soya" pero por compatibilidad cubrimos ambos.
+      const LABEL_OVERRIDE: Record<string, string> = { soja: "Sin soya", soya: "Sin soya" };
       let hasNuts = false;
       for (const item of items) {
         if (HIDDEN_RESTRICTIONS.includes(item.name)) continue;
@@ -239,18 +240,17 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
     }).catch(() => {});
   }, []);
 
-  // Migración legacy: si hay valores expandidos de nuts (mani/nueces/almendras), colapsar a "frutos secos"
-  // y normalizar "soya" → "soja" (canonical)
+  // Migración legacy: nuts expandidos → "frutos secos", y "soja" → "soya" (canonical nuevo)
   const NUT_LEGACY_INIT = ["maní", "mani", "nueces", "almendras", "nuez", "almendra"];
   useEffect(() => {
     const hasLegacyNuts = restrictions.some(r => NUT_LEGACY_INIT.includes(r));
-    const hasSoya = restrictions.includes("soya");
-    if (!hasLegacyNuts && !hasSoya) return;
+    const hasSojaLegacy = restrictions.includes("soja");
+    if (!hasLegacyNuts && !hasSojaLegacy) return;
     let cleaned = restrictions.filter(r => !NUT_LEGACY_INIT.includes(r));
     if (hasLegacyNuts && !cleaned.includes("frutos secos")) cleaned.push("frutos secos");
-    if (hasSoya) {
-      cleaned = cleaned.filter(r => r !== "soya");
-      if (!cleaned.includes("soja")) cleaned.push("soja");
+    if (hasSojaLegacy) {
+      cleaned = cleaned.filter(r => r !== "soja");
+      if (!cleaned.includes("soya")) cleaned.push("soya");
     }
     setRestrictions(cleaned);
     localStorage.setItem("qr_restrictions", JSON.stringify(cleaned));
