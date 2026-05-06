@@ -112,28 +112,188 @@ function formatDuration(ms: number) {
 type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones";
 
 /* ═══ TAB: Resumen ═══ */
+function HeroKpi({ icon, value, label, sub, color, gradient }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string }) {
+  return (
+    <div style={{ background: gradient, border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)", position: "relative", overflow: "hidden" }}>
+      <div style={{ fontSize: "1.4rem", marginBottom: 6, opacity: 0.9 }}>{icon}</div>
+      <p style={{ fontFamily: F, fontSize: "2rem", color, margin: "0 0 2px", fontWeight: 700, lineHeight: 1 }}>{value}</p>
+      <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: "6px 0 0", fontWeight: 600 }}>{label}</p>
+      {sub && <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>{sub}</p>}
+    </div>
+  );
+}
+
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
-  const [data, setData] = useState<any>(null);
+  const [metrics, setMetrics] = useState<any>(null);
+  const [clientes, setClientes] = useState<any>(null);
+  const [dishes, setDishes] = useState<any>(null);
+  const [searches, setSearches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    const p = new URLSearchParams({ type: "metrics", from, to });
-    if (rid) p.set("restaurantId", rid);
-    fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
+    const make = (type: string) => {
+      const p = new URLSearchParams({ type, from, to });
+      if (rid) p.set("restaurantId", rid);
+      return fetch(`/api/admin/analytics?${p}`).then(r => r.json()).catch(() => null);
+    };
+    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches")])
+      .then(([m, c, d, s]) => { setMetrics(m); setClientes(c); setDishes(d); setSearches(Array.isArray(s) ? s : []); })
+      .finally(() => setLoading(false));
   }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
-  if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
+  if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
+
+  const topDish = dishes?.mostViewed?.[0];
+  const topCategory = dishes?.topCategories?.[0];
+  const topSearch = searches?.[0];
+  const peakHour = clientes?.timeOfDay ? [...clientes.timeOfDay].sort((a: any, b: any) => b.count - a.count)[0] : null;
+  const maxTime = clientes?.timeOfDay ? Math.max(...clientes.timeOfDay.map((t: any) => t.count), 1) : 1;
+  const topDiet = clientes?.dietProfile?.diets?.[0];
+  const topRestriction = clientes?.dietProfile?.restrictions?.[0];
+  const topDevice = clientes?.acquisition?.devices?.[0];
+  const totalDevices = clientes?.acquisition?.devices?.reduce((s: number, d: any) => s + d.count, 0) || 0;
 
   return (
-    <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-      <Card label="Visitantes únicos" value={data.totalVisitors} />
-      <Card label="Total sesiones" value={data.totalSessions} />
-      <Card label="% Recurrentes" value={`${data.returningPct}%`} sub={`${data.returningVisitors} de ${data.totalVisitors}`} color="var(--adm-positive)" />
-      <Card label="% Conversión a registrado" value={`${data.conversionPct}%`} sub={`${data.convertedCount} convertidos`} color="#7fbfdc" />
-      <Card label="Duración promedio" value={formatDuration(data.avgDurationMs)} color="var(--adm-positive)" />
-      <Card label="Platos vistos / sesión" value={data.avgDishesViewed} color="var(--adm-text)" />
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {/* ═══ Hero KPIs ═══ */}
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10 }}>
+        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
+        <HeroKpi icon="🔁" value={`${metrics.returningPct}%`} label="Recurrentes" sub={`${metrics.returningVisitors} volvieron`} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
+        <HeroKpi icon="✅" value={`${metrics.conversionPct}%`} label="Se registraron" sub={`${metrics.convertedCount} crearon cuenta`} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
+        <HeroKpi icon="⏱️" value={formatDuration(metrics.avgDurationMs)} label="Tiempo promedio" sub={`${metrics.avgDishesViewed} platos / sesión`} color="#16a34a" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)" />
+      </div>
+
+      {/* ═══ Plato estrella + hora dorada ═══ */}
+      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {topDish && (
+          <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}>
+            {topDish.photo ? (
+              <img src={topDish.photo} alt={topDish.name} style={{ width: 70, height: 70, borderRadius: 12, objectFit: "cover", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }} />
+            ) : (
+              <div style={{ width: 70, height: 70, borderRadius: 12, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", flexShrink: 0 }}>🍽️</div>
+            )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#F4A623", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>⭐ Plato estrella</p>
+              <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{topDish.name}</p>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>Abierto <strong style={{ color: "#F4A623" }}>{topDish.count} veces</strong> en este período</p>
+            </div>
+          </div>
+        )}
+        {peakHour && peakHour.count > 0 && (
+          <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.06) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}>
+            <div style={{ width: 70, height: 70, borderRadius: 12, background: "rgba(167,139,250,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.4rem", flexShrink: 0 }}>🕐</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#a78bfa", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Hora dorada</p>
+              <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>{peakHour.label} <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", fontWeight: 400 }}>({peakHour.hint})</span></p>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}><strong style={{ color: "#a78bfa" }}>{peakHour.count} sesiones</strong> · cuándo más miran la carta</p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ═══ Distribución horaria ═══ */}
+      {clientes?.timeOfDay && clientes.totalSessions > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>📊 Cuándo abren la carta</p>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
+            {clientes.timeOfDay.map((t: any) => {
+              const isPeak = t.key === peakHour?.key;
+              return (
+                <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: isPeak ? "#a78bfa" : "var(--adm-text2)", fontWeight: 700 }}>{t.count}</span>
+                  <div style={{ width: "100%", height: Math.max(4, (t.count / maxTime) * 80), background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease" }} />
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Top platos + Quiénes son ═══ */}
+      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 12 }}>
+        {/* Top 3 platos vistos */}
+        {dishes?.mostViewed && dishes.mostViewed.length > 0 && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>🏆 Top 3 más vistos</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {dishes.mostViewed.slice(0, 3).map((d: any, i: number) => {
+                const medal = ["🥇", "🥈", "🥉"][i];
+                return (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>{medal}</span>
+                    {d.photo ? (
+                      <img src={d.photo} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--adm-hover)", flexShrink: 0 }} />
+                    )}
+                    <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Quiénes son */}
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>👤 Quiénes son</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {topDevice && totalDevices > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "0.95rem" }}>{topDevice.name === "mobile" ? "📱" : topDevice.name === "desktop" ? "💻" : "📟"}</span>
+                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Mayoría usa <strong style={{ color: "var(--adm-text)" }}>{topDevice.name === "mobile" ? "celular" : topDevice.name === "desktop" ? "escritorio" : "tablet"}</strong></span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{Math.round((topDevice.count / totalDevices) * 100)}%</span>
+              </div>
+            )}
+            {topDiet && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "0.95rem" }}>🥗</span>
+                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Dieta más común <strong style={{ color: "var(--adm-text)" }}>{topDiet.label}</strong></span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topDiet.count}</span>
+              </div>
+            )}
+            {topRestriction && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "0.95rem" }}>⚠️</span>
+                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Restricción top <strong style={{ color: "var(--adm-text)" }}>{topRestriction.label || topRestriction.name}</strong></span>
+                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topRestriction.count}</span>
+              </div>
+            )}
+            {clientes?.languages && clientes.languages.length > 0 && (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "0.95rem" }}>🌐</span>
+                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Idiomas <strong style={{ color: "var(--adm-text)" }}>{clientes.languages.slice(0, 3).map((l: any) => l.code.toUpperCase()).join(" · ")}</strong></span>
+              </div>
+            )}
+            {!topDevice && !topDiet && !topRestriction && (!clientes?.languages || clientes.languages.length === 0) && (
+              <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0 }}>Aún no hay suficientes datos demográficos</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Categoría top + búsqueda top ═══ */}
+      <div className="adm-cols-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        {topCategory && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>📂 Categoría favorita</p>
+            <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>{topCategory.name}</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Acapara el <strong style={{ color: "var(--adm-accent)" }}>{topCategory.pct}%</strong> del tiempo en carta</p>
+          </div>
+        )}
+        {topSearch && (
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
+            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>🔍 Lo más buscado</p>
+            <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>"{topSearch.query}"</p>
+            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Buscado <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? "vez" : "veces"}</strong> por {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? "persona" : "personas"}</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
