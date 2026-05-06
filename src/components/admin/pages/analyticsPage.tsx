@@ -672,7 +672,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
                   {clientes.dietProfile.restrictions.map((r: any, i: number) => (
                     <div key={r.name} style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", fontWeight: 700, width: 14 }}>{i + 1}</span>
-                      <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, textTransform: "capitalize" }}>{r.name}</span>
+                      <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>{r.label || r.name}</span>
                       <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{r.count}</span>
                     </div>
                   ))}

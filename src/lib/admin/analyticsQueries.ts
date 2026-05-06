@@ -473,6 +473,26 @@ const DIET_LABELS: Record<string, string> = {
   VEGETARIAN: "Vegetariano",
   PESCETARIAN: "Pescetariano",
 };
+// Etiquetas amigables para restricciones — los valores en DB vienen en es-lowercase
+// pero algunos son codigos internos (_spicy) o variantes (soja vs soya) que conviene unificar.
+const RESTRICTION_LABELS: Record<string, string> = {
+  "_spicy": "Sin picante",
+  "spicy": "Sin picante",
+  "gluten": "Sin gluten",
+  "lactosa": "Sin lactosa",
+  "soja": "Sin soya",
+  "soya": "Sin soya",
+  "frutos secos": "Sin frutos secos",
+  "mariscos": "Sin mariscos",
+  "cerdo": "Sin cerdo",
+  "pescado": "Sin pescado",
+  "huevo": "Sin huevo",
+  "alcohol": "Sin alcohol",
+  "mani": "Sin maní",
+  "maní": "Sin maní",
+  "nueces": "Sin nueces",
+  "almendras": "Sin almendras",
+};
 
 /**
  * Aggregated customer-profile data for the /panel/analytics Clientes tab:
@@ -530,7 +550,11 @@ export async function getClientesAnalytics(restaurantId: string | null, from: Da
     seenGuests.add(s.guestId);
     const prefs = (s.guest?.preferences as any) || {};
     const diet = s.qrUser?.dietType || prefs?.dietType;
-    if (diet) dietCount[diet] = (dietCount[diet] || 0) + 1;
+    if (diet) {
+      // Normalizar a uppercase: el enum del schema viene UPPER pero localStorage del Genio lower
+      const dietKey = String(diet).toUpperCase();
+      dietCount[dietKey] = (dietCount[dietKey] || 0) + 1;
+    }
     const restrictions = (s.qrUser?.restrictions || prefs?.restrictions || []) as string[];
     for (const r of restrictions) {
       const key = r.toLowerCase();
@@ -542,7 +566,7 @@ export async function getClientesAnalytics(restaurantId: string | null, from: Da
     .map(([key, count]) => ({ key, label: DIET_LABELS[key] || key, count }))
     .sort((a, b) => b.count - a.count);
   const restrictions = Object.entries(restrictionCount)
-    .map(([name, count]) => ({ name, count }))
+    .map(([name, count]) => ({ name, label: RESTRICTION_LABELS[name] || name, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 6);
   const totalDietGuests = diets.reduce((s, d) => s + d.count, 0);
