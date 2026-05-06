@@ -1448,10 +1448,11 @@ export default function AdminMenus() {
           {(bulkAction === "addCharacteristic" || bulkAction === "removeCharacteristic") && (
             <select value={bulkActionValue} onChange={e => setBulkActionValue(e.target.value)} style={{ padding: "6px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text)", outline: "none" }}>
               <option value="">Seleccionar característica...</option>
+              <option value="isSpicy">🌶️ Picante</option>
               <option value="isGlutenFree">🌾 Sin gluten</option>
               <option value="isLactoseFree">🥛 Sin lactosa</option>
-              <option value="isSoyFree">🌱 Sin soya</option>
-              <option value="isSpicy">🌶️ Picante</option>
+              <option value="isSoyFree">🫘 Sin soya</option>
+              <option value="containsNuts">🥜 Contiene frutos secos</option>
             </select>
           )}
           <button
