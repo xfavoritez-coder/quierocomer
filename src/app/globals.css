@@ -125,10 +125,10 @@ textarea::placeholder {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-/* KPI grid: 4 en desktop, 2x2 en mobile — los hero KPI quedan estirados feo si caen a 1 col */
+/* KPI grid: 3 en desktop, 1 col en mobile chico (cambia abajo a 768px) */
 .adm-kpi-grid {
   display: grid !important;
-  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 10px;
 }
 /* Carousel horizontal mobile-first: cards de ancho fijo con scroll */
@@ -147,9 +147,15 @@ textarea::placeholder {
   .adm-cols-3 {
     grid-template-columns: 1fr;
   }
+}
+/* KPIs en mobile chico (iPhone normal) se stackean — 3 en fila quedan apretados */
+@media (max-width: 560px) {
   .adm-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
   }
+}
+@media (max-width: 768px) {
   .adm-hour-grid {
     display: flex !important;
     overflow-x: auto;

@@ -196,39 +196,11 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* ═══ Hero KPIs ═══ */}
+      {/* ═══ Hero KPIs (3) ═══ */}
       <div className="adm-kpi-grid">
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
-        {hasToteat ? (
-          <HeroKpi
-            icon="🛒"
-            value={`${conversionPct}%`}
-            label="Conversión a venta"
-            sub={`${cross.summary.totalSales} ventas · ${cross.summary.totalOpens} vistas detalle`}
-            color="#16a34a"
-            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.10) 100%)"
-          />
-        ) : topCategory ? (
-          <HeroKpi
-            icon="📂"
-            value={`${topCategory.pct || 0}%`}
-            label={topCategory.name}
-            sub="del tiempo en la carta"
-            color="#16a34a"
-            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)"
-          />
-        ) : (
-          <HeroKpi
-            icon="🧞"
-            value={`${metrics.genioUsedPct || 0}%`}
-            label="Usaron el Genio"
-            sub={`${metrics.genioUsers || 0} completaron el onboarding`}
-            color="#16a34a"
-            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)"
-          />
-        )}
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
