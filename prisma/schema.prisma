@@ -439,6 +439,16 @@ model Restaurant {
   lastPaymentAt        DateTime?
   billingExempt        Boolean            @default(false)  // legacy clients que no pagan via Flow
   billingAnchorDay     Int?               // dia del mes del ciclo de cobro (1-28); ancla cuando reactivan tras gap
+
+  // Datos de facturacion (Chile) — requeridos para emitir factura electronica
+  billingCompanyName   String?            // razon social
+  billingRut           String?            // RUT formato 76.123.456-7 o 76123456-7
+  billingGiro          String?            // giro / actividad economica
+  billingAddress       String?            // direccion comercial (puede diferir de address del local)
+  billingCity          String?            // comuna / ciudad
+  billingEmail         String?            // email contacto facturacion
+  billingContactName   String?            // nombre responsable contable
+  billingPhone         String?            // telefono contacto facturacion
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
   ownerId     String?

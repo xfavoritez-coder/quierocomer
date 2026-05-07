@@ -5,6 +5,14 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
 import { toast } from "sonner";
+import {
+  PLAN_FEATURES_DISPLAY,
+  PLAN_INHERITS_FROM,
+  PLAN_TAGLINES,
+  planNetAmount,
+  ivaOf,
+  grossOf,
+} from "@/lib/billing/plans-config";
 
 const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
 
@@ -86,26 +94,6 @@ function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
   );
 }
 
-const PLAN_FEATURES: Record<string, { text: string; tip: string }[]> = {
-  GOLD: [
-    { text: "2 vistas de carta", tip: "Vista lista y galería" },
-    { text: "Destacar platos estrella", tip: "Aparecen primero en el hero" },
-    { text: "Ofertas y promociones", tip: "Descuentos visibles en la carta" },
-    { text: "Estadísticas básicas", tip: "Visitas, platos más vistos" },
-    { text: "Anuncios en la carta", tip: "Banner de novedades" },
-    { text: "Multilenguaje", tip: "ES · EN · PT automático" },
-  ],
-  PREMIUM: [
-    { text: "Todo del plan Gold", tip: "Incluye todas las funciones Gold" },
-    { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
-    { text: "Estadísticas avanzadas", tip: "Recorridos, filtros, clima" },
-    { text: "Llamar al garzón", tip: "Notificación push al garzón" },
-    { text: "Venta cruzada", tip: "El Genio sugiere acompañamientos para subir el ticket" },
-    { text: "Automatizaciones", tip: "Emails de cumpleaños y bienvenida" },
-    { text: "Campañas y email marketing", tip: "Envíos masivos a clientes" },
-    { text: "Clientes ilimitados + CSV", tip: "Lista completa y exportable" },
-  ],
-};
 
 function PlanFeatureRow({ text, tip, color }: { text: string; tip: string; color: string }) {
   const [open, setOpen] = useState(false);
@@ -190,7 +178,7 @@ function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const FD = "var(--font-display)";
   const FB2 = "var(--font-body)";
-  const features = PLAN_FEATURES[tab] || [];
+  const features = PLAN_FEATURES_DISPLAY[tab] || [];
   const isCurrentPlan = plan === tab;
 
   useEffect(() => {
@@ -212,6 +200,13 @@ function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
+        if (data?.code === "BILLING_INFO_REQUIRED") {
+          toast.error("Completa tus datos de facturacion antes de continuar");
+          setSubmitting(false);
+          onClose();
+          window.location.href = "/panel/facturacion";
+          return;
+        }
         toast.error(data.error || "No se pudo iniciar la suscripcion");
         setSubmitting(false);
         return;
@@ -298,13 +293,24 @@ function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <p style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
-              {tab === "PREMIUM" ? "Para vender más sin levantar un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+              {PLAN_TAGLINES[tab]}
             </p>
-            <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
-              {tab === "PREMIUM" ? "$49.900" : "$29.900"}
-            </span>
-            <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
-            <p style={{ fontFamily: FB2, fontSize: "0.72rem", color: "#bbb", margin: "-2px 0 0" }}>Neto · Sin contratos</p>
+            {(() => {
+              const net = planNetAmount(tab);
+              const iva = ivaOf(net);
+              const gross = grossOf(net);
+              const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
+              return (
+                <>
+                  <span style={{ fontFamily: FD, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>{fmt(net)}</span>
+                  <span style={{ fontFamily: FB2, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes neto</span>
+                  <p style={{ fontFamily: FB2, fontSize: "0.78rem", color: "#666", margin: "4px 0 0" }}>
+                    + IVA 19% ({fmt(iva)}) = <strong style={{ color: "#1a1a1a" }}>{fmt(gross)}</strong> total mensual
+                  </p>
+                  <p style={{ fontFamily: FB2, fontSize: "0.7rem", color: "#bbb", margin: "2px 0 0" }}>Sin contratos · Cancelas cuando quieras</p>
+                </>
+              );
+            })()}
           </div>
 
           {/* Features */}
@@ -314,6 +320,11 @@ function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId
             border: `1px solid ${tab === "PREMIUM" ? "#e9d5ff" : "#fde68a"}`,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <PlanFeatureRow
+                text={PLAN_INHERITS_FROM[tab]}
+                tip={`Incluye todas las funciones del plan ${tab === "PREMIUM" ? "Gold" : "Gratis"}`}
+                color={tab === "PREMIUM" ? "#7c3aed" : "#F4A623"}
+              />
               {features.map(f => (
                 <PlanFeatureRow key={f.text} text={f.text} tip={f.tip} color={tab === "PREMIUM" ? "#7c3aed" : "#F4A623"} />
               ))}
