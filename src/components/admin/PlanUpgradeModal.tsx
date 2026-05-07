@@ -1,30 +1,17 @@
 "use client";
 
 import { useState } from "react";
+import {
+  PLAN_FEATURES_DISPLAY,
+  PLAN_INHERITS_FROM,
+  PLAN_TAGLINES,
+  planNetAmount,
+  ivaOf,
+  grossOf,
+} from "@/lib/billing/plans-config";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
-
-const PLAN_FEATURES_WITH_TIPS: Record<string, { text: string; tip: string }[]> = {
-  GOLD: [
-    { text: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
-    { text: "Destacar platos estrella", tip: "Marca tus mejores platos para que aparezcan primero en el hero" },
-    { text: "Ofertas y promociones", tip: "Publica descuentos que se muestran automáticamente en la carta" },
-    { text: "Estadísticas básicas", tip: "Visitantes, sesiones, platos más vistos y duración promedio" },
-    { text: "Anuncios en la carta", tip: "Banner de novedades visible al abrir la carta" },
-    { text: "Multilenguaje", tip: "Carta traducida automáticamente a inglés y portugués" },
-  ],
-  PREMIUM: [
-    { text: "Todo del plan Gold", tip: "Incluye todas las funciones del plan Gold" },
-    { text: "4 vistas de carta", tip: "Lista, galería, feed y espacial" },
-    { text: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, búsquedas y estadísticas del garzón" },
-    { text: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe notificación push" },
-    { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket" },
-    { text: "Automatizaciones", tip: "Emails automáticos de bienvenida, cumpleaños y reactivación" },
-    { text: "Campañas y email marketing", tip: "Envía comunicaciones masivas a tus clientes" },
-    { text: "Clientes ilimitados + CSV", tip: "Ve todos los registrados y exporta la lista" },
-  ],
-};
 
 function FeatureRow({ text, tip, color }: { text: string; tip: string; color: string }) {
   const [open, setOpen] = useState(false);
@@ -49,6 +36,12 @@ interface Props {
 
 export default function PlanUpgradeModal({ initialTab = "PREMIUM", onClose }: Props) {
   const [modalTab, setModalTab] = useState<"GOLD" | "PREMIUM">(initialTab);
+
+  const features = PLAN_FEATURES_DISPLAY[modalTab] || [];
+  const net = planNetAmount(modalTab);
+  const iva = ivaOf(net);
+  const gross = grossOf(net);
+  const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -75,15 +68,16 @@ export default function PlanUpgradeModal({ initialTab = "PREMIUM", onClose }: Pr
           {/* Description + Price */}
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "#555", lineHeight: 1.5, margin: "0 0 6px" }}>
-              {modalTab === "PREMIUM" ? "Para vender más sin levantar un dedo" : "Destaca tu carta y entiende mejor a tus clientes"}
+              {PLAN_TAGLINES[modalTab]}
             </p>
             <div>
-              <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>
-                {modalTab === "PREMIUM" ? "$55.000" : "$35.000"}
-              </span>
-              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes</span>
+              <span style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a" }}>{fmt(net)}</span>
+              <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#999", marginLeft: 4 }}>/mes neto</span>
             </div>
-            <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#bbb", margin: "-2px 0 0" }}>Neto · Sin contratos</p>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#666", margin: "4px 0 0" }}>
+              + IVA 19% ({fmt(iva)}) = <strong style={{ color: "#1a1a1a" }}>{fmt(gross)}</strong> total mensual
+            </p>
+            <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "#bbb", margin: "2px 0 0" }}>Sin contratos</p>
           </div>
 
           {/* Features */}
@@ -93,7 +87,12 @@ export default function PlanUpgradeModal({ initialTab = "PREMIUM", onClose }: Pr
             border: `1px solid ${modalTab === "PREMIUM" ? "#e9d5ff" : "#fde68a"}`,
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {(PLAN_FEATURES_WITH_TIPS[modalTab] || []).map(f => (
+              <FeatureRow
+                text={PLAN_INHERITS_FROM[modalTab]}
+                tip={`Incluye todas las funciones del plan ${modalTab === "PREMIUM" ? "Gold" : "Gratis"}`}
+                color={modalTab === "PREMIUM" ? "#7c3aed" : "#F4A623"}
+              />
+              {features.map(f => (
                 <FeatureRow key={f.text} text={f.text} tip={f.tip} color={modalTab === "PREMIUM" ? "#7c3aed" : "#F4A623"} />
               ))}
             </div>

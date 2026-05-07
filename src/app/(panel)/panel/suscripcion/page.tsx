@@ -2,6 +2,7 @@
 import { useEffect, useState, useContext } from "react";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import { toast } from "sonner";
+import { planNetAmount, ivaOf, type PlanKey } from "@/lib/billing/plans-config";
 
 type BillingStatus = {
   restaurantId: string;
@@ -13,9 +14,10 @@ type BillingStatus = {
   hasSubscription: boolean;
   activeFlowPlan: string | null;
   billingExempt: boolean;
+  ivaRate?: number;
+  billingInfo?: { isComplete: boolean; missingFields: string[] };
 };
 
-const PLAN_PRICES: Record<string, number> = { GOLD: 29900, PREMIUM: 49900 };
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -95,7 +97,10 @@ export default function SuscripcionPage() {
   const hasActiveSub = status.hasSubscription && (status.subscriptionStatus === "TRIALING" || status.subscriptionStatus === "ACTIVE" || status.subscriptionStatus === "PAST_DUE");
   const isCanceled = status.subscriptionStatus === "CANCELED";
   const inTrial = status.subscriptionStatus === "TRIALING";
-  const monthlyPrice = PLAN_PRICES[status.plan] || 0;
+  const monthlyNet = planNetAmount(status.plan as PlanKey);
+  const monthlyIva = ivaOf(monthlyNet);
+  const monthlyGross = monthlyNet + monthlyIva;
+  const billingComplete = status.billingInfo?.isComplete !== false;
 
   return (
     <div style={{ padding: "24px 16px", maxWidth: 720, margin: "0 auto", fontFamily: FB }}>
@@ -145,7 +150,7 @@ export default function SuscripcionPage() {
               ✓ Estás en prueba gratis
             </p>
             <p style={{ fontSize: "0.82rem", color: "#166534", margin: 0 }}>
-              Primer cobro: <strong>{formatDate(status.trialEndsAt)}</strong> · {formatCLP(monthlyPrice)} mensual
+              Primer cobro: <strong>{formatDate(status.trialEndsAt)}</strong> · {formatCLP(monthlyGross)} (incluye IVA)
             </p>
           </div>
         )}
@@ -153,8 +158,25 @@ export default function SuscripcionPage() {
         {!isExempt && status.subscriptionStatus === "ACTIVE" && status.currentPeriodEnd && (
           <div style={{ background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: 10, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.85rem", color: "#0369a1", margin: 0 }}>
-              Próximo cobro: <strong>{formatDate(status.currentPeriodEnd)}</strong> · {formatCLP(monthlyPrice)}
+              Próximo cobro: <strong>{formatDate(status.currentPeriodEnd)}</strong> · {formatCLP(monthlyGross)} (incluye IVA)
             </p>
+          </div>
+        )}
+
+        {!isExempt && !billingComplete && (
+          <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 10, padding: "14px", marginBottom: 16 }}>
+            <p style={{ fontSize: "0.9rem", color: "#92400e", margin: "0 0 4px", fontWeight: 600 }}>
+              ⚠ Faltan datos de facturación
+            </p>
+            <p style={{ fontSize: "0.82rem", color: "#78350f", margin: "0 0 10px", lineHeight: 1.5 }}>
+              Necesitamos tu razón social, RUT y giro para emitir la factura electrónica con IVA cada mes.
+            </p>
+            <a href="/panel/facturacion" style={{
+              display: "inline-block", padding: "8px 16px", background: GOLD, color: "white",
+              borderRadius: 999, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, textDecoration: "none",
+            }}>
+              Completar datos →
+            </a>
           </div>
         )}
 
@@ -197,8 +219,13 @@ export default function SuscripcionPage() {
           <div>
             <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Cobro mensual</p>
             <p style={{ fontSize: "0.92rem", color: "#333", margin: "2px 0 0", fontWeight: 600 }}>
-              {monthlyPrice > 0 ? `${formatCLP(monthlyPrice)} (neto)` : isExempt ? "Sin costo" : "—"}
+              {monthlyNet > 0 ? formatCLP(monthlyGross) : isExempt ? "Sin costo" : "—"}
             </p>
+            {monthlyNet > 0 && (
+              <p style={{ fontSize: "0.7rem", color: "#888", margin: "2px 0 0" }}>
+                {formatCLP(monthlyNet)} neto + {formatCLP(monthlyIva)} IVA
+              </p>
+            )}
           </div>
           <div>
             <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pasarela</p>
@@ -249,6 +276,7 @@ export default function SuscripcionPage() {
         <p style={{ margin: "0 0 8px", fontWeight: 600, color: "#444" }}>📋 Información sobre tu suscripción</p>
         <ul style={{ margin: "0", paddingLeft: 18 }}>
           <li>Los cobros se hacen automáticamente cada mes con la tarjeta inscrita en Webpay.</li>
+          <li>El monto incluye IVA (19%) y se emite factura electrónica al email de facturación que registres.</li>
           <li>Puedes cancelar en cualquier momento desde aquí. Mantienes acceso hasta el final del mes pagado.</li>
           <li>Si tu tarjeta falla, te avisamos y reintentamos durante 7 días. Si no se regulariza, tu plan vuelve a Gratis.</li>
           <li>Tu carta QR sigue funcionando aunque tu plan baje a Gratis. Solo pierdes funciones avanzadas.</li>

@@ -8,6 +8,10 @@ const OWNER_EDITABLE_FIELDS = [
   "phone", "whatsapp", "address",
   "instagram", "website", "scheduleJson",
   "waiterPanelActive",
+  // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
+  "billingCompanyName", "billingRut", "billingGiro",
+  "billingAddress", "billingCity", "billingEmail",
+  "billingContactName", "billingPhone",
 ];
 
 function pickFields(body: Record<string, any>, allowed: string[]): Record<string, any> {

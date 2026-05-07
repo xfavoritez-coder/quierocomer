@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
-import { FLOW_PLANS } from "@/lib/billing/plans-config";
+import { FLOW_PLANS, missingBillingFields } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
@@ -32,6 +32,27 @@ export async function POST(req: NextRequest) {
   }
   const restaurant = owner.restaurants[0];
   if (!restaurant) return NextResponse.json({ error: "Restaurant no encontrado" }, { status: 404 });
+
+  // Validar que estan todos los datos de facturacion antes de iniciar el cobro.
+  // Sin estos datos no podemos emitir factura electronica al cliente.
+  const missing = missingBillingFields({
+    billingCompanyName: restaurant.billingCompanyName,
+    billingRut: restaurant.billingRut,
+    billingGiro: restaurant.billingGiro,
+    billingAddress: restaurant.billingAddress,
+    billingCity: restaurant.billingCity,
+    billingEmail: restaurant.billingEmail,
+  });
+  if (missing.length > 0) {
+    return NextResponse.json(
+      {
+        error: "Completa tus datos de facturacion antes de suscribirte",
+        code: "BILLING_INFO_REQUIRED",
+        missingFields: missing,
+      },
+      { status: 400 },
+    );
+  }
 
   const planConfig = FLOW_PLANS[plan];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;

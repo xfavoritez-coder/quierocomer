@@ -2,6 +2,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import {
+  PLAN_FEATURES_DISPLAY,
+  PLAN_TAGLINES,
+  planNetAmount,
+} from "@/lib/billing/plans-config";
 
 /* ─── Types ─── */
 interface Logo { slug: string; name: string; logoUrl: string | null; color: string; initials: string; }
@@ -327,15 +332,11 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gratis</p>
               <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111", marginBottom: 2 }}>$0</p>
               <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Para siempre</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Carta digital con QR para empezar a vender</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.FREE}</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
-                {[
-                  { t: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Sin app, sin descargas." },
-                  { t: "Vista lista", tip: "Todos los platos en una lista atractiva y fácil de navegar. Cuando el cliente toca un plato, se abre un detalle con foto grande y descripción del producto." },
-                  { t: "Panel autoadministrable", tip: "Editas tu carta cuando quieras desde tu celular o computador: precios, fotos, descripciones, modificadores. Los cambios se ven al instante." },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                {PLAN_FEATURES_DISPLAY.FREE.map((f) => (
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
@@ -344,23 +345,16 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ position: "absolute", top: -11, left: "50%", transform: "translateX(-50%)", background: BRAND, color: "#fff", fontFamily: F, fontSize: "10.5px", fontWeight: 700, padding: "3px 12px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase" }}>Recomendado</span>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#92400e", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Gold</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>$29.900</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#111" }}>${planNetAmount("GOLD").toLocaleString("es-CL")}</span>
                 <span style={{ fontSize: 16, color: "#999", fontWeight: 500 }}>/mes</span>
               </div>
-              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Neto · Sin contratos</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>Para destacar tus platos y entender a tus clientes</p>
+              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>Neto + IVA · Sin contratos</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar prueba gratis 7 días</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
-                {[
-                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente: dieta, restricciones y alérgenos" },
-                  { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
-                  { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
-                  { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },
-                  { t: "Estadísticas básicas", tip: "Ve cuántas personas visitan tu carta, qué platos ven más y cuánto tiempo pasan" },
-                  { t: "Multilenguaje (ES · EN · PT)", tip: "Tu carta se traduce automáticamente al idioma del cliente" },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                {PLAN_FEATURES_DISPLAY.GOLD.map((f) => (
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>
@@ -368,24 +362,16 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <div style={{ background: "linear-gradient(180deg, #F5F0FF 0%, #EDE5FF 100%)", border: "2px solid #c4b5fd", borderRadius: 16, padding: 28 }}>
               <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#6d28d9", letterSpacing: "0.5px", textTransform: "uppercase", marginBottom: 6 }}>Premium</p>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4, marginBottom: 2 }}>
-                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>$49.900</span>
+                <span style={{ fontFamily: F, fontSize: 36, fontWeight: 700, letterSpacing: "-1px", color: "#1a1a1a" }}>${planNetAmount("PREMIUM").toLocaleString("es-CL")}</span>
                 <span style={{ fontSize: 16, color: "#6b7280", fontWeight: 500 }}>/mes</span>
               </div>
-              <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>Neto · Sin contratos</p>
-              <p style={{ fontFamily: F, fontSize: 13, color: "#555", marginBottom: 20, lineHeight: 1.4 }}>Para vender más sin levantar un dedo</p>
+              <p style={{ fontSize: 13, color: "#6b7280", marginBottom: 6 }}>Neto + IVA · Sin contratos</p>
+              <p style={{ fontFamily: F, fontSize: 13, color: "#555", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#7c3aed", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar prueba gratis 7 días</a>
               <div style={{ borderTop: "1px solid #ddd6fe", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> Todo del plan Gold</div>
-                {[
-                  { t: "4 vistas de carta", tip: "Lista, galería, feed y espacial — elige la que mejor represente tu local" },
-                  { t: "Estadísticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, qué buscan en tu carta y estadísticas del garzón" },
-                  { t: "Llamar al garzón", tip: "El cliente toca un botón y el garzón recibe la notificación al instante" },
-                  { t: "Venta cruzada", tip: "El Genio sugiere acompañamientos al cliente para subir el ticket de cada mesa" },
-                  { t: "Automatizaciones", tip: "Emails automáticos: bienvenida al registrarse, saludo de cumpleaños, reactivación de clientes inactivos" },
-                  { t: "Campañas y email marketing", tip: "Crea y envía emails con novedades, promociones o comunicaciones a tus clientes registrados" },
-                  { t: "Integración con Toteat", tip: "Si tu local ya usa Toteat, sincronizamos las ventas reales con la carta digital. Verás qué platos se ven y se piden, dashboard en vivo de tu negocio, y badges como 'lo más pedido hoy' basado en ventas reales." },
-                ].map((f) => (
-                  <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
+                {PLAN_FEATURES_DISPLAY.PREMIUM.map((f) => (
+                  <div key={f.text} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#444" }}><Check /> <span>{f.text}</span> <InfoTip text={f.tip} /></div>
                 ))}
               </div>
             </div>

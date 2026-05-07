@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { FLOW_PLANS, planFromFlowId } from "@/lib/billing/plans-config";
+import {
+  FLOW_PLANS,
+  planFromFlowId,
+  ivaOf,
+  grossOf,
+  IVA_RATE,
+  missingBillingFields,
+} from "@/lib/billing/plans-config";
 
 /**
  * GET /api/billing/status?restaurantId=...
@@ -24,6 +31,12 @@ export async function GET(req: NextRequest) {
           flowCustomerId: true, flowSubscriptionId: true, flowPlanId: true,
           subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true, lastPaymentAt: true,
           billingExempt: true,
+          billingCompanyName: true,
+          billingRut: true,
+          billingGiro: true,
+          billingAddress: true,
+          billingCity: true,
+          billingEmail: true,
         },
         take: 1,
       },
@@ -33,6 +46,28 @@ export async function GET(req: NextRequest) {
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
   const flowPlan = restaurant.flowPlanId ? planFromFlowId(restaurant.flowPlanId) : null;
+
+  // Adjuntar desglose neto/IVA/bruto a cada plan disponible
+  const plansWithIva = Object.fromEntries(
+    Object.entries(FLOW_PLANS).map(([key, cfg]) => [
+      key,
+      {
+        ...cfg,
+        amount: cfg.amountNet, // backwards-compat con clientes existentes
+        amountIva: ivaOf(cfg.amountNet),
+        amountGross: grossOf(cfg.amountNet),
+      },
+    ]),
+  );
+
+  const missing = missingBillingFields({
+    billingCompanyName: restaurant.billingCompanyName,
+    billingRut: restaurant.billingRut,
+    billingGiro: restaurant.billingGiro,
+    billingAddress: restaurant.billingAddress,
+    billingCity: restaurant.billingCity,
+    billingEmail: restaurant.billingEmail,
+  });
 
   return NextResponse.json({
     restaurantId: restaurant.id,
@@ -44,6 +79,17 @@ export async function GET(req: NextRequest) {
     hasSubscription: !!restaurant.flowSubscriptionId,
     activeFlowPlan: flowPlan,
     billingExempt: restaurant.billingExempt,
-    plans: FLOW_PLANS,
+    plans: plansWithIva,
+    ivaRate: IVA_RATE,
+    billingInfo: {
+      billingCompanyName: restaurant.billingCompanyName,
+      billingRut: restaurant.billingRut,
+      billingGiro: restaurant.billingGiro,
+      billingAddress: restaurant.billingAddress,
+      billingCity: restaurant.billingCity,
+      billingEmail: restaurant.billingEmail,
+      isComplete: missing.length === 0,
+      missingFields: missing,
+    },
   });
 }
