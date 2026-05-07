@@ -331,9 +331,9 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "transparent", color: "#1a1a1a", border: "1.5px solid #ddd", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar gratis</a>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
-                  { t: "Carta inteligente con QR", tip: "Tus clientes escanean un QR y ven tu carta digital" },
-                  { t: "Vista lista", tip: "Todos los platos en formato lista limpia" },
-                  { t: "Modificadores de platos", tip: "Agregar opciones (sin cebolla, con queso extra, etc) a cada plato" },
+                  { t: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Sin app, sin descargas." },
+                  { t: "Vista lista", tip: "Todos los platos en una lista limpia. Cuando el cliente toca uno, se abre un detalle con foto grande y descripción en lenguaje cercano — no nombres técnicos como en otras cartas QR." },
+                  { t: "Panel autoadministrable", tip: "Editas tu carta cuando quieras desde tu celular o computador: precios, fotos, descripciones, modificadores. Los cambios se ven al instante." },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
@@ -353,7 +353,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
                 {[
-                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente: dieta, restricciones y alergenos" },
+                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente: dieta, restricciones y alérgenos" },
                   { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
                   { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
                   { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },

@@ -5,7 +5,7 @@ import { X } from "lucide-react";
 import { filterSupportedRestrictions } from "@/lib/qr/utils/carouselMode";
 
 interface Props {
-  type: "no-results" | "redundant-vegan" | "redundant-vegetarian";
+  type: "no-results" | "redundant-vegan" | "redundant-vegetarian" | "reordered-spicy";
   diet?: string | null;
   restrictions?: string[];
   restaurantName?: string;
@@ -55,6 +55,41 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
   const [dismissed, setDismissed] = useState(() => sessionStorage.getItem(DISMISS_KEY) === "1");
 
   if (dismissed) return null;
+
+  // Variante "reordered-spicy": el cliente marcó solo "sin picante". La
+  // mayoría de la carta no es picante, así que en lugar de "no encontramos"
+  // (gris, decepcionante) mostramos un mensaje verde positivo confirmando
+  // que la carta ya quedó reordenada para él.
+  if (type === "reordered-spicy") {
+    return (
+      <div
+        id="genio-diet-message"
+        className="font-[family-name:var(--font-dm)]"
+        style={{
+          margin: "0 12px 10px",
+          padding: "12px 38px 12px 14px",
+          background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+          border: "1px solid rgba(16,185,129,0.25)",
+          borderRadius: 14,
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+        }}
+      >
+        <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
+        <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+          Listo. Reordenamos la carta dejando lo picante al final, y marcamos los picantes con 🌶️ para que los identifiques rápido.
+        </p>
+        <button
+          onClick={() => { setDismissed(true); sessionStorage.setItem(DISMISS_KEY, "1"); }}
+          style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
+        >
+          <X size={14} color="#059669" />
+        </button>
+      </div>
+    );
+  }
 
   let message = "";
   if (type === "redundant-vegan" || type === "redundant-vegetarian") {

@@ -210,6 +210,15 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             color="#16a34a"
             gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.10) 100%)"
           />
+        ) : topCategory ? (
+          <HeroKpi
+            icon="📂"
+            value={`${topCategory.pct || 0}%`}
+            label={topCategory.name}
+            sub="del tiempo en la carta"
+            color="#16a34a"
+            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)"
+          />
         ) : (
           <HeroKpi
             icon="🧞"
@@ -373,23 +382,14 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         </div>
       </div>
 
-      {/* ═══ Categoría top + búsqueda top ═══ */}
-      <div className="adm-cols-2">
-        {topCategory && (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
-            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>📂 Categoría favorita</p>
-            <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>{topCategory.name}</p>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Acapara el <strong style={{ color: "var(--adm-accent)" }}>{topCategory.pct}%</strong> del tiempo en carta</p>
-          </div>
-        )}
-        {topSearch && (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
-            <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>🔍 Lo más buscado</p>
-            <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>"{topSearch.query}"</p>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Buscado <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? "vez" : "veces"}</strong> por {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? "persona" : "personas"}</p>
-          </div>
-        )}
-      </div>
+      {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}
+      {topSearch && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
+          <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>🔍 Lo más buscado</p>
+          <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>&ldquo;{topSearch.query}&rdquo;</p>
+          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Buscado <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? "vez" : "veces"}</strong> por {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? "persona" : "personas"}</p>
+        </div>
+      )}
 
       {/* ═══ Bloques solo Toteat: Campeones + Fantasmas ═══ */}
       {hasToteat && (champions.length > 0 || ghosts.length > 0) && (
@@ -596,11 +596,10 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* 🎖️ Acierto de los badges — premium + sales in window */}
-      {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
-
-      {/* 🩺 Salud de tu carta — issues editoriales (sin foto, sin descripción, etc.) */}
-      {menuHealth && menuHealth.total > 0 && (
+      {/* 🩺 Salud de tu carta — PRIMER bloque (siempre arriba). Solo se muestra si
+         hay al menos un problema editorial (healthScore < 100). Si la carta esta
+         perfecta, ocultamos para no robar atencion al resto del Resumen. */}
+      {menuHealth && menuHealth.total > 0 && menuHealth.healthScore < 100 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
@@ -633,6 +632,9 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
           </div>
         </div>
       )}
+
+      {/* 🎖️ Acierto de los badges — premium + sales in window */}
+      {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
 
       {/* 🌟 Estrella por horario — qué plato gana en cada momento del día */}
       {popularByHour.length > 0 && (

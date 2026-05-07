@@ -112,7 +112,7 @@ export function hasMatchingDishes(dishes: any[], categories: any[], mode: Carous
   });
 }
 
-export type DietMessageType = "no-results" | "redundant-vegan" | "redundant-vegetarian" | null;
+export type DietMessageType = "no-results" | "redundant-vegan" | "redundant-vegetarian" | "reordered-spicy" | null;
 
 /** Determine which fallback message to show when there's no carousel */
 export function getDietMessage(diet: string | null, restrictions: string[], restaurantDietType?: string | null, dishes?: any[], categories?: any[]): DietMessageType {
@@ -133,6 +133,15 @@ export function getDietMessage(diet: string | null, restrictions: string[], rest
   if (dietRedundant && active.length === 0) {
     return restDiet === "VEGAN" ? "redundant-vegan" : "redundant-vegetarian";
   }
+
+  // Caso especial: la unica restriccion es "_spicy" y no hay diet. La mayoria
+  // de los locales tiene la mayoria de su carta sin picante, asi que no
+  // tiene sentido mostrar 'no encontramos' (lo hay en abundancia) ni un
+  // carousel agrupando casi toda la carta. En su lugar, mostramos un mensaje
+  // positivo: la carta ya esta reordenada con los picantes al final
+  // (los penaliza dishScoring) y se destacan para que se identifiquen.
+  const onlySpicy = !diet && active.length === 1 && active[0] === "_spicy";
+  if (onlySpicy) return "reordered-spicy";
 
   // Has preferences but no matching dishes
   if (hasPrefs) return "no-results";

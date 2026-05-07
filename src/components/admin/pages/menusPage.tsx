@@ -875,6 +875,12 @@ export default function AdminMenus() {
   const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
   const toggleTag = async (t: string) => {
     if (!selectedDish) return;
+    // Gating por plan: destacar (RECOMMENDED) requiere Gold o superior.
+    // Si el usuario es FREE, abrimos el modal de upgrade en vez de aplicar.
+    if (t === "RECOMMENDED" && !eTags.includes(t) && !canHighlight) {
+      window.dispatchEvent(new CustomEvent("show-plan-modal"));
+      return;
+    }
     if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
     const newTags = eTags.includes(t) ? eTags.filter(x => x !== t) : [...eTags, t];
     setETags(newTags);
