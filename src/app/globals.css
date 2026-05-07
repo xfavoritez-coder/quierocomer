@@ -136,6 +136,12 @@ textarea::placeholder {
   display: grid !important;
   gap: 8px;
 }
+/* Toteat (campeones + fantasmas): 2 cols desktop, stack en mobile */
+.adm-toteat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
 @media (max-width: 768px) {
   .adm-cols-2,
   .adm-cols-3 {
@@ -155,6 +161,10 @@ textarea::placeholder {
   }
   .adm-hour-grid > * {
     flex: 0 0 130px;
+  }
+  /* Mobile: stack — campeones primero (orden natural del JSX) */
+  .adm-toteat-grid {
+    grid-template-columns: 1fr;
   }
 }
 

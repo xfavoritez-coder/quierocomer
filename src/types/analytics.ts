@@ -12,6 +12,9 @@ export interface VisitorMetrics {
   avgVisitsPerGuest: number;
   engagedVisitors: number;
   engagementPct: number;
+  // Genio: visitantes unicos que completaron el onboarding del Genio en periodo
+  genioUsers: number;
+  genioUsedPct: number;
 }
 
 export interface FunnelData {

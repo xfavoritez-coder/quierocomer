@@ -124,11 +124,14 @@ function HeroKpi({ icon, value, label, sub, color, gradient }: { icon: string; v
 }
 
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { activePlan } = usePanelSession();
+  const hasToteatPlan = canAccess(activePlan, "toteat_integration");
   const [metrics, setMetrics] = useState<any>(null);
   const [clientes, setClientes] = useState<any>(null);
   const [dishes, setDishes] = useState<any>(null);
   const [searches, setSearches] = useState<any[]>([]);
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
+  const [cross, setCross] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -138,10 +141,22 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       if (rid) p.set("restaurantId", rid);
       return fetch(`/api/admin/analytics?${p}`).then(r => r.json()).catch(() => null);
     };
-    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour")])
-      .then(([m, c, d, s, ph]) => { setMetrics(m); setClientes(c); setDishes(d); setSearches(Array.isArray(s) ? s : []); setPopularByHour(Array.isArray(ph) ? ph : []); })
+    // carta-vs-caja gated por plan PREMIUM en el endpoint — pedimos solo si aplica
+    const crossPromise = hasToteatPlan && rid
+      ? (() => {
+          const p = new URLSearchParams({ from, to, restaurantId: rid });
+          return fetch(`/api/admin/analytics/carta-vs-caja?${p}`).then(r => r.json()).catch(() => null);
+        })()
+      : Promise.resolve(null);
+    Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour"), crossPromise])
+      .then(([m, c, d, s, ph, cv]) => {
+        setMetrics(m); setClientes(c); setDishes(d);
+        setSearches(Array.isArray(s) ? s : []);
+        setPopularByHour(Array.isArray(ph) ? ph : []);
+        setCross(cv && !cv.error ? cv : null);
+      })
       .finally(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, hasToteatPlan]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
@@ -156,6 +171,29 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   const topDevice = clientes?.acquisition?.devices?.[0];
   const totalDevices = clientes?.acquisition?.devices?.reduce((s: number, d: any) => s + d.count, 0) || 0;
 
+  // Toteat: el local tiene Toteat conectado solo si hay platos mapeados.
+  const hasToteat = !!(cross?.summary?.mappedDishes && cross.summary.mappedDishes > 0);
+  // Conversion a venta: ventas / vistas de detalle (sobre platos mapeados).
+  const conversionPct = hasToteat && cross.summary.totalOpens > 0
+    ? Math.round((cross.summary.totalSales / cross.summary.totalOpens) * 100)
+    : 0;
+  // Mapa dishId → ventas en el periodo (para enriquecer top platos / estrella por horario)
+  const salesByDish = new Map<string, number>();
+  if (hasToteat && Array.isArray(cross?.rows)) {
+    for (const r of cross.rows) {
+      if (r.dishId && (r.sales || 0) > 0) salesByDish.set(r.dishId, r.sales);
+    }
+  }
+  // Mapa nombre → ventas (mostViewed solo trae name, no dishId)
+  const salesByName = new Map<string, number>();
+  if (hasToteat && Array.isArray(cross?.rows)) {
+    for (const r of cross.rows) {
+      if (r.name && (r.sales || 0) > 0) salesByName.set(r.name, r.sales);
+    }
+  }
+  const champions = hasToteat ? (cross?.insights?.estrellas || []).slice(0, 5) : [];
+  const ghosts = hasToteat ? (cross?.insights?.fantasmas || []).slice(0, 5) : [];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* ═══ Hero KPIs ═══ */}
@@ -163,7 +201,25 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
-        <HeroKpi icon="🍽️" value={`${metrics.engagementPct || 0}%`} label="Exploraron la carta" sub={`${metrics.engagedVisitors || 0} abrieron platos · ${metrics.avgDishesViewed} prom. por persona`} color="#16a34a" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)" />
+        {hasToteat ? (
+          <HeroKpi
+            icon="🛒"
+            value={`${conversionPct}%`}
+            label="Conversión a venta"
+            sub={`${cross.summary.totalSales} ventas · ${cross.summary.totalOpens} vistas detalle`}
+            color="#16a34a"
+            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.10) 100%)"
+          />
+        ) : (
+          <HeroKpi
+            icon="🧞"
+            value={`${metrics.genioUsedPct || 0}%`}
+            label="Usaron el Genio"
+            sub={`${metrics.genioUsers || 0} completaron el onboarding`}
+            color="#16a34a"
+            gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.08) 100%)"
+          />
+        )}
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
@@ -178,7 +234,10 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#F4A623", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>⭐ Plato estrella</p>
               <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{topDish.name}</p>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>Abierto <strong style={{ color: "#F4A623" }}>{topDish.count} veces</strong> en este período</p>
+              <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}>
+                <strong style={{ color: "#F4A623" }}>{topDish.count} {typeof topDish.count === "number" ? "vistas" : "veces"}</strong>
+                {hasToteat && salesByName.has(topDish.name) && <> · <strong style={{ color: "#16a34a" }}>{salesByName.get(topDish.name)} ventas</strong></>}
+              </p>
             </div>
           </div>
         )}
@@ -232,7 +291,12 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                   <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
                 )}
                 <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
-                <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count}x</span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
+                  {(p.sales || 0) > 0 && (
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -248,6 +312,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {dishes.mostViewed.slice(0, 3).map((d: any, i: number) => {
                 const medal = ["🥇", "🥈", "🥉"][i];
+                const sales = hasToteat ? salesByName.get(d.name) || 0 : 0;
                 return (
                   <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span style={{ fontSize: "1.2rem", flexShrink: 0 }}>{medal}</span>
@@ -256,8 +321,13 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                     ) : (
                       <div style={{ width: 36, height: 36, borderRadius: 8, background: "var(--adm-hover)", flexShrink: 0 }} />
                     )}
-                    <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                      {hasToteat && sales > 0 && (
+                        <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.count} vistas · <span style={{ color: "#16a34a", fontWeight: 700 }}>{sales} ventas</span></p>
+                      )}
+                    </div>
+                    {!hasToteat && <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-accent)", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>}
                   </div>
                 );
               })}
@@ -320,6 +390,64 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
           </div>
         )}
       </div>
+
+      {/* ═══ Bloques solo Toteat: Campeones + Fantasmas ═══ */}
+      {hasToteat && (champions.length > 0 || ghosts.length > 0) && (
+        <div className="adm-toteat-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          {/* Campeones */}
+          {champions.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(22,163,74,0.06) 100%)", border: "1px solid rgba(22,163,74,0.18)", borderRadius: 14, padding: "16px 18px" }}>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#16a34a", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                <span>🌟 Platos campeones</span>
+                <InfoTip text="Los platos que la gente abre Y compra. Estrellas del menú con mejor conversión." />
+              </p>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Lo abren y lo piden.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {champions.map((c: any) => (
+                  <div key={c.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(22,163,74,0.12)" }}>
+                    {c.photo ? (
+                      <img src={c.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{c.opens} vistas · <span style={{ color: "#16a34a", fontWeight: 700 }}>{c.sales} ventas</span></p>
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#16a34a", flexShrink: 0 }}>{c.conversionPct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Fantasmas */}
+          {ghosts.length > 0 && (
+            <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(239,68,68,0.04) 100%)", border: "1px solid rgba(239,68,68,0.18)", borderRadius: 14, padding: "16px 18px" }}>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: "0 0 4px", fontWeight: 700, display: "flex", alignItems: "center", gap: 6 }}>
+                <span>👻 Platos fantasma</span>
+                <InfoTip text="La gente los abre pero casi nadie los pide. Revisa precio, descripción, foto, o si vale la pena tenerlos." />
+              </p>
+              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Lo abren pero no lo compran.</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {ghosts.map((g: any) => (
+                  <div key={g.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 0", borderBottom: "1px dashed rgba(239,68,68,0.12)" }}>
+                    {g.photo ? (
+                      <img src={g.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{g.name}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{g.opens} vistas · <span style={{ color: "#ef4444", fontWeight: 700 }}>{g.sales} ventas</span></p>
+                    </div>
+                    <span style={{ fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "#ef4444", flexShrink: 0 }}>{g.conversionPct ?? 0}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -527,7 +655,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                   <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
                 )}
                 <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
-                <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count}x</span>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
+                  {(p.sales || 0) > 0 && (
+                    <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
