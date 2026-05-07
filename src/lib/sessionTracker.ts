@@ -60,7 +60,7 @@ let creatingDbSession = false; // prevent duplicate DB session creation
 let hadUserInteraction = false; // true after real touch/click
 
 const SESSION_STORAGE_KEY = "qc_active_session";
-const SESSION_REUSE_WINDOW = 2 * 60_000; // 2 minutes — reuse session if reloaded within this window
+const SESSION_REUSE_WINDOW = 60_000; // 1 minute — reuse session if reloaded within this window
 
 function persistSession(dbSessionId: string, restaurantId: string, startedAt: number) {
   try { sessionStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({ dbSessionId, restaurantId, startedAt })); } catch {}
