@@ -16,7 +16,7 @@ import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, se
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
-import SpicyStamp from "./SpicyStamp";
+import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
@@ -163,11 +163,23 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
     return dishes.filter(d => norm(d.name || "").includes(q) || norm(d.description || "").includes(q));
   }, [dishes, query]);
 
+  const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(filtered, categories);
-    if (sortKey === "default") return base;
-    return base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
-  }, [filtered, categories, sortKey, rankings]);
+    let result = sortKey === "default" ? base : base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
+    // Hard rule: spicy al final si el cliente filtra "sin picante"
+    if (clientAvoidsSpicyForSort) {
+      result = result.map((g) => ({
+        ...g,
+        dishes: [...g.dishes].sort((a, b) => {
+          const aSpicy = (a as any).isSpicy ? 1 : 0;
+          const bSpicy = (b as any).isSpicy ? 1 : 0;
+          return aSpicy - bSpicy;
+        }),
+      }));
+    }
+    return result;
+  }, [filtered, categories, sortKey, rankings, clientAvoidsSpicyForSort]);
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);

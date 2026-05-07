@@ -34,7 +34,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
-import SpicyStamp from "./SpicyStamp";
+import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
@@ -163,6 +163,7 @@ export default function CartaLista({
   });
   const [profileTrigger, setProfileTrigger] = useState(0);
   const [personalizing, setPersonalizing] = useState(false);
+  const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
 
   useEffect(() => { onReady?.(); }, [readyKey]);
 
@@ -285,6 +286,12 @@ export default function CartaLista({
       const catDishes = dishes
         .filter((d) => d.categoryId === cat.id)
         .sort((a, b) => {
+          // Hard: spicy al final si el cliente filtra "sin picante"
+          if (clientAvoidsSpicyForSort) {
+            const aSpicy = (a as any).isSpicy ? 1 : 0;
+            const bSpicy = (b as any).isSpicy ? 1 : 0;
+            if (aSpicy !== bSpicy) return aSpicy - bSpicy;
+          }
           if (pMap) {
             const aScore = pMap.get(a.id)?.score ?? 50;
             const bScore = pMap.get(b.id)?.score ?? 50;
@@ -305,7 +312,7 @@ export default function CartaLista({
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap]);
+  }, [categories, dishes, pMap, clientAvoidsSpicyForSort]);
 
   const filtered = useMemo(() => {
     return dishes.filter((d) => {
@@ -328,6 +335,12 @@ export default function CartaLista({
     return base.map((g) => ({
       ...g,
       dishes: [...g.dishes].sort((a, b) => {
+        // Hard: spicy al final si el cliente filtra "sin picante"
+        if (clientAvoidsSpicyForSort) {
+          const aSpicy = (a as any).isSpicy ? 1 : 0;
+          const bSpicy = (b as any).isSpicy ? 1 : 0;
+          if (aSpicy !== bSpicy) return aSpicy - bSpicy;
+        }
         const aScore = pMap.get(a.id)?.score ?? 50;
         const bScore = pMap.get(b.id)?.score ?? 50;
         const aAuto = pMap.get(a.id)?.autoRecommended && aScore > 10 ? 1 : 0;
@@ -340,7 +353,7 @@ export default function CartaLista({
         return a.position - b.position;
       }),
     }));
-  }, [filtered, categories, pMap, sortKey, rankings]);
+  }, [filtered, categories, pMap, sortKey, rankings, clientAvoidsSpicyForSort]);
 
   const handleDishClick = (dish: Dish) => {
     setSelectedDish(dish);

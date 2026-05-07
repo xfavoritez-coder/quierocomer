@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { filterSupportedRestrictions } from "@/lib/qr/utils/carouselMode";
 
@@ -60,35 +60,13 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
   // mayoría de la carta no es picante, así que en lugar de "no encontramos"
   // (gris, decepcionante) mostramos un mensaje verde positivo confirmando
   // que la carta ya quedó reordenada para él.
+  // SOLO se muestra cuando el flag transient qc_spicy_msg_pending está set
+  // (lo setea el Genio al cerrar si tiene _spicy guardado). Se consume al
+  // mount via useEffect — en cambios de vista o recargas posteriores ya no
+  // aparece. Si el cliente vuelve al Genio y guarda otra vez, el flag se
+  // resetea y vuelve a verse una vez.
   if (type === "reordered-spicy") {
-    return (
-      <div
-        id="genio-diet-message"
-        className="font-[family-name:var(--font-dm)]"
-        style={{
-          margin: "0 12px 10px",
-          padding: "12px 38px 12px 14px",
-          background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
-          border: "1px solid rgba(16,185,129,0.25)",
-          borderRadius: 14,
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
-        <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
-          Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas.
-        </p>
-        <button
-          onClick={() => { setDismissed(true); sessionStorage.setItem(DISMISS_KEY, "1"); }}
-          style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
-        >
-          <X size={14} color="#059669" />
-        </button>
-      </div>
-    );
+    return <ReorderedSpicyMessage />;
   }
 
   let message = "";
@@ -134,6 +112,55 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
         style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
       >
         <X size={14} color="#bbb" />
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Banner verde 'Reordenamos la carta para ti...'. Solo se muestra UNA vez,
+ * justo después de que el cliente cierra el Genio con _spicy guardado
+ * (el flag qc_spicy_msg_pending se setea en GenioOnboarding.close()).
+ * Al mount consume el flag — en cambios de vista o recargas posteriores
+ * ya no aparece.
+ */
+function ReorderedSpicyMessage() {
+  const [show, setShow] = useState(false);
+  const [closed, setClosed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const pending = sessionStorage.getItem("qc_spicy_msg_pending") === "1";
+    if (pending) {
+      setShow(true);
+      sessionStorage.removeItem("qc_spicy_msg_pending");
+    }
+  }, []);
+
+  if (!show || closed) return null;
+  return (
+    <div
+      className="font-[family-name:var(--font-dm)]"
+      style={{
+        margin: "0 12px 10px",
+        padding: "12px 38px 12px 14px",
+        background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
+        border: "1px solid rgba(16,185,129,0.25)",
+        borderRadius: 14,
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+      }}
+    >
+      <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
+      <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+        Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas.
+      </p>
+      <button
+        onClick={() => setClosed(true)}
+        style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
+      >
+        <X size={14} color="#059669" />
       </button>
     </div>
   );

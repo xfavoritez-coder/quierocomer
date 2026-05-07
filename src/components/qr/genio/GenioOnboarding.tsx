@@ -313,6 +313,16 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, [restaurantId]);
 
   const close = useCallback(() => {
+    // Si al cerrar el Genio el cliente tiene "_spicy" filtrado, marcamos un
+    // flag transient para que el banner verde 'Reordenamos la carta...'
+    // aparezca UNA sola vez (después de configurar) y no en cada cambio
+    // de vista o recarga.
+    try {
+      const saved = JSON.parse(localStorage.getItem("qr_restrictions") || "[]");
+      if (Array.isArray(saved) && saved.includes("_spicy")) {
+        sessionStorage.setItem("qc_spicy_msg_pending", "1");
+      }
+    } catch { /* ignore */ }
     window.dispatchEvent(new Event("genio-updated"));
     setVisible(false);
     setTimeout(onClose, 200);

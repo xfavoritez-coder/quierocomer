@@ -132,7 +132,8 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
       )}
       <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
-      <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={28} top={9} left={9} />
+      {/* Top-right para no chocar con los badges Recomendado/Popular en top-left */}
+      <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={28} top={9} right={9} />
       <div className="absolute" style={{ top: 7, left: 7, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, zIndex: 2 }}>
         {badges.map((b, i) => (
           <span key={i} className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.78rem", fontWeight: 600, padding: "3px 9px", borderRadius: 8 }}>{b}</span>

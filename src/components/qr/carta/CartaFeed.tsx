@@ -34,7 +34,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
-import SpicyStamp from "./SpicyStamp";
+import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
@@ -270,8 +270,8 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
       {photo ? (
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 10" }}>
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 500px" loading="lazy" />
-          {/* Stamp picante: top-right para no chocar con badges en top-left */}
-          <SpicyStamp isSpicy={!!isSpicy} size={32} top={10} right={10} />
+          {/* En CartaFeed el indicador de picante ya esta en los attribute circles
+             abajo de la foto, no agregamos un SpicyStamp adicional. */}
 
           {/* Badges top-left */}
           {(isRec || isPopular || pEntry?.autoRecommended) && (
@@ -461,14 +461,27 @@ export default function CartaFeed({
     return { id: "diet-carousel", name: getCarouselNavName(mode), scrollTo: getCarouselScrollId(mode) };
   }, [restaurant, hasCompletedGenio, dishes, categories]);
 
+  const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
   const grouped = useMemo(() => {
     const base = groupDishesByCategory(
       query ? dishes.filter(d => norm(d.name || "").includes(norm(query)) || norm(d.description || "").includes(norm(query))) : dishes,
       categories,
     );
-    if (sortKey === "default") return base;
-    return base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
-  }, [dishes, categories, query, sortKey, rankings]);
+    let result = sortKey === "default" ? base : base.map((g) => ({ ...g, dishes: applyCartaSort(g.dishes, sortKey, rankings) }));
+    // Hard rule: si el cliente filtra "sin picante", los picantes van al
+    // final de la categoria sin importar score, RECOMMENDED u orden manual.
+    if (clientAvoidsSpicyForSort) {
+      result = result.map((g) => ({
+        ...g,
+        dishes: [...g.dishes].sort((a, b) => {
+          const aSpicy = (a as any).isSpicy ? 1 : 0;
+          const bSpicy = (b as any).isSpicy ? 1 : 0;
+          return aSpicy - bSpicy; // 0 first, 1 last
+        }),
+      }));
+    }
+    return result;
+  }, [dishes, categories, query, sortKey, rankings, clientAvoidsSpicyForSort]);
 
   const sortedDishes = useMemo(() => grouped.flatMap(g => g.dishes), [grouped]);
 

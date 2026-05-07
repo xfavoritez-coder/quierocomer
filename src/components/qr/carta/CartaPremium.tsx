@@ -17,6 +17,7 @@ import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
+import { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -349,6 +350,12 @@ export default function CartaPremium({
     return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
   }, [dishes, popularDishIds]);
 
+  // Hard rule: si el cliente filtra "_spicy", los picantes SIEMPRE van al final
+  // de la categoria, sin importar score, RECOMMENDED, autoRec o popularidad.
+  // Si tiene la preferencia de evitar picante, no le interesa el plato por
+  // muy destacado que este.
+  const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
+
   // Build sorted dish list matching carta visual order (category by category, recommended first, then by score)
   const sortedDishes = useMemo(() => {
     const result: Dish[] = [];
@@ -360,6 +367,12 @@ export default function CartaPremium({
         continue;
       }
       catDishes.sort((a, b) => {
+          // Hard: spicy al final si el cliente filtra "sin picante"
+          if (clientAvoidsSpicyForSort) {
+            const aSpicy = (a as any).isSpicy ? 1 : 0;
+            const bSpicy = (b as any).isSpicy ? 1 : 0;
+            if (aSpicy !== bSpicy) return aSpicy - bSpicy;
+          }
           if (pMap) {
             const aScore = pMap.get(a.id)?.score ?? 50;
             const bScore = pMap.get(b.id)?.score ?? 50;
@@ -383,7 +396,7 @@ export default function CartaPremium({
       result.push(...catDishes);
     }
     return result;
-  }, [categories, dishes, pMap, sortKey, rankings]);
+  }, [categories, dishes, pMap, sortKey, rankings, clientAvoidsSpicyForSort]);
 
   // Reset horizontal scroll containers when personalization order changes
   useEffect(() => {
