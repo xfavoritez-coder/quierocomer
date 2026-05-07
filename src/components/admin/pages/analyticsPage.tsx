@@ -1265,7 +1265,13 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                     </span>
                   )}
                   {/* Cumpleaños */}
-                  {s.genioData?.birthdaySaved && <span title="El comensal guardó su cumpleaños en esta sesión" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Guardó cumple</span>}
+                  {s.genioData?.birthdaySaved && (
+                    s.genioData.birthdayWasReturning ? (
+                      <span title="Esta persona ya tenía cuenta en QuieroComer (volvió, no es cliente nuevo)" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#5fa3c4" }}>🎂↻ Cliente que vuelve</span>
+                    ) : (
+                      <span title="El comensal guardó su cumpleaños en esta sesión (cuenta nueva)" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Guardó cumple</span>
+                    )
+                  )}
                   {!s.genioData?.birthdaySaved && s.genioData?.birthdayDismissed && <span title="Vio el modal de cumple pero lo cerró sin guardar" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(155,155,155,0.15)", color: "var(--adm-text3)" }}>🎂✕ Cerró cumple</span>}
                   {!s.genioData?.birthdaySaved && !s.genioData?.birthdayDismissed && s.genioData?.birthdayModalAutoShown && <span title="Se le mostró el modal automático de cumple" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.10)", color: "#a78bfa" }}>🎂 Modal mostrado</span>}
                   {/* Garzón */}

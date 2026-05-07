@@ -14,6 +14,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email y restaurantId son requeridos" }, { status: 400 });
     }
 
+    // Pre-check: ¿el email ya estaba registrado? Esto nos permite distinguir
+    // 'cuenta nueva' vs 're-registro/actualizacion' en la respuesta y en el tracking.
+    const existing = await prisma.qRUser.findUnique({
+      where: { email },
+      select: { id: true, name: true, birthDate: true },
+    });
+    const alreadyExisted = !!existing;
+    const hadPreviousBirthday = !!existing?.birthDate;
+    const hadPreviousName = !!existing?.name;
+
     // Upsert user
     const user = await prisma.qRUser.upsert({
       where: { email },
@@ -69,33 +79,36 @@ export async function POST(request: Request) {
 
     // Verification email disabled — users register without email confirmation
 
-    // Record interaction
-    await prisma.qRUserInteraction.create({
-      data: {
-        userId: user.id,
-        restaurantId,
-        type: `${source || "unknown"}_CONVERTED`,
-        bannerVariantId: bannerVariantId || null,
-      },
-    });
+    // Solo registramos interaction y trackUserRegistration si es cuenta nueva.
+    // Si el email ya existia, no es una conversion — es alguien que vuelve.
+    if (!alreadyExisted) {
+      await prisma.qRUserInteraction.create({
+        data: {
+          userId: user.id,
+          restaurantId,
+          type: `${source || "unknown"}_CONVERTED`,
+          bannerVariantId: bannerVariantId || null,
+        },
+      });
 
-    // Track user registration (unified analytics)
-    const triggeredByMap: Record<string, string> = {
-      post_genio: "post_genio_capture",
-      cta_post_genio: "conversion_cta",
-      cta_repeat_dish: "conversion_cta",
-      cta_promo_unlock: "conversion_cta",
-      birthday_banner: "birthday_banner",
-      favorites: "favorites_threshold",
-    };
-    await trackUserRegistration({
-      qrUserId: user.id,
-      guestId: guestId || null,
-      restaurantId,
-      sessionId: sessionId || null,
-      triggeredBy: (triggeredByMap[source || ""] || "conversion_cta") as any,
-      dbSessionId: dbSessionId || null,
-    });
+      // Track user registration (unified analytics)
+      const triggeredByMap: Record<string, string> = {
+        post_genio: "post_genio_capture",
+        cta_post_genio: "conversion_cta",
+        cta_repeat_dish: "conversion_cta",
+        cta_promo_unlock: "conversion_cta",
+        birthday_banner: "birthday_banner",
+        favorites: "favorites_threshold",
+      };
+      await trackUserRegistration({
+        qrUserId: user.id,
+        guestId: guestId || null,
+        restaurantId,
+        sessionId: sessionId || null,
+        triggeredBy: (triggeredByMap[source || ""] || "conversion_cta") as any,
+        dbSessionId: dbSessionId || null,
+      });
+    }
 
     // Migrate dish favorites from guest to user
     if (guestId) {
@@ -106,7 +119,15 @@ export async function POST(request: Request) {
     }
 
     // Set cookie for immediate login
-    const response = NextResponse.json({ ok: true, userId: user.id, message: "Revisa tu correo" });
+    const response = NextResponse.json({
+      ok: true,
+      userId: user.id,
+      alreadyExisted,
+      hadPreviousBirthday,
+      hadPreviousName,
+      userName: user.name,
+      message: alreadyExisted ? "Bienvenido de vuelta" : "Revisa tu correo",
+    });
     response.cookies.set("qr_user_id", user.id, {
       path: "/",
       maxAge: 60 * 60 * 24 * 365,

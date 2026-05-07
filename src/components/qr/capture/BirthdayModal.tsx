@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { X } from "lucide-react";
+import { useState, useRef } from "react";
+import { X, Calendar } from "lucide-react";
 import { getGuestId, getSessionId } from "@/lib/guestId";
 import { getDbSessionId } from "@/lib/sessionTracker";
 import EmailTypoHint from "./EmailTypoHint";
@@ -37,6 +37,49 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
   const [birthDate, setBirthDate] = useState("");
+  // Texto visible con mascara DD/MM/AAAA. birthDate es el ISO YYYY-MM-DD que se envia al backend.
+  const [birthDateText, setBirthDateText] = useState("");
+  const hiddenDateRef = useRef<HTMLInputElement>(null);
+
+  const handleDateTextChange = (val: string) => {
+    const digits = val.replace(/\D/g, "").slice(0, 8);
+    let formatted = digits;
+    if (digits.length >= 5) formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    else if (digits.length >= 3) formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    setBirthDateText(formatted);
+    if (digits.length === 8) {
+      const dd = parseInt(digits.slice(0, 2), 10);
+      const mm = parseInt(digits.slice(2, 4), 10);
+      const yyyy = parseInt(digits.slice(4), 10);
+      const currentYear = new Date().getFullYear();
+      if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31 && yyyy >= 1900 && yyyy <= currentYear) {
+        setBirthDate(`${yyyy}-${mm.toString().padStart(2, "0")}-${dd.toString().padStart(2, "0")}`);
+        return;
+      }
+    }
+    setBirthDate("");
+  };
+
+  const handleDatePickerChange = (val: string) => {
+    setBirthDate(val);
+    if (val) {
+      const [yyyy, mm, dd] = val.split("-");
+      setBirthDateText(`${dd}/${mm}/${yyyy}`);
+    } else {
+      setBirthDateText("");
+    }
+  };
+
+  const openDatePicker = () => {
+    const input = hiddenDateRef.current;
+    if (!input) return;
+    // showPicker() es la API moderna; si no esta soportada, hacemos focus + click
+    if (typeof (input as any).showPicker === "function") {
+      try { (input as any).showPicker(); return; } catch { /* fallback */ }
+    }
+    input.focus();
+    input.click();
+  };
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [phase, setPhase] = useState<Phase>("form");
 
@@ -61,6 +104,13 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
   // Name capture state (post-success)
   const [name, setName] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
+  // Info devuelta por /register que distingue cuenta nueva vs re-registro
+  const [registrationInfo, setRegistrationInfo] = useState<{
+    alreadyExisted: boolean;
+    hadPreviousBirthday: boolean;
+    hadPreviousName: boolean;
+    userName: string | null;
+  } | null>(null);
 
   // Capitaliza "juan pablo" → "Juan Pablo"
   const formatName = (n: string) =>
@@ -122,7 +172,15 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
             body: JSON.stringify({ variantId: bannerVariantId }),
           });
         }
-        await res.json();
+        try {
+          const data = await res.json();
+          setRegistrationInfo({
+            alreadyExisted: !!data?.alreadyExisted,
+            hadPreviousBirthday: !!data?.hadPreviousBirthday,
+            hadPreviousName: !!data?.hadPreviousName,
+            userName: data?.userName || null,
+          });
+        } catch { /* ignore */ }
       }
     }
 
@@ -135,10 +193,16 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
       return;
     }
 
-    // Track BIRTHDAY_SAVED con A/B metadata
+    // Track BIRTHDAY_SAVED con A/B metadata + info para distinguir nuevos vs re-registros
     const abMetadata = abVariant
       ? { abExperiment: abVariant.experimentSlug, titleId: abVariant.titleId, subtitleId: abVariant.subtitleId, ctaId: abVariant.ctaId }
-      : undefined;
+      : {};
+    // existingUser viene como prop si la cookie qr_user_id ya estaba — entonces
+    // siempre fue cuenta existente. Para el caso anonimo, leemos del response.
+    const wasExistingAccount = !!existingUser || (registrationInfo?.alreadyExisted ?? false);
+    // hadBirthday: solo lo sabemos por el response del register (caso anonimo).
+    // Si existingUser, le acabamos de agregar el cumple via PATCH — antes no lo tenia.
+    const hadBirthdayBefore = registrationInfo?.hadPreviousBirthday ?? false;
     fetch("/api/qr/stats", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -148,20 +212,21 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         guestId: getGuestId(),
         sessionId: getSessionId(),
         dbSessionId: getDbSessionId(),
-        ...(abMetadata ? { metadata: abMetadata } : {}),
+        metadata: { ...abMetadata, wasExistingAccount, hadBirthdayBefore },
       }),
     }).catch(() => {});
 
     setStatus("success");
     onSuccess?.();
 
-    // Si el usuario ya tenía nombre guardado (caso existingUser), no preguntamos.
-    if (existingUser?.name) {
-      onClose();
-      return;
+    // Solo si ya teniamos nombre guardado evitamos preguntar de nuevo.
+    // Si la cuenta existia pero sin nombre, igual le pedimos el nombre.
+    const alreadyHadName = !!existingUser?.name;
+    setPhase("name"); // mostrar phase 2 (success + name capture o welcome-back)
+    if (alreadyHadName) {
+      // Cuenta con nombre — auto-cerrar despues de 2.2s sin pedir nada mas
+      setTimeout(() => onClose(), 2200);
     }
-    // Si es usuario nuevo o existingUser sin nombre, abrimos el step de captura de nombre
-    setPhase("name");
   };
 
   const handleSaveName = async () => {
@@ -257,23 +322,49 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                   <EmailTypoHint email={email} onAccept={setEmail} />
                 </>
               )}
-              <div style={{ position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "relative" }}>
                 <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelDate")}</label>
-                <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  style={{
-                    width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                    padding: "12px 16px", color: birthDate ? "#0e0e0e" : "transparent", fontSize: "0.92rem",
-                    outline: "none", colorScheme: "light", fontFamily: "inherit", boxSizing: "border-box",
-                  }}
-                />
-                {!birthDate && (
-                  <span style={{ position: "absolute", left: 16, top: 34, fontSize: "0.92rem", color: "#999", pointerEvents: "none" }}>
-                    {t(lang, "bdayPlaceholderDate")}
-                  </span>
-                )}
+                <div style={{ position: "relative" }}>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="DD/MM/AAAA"
+                    value={birthDateText}
+                    onChange={(e) => handleDateTextChange(e.target.value)}
+                    maxLength={10}
+                    style={{
+                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                      padding: "12px 44px 12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                      letterSpacing: "0.02em",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={openDatePicker}
+                    aria-label="Abrir calendario"
+                    style={{
+                      position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                      background: "transparent", border: "none", cursor: "pointer",
+                      padding: 6, display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "#888",
+                    }}
+                  >
+                    <Calendar size={18} />
+                  </button>
+                  {/* Input date oculto — se abre solo al hacer click en el icono */}
+                  <input
+                    ref={hiddenDateRef}
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => handleDatePickerChange(e.target.value)}
+                    max={new Date().toISOString().split("T")[0]}
+                    style={{
+                      position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
+                      width: 1, height: 1, padding: 0, opacity: 0, pointerEvents: "none",
+                    }}
+                  />
+                </div>
               </div>
               <button
                 onClick={handleSubmit}
@@ -298,66 +389,104 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           </>
         )}
 
-        {/* ── FASE 2: SUCCESS + NAME PROMPT ── */}
-        {phase === "name" && (
-          <div style={{ textAlign: "center" }}>
-            {/* Confirmación de éxito */}
-            <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
-            <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 4 }}>
-              {t(lang, "bdayDoneTitle")}
-            </h3>
-            <p style={{ fontSize: "0.88rem", color: "#888", margin: "0 0 22px", lineHeight: 1.45 }}>
-              {t(lang, "bdayDoneSub")}
-            </p>
+        {/* ── FASE 2: SUCCESS + NAME PROMPT (o welcome-back si ya estaba registrado) ── */}
+        {phase === "name" && (() => {
+          // Welcome-back automatico SOLO si ya teniamos nombre. Si la cuenta
+          // existia pero no tenia nombre, pasamos al flow normal de captura.
+          const previousName = existingUser?.name || registrationInfo?.userName || null;
+          const showWelcomeBack = !!existingUser?.name;
+          const hadBirthday = registrationInfo?.hadPreviousBirthday ?? false;
+          const firstName = previousName?.split(" ")[0] || null;
 
-            {/* Separador sutil */}
-            <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #eee, transparent)", margin: "0 0 20px" }} />
+          if (showWelcomeBack) {
+            const title = firstName ? `¡Te tenemos, ${firstName}! 🎉` : "¡Ya estabas con nosotros! 🎉";
+            const sub = hadBirthday
+              ? "Tu cumpleaños ya estaba guardado. Te avisaremos cuando se acerque tu día."
+              : "Guardamos tu cumpleaños. Te avisaremos cuando se acerque tu día.";
+            return (
+              <div style={{ textAlign: "center" }}>
+                <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
+                <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 8 }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 18px", lineHeight: 1.5 }}>
+                  {sub}
+                </p>
+                <button
+                  onClick={onClose}
+                  className="active:scale-[0.98] transition-transform"
+                  style={{
+                    width: "100%", background: "#F4A623", color: "white",
+                    borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
+                    border: "none", fontFamily: "inherit", cursor: "pointer",
+                    boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
+                  }}
+                >
+                  Continuar
+                </button>
+                <style>{`@keyframes bdayDonePop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
+              </div>
+            );
+          }
 
-            {/* Prompt nombre */}
-            <p style={{ fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 6 }}>
-              {t(lang, "bdayNameSubtitle")}
-            </p>
-            <p style={{ fontSize: "0.88rem", color: "#666", margin: "0 0 14px", lineHeight: 1.45 }}>
-              {t(lang, "bdayNamePrompt")}
-            </p>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={t(lang, "bdayPlaceholderName")}
-              autoFocus
-              onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
-              style={{
-                width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                padding: "12px 16px", color: "#0e0e0e", fontSize: "0.95rem",
-                outline: "none", fontFamily: "inherit", boxSizing: "border-box", textAlign: "center",
-                marginBottom: 14,
-              }}
-            />
-            <button
-              onClick={handleSaveName}
-              disabled={nameSaving}
-              className="active:scale-[0.98] transition-transform"
-              style={{
-                width: "100%", background: "#F4A623", color: "white",
-                borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
-                border: "none", fontFamily: "inherit", cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
-                opacity: nameSaving ? 0.6 : 1, marginBottom: 8,
-              }}
-            >
-              {t(lang, "bdayNameContinue")}
-            </button>
-            <button
-              onClick={onClose}
-              style={{ background: "none", border: "none", color: "#aaa", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
-            >
-              {t(lang, "bdayNameSkip")}
-            </button>
+          // Cuenta nueva: confirmacion + captura de nombre
+          return (
+            <div style={{ textAlign: "center" }}>
+              <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
+              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 4 }}>
+                {t(lang, "bdayDoneTitle")}
+              </h3>
+              <p style={{ fontSize: "0.88rem", color: "#888", margin: "0 0 22px", lineHeight: 1.45 }}>
+                {t(lang, "bdayDoneSub")}
+              </p>
 
-            <style>{`@keyframes bdayDonePop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
-          </div>
-        )}
+              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #eee, transparent)", margin: "0 0 20px" }} />
+
+              <p style={{ fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 6 }}>
+                {t(lang, "bdayNameSubtitle")}
+              </p>
+              <p style={{ fontSize: "0.88rem", color: "#666", margin: "0 0 14px", lineHeight: 1.45 }}>
+                {t(lang, "bdayNamePrompt")}
+              </p>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={t(lang, "bdayPlaceholderName")}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
+                style={{
+                  width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                  padding: "12px 16px", color: "#0e0e0e", fontSize: "0.95rem",
+                  outline: "none", fontFamily: "inherit", boxSizing: "border-box", textAlign: "center",
+                  marginBottom: 14,
+                }}
+              />
+              <button
+                onClick={handleSaveName}
+                disabled={nameSaving}
+                className="active:scale-[0.98] transition-transform"
+                style={{
+                  width: "100%", background: "#F4A623", color: "white",
+                  borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
+                  border: "none", fontFamily: "inherit", cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
+                  opacity: nameSaving ? 0.6 : 1, marginBottom: 8,
+                }}
+              >
+                {t(lang, "bdayNameContinue")}
+              </button>
+              <button
+                onClick={onClose}
+                style={{ background: "none", border: "none", color: "#aaa", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
+              >
+                {t(lang, "bdayNameSkip")}
+              </button>
+
+              <style>{`@keyframes bdayDonePop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );

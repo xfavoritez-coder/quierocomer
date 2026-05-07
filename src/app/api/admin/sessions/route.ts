@@ -222,7 +222,7 @@ export async function GET(req: NextRequest) {
           }] : []),
         ],
       },
-      select: { guestId: true, dbSessionId: true, eventType: true, dishId: true, createdAt: true },
+      select: { guestId: true, dbSessionId: true, eventType: true, dishId: true, createdAt: true, metadata: true },
     }) : [];
 
     const genioDishIds = [...new Set(genioEvents.filter(e => e.eventType === "GENIO_COMPLETE" && e.dishId).map(e => e.dishId!))];
@@ -257,7 +257,7 @@ export async function GET(req: NextRequest) {
       if (matching.length === 0) continue;
 
       dbSessionsWithGenio.add(s.id);
-      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false, birthdayModalAutoShown: false, birthdayDismissed: false };
+      const data = { timesUsed: 0, completed: false, profileEdits: 0, lastStep: "", birthdayClicked: false, birthdaySaved: false, birthdayModalAutoShown: false, birthdayDismissed: false, birthdayWasReturning: false };
       const stepOrder = ["GENIO_STEP_DIET", "GENIO_STEP_RESTRICTIONS", "GENIO_STEP_DISLIKES"];
       const stepLabels: Record<string, string> = { GENIO_STEP_DIET: "Dieta", GENIO_STEP_RESTRICTIONS: "Restricciones", GENIO_STEP_DISLIKES: "Gustos" };
       let maxStep = -1;
@@ -266,7 +266,13 @@ export async function GET(req: NextRequest) {
         if (e.eventType === "GENIO_COMPLETE") { data.completed = true; }
         if (e.eventType === "GENIO_PROFILE_SAVED") { data.profileEdits++; }
         if (e.eventType === "BIRTHDAY_BANNER_CLICKED") { data.birthdayClicked = true; }
-        if (e.eventType === "BIRTHDAY_SAVED") { data.birthdaySaved = true; }
+        if (e.eventType === "BIRTHDAY_SAVED") {
+          data.birthdaySaved = true;
+          // Si el modal nos dijo que la cuenta ya existia, lo marcamos para
+          // distinguir 'cliente nuevo' vs 'cliente que vuelve' en el panel.
+          const meta = (e.metadata as any) || {};
+          if (meta.wasExistingAccount) data.birthdayWasReturning = true;
+        }
         if ((e.eventType as string) === "BIRTHDAY_MODAL_AUTO_SHOWN") { data.birthdayModalAutoShown = true; }
         if ((e.eventType as string) === "BIRTHDAY_DISMISSED") { data.birthdayDismissed = true; }
         const stepIdx = stepOrder.indexOf(e.eventType);
