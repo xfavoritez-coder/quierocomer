@@ -34,6 +34,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
+import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
 import { useLang } from "@/contexts/LangContext";
@@ -681,7 +682,7 @@ export default function CartaFeed({
       <GlutenFreeFloatingPill />
 
       <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 24, right: 16 }}>
-        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
+        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>

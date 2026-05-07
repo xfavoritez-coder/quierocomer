@@ -34,6 +34,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
+import { canAccess, effectivePlan } from "@/lib/plans";
 import SortChip from "./SortChip";
 import { useCartaSort, applyCartaSort } from "./hooks/useCartaSort";
 import WaiterButton from "../garzon/WaiterButton";
@@ -595,7 +596,7 @@ export default function CartaLista({
 
       {/* Floating buttons */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
-        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
+        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>

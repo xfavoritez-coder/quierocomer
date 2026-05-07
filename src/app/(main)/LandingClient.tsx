@@ -176,7 +176,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
             </span>
             <h1 style={{ fontFamily: F, fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>
-              La carta QR con IA que aumenta tu ticket de venta
+              La carta digital con IA que aumenta tu ticket de venta
             </h1>
             <p style={{ fontFamily: B, fontSize: "clamp(15px, 2vw, 17px)", color: "#555", lineHeight: 1.6, maxWidth: 520, marginBottom: 28, marginLeft: "auto", marginRight: "auto" }}>
               Tu carta se reordena para cada cliente según sus gustos. Sugiere acompañamientos. Llama al garzón cuando hace falta. Sin que tu equipo haga nada
@@ -333,7 +333,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 {[
                   { t: "Carta inteligente con QR", tip: "Tus clientes escanean un QR y ven tu carta digital" },
                   { t: "Vista lista", tip: "Todos los platos en formato lista limpia" },
-                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente" },
+                  { t: "Modificadores de platos", tip: "Agregar opciones (sin cebolla, con queso extra, etc) a cada plato" },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
                 ))}
@@ -353,6 +353,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> Todo lo del plan Gratis</div>
                 {[
+                  { t: "El Genio incluido 🧞", tip: "El Genio reordena tu carta según los gustos de cada cliente: dieta, restricciones y alergenos" },
                   { t: "2 vistas de carta", tip: "Vista lista y vista galería con fotos grandes" },
                   { t: "Destaca platos estrella", tip: "Marca tus platos más vendidos para que aparezcan primero" },
                   { t: "Ofertas del día", tip: "Publica promociones que se muestran solo el día indicado" },

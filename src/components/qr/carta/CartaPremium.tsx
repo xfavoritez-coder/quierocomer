@@ -17,6 +17,7 @@ import ProfileDrawer from "../auth/ProfileDrawer";
 import ViewSelector from "./ViewSelector";
 import GenioTip from "../genio/GenioTip";
 import GenioFab from "./GenioFab";
+import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
 import SortChip from "./SortChip";
@@ -818,7 +819,7 @@ export default function CartaPremium({
       {/* Floating buttons */}
       {/* Floating buttons — Genio separate to avoid pushing others */}
       <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
-        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
+        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>

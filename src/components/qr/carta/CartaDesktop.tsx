@@ -16,6 +16,7 @@ import { startSession, trackDetailOpen, trackDetailClose, trackCategoryDwell, se
 import WaiterButton from "../garzon/WaiterButton";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
+import { canAccess, effectivePlan } from "@/lib/plans";
 import PromoCarousel from "../capture/PromoCarousel";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
@@ -449,7 +450,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
       {/* Floating buttons — bottom right */}
       <div style={{ position: "fixed", bottom: 28, right: 28, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />
+        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
 
         {/* Waiter button */}
         {showWaiter && (
