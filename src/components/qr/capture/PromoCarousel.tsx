@@ -267,7 +267,45 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  <span style={{ display: "inline-block", fontSize: "13px", fontWeight: 700, color: p.daysOfWeek?.length ? "#C23B1E" : "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: 3 }}>{p.daysOfWeek?.length ? "HOY" : "OFERTA"}</span>
+                  {/* Badge: pill solida naranja con dia. Logica:
+                       - sin daysOfWeek → 'OFERTA'
+                       - 1 dia que coincide con hoy → 'SOLO HOY MIÉRCOLES'
+                       - 1 dia distinto a hoy → 'SOLO MIÉRCOLES'
+                       - 2-3 dias → 'SOLO MAR · JUE'
+                       - 4+ dias → 'DÍAS SELECTOS'
+                  */}
+                  {(() => {
+                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                    const DAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                    let label = "OFERTA";
+                    if (p.daysOfWeek?.length) {
+                      if (p.daysOfWeek.length === 1) {
+                        const d = p.daysOfWeek[0];
+                        label = d === todayDow ? `SOLO HOY ${DAY_NAMES[d]}` : `SOLO ${DAY_NAMES[d]}S`;
+                      } else if (p.daysOfWeek.length <= 3) {
+                        label = `SOLO ${p.daysOfWeek.map(d => DAY_SHORT[d]).join(" · ")}`;
+                      } else {
+                        label = "DÍAS SELECTOS";
+                      }
+                    }
+                    return (
+                      <span style={{
+                        display: "inline-block",
+                        fontSize: "9.5px",
+                        fontWeight: 800,
+                        color: "white",
+                        background: "#F4A623",
+                        letterSpacing: "0.12em",
+                        textTransform: "uppercase",
+                        padding: "3px 8px",
+                        borderRadius: 999,
+                        marginBottom: 5,
+                      }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                   <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
