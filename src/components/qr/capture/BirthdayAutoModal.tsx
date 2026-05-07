@@ -24,6 +24,9 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
   const [abVariant, setAbVariant] = useState<AbVariant | null>(null);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  // Si el usuario completo el step de captura de nombre, guardamos el nombre
+  // para mostrar un toast personalizado al cierre.
+  const [savedName, setSavedName] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -152,6 +155,13 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
             window.dispatchEvent(new CustomEvent("qc:birthday-saved"));
             setTimeout(() => setShowSuccessToast(false), 4500);
           }}
+          onNameSaved={(name) => {
+            // El step de captura de nombre se completo: reemplazamos el toast
+            // generico por uno personalizado con el primer nombre del usuario.
+            setSavedName(name.split(" ")[0] || name);
+            setShowSuccessToast(true);
+            setTimeout(() => { setShowSuccessToast(false); setSavedName(null); }, 4500);
+          }}
         />
       )}
       {showSuccessToast && (
@@ -166,20 +176,26 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
             zIndex: 250,
             background: "linear-gradient(135deg, #FFF8E5 0%, #FDE6BD 100%)",
             border: "1px solid rgba(244,166,35,0.4)",
-            borderRadius: 20,
-            padding: "20px 22px",
-            width: "min(380px, calc(100vw - 32px))",
+            borderRadius: 22,
+            padding: "26px 24px 24px",
+            width: "min(340px, calc(100vw - 32px))",
             boxShadow: "0 14px 38px rgba(244,166,35,0.25), 0 4px 14px rgba(0,0,0,0.08)",
             animation: "bdayToastIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)",
             display: "flex",
+            flexDirection: "column",
             alignItems: "center",
-            gap: 16,
+            textAlign: "center",
+            gap: 10,
           }}
         >
-          <span style={{ fontSize: "2.2rem", lineHeight: 1, animation: "bdayToastBounce 0.9s ease-in-out infinite alternate", flexShrink: 0 }}>🎂</span>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <p style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.25 }}>{t(lang, "bdaySuccessTitle")}</p>
-            <p style={{ margin: "5px 0 0", fontSize: "0.84rem", color: "#9A5510", lineHeight: 1.4 }}>{t(lang, "bdaySuccessSub")}</p>
+          <span style={{ fontSize: "2.6rem", lineHeight: 1, animation: "bdayToastBounce 0.9s ease-in-out infinite alternate", display: "block" }}>🎂</span>
+          <div style={{ width: "100%" }}>
+            <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.3 }}>
+              {savedName ? `¡Listo, ${savedName}!` : t(lang, "bdaySuccessTitle")}
+            </p>
+            <p style={{ margin: "6px 0 0", fontSize: "0.86rem", color: "#9A5510", lineHeight: 1.45 }}>
+              {savedName ? "Te avisaremos cuando se acerque tu cumpleaños 🎉" : t(lang, "bdaySuccessSub")}
+            </p>
           </div>
           <style>{`
             @keyframes bdayToastIn { from { opacity: 0; transform: translate(-50%, 18px) scale(0.92); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }

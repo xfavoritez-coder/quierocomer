@@ -28,11 +28,14 @@ interface Props {
   abVariant?: AbVariant | null;
   onClose: () => void;
   onSuccess?: () => void;
+  /** Llamado cuando el usuario guardo su nombre en el step post-cumple. Permite
+   * al padre mostrar un toast personalizado con el nombre. */
+  onNameSaved?: (name: string) => void;
 }
 
 type Phase = "form" | "name";
 
-export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, abVariant, onClose, onSuccess }: Props) {
+export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, abVariant, onClose, onSuccess, onNameSaved }: Props) {
   const lang = useLang();
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
@@ -104,6 +107,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
   // Name capture state (post-success)
   const [name, setName] = useState("");
   const [nameSaving, setNameSaving] = useState(false);
+  // Cuando el nombre se guardo con exito, mostramos un mensaje custom de cierre.
+  const [savedName, setSavedName] = useState<string | null>(null);
   // Info devuelta por /register que distingue cuenta nueva vs re-registro
   const [registrationInfo, setRegistrationInfo] = useState<{
     alreadyExisted: boolean;
@@ -237,11 +242,12 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
       return;
     }
     setNameSaving(true);
+    const formatted = formatName(trimmed);
     try {
       await fetch("/api/qr/user/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formatName(trimmed) }),
+        body: JSON.stringify({ name: formatted }),
       });
       // Track captura post-éxito
       fetch("/api/qr/stats", {
@@ -256,6 +262,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
         }),
       }).catch(() => {});
     } catch {}
+    // Avisamos al padre con el nombre para que muestre el toast personalizado.
+    onNameSaved?.(formatted);
     onClose();
   };
 
