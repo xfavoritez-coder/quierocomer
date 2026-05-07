@@ -1184,7 +1184,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   const viewLabels: Record<string, string> = { premium: "Galería", lista: "Lista", feed: "Feed", viaje: "Espacial" };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {guestFilter && (
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.25)", borderRadius: 10 }}>
           <span style={{ fontSize: "0.85rem" }}>👤</span>
