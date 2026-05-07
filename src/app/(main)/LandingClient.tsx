@@ -332,7 +332,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 18, display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
                   { t: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Sin app, sin descargas." },
-                  { t: "Vista lista", tip: "Todos los platos en una lista limpia. Cuando el cliente toca uno, se abre un detalle con foto grande y descripción en lenguaje cercano — no nombres técnicos como en otras cartas QR." },
+                  { t: "Vista lista", tip: "Todos los platos en una lista atractiva y fácil de navegar. Cuando el cliente toca un plato, se abre un detalle con foto grande y descripción del producto." },
                   { t: "Panel autoadministrable", tip: "Editas tu carta cuando quieras desde tu celular o computador: precios, fotos, descripciones, modificadores. Los cambios se ven al instante." },
                 ].map((f) => (
                   <div key={f.t} style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, color: "#555" }}><Check /> <span>{f.t}</span> <InfoTip text={f.tip} /></div>
@@ -423,22 +423,22 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
             <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14, textAlign: "left" }}>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Tu nombre</label>
-                <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="Ej: María López" required
+                <input type="text" value={nombre} onChange={e => setNombre(e.target.value)} placeholder="María López" required
                   style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Restaurante</label>
-                <input type="text" value={restaurante} onChange={e => setRestaurante(e.target.value)} placeholder="Ej: La Cocina de María" required
+                <input type="text" value={restaurante} onChange={e => setRestaurante(e.target.value)} placeholder="La Cocina de María" required
                   style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Correo electrónico</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Ej: maria@mirestaurante.cl" required
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="maria@mirestaurante.cl" required
                   style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
               </div>
               <div>
                 <label style={{ display: "block", fontSize: 12, fontWeight: 600, color: "rgba(255,255,255,0.5)", fontFamily: F, marginBottom: 5, letterSpacing: "0.03em" }}>Teléfono</label>
-                <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="Ej: +56 9 1234 5678" required
+                <input type="tel" value={telefono} onChange={e => setTelefono(e.target.value)} placeholder="+56 9 1234 5678" required
                   style={{ width: "100%", padding: "14px 16px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 10, fontSize: 14, fontFamily: B, color: "#fff", outline: "none", boxSizing: "border-box" }} />
               </div>
               {formError && <p style={{ fontSize: 13, color: "#ef4444", margin: 0 }}>{formError}</p>}
