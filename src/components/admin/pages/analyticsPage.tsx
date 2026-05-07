@@ -893,7 +893,7 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
             </p>
             <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
               <span>Acierto</span>
-              <InfoTip text="De los platos que mostramos con este badge, qué porcentaje también estuvo entre los más vendidos. Si dice 67%, 2 de cada 3 platos destacados sí vendieron bien — el badge está acertando. Si dice 0%, ningún plato destacado fue de los más vendidos." />
+              <InfoTip text="De los platos que mostramos con esta etiqueta, qué porcentaje también estuvo entre los más vendidos. Si dice 67%, 2 de cada 3 platos etiquetados sí vendieron bien — la etiqueta está acertando. Si dice 0%, ningún plato etiquetado fue de los más vendidos." />
             </p>
           </div>
           <div>
@@ -902,27 +902,37 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
             </p>
             <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text2)", margin: "2px 0 0", display: "flex", alignItems: "center", gap: 4 }}>
               <span>Más ventas que el resto</span>
-              <InfoTip text="Comparación de ventas entre platos destacados y no destacados. Si dice +50%, los platos con badge vendieron en promedio 50% más unidades que los que no tuvieron badge. Si es negativo, los platos sin badge vendieron más." />
+              <InfoTip text="Comparación de ventas entre platos etiquetados y no etiquetados. Si dice +50%, los platos con etiqueta vendieron en promedio 50% más unidades que los que no tuvieron etiqueta. Si es negativo, los platos sin etiqueta vendieron más." />
             </p>
           </div>
         </div>
 
-        {/* Top items */}
+        {/* Top items con foto */}
         {data.topItems?.length > 0 && (
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
-              <span>Platos que tuvieron este badge</span>
-              <InfoTip text="Lista los platos que tuvieron el badge en el período. La estrella ⭐ marca los que también fueron de los más vendidos — eso significa que el badge acertó." />
+            <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "0 0 8px", textTransform: "uppercase", letterSpacing: 0.5, display: "flex", alignItems: "center", gap: 6 }}>
+              <span>Platos que se vendieron con esta etiqueta</span>
+              <InfoTip text="Top platos que tuvieron la etiqueta en el período Y vendieron. Ordenados por ventas. La estrella ⭐ marca los que además fueron de los más vendidos del local. El % indica cuánto del periodo el plato estuvo con la etiqueta." />
             </p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               {data.topItems.map((it: any) => (
-                <div key={it.dishId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, fontFamily: FB, fontSize: "0.74rem", padding: "4px 0", borderBottom: `1px dashed rgba(${bgRgb},0.15)` }}>
-                  <span style={{ color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>
-                    {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}
-                    {it.name}
-                  </span>
-                  <span style={{ flexShrink: 0, color: accent, fontSize: "0.74rem", fontWeight: 600 }}>
-                    {it.sales} {it.sales === 1 ? "venta" : "ventas"}
+                <div key={it.dishId} style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0", borderBottom: `1px dashed rgba(${bgRgb},0.15)` }}>
+                  {it.photo ? (
+                    <img src={it.photo} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-hover)", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem" }}>🍽️</div>
+                  )}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {it.wasTopSeller && <span style={{ marginRight: 4 }}>⭐</span>}{it.name}
+                    </p>
+                    <p style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "2px 0 0" }} title={`Estuvo ${it.coveragePct}% del periodo con la etiqueta`}>
+                      {it.coveragePct}% del tiempo etiquetado
+                    </p>
+                  </div>
+                  <span style={{ flexShrink: 0, color: accent, fontFamily: F, fontSize: "0.92rem", fontWeight: 700 }}>
+                    {it.sales}
+                    <span style={{ fontSize: "0.62rem", fontWeight: 600, marginLeft: 3, opacity: 0.85 }}>{it.sales === 1 ? "venta" : "ventas"}</span>
                   </span>
                 </div>
               ))}
@@ -936,8 +946,8 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
-        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🎖️ Acierto de los badges</p>
-        <InfoTip text="¿Los badges que mostramos en la carta están funcionando? Comparamos los platos que tuvieron badge contra los que más se vendieron." />
+        <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>🎖️ Acierto de las etiquetas</p>
+        <InfoTip text="¿Las etiquetas que mostramos en la carta están funcionando? Comparamos los platos que tuvieron etiqueta contra los que más se vendieron." />
         <span style={{ flex: 1 }} />
         <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>
           Capturado cada 30 min · {badges.summary.popularRuns} corridas

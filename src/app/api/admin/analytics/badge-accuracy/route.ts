@@ -164,6 +164,8 @@ export async function GET(req: NextRequest) {
     const totalSales = salesIn + salesOut;
     const sharePct = totalSales > 0 ? Math.round((salesIn / totalSales) * 100) : 0;
 
+    // Top items: solo los que efectivamente vendieron (sales > 0), ordenados
+    // por ventas desc, top 6. El dueño quiere ver qué etiqueta-y-vendió mejor.
     const topItems = [...badgedByDish.entries()]
       .map(([dishId, snapshotCount]) => ({
         dishId,
@@ -175,8 +177,9 @@ export async function GET(req: NextRequest) {
         sales: salesByDish.get(dishId) || 0,
         wasTopSeller: topSellerIds.has(dishId),
       }))
-      .sort((a, b) => b.snapshotCount - a.snapshotCount || b.sales - a.sales)
-      .slice(0, 8);
+      .filter((it) => it.sales > 0)
+      .sort((a, b) => b.sales - a.sales || b.snapshotCount - a.snapshotCount)
+      .slice(0, 6);
 
     return {
       distinctDishes: badgedDishIds.size,
