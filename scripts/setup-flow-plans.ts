@@ -1,5 +1,9 @@
 /**
- * Crea o actualiza los 3 planes en Flow.
+ * Crea o actualiza los planes en Flow con el monto BRUTO (neto + 19% IVA).
+ *
+ * Los planes en plans-config.ts estan en valor NETO. Aqui se calcula el bruto
+ * (neto * 1.19) y ese es el monto que queda configurado en Flow para que cada
+ * cobro mensual ya incluya el IVA.
  *
  * Usage:
  *   npx tsx scripts/setup-flow-plans.ts
@@ -10,7 +14,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: ".env" });
 dotenv.config({ path: ".env.local", override: true });
 import { flowPost } from "../src/lib/billing/flow";
-import { FLOW_PLANS } from "../src/lib/billing/plans-config";
+import { FLOW_PLANS, grossOf, ivaOf } from "../src/lib/billing/plans-config";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 const URL_CALLBACK = `${BASE_URL}/api/billing/webhook`;
@@ -51,10 +55,16 @@ async function main() {
   console.log(`Callback: ${URL_CALLBACK}\n`);
 
   for (const cfg of Object.values(FLOW_PLANS)) {
-    const result = await upsertPlan(cfg.planId, cfg.name, cfg.amount);
-    console.log(`   ${cfg.planId} ($${cfg.amount.toLocaleString("es-CL")}) ✓`);
+    const net = cfg.amountNet;
+    const iva = ivaOf(net);
+    const gross = grossOf(net);
+    const fmt = (n: number) => `$${n.toLocaleString("es-CL")}`;
+    console.log(`\n${cfg.planId} (${cfg.name})`);
+    console.log(`   Neto: ${fmt(net)} + IVA ${fmt(iva)} = ${fmt(gross)} BRUTO mensual`);
+    await upsertPlan(cfg.planId, cfg.name, gross);
+    console.log(`   ✓ ${cfg.planId} configurado en Flow con ${fmt(gross)}`);
   }
-  console.log("\nListo. Los 3 planes estan sincronizados en Flow.");
+  console.log("\nListo. Los planes estan sincronizados en Flow con monto bruto (IVA incluido).");
 }
 
 main().catch((e) => {
