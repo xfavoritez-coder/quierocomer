@@ -101,6 +101,7 @@ export async function POST(request: Request) {
         qrActivatedAt: new Date(),
         plan: "PREMIUM",                 // arranca en PREMIUM para la demo en vivo; el admin lo baja a FREE al entregar al duenio
         subscriptionStatus: "NONE",
+        waiterPanelActive: true,         // campanita de garzon activa por default — el dueño la apaga si no la quiere
       },
     });
 

@@ -64,7 +64,6 @@ export default function AdminLocales() {
   const [editLangs, setEditLangs] = useState<string[]>(["es", "en", "pt"]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [announcements, setAnnouncements] = useState<{ id: string; text: string; isActive: boolean }[]>([]);
 
   // Sync form when selected changes
   useEffect(() => {
@@ -79,10 +78,6 @@ export default function AdminLocales() {
     setEditDietType(selected.dietType || "OMNIVORE");
     setEditLangs(selected.enabledLangs?.length ? selected.enabledLangs : ["es", "en", "pt"]);
     setSaved(false);
-    // Fetch announcements
-    if (selected) {
-      fetch(`/api/admin/announcements?restaurantId=${selected.id}`).then(r => r.json()).then(d => { const list = d?.announcements || d; setAnnouncements(Array.isArray(list) ? list : []); }).catch(() => setAnnouncements([]));
-    }
   }, [selected?.id]);
 
   const saveChanges = async () => {
@@ -438,22 +433,6 @@ export default function AdminLocales() {
           </button>
         </div>
 
-        {/* Anuncios */}
-        <div style={{ marginTop: 12, padding: "14px 16px", background: "rgba(255,255,255,0.02)", border: "1px solid #2A2A2A", borderRadius: 12 }}>
-          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "white", margin: "0 0 10px" }}>📢 Anuncios ({announcements.length})</p>
-          {announcements.length === 0 ? (
-            <p style={{ fontFamily: F, fontSize: "0.75rem", color: "#555", margin: 0, fontStyle: "italic" }}>Sin anuncios configurados</p>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              {announcements.map(a => (
-                <div key={a.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
-                  <span style={{ width: 8, height: 8, borderRadius: "50%", background: a.isActive ? "#4ade80" : "#555", flexShrink: 0 }} />
-                  <span style={{ fontFamily: F, fontSize: "0.75rem", color: a.isActive ? "#ccc" : "#666", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.text}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
     </div>
