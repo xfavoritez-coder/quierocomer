@@ -407,7 +407,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
           const firstName = previousName?.split(" ")[0] || null;
 
           if (showWelcomeBack) {
-            const title = firstName ? `¡Te tenemos, ${firstName}! 🎉` : "¡Ya estabas con nosotros! 🎉";
+            const title = firstName ? `¡Bienvenido de vuelta, ${firstName}! 🎉` : "¡Bienvenido de vuelta! 🎉";
             const sub = hadBirthday
               ? "Tu cumpleaños ya estaba guardado. Te avisaremos cuando se acerque tu día."
               : "Guardamos tu cumpleaños. Te avisaremos cuando se acerque tu día.";

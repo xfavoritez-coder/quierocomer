@@ -94,7 +94,7 @@ function ModalNameStep() {
       <div style={{ textAlign: "center" }}>
         <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8 }}>🎉</span>
         <h3 style={{ fontFamily: "var(--font-playfair)", fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, margin: "0 0 4px" }}>
-          ¡Listo, te tenemos!
+          ¡Listo!
         </h3>
         <p style={{ fontSize: "0.88rem", color: "#888", margin: "0 0 22px", lineHeight: 1.45 }}>
           Te avisaremos cuando se acerque tu día.
