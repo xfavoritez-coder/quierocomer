@@ -134,13 +134,15 @@ export function getDietMessage(diet: string | null, restrictions: string[], rest
     return restDiet === "VEGAN" ? "redundant-vegan" : "redundant-vegetarian";
   }
 
-  // Caso especial: la unica restriccion es "_spicy" y no hay diet. La mayoria
-  // de los locales tiene la mayoria de su carta sin picante, asi que no
-  // tiene sentido mostrar 'no encontramos' (lo hay en abundancia) ni un
-  // carousel agrupando casi toda la carta. En su lugar, mostramos un mensaje
-  // positivo: la carta ya esta reordenada con los picantes al final
-  // (los penaliza dishScoring) y se destacan para que se identifiquen.
-  const onlySpicy = !diet && active.length === 1 && active[0] === "_spicy";
+  // Caso especial: la unica restriccion es "_spicy" y la dieta NO afecta
+  // la carta (sin diet o omnivore — omnivore es default y no filtra nada).
+  // La mayoria de los locales tiene la mayoria de su carta sin picante, asi
+  // que no tiene sentido mostrar 'no encontramos' (lo hay en abundancia) ni
+  // un carousel agrupando casi toda la carta. En su lugar, mostramos un
+  // mensaje positivo: la carta ya esta reordenada con los picantes al final
+  // (los penaliza dishScoring) y se destacan con el SpicyStamp en la foto.
+  const noEffectiveDiet = !diet || diet === "omnivore";
+  const onlySpicy = noEffectiveDiet && active.length === 1 && active[0] === "_spicy";
   if (onlySpicy) return "reordered-spicy";
 
   // Has preferences but no matching dishes
