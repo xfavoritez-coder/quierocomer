@@ -6,7 +6,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { maxVisibleClients, canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
-import { Users, Download, Gift, Mail } from "lucide-react";
+import { Users, Download, Gift, Mail, Pencil, Trash2, X } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -53,8 +53,11 @@ export default function ClientesPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
+  const [editing, setEditing] = useState<Client | null>(null);
+  const [deleting, setDeleting] = useState<Client | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
+  const reload = () => {
     if (!selectedRestaurantId) return;
     setLoading(true);
     fetch(`/api/panel/clients?restaurantId=${selectedRestaurantId}`)
@@ -62,7 +65,57 @@ export default function ClientesPage() {
       .then(d => { setClients(d.clients || []); setTotal(d.total || 0); })
       .catch(() => {})
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    reload();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
+
+  const handleSaveEdit = async (form: { name: string; email: string; birthDate: string; dietType: string }) => {
+    if (!editing || !selectedRestaurantId) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/panel/clients/${editing.id}?restaurantId=${selectedRestaurantId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          birthDate: form.birthDate || null,
+          dietType: form.dietType || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "No se pudo guardar");
+        return;
+      }
+      setEditing(null);
+      reload();
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleting || !selectedRestaurantId) return;
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/panel/clients/${deleting.id}?restaurantId=${selectedRestaurantId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || "No se pudo borrar");
+        return;
+      }
+      setDeleting(null);
+      reload();
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const maxVisible = maxVisibleClients(activePlan);
   const canExport = canAccess(activePlan, "clients_export");
@@ -158,6 +211,22 @@ export default function ClientesPage() {
                     {SOURCE_LABELS[c.source] || c.source}
                   </p>
                 </div>
+                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                  <button
+                    onClick={() => setEditing(c)}
+                    title="Editar"
+                    style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--adm-text3)" }}
+                  >
+                    <Pencil size={13} />
+                  </button>
+                  <button
+                    onClick={() => setDeleting(c)}
+                    title="Borrar"
+                    style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444" }}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -184,6 +253,98 @@ export default function ClientesPage() {
           )}
         </>
       )}
+
+      {/* Modal editar */}
+      {editing && (
+        <EditClientModal
+          client={editing}
+          onClose={() => setEditing(null)}
+          onSave={handleSaveEdit}
+          loading={actionLoading}
+        />
+      )}
+
+      {/* Modal borrar */}
+      {deleting && (
+        <DeleteClientModal
+          client={deleting}
+          onClose={() => setDeleting(null)}
+          onConfirm={handleConfirmDelete}
+          loading={actionLoading}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ═══════════ Modales ═══════════ */
+function EditClientModal({ client, onClose, onSave, loading }: { client: Client; onClose: () => void; onSave: (form: { name: string; email: string; birthDate: string; dietType: string }) => void; loading: boolean }) {
+  const [name, setName] = useState(client.name || "");
+  const [email, setEmail] = useState(client.email);
+  const [birthDate, setBirthDate] = useState(client.birthDate ? client.birthDate.split("T")[0] : "");
+  const [dietType, setDietType] = useState(client.dietType || "");
+
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card)", borderRadius: 16, padding: "24px", maxWidth: 420, width: "100%", boxShadow: "0 25px 60px rgba(0,0,0,0.25)", position: "relative" }}>
+        <button onClick={onClose} style={{ position: "absolute", top: 12, right: 12, background: "none", border: "none", cursor: "pointer", color: "var(--adm-text3)", padding: 4 }}>
+          <X size={18} />
+        </button>
+        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 18px" }}>Editar cliente</h2>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Nombre</label>
+            <input value={name} onChange={e => setName(e.target.value)} placeholder="Nombre" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Email</label>
+            <input value={email} onChange={e => setEmail(e.target.value)} type="email" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Fecha de cumpleaños</label>
+            <input value={birthDate} onChange={e => setBirthDate(e.target.value)} type="date" style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box" }} />
+          </div>
+          <div>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", marginBottom: 5, fontWeight: 600 }}>Dieta</label>
+            <select value={dietType} onChange={e => setDietType(e.target.value)} style={{ width: "100%", padding: "10px 12px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)", outline: "none", boxSizing: "border-box", appearance: "none" }}>
+              <option value="">Sin especificar</option>
+              <option value="omnivore">Carnívoro</option>
+              <option value="vegetarian">Vegetariano</option>
+              <option value="vegan">Vegano</option>
+            </select>
+          </div>
+        </div>
+
+        <div style={{ display: "flex", gap: 8, marginTop: 22, justifyContent: "flex-end" }}>
+          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={() => onSave({ name, email, birthDate, dietType })} disabled={loading} style={{ padding: "9px 16px", background: GOLD, border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "white", cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Guardando..." : "Guardar"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DeleteClientModal({ client, onClose, onConfirm, loading }: { client: Client; onClose: () => void; onConfirm: () => void; loading: boolean }) {
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 200, padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card)", borderRadius: 16, padding: "24px", maxWidth: 380, width: "100%", boxShadow: "0 25px 60px rgba(0,0,0,0.25)", position: "relative" }}>
+        <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 14 }}>
+          <Trash2 size={20} color="#ef4444" />
+        </div>
+        <h2 style={{ fontFamily: F, fontSize: "1.05rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Borrar cliente</h2>
+        <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 18px", lineHeight: 1.5 }}>
+          Vas a quitar a <strong>{client.name || client.email}</strong> de la lista de clientes de este local. La cuenta del usuario sigue existiendo si tiene relación con otros locales.
+        </p>
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button onClick={onClose} disabled={loading} style={{ padding: "9px 16px", background: "transparent", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={onConfirm} disabled={loading} style={{ padding: "9px 16px", background: "#ef4444", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, color: "white", cursor: "pointer", opacity: loading ? 0.6 : 1 }}>
+            {loading ? "Borrando..." : "Sí, borrar"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
