@@ -52,10 +52,15 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       } catch {}
     };
 
+    // Debug helper: ?debug_bday=1 fuerza la apertura del modal sin chequear
+    // la 2da visita ni los flags de "ya mostrado". Util para QA/dueño que
+    // quiere probar el flujo sin tener que esperar 2+ minutos entre visitas.
+    const isDebug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug_bday") === "1";
+
     const evaluate = async () => {
       if (cancelled) return;
-      if (sessionStorage.getItem("qr_birthday_dismissed")) return;
-      if (localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1") return;
+      if (!isDebug && sessionStorage.getItem("qr_birthday_dismissed")) return;
+      if (!isDebug && localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1") return;
 
       const guestId = getGuestId();
       const dbSessionId = (await ensureDbSessionAsync(3000)) || getDbSessionId();
@@ -67,7 +72,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       // per-tab y se quedaba pegado entre sesiones.
       const checkedKey = `qc_bday_checked_${restaurantId}`;
       const sessionMarker = dbSessionId || "pre-session";
-      if (sessionStorage.getItem(checkedKey) === sessionMarker) return;
+      if (!isDebug && sessionStorage.getItem(checkedKey) === sessionMarker) return;
       sessionStorage.setItem(checkedKey, sessionMarker);
 
       const params = new URLSearchParams({ guestId, restaurantId });
@@ -76,7 +81,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
       try {
         const info = await fetch(`/api/qr/guest/visit-info?${params}`).then((r) => r.json());
         if (cancelled) return;
-        if ((info.restaurantSessions || 0) < 1) return;
+        if (!isDebug && (info.restaurantSessions || 0) < 1) return;
 
         const ab: AbVariant | null = await fetch("/api/qr/ab/birthday-modal")
           .then((r) => r.json())
