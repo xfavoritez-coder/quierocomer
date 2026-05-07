@@ -1235,7 +1235,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                     </span>
                   )}
                   {visitsToday > 1 && (
-                    <span title={`Hoy abrió la carta ${visitsToday} veces. Esta es la visita N° ${visitNumToday} (reloads y reaperturas dentro de 10 min cuentan como una sola visita)`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600, cursor: "help" }}>
+                    <span title={`Hoy abrió la carta ${visitsToday} veces. Esta es la visita N° ${visitNumToday}. Reloads dentro de 1 min se cuentan como la misma sesión.`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc", fontWeight: 600, cursor: "help" }}>
                       👁 {visitNumToday} de {visitsToday} hoy
                     </span>
                   )}

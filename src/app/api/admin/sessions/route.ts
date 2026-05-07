@@ -387,45 +387,32 @@ export async function GET(req: NextRequest) {
       // Quedarnos con el máximo entre los restaurantes del guest si aparece en varias filas
       visitDaysByGuest[guestId] = Math.max(visitDaysByGuest[guestId] || 0, count);
     }
-    // Per-session "visit N of M today" — calculated against ALL sessions in
-    // the DB for that guest+day, not just the ones loaded in the current
-    // admin page. Without this, paginated listings hide the prior visits and
-    // the blue "Xª visita hoy" tag goes missing inconsistently.
-    //
-    // Importante: una persona puede generar multiples sesiones por reloads,
-    // tabs duplicados o reconexion. Si hay gap < 10 min entre el fin de una
-    // sesion y el inicio de la siguiente (o solapan), las consideramos la
-    // MISMA visita. Asi "13 sesiones" se reduce a las visitas reales (~4).
-    // Cargar todas las sesiones del dia para calcular esto, no solo las que
-    // tienen guestId en el page actual.
+    // Per-session "visit N of M today": cada session row = una visita.
+    // Antes agrupabamos sesiones consecutivas con gap < 10 min como una
+    // sola "visita real" para evitar inflar el conteo en casos como '13 sesiones
+    // pegadas'. Pero eso desalineaba con la logica del modal automatico de
+    // cumple (que cuenta sesiones brutas) — caso reportado: Alfonso guardo cumple
+    // en lo que el modal trato como 2da sesion, pero el panel mostraba '1 visita'
+    // por la agrupacion. Ahora con SESSION_REUSE_WINDOW=1min en sessionTracker,
+    // los reloads rapidos ya no generan sesiones nuevas, asi que la agrupacion
+    // post-hoc no aporta valor y desincroniza. Cada row = una visita.
     const allDaySessionsByGuestRest = sessionGuestIds.length ? await prisma.session.findMany({
       where: {
         guestId: { in: sessionGuestIds },
         ...(where.restaurantId ? { restaurantId: where.restaurantId } : {}),
       },
-      select: { id: true, guestId: true, restaurantId: true, startedAt: true, endedAt: true },
+      select: { id: true, guestId: true, restaurantId: true, startedAt: true },
     }) : [];
-    const VISIT_GAP_MS = 10 * 60 * 1000;
     const visitsTodayBySession: Record<string, { numToday: number; totalToday: number }> = {};
     for (const target of sessions) {
       const day = toClDate(target.startedAt);
       const sameDay = allDaySessionsByGuestRest
         .filter((x) => x.guestId === target.guestId && x.restaurantId === target.restaurantId && toClDate(x.startedAt) === day)
         .sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
-      // Agrupar sesiones consecutivas (gap <= 10 min o solapadas) como UNA visita
-      let visitIdx = 0;
-      let lastEnd = -Infinity;
-      const sessionToVisit = new Map<string, number>();
-      for (const s of sameDay) {
-        const start = s.startedAt.getTime();
-        if (start - lastEnd > VISIT_GAP_MS) visitIdx++;
-        sessionToVisit.set(s.id, visitIdx);
-        const end = s.endedAt ? s.endedAt.getTime() : start;
-        if (end > lastEnd) lastEnd = end;
-      }
+      const idx = sameDay.findIndex((x) => x.id === target.id);
       visitsTodayBySession[target.id] = {
-        numToday: sessionToVisit.get(target.id) || 1,
-        totalToday: visitIdx,
+        numToday: idx >= 0 ? idx + 1 : 1,
+        totalToday: sameDay.length,
       };
     }
 
