@@ -87,30 +87,15 @@ export default function LiveDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
 
-  // Supabase Realtime con debounce: cuando llega una venta nueva (INSERT en
-  // ToteatSale) del restaurant, refrescamos el dashboard. El debounce evita
-  // bursts de queries cuando un sync de Toteat trae muchas ventas a la vez:
-  // todos los eventos en una ventana de 1.5s se colapsan en un solo load().
+  // Polling cada 8s: antes usabamos Supabase Realtime sobre ToteatSale, pero
+  // RLS habilitado bloquea el Realtime con anon (los datos de venta son
+  // sensibles, NO los queremos accesibles via REST publica). Polling es
+  // suficiente — un sync de Toteat trae varias ventas y queremos refresco
+  // visual, no event-driven.
   useEffect(() => {
-    if (!supabase || !selectedRestaurantId) return;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const debouncedLoad = () => {
-      if (timer) return; // ya hay uno agendado
-      timer = setTimeout(() => { load(); timer = null; }, 1500);
-    };
-    const channel = supabase
-      .channel(`toteat-sales-${selectedRestaurantId}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "ToteatSale",
-        filter: `restaurantId=eq.${selectedRestaurantId}`,
-      }, debouncedLoad)
-      .subscribe();
-    return () => {
-      if (timer) clearTimeout(timer);
-      supabase.removeChannel(channel);
-    };
+    if (!selectedRestaurantId) return;
+    const tick = window.setInterval(() => { load(); }, 8000);
+    return () => window.clearInterval(tick);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRestaurantId]);
 
