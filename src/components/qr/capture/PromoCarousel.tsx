@@ -370,7 +370,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
               width: "100%", maxWidth: "100%",
               height: "100dvh",
               touchAction: "pan-y",
-              background: isGraphic ? "#000" : "white",
+              background: "white",
               borderRadius: 0,
               zIndex: 101, display: "flex", flexDirection: "column",
               transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -403,24 +403,57 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
             >
 
             {isGraphic ? (
-              /* GRAPHIC PROMO — fullscreen photo, title + price over overlay */
-              <div style={{ position: "relative", flex: 1 }}>
-                {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
-                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.1) 0%, transparent 25%, transparent 45%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.88) 100%)" }} />
-                <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "0 24px 32px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", letterSpacing: "0.2em", textTransform: "uppercase", display: "block", marginBottom: 10 }}>✦ OFERTA</span>
-                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "28px", fontWeight: 600, lineHeight: 1.1, color: "white", margin: "0 0 8px", textShadow: "0 2px 8px rgba(0,0,0,0.3)" }}>
+              /* GRAPHIC PROMO — Variante C: imagen 70% arriba, panel blanco abajo
+                 con info legible. Antes era fullscreen con overlay y se mezclaba
+                 con el texto que la imagen ya traia. */
+              <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
+                {/* Imagen 70% */}
+                <div style={{ position: "relative", height: "70%", background: "#000", overflow: "hidden", flexShrink: 0 }}>
+                  {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
+                </div>
+                {/* Panel blanco abajo con info */}
+                <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "white" }}>
+                  {(() => {
+                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                    const DAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                    const dow = selectedPromo.daysOfWeek;
+                    let label = "OFERTA";
+                    if (dow?.length) {
+                      if (dow.length === 1) {
+                        const d = dow[0];
+                        label = d === todayDow ? `SOLO HOY ${DAY_NAMES[d]}` : `SOLO ${DAY_NAMES[d]}S`;
+                      } else if (dow.length <= 3) {
+                        label = `SOLO ${dow.map(d => DAY_SHORT[d]).join(" · ")}`;
+                      } else {
+                        label = "DÍAS SELECTOS";
+                      }
+                    }
+                    return (
+                      <span style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 999, marginBottom: 10 }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
+                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 700, lineHeight: 1.15, color: "#0e0e0e", margin: "0 0 8px" }}>
                     {selectedPromo.name}
                   </h2>
                   {selectedPromo.description && (
-                    <p style={{ fontSize: "16px", lineHeight: 1.5, color: "rgba(255,255,255,0.7)", margin: "0 0 12px", maxWidth: 320 }}>
+                    <p style={{ fontSize: "13.5px", lineHeight: 1.55, color: "#4a4a4a", margin: "0 0 14px" }}>
                       {selectedPromo.description}
                     </p>
                   )}
                   {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
-                    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
-                      {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "20px", fontWeight: 600, color: "#F4A623" }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
-                      {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "rgba(255,255,255,0.4)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                      {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "#F4A623", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
+                      {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                      {savings > 0 && <span style={{ fontSize: "12px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "5px 9px", borderRadius: 7 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
+                    </div>
+                  )}
+                  {selectedPromo.validUntil && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, fontSize: "12px", color: "#8a8a8a" }}>
+                      <span style={{ fontSize: "14px" }}>⏰</span>
+                      <span>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</span>
                     </div>
                   )}
                 </div>
