@@ -160,26 +160,26 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
           className="font-[family-name:var(--font-dm)]"
           style={{
             position: "fixed",
-            bottom: 24,
+            bottom: 28,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 250,
             background: "linear-gradient(135deg, #FFF8E5 0%, #FDE6BD 100%)",
             border: "1px solid rgba(244,166,35,0.4)",
-            borderRadius: 18,
-            padding: "16px 22px 16px 18px",
-            maxWidth: "calc(100vw - 32px)",
+            borderRadius: 20,
+            padding: "20px 22px",
+            width: "min(380px, calc(100vw - 32px))",
             boxShadow: "0 14px 38px rgba(244,166,35,0.25), 0 4px 14px rgba(0,0,0,0.08)",
             animation: "bdayToastIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)",
             display: "flex",
             alignItems: "center",
-            gap: 14,
+            gap: 16,
           }}
         >
-          <span style={{ fontSize: "2rem", lineHeight: 1, animation: "bdayToastBounce 0.9s ease-in-out infinite alternate", flexShrink: 0 }}>🎂</span>
-          <div style={{ minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.2 }}>{t(lang, "bdaySuccessTitle")}</p>
-            <p style={{ margin: "3px 0 0", fontSize: "0.82rem", color: "#9A5510", lineHeight: 1.35 }}>{t(lang, "bdaySuccessSub")}</p>
+          <span style={{ fontSize: "2.2rem", lineHeight: 1, animation: "bdayToastBounce 0.9s ease-in-out infinite alternate", flexShrink: 0 }}>🎂</span>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <p style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.25 }}>{t(lang, "bdaySuccessTitle")}</p>
+            <p style={{ margin: "5px 0 0", fontSize: "0.84rem", color: "#9A5510", lineHeight: 1.4 }}>{t(lang, "bdaySuccessSub")}</p>
           </div>
           <style>{`
             @keyframes bdayToastIn { from { opacity: 0; transform: translate(-50%, 18px) scale(0.92); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
