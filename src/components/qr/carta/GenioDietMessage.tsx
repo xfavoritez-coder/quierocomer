@@ -79,7 +79,7 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
       >
         <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
         <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
-          Listo. Reordenamos la carta dejando lo picante al final, y marcamos los picantes con 🌶️ para que los identifiques rápido.
+          Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas.
         </p>
         <button
           onClick={() => { setDismissed(true); sessionStorage.setItem(DISMISS_KEY, "1"); }}

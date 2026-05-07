@@ -34,6 +34,7 @@ import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import GenioFab from "./GenioFab";
+import SpicyStamp from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
@@ -269,6 +270,8 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
       {photo ? (
         <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 10" }}>
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 500px" loading="lazy" />
+          {/* Stamp picante: top-right para no chocar con badges en top-left */}
+          <SpicyStamp isSpicy={!!isSpicy} size={32} top={10} right={10} />
 
           {/* Badges top-left */}
           {(isRec || isPopular || pEntry?.autoRecommended) && (
