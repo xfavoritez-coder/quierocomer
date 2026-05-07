@@ -418,13 +418,24 @@ export default function AdminMenus() {
 
   const activeRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
 
+  // Snapshot de IDs destacados al cargar la lista. Lo usamos para ordenar
+  // los destacados arriba SIN que un toggle inmediato reordene la lista
+  // (eso confunde al usuario porque el plato 'desaparece' de su vista).
+  // Se actualiza solo al cambiar de restaurante o recargar.
+  const [recommendedSnapshot, setRecommendedSnapshot] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     if (!selectedRestaurantId) return;
     setLoading(true);
     setSelectedDish(null);
     fetch(`/api/admin/dishes?restaurantId=${selectedRestaurantId}`)
       .then(r => r.json())
-      .then(d => { if (Array.isArray(d)) setDishes(d); })
+      .then(d => {
+        if (Array.isArray(d)) {
+          setDishes(d);
+          setRecommendedSnapshot(new Set(d.filter((x: any) => x.tags?.includes("RECOMMENDED")).map((x: any) => x.id)));
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [selectedRestaurantId]);
@@ -506,17 +517,19 @@ export default function AdminMenus() {
     if (soyFreeFilter) list = list.filter(d => (d as any).isSoyFree === true);
     // Filtro warning "Frutos secos": cualquier señal positiva (containsNuts O alergeno)
     if (nutsFilter) list = list.filter(d => (d as any).containsNuts === true || allergensHas(d, ["maní", "mani", "nuez", "nueces", "almendra", "frutos secos"]));
-    // Recently created first, then recommended, then alphabetical
+    // Recently created first, then recommended (snapshot — no se reordena
+    // mientras el usuario marca/desmarca; los nuevos destacados suben en
+    // el siguiente reload del listado), then alphabetical.
     return [...list].sort((a, b) => {
       const aNew = recentlyCreated.has(a.id) ? 0 : 1;
       const bNew = recentlyCreated.has(b.id) ? 0 : 1;
       if (aNew !== bNew) return aNew - bNew;
-      const aRec = a.tags?.includes("RECOMMENDED") ? 0 : 1;
-      const bRec = b.tags?.includes("RECOMMENDED") ? 0 : 1;
+      const aRec = recommendedSnapshot.has(a.id) ? 0 : 1;
+      const bRec = recommendedSnapshot.has(b.id) ? 0 : 1;
       if (aRec !== bRec) return aRec - bRec;
       return a.name.localeCompare(b.name, "es");
     });
-  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated]);
+  }, [dishes, search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, recentlyCreated, recommendedSnapshot]);
 
   // Reset page when filters change
   useEffect(() => { setPage(1); }, [search, catFilter, dietFilter, spicyFilter, glutenFreeFilter, lactoseFreeFilter, soyFreeFilter, nutsFilter, selectedRestaurantId]);
@@ -1521,11 +1534,12 @@ export default function AdminMenus() {
             const isHidden = !d.isActive;
             return (
             <div key={d.id} className="adm-dish-card" style={{
-              background: isHidden ? "#FAF9F7" : "var(--adm-card)",
-              border: "0.5px solid rgba(0,0,0,0.08)",
+              background: isHidden ? "#FAF9F7" : (isRec ? "linear-gradient(135deg, #FFFDF5 0%, #FFF6E0 100%)" : "var(--adm-card)"),
+              border: isRec ? "1px solid rgba(244,166,35,0.45)" : "0.5px solid rgba(0,0,0,0.08)",
+              boxShadow: isRec ? "0 1px 0 rgba(244,166,35,0.08), 0 0 0 3px rgba(244,166,35,0.06)" : undefined,
               borderRadius: 12, overflow: menuOpenId === d.id ? "visible" : "hidden", opacity: isHidden ? 0.7 : 1,
               position: menuOpenId === d.id ? "relative" as const : undefined, zIndex: menuOpenId === d.id ? 100 : undefined,
-              cursor: "pointer", transition: "box-shadow 0.15s, transform 0.15s",
+              cursor: "pointer", transition: "box-shadow 0.15s, transform 0.15s, background 0.2s",
             }}>
               {/* Row */}
               <div style={{ display: "flex", gap: 12, padding: 10, alignItems: "center" }}>
@@ -1539,17 +1553,35 @@ export default function AdminMenus() {
                   style={{ width: 16, height: 16, accentColor: "#F4A623", cursor: "pointer", flexShrink: 0 }}
                 />
                 {/* Photo */}
-                {d.photos?.[0] ? (
-                  <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", flexShrink: 0, cursor: "zoom-in" }} />
-                ) : (
-                  <div style={{ width: 56, height: 56, borderRadius: 8, background: "#eee", flexShrink: 0 }} />
-                )}
+                <div style={{ position: "relative", width: 56, height: 56, flexShrink: 0 }}>
+                  {d.photos?.[0] ? (
+                    <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", cursor: "zoom-in", display: "block" }} />
+                  ) : (
+                    <div style={{ width: 56, height: 56, borderRadius: 8, background: "#eee" }} />
+                  )}
+                  {/* Badge destacado en la foto */}
+                  {isRec && (
+                    <span title="Plato destacado" style={{ position: "absolute", top: -4, left: -4, width: 22, height: 22, borderRadius: "50%", background: "#F4A623", color: "white", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(244,166,35,0.4)", fontSize: "0.72rem", fontWeight: 700 }}>★</span>
+                  )}
+                </div>
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }} onClick={() => { setSelectedDish(d); startEditDish(d); }} role="button" tabIndex={0}>
-                  <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {d.name}
-                  </p>
-                  <span style={{ display: "inline-block", fontFamily: F, fontSize: "11px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999, marginTop: 4 }}>{d.category.name}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                    <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {d.name}
+                    </p>
+                    {isRec && (
+                      <span style={{ fontFamily: F, fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", padding: "2px 7px", borderRadius: 999, letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>★ Destacado</span>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 4 }}>
+                    <span style={{ display: "inline-block", fontFamily: F, fontSize: "11px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999 }}>{d.category.name}</span>
+                    {isHidden && (
+                      <span style={{ display: "inline-block", fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "#9a3d2c", background: "rgba(220,80,40,0.10)", border: "1px solid rgba(220,80,40,0.18)", padding: "2px 7px", borderRadius: 999 }}>
+                        🚫 No se ve en la carta
+                      </span>
+                    )}
+                  </div>
                   <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                 </div>
                 {/* Actions */}
