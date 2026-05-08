@@ -60,15 +60,13 @@ function PrintPageInner() {
     }).then(setQrDataUrl);
   }, [restaurant]);
 
-  // Layout calc
+  // Layout calc — edge-to-edge: sin margen ni gap, max densidad
   const layout = useMemo(() => {
     const qrMm = size * 10;
-    const margin = 4;
-    const gap = 4;
-    const usableW = paperW - margin * 2;
-    const usableH = paperH - margin * 2;
-    const cols = Math.max(1, Math.floor((usableW + gap) / (qrMm + gap)));
-    const rows = Math.max(1, Math.floor((usableH + gap) / (qrMm + gap)));
+    const margin = 0;
+    const gap = 0;
+    const cols = Math.max(1, Math.floor(paperW / qrMm));
+    const rows = Math.max(1, Math.floor(paperH / qrMm));
     const perPage = cols * rows;
     const pages = Math.max(1, Math.ceil(qty / perPage));
     return { qrMm, cols, rows, perPage, pages, margin, gap };

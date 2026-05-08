@@ -48,15 +48,13 @@ export default function ImprimirQrPage() {
 
   const layout = useMemo(() => {
     const qrMm = qrCm * 10;
-    const margin = 4; // 4mm margen exterior por seguridad de impresion
-    const gap = 4; // 4mm entre QRs (linea de corte)
-    const usableW = paperW - margin * 2;
-    const usableH = paperH - margin * 2;
-    const cols = Math.max(1, Math.floor((usableW + gap) / (qrMm + gap)));
-    const rows = Math.max(1, Math.floor((usableH + gap) / (qrMm + gap)));
+    // Edge-to-edge: sin margen ni gap. Maximiza la densidad por hoja.
+    // El usuario corta por la linea de separacion entre QRs adyacentes.
+    const cols = Math.max(1, Math.floor(paperW / qrMm));
+    const rows = Math.max(1, Math.floor(paperH / qrMm));
     const perPage = cols * rows;
     const pages = Math.max(1, Math.ceil(qty / perPage));
-    const fits = qrMm <= usableW && qrMm <= usableH;
+    const fits = qrMm <= paperW && qrMm <= paperH;
     return { qrMm, cols, rows, perPage, pages, fits };
   }, [qrCm, qty, paperW, paperH]);
 
