@@ -56,7 +56,11 @@ function PrintPageInner() {
     const url = `${baseUrl}/qr/${restaurant.slug}${restaurant.qrToken ? `?t=${restaurant.qrToken}` : ""}`;
     QRCode.toDataURL(url, {
       errorCorrectionLevel: "H",
-      margin: 2,
+      // quiet zone minima — antes 2 modulos hacia que QRs adyacentes se vieran
+      // separados aunque las celdas estuvieran pegadas. 1 modulo basta para
+      // que cualquier scanner moderno lea el codigo, y los QRs quedan visualmente
+      // mas juntos en la hoja.
+      margin: 1,
       width: 1200, // alta resolucion para imprimir nitido
       color: { dark: "#000000", light: "#FFFFFF" },
     }).then(setQrDataUrl);
