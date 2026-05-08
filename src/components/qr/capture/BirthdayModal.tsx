@@ -309,12 +309,20 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
               </h3>
               {(() => {
-                // Prioridad: abVariant (A/B test) > perk del local > nada (no fallback generico)
-                const subtitle = abVariant?.subtitleText
-                  || (birthdayPerk?.trim()
-                    ? t(lang, "bdayModalSubPerk").replace("{perk}", birthdayPerk.trim())
-                    : null);
-                if (!subtitle) return null;
+                // Prioridad del subtitulo:
+                // 1. Perk del local (contenido especifico del dueno) — siempre gana
+                // 2. abVariant (A/B test) — para locales sin perk, el bandit
+                //    sigue optimizando wording
+                // 3. Default i18n bdayModalSub — fallback corto si nada aplica
+                let subtitle: string;
+                const perk = birthdayPerk?.trim();
+                if (perk) {
+                  subtitle = t(lang, "bdayModalSubPerk").replace("{perk}", perk);
+                } else if (abVariant?.subtitleText) {
+                  subtitle = abVariant.subtitleText;
+                } else {
+                  subtitle = t(lang, "bdayModalSub");
+                }
                 return (
                   <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
                     {subtitle}
