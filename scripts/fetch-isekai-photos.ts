@@ -91,16 +91,57 @@ Reglas:
   return all;
 }
 
-async function searchUnsplash(query: string): Promise<string | null> {
-  if (UNSPLASH_KEY) {
-    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + " food")}&per_page=1&orientation=landscape`, {
+/** Busca en Unsplash con la query principal; si no hay resultado, prueba
+ * con queries mas simples (1-2 palabras) hasta encontrar algo. */
+async function searchUnsplash(query: string, dishName: string): Promise<string | null> {
+  if (!UNSPLASH_KEY) {
+    return `https://source.unsplash.com/800x600/?${encodeURIComponent(query + ",food,dish")}`;
+  }
+
+  const tryQuery = async (q: string): Promise<string | null> => {
+    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(q)}&per_page=1&orientation=landscape`, {
       headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
     });
     if (!res.ok) return null;
     const data = await res.json();
     return data.results?.[0]?.urls?.regular || null;
+  };
+
+  // 1. Query original + "food"
+  let url = await tryQuery(query + " food");
+  if (url) return url;
+
+  // 2. Query original sin "food"
+  url = await tryQuery(query);
+  if (url) return url;
+
+  // 3. Solo primeras 2 palabras
+  const words = query.split(/\s+/);
+  if (words.length > 2) {
+    url = await tryQuery(words.slice(0, 2).join(" "));
+    if (url) return url;
   }
-  return `https://source.unsplash.com/800x600/?${encodeURIComponent(query + ",food,dish")}`;
+
+  // 4. Fallbacks por categoria semantica del nombre del plato
+  const lower = dishName.toLowerCase();
+  let fallback: string | null = null;
+  if (/ramen|miso|paitan|tonkotsu|shoyu|shio|tan-tan/.test(lower)) fallback = "ramen bowl";
+  else if (/nigiri|sushi|sashimi|maki|gunkan|chirashi/.test(lower)) fallback = "sushi";
+  else if (/yakimeshi|gohan|donburi|don\b/.test(lower)) fallback = "japanese rice bowl";
+  else if (/karaage|tonkatsu|tebasaki/.test(lower)) fallback = "japanese fried chicken";
+  else if (/gyosa|gyoza|takoyaki|edamame|okonomiyaki/.test(lower)) fallback = "japanese appetizer";
+  else if (/mochi|taiyaki|dorayaki/.test(lower)) fallback = "japanese dessert";
+  else if (/te\b|matcha|mugicha|genmaicha/.test(lower)) fallback = "japanese tea";
+  else if (/limonada|jugo|mocktail|kombucha/.test(lower)) fallback = "fresh drink";
+  else if (/topping|wakame|nori|kikurage|gari|moyashi|chashu|ajitama/.test(lower)) fallback = "japanese ingredient";
+
+  if (fallback) {
+    url = await tryQuery(fallback);
+    if (url) return url;
+  }
+
+  // 5. Ultimo recurso: "japanese food"
+  return tryQuery("japanese food");
 }
 
 async function reuploadToSupabase(externalUrl: string, restaurantId: string, dishName: string): Promise<string | null> {
@@ -163,7 +204,7 @@ async function main() {
     const batch = needsPhotos.slice(i, i + BATCH);
     await Promise.all(batch.map(async (dish) => {
       const query = queryById.get(dish.id) || dish.name;
-      const externalUrl = await searchUnsplash(query);
+      const externalUrl = await searchUnsplash(query, dish.name);
       if (!externalUrl) {
         console.log(`  ✗ ${dish.name} (query: "${query}") — no se encontró foto`);
         fail++;
