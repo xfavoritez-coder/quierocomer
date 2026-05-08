@@ -688,7 +688,11 @@ function DishListCard({
   const isRec = dish.tags?.includes("RECOMMENDED");
 
   const cardBg = isRec ? "rgba(244,166,35,0.04)" : "white";
-  const cardBorder = isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.04)";
+  const cardBorder = isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.07)";
+  // Sombra sutil para separar cards entre si — un poco mas marcada en las recomendadas
+  const cardShadow = isRec
+    ? "0 2px 6px rgba(244,166,35,0.08), 0 1px 2px rgba(0,0,0,0.04)"
+    : "0 1px 3px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.02)";
 
   return (
     <button
@@ -703,6 +707,7 @@ function DishListCard({
         background: cardBg,
         borderRadius: 14,
         border: cardBorder,
+        boxShadow: cardShadow,
         textAlign: "left",
         cursor: "pointer",
         fontFamily: "inherit",
