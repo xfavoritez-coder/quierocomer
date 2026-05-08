@@ -28,45 +28,91 @@ type SyncResult = {
   error?: string;
 };
 
-async function getPlan(planId: string): Promise<{ amount?: number } | null> {
-  try {
-    return await flowPost("/plans/get", { planId });
-  } catch (err: any) {
-    if (err?.status === 400 || err?.status === 404) return null;
-    if (err?.message?.includes("not found") || err?.message?.includes("does not exist")) return null;
-    throw err;
-  }
+// Flow tiene varios codigos/mensajes para "plan no existe". Esta lista
+// reune los que vimos en produccion + sandbox.
+function isPlanNotFoundError(err: any): boolean {
+  const msg = String(err?.message || "").toLowerCase();
+  return (
+    msg.includes("not found") ||
+    msg.includes("does not exist") ||
+    msg.includes("no existe") ||
+    msg.includes("plan no encontrado")
+  );
 }
 
+function isPlanAlreadyExistsError(err: any): boolean {
+  const msg = String(err?.message || "").toLowerCase();
+  return (
+    msg.includes("already been used") ||
+    msg.includes("already exists") ||
+    msg.includes("ya existe") ||
+    msg.includes("ya ha sido")
+  );
+}
+
+/**
+ * Idempotent upsert estrategia:
+ * 1. Intenta /plans/get para obtener monto actual (no critica)
+ * 2. Intenta /plans/edit. Si funciona, listo.
+ * 3. Si edit falla con "plan no existe", intenta /plans/create.
+ * 4. Si create falla con "ya existe" (race condition o error transient en
+ *    el get), reintenta /plans/edit.
+ */
 async function upsertPlan(
   planId: string,
   name: string,
   amountGross: number,
 ): Promise<Pick<SyncResult, "action" | "previousAmount" | "error">> {
-  try {
-    const existing = await getPlan(planId);
-    const params = {
-      planId,
-      name,
-      amount: amountGross,
-      currency: "CLP",
-      interval: 3, // 3 = mensual en Flow
-      interval_count: 1,
-      periods_number: 0, // 0 = infinito
-      urlCallback: URL_CALLBACK,
-    };
+  const params = {
+    planId,
+    name,
+    amount: amountGross,
+    currency: "CLP",
+    interval: 3, // 3 = mensual en Flow
+    interval_count: 1,
+    periods_number: 0, // 0 = infinito
+    urlCallback: URL_CALLBACK,
+  };
 
-    if (!existing) {
-      await flowPost("/plans/create", params);
-      return { action: "created" };
-    }
-    if (existing.amount === amountGross) {
-      return { action: "no_change", previousAmount: existing.amount };
-    }
+  // Intentar leer monto actual (best effort, sin fallar si Flow devuelve raro)
+  let previousAmount: number | undefined;
+  try {
+    const existing = await flowPost<{ amount?: number }>("/plans/get", { planId });
+    previousAmount = existing?.amount;
+  } catch {
+    // Ignoramos — si /plans/get falla, edit/create se encargara.
+  }
+
+  if (previousAmount === amountGross) {
+    return { action: "no_change", previousAmount };
+  }
+
+  // Intentar editar primero
+  try {
     await flowPost("/plans/edit", params);
-    return { action: "updated", previousAmount: existing.amount };
-  } catch (err: any) {
-    return { action: "error", error: err?.message || String(err) };
+    return { action: "updated", previousAmount };
+  } catch (editErr: any) {
+    if (!isPlanNotFoundError(editErr)) {
+      // Editar fallo por algo distinto a "no existe" → reportar error
+      return { action: "error", error: editErr?.message || String(editErr), previousAmount };
+    }
+  }
+
+  // Edit dijo "no existe" → crear
+  try {
+    await flowPost("/plans/create", params);
+    return { action: "created" };
+  } catch (createErr: any) {
+    if (isPlanAlreadyExistsError(createErr)) {
+      // Race: alguien lo creo justo ahora — reintentar edit
+      try {
+        await flowPost("/plans/edit", params);
+        return { action: "updated", previousAmount };
+      } catch (retryErr: any) {
+        return { action: "error", error: retryErr?.message || String(retryErr), previousAmount };
+      }
+    }
+    return { action: "error", error: createErr?.message || String(createErr), previousAmount };
   }
 }
 
