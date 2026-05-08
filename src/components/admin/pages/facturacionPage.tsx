@@ -23,12 +23,12 @@ type BillingInfo = {
 };
 
 const FIELD_LABELS: Record<string, string> = {
-  billingCompanyName: "Razon social",
+  billingCompanyName: "Razón social",
   billingRut: "RUT",
   billingGiro: "Giro",
-  billingAddress: "Direccion comercial",
+  billingAddress: "Dirección comercial",
   billingCity: "Comuna / Ciudad",
-  billingEmail: "Email facturacion",
+  billingEmail: "Email facturación",
 };
 
 const inputStyle: React.CSSProperties = {
@@ -117,9 +117,9 @@ export default function FacturacionPage() {
       }
       setInfo(data);
       if (data.billingRut) setRut(data.billingRut);
-      toast.success(data.isComplete ? "Datos de facturacion completos" : "Guardado");
+      toast.success(data.isComplete ? "Datos de facturación completos" : "Guardado");
     } catch {
-      toast.error("Error de conexion");
+      toast.error("Error de conexión");
     }
     setSaving(false);
   };
@@ -129,9 +129,9 @@ export default function FacturacionPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Datos de facturacion</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Datos de facturación</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>
-        Estos datos los usamos para emitir tu factura electronica cada mes
+        Estos datos los usamos para emitir tu factura electrónica cada mes
       </p>
 
       {/* Estado */}
@@ -140,10 +140,10 @@ export default function FacturacionPage() {
           <FileText size={20} color="#92400e" style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
             <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "#92400e", margin: 0 }}>
-              Faltan datos para poder cobrar
+              Faltan datos para emitir tu factura
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#78350f", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Necesitamos: {info.missingFields.map((f) => FIELD_LABELS[f] || f).join(", ")}. Sin estos datos no podemos emitir factura ni iniciar la suscripcion.
+              Necesitamos: {info.missingFields.map((f) => FIELD_LABELS[f] || f).join(", ")}. Sin estos datos no podremos emitir tu factura electrónica.
             </p>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function FacturacionPage() {
               Datos completos
             </p>
             <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#166534", margin: "2px 0 0" }}>
-              Listo para emitir factura electronica con IVA incluido.
+              Listo para emitir factura electrónica con IVA incluido.
             </p>
           </div>
         </div>
@@ -167,23 +167,23 @@ export default function FacturacionPage() {
         <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
           Empresa
         </h3>
-        <Field label="Razon social" required>
+        <Field label="Razón social" required>
           <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={inputStyle} placeholder="Restaurantes SpA" />
         </Field>
         <Field label="RUT" required hint="Formato: 76.123.456-7">
           <input value={rut} onChange={(e) => setRut(e.target.value)} style={inputStyle} placeholder="76.123.456-7" />
         </Field>
-        <Field label="Giro" required hint="Actividad economica registrada en SII">
+        <Field label="Giro" required hint="Actividad económica registrada en el SII">
           <input value={giro} onChange={(e) => setGiro(e.target.value)} style={inputStyle} placeholder="Restaurante / Servicio de comida" />
         </Field>
       </div>
 
-      {/* Direccion */}
+      {/* Dirección */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
         <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
-          Direccion comercial
+          Dirección comercial
         </h3>
-        <Field label="Direccion" required>
+        <Field label="Dirección" required>
           <input value={address} onChange={(e) => setAddress(e.target.value)} style={inputStyle} placeholder="Av. Providencia 1234, oficina 502" />
         </Field>
         <Field label="Comuna / Ciudad" required>
@@ -194,15 +194,15 @@ export default function FacturacionPage() {
       {/* Contacto */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
         <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
-          Contacto facturacion
+          Contacto de facturación
         </h3>
-        <Field label="Email facturacion" required hint="Ahi enviamos la factura cada mes">
+        <Field label="Email facturación" required hint="Ahí enviamos la factura cada mes">
           <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="contabilidad@tu-empresa.cl" type="email" />
         </Field>
         <Field label="Nombre responsable">
-          <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={inputStyle} placeholder="Juan Perez" />
+          <input value={contactName} onChange={(e) => setContactName(e.target.value)} style={inputStyle} placeholder="Juan Pérez" />
         </Field>
-        <Field label="Telefono">
+        <Field label="Teléfono">
           <input value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} placeholder="+56 2 1234 5678" type="tel" />
         </Field>
       </div>
@@ -211,7 +211,7 @@ export default function FacturacionPage() {
         width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8,
         fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: saving ? "wait" : "pointer",
       }}>
-        {saving ? "Guardando..." : "Guardar datos de facturacion"}
+        {saving ? "Guardando..." : "Guardar datos de facturación"}
       </button>
 
       <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>

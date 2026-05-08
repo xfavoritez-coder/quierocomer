@@ -143,9 +143,11 @@ function TrialBanner({ restaurantId }: { restaurantId: string | null }) {
     daysLeft = Math.max(0, Math.ceil((end - now) / (24 * 60 * 60 * 1000)));
   }
 
-  const billingComplete = (status as any).billingInfo?.isComplete !== false;
-  const ctaHref = billingComplete ? "/panel/suscripcion" : "/panel/facturacion";
-  const ctaLabel = billingComplete ? "Inscribir tarjeta" : "Completar datos";
+  // El banner de trial siempre manda directo a /panel/suscripcion para
+  // inscribir tarjeta. Los datos de facturación se piden DESPUÉS, cuando
+  // ya pagó el primer mes (banner separado en /panel/suscripcion).
+  const ctaHref = "/panel/suscripcion";
+  const ctaLabel = "Inscribir tarjeta";
 
   const isUrgent = (daysLeft ?? 999) <= 2;
   const bg = isUrgent
@@ -273,14 +275,7 @@ function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; 
       });
       const data = await res.json();
       if (!res.ok || !data.url) {
-        if (data?.code === "BILLING_INFO_REQUIRED") {
-          toast.error("Completa tus datos de facturacion antes de continuar");
-          setSubmitting(false);
-          onClose();
-          window.location.href = "/panel/facturacion";
-          return;
-        }
-        toast.error(data.error || "No se pudo iniciar la suscripcion");
+        toast.error(data.error || "No se pudo iniciar la suscripción");
         setSubmitting(false);
         return;
       }
