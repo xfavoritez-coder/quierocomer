@@ -424,6 +424,7 @@ model Restaurant {
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
   waiterPanelActive  Boolean    @default(false)
+  birthdayPerk       String?    // beneficio que el local le regala al cliente en su cumple (ej: "un postre" / "10% off"). Si esta vacio, el modal de cumple no muestra mensaje de regalo
   plan               RestaurantPlan @default(FREE)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
 

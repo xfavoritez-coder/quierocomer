@@ -10,6 +10,7 @@ import { t } from "@/lib/qr/i18n";
 interface Props {
   restaurantId: string;
   restaurantName?: string;
+  birthdayPerk?: string | null;
 }
 
 /**
@@ -17,7 +18,7 @@ interface Props {
  * Mounted at top level of carta — doesn't depend on scroll position.
  * Owns the visit counter (increments on mount, checks >= 2).
  */
-export default function BirthdayAutoModal({ restaurantId, restaurantName }: Props) {
+export default function BirthdayAutoModal({ restaurantId, restaurantName, birthdayPerk }: Props) {
   const lang = useLang();
   const [modalOpen, setModalOpen] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
@@ -144,6 +145,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName }: Prop
         <BirthdayModal
           restaurantId={restaurantId}
           restaurantName={restaurantName}
+          birthdayPerk={birthdayPerk}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           abVariant={abVariant}

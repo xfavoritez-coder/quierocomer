@@ -21,6 +21,9 @@ export interface AbVariant {
 interface Props {
   restaurantId: string;
   restaurantName?: string;
+  /** Beneficio que el local le regala al cliente en su cumple. Si esta vacio,
+   * el modal no muestra texto de regalo (solo titulo + form). */
+  birthdayPerk?: string | null;
   /** If user is already logged in, pass their data to update instead of register */
   existingUser?: { name: string | null; email: string } | null;
   bannerVariantId?: string;
@@ -35,7 +38,7 @@ interface Props {
 
 type Phase = "form" | "name";
 
-export default function BirthdayModal({ restaurantId, restaurantName, existingUser, bannerVariantId, abVariant, onClose, onSuccess, onNameSaved }: Props) {
+export default function BirthdayModal({ restaurantId, restaurantName, birthdayPerk, existingUser, bannerVariantId, abVariant, onClose, onSuccess, onNameSaved }: Props) {
   const lang = useLang();
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
@@ -305,9 +308,19 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
                 {abVariant?.titleText
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
               </h3>
-              <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
-                {abVariant?.subtitleText || t(lang, "bdayModalSub")}
-              </p>
+              {(() => {
+                // Prioridad: abVariant (A/B test) > perk del local > nada (no fallback generico)
+                const subtitle = abVariant?.subtitleText
+                  || (birthdayPerk?.trim()
+                    ? t(lang, "bdayModalSubPerk").replace("{perk}", birthdayPerk.trim())
+                    : null);
+                if (!subtitle) return null;
+                return (
+                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
+                    {subtitle}
+                  </p>
+                );
+              })()}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -389,11 +402,6 @@ export default function BirthdayModal({ restaurantId, restaurantName, existingUs
               </button>
             </div>
 
-            {!existingUser && (
-              <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#aaa", marginTop: 12 }}>
-                🔒 {t(lang, "bdayPrivacy")}
-              </p>
-            )}
           </>
         )}
 

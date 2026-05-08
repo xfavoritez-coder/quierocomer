@@ -659,7 +659,7 @@ export default function CartaFeed({
         <section key={category.id} id={`feed-cat-${category.id}`}>
           {/* Interstitial banners */}
           {index === Math.max(2, Math.floor(grouped.length * 0.4)) && <div style={{ margin: "0 10px 8px" }}><ExperienceBanner restaurantId={restaurant.id} /></div>}
-          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-8px 0 8px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} /></div>}
+          {index === Math.max(4, Math.floor(grouped.length * 0.75)) && <div style={{ margin: "-8px 0 8px" }}><BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} /></div>}
 
           {/* Section header */}
           <div style={{ padding: "28px 16px 14px" }}>
@@ -703,7 +703,7 @@ export default function CartaFeed({
         {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
       </div>
 
-      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} />
+      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
 
       {/* ═══ MODALS ═══ */}
       {genioOpen && (

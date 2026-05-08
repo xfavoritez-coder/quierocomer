@@ -4,7 +4,7 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
-import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
+import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check, Gift } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -30,6 +30,7 @@ interface RestaurantData {
   instagram: string | null; website: string | null;
   scheduleJson: Record<string, string> | null;
   waiterPanelActive: boolean;
+  birthdayPerk: string | null;
 }
 
 function Card({ children, title, icon: Icon }: { children: React.ReactNode; title: string; icon?: any }) {
@@ -79,6 +80,7 @@ export default function MiRestaurantePage() {
   const [instagram, setInstagram] = useState("");
   const [website, setWebsite] = useState("");
   const [schedule, setSchedule] = useState<Record<string, string>>({});
+  const [birthdayPerk, setBirthdayPerk] = useState("");
 
   const rid = selectedRestaurantId;
 
@@ -100,6 +102,7 @@ export default function MiRestaurantePage() {
       setInstagram(d.instagram || "");
       setWebsite(d.website || "");
       setSchedule(d.scheduleJson || {});
+      setBirthdayPerk(d.birthdayPerk || "");
     } catch {}
     setLoading(false);
   }, [rid]);
@@ -132,6 +135,7 @@ export default function MiRestaurantePage() {
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
   const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
+  const saveBirthdayPerk = () => save({ birthdayPerk: birthdayPerk.trim() || null });
 
   const updateDay = (key: string, value: string) => {
     setSchedule(prev => ({ ...prev, [key]: value }));
@@ -231,6 +235,27 @@ export default function MiRestaurantePage() {
         </Field>
         <button onClick={saveSocial} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
           {saving ? "Guardando..." : "Guardar redes"}
+        </button>
+      </Card>
+
+      {/* ── Regalo de cumpleaños ── */}
+      <Card title="Regalo de cumpleaños" icon={Gift}>
+        <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>
+          Si pones algo aquí, aparece en el modal de captura de cumple para invitar al cliente a registrar su fecha. Si lo dejas vacío, el modal solo pide la fecha sin prometer un regalo.
+        </p>
+        <Field label="Beneficio">
+          <input
+            value={birthdayPerk}
+            onChange={(e) => setBirthdayPerk(e.target.value.slice(0, 80))}
+            style={inputStyle}
+            placeholder="Ej: un postre · un trago de cortesía · 20% de descuento"
+          />
+          <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
+            {birthdayPerk.length}/80 · Texto corto. El modal mostrará: "Déjanos tu cumple y te regalamos {birthdayPerk || "..."}".
+          </p>
+        </Field>
+        <button onClick={saveBirthdayPerk} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+          {saving ? "Guardando..." : "Guardar regalo"}
         </button>
       </Card>
 
