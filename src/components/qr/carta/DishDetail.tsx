@@ -276,7 +276,10 @@ function DishSlide({
   const photos = dish.photos?.length ? dish.photos : [];
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
-  useEffect(() => { setImgLoaded(false); }, [photoIndex]);
+  // Aspect ratio real de la foto — para que el container se adapte a la
+  // imagen y no haya borde gris ni zoom forzado.
+  const [imgAspect, setImgAspect] = useState<number | null>(null);
+  useEffect(() => { setImgLoaded(false); setImgAspect(null); }, [photoIndex]);
   const averageRating = ratingMap[dish.id];
   const categoryName = categories.find((c) => c.id === dish.categoryId)?.name;
   const desc = dish.description || "";
@@ -328,8 +331,21 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#fff",
       }}
     >
-      {/* Photo */}
-      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0, background: photos.length > 0 ? "#f5f5f3" : "transparent" }}>
+      {/* Photo — el container se adapta al aspect ratio real de la imagen
+           para que no haya bordes grises ni zoom forzado. Cap a 75vh para
+           que portraits muy alargados no dominen la pantalla. */}
+      <div ref={photoRef} style={{
+        position: "relative",
+        width: "100%",
+        // Si ya se cargo la imagen, usamos su aspect real. Sino fallback a min(55vh, 420px) como antes.
+        ...(photos.length > 0 && imgAspect
+          ? { aspectRatio: String(imgAspect), maxHeight: "75vh" }
+          : { height: photos.length > 0 ? "min(55vh, 420px)" : "26vh" }
+        ),
+        overflow: "hidden",
+        zIndex: 0,
+        background: photos.length > 0 ? "#f5f5f3" : "transparent",
+      }}>
         {photos.length === 0 && (
           <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #f5f5f3 0%, #e8e4dc 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
@@ -340,7 +356,7 @@ function DishSlide({
             src={photos[photoIndex]}
             alt={dish.name}
             fill
-            className="object-contain object-center"
+            className="object-cover object-center"
             sizes="100vw"
             priority={isActive}
             quality={80}
@@ -354,8 +370,14 @@ function DishSlide({
             key={photos[photoIndex]}
             loading="eager"
             decoding="async"
-            onLoad={() => setImgLoaded(true)}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+            onLoad={(e) => {
+              const t = e.currentTarget;
+              if (t.naturalWidth && t.naturalHeight) {
+                setImgAspect(t.naturalWidth / t.naturalHeight);
+              }
+              setImgLoaded(true);
+            }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
           />
         )}
 
