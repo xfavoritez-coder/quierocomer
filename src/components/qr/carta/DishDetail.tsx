@@ -505,20 +505,20 @@ function DishSlide({
 
           const seals: { emoji: string; label: string; bg: string; color: string; forYou?: boolean; warning?: boolean }[] = [];
           // UNIVERSAL: dieta
-          if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.18)", color: "#4ade80" });
-          else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(134,239,172,0.18)", color: "#86efac" });
+          if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.12)", color: "#15803d" });
+          else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(34,197,94,0.10)", color: "#16a34a" });
           // UNIVERSAL: picante
-          if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.18)", color: "#f87171" });
+          if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.10)", color: "#dc2626" });
           // UNIVERSAL: sin gluten
-          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.18)", color: "#d4a647" });
+          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#854d0e" });
           // UNIVERSAL: contiene frutos secos (warning de alergeno serio — anafilaxia)
-          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.14)", color: "#fb923c", warning: true });
+          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.10)", color: "#9a3412", warning: true });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)
-          if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.18)", color: "#60a5fa", forYou: true });
+          if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.12)", color: "#1d4ed8", forYou: true });
           // CONDICIONAL: sin soya
-          if (soyFree && userWantsSoy) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.18)", color: "#34d399", forYou: true });
+          if (soyFree && userWantsSoy) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.12)", color: "#047857", forYou: true });
           // CONDICIONAL: sin frutos secos (solo si usuario tiene la restriccion Y el plato lo confirma explicito)
-          if (explicitlyNutsFree && userWantsNutsFree) seals.push({ emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.12)", color: "#a06a3a", forYou: true });
+          if (explicitlyNutsFree && userWantsNutsFree) seals.push({ emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.14)", color: "#854d0e", forYou: true });
 
           if (seals.length === 0) return null;
           return (
