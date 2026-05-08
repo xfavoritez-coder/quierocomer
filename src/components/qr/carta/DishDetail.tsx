@@ -329,7 +329,7 @@ function DishSlide({
       }}
     >
       {/* Photo */}
-      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
+      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0, background: photos.length > 0 ? "#f5f5f3" : "transparent" }}>
         {photos.length === 0 && (
           <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #f5f5f3 0%, #e8e4dc 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
@@ -340,7 +340,7 @@ function DishSlide({
             src={photos[photoIndex]}
             alt={dish.name}
             fill
-            className="object-cover object-center"
+            className="object-contain object-center"
             sizes="100vw"
             priority={isActive}
             quality={80}
@@ -355,7 +355,7 @@ function DishSlide({
             loading="eager"
             decoding="async"
             onLoad={() => setImgLoaded(true)}
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", objectPosition: "center", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }}
           />
         )}
 
@@ -511,8 +511,8 @@ function DishSlide({
           if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.10)", color: "#dc2626" });
           // UNIVERSAL: sin gluten
           if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#854d0e" });
-          // UNIVERSAL: contiene frutos secos (warning de alergeno serio — anafilaxia)
-          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.10)", color: "#9a3412", warning: true });
+          // UNIVERSAL: contiene frutos secos (informativo, mismo estilo que el resto)
+          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.10)", color: "#9a3412" });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)
           if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.12)", color: "#1d4ed8", forYou: true });
           // CONDICIONAL: sin soya
