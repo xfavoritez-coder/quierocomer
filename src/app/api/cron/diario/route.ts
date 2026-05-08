@@ -79,6 +79,69 @@ export async function GET(req: NextRequest) {
       console.error("Automation processing error:", e);
     }
 
+    // 4.5 Auto-downgrade trials expirados sin tarjeta inscrita.
+    // Si un local entro en TRIALING (via /admin/locales/[id]/handoff) y no
+    // inscribio tarjeta antes del trialEndsAt, baja a FREE y manda email.
+    const now = new Date();
+    const expiredTrials = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "TRIALING",
+        trialEndsAt: { lt: now },
+        flowSubscriptionId: null,
+        billingExempt: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        plan: true,
+        owner: { select: { email: true, name: true } },
+      },
+    });
+
+    let trialsExpired = 0;
+    if (expiredTrials.length > 0) {
+      await prisma.restaurant.updateMany({
+        where: { id: { in: expiredTrials.map((r) => r.id) } },
+        data: {
+          subscriptionStatus: "NONE",
+          plan: "FREE",
+          trialEndsAt: null,
+        },
+      });
+      trialsExpired = expiredTrials.length;
+
+      // Email notificacion al dueno (best effort, no falla el cron si falla)
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      for (const r of expiredTrials) {
+        if (!r.owner?.email) continue;
+        try {
+          const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
+          const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
+          await sendAdminEmail({
+            to: r.owner.email,
+            subject: `Tu plan de ${r.name} bajo a Gratis`,
+            html: adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:20px;margin:0 0 16px">${firstName}, tu prueba gratis termino</h2>
+<p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 16px">
+  Tu local <strong>${r.name}</strong> volvio al plan <strong>Gratis</strong> porque no inscribiste tu tarjeta.
+</p>
+<p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 24px">
+  Tu carta digital sigue funcionando — solo perdiste las funciones avanzadas (estadisticas, multilenguaje, etc.). Cuando quieras volver, entra al panel y reactiva tu plan.
+</p>
+<div style="text-align:center">
+  <a href="${baseUrl}/panel/suscripcion" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none">
+    Reactivar mi plan
+  </a>
+</div>`),
+            purpose: "trial_expired",
+          });
+        } catch (e) {
+          console.error("[diario] email trial expired error:", e);
+        }
+      }
+    }
+
     // 5. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -100,6 +163,7 @@ export async function GET(req: NextRequest) {
           sessionsAbandoned: abandonedSessions.count,
           guestsUpdated,
           expiredTokensCleaned: expiredTokens.count,
+          trialsExpired,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,
@@ -117,6 +181,7 @@ export async function GET(req: NextRequest) {
       sessionsAbandoned: abandonedSessions.count,
       guestsUpdated,
       expiredTokensCleaned: expiredTokens.count,
+      trialsExpired,
     });
   } catch (error) {
     const durationMs = Date.now() - start;

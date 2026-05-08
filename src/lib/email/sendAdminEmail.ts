@@ -131,3 +131,50 @@ ${step(3, "Imprime tu QR y ponlo en las mesas", "Desde tu panel puedes generar e
   </a>
 </div>`);
 }
+
+/**
+ * Email de entrega al dueño con trial activo. Le explica que tiene N dias
+ * gratis para inscribir su tarjeta y mantener el plan pagado.
+ */
+export function handoffOwnerEmailHtml(
+  name: string,
+  email: string,
+  password: string,
+  qrLink: string | null,
+  panelLink: string,
+  planLabel: string,
+  trialDays: number,
+): string {
+  return adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Bienvenido, ${name}! 🎉</h2>
+<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
+  Tu carta digital ya está funcionando. Te activamos el plan <strong style="color:#FFD600">${planLabel}</strong> con <strong style="color:#FFD600">${trialDays} días gratis</strong> para que la pruebes con tus clientes reales.
+</p>
+
+<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px">🔑 Tu acceso al panel</p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Email:</strong> ${email}</p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 12px"><strong>Contraseña:</strong> ${password}</p>
+  <p style="color:#c0a060;font-size:13px;margin:0;opacity:0.85">Te pediremos cambiarla en el primer login.</p>
+</div>
+
+<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">⏰ Para no perder tu plan</p>
+  <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 8px">
+    Tienes <strong style="color:#FFD600">${trialDays} días</strong> para inscribir tu tarjeta y completar tus datos de facturación. Después de eso, el cobro mensual se hace automático.
+  </p>
+  <p style="color:#c0a060;font-size:14px;line-height:1.6;margin:0;opacity:0.85">
+    Si no inscribes tarjeta en ${trialDays} días, tu plan baja a Gratis (la carta sigue funcionando, pero pierdes funciones avanzadas).
+  </p>
+</div>
+
+${qrLink ? `<p style="color:#c0a060;font-size:14px;line-height:1.6;margin-bottom:20px;text-align:center">
+  Tu carta vive en <a href="${qrLink}" style="color:#FFD600;text-decoration:underline">${qrLink.replace("https://", "")}</a>
+</p>` : ""}
+
+<div style="text-align:center;margin-top:24px">
+  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px">
+    Entrar a mi panel →
+  </a>
+</div>`);
+}

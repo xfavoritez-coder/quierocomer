@@ -29,6 +29,10 @@ interface Restaurant {
   owner: { id: string; name: string; email: string } | null;
   waiterPanelActive: boolean;
   plan: string;
+  subscriptionStatus?: string;
+  trialEndsAt?: string | null;
+  flowSubscriptionId?: string | null;
+  billingExempt?: boolean;
   toteatRestaurantId: string | null;
   toteatLocalId: number | null;
   toteatUserId: number | null;
@@ -47,6 +51,13 @@ export default function AdminLocales() {
   const [filter, setFilter] = useState<"todos" | "activos" | "inactivos" | "sin_owner">("todos");
   const [selected, setSelected] = useState<Restaurant | null>(null);
   const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [handoffOpen, setHandoffOpen] = useState(false);
+  const [handoffEmail, setHandoffEmail] = useState("");
+  const [handoffName, setHandoffName] = useState("");
+  const [handoffWhatsapp, setHandoffWhatsapp] = useState("");
+  const [handoffSubmitting, setHandoffSubmitting] = useState(false);
+  const [handoffError, setHandoffError] = useState<string | null>(null);
+  const [handoffResult, setHandoffResult] = useState<null | { ok: boolean; trialEndsAt: string; emailSent: boolean; emailError: string | null; passwordGenerated: string | null }>(null);
 
   useEffect(() => {
     fetch("/api/admin/locales").then(r => r.json()).then(d => { if (Array.isArray(d)) setRestaurants(d); }).catch(() => {}).finally(() => setLoading(false));
@@ -353,6 +364,21 @@ export default function AdminLocales() {
               🔑 Entrar como owner
             </button>
           )}
+          {selected.plan !== "FREE" && !selected.billingExempt && (selected.subscriptionStatus === "NONE" || !selected.subscriptionStatus) && (
+            <button
+              onClick={() => {
+                setHandoffEmail(selected.owner?.email || "");
+                setHandoffName(selected.owner?.name || "");
+                setHandoffWhatsapp("");
+                setHandoffError(null);
+                setHandoffResult(null);
+                setHandoffOpen(true);
+              }}
+              style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.12)", border: "1px solid rgba(74,222,128,0.3)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}
+            >
+              🤝 Entregar al dueño
+            </button>
+          )}
           <button onClick={() => { navigator.clipboard.writeText(`https://quierocomer.cl/qr/generar/${selected.slug}`); setQrModalOpen(true); }} style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 10, color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>📱 Generar QR</button>
           <a href={`/qr/${selected.slug}?mesa=demo&demo=true`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(127,191,220,0.1)", border: "1px solid rgba(127,191,220,0.2)", borderRadius: 10, color: "#7fbfdc", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>🔔 Demo Garzón</a>
           <a href={`/qr/admin/garzon/${selected.slug}`} target="_blank" style={{ flex: 1, minWidth: "45%", padding: "10px", background: "rgba(74,222,128,0.1)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 10, color: "#4ade80", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textAlign: "center", textDecoration: "none" }}>📱 Panel Garzón</a>
@@ -435,6 +461,102 @@ export default function AdminLocales() {
 
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
+
+      {handoffOpen && selected && (
+        <div onClick={() => !handoffSubmitting && setHandoffOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 9999, padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: "#1a1a1a", border: "1px solid #2A2A2A", borderRadius: 16, padding: 28, maxWidth: 460, width: "100%", maxHeight: "90vh", overflowY: "auto" }}>
+            {!handoffResult ? (
+              <>
+                <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#4ade80", margin: "0 0 6px" }}>🤝 Entregar al dueño</h2>
+                <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "0 0 18px", lineHeight: 1.5 }}>
+                  Crea cuenta para el dueño de <strong style={{ color: "#fff" }}>{selected.name}</strong>, le manda email con credenciales y le activa <strong style={{ color: "#FFD600" }}>7 días gratis</strong> de plan {selected.plan === "PREMIUM" ? "Premium" : "Gold"}.
+                </p>
+
+                {handoffError && (
+                  <div style={{ background: "rgba(255,100,100,0.1)", border: "1px solid rgba(255,100,100,0.3)", borderRadius: 8, padding: "10px 12px", marginBottom: 14 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ff6b6b", margin: 0 }}>{handoffError}</p>
+                  </div>
+                )}
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
+                  <div>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>Email del dueño *</label>
+                    <input value={handoffEmail} onChange={(e) => setHandoffEmail(e.target.value)} type="email" placeholder="dueno@restaurante.cl" style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>Nombre *</label>
+                    <input value={handoffName} onChange={(e) => setHandoffName(e.target.value)} placeholder="Juan Pérez" style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                  <div>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>WhatsApp (opcional)</label>
+                    <input value={handoffWhatsapp} onChange={(e) => setHandoffWhatsapp(e.target.value)} placeholder="+56 9 1234 5678" style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", gap: 10 }}>
+                  <button onClick={() => setHandoffOpen(false)} disabled={handoffSubmitting} style={{ flex: 1, padding: "11px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#aaa", fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button
+                    disabled={handoffSubmitting || !handoffEmail || !handoffName}
+                    onClick={async () => {
+                      setHandoffSubmitting(true);
+                      setHandoffError(null);
+                      try {
+                        const res = await fetch(`/api/admin/locales/${selected.id}/handoff`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ email: handoffEmail, name: handoffName, whatsapp: handoffWhatsapp || undefined }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          setHandoffError(data.error || "Error al entregar");
+                          setHandoffSubmitting(false);
+                          return;
+                        }
+                        setHandoffResult(data);
+                        // Refresh local data
+                        const updated = { ...selected, ownerId: data.ownerId, subscriptionStatus: "TRIALING", trialEndsAt: data.trialEndsAt };
+                        setSelected(updated);
+                        setRestaurants(prev => prev.map(r => r.id === selected.id ? updated : r));
+                      } catch (e: any) {
+                        setHandoffError(e?.message || "Error de conexión");
+                      }
+                      setHandoffSubmitting(false);
+                    }}
+                    style={{ flex: 2, padding: "11px", background: handoffSubmitting ? "#666" : "#4ade80", border: "none", borderRadius: 8, color: "#0a0a0a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: handoffSubmitting ? "wait" : "pointer" }}
+                  >
+                    {handoffSubmitting ? "Entregando..." : "🤝 Entregar y empezar trial"}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#4ade80", margin: "0 0 18px", textAlign: "center" }}>✓ Local entregado</h2>
+                <div style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#fff", margin: "0 0 6px" }}>Trial activo · {selected.plan === "PREMIUM" ? "Premium" : "Gold"}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.74rem", color: "#aaa", margin: 0 }}>Vence: {new Date(handoffResult.trialEndsAt).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</p>
+                </div>
+                {handoffResult.passwordGenerated && (
+                  <div style={{ background: "rgba(255,214,0,0.06)", border: "1px solid rgba(255,214,0,0.2)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#FFD600", margin: "0 0 6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Contraseña generada</p>
+                    <p style={{ fontFamily: "monospace", fontSize: "0.92rem", color: "#fff", margin: 0, wordBreak: "break-all" }}>{handoffResult.passwordGenerated}</p>
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#888", margin: "8px 0 0" }}>Se la enviamos por email. Cópiala por si acaso.</p>
+                  </div>
+                )}
+                <div style={{ background: handoffResult.emailSent ? "rgba(74,222,128,0.06)" : "rgba(255,100,100,0.08)", border: `1px solid ${handoffResult.emailSent ? "rgba(74,222,128,0.2)" : "rgba(255,100,100,0.25)"}`, borderRadius: 8, padding: "10px 12px", marginBottom: 18 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.78rem", color: handoffResult.emailSent ? "#4ade80" : "#ff6b6b", margin: 0 }}>
+                    {handoffResult.emailSent ? "📧 Email enviado al dueño" : `⚠ El email falló: ${handoffResult.emailError}. Mándale las credenciales tú.`}
+                  </p>
+                </div>
+                <button onClick={() => { setHandoffOpen(false); setHandoffResult(null); }} style={{ width: "100%", padding: "11px", background: "#F4A623", border: "none", borderRadius: 8, color: "#0a0a0a", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>
+                  Listo
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 
