@@ -57,11 +57,17 @@ export default function CategoryNav({
           flex: 1,
           height: "100%",
           paddingLeft: leftSlot ? 20 : 16,
-          paddingRight: rightSlot ? 20 : 16,
+          paddingRight: rightSlot ? 28 : 16,
           gap: 24,
           scrollbarWidth: "none",
           msOverflowStyle: "none",
           WebkitOverflowScrolling: "touch",
+          // Fade gradient en el borde donde haya slot — el texto largo se
+          // desvanece suavemente en vez de cortarse abrupto contra el boton.
+          ...(rightSlot ? {
+            maskImage: "linear-gradient(to right, black 0%, black calc(100% - 28px), transparent 100%)",
+            WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 28px), transparent 100%)",
+          } : {}),
         }}
       >
         {categories.map((cat) => {
