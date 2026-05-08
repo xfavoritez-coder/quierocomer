@@ -139,8 +139,8 @@ function PrintPageInner() {
       </div>
 
       {/* Hojas */}
-      <div style={{ background: "#e8e4dc", padding: 20, minHeight: "calc(100vh - 100px)" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
+      <div className="qr-print-bg" style={{ background: "#e8e4dc", padding: 20, minHeight: "calc(100vh - 100px)" }}>
+        <div className="qr-pages-wrap" style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
           {(() => {
             // Celdas cuadradas perfectas — usamos el lado mas chico que entra.
             // Solo dejamos 4mm de safety abajo (zona no imprimible del impresor).
@@ -233,15 +233,24 @@ function PrintPageInner() {
         }
         @media print {
           html, body {
-            margin: 0;
-            padding: 0;
+            margin: 0 !important;
+            padding: 0 !important;
             background: white !important;
           }
           .qr-toolbar { display: none !important; }
+          /* Reset wrappers de pantalla — padding/gap solo sirven para el preview */
+          .qr-print-bg, .qr-pages-wrap {
+            padding: 0 !important;
+            gap: 0 !important;
+            min-height: 0 !important;
+            background: white !important;
+          }
+          /* page-break-after lo maneja el inline style por pagina (auto en la
+             ultima, always en las anteriores). NO aplicarlo aqui, sino fuerza
+             un page-break despues de la ultima pagina = hoja en blanco extra. */
           .qr-page {
             box-shadow: none !important;
             margin: 0 !important;
-            page-break-after: always;
           }
         }
       `}</style>
