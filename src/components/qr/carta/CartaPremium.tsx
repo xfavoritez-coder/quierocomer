@@ -583,7 +583,11 @@ export default function CartaPremium({
           const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
           const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
           const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-          const msgType = !mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions) ? getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories) : null;
+          // 'reordered-spicy' se muestra siempre que aplique (no depende de
+          // hasMatchingDishes — para 'no picante' la mayoria de la carta
+          // matchea, sino el banner nunca aparece para clientes recurrentes).
+          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
+          const msgType = dietMsg === "reordered-spicy" ? dietMsg : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
           if (msgType) return <div style={{ paddingTop: 20 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
           if (!mode) return null;
           return (

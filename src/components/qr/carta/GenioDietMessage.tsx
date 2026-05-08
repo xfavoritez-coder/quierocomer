@@ -118,23 +118,33 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
 }
 
 /**
- * Banner verde 'Reordenamos la carta para ti...'. Solo se muestra UNA vez,
- * justo después de que el cliente cierra el Genio con _spicy guardado
- * (el flag qc_spicy_msg_pending se setea en GenioOnboarding.close()).
- * Al mount consume el flag — en cambios de vista o recargas posteriores
- * ya no aparece.
+ * Banner verde 'Reordenamos la carta para ti...'. Aparece en cada visita
+ * fresca de la carta cuando el cliente tiene activa solo la restriccion
+ * '_spicy' (no picante). El cliente puede cerrarlo y no se le repite en
+ * la misma sesion; vuelve a aparecer en la proxima visita.
+ *
+ * Antes solo se mostraba justo despues de cerrar el Genio (via flag
+ * transient qc_spicy_msg_pending), por lo que clientes recurrentes con
+ * restriccion ya guardada nunca veian la confirmacion.
  */
 function ReorderedSpicyMessage() {
   const [show, setShow] = useState(false);
   const [closed, setClosed] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const pending = sessionStorage.getItem("qc_spicy_msg_pending") === "1";
-    if (pending) {
-      setShow(true);
-      sessionStorage.removeItem("qc_spicy_msg_pending");
-    }
+    // Mostrar a menos que el cliente lo haya cerrado en esta sesion
+    const dismissed = sessionStorage.getItem("qc_spicy_msg_dismissed") === "1";
+    if (!dismissed) setShow(true);
+    // Limpieza del flag legacy (ya no es el trigger)
+    sessionStorage.removeItem("qc_spicy_msg_pending");
   }, []);
+
+  const handleClose = () => {
+    setClosed(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("qc_spicy_msg_dismissed", "1");
+    }
+  };
 
   if (!show || closed) return null;
   return (
@@ -157,7 +167,7 @@ function ReorderedSpicyMessage() {
         Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas.
       </p>
       <button
-        onClick={() => setClosed(true)}
+        onClick={handleClose}
         style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
       >
         <X size={14} color="#059669" />
