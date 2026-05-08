@@ -183,16 +183,72 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
   const scrollToCategory = (catId: string) => {
     setActiveCategory(catId);
+    isClickScrollingRef.current = true;
     const el = document.getElementById(`desktop-cat-${catId}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (el) {
+      // Compensa la altura del nav fixed (52px aprox) para que el titulo
+      // no quede escondido detras
+      const top = el.getBoundingClientRect().top + window.scrollY - 60;
+      window.scrollTo({ top, behavior: "smooth" });
+    }
+    // Liberar el observer despues de que termine la animacion (~600ms)
+    setTimeout(() => { isClickScrollingRef.current = false; }, 700);
   };
+
+  // Scroll spy: cambia el tab activo mientras el usuario baja por las
+  // categorias. Usa IntersectionObserver con rootMargin negativo arriba
+  // (compensa la altura del nav fixed) para que el tab cambie cuando el
+  // titulo de la siguiente categoria pasa por debajo del nav.
+  const isClickScrollingRef = useRef(false);
+  const navScrollerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (categories.length === 0) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (isClickScrollingRef.current) return;
+        // Tomar la entrada mas cerca del top del viewport (entre las visibles)
+        const visible = entries.filter((e) => e.isIntersecting);
+        if (visible.length === 0) return;
+        const closest = visible.reduce((a, b) =>
+          Math.abs(a.boundingClientRect.top) < Math.abs(b.boundingClientRect.top) ? a : b
+        );
+        const id = closest.target.id.replace(/^desktop-cat-/, "");
+        if (id) setActiveCategory(id);
+      },
+      {
+        // Top: -60px (alto del nav fixed + un poquito). Bottom: -60% del viewport
+        // para que el tab cambie cuando el titulo entra al tercio superior.
+        rootMargin: "-60px 0px -60% 0px",
+        threshold: 0,
+      },
+    );
+    categories.forEach((c) => {
+      const el = document.getElementById(`desktop-cat-${c.id}`);
+      if (el) observer.observe(el);
+    });
+    return () => observer.disconnect();
+  }, [categories]);
+
+  // Auto-scroll horizontal del nav para que el tab activo se vea
+  useEffect(() => {
+    const scroller = navScrollerRef.current;
+    if (!scroller) return;
+    const activeBtn = scroller.querySelector<HTMLButtonElement>(`[data-cat-id="${activeCategory}"]`);
+    if (!activeBtn) return;
+    const btnRect = activeBtn.getBoundingClientRect();
+    const scRect = scroller.getBoundingClientRect();
+    // Si esta fuera del area visible del scroller horizontal, lo centramos
+    if (btnRect.left < scRect.left || btnRect.right > scRect.right) {
+      const offset = activeBtn.offsetLeft - scroller.clientWidth / 2 + activeBtn.clientWidth / 2;
+      scroller.scrollTo({ left: offset, behavior: "smooth" });
+    }
+  }, [activeCategory]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f3ef", fontFamily: "var(--font-dm)" }}>
-      {/* Header */}
-      <header style={{ background: "white", borderBottom: "1px solid #e8e4dc", position: "sticky", top: 0, zIndex: 50 }}>
+      {/* Top row: NO sticky — scrollea con el resto cuando bajas */}
+      <header style={{ background: "white", borderBottom: "1px solid #e8e4dc" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
-          {/* Top row: logo + name + search */}
           <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "16px 0" }}>
             {restaurant.logoUrl ? (
               <Image src={restaurant.logoUrl} alt="" width={40} height={40} className="rounded-full" style={{ border: "1px solid #e8e4dc" }} />
@@ -222,11 +278,16 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             </div>
             <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
+        </div>
+      </header>
 
-          {/* Category tabs */}
-          <div style={{ display: "flex", gap: 4, overflowX: "auto", paddingBottom: 8, scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}>
+      {/* Category nav — fixed al top mientras se baja */}
+      <nav style={{ background: "white", borderBottom: "1px solid #e8e4dc", position: "sticky", top: 0, zIndex: 50, boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 40px" }}>
+          <div ref={navScrollerRef} style={{ display: "flex", gap: 4, overflowX: "auto", padding: "8px 0", scrollbarWidth: "thin", scrollbarColor: "#ccc transparent" }}>
             {dietNavItem && (
               <button
+                data-cat-id="diet-carousel"
                 onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                 style={{
                   padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -244,6 +305,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               return (
                 <button
                   key={cat.id}
+                  data-cat-id={cat.id}
                   onClick={() => scrollToCategory(cat.id)}
                   style={{
                     padding: "8px 18px", borderRadius: 8, border: "none", cursor: "pointer",
@@ -259,7 +321,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             })}
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Content */}
       <div ref={contentRef} style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px 80px" }}>
