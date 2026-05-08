@@ -422,10 +422,10 @@ function DishSlide({
               {dish.discountPrice ? (
                 <>
                   <span className="line-through" style={{ color: "rgba(0,0,0,0.45)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
-                  <span style={{ color: "#555", fontSize: "17px", fontWeight: 500 }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "#555", fontSize: "17px" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
                 </>
               ) : (
-                <span style={{ color: "#555", fontSize: "17px", fontWeight: 500 }}>${dish.price.toLocaleString("es-CL")}</span>
+                <span style={{ color: "#555", fontSize: "17px" }}>${dish.price.toLocaleString("es-CL")}</span>
               )}
             </div>
           </div>
