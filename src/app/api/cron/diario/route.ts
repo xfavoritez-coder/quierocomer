@@ -79,10 +79,55 @@ export async function GET(req: NextRequest) {
       console.error("Automation processing error:", e);
     }
 
-    // 4.5 Auto-downgrade trials expirados sin tarjeta inscrita.
+    // 4.5a Recordatorio: trials con <= 2 dias restantes que aun no inscriben tarjeta.
+    // Mandamos email solo una vez (trialReminderSentAt previene duplicados).
+    const now = new Date();
+    const twoDaysFromNow = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const trialsEndingSoon = await prisma.restaurant.findMany({
+      where: {
+        subscriptionStatus: "TRIALING",
+        trialEndsAt: { gt: now, lte: twoDaysFromNow },
+        flowSubscriptionId: null,
+        billingExempt: false,
+        trialReminderSentAt: null,
+      },
+      select: {
+        id: true,
+        name: true,
+        trialEndsAt: true,
+        owner: { select: { email: true, name: true } },
+      },
+    });
+
+    let trialRemindersSent = 0;
+    if (trialsEndingSoon.length > 0) {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      const { sendAdminEmail, trialEndingSoonEmailHtml } = await import("@/lib/email/sendAdminEmail");
+      for (const r of trialsEndingSoon) {
+        if (!r.owner?.email) continue;
+        const daysLeft = Math.max(1, Math.ceil(((r.trialEndsAt?.getTime() || now.getTime()) - now.getTime()) / (24 * 60 * 60 * 1000)));
+        const firstName = (r.owner.name || "").split(" ")[0] || "Hola";
+        try {
+          await sendAdminEmail({
+            to: r.owner.email,
+            subject: `⏰ ${daysLeft === 1 ? "Te queda 1 día" : `Quedan ${daysLeft} días`} de tu prueba en ${r.name}`,
+            html: trialEndingSoonEmailHtml(firstName, r.name, daysLeft, `${baseUrl}/panel`, `${baseUrl}/panel/facturacion`),
+            purpose: "trial_reminder",
+          });
+          await prisma.restaurant.update({
+            where: { id: r.id },
+            data: { trialReminderSentAt: now },
+          });
+          trialRemindersSent++;
+        } catch (e) {
+          console.error("[diario] trial reminder error:", e);
+        }
+      }
+    }
+
+    // 4.5b Auto-downgrade trials expirados sin tarjeta inscrita.
     // Si un local entro en TRIALING (via /admin/locales/[id]/handoff) y no
     // inscribio tarjeta antes del trialEndsAt, baja a FREE y manda email.
-    const now = new Date();
     const expiredTrials = await prisma.restaurant.findMany({
       where: {
         subscriptionStatus: "TRIALING",
@@ -163,6 +208,7 @@ export async function GET(req: NextRequest) {
           sessionsAbandoned: abandonedSessions.count,
           guestsUpdated,
           expiredTokensCleaned: expiredTokens.count,
+          trialRemindersSent,
           trialsExpired,
           automations: automationResults,
           dailySnapshot: {
@@ -181,6 +227,7 @@ export async function GET(req: NextRequest) {
       sessionsAbandoned: abandonedSessions.count,
       guestsUpdated,
       expiredTokensCleaned: expiredTokens.count,
+      trialRemindersSent,
       trialsExpired,
     });
   } catch (error) {
