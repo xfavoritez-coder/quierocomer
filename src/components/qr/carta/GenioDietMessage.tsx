@@ -130,13 +130,21 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
 function ReorderedSpicyMessage() {
   const [show, setShow] = useState(false);
   const [closed, setClosed] = useState(false);
+  // Diferenciamos texto: "Listo. Reordenamos..." cuando el cliente viene de
+  // cerrar el Genio (accion reciente), vs texto pasivo cuando es una visita
+  // recurrente con la restriccion ya guardada (no hay accion reciente que
+  // celebrar — solo recordamos).
+  const [fromGenio, setFromGenio] = useState(false);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // Mostrar a menos que el cliente lo haya cerrado en esta sesion
     const dismissed = sessionStorage.getItem("qc_spicy_msg_dismissed") === "1";
+    const pending = sessionStorage.getItem("qc_spicy_msg_pending") === "1";
+    if (pending) {
+      setFromGenio(true);
+      sessionStorage.removeItem("qc_spicy_msg_pending");
+    }
     if (!dismissed) setShow(true);
-    // Limpieza del flag legacy (ya no es el trigger)
-    sessionStorage.removeItem("qc_spicy_msg_pending");
   }, []);
 
   const handleClose = () => {
@@ -164,7 +172,9 @@ function ReorderedSpicyMessage() {
     >
       <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
       <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
-        Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas.
+        {fromGenio
+          ? "Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas."
+          : "Esta carta está reordenada para ti: los platos picantes quedan al final y los marcamos con 🌶️ en su foto."}
       </p>
       <button
         onClick={handleClose}
