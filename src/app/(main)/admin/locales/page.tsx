@@ -464,6 +464,45 @@ export default function AdminLocales() {
           </button>
         </div>
 
+        {/* Toggle bonificado */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.billingExempt ? "rgba(255,214,0,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.billingExempt ? "rgba(255,214,0,0.3)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.billingExempt ? "#FFD600" : "white", margin: 0 }}>🎁 Plan bonificado</p>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+              {selected.billingExempt
+                ? "Sin cobro · Disfruta funciones del plan sin pagar"
+                : "Pago normal — el dueño paga su plan via Flow"}
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const val = !selected.billingExempt;
+              if (val && !confirm(`¿Marcar ${selected.name} como plan bonificado? No se le cobrará nada.`)) return;
+              if (!val && !confirm(`¿Quitar el plan bonificado de ${selected.name}? Volverá al flujo normal de cobro.`)) return;
+              const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ billingExempt: val }) });
+              if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                alert(err.error || "Error al actualizar");
+                return;
+              }
+              const u = { ...selected, billingExempt: val };
+              setSelected(u);
+              setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }}
+            style={{
+              width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+              background: selected.billingExempt ? "#FFD600" : "rgba(255,255,255,0.15)",
+              transition: "background 0.2s", flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: selected.billingExempt ? 23 : 3, transition: "left 0.2s",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            }} />
+          </button>
+        </div>
+
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
 
