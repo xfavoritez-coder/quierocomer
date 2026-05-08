@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { canAccess, requiredPlan, PLAN_INFO, type Feature, type Plan } from "@/lib/plans";
-import PlanUpgradeModal from "./PlanUpgradeModal";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -27,7 +25,6 @@ interface Props {
 }
 
 export default function PlanGate({ plan, feature, children, blur = true }: Props) {
-  const [showModal, setShowModal] = useState(false);
   const hasAccess = canAccess(plan, feature);
 
   if (hasAccess) return <>{children}</>;
@@ -38,7 +35,11 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
 
   if (!blur) return null;
 
-  const openModal = () => setShowModal(true);
+  // Dispatch al PlanModal del layout — reusa el flujo correcto con Flow
+  // (no WhatsApp). Pasa la pestaña que el usuario necesita destrabar.
+  const openModal = () => {
+    window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: needed } }));
+  };
 
   return (
     <>
@@ -77,12 +78,6 @@ export default function PlanGate({ plan, feature, children, blur = true }: Props
         </div>
       </div>
 
-      {showModal && (
-        <PlanUpgradeModal
-          initialTab={needed === "PREMIUM" ? "PREMIUM" : "GOLD"}
-          onClose={() => setShowModal(false)}
-        />
-      )}
     </>
   );
 }

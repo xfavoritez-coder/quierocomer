@@ -48,7 +48,7 @@ export function planFromFlowId(planId: string): RestaurantPlan | null {
 
 // ─── Display: textos visibles en landing y panel ───────────────────────
 // Single source of truth para precios + features + taglines.
-// Todos los componentes (LandingClient, PlanModal, PlanUpgradeModal,
+// Todos los componentes (LandingClient, PlanModal,
 // suscripcion page) deben leer de aqui. No duplicar.
 
 export type PlanKey = "FREE" | "GOLD" | "PREMIUM";

@@ -436,6 +436,7 @@ model Restaurant {
   flowRegisterToken    String?            // token de /customer/register en curso
   subscriptionStatus   SubscriptionStatus @default(NONE)
   trialEndsAt          DateTime?
+  trialReminderSentAt  DateTime?  // marca cuando se envio el email de "te quedan 2 dias", para no mandar duplicados
   currentPeriodEnd     DateTime?
   lastPaymentAt        DateTime?
   billingExempt        Boolean            @default(false)  // legacy clients que no pagan via Flow

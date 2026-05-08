@@ -55,9 +55,10 @@ export default function AdminLocales() {
   const [handoffEmail, setHandoffEmail] = useState("");
   const [handoffName, setHandoffName] = useState("");
   const [handoffWhatsapp, setHandoffWhatsapp] = useState("");
+  const [handoffPlan, setHandoffPlan] = useState<"FREE" | "GOLD" | "PREMIUM">("PREMIUM");
   const [handoffSubmitting, setHandoffSubmitting] = useState(false);
   const [handoffError, setHandoffError] = useState<string | null>(null);
-  const [handoffResult, setHandoffResult] = useState<null | { ok: boolean; trialEndsAt: string; emailSent: boolean; emailError: string | null; passwordGenerated: string | null }>(null);
+  const [handoffResult, setHandoffResult] = useState<null | { ok: boolean; trialEndsAt: string | null; isPaidPlan: boolean; plan: string; emailSent: boolean; emailError: string | null; passwordGenerated: string | null }>(null);
 
   useEffect(() => {
     fetch("/api/admin/locales").then(r => r.json()).then(d => { if (Array.isArray(d)) setRestaurants(d); }).catch(() => {}).finally(() => setLoading(false));
@@ -364,12 +365,16 @@ export default function AdminLocales() {
               🔑 Entrar como owner
             </button>
           )}
-          {selected.plan !== "FREE" && !selected.billingExempt && (selected.subscriptionStatus === "NONE" || !selected.subscriptionStatus) && (
+          {!selected.ownerId && !selected.billingExempt && (
             <button
               onClick={() => {
                 setHandoffEmail(selected.owner?.email || "");
                 setHandoffName(selected.owner?.name || "");
                 setHandoffWhatsapp("");
+                // Default al plan actual del local — el vendedor lo cambia en el modal
+                // si el dueño escogio otro
+                const currentPlan = (selected.plan === "GOLD" || selected.plan === "PREMIUM" || selected.plan === "FREE") ? selected.plan : "PREMIUM";
+                setHandoffPlan(currentPlan as "FREE" | "GOLD" | "PREMIUM");
                 setHandoffError(null);
                 setHandoffResult(null);
                 setHandoffOpen(true);
@@ -469,7 +474,7 @@ export default function AdminLocales() {
               <>
                 <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#4ade80", margin: "0 0 6px" }}>🤝 Entregar al dueño</h2>
                 <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#888", margin: "0 0 18px", lineHeight: 1.5 }}>
-                  Crea cuenta para el dueño de <strong style={{ color: "#fff" }}>{selected.name}</strong>, le manda email con credenciales y le activa <strong style={{ color: "#FFD600" }}>7 días gratis</strong> de plan {selected.plan === "PREMIUM" ? "Premium" : "Gold"}.
+                  Crea cuenta para el dueño de <strong style={{ color: "#fff" }}>{selected.name}</strong> y le manda email con sus credenciales y enlaces.
                 </p>
 
                 {handoffError && (
@@ -479,6 +484,38 @@ export default function AdminLocales() {
                 )}
 
                 <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 18 }}>
+                  <div>
+                    <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 }}>Plan que escogió el dueño *</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                      {(["FREE", "GOLD", "PREMIUM"] as const).map((p) => {
+                        const selected = handoffPlan === p;
+                        const colors = p === "PREMIUM"
+                          ? { bg: selected ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.04)", border: selected ? "rgba(124,58,237,0.6)" : "#2A2A2A", text: selected ? "#c4b5fd" : "#888" }
+                          : p === "GOLD"
+                            ? { bg: selected ? "rgba(244,166,35,0.18)" : "rgba(255,255,255,0.04)", border: selected ? "rgba(244,166,35,0.6)" : "#2A2A2A", text: selected ? "#F4A623" : "#888" }
+                            : { bg: selected ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)", border: selected ? "rgba(255,255,255,0.4)" : "#2A2A2A", text: selected ? "#fff" : "#888" };
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setHandoffPlan(p)}
+                            style={{
+                              padding: "10px 8px", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 8,
+                              color: colors.text, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer",
+                              transition: "all 0.15s",
+                            }}
+                          >
+                            {p === "PREMIUM" ? "💎 Premium" : p === "GOLD" ? "⭐ Gold" : "Gratis"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#666", margin: "6px 0 0", lineHeight: 1.4 }}>
+                      {handoffPlan === "FREE"
+                        ? "Sin trial. Email simple sin urgencia."
+                        : `Activa 7 días gratis. Email con instrucciones para inscribir tarjeta antes de que venza.`}
+                    </p>
+                  </div>
                   <div>
                     <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>Email del dueño *</label>
                     <input value={handoffEmail} onChange={(e) => setHandoffEmail(e.target.value)} type="email" placeholder="dueno@restaurante.cl" style={{ width: "100%", padding: "10px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid #2A2A2A", borderRadius: 8, color: "#fff", fontFamily: "monospace", fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }} />
@@ -506,7 +543,7 @@ export default function AdminLocales() {
                         const res = await fetch(`/api/admin/locales/${selected.id}/handoff`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ email: handoffEmail, name: handoffName, whatsapp: handoffWhatsapp || undefined }),
+                          body: JSON.stringify({ email: handoffEmail, name: handoffName, whatsapp: handoffWhatsapp || undefined, plan: handoffPlan }),
                         });
                         const data = await res.json();
                         if (!res.ok) {
@@ -516,7 +553,7 @@ export default function AdminLocales() {
                         }
                         setHandoffResult(data);
                         // Refresh local data
-                        const updated = { ...selected, ownerId: data.ownerId, subscriptionStatus: "TRIALING", trialEndsAt: data.trialEndsAt };
+                        const updated = { ...selected, ownerId: data.ownerId, plan: data.plan, subscriptionStatus: data.isPaidPlan ? "TRIALING" : "NONE", trialEndsAt: data.trialEndsAt };
                         setSelected(updated);
                         setRestaurants(prev => prev.map(r => r.id === selected.id ? updated : r));
                       } catch (e: any) {
@@ -534,8 +571,21 @@ export default function AdminLocales() {
               <>
                 <h2 style={{ fontFamily: F, fontSize: "1.1rem", color: "#4ade80", margin: "0 0 18px", textAlign: "center" }}>✓ Local entregado</h2>
                 <div style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.25)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
-                  <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#fff", margin: "0 0 6px" }}>Trial activo · {selected.plan === "PREMIUM" ? "Premium" : "Gold"}</p>
-                  <p style={{ fontFamily: F, fontSize: "0.74rem", color: "#aaa", margin: 0 }}>Vence: {new Date(handoffResult.trialEndsAt).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.82rem", color: "#fff", margin: "0 0 6px" }}>
+                    {handoffResult.isPaidPlan
+                      ? `Trial activo · ${handoffResult.plan === "PREMIUM" ? "Premium" : "Gold"}`
+                      : "Plan Gratis activado"}
+                  </p>
+                  {handoffResult.isPaidPlan && handoffResult.trialEndsAt && (
+                    <p style={{ fontFamily: F, fontSize: "0.74rem", color: "#aaa", margin: 0 }}>
+                      Vence: {new Date(handoffResult.trialEndsAt).toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                  )}
+                  {!handoffResult.isPaidPlan && (
+                    <p style={{ fontFamily: F, fontSize: "0.74rem", color: "#aaa", margin: 0 }}>
+                      Sin trial. El dueño puede subir de plan cuando quiera desde su panel.
+                    </p>
+                  )}
                 </div>
                 {handoffResult.passwordGenerated && (
                   <div style={{ background: "rgba(255,214,0,0.06)", border: "1px solid rgba(255,214,0,0.2)", borderRadius: 12, padding: 14, marginBottom: 14 }}>
