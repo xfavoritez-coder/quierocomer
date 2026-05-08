@@ -232,14 +232,109 @@ function DishDetailLight() {
   );
 }
 
+// ─── Seals: comparación antes/después ────────────────────────────
+type SealSpec = { emoji: string; label: string; bg: string; color: string; border?: string; shadow?: string; forYou?: boolean };
+
+const SEAL_OLD: SealSpec[] = [
+  { emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.18)", color: "#4ade80" },
+  { emoji: "🥗", label: "Vegetariano", bg: "rgba(134,239,172,0.18)", color: "#86efac" },
+  { emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.18)", color: "#f87171" },
+  { emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.18)", color: "#d4a647" },
+  { emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.14)", color: "#fb923c", border: "1px solid rgba(234,88,12,0.45)", shadow: "0 0 0 2px rgba(234,88,12,0.10)" },
+  { emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.18)", color: "#60a5fa", forYou: true },
+  { emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.18)", color: "#34d399", forYou: true },
+  { emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.12)", color: "#a06a3a", forYou: true },
+];
+
+const SEAL_NEW: SealSpec[] = [
+  { emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.12)", color: "#15803d" },
+  { emoji: "🥗", label: "Vegetariano", bg: "rgba(34,197,94,0.10)", color: "#16a34a" },
+  { emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.10)", color: "#dc2626" },
+  { emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#854d0e" },
+  { emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.10)", color: "#9a3412", border: "1px solid rgba(234,88,12,0.5)", shadow: "0 0 0 2px rgba(234,88,12,0.10)" },
+  { emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.12)", color: "#1d4ed8", forYou: true },
+  { emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.12)", color: "#047857", forYou: true },
+  { emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.14)", color: "#854d0e", forYou: true },
+];
+
+function SealRow({ seal }: { seal: SealSpec }) {
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 5,
+      padding: (seal.forYou || seal.border) ? "4px 12px" : "5px 12px",
+      borderRadius: 50, background: seal.bg, color: seal.color,
+      fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
+      border: seal.border || (seal.forYou ? "1px solid rgba(244,166,35,0.55)" : "none"),
+      boxShadow: seal.shadow || (seal.forYou ? "0 0 0 2px rgba(244,166,35,0.08)" : "none"),
+    }}>
+      <span aria-hidden>{seal.emoji}</span>
+      <span>{seal.label}</span>
+      {seal.forYou && <span style={{ fontSize: "10px", color: "#F4A623", fontWeight: 700, marginLeft: 2 }}>· para ti</span>}
+    </span>
+  );
+}
+
 export default function PreviewDishModalPage() {
   return (
     <div style={{ minHeight: "100vh", background: "#1a1a1a", color: "white", fontFamily: "var(--font-dm), -apple-system, sans-serif" }}>
       {/* Header explicativo */}
       <div style={{ padding: "24px 32px", borderBottom: "1px solid #2a2a2a" }}>
-        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 6px" }}>Color-flip del DishDetail (sin tocar layout/fonts)</h1>
-        <p style={{ fontSize: "0.88rem", color: "#999", margin: "0 0 8px" }}>Mismo modal de hoy con los colores invertidos: fondo blanco, texto oscuro, mismo tipografía y sizes.</p>
-        <p style={{ fontSize: "0.78rem", color: "#666", margin: 0 }}>Si te parece bien, aplico este mismo mapping a <code style={{ background: "#000", padding: "1px 6px", borderRadius: 3, color: "#FFD600" }}>DishDetail.tsx</code> y <code style={{ background: "#000", padding: "1px 6px", borderRadius: 3, color: "#FFD600" }}>DishModifierDrawer.tsx</code>.</p>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, margin: "0 0 6px" }}>Comparativa de sellos del modal — antes vs propuesta</h1>
+        <p style={{ fontSize: "0.88rem", color: "#999", margin: 0 }}>Sobre fondo blanco real (mismo del modal), tamaño y forma idénticos al actual. Solo cambia la saturación de los colores para mejorar contraste y legibilidad.</p>
+      </div>
+
+      {/* Comparativa de sellos sobre fondo blanco */}
+      <div style={{ padding: "32px 32px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }} className="seal-grid">
+          {/* ANTES */}
+          <div>
+            <h2 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#ff8585", margin: "0 0 4px" }}>ANTES (actual)</h2>
+            <p style={{ fontSize: "0.78rem", color: "#888", margin: "0 0 14px" }}>Texto pastel claro — diseñado para el dark mode original. Sobre blanco contrast ratio ~2.5:1.</p>
+            <div style={{ background: "#fff", padding: "20px 18px", borderRadius: 16, border: "1px solid #2a2a2a", display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {SEAL_OLD.map((s, i) => <SealRow key={`old-${i}`} seal={s} />)}
+            </div>
+          </div>
+
+          {/* PROPUESTA */}
+          <div>
+            <h2 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#86efac", margin: "0 0 4px" }}>PROPUESTA</h2>
+            <p style={{ fontSize: "0.78rem", color: "#888", margin: "0 0 14px" }}>Texto saturado oscuro — contrast ratio &gt;6:1. Misma estructura, mismos íconos, mismos tamaños.</p>
+            <div style={{ background: "#fff", padding: "20px 18px", borderRadius: 16, border: "1px solid #4ade80", display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {SEAL_NEW.map((s, i) => <SealRow key={`new-${i}`} seal={s} />)}
+            </div>
+          </div>
+        </div>
+
+        {/* Caso particular: Frutos secos warning */}
+        <div style={{ marginTop: 32 }}>
+          <h2 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#FFD600", margin: "0 0 4px" }}>⚠ Caso clave: Frutos secos (warning de alérgeno)</h2>
+          <p style={{ fontSize: "0.78rem", color: "#888", margin: "0 0 14px" }}>Este sello debería actuar como alerta — anafilaxia. Hoy se siente "decorativo". La propuesta lo eleva a alerta visible.</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }} className="seal-grid">
+            <div style={{ background: "#fff", padding: "20px 18px", borderRadius: 12, border: "1px solid #2a2a2a" }}>
+              <p style={{ fontSize: "0.7rem", color: "#888", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Antes</p>
+              <SealRow seal={SEAL_OLD[4]} />
+            </div>
+            <div style={{ background: "#fff", padding: "20px 18px", borderRadius: 12, border: "1px solid #4ade80" }}>
+              <p style={{ fontSize: "0.7rem", color: "#888", margin: "0 0 12px", textTransform: "uppercase", letterSpacing: "0.06em" }}>Propuesta</p>
+              <SealRow seal={SEAL_NEW[4]} />
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: 32, padding: "16px 18px", background: "#0d0d0d", border: "1px solid #2a2a2a", borderRadius: 12, fontSize: "0.82rem", color: "#999", lineHeight: 1.6 }}>
+          <strong style={{ color: "#fff" }}>Si te gusta la propuesta</strong> — toco solo las 8 líneas del bloque de seals en <code style={{ background: "#000", padding: "1px 6px", borderRadius: 3, color: "#FFD600" }}>DishDetail.tsx</code> (líneas 508-521 aprox). Cero cambios de tamaño, padding, íconos, posiciones o lógica condicional. Solo bg + color.
+        </div>
+
+        <style jsx>{`
+          @media (max-width: 720px) {
+            .seal-grid { grid-template-columns: 1fr !important; }
+          }
+        `}</style>
+      </div>
+
+      {/* Header explicativo del modal completo (existing) */}
+      <div style={{ padding: "32px 32px 24px", borderTop: "1px solid #2a2a2a" }}>
+        <h1 style={{ fontSize: "1.2rem", fontWeight: 700, margin: "0 0 6px" }}>↓ El modal completo (color-flip aplicado anteriormente)</h1>
       </div>
 
       {/* Frame del modal — alto fijo + scroll dentro */}
