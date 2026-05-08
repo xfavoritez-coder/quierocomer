@@ -35,6 +35,7 @@ export default function ImprimirQrPage() {
   const [qty, setQty] = useState(20);
   const [paperW, setPaperW] = useState(100); // mm
   const [paperH, setPaperH] = useState(150); // mm
+  const [withLogo, setWithLogo] = useState(true);
 
   useEffect(() => {
     fetch("/api/qr/print/restaurants")
@@ -68,6 +69,7 @@ export default function ImprimirQrPage() {
       qty: String(qty),
       paperW: String(paperW),
       paperH: String(paperH),
+      logo: withLogo ? "1" : "0",
     });
     router.push(`/imprimirqr/print?${params.toString()}`);
   };
@@ -191,6 +193,36 @@ export default function ImprimirQrPage() {
                 })}
               </div>
             </Field>
+
+            {/* Logo toggle — solo si el local tiene logo */}
+            {selectedRestaurant?.logoUrl && (
+              <Field label="Logo del local en el centro" hint={withLogo ? "Cada QR llevará el logo al centro." : "Imprime sólo el QR, sin nada en el centro."}>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {[
+                    { val: true, label: "Con logo" },
+                    { val: false, label: "Sin logo" },
+                  ].map((opt) => {
+                    const active = withLogo === opt.val;
+                    return (
+                      <button
+                        key={String(opt.val)}
+                        type="button"
+                        onClick={() => setWithLogo(opt.val)}
+                        style={{
+                          flex: 1, padding: "10px 14px", borderRadius: 8,
+                          background: active ? "#1a1a1a" : "white",
+                          color: active ? "white" : "#555",
+                          border: active ? "1.5px solid #1a1a1a" : "1.5px solid #ececea",
+                          fontFamily: F, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+            )}
 
             {/* Resumen */}
             <div style={{ background: "#fff8e7", border: "1px solid #fde68a", borderRadius: 10, padding: "14px 16px", marginTop: 18 }}>

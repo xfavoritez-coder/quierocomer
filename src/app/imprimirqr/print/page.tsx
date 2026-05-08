@@ -29,6 +29,8 @@ function PrintPageInner() {
   const qty = Math.max(1, Math.min(500, Number(params.get("qty") || 20)));
   const paperW = Math.max(50, Math.min(500, Number(params.get("paperW") || 100)));
   const paperH = Math.max(50, Math.min(500, Number(params.get("paperH") || 150)));
+  // logo: "1" o "0". Default "1" para no romper URLs antiguas.
+  const withLogo = params.get("logo") !== "0";
 
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
@@ -177,8 +179,8 @@ function PrintPageInner() {
                       alt={`QR ${restaurant.name}`}
                       style={{ width: "100%", height: "100%", display: "block" }}
                     />
-                    {/* Logo overlay al centro (si hay) */}
-                    {restaurant.logoUrl && (
+                    {/* Logo overlay al centro (si el local tiene logo Y el usuario lo eligió) */}
+                    {withLogo && restaurant.logoUrl && (
                       <div style={{
                         position: "absolute",
                         top: "50%", left: "50%",
