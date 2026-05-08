@@ -56,8 +56,8 @@ export default function CategoryNav({
         style={{
           flex: 1,
           height: "100%",
-          paddingLeft: leftSlot ? 8 : 16,
-          paddingRight: rightSlot ? 8 : 16,
+          paddingLeft: leftSlot ? 20 : 16,
+          paddingRight: rightSlot ? 20 : 16,
           gap: 24,
           scrollbarWidth: "none",
           msOverflowStyle: "none",

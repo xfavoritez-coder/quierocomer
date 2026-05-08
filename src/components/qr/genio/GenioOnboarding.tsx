@@ -296,9 +296,19 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
 
   const TOTAL_STEPS = 3; // welcome (0) + diet (1) + restrictions (2) + done (3) — el step "dislikes" se quitó
 
+  // Snapshot del estado inicial de _spicy al abrir el Genio. Si el cliente
+  // YA tenia _spicy guardado antes de abrir, no disparamos el banner "Listo."
+  // (no hizo nada nuevo). Solo lo disparamos si _spicy se agrego durante
+  // esta sesion del modal.
+  const initialHadSpicyRef = useRef<boolean>(false);
+
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
     document.body.style.overflow = "hidden";
+    try {
+      const saved = JSON.parse(localStorage.getItem("qr_restrictions") || "[]");
+      initialHadSpicyRef.current = Array.isArray(saved) && saved.includes("_spicy");
+    } catch { initialHadSpicyRef.current = false; }
     // Para usuarios nuevos disparamos GENIO_START + GENIO_STEP_DIET al mount
     // (antes se hacía al hacer click en "Comenzar" del step 0 de bienvenida).
     // Returning users no disparan GENIO_START hasta que efectivamente
@@ -313,13 +323,14 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
   }, [restaurantId]);
 
   const close = useCallback(() => {
-    // Si al cerrar el Genio el cliente tiene "_spicy" filtrado, marcamos un
-    // flag transient para que el banner verde 'Reordenamos la carta...'
-    // aparezca UNA sola vez (después de configurar) y no en cada cambio
-    // de vista o recarga.
+    // Solo marcamos el flag "Listo." si _spicy fue AGREGADO en esta sesion del
+    // modal (no estaba al abrir + esta al cerrar). Si ya estaba guardado de
+    // antes y el cliente solo abrio para mirar, no disparamos el banner.
     try {
       const saved = JSON.parse(localStorage.getItem("qr_restrictions") || "[]");
-      if (Array.isArray(saved) && saved.includes("_spicy")) {
+      const nowHasSpicy = Array.isArray(saved) && saved.includes("_spicy");
+      const justAddedSpicy = nowHasSpicy && !initialHadSpicyRef.current;
+      if (justAddedSpicy) {
         sessionStorage.setItem("qc_spicy_msg_pending", "1");
       }
     } catch { /* ignore */ }
