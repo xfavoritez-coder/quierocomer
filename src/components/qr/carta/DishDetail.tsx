@@ -640,9 +640,9 @@ function DishSlide({
                         {(s.dish as any).isSpicy && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌶️</span></>}
                       </p>
                       {s.dish.description && (
-                        <p style={{ fontSize: "0.86rem", color: "rgba(0,0,0,0.5)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
+                        <p style={{ fontSize: "0.92rem", color: "rgba(0,0,0,0.5)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
-                      <span style={{ fontSize: "0.92rem", color: "#555", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                      <span style={{ fontSize: "0.9rem", color: "rgb(126,126,126)", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
                     </div>
                   </div>
                 ))}
