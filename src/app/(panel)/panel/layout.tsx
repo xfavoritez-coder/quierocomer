@@ -119,6 +119,72 @@ type BillingStatus = {
   billingExempt?: boolean;
 };
 
+function TrialBanner({ restaurantId }: { restaurantId: string | null }) {
+  const [status, setStatus] = useState<BillingStatus | null>(null);
+
+  useEffect(() => {
+    if (!restaurantId) return;
+    fetch(`/api/billing/status?restaurantId=${restaurantId}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((d) => d && setStatus(d))
+      .catch(() => {});
+  }, [restaurantId]);
+
+  if (!status) return null;
+  if (status.subscriptionStatus !== "TRIALING") return null;
+  if (status.hasSubscription) return null; // ya inscribio tarjeta
+  if (status.billingExempt) return null;
+
+  // Calcular dias restantes
+  let daysLeft: number | null = null;
+  if (status.trialEndsAt) {
+    const end = new Date(status.trialEndsAt).getTime();
+    const now = Date.now();
+    daysLeft = Math.max(0, Math.ceil((end - now) / (24 * 60 * 60 * 1000)));
+  }
+
+  const billingComplete = (status as any).billingInfo?.isComplete !== false;
+  const ctaHref = billingComplete ? "/panel/suscripcion" : "/panel/facturacion";
+  const ctaLabel = billingComplete ? "Inscribir tarjeta" : "Completar datos";
+
+  const isUrgent = (daysLeft ?? 999) <= 2;
+  const bg = isUrgent
+    ? "linear-gradient(90deg, #FEE2E2 0%, #FEF3C7 100%)"
+    : "linear-gradient(90deg, #FEF3C7 0%, #FFF8E7 100%)";
+  const border = isUrgent ? "#fca5a5" : "#fcd34d";
+  const fg = isUrgent ? "#991b1b" : "#92400e";
+
+  return (
+    <div style={{
+      display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
+      background: bg, border: `1px solid ${border}`, borderRadius: 10, margin: "12px 16px 0",
+      fontFamily: "var(--font-body)", fontSize: "0.84rem", color: fg,
+    }}>
+      <span style={{ fontSize: 20 }}>{isUrgent ? "⏰" : "🎁"}</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ fontWeight: 700, margin: 0, fontSize: "0.88rem" }}>
+          {daysLeft === null
+            ? "Estás en prueba gratis"
+            : daysLeft === 0
+              ? "¡Tu prueba vence hoy!"
+              : daysLeft === 1
+                ? "Te queda 1 día de prueba"
+                : `Te quedan ${daysLeft} días de prueba`}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: "0.78rem", opacity: 0.85 }}>
+          Inscribe tu tarjeta para no perder tu plan {status.plan === "PREMIUM" ? "Premium" : "Gold"}.
+        </p>
+      </div>
+      <a href={ctaHref} style={{
+        padding: "8px 14px", border: "none", borderRadius: 999,
+        background: isUrgent ? "#dc2626" : "#F4A623", color: "#fff",
+        fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
+        textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
+      }}>{ctaLabel} →</a>
+    </div>
+  );
+}
+
 function UpgradeBanner({ restaurantId }: { restaurantId: string | null }) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -487,6 +553,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         basePath="/panel"
         activePlan={activePlan}
       >
+        <TrialBanner restaurantId={selectedRestaurantId} />
         <UpgradeBanner restaurantId={selectedRestaurantId} />
         {children}
       </AdminLayoutOwner>
