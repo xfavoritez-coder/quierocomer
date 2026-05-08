@@ -535,7 +535,7 @@ export default function CartaLista({
               {category.name}
             </h2>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {catDishes.map((dish) => {
               const entry = pMap?.get(dish.id);
               return (
