@@ -237,8 +237,15 @@ function formatDateCL(d: string | null) {
   return date.toLocaleDateString("es-CL", { day: "numeric", month: "long" });
 }
 
-function PlanModal({ plan, restaurantId, onClose }: { plan: string; restaurantId: string | null; onClose: () => void }) {
-  const [tab, setTab] = useState<"GOLD" | "PREMIUM">(plan === "FREE" ? "GOLD" : plan as any);
+function PlanModal({ plan, restaurantId, initialTab, onClose }: { plan: string; restaurantId: string | null; initialTab?: "GOLD" | "PREMIUM"; onClose: () => void }) {
+  // initialTab gana — viene del PlanGate cuando el usuario clickea una feature bloqueada.
+  // Si el plan actual del usuario coincide con el initialTab, abrimos el OTRO tab para
+  // mostrarle el upgrade real (ej: usuario Gold ve feature Premium → abre Premium).
+  // Fallback: si no hay initialTab, abrimos el plan actual (o Gold si es FREE).
+  const defaultTab: "GOLD" | "PREMIUM" = initialTab
+    ? (initialTab === plan ? (plan === "GOLD" ? "PREMIUM" : "GOLD") : initialTab)
+    : (plan === "FREE" ? "GOLD" : plan as any);
+  const [tab, setTab] = useState<"GOLD" | "PREMIUM">(defaultTab);
   const [submitting, setSubmitting] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [status, setStatus] = useState<BillingStatus | null>(null);
@@ -444,9 +451,18 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
   const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planModalInitialTab, setPlanModalInitialTab] = useState<"GOLD" | "PREMIUM" | undefined>(undefined);
 
   useEffect(() => {
-    const handler = () => setPlanModalOpen(true);
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.initialTab === "GOLD" || detail?.initialTab === "PREMIUM") {
+        setPlanModalInitialTab(detail.initialTab);
+      } else {
+        setPlanModalInitialTab(undefined);
+      }
+      setPlanModalOpen(true);
+    };
     window.addEventListener("show-plan-modal", handler);
     return () => window.removeEventListener("show-plan-modal", handler);
   }, []);
@@ -560,7 +576,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
       {/* Plan modal — triggered from "Mi Plan" menu */}
       {planModalOpen && (
-        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} onClose={() => setPlanModalOpen(false)} />
+        <PlanModal plan={activePlan} restaurantId={selectedRestaurantId || null} initialTab={planModalInitialTab} onClose={() => setPlanModalOpen(false)} />
       )}
     </SessionContext.Provider>
   );

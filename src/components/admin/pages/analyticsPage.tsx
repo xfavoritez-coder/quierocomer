@@ -5,7 +5,6 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 import PlanGate from "@/components/admin/PlanGate";
-import PlanUpgradeModal from "@/components/admin/PlanUpgradeModal";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
@@ -1571,7 +1570,7 @@ export default function AnalyticsDashboard() {
   const hasAdvanced = isSuper || canAccess(activePlan, "stats_advanced");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const openUpgrade = () => window.dispatchEvent(new CustomEvent("show-plan-modal", { detail: { initialTab: "PREMIUM" } }));
 
   // Read state from URL params
   const restaurantId = searchParams.get("restaurantId") || "";
@@ -1660,7 +1659,7 @@ export default function AnalyticsDashboard() {
           const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
           const locked = isAdvancedTab && !hasAdvanced;
           return (
-            <button key={t.key} onClick={() => { if (locked) { setShowUpgradeModal(true); } else { setTab(t.key); } }} style={{
+            <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
               padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
               background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
@@ -1692,7 +1691,7 @@ export default function AnalyticsDashboard() {
             Sesiones en vivo, qué platos miran, cuánto tiempo pasan en cada uno, qué buscan y más
           </p>
           <button
-            onClick={() => setShowUpgradeModal(true)}
+            onClick={() => openUpgrade()}
             style={{ padding: "10px 24px", background: "#7c3aed", color: "#fff", borderRadius: 999, border: "none", fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", boxShadow: "0 4px 16px rgba(124,58,237,0.3)" }}
           >
             Pasarme a Premium →
@@ -1700,9 +1699,6 @@ export default function AnalyticsDashboard() {
         </div>
       )}
 
-      {showUpgradeModal && (
-        <PlanUpgradeModal initialTab="PREMIUM" onClose={() => setShowUpgradeModal(false)} />
-      )}
     </div>
   );
 }
