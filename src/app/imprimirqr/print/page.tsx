@@ -141,7 +141,14 @@ function PrintPageInner() {
       {/* Hojas */}
       <div style={{ background: "#e8e4dc", padding: 20, minHeight: "calc(100vh - 100px)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 20, alignItems: "center" }}>
-          {pages.map((countOnPage, pageIdx) => (
+          {(() => {
+            // Celdas cuadradas perfectas — usamos el lado mas chico que entra.
+            // Solo dejamos 4mm de safety abajo (zona no imprimible del impresor).
+            // Sin safety arriba ni a los lados — los QRs se pegan al tope.
+            const bottomSafetyMm = 4;
+            const cellSize = Math.min(paperW / layout.cols, (paperH - bottomSafetyMm) / layout.rows);
+            const gridWidthMm = layout.cols * cellSize;
+            return pages.map((countOnPage, pageIdx) => (
             <div
               key={pageIdx}
               className="qr-page"
@@ -152,27 +159,25 @@ function PrintPageInner() {
                 position: "relative",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 pageBreakAfter: pageIdx < pages.length - 1 ? "always" : "auto",
-                // 2mm de safety en cada borde — la mayoria de impresoras tiene
-                // zona no imprimible de 2-4mm, sin esto los QRs del borde se
-                // pasan a la siguiente hoja al imprimir a 100%.
-                padding: "2mm",
+                padding: 0,
                 boxSizing: "border-box",
+                overflow: "hidden",
               }}
             >
               <div style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
-                gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
+                gridTemplateColumns: `repeat(${layout.cols}, ${cellSize}mm)`,
+                gridTemplateRows: `repeat(${layout.rows}, ${cellSize}mm)`,
                 gap: 0,
-                width: "100%",
-                height: "100%",
+                width: `${gridWidthMm}mm`,
+                margin: "0 auto", // centra horizontalmente, top-aligned
               }}>
                 {Array.from({ length: countOnPage }).map((_, i) => (
                   <div
                     key={i}
                     style={{
-                      width: "100%",
-                      height: "100%",
+                      width: `${cellSize}mm`,
+                      height: `${cellSize}mm`,
                       position: "relative",
                       background: "white",
                     }}
@@ -215,7 +220,8 @@ function PrintPageInner() {
                 ))}
               </div>
             </div>
-          ))}
+            ));
+          })()}
         </div>
       </div>
 
