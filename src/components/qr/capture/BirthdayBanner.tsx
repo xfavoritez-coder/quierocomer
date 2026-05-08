@@ -11,9 +11,10 @@ import { t } from "@/lib/qr/i18n";
 interface Props {
   restaurantId: string;
   restaurantName?: string;
+  birthdayPerk?: string | null;
 }
 
-export default function BirthdayBanner({ restaurantId, restaurantName }: Props) {
+export default function BirthdayBanner({ restaurantId, restaurantName, birthdayPerk }: Props) {
   const lang = useLang();
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -155,6 +156,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName }: Props) 
         <BirthdayModal
           restaurantId={restaurantId}
           restaurantName={restaurantName}
+          birthdayPerk={birthdayPerk}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           abVariant={abVariant}

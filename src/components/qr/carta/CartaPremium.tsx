@@ -647,7 +647,7 @@ export default function CartaPremium({
           return (
             <div key={cat.id}>
             {index === Math.max(2, Math.floor(categories.length * 0.4)) && <ExperienceBanner restaurantId={restaurant.id} />}
-            {index === Math.max(4, Math.floor(categories.length * 0.8)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} />}
+            {index === Math.max(4, Math.floor(categories.length * 0.8)) && <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
             <section id={`cat-${cat.id}`} style={{ paddingTop: index === 0 ? 16 : 21 }}>
               {/* Title */}
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
@@ -862,7 +862,7 @@ export default function CartaPremium({
         </DishDetailErrorBoundary>
       )}
 
-      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} />
+      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
 
       {genioOpen && (
         <GenioOnboarding
