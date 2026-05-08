@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   if (!restaurant) return {};
 
-  const title = `${restaurant.name} | Carta QR Viva`;
+  const title = `${restaurant.name} | Carta online`;
   const description = `Mira la carta completa de ${restaurant.name}. Platos con fotos, recomendaciones del Genio y más.`;
   const image = restaurant.logoUrl || "https://quierocomer.cl/favicon.svg";
 
