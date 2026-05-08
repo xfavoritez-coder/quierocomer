@@ -96,8 +96,8 @@ function PrintPageInner() {
     return <div style={{ padding: 40, textAlign: "center", fontFamily: FB }}>Generando QR…</div>;
   }
 
-  // Logo size: ~22% del QR — con error-correction H el QR sigue siendo escaneable
-  const logoSizeMm = layout.qrMm * 0.22;
+  // Logo size: ~22% del QR — con error-correction H el QR sigue siendo escaneable.
+  // Se usa como porcentaje del cell (que es flexible con grid 1fr).
 
   return (
     <>
@@ -148,26 +148,27 @@ function PrintPageInner() {
                 position: "relative",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
                 pageBreakAfter: pageIdx < pages.length - 1 ? "always" : "auto",
-                padding: `${layout.margin}mm`,
+                // 2mm de safety en cada borde — la mayoria de impresoras tiene
+                // zona no imprimible de 2-4mm, sin esto los QRs del borde se
+                // pasan a la siguiente hoja al imprimir a 100%.
+                padding: "2mm",
                 boxSizing: "border-box",
               }}
             >
               <div style={{
                 display: "grid",
-                gridTemplateColumns: `repeat(${layout.cols}, ${layout.qrMm}mm)`,
-                gridTemplateRows: `repeat(${layout.rows}, ${layout.qrMm}mm)`,
-                gap: `${layout.gap}mm`,
+                gridTemplateColumns: `repeat(${layout.cols}, 1fr)`,
+                gridTemplateRows: `repeat(${layout.rows}, 1fr)`,
+                gap: 0,
                 width: "100%",
                 height: "100%",
-                justifyContent: "start",
-                alignContent: "start",
               }}>
                 {Array.from({ length: countOnPage }).map((_, i) => (
                   <div
                     key={i}
                     style={{
-                      width: `${layout.qrMm}mm`,
-                      height: `${layout.qrMm}mm`,
+                      width: "100%",
+                      height: "100%",
                       position: "relative",
                       background: "white",
                     }}
@@ -185,11 +186,11 @@ function PrintPageInner() {
                         position: "absolute",
                         top: "50%", left: "50%",
                         transform: "translate(-50%, -50%)",
-                        width: `${logoSizeMm}mm`,
-                        height: `${logoSizeMm}mm`,
+                        width: "22%",
+                        height: "22%",
                         background: "white",
                         borderRadius: "50%",
-                        padding: `${logoSizeMm * 0.08}mm`,
+                        padding: "2%",
                         boxSizing: "border-box",
                         display: "flex", alignItems: "center", justifyContent: "center",
                       }}>
