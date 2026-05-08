@@ -312,7 +312,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             )}
             {basePath === "/panel" && (
               <a href="/panel/facturacion" onClick={closeAccount} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left", textDecoration: "none" }}>
-                <Receipt size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Datos de facturacion</span>
+                <Receipt size={18} color="#8a7550" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#1a1a1a" }}>Datos de facturación</span>
               </a>
             )}
             <button onClick={() => setPwOpen(true)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", textAlign: "left" }}>

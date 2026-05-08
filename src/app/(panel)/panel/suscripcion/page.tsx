@@ -163,10 +163,13 @@ export default function SuscripcionPage() {
           </div>
         )}
 
-        {!isExempt && !billingComplete && (
+        {/* Solo mostrar el aviso de "completar datos de facturación" si el cliente
+            ya tiene suscripción (trial o activa). Antes pedíamos los datos antes
+            de inscribir tarjeta y eso espantaba el alta. */}
+        {!isExempt && !billingComplete && status.hasSubscription && (
           <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 10, padding: "14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.9rem", color: "#92400e", margin: "0 0 4px", fontWeight: 600 }}>
-              ⚠ Faltan datos de facturación
+              ⚠ Completa tus datos de facturación
             </p>
             <p style={{ fontSize: "0.82rem", color: "#78350f", margin: "0 0 10px", lineHeight: 1.5 }}>
               Necesitamos tu razón social, RUT y giro para emitir la factura electrónica con IVA cada mes.
