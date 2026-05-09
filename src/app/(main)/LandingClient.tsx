@@ -186,7 +186,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <section style={{ background: `linear-gradient(to bottom, #CFE2EC 0%, #E8E0CC 55%, ${BG_WARM} 100%)`, paddingTop: 56, position: "relative", overflow: "hidden" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 48px", textAlign: "center", position: "relative" }}>
           <div>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg, rgba(239,159,39,0.18) 0%, rgba(244,166,35,0.25) 100%)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#b45309", fontWeight: 700, marginBottom: 20, fontFamily: F, border: "1px solid rgba(244,166,35,0.3)" }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#92400e", fontWeight: 700, marginBottom: 20, fontFamily: F, border: "1px solid #F59E0B" }}>
               <span style={{ animation: "lndFloat 2.5s ease-in-out infinite", display: "inline-block" }}>🧞</span> Impulsado por el Genio
             </span>
             <h1 style={{ fontFamily: F, fontSize: "clamp(32px, 4.5vw, 48px)", fontWeight: 700, letterSpacing: "-1.5px", lineHeight: 1.05, marginBottom: 18, color: "#111" }}>

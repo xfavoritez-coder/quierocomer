@@ -201,7 +201,7 @@ export function formatRut(rut: string): string {
 
 const ANNUAL_MONTHLY_NET: Record<Exclude<PlanKey, "FREE">, number> = {
   GOLD: 29900,
-  PREMIUM: 40900,
+  PREMIUM: 39900,
 };
 
 /** Precio NETO mensualizado del plan anual. FREE = 0. */
