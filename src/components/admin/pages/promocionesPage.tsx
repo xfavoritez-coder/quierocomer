@@ -521,21 +521,10 @@ export default function AdminPromociones() {
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
               <div key={p.id} data-promo-id={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
-                {/* Featured star — top right */}
-                {isPanel && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }}
-                    title={p.featured ? "Quitar destacado" : "Destacar"}
-                    style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "none", border: "none", cursor: "pointer", padding: 4, fontSize: "0.9rem", lineHeight: 1, opacity: p.featured ? 1 : 0.4, transition: "opacity 0.15s" }}
-                  >
-                    {p.featured ? "⭐" : "☆"}
-                  </button>
-                )}
                 {/* Header — draggable from anywhere */}
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: isPanel ? "grab" : "pointer", touchAction: isPanel ? "none" : "auto", userSelect: "none" }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", cursor: isPanel ? "grab" : "pointer", touchAction: isPanel ? "none" : "auto", userSelect: "none" }}
                   onPointerDown={isPanel ? (e) => {
-                    // Don't drag from star button or expanded detail
                     if ((e.target as HTMLElement).closest("button")) return;
                     const card = e.currentTarget.closest("[data-promo-id]") as HTMLElement;
                     if (!card) return;
@@ -577,6 +566,16 @@ export default function AdminPromociones() {
                     document.addEventListener("pointerup", onUp);
                   } : () => setExpanded(isOpen ? null : p.id)}
                 >
+                  {/* Grip dots — subtle */}
+                  {isPanel && (
+                    <div style={{ display: "grid", gridTemplateColumns: "3px 3px", gap: 2, flexShrink: 0, opacity: 0.3 }}>
+                      {[...Array(6)].map((_, i) => <div key={i} style={{ width: 3, height: 3, borderRadius: "50%", background: "var(--adm-text2)" }} />)}
+                    </div>
+                  )}
+                  {/* Star inline */}
+                  {isPanel && (
+                    <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "1.1rem", lineHeight: 1, flexShrink: 0 }}>{p.featured ? "⭐" : "☆"}</button>
+                  )}
                   {(() => {
                     const thumb = (p.promoType === "graphic" && p.imageUrl) ? (p.thumbUrl || p.imageUrl) : p.dishes?.[0]?.photos?.[0] || null;
                     return thumb ? (
@@ -588,28 +587,21 @@ export default function AdminPromociones() {
                     );
                   })()}
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", paddingRight: isPanel ? 20 : 0 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
-                      <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text)", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                      <span style={{ fontSize: "0.58rem", padding: "2px 7px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600, flexShrink: 0 }}>{st.label}</span>
                     </div>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-                      {p.discountPct && `${p.discountPct}% off`}
-                      {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
-                      {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
+                    <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: "3px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {p.promoPrice ? `$${p.promoPrice.toLocaleString("es-CL")}` : ""}{p.discountPct ? ` · ${p.discountPct}% off` : ""}{dishNames.length > 0 ? ` · ${dishNames.join(", ")}` : ""}{p.daysOfWeek && p.daysOfWeek.length > 0 ? ` · ${p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}` : ""}
                     </p>
-                    {p.daysOfWeek && p.daysOfWeek.length > 0 && (
-                      <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
-                        {p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}
-                      </p>
-                    )}
                   </div>
-                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
 
                 {/* Detail */}
                 {isOpen && (
-                  <div style={{ padding: "0 18px 18px", borderTop: "1px solid var(--adm-card-border)" }}>
-                    {p.description && <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "12px 0", lineHeight: 1.5 }}>{p.description}</p>}
+                  <div style={{ padding: "12px 18px 18px", borderTop: "1px solid var(--adm-card-border)" }}>
+                    {p.description && <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 12px", lineHeight: 1.5 }}>{p.description}</p>}
 
                     {p.aiJustification && (
                       <div style={{ background: "rgba(244,166,35,0.05)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 10, padding: "12px 14px", marginBottom: 12 }}>
