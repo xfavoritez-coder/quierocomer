@@ -31,10 +31,11 @@ interface Props {
 function SortableDish({ dish, onMove, onEdit, onToggleFeatured, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; categories: Category[]; currentCatId: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
   const [moving, setMoving] = useState(false);
+  const isFeatured = dish.tags?.includes("RECOMMENDED") || false;
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4 }}>
         <div {...attributes} {...listeners} style={{ cursor: "grab", padding: "4px 2px", color: "var(--adm-text3)", fontSize: "0.8rem", touchAction: "none" }}>⠿</div>
         {dish.photos?.[0] ? (
           <img src={dish.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
@@ -44,8 +45,8 @@ function SortableDish({ dish, onMove, onEdit, onToggleFeatured, categories, curr
         <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
         <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
         {onToggleFeatured && (
-          <button onClick={() => onToggleFeatured(dish.id)} title={dish.tags?.includes("RECOMMENDED") ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.9rem", lineHeight: 1, flexShrink: 0, opacity: dish.tags?.includes("RECOMMENDED") ? 1 : 0.3 }}>
-            {dish.tags?.includes("RECOMMENDED") ? "⭐" : "☆"}
+          <button onClick={() => onToggleFeatured(dish.id)} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.82rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
+            {isFeatured ? "★" : "☆"}
           </button>
         )}
         {onEdit && <button onClick={() => onEdit(dish)} style={{ padding: "3px 8px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#F4A623", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Editar</button>}
