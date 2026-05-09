@@ -521,88 +521,89 @@ export default function AdminPromociones() {
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
               <div key={p.id} data-promo-id={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
-                {/* Header */}
-                <div style={{ display: "flex", alignItems: "center" }}>
-                  {/* Drag handle + Featured */}
-                  {isPanel && (
-                    <div
-                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "8px 2px 8px 10px", gap: 6, flexShrink: 0, cursor: "grab", touchAction: "none" }}
-                      onPointerDown={(e) => {
-                        e.preventDefault();
-                        const card = e.currentTarget.closest("[data-promo-id]") as HTMLElement;
-                        if (!card) return;
-                        const container = card.parentElement;
-                        if (!container) return;
-                        const cards = Array.from(container.querySelectorAll("[data-promo-id]")) as HTMLElement[];
-                        const startIdx = cards.indexOf(card);
-                        const startY = e.clientY;
-                        const cardH = card.offsetHeight + 10; // gap
-                        card.style.zIndex = "10";
+                {/* Featured star — top right */}
+                {isPanel && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }}
+                    title={p.featured ? "Quitar destacado" : "Destacar"}
+                    style={{ position: "absolute", top: 8, right: 8, zIndex: 2, background: "none", border: "none", cursor: "pointer", padding: 4, fontSize: "0.9rem", lineHeight: 1, opacity: p.featured ? 1 : 0.4, transition: "opacity 0.15s" }}
+                  >
+                    {p.featured ? "⭐" : "☆"}
+                  </button>
+                )}
+                {/* Header — draggable from anywhere */}
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", cursor: isPanel ? "grab" : "pointer", touchAction: isPanel ? "none" : "auto", userSelect: "none" }}
+                  onPointerDown={isPanel ? (e) => {
+                    // Don't drag from star button or expanded detail
+                    if ((e.target as HTMLElement).closest("button")) return;
+                    const card = e.currentTarget.closest("[data-promo-id]") as HTMLElement;
+                    if (!card) return;
+                    const container = card.parentElement;
+                    if (!container) return;
+                    const startY = e.clientY;
+                    const cardH = card.offsetHeight + 10;
+                    let moved = false;
+                    card.style.zIndex = "10";
+
+                    const onMove = (ev: PointerEvent) => {
+                      const dy = ev.clientY - startY;
+                      if (Math.abs(dy) > 5) moved = true;
+                      if (moved) {
                         card.style.opacity = "0.85";
                         card.style.transition = "none";
-
-                        const onMove = (ev: PointerEvent) => {
-                          const dy = ev.clientY - startY;
-                          card.style.transform = `translateY(${dy}px)`;
-                        };
-                        const onUp = (ev: PointerEvent) => {
-                          document.removeEventListener("pointermove", onMove);
-                          document.removeEventListener("pointerup", onUp);
-                          const dy = ev.clientY - startY;
-                          const steps = Math.round(dy / cardH);
-                          card.style.zIndex = "";
-                          card.style.opacity = "";
-                          card.style.transform = "";
-                          card.style.transition = "";
-                          if (steps !== 0) {
-                            const dir = steps > 0 ? "down" : "up";
-                            const count = Math.abs(steps);
-                            for (let i = 0; i < count; i++) movePromo(p.id, dir);
-                          }
-                        };
-                        document.addEventListener("pointermove", onMove);
-                        document.addEventListener("pointerup", onUp);
-                      }}
-                    >
-                      {/* Grip dots (6 dots, 2×3) */}
-                      <div style={{ display: "grid", gridTemplateColumns: "4px 4px", gap: 3 }}>
-                        {[...Array(6)].map((_, i) => (
-                          <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--adm-text3)" }} />
-                        ))}
+                        card.style.transform = `translateY(${dy}px)`;
+                      }
+                    };
+                    const onUp = (ev: PointerEvent) => {
+                      document.removeEventListener("pointermove", onMove);
+                      document.removeEventListener("pointerup", onUp);
+                      card.style.zIndex = "";
+                      card.style.opacity = "";
+                      card.style.transform = "";
+                      card.style.transition = "";
+                      if (moved) {
+                        const dy = ev.clientY - startY;
+                        const steps = Math.round(dy / cardH);
+                        if (steps !== 0) {
+                          const dir = steps > 0 ? "down" : "up";
+                          for (let i = 0; i < Math.abs(steps); i++) movePromo(p.id, dir);
+                        }
+                      } else {
+                        setExpanded(isOpen ? null : p.id);
+                      }
+                    };
+                    document.addEventListener("pointermove", onMove);
+                    document.addEventListener("pointerup", onUp);
+                  } : () => setExpanded(isOpen ? null : p.id)}
+                >
+                  {(() => {
+                    const thumb = (p.promoType === "graphic" && p.imageUrl) ? (p.thumbUrl || p.imageUrl) : p.dishes?.[0]?.photos?.[0] || null;
+                    return thumb ? (
+                      <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
+                        {p.restaurant?.name?.charAt(0) || "🏷️"}
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "0.8rem", lineHeight: 1 }}>{p.featured ? "⭐" : "☆"}</button>
+                    );
+                  })()}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", paddingRight: isPanel ? 20 : 0 }}>
+                      <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
+                      <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
                     </div>
-                  )}
-                  <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0 }}>
-                    {(() => {
-                      const thumb = (p.promoType === "graphic" && p.imageUrl) ? (p.thumbUrl || p.imageUrl) : p.dishes?.[0]?.photos?.[0] || null;
-                      return thumb ? (
-                        <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                      ) : (
-                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
-                          {p.restaurant?.name?.charAt(0) || "🏷️"}
-                        </div>
-                      );
-                    })()}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
-                        <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
-                        {p.featured && <span style={{ fontSize: "0.55rem", padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 700 }}>Destacada</span>}
-                      </div>
-                      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-                        {p.discountPct && `${p.discountPct}% off`}
-                        {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
-                        {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
+                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
+                      {p.discountPct && `${p.discountPct}% off`}
+                      {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
+                      {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
+                    </p>
+                    {p.daysOfWeek && p.daysOfWeek.length > 0 && (
+                      <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
+                        {p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}
                       </p>
-                      {p.daysOfWeek && p.daysOfWeek.length > 0 && (
-                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
-                          {p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}
-                        </p>
-                      )}
-                    </div>
-                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
-                  </button>
+                    )}
+                  </div>
+                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                 </div>
 
                 {/* Detail */}
