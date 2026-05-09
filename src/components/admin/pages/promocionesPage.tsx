@@ -461,7 +461,7 @@ export default function AdminPromociones() {
             padding: "6px 14px", borderRadius: 6, border: "none", cursor: "pointer",
             fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
             background: filter === f.key ? "#F4A623" : "var(--adm-hover)",
-            color: filter === f.key ? "#0a0a0a" : "var(--adm-text2)",
+            color: filter === f.key ? "white" : "var(--adm-text2)",
           }}>
             {f.label}
           </button>
