@@ -20,7 +20,7 @@ export type Feature =
   | "waiter"            // Llamar al garzón
   | "suggestions"       // Productos sugeridos (cross-sell)
   | "automations"       // Automatizaciones (emails automáticos)
-  | "campaigns"         // Campañas y email marketing
+  | "campaigns"         // Email marketing
   | "announcements"     // Anuncios en la carta
   | "modifiers"         // Modificadores de platos
   | "clients_full"      // Ver todos los clientes

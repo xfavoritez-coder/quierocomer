@@ -10,7 +10,7 @@ const NAV = [
   { icon: "🍽️", label: "Platos", href: "/admin/menus" },
   { icon: "👁️", label: "Sesiones", href: "/admin/genie" },
   { icon: "👥", label: "Segmentos", href: "/admin/segmentos" },
-  { icon: "📧", label: "Campañas", href: "/admin/campanias" },
+  { icon: "📧", label: "Email Marketing", href: "/admin/campanias" },
   { icon: "🏷️", label: "Promos", href: "/admin/promociones" },
   { icon: "⚡", label: "Automático", href: "/admin/automatizaciones" },
   { icon: "🎭", label: "Experiencias", href: "/admin/experiencias" },

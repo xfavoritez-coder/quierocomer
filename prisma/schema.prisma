@@ -425,6 +425,7 @@ model Restaurant {
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
   waiterPanelActive  Boolean    @default(false)
   birthdayPerk       String?    // beneficio que el local le regala al cliente en su cumple (ej: "un postre" / "10% off"). Si esta vacio, el modal de cumple no muestra mensaje de regalo
+  birthdayEmailEnabled Boolean @default(false) // si esta activo, se envia email automatico el dia del cumple del cliente
   plan               RestaurantPlan @default(FREE)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
 
@@ -483,6 +484,7 @@ model Restaurant {
   waiterSubscriptions   WaiterPushSubscription[]
   qrUserInteractions    QRUserInteraction[]
   restaurantClients     RestaurantClient[]
+  birthdayEmailLogs     BirthdayEmailLog[]
   segments              Segment[]
   campaigns             Campaign[]
   promotionsMarketing   Promotion[]
@@ -1206,7 +1208,25 @@ model QRUser {
   statEvents   StatEvent[]
   campaignRecipients CampaignRecipient[]
   dishFavorites DishFavorite[]
+  birthdayEmailLogs BirthdayEmailLog[]
   restaurantClients RestaurantClient[]
+}
+
+model BirthdayEmailLog {
+  id             String    @id @default(cuid())
+  restaurantId   String
+  qrUserId       String
+  sentAt         DateTime  @default(now())
+  perkText       String    // snapshot del regalo al momento de enviar
+  opened         Boolean   @default(false)
+  openedAt       DateTime?
+  visitedAt      DateTime? // si el cliente visito el local +-1 dia del cumple
+
+  restaurant     Restaurant @relation(fields: [restaurantId], references: [id])
+  qrUser         QRUser     @relation(fields: [qrUserId], references: [id])
+
+  @@index([restaurantId, sentAt])
+  @@index([qrUserId])
 }
 
 model RestaurantClient {
