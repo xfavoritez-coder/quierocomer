@@ -510,10 +510,10 @@ export default function CartaLista({
         // 'reordered-spicy' se muestra siempre que aplique
         const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
         const msgType = dietMsg === "reordered-spicy" ? dietMsg : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
-        if (msgType) return <div style={{ paddingTop: 20 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
+        if (msgType) return <div style={{ paddingTop: 8 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
         if (!mode) return null;
         return (
-          <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
             {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
             {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
