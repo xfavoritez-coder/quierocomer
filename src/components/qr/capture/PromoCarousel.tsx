@@ -216,7 +216,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
   return (
     <>
-      <div className="font-[family-name:var(--font-dm)]" style={{ padding: compact ? "0 0 0" : "0 12px 4px" }}>
+      <div className="font-[family-name:var(--font-dm)]" style={{ padding: compact ? "0 0 0" : "0 12px 0" }}>
         {/* Carousel */}
         <div style={{ position: "relative" }}>
         <div
@@ -336,7 +336,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
         {/* Dots */}
         {promos.length > 1 && (
-          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 12 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 5, marginTop: 8 }}>
             {promos.map((_, i) => (
               <div key={i} style={{
                 width: i === activeIdx ? 16 : 5, height: 5,
