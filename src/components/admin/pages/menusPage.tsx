@@ -165,7 +165,7 @@ function DishTranslationsEditor({ dishId, restaurantId }: { dishId: string; rest
                     value={draft}
                     onChange={e => setDrafts(prev => ({ ...prev, [lang]: e.target.value }))}
                     placeholder={`Descripción en ${info.label.toLowerCase()}...`}
-                    rows={2}
+                    rows={4}
                     style={{
                       width: "100%", padding: "8px 10px", borderRadius: 8,
                       border: "1px solid var(--adm-card-border, #eee)", background: "var(--adm-card, white)",
