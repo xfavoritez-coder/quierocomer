@@ -381,7 +381,7 @@ function DishSlide({
 
       {/* Content — flows below photo, black bg covers sticky photo */}
       {/* Close button — fixed, always visible */}
-      <button onClick={onClose} className="flex items-center justify-center" style={{ position: "fixed", top: 16, right: 16, zIndex: 130, width: 34, height: 34, borderRadius: "50%", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", border: "0.5px solid rgba(0,0,0,0.08)", color: "#1a1a1a", fontSize: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>✕</button>
+      <button onClick={onClose} className="flex items-center justify-center" style={{ position: "fixed", top: 16, right: 16, zIndex: 130, width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "none", color: "white", fontSize: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>✕</button>
 
       <div style={{ position: "relative", zIndex: 1, background: "#fff", padding: "20px 20px 60px" }}>
 
