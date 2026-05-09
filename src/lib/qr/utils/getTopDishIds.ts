@@ -15,7 +15,6 @@ import { chileStartOfTodayUTC } from "@/lib/toteat/timezone";
 import { getPopularDishes } from "./getPopularDishes";
 
 const MIN_SALES_FOR_TOTEAT = 5;       // need at least 5 units sold today to use Toteat
-const MAX_TOP = 10;                   // max badges global
 const MAX_PER_CATEGORY = 2;           // spread badges across menu
 
 export interface TopDishesResult {
@@ -25,6 +24,10 @@ export interface TopDishesResult {
 }
 
 export async function getTopDishIds(restaurantId: string): Promise<TopDishesResult> {
+  // Count active dishes to calculate max popular (10% of menu, min 2, max 5)
+  const totalDishes = await prisma.dish.count({ where: { restaurantId, isActive: true, deletedAt: null } });
+  const MAX_TOP = Math.min(5, Math.max(2, Math.round(totalDishes * 0.1)));
+
   // 1. Try Toteat sales for today
   const todayStart = chileStartOfTodayUTC();
   const sales = await prisma.toteatSale.findMany({
