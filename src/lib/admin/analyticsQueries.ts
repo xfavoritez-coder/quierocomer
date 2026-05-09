@@ -125,12 +125,11 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
   }
   const engagedVisitors = engagedGuestIds.size;
 
-  // Genio usado: distinct guests con GENIO_COMPLETE en periodo (alguien que
-  // pasó por el onboarding completo del Genio en este local).
+  // Genio: distinct guests que abrieron el Genio (GENIO_START) en periodo.
   const genioGuests = await prisma.statEvent.groupBy({
     by: ["guestId"],
     where: {
-      eventType: "GENIO_COMPLETE" as any,
+      eventType: "GENIO_START" as any,
       ...rf,
       createdAt: { gte: from, lte: to },
     },
