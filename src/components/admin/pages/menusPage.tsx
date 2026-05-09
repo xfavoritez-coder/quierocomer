@@ -1335,7 +1335,7 @@ export default function AdminMenus() {
       </div>
       {/* Restricciones (fila 3) — scroll horizontal con fades */}
       <div style={{ position: "relative", marginBottom: creatingDish ? 10 : 16 }}>
-        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24, paddingLeft: 24 }}>
+        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24 }}>
           <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
             🌶️ Picante
           </button>
