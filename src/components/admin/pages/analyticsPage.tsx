@@ -1369,6 +1369,12 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                       ⭐ {s.recommendedHits || 0}/{s.recommendedTotal} destacados
                     </span>
                   )}
+                  {/* Genio */}
+                  {s.genioData?.timesUsed > 0 && (
+                    <span title={s.genioData.completed ? "Completó el Genio" : `Abrió el Genio (llegó hasta: ${s.genioData.lastStep || "inicio"})`} style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: s.genioData.completed ? "rgba(74,222,128,0.15)" : "rgba(244,166,35,0.15)", color: s.genioData.completed ? "#16a34a" : "#F4A623" }}>
+                      🧞 {s.genioData.completed ? "Genio completado" : "Abrió Genio"}
+                    </span>
+                  )}
                   {/* Cumpleaños */}
                   {s.genioData?.birthdaySaved && (
                     s.genioData.birthdayWasReturning ? (
