@@ -798,7 +798,7 @@ export default function CartaPremium({
         }}
       >
         <a
-          href="https://quierocomer.cl/qr"
+          href="https://quierocomer.cl"
           target="_blank"
           rel="noopener noreferrer"
           style={{
