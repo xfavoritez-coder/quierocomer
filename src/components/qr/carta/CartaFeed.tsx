@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, X, Globe } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -39,7 +40,7 @@ import { canAccess, effectivePlan } from "@/lib/plans";
 import WaiterButton from "../garzon/WaiterButton";
 import { norm } from "@/lib/normalize";
 import { useLang } from "@/contexts/LangContext";
-import { t } from "@/lib/qr/i18n";
+import { t, SUPPORTED_LANGS, type Lang } from "@/lib/qr/i18n";
 import AnnouncementBanner from "./AnnouncementBanner";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
@@ -67,8 +68,38 @@ interface Props {
 /* ═══════════════════════════════════════════
    HERO FULL-BLEED
    ═══════════════════════════════════════════ */
+function FlagCircle({ lang: l, size = 20 }: { lang: string; size?: number }) {
+  const flags: Record<string, React.ReactNode> = {
+    es: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="ffes"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#ffes)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>,
+    en: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="ffen"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#ffen)"><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
+    pt: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="ffpt"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#ffpt)"><rect width="100" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
+    it: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="ffit"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#ffit)"><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
+  };
+  return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[l] || <span>🌐</span>}</span>;
+}
+
 function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restaurant: Restaurant; onDishSelect: (d: Dish) => void }) {
   const lang = useLang();
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+  const [langOpen, setLangOpen] = useState(false);
+  const [optimisticLang, setOptimisticLang] = useState<string | null>(null);
+  const [langToast, setLangToast] = useState<string | null>(null);
+  const langRef = useRef<HTMLDivElement>(null);
+  const enabledLangs = (restaurant as any).enabledLangs as string[] | undefined;
+  const availLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
+  const showLangSelector = availLangs.length > 1;
+  const activeLang = optimisticLang || lang;
+  const LANG_NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano" };
+
+  useEffect(() => { setOptimisticLang(null); }, [lang]);
+  useEffect(() => {
+    if (!langOpen) return;
+    const h = (e: MouseEvent) => { if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false); };
+    document.addEventListener("click", h);
+    return () => document.removeEventListener("click", h);
+  }, [langOpen]);
   const heroDishes = useMemo(() => {
     const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
     if (rec.length > 0) return rec;
@@ -159,21 +190,31 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
           <span style={{ color: "#fff", fontSize: 13, fontWeight: 600, letterSpacing: "-0.1px" }}>{r.name}</span>
         </div>
 
-        {/* Social icons */}
-        {(hasInsta || hasWeb) && (
-          <div style={{ display: "flex", gap: 6 }}>
-            {hasInsta && (
-              <a href={`https://instagram.com/${r.instagram}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-              </a>
+        {/* Social icons + lang */}
+        {(hasInsta || hasWeb || showLangSelector) && (
+          <div style={{ display: "flex", gap: 6 }} onClick={e => e.stopPropagation()}>
+            {hasInsta && <a href={`https://instagram.com/${r.instagram}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center" }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>}
+            {hasWeb && <a href={r.website.startsWith("http") ? r.website : `https://${r.website}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center" }}><Globe size={14} color="#fff" /></a>}
+            {showLangSelector && (
+              <div ref={langRef} style={{ position: "relative" }}>
+                <button onClick={() => setLangOpen(!langOpen)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}><FlagCircle lang={activeLang} size={20} /></button>
+                {langOpen && (
+                  <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120, zIndex: 50 }}>
+                    {availLangs.map(l => (
+                      <button key={l} onClick={() => { setOptimisticLang(l); localStorage.setItem("qc_lang", l); const p = new URLSearchParams(sp.toString()); p.set("lang", l); router.replace(`${pathname}?${p.toString()}`, { scroll: false }); setLangOpen(false); setLangToast(LANG_NAMES[l]); setTimeout(() => setLangToast(null), 2500); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === activeLang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === activeLang ? 600 : 400 }}>
+                        <FlagCircle lang={l} size={18} />{LANG_NAMES[l]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
-            {hasWeb && (
-              <a href={r.website.startsWith("http") ? r.website : `https://${r.website}`} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Globe size={14} color="#fff" />
-              </a>
-            )}
+          </div>
+        )}
+        {langToast && (
+          <div style={{ position: "fixed", top: "45%", left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 16, padding: "16px 28px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
+            <FlagCircle lang={activeLang} size={24} />
+            <span style={{ color: "white", fontSize: "0.95rem", fontWeight: 600 }}>Carta en {langToast}</span>
           </div>
         )}
       </div>
