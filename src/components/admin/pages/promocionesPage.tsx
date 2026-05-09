@@ -574,17 +574,18 @@ export default function AdminPromociones() {
                     </div>
                   )}
                   <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0 }}>
-                    {(p.promoType === "graphic" && p.imageUrl) ? (
-                      <img src={p.thumbUrl || p.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                    ) : p.restaurant?.logoUrl ? (
-                      <img src={p.restaurant.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                    ) : (
-                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
-                        {p.restaurant?.name?.charAt(0) || "🏷️"}
-                      </div>
-                    )}
+                    {(() => {
+                      const thumb = (p.promoType === "graphic" && p.imageUrl) ? (p.thumbUrl || p.imageUrl) : p.dishes?.[0]?.photos?.[0] || null;
+                      return thumb ? (
+                        <img src={thumb} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                      ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
+                          {p.restaurant?.name?.charAt(0) || "🏷️"}
+                        </div>
+                      );
+                    })()}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                         <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
                         <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
                         {p.featured && <span style={{ fontSize: "0.55rem", padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 700 }}>Destacada</span>}
@@ -594,6 +595,11 @@ export default function AdminPromociones() {
                         {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
                         {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
                       </p>
+                      {p.daysOfWeek && p.daysOfWeek.length > 0 && (
+                        <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>
+                          {p.daysOfWeek.map(d => ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d]).join(" · ")}
+                        </p>
+                      )}
                     </div>
                     <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
                   </button>
