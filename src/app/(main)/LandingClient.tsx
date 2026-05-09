@@ -387,7 +387,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                   <p style={{ fontSize: 12, color: BRAND, fontWeight: 600, margin: "2px 0 4px" }}>${planAnnualNetTotal("GOLD").toLocaleString("es-CL")} facturado anual</p>
                 </>
               )}
-              <p style={{ fontSize: 13, color: "#999", marginBottom: 6 }}>+ IVA</p>
               <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
               {billingMode === "mensual" ? (
                 <a href="#contacto" style={{ display: "block", textAlign: "center", padding: "11px 14px", background: "#1a1a1a", color: "#fff", borderRadius: 999, fontFamily: F, fontWeight: 600, fontSize: 14, textDecoration: "none", marginBottom: 20 }}>Empezar prueba gratis 7 días</a>

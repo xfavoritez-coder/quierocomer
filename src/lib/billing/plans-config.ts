@@ -197,18 +197,20 @@ export function formatRut(rut: string): string {
 }
 
 // ─── Precios anuales ─────────────────────────────────────────────────
-// Pagas 10 meses, llevas 12 → 2 meses gratis (~16.67% descuento).
+// Precios fijos mensualizados al contratar anual (2 meses gratis aprox).
 
-export const ANNUAL_MONTHS_PAID = 10;
+const ANNUAL_MONTHLY_NET: Record<Exclude<PlanKey, "FREE">, number> = {
+  GOLD: 29900,
+  PREMIUM: 40900,
+};
 
-/** Total NETO anual (10 meses al precio mensual). FREE = 0. */
-export function planAnnualNetTotal(plan: PlanKey): number {
-  if (plan === "FREE") return 0;
-  return FLOW_PLANS[plan].amountNet * ANNUAL_MONTHS_PAID;
-}
-
-/** Precio NETO mensualizado del plan anual (total / 12). FREE = 0. */
+/** Precio NETO mensualizado del plan anual. FREE = 0. */
 export function planAnnualNetMonthly(plan: PlanKey): number {
   if (plan === "FREE") return 0;
-  return Math.round(planAnnualNetTotal(plan) / 12);
+  return ANNUAL_MONTHLY_NET[plan];
+}
+
+/** Total NETO anual (mensualizado × 12). FREE = 0. */
+export function planAnnualNetTotal(plan: PlanKey): number {
+  return planAnnualNetMonthly(plan) * 12;
 }
