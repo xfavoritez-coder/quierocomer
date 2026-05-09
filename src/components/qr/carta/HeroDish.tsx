@@ -18,7 +18,15 @@ interface QRUserData {
   email: string;
 }
 
-const FLAG_EMOJIS: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+function FlagCircle({ lang, size = 20 }: { lang: string; size?: number }) {
+  const flags: Record<string, React.ReactNode> = {
+    es: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fes"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fes)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>,
+    en: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fen"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fen)"><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
+    pt: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fpt"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fpt)"><rect width="100" height="100" fill="#009739"/><rect x="35" width="65" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
+    it: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fit"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fit)"><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
+  };
+  return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[lang] || <span style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.5, color: "white" }}>🌐</span>}</span>;
+}
 
 interface HeroDishProps {
   restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl" | "instagram" | "website" | "whatsapp"> & { id: string };
@@ -193,7 +201,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   onClick={(e) => { e.stopPropagation(); setLangOpen(!langOpen); }}
                   style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", fontSize: "0.9rem" }}
                 >
-                  {FLAG_EMOJIS[lang] || "🌐"}
+                  <FlagCircle lang={lang} size={20} />
                 </button>
                 {langOpen && (
                   <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
@@ -203,7 +211,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                         onClick={(e) => { e.stopPropagation(); handleLangChange(l); }}
                         style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}
                       >
-                        <span style={{ fontSize: "1rem" }}>{FLAG_EMOJIS[l]}</span>
+                        <FlagCircle lang={l} size={18} />
                         {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
                       </button>
                     ))}

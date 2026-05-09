@@ -69,7 +69,15 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
-const FLAG_E: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+function FlagCircle({ lang, size = 20 }: { lang: string; size?: number }) {
+  const flags: Record<string, React.ReactNode> = {
+    es: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fes2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fes2)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>,
+    en: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fen2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fen2)"><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
+    pt: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fpt2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fpt2)"><rect width="100" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
+    it: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fit2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fit2)"><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
+  };
+  return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[lang] || <span>🌐</span>}</span>;
+}
 function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
   const enabledLangs = (restaurant as any).enabledLangs as string[] | undefined;
   const availLangs = enabledLangs ? (["es","en","pt","it"] as const).filter(l => enabledLangs.includes(l)) : [];
@@ -97,12 +105,12 @@ function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
       {restaurant.website && <a href={restaurant.website.startsWith("http") ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>}
       {showLang && (
         <div ref={lRef} style={{ position: "relative" }}>
-          <button onClick={(e) => { e.stopPropagation(); setLOpen(!lOpen); }} style={{ ...iconStyle, border: "none", cursor: "pointer", fontSize: "0.9rem" }}>{FLAG_E[lang] || "🌐"}</button>
+          <button onClick={(e) => { e.stopPropagation(); setLOpen(!lOpen); }} style={{ ...iconStyle, border: "none", cursor: "pointer", fontSize: "0.9rem" }}><FlagCircle lang={lang} size={20} /></button>
           {lOpen && (
             <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
               {availLangs.map(l => (
                 <button key={l} onClick={(e) => { e.stopPropagation(); localStorage.setItem("qc_lang", l); const p = new URLSearchParams(sp.toString()); p.set("lang", l); router.replace(pathname + "?" + p.toString(), { scroll: false }); setLOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
-                  <span style={{ fontSize: "1rem" }}>{FLAG_E[l]}</span>
+                  <FlagCircle lang={l} size={18} />
                   {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
                 </button>
               ))}
