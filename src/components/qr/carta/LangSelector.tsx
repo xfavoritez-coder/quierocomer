@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLang } from "@/contexts/LangContext";
 import { SUPPORTED_LANGS } from "@/lib/qr/i18n";
 
@@ -18,6 +18,8 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
 
   const availableLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
 
@@ -25,10 +27,19 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
 
   if (!mounted || availableLangs.length < 2) return null;
 
+  const handleOpen = () => {
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    }
+    setOpen(!open);
+  };
+
   return (
-    <div style={{ position: "relative" }}>
+    <>
       <button
-        onClick={() => setOpen(!open)}
+        ref={btnRef}
+        onClick={handleOpen}
         style={{
           width: 32, height: 32, borderRadius: "50%",
           background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
@@ -40,14 +51,12 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
       </button>
       {open && (
         <>
-          {/* Invisible backdrop to close */}
-          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
-          {/* Dropdown */}
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 199 }} />
           <div style={{
-            position: "absolute", top: 38, right: 0, zIndex: 50,
-            background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            position: "fixed", top: pos.top, right: pos.right, zIndex: 200,
+            background: "rgba(0,0,0,0.85)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
             borderRadius: 12, padding: 4, minWidth: 140,
-            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
           }}>
             {availableLangs.map(l => (
               <a
@@ -69,6 +78,6 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
