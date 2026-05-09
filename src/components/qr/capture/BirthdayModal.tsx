@@ -357,7 +357,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     className="bday-input"
                     type="text"
                     inputMode="numeric"
-                    placeholder="Fecha de cumpleaños"
+                    placeholder="Fecha de nacimiento"
                     value={birthDateText}
                     onChange={(e) => handleDateTextChange(e.target.value)}
                     maxLength={10}
