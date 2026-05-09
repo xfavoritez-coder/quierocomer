@@ -253,7 +253,7 @@ export default function VendedoresPage() {
             const examples = [
               { label: "2 locales por semana · Gold", sub: "8 cierres al mes", total: 8 * goldDirect.total },
               { label: "1 local por día · Gold", sub: "20 cierres al mes (lun-vie)", total: 20 * goldDirect.total },
-              { label: "2 locales por día · Mix", sub: "40 cierres al mes (lun-vie)", total: 40 * Math.round((goldDirect.total + premDirect.total) / 2) },
+              { label: "2 locales por día · Gold", sub: "40 cierres al mes (lun-vie)", total: 40 * goldDirect.total },
             ];
             return (
               <>
