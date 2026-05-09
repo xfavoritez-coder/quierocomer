@@ -14,7 +14,7 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
   const [
     totalSessions,
     uniqueGuestsResult,
-    returningGuestsResult,
+    _unusedReturning,
     convertedGuestsResult,
     durationAgg,
     // dishesViewed is JSON so we still need in-memory for avg dishes
@@ -22,10 +22,12 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     // Eventos BIRTHDAY_SAVED en periodo — los validamos abajo contra la
     // persistencia real para no contar fantasmas si el register fallo.
     birthdayEventsRaw,
+    // Guests in this period — to cross-check with prior visits
+    guestsInPeriod,
   ] = await Promise.all([
     prisma.session.count({ where }),
     prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
-    prisma.session.groupBy({ by: ["guestId"], where: { ...where, isReturningVisitor: true }, _count: true }).then((r) => r.length),
+    Promise.resolve(0), // replaced by true returning calculation below
     prisma.session.groupBy({ by: ["guestId"], where: { ...where, converted: true }, _count: true }).then((r) => r.length),
     prisma.session.aggregate({ where: { ...where, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
     prisma.session.findMany({ where, select: { dishesViewed: true }, take: 5000 }),
@@ -38,7 +40,31 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
       },
       _count: true,
     }),
+    // Distinct guests in this period — for true returning calculation
+    prisma.session.findMany({
+      where,
+      select: { guestId: true },
+      distinct: ["guestId"],
+    }),
   ]);
+
+  // True returning: guests who visited in THIS period AND have sessions on a DIFFERENT day before the period
+  let returningGuestsResult = 0;
+  if (guestsInPeriod.length > 0) {
+    const guestIds = guestsInPeriod.map(g => g.guestId).filter(Boolean) as string[];
+    if (guestIds.length > 0) {
+      // Find guests who have at least one session BEFORE this period started
+      const priorVisitors = await prisma.session.groupBy({
+        by: ["guestId"],
+        where: {
+          ...rf,
+          guestId: { in: guestIds },
+          startedAt: { lt: from },
+        },
+      });
+      returningGuestsResult = priorVisitors.length;
+    }
+  }
 
   // Saco el cast aca — Prisma puede tipar guestId como string|null en groupBy
   // y dentro de Promise.all el type guard del .filter no se propaga bien al
