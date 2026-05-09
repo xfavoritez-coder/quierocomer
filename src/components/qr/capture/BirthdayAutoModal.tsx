@@ -98,7 +98,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
         if (cancelled) return;
         if (me.user) {
           if (!me.user.birthDate || isDebug) {
-            setExistingUser({ name: me.user.name, email: me.user.email });
+            if (!isDebug) setExistingUser({ name: me.user.name, email: me.user.email });
             setModalOpen(true);
             localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
             trackAutoShown(guestId, dbSessionId, ab);
