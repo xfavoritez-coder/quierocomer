@@ -16,6 +16,7 @@ const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   food: { label: "Platos de fondo", emoji: "🍽️" },
   entry: { label: "Entradas", emoji: "🥗" },
   drink: { label: "Bebestibles", emoji: "🥤" },
+  coffee: { label: "Café/Té", emoji: "☕" },
   dessert: { label: "Postres", emoji: "🍰" },
   extra: { label: "Extras", emoji: "🔧" },
 };

@@ -44,8 +44,8 @@ export function getCrossSellDishes(
     if (type === "food" && ENTRY_PATTERN.test(cat.name)) {
       type = "entry";
     }
-    // Detect hot drinks (café/té) as separate from cold drinks
-    if (type === "drink" && HOT_PATTERN.test(cat.name)) {
+    // Detect hot drinks (café/té) — via dishType "coffee" or name pattern
+    if (type === "coffee" || (type === "drink" && HOT_PATTERN.test(cat.name))) {
       type = "hot";
     }
     catTypeMap.set(cat.id, type);
@@ -202,7 +202,7 @@ export function getCrossSellDishes(
   } else if (currentType === "drink" || currentType === "hot") {
     title = "Deja espacio para...";
   } else if (currentType === "dessert") {
-    title = "¿Un café con eso?";
+    title = "¿Un café o un té para acompañar?";
   }
 
   return { title, items: results.slice(0, MAX) };
