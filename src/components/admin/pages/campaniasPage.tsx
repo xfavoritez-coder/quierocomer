@@ -397,7 +397,7 @@ export default function AdminCampanias() {
   return (
     <div style={{ maxWidth: 700 }}>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: GOLD, margin: "0 0 4px" }}>Mail Marketing</h1>
+        <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: GOLD, margin: "0 0 4px" }}>Email Marketing</h1>
         <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>Comunícate con tus clientes y premia su fidelidad</p>
       </div>
 
