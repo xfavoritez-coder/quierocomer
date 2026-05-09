@@ -222,16 +222,15 @@ export async function getFailedSearches(restaurantId: string | null, from: Date,
       eventType: "SEARCH_PERFORMED",
       createdAt: { gte: from, lte: to },
       query: { not: null },
-      // Exclude Genio dislike searches
-      NOT: { metadata: { path: ["context"], equals: "dislike_search" } },
     },
-    select: { query: true, guestId: true, restaurantId: true, createdAt: true, resultsCount: true },
+    select: { query: true, guestId: true, restaurantId: true, createdAt: true, resultsCount: true, metadata: true },
     take: 5000,
   });
 
-  // Aggregate
+  // Aggregate (exclude Genio dislike searches in JS to avoid Prisma Json path issues with null metadata)
   const map = new Map<string, { count: number; visitors: Set<string>; restaurants: Set<string>; lastAt: Date }>();
   for (const s of searches) {
+    if ((s as any).metadata && (s as any).metadata.context === "dislike_search") continue;
     const q = (s.query || "").toLowerCase().trim();
     if (!q) continue;
     const existing = map.get(q) || { count: 0, visitors: new Set(), restaurants: new Set(), lastAt: new Date(0) };
