@@ -1,65 +1,40 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useLang } from "@/contexts/LangContext";
 import { SUPPORTED_LANGS } from "@/lib/qr/i18n";
 
-const FLAGS: Record<string, string> = {
-  es: "🇪🇸",
-  en: "🇺🇸",
-  pt: "🇧🇷",
-  it: "🇮🇹",
-};
+const FLAGS: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+const NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano" };
 
-const NAMES: Record<string, string> = {
-  es: "Español",
-  en: "English",
-  pt: "Português",
-  it: "Italiano",
-};
-
-interface Props {
-  enabledLangs?: string[];
+function buildLangUrl(lang: string): string {
+  if (typeof window === "undefined") return "#";
+  const url = new URL(window.location.href);
+  url.searchParams.set("lang", lang);
+  return url.toString();
 }
 
-export default function LangSelector({ enabledLangs }: Props) {
+export default function LangSelector({ enabledLangs }: { enabledLangs?: string[] }) {
   const lang = useLang();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
-  const availableLangs = enabledLangs
-    ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l))
-    : [];
+  const availableLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
 
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [open]);
+    if (mounted) {
+      console.log("[LangSelector] enabledLangs:", enabledLangs, "availableLangs:", availableLangs, "lang:", lang);
+    }
+  }, [mounted]);
 
-  // Don't render until mounted (avoids hydration mismatch)
-  // Don't render if less than 2 languages
   if (!mounted || availableLangs.length < 2) return null;
 
-  const handleChange = (next: string) => {
-    if (next === lang) { setOpen(false); return; }
-    localStorage.setItem("qc_lang", next);
-    setOpen(false);
-    const url = new URL(window.location.href);
-    url.searchParams.set("lang", next);
-    window.location.assign(url.toString());
-  };
-
   return (
-    <div ref={ref} style={{ position: "relative" }}>
+    <>
       <button
-        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
+        onClick={() => setOpen(true)}
         style={{
           width: 32, height: 32, borderRadius: "50%",
           background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
@@ -69,29 +44,45 @@ export default function LangSelector({ enabledLangs }: Props) {
       >
         {FLAGS[lang] || "🌐"}
       </button>
+
       {open && (
-        <div style={{
-          position: "absolute", top: 38, right: 0, zIndex: 50,
-          background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
-          borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 130,
-        }}>
-          {availableLangs.map(l => (
-            <button
-              key={l}
-              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleChange(l); }}
-              style={{
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "8px 12px", border: "none", borderRadius: 8, cursor: "pointer",
-                background: l === lang ? "rgba(244,166,35,0.2)" : "transparent",
-                color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400,
-              }}
-            >
-              <span style={{ fontSize: "1.1rem" }}>{FLAGS[l]}</span>
-              {NAMES[l]}
-            </button>
-          ))}
+        <div
+          onClick={() => setOpen(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(0,0,0,0.5)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "rgba(20,20,20,0.95)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+              borderRadius: 16, padding: "8px 6px", minWidth: 180,
+              boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
+            }}
+          >
+            <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", textAlign: "center", margin: "8px 0 6px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>Idioma</p>
+            {availableLangs.map(l => (
+              <a
+                key={l}
+                href={buildLangUrl(l)}
+                onClick={() => localStorage.setItem("qc_lang", l)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 10, width: "100%",
+                  padding: "10px 16px", borderRadius: 10, textDecoration: "none",
+                  background: l === lang ? "rgba(244,166,35,0.15)" : "transparent",
+                  color: "white", fontSize: "0.9rem", fontWeight: l === lang ? 600 : 400,
+                }}
+              >
+                <span style={{ fontSize: "1.2rem" }}>{FLAGS[l]}</span>
+                {NAMES[l]}
+                {l === lang && <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "#F4A623" }}>✓</span>}
+              </a>
+            ))}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
