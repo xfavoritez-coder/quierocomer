@@ -359,8 +359,6 @@ function DishSlide({
           />
         )}
 
-        {/* Top gradient */}
-        <div className="absolute pointer-events-none" style={{ top: 0, left: 0, right: 0, height: 100, zIndex: 8, background: "linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.06) 50%, transparent 100%)" }} />
 
         {/* Photo dots */}
         {photos.length > 1 && (

@@ -465,7 +465,6 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                           </div>
                         ))}
                       </div>
-                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 40%, rgba(0,0,0,0.5) 100%)", pointerEvents: "none" }} />
                       {selectedPromo.discountPct && (
                         <div style={{ position: "absolute", top: 20, left: 20, background: "#10b981", color: "white", padding: "8px 14px", borderRadius: 100, fontSize: "12px", fontWeight: 700, letterSpacing: "0.05em", boxShadow: "0 4px 12px rgba(16,185,129,0.4)" }}>-{selectedPromo.discountPct}% OFF</div>
                       )}
