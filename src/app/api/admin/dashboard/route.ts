@@ -70,6 +70,8 @@ export async function GET(req: NextRequest) {
       weekDetailViews,
       weekWaiterCalls,
       uniqueVisitorsToday,
+      weekBirthdays,
+      topSearches,
     ] = await Promise.all([
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } },
@@ -176,6 +178,18 @@ export async function GET(req: NextRequest) {
         select: { guestId: true },
         distinct: ["guestId"],
       }),
+      // Birthdays saved this week
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: weekAgo } },
+      }),
+      // Top searches this month
+      prisma.statEvent.groupBy({
+        by: ["query"],
+        where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: monthAgo } },
+        _count: { id: true },
+        orderBy: { _count: { id: "desc" } },
+        take: 5,
+      }),
     ]);
 
     // Aggregate detailMs from sessions JSON for "Más tiempo en detalle" ranking
@@ -256,6 +270,8 @@ export async function GET(req: NextRequest) {
       weekDetailViews,
       weekWaiterCalls,
       todayUniqueVisitors: uniqueVisitorsToday.length,
+      weekBirthdays,
+      topSearches: (topSearches as any[]).map((s: any) => ({ name: s.query || "—", count: s._count.id })),
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
