@@ -328,21 +328,8 @@ function DishSlide({
         flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#fff",
       }}
     >
-      {/* Photo — container cuadrado fijo (1:1). Todas las fotos del mismo
-           tamano para consistencia visual entre platos. object-cover hace
-           crop simetrico centrado (estandar de la industria food: Instagram,
-           Uber Eats, DoorDash todos usan cuadrado). */}
-      <div ref={photoRef} style={{
-        position: "relative",
-        width: "100%",
-        ...(photos.length > 0
-          ? { aspectRatio: "1 / 1" }
-          : { height: "26vh" }
-        ),
-        overflow: "hidden",
-        zIndex: 0,
-        background: photos.length > 0 ? "#f5f5f3" : "transparent",
-      }}>
+      {/* Photo */}
+      <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length === 0 && (
           <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #f5f5f3 0%, #e8e4dc 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
