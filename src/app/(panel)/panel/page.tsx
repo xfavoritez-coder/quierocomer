@@ -143,13 +143,29 @@ export default function PanelDashboard() {
 
       <PlanGate plan={(restaurants.find(r => r.id === selectedRestaurantId) as any)?.plan} feature="stats_basic">
 
-      {/* ═══ Snapshot hoy — 2×2 ═══ */}
+      {/* ═══ HOY ═══ */}
+      <h2 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px", fontWeight: 600 }}>Hoy</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
+        {[
+          { icon: "📱", label: "Escaneos", value: data.todayScans },
+          { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
+        ].map((s, i) => (
+          <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{s.value}</p>
+              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{s.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* ═══ ESTA SEMANA ═══ */}
+      <h2 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px", fontWeight: 600 }}>Esta semana</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
         {[
-          { icon: "📱", label: "Escaneos hoy", value: data.todayScans },
-          { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
-          { icon: "👥", label: "Visitas semana", value: data.visitsThisWeek, sub: data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs ant.` : undefined, subColor: data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : undefined },
-          { icon: "🎂", label: "Cumpleaños sem.", value: data.weekBirthdays || 0 },
+          { icon: "👥", label: "Visitas", value: data.visitsThisWeek, sub: data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs anterior` : undefined, subColor: data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : undefined },
+          { icon: "🎂", label: "Cumpleaños", value: data.weekBirthdays || 0 },
         ].map((s: any, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
