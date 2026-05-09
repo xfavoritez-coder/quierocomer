@@ -48,12 +48,13 @@ export default function LangSelector({ enabledLangs }: Props) {
   if (!mounted || availableLangs.length < 2) return null;
 
   const handleChange = (next: string) => {
+    alert(`DEBUG: handleChange called with "${next}", current lang: "${lang}"`);
     if (next === lang) { setOpen(false); return; }
     localStorage.setItem("qc_lang", next);
     setOpen(false);
-    // Use assign for a full page reload with the new lang param
     const url = new URL(window.location.href);
     url.searchParams.set("lang", next);
+    alert(`DEBUG: redirecting to ${url.toString()}`);
     window.location.assign(url.toString());
   };
 
