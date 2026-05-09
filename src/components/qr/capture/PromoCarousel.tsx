@@ -438,7 +438,6 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
                       {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "#F4A623", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
                       {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
-                      {savings > 0 && <span style={{ fontSize: "12px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "5px 9px", borderRadius: 7 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
                     </div>
                   )}
                   {selectedPromo.validUntil && (
@@ -506,7 +505,6 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                         <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
                         {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
-                        {savings > 0 && <span style={{ marginLeft: "auto", fontSize: "13px", fontWeight: 700, color: "#10b981", background: "#d1fae5", padding: "6px 10px", borderRadius: 8 }}>Ahorras ${savings.toLocaleString("es-CL")}</span>}
                       </div>
                     </div>
                   )}
