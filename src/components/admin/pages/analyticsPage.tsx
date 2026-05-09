@@ -113,11 +113,13 @@ type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesione
 /* ═══ TAB: Resumen ═══ */
 function HeroKpi({ icon, value, label, sub, color, gradient }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string }) {
   return (
-    <div style={{ background: gradient, border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)", position: "relative", overflow: "hidden" }}>
-      <div style={{ fontSize: "1.4rem", marginBottom: 6, opacity: 0.9 }}>{icon}</div>
-      <p style={{ fontFamily: F, fontSize: "2rem", color, margin: "0 0 2px", fontWeight: 700, lineHeight: 1 }}>{value}</p>
-      <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: "6px 0 0", fontWeight: 600 }}>{label}</p>
-      {sub && <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>{sub}</p>}
+    <div style={{ background: gradient, border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)", position: "relative", overflow: "hidden" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+        <span style={{ fontSize: "1.3rem", opacity: 0.9 }}>{icon}</span>
+        <span style={{ fontFamily: F, fontSize: "1.8rem", color, fontWeight: 700, lineHeight: 1 }}>{value}</span>
+      </div>
+      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0", fontWeight: 600 }}>{label}</p>
+      {sub && <p style={{ fontFamily: F, fontSize: "0.64rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{sub}</p>}
     </div>
   );
 }
@@ -257,12 +259,19 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       )}
 
       {/* ═══ Estrellas por horario — qué plato gana en cada momento del día ═══ */}
-      {popularByHour.length > 0 && (
+      {(() => {
+        // If viewing a single day (from === to), filter out future time slots
+        const isSingleDay = from === to;
+        const nowChileHour = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
+        const slotStart: Record<string, number> = { MORNING: 6, LUNCH: 11, AFTERNOON: 15, DINNER: 19, LATE: 23 };
+        const filteredHours = isSingleDay ? popularByHour.filter((p: any) => (slotStart[p.key] ?? 0) <= nowChileHour) : popularByHour;
+        if (filteredHours.length === 0) return null;
+        return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600 }}>🌟 Estrella por horario</p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato más abierto en cada momento del día.</p>
-          <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${popularByHour.length}, minmax(0, 1fr))` }}>
-            {popularByHour.map((p: any) => (
+          <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${filteredHours.length}, minmax(0, 1fr))` }}>
+            {filteredHours.map((p: any) => (
               <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
                 <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700 }}>{p.label}</span>
@@ -284,7 +293,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             ))}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ═══ Top platos + Quiénes son ═══ */}
       <div className="adm-cols-2">
