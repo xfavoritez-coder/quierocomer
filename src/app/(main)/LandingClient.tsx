@@ -70,7 +70,7 @@ const BG_WARM = "#FAF9F7";
 
 const WHATSAPP_NUMBER = "56999946208";
 const annualWhatsappUrl = (planName: string) => {
-  const msg = encodeURIComponent(`Hola, quiero activar el plan ${planName} anual con 2 meses gratis en QuieroComer`);
+  const msg = encodeURIComponent(`Hola, quiero activar el plan ${planName} anual en QuieroComer`);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
 };
 
@@ -348,12 +348,12 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                     transition: "all 0.2s",
                   }}
                 >
-                  {mode === "mensual" ? "Mensual" : "Anual · 2 meses gratis"}
+                  {mode === "mensual" ? "Mensual" : "Anual"}
                 </button>
               ))}
             </div>
             <p style={{ fontSize: 13, color: "#999", marginTop: 10 }}>
-              {billingMode === "anual" ? "Pagas 10 meses, llevas 12" : "Cambia a anual y llévate 2 meses gratis"}
+              {billingMode === "anual" ? "Ahorra pagando anual" : "Cambia a anual y ahorra"}
             </p>
           </div>
           <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
@@ -383,9 +383,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               </div>
               {billingMode === "anual" && (
                 <>
-                  <p style={{ fontSize: 12, color: "#999", margin: "2px 0 0" }}>Antes <span style={{ textDecoration: "line-through" }}>${planNetAmount("GOLD").toLocaleString("es-CL")}/mes</span></p>
-                  <p style={{ fontSize: 12, color: BRAND, fontWeight: 600, margin: "2px 0 0" }}>${planAnnualNetTotal("GOLD").toLocaleString("es-CL")} anual</p>
-                  <p style={{ fontSize: 11, color: "#16a34a", margin: "2px 0 4px" }}>Ahorras ${(planNetAmount("GOLD") * 12 - planAnnualNetTotal("GOLD")).toLocaleString("es-CL")} al año</p>
+                  <p style={{ fontSize: 11, color: "#999", margin: "2px 0 0" }}>${planAnnualNetTotal("GOLD").toLocaleString("es-CL")} anual</p>
+                  <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, color: "#16a34a", background: "#dcfce7", padding: "2px 8px", borderRadius: 999, margin: "4px 0" }}>Ahorras ${(planNetAmount("GOLD") * 12 - planAnnualNetTotal("GOLD")).toLocaleString("es-CL")}/año</span>
                 </>
               )}
               {billingMode === "mensual" ? (
@@ -413,9 +412,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               </div>
               {billingMode === "anual" && (
                 <>
-                  <p style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 0" }}>Antes <span style={{ textDecoration: "line-through" }}>${planNetAmount("PREMIUM").toLocaleString("es-CL")}/mes</span></p>
-                  <p style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600, margin: "2px 0 0" }}>${planAnnualNetTotal("PREMIUM").toLocaleString("es-CL")} anual</p>
-                  <p style={{ fontSize: 11, color: "#16a34a", margin: "2px 0 4px" }}>Ahorras ${(planNetAmount("PREMIUM") * 12 - planAnnualNetTotal("PREMIUM")).toLocaleString("es-CL")} al año</p>
+                  <p style={{ fontSize: 11, color: "#999", margin: "2px 0 0" }}>${planAnnualNetTotal("PREMIUM").toLocaleString("es-CL")} anual</p>
+                  <span style={{ display: "inline-block", fontSize: 11, fontWeight: 700, color: "#16a34a", background: "#dcfce7", padding: "2px 8px", borderRadius: 999, margin: "4px 0" }}>Ahorras ${(planNetAmount("PREMIUM") * 12 - planAnnualNetTotal("PREMIUM")).toLocaleString("es-CL")}/año</span>
                 </>
               )}
               {billingMode === "mensual" ? (
