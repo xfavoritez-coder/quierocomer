@@ -42,12 +42,13 @@ export async function GET(req: NextRequest) {
     }
     // If superadmin and no filter, no restriction
 
-    const now = new Date();
-    const chileNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
-    const todayStart = new Date(chileNow.getFullYear(), chileNow.getMonth(), chileNow.getDate());
-    const weekAgo = daysAgo(7);
-    const twoWeeksAgo = daysAgo(14);
-    const monthAgo = daysAgo(30);
+    // Use Chile timezone for "today" boundaries
+    const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const chileDateStr = `${chileNow.getFullYear()}-${String(chileNow.getMonth()+1).padStart(2,"0")}-${String(chileNow.getDate()).padStart(2,"0")}`;
+    const todayStart = new Date(chileDateStr + "T00:00:00.000-04:00");
+    const weekAgo = new Date(todayStart.getTime() - 7 * 86400000);
+    const twoWeeksAgo = new Date(todayStart.getTime() - 14 * 86400000);
+    const monthAgo = new Date(todayStart.getTime() - 30 * 86400000);
 
     const [
       visitsThisWeek,
