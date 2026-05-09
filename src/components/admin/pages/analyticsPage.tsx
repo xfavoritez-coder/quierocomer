@@ -238,14 +238,16 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       {clientes?.timeOfDay && clientes.totalSessions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>📊 Cuándo abren la carta</p>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
             {clientes.timeOfDay.map((t: any) => {
               const isPeak = t.key === peakHour?.key;
+              const barH = Math.max(4, (t.count / maxTime) * 80);
               return (
                 <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <span style={{ fontFamily: F, fontSize: isPeak ? "0.78rem" : "0.7rem", color: isPeak ? "#c4b5fd" : "var(--adm-text2)", fontWeight: 700 }}>{t.count}</span>
-                  <div style={{ width: "100%", height: Math.max(4, (t.count / maxTime) * 80), background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease" }} />
-                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
+                  <div style={{ width: "100%", height: barH, background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 4, minHeight: 22 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: isPeak ? "#fff" : "rgba(255,255,255,0.9)", fontWeight: 700 }}>{t.count}</span>
+                  </div>
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: isPeak ? "#c4b5fd" : "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
                   <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
                 </div>
               );
