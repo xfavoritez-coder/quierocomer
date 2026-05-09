@@ -352,9 +352,6 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                 </button>
               ))}
             </div>
-            <p style={{ fontSize: 13, color: "#999", marginTop: 10 }}>
-              {billingMode === "anual" ? "Paga menos con el plan anual" : "Cancela cuando quieras"}
-            </p>
           </div>
           <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
             {/* GRATIS */}
