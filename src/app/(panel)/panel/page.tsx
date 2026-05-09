@@ -151,7 +151,7 @@ export default function PanelDashboard() {
         {[
           { icon: "📱", label: "Sesiones", value: data.todayScans },
           { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
-          { icon: "🎂", label: "Cumpleaños", value: (data as any).todayBirthdays || 0 },
+          { icon: "🎂", label: "Cumple registrados", value: (data as any).todayBirthdays || 0 },
         ].map((s, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
@@ -168,7 +168,7 @@ export default function PanelDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
         {[
           { icon: "👥", label: "Visitas", value: data.visitsThisWeek, sub: data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs anterior` : undefined, subColor: data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : undefined },
-          { icon: "🎂", label: "Cumpleaños", value: data.weekBirthdays || 0 },
+          { icon: "🎂", label: "Cumple registrados", value: data.weekBirthdays || 0 },
         ].map((s: any, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
