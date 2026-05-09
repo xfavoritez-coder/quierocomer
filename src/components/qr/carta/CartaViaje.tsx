@@ -778,8 +778,8 @@ const CSS = `
   .vj-chapter-featured img { object-fit: cover; }
   .vj-chapter.in-view .vj-chapter-featured,
   .vj-chapter-slide.in-view .vj-chapter-featured {
-    filter: blur(3px) brightness(0.4);
-    opacity: 0.7;
+    filter: blur(3px) brightness(0.3);
+    opacity: 0.6;
     animation: vjBgDrift 12s ease-in-out infinite alternate;
   }
   @keyframes vjBgDrift {
@@ -871,7 +871,7 @@ const CSS = `
   .vj-hero-photo { position: absolute; inset: 0; transform: scale(1.12); transition: transform 14s var(--vj-ease); }
   .vj-hero-photo img { object-fit: cover; }
   .vj-v-hero.in-view .vj-hero-photo { transform: scale(1); }
-  .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, transparent 30%, rgba(0,0,0,0.4) 60%, rgba(0,0,0,0.75) 100%); }
+  .vj-hero-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.5) 60%, rgba(0,0,0,0.8) 100%); }
   .vj-hero-info { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); width: 100%; max-width: calc(100% - 70px); }
 
   /* STAGE — full-screen photo with title centered top + price bottom-right */
@@ -879,7 +879,7 @@ const CSS = `
   .vj-stage-photo { position: absolute; inset: 0; transform: scale(1.1); transition: transform 14s var(--vj-ease); }
   .vj-stage-photo img { object-fit: cover; }
   .vj-v-stage.in-view .vj-stage-photo { transform: scale(1); }
-  .vj-stage-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 30%, rgba(0,0,0,0.15) 60%, rgba(0,0,0,0.85) 100%); }
+  .vj-stage-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 30%, rgba(0,0,0,0.25) 60%, rgba(0,0,0,0.88) 100%); }
   .vj-stage-top { position: relative; z-index: 3; padding: calc(110px + env(safe-area-inset-top)) 28px 0; text-align: center; opacity: 0; transform: translateY(-12px); transition: all 1.1s var(--vj-ease) 0.3s; }
   .vj-v-stage.in-view .vj-stage-top { opacity: 1; transform: translateY(0); }
   .vj-stage-eyebrow { display: inline-block; font-size: 10px; letter-spacing: 0.4em; color: rgba(255,255,255,0.75); margin-bottom: 14px; font-weight: 500; }
@@ -893,7 +893,7 @@ const CSS = `
   .vj-v-split { flex-direction: column; background: radial-gradient(ellipse at 50% 80%, rgba(244,166,35,0.08), transparent 50%), linear-gradient(180deg, #0a0604 0%, #1a0f08 100%); }
   .vj-split-photo { height: 58%; position: relative; overflow: hidden; flex-shrink: 0; }
   .vj-split-photo img { object-fit: cover; }
-  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(10,6,4,0.5) 70%, rgba(10,6,4,0.9) 100%); }
+  .vj-split-gradient { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 30%, rgba(10,6,4,0.6) 65%, rgba(10,6,4,0.92) 100%); }
   .vj-split-info { flex: 1; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 3; }
   .vj-split-divider { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, #F4A623, transparent); margin-bottom: 16px; }
   .vj-split-eyebrow { font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase; color: #F4A623; margin-bottom: 12px; font-weight: 600; }
