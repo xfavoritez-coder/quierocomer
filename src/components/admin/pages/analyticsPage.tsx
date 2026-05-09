@@ -237,13 +237,21 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       </div>
 
       {/* ═══ Distribución horaria ═══ */}
-      {clientes?.timeOfDay && clientes.totalSessions > 0 && (
+      {clientes?.timeOfDay && clientes.totalSessions > 0 && (() => {
+        const isSingleDay = from === to;
+        const nowH = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
+        const slotStartH: Record<string, number> = { morning: 6, lunch: 11, afternoon: 15, dinner: 19, late: 23 };
+        const filteredTod = isSingleDay ? clientes.timeOfDay.filter((t: any) => (slotStartH[t.key] ?? 0) <= nowH) : clientes.timeOfDay;
+        const filteredMax = Math.max(...filteredTod.map((t: any) => t.count), 1);
+        if (filteredTod.length === 0) return null;
+        return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>📊 Cuándo abren la carta</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
-            {clientes.timeOfDay.map((t: any) => {
-              const isPeak = t.key === peakHour?.key;
-              const barH = Math.max(4, (t.count / maxTime) * 80);
+            {filteredTod.map((t: any) => {
+              const filteredPeak = [...filteredTod].sort((a: any, b: any) => b.count - a.count)[0];
+              const isPeak = t.key === filteredPeak?.key;
+              const barH = Math.max(4, (t.count / filteredMax) * 80);
               return (
                 <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
                   <div style={{ width: "100%", height: barH, background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 4, minHeight: 22 }}>
@@ -256,7 +264,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
             })}
           </div>
         </div>
-      )}
+        );
+      })()}
 
       {/* ═══ Estrellas por horario — qué plato gana en cada momento del día ═══ */}
       {(() => {
