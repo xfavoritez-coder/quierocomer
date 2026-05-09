@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     const promotions = await prisma.promotion.findMany({
       where,
       include: { restaurant: { select: { name: true, logoUrl: true } } },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
     const allDishIds = promotions.flatMap((p) => p.dishIds);
@@ -113,7 +113,18 @@ export async function PUT(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { id, status, ...data } = await req.json();
+    const body = await req.json();
+
+    // Bulk reorder
+    if (body.action === "reorder" && Array.isArray(body.order)) {
+      const restaurantId = await requireRestaurantForOwner(req, body.restaurantId);
+      for (let i = 0; i < body.order.length; i++) {
+        await prisma.promotion.update({ where: { id: body.order[i] }, data: { position: i } });
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    const { id, status, ...data } = body;
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     // Ownership check
@@ -133,6 +144,8 @@ export async function PUT(req: NextRequest) {
         ...(data.validFrom && { validFrom: new Date(data.validFrom) }),
         ...(data.validUntil && { validUntil: new Date(data.validUntil) }),
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
+        ...(data.position !== undefined && { position: data.position }),
+        ...(data.featured !== undefined && { featured: data.featured }),
       },
     });
     return NextResponse.json({ promotion: promo });

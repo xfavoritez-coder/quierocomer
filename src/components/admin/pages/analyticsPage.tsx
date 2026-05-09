@@ -1556,8 +1556,9 @@ const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
 type DatePreset = "hoy" | "ayer" | "semana" | "custom";
 
 function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string): { from: string; to: string } {
-  const today = new Date();
-  const fmt = (d: Date) => d.toISOString().split("T")[0];
+  // Use Chile timezone so "hoy"/"ayer" match the user's local day
+  const today = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+  const fmt = (d: Date) => { const y = d.getFullYear(); const m = String(d.getMonth()+1).padStart(2,"0"); const dd = String(d.getDate()).padStart(2,"0"); return `${y}-${m}-${dd}`; };
   if (preset === "hoy") return { from: fmt(today), to: fmt(today) };
   if (preset === "ayer") { const y = new Date(today); y.setDate(y.getDate() - 1); return { from: fmt(y), to: fmt(y) }; }
   if (preset === "semana") { const w = new Date(today); w.setDate(w.getDate() - 7); return { from: fmt(w), to: fmt(today) }; }

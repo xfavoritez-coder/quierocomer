@@ -584,6 +584,20 @@ export default function AgregarLocalPage() {
               🔔 Panel Garzón
             </a>
 
+            <a
+              href={`/agregarlocal/demo-analytics/${result.slug}`}
+              target="_blank"
+              style={{
+                display: "block", width: "100%", padding: "14px", borderRadius: 50,
+                background: "linear-gradient(135deg, rgba(244,166,35,0.12) 0%, rgba(167,139,250,0.08) 100%)",
+                border: "1px solid rgba(244,166,35,0.2)",
+                color: "#F4A623", textDecoration: "none",
+                fontSize: "0.92rem", fontWeight: 600, textAlign: "center", marginBottom: 16,
+              }}
+            >
+              📊 Ver estadísticas demo
+            </a>
+
             {/* QR Code */}
             <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, margin: "0 auto 16px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <QRCodeCanvas value={result.url} size={148} level="H" />

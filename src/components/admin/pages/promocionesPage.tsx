@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -21,6 +21,8 @@ interface Promo {
   createdAt: string; targetSegment?: string; emailCopy?: string; dishNames?: string[];
   restaurant?: { name: string; logoUrl?: string | null } | null;
   daysOfWeek?: number[];
+  position?: number;
+  featured?: boolean;
 }
 
 export default function AdminPromociones() {
@@ -57,6 +59,8 @@ export default function AdminPromociones() {
   const [editDaysOfWeek, setEditDaysOfWeek] = useState<number[]>([]);
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
   const [savingNew, setSavingNew] = useState(false);
+  const [dishSearch, setDishSearch] = useState("");
+  const editRef = React.useRef<HTMLDivElement>(null);
 
   // Auto-set selectedLocal from session (for owners)
   useEffect(() => {
@@ -133,7 +137,7 @@ export default function AdminPromociones() {
 
   const resetCreate = () => {
     setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]);
+    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch("");
   };
 
   useEffect(() => {
@@ -183,6 +187,7 @@ export default function AdminPromociones() {
     setEditOriginalPrice(p.originalPrice?.toString() || "");
     setEditImageUrl(p.imageUrl || "");
     setEditDaysOfWeek(p.daysOfWeek || []);
+    setTimeout(() => editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
   const handleEditUpload = async (file: File) => {
@@ -225,6 +230,42 @@ export default function AdminPromociones() {
       setPromos(prev => prev.map(p => p.id === editing.id ? { ...p, ...body } : p));
     }
     setEditing(null);
+  };
+
+  const movePromo = async (id: string, dir: "up" | "down") => {
+    const idx = filtered.findIndex(p => p.id === id);
+    if (idx < 0) return;
+    const swapIdx = dir === "up" ? idx - 1 : idx + 1;
+    if (swapIdx < 0 || swapIdx >= filtered.length) return;
+    const newOrder = [...filtered];
+    [newOrder[idx], newOrder[swapIdx]] = [newOrder[swapIdx], newOrder[idx]];
+    const ids = newOrder.map(p => p.id);
+    // Optimistic update
+    setPromos(prev => {
+      const copy = [...prev];
+      const allIds = ids;
+      allIds.forEach((pid, i) => {
+        const p = copy.find(x => x.id === pid);
+        if (p) p.position = i;
+      });
+      copy.sort((a, b) => (a.position ?? 999) - (b.position ?? 999));
+      return copy;
+    });
+    await fetch("/api/admin/promotions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "reorder", order: ids, restaurantId: selectedLocal }),
+    });
+  };
+
+  const toggleFeatured = async (p: Promo) => {
+    const newVal = !p.featured;
+    setPromos(prev => prev.map(x => x.id === p.id ? { ...x, featured: newVal } : x));
+    await fetch("/api/admin/promotions", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id: p.id, featured: newVal }),
+    });
   };
 
   const filtered = promos.filter(p => {
@@ -352,8 +393,14 @@ export default function AdminPromociones() {
 
           {/* Dish selector */}
           <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Selecciona platos ({cSelectedDishes.length} seleccionados)</p>
-          <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 14, borderRadius: 10, border: "1px solid var(--adm-card-border)", scrollbarWidth: "none" }}>
-            {localDishes.map(d => {
+          <input
+            placeholder="Buscar plato..."
+            value={dishSearch}
+            onChange={e => setDishSearch(e.target.value)}
+            style={{ ...INP, marginBottom: 0, borderRadius: "10px 10px 0 0", borderBottom: "none" }}
+          />
+          <div style={{ maxHeight: 200, overflowY: "auto", marginBottom: 14, borderRadius: "0 0 10px 10px", border: "1px solid var(--adm-card-border)", scrollbarWidth: "none" }}>
+            {localDishes.filter(d => !dishSearch || d.name.toLowerCase().includes(dishSearch.toLowerCase())).map(d => {
               const sel = cSelectedDishes.includes(d.id);
               return (
                 <button key={d.id} onClick={() => toggleDishSelection(d.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", width: "100%", background: sel ? "rgba(244,166,35,0.08)" : "transparent", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
@@ -423,7 +470,7 @@ export default function AdminPromociones() {
 
       {/* Edit modal */}
       {editing && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
+        <div ref={editRef} style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
           <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>Editar promoción</h3>
           <input placeholder="Nombre" value={editName} onChange={e => setEditName(e.target.value)} style={I} />
           <textarea placeholder="Descripción" value={editDesc} onChange={e => setEditDesc(e.target.value)} rows={3} style={{ ...I, resize: "vertical" }} />
@@ -473,31 +520,42 @@ export default function AdminPromociones() {
             const isOpen = expanded === p.id;
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
-              <div key={p.id} style={{ background: "var(--adm-card)", border: `1px solid ${isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden" }}>
+              <div key={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden" }}>
                 {/* Header */}
-                <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", width: "100%", background: "none", border: "none", cursor: "pointer", textAlign: "left" }}>
-                  {(p.promoType === "graphic" && p.imageUrl) ? (
-                    <img src={p.thumbUrl || p.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                  ) : p.restaurant?.logoUrl ? (
-                    <img src={p.restaurant.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
-                  ) : (
-                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
-                      {p.restaurant?.name?.charAt(0) || "🏷️"}
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {/* Reorder + Featured */}
+                  {isPanel && (
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "4px 0 4px 8px", gap: 2, flexShrink: 0 }}>
+                      <button onClick={() => movePromo(p.id, "up")} title="Subir" style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.7rem", color: "var(--adm-text3)", lineHeight: 1 }}>▲</button>
+                      <button onClick={() => toggleFeatured(p)} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.85rem", lineHeight: 1 }}>{p.featured ? "⭐" : "☆"}</button>
+                      <button onClick={() => movePromo(p.id, "down")} title="Bajar" style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.7rem", color: "var(--adm-text3)", lineHeight: 1 }}>▼</button>
                     </div>
                   )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
-                      <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
+                  <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0 }}>
+                    {(p.promoType === "graphic" && p.imageUrl) ? (
+                      <img src={p.thumbUrl || p.imageUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                    ) : p.restaurant?.logoUrl ? (
+                      <img src={p.restaurant.logoUrl} alt="" style={{ width: 40, height: 40, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+                    ) : (
+                      <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>
+                        {p.restaurant?.name?.charAt(0) || "🏷️"}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <span style={{ fontFamily: F, fontSize: "0.95rem", color: "var(--adm-text)", fontWeight: 600 }}>{p.name}</span>
+                        <span style={{ fontSize: "0.6rem", padding: "2px 8px", borderRadius: 4, background: st.bg, color: st.color, fontWeight: 600 }}>{st.label}</span>
+                        {p.featured && <span style={{ fontSize: "0.55rem", padding: "2px 6px", borderRadius: 4, background: "rgba(244,166,35,0.15)", color: "#F4A623", fontWeight: 700 }}>Destacada</span>}
+                      </div>
+                      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
+                        {p.discountPct && `${p.discountPct}% off`}
+                        {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
+                        {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
+                      </p>
                     </div>
-                    <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>
-                      {p.discountPct && `${p.discountPct}% off`}
-                      {p.promoPrice && ` · $${p.promoPrice.toLocaleString("es-CL")}`}
-                      {dishNames.length > 0 && ` · ${dishNames.join(", ")}`}
-                    </p>
-                  </div>
-                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
-                </button>
+                    <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", flexShrink: 0 }}>{isOpen ? "▲" : "▼"}</span>
+                  </button>
+                </div>
 
                 {/* Detail */}
                 {isOpen && (

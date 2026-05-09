@@ -36,12 +36,13 @@ interface Props {
   onNameSaved?: (name: string) => void;
 }
 
-type Phase = "form" | "name";
+type Phase = "form" | "done";
 
 export default function BirthdayModal({ restaurantId, restaurantName, birthdayPerk, existingUser, bannerVariantId, abVariant, onClose, onSuccess, onNameSaved }: Props) {
   const lang = useLang();
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
+  const [userName, setUserName] = useState(existingUser?.name || "");
   const [birthDate, setBirthDate] = useState("");
   // Texto visible con mascara DD/MM/AAAA. birthDate es el ISO YYYY-MM-DD que se envia al backend.
   const [birthDateText, setBirthDateText] = useState("");
@@ -89,6 +90,9 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
   const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
   const [phase, setPhase] = useState<Phase>("form");
 
+  // Detect promo-style variant (no birthday icon, different vibe)
+  const isPromoVariant = abVariant?.titleText?.includes("descuentos");
+
   // Cierre sin guardar = "dismissed" (solo si todavía está en form, sin haber guardado nunca)
   const handleDismiss = () => {
     if (status !== "success") {
@@ -107,11 +111,6 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
     }
     onClose();
   };
-  // Name capture state (post-success)
-  const [name, setName] = useState("");
-  const [nameSaving, setNameSaving] = useState(false);
-  // Cuando el nombre se guardo con exito, mostramos un mensaje custom de cierre.
-  const [savedName, setSavedName] = useState<string | null>(null);
   // Info devuelta por /register que distingue cuenta nueva vs re-registro
   const [registrationInfo, setRegistrationInfo] = useState<{
     alreadyExisted: boolean;
@@ -130,6 +129,9 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
     if (!birthDate) return;
     setStatus("loading");
 
+    const trimmedName = userName.trim();
+    const formattedName = trimmedName ? formatName(trimmedName) : null;
+
     let persisted = false;
     let errorMsg: string | null = null;
 
@@ -137,7 +139,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
       const res = await fetch("/api/qr/user/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ birthDate }),
+        body: JSON.stringify({ birthDate, ...(formattedName && !existingUser.name ? { name: formattedName } : {}) }),
       });
       persisted = res.ok;
       if (!res.ok) errorMsg = "No pudimos guardar tu fecha. Intenta de nuevo.";
@@ -151,7 +153,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
-          name: null, // se pide en el siguiente paso para no romper la barrera
+          name: formattedName,
           birthDate,
           dietType: savedDiet,
           restrictions,
@@ -227,32 +229,10 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
     setStatus("success");
     onSuccess?.();
 
-    // Solo si ya teniamos nombre guardado evitamos preguntar de nuevo.
-    // Si la cuenta existia pero sin nombre, igual le pedimos el nombre.
-    const alreadyHadName = !!existingUser?.name;
-    setPhase("name"); // mostrar phase 2 (success + name capture o welcome-back)
-    if (alreadyHadName) {
-      // Cuenta con nombre — auto-cerrar despues de 2.2s sin pedir nada mas
-      setTimeout(() => onClose(), 2200);
-    }
-  };
-
-  const handleSaveName = async () => {
-    if (nameSaving) return;
-    const trimmed = name.trim();
-    if (!trimmed) {
-      onClose();
-      return;
-    }
-    setNameSaving(true);
-    const formatted = formatName(trimmed);
-    try {
-      await fetch("/api/qr/user/update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formatted }),
-      });
-      // Track captura post-éxito
+    // Name was captured in the form itself — notify parent and show done
+    if (formattedName) {
+      onNameSaved?.(formattedName);
+      // Track name capture
       fetch("/api/qr/stats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -264,11 +244,12 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
           dbSessionId: getDbSessionId(),
         }),
       }).catch(() => {});
-    } catch {}
-    // Avisamos al padre con el nombre para que muestre el toast personalizado.
-    onNameSaved?.(formatted);
-    onClose();
+    }
+
+    setPhase("done");
+    setTimeout(() => onClose(), 2200);
   };
+
 
   return (
     <div
@@ -299,8 +280,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
         {/* ── FASE 1: FORM ── */}
         {phase === "form" && (
           <>
-            <div style={{ textAlign: "center", marginBottom: 24 }}>
-              <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 10 }}>🎂</span>
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 10 }}>{isPromoVariant ? "🎁" : "🎂"}</span>
               <h3
                 className="font-[family-name:var(--font-playfair)]"
                 style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
@@ -309,50 +290,64 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
               </h3>
               {(() => {
-                // Prioridad del subtitulo:
-                // 1. Perk del local (contenido especifico del dueno) — siempre gana
-                // 2. abVariant (A/B test) — para locales sin perk, el bandit
-                //    sigue optimizando wording
-                // 3. Default i18n bdayModalSub — fallback corto si nada aplica
-                let subtitle: string;
                 const perk = birthdayPerk?.trim();
+                let subtitle: string | null = null;
                 if (perk) {
                   subtitle = t(lang, "bdayModalSubPerk").replace("{perk}", perk);
                 } else if (abVariant?.subtitleText) {
                   subtitle = abVariant.subtitleText;
-                } else {
-                  subtitle = t(lang, "bdayModalSub");
                 }
-                return (
+                // Only show subtitle if there's a perk or A/B variant text
+                return subtitle ? (
                   <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
                     {subtitle}
                   </p>
-                );
+                ) : null;
               })()}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {!existingUser && (
                 <>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelEmail")}</label>
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder={t(lang, "bdayPlaceholderEmail")}
-                      style={{
-                        width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                        padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
-                        outline: "none", fontFamily: "inherit", boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    placeholder="Nombre"
+                    style={{
+                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                    }}
+                  />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Email"
+                    style={{
+                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                    }}
+                  />
                   <EmailTypoHint email={email} onAccept={setEmail} />
                 </>
               )}
+              {existingUser && !existingUser.name && (
+                <input
+                  type="text"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Nombre"
+                  style={{
+                    width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
+                    padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                    outline: "none", fontFamily: "inherit", boxSizing: "border-box",
+                  }}
+                />
+              )}
               <div style={{ position: "relative" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", color: "#888", marginBottom: 4, fontFamily: "inherit" }}>{t(lang, "bdayLabelDate")}</label>
                 <div style={{ position: "relative" }}>
                   <input
                     type="text"
@@ -381,7 +376,6 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                   >
                     <Calendar size={18} />
                   </button>
-                  {/* Input date oculto — se abre solo al hacer click en el icono */}
                   <input
                     ref={hiddenDateRef}
                     type="date"
@@ -413,100 +407,20 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
           </>
         )}
 
-        {/* ── FASE 2: SUCCESS + NAME PROMPT (o welcome-back si ya estaba registrado) ── */}
-        {phase === "name" && (() => {
-          // Welcome-back automatico SOLO si ya teniamos nombre. Si la cuenta
-          // existia pero no tenia nombre, pasamos al flow normal de captura.
-          const previousName = existingUser?.name || registrationInfo?.userName || null;
-          const showWelcomeBack = !!existingUser?.name;
-          const hadBirthday = registrationInfo?.hadPreviousBirthday ?? false;
-          const firstName = previousName?.split(" ")[0] || null;
-
-          if (showWelcomeBack) {
-            const title = firstName ? `¡Bienvenido de vuelta, ${firstName}! 🎉` : "¡Bienvenido de vuelta! 🎉";
-            const sub = hadBirthday
-              ? "Tu cumpleaños ya estaba guardado. Te avisaremos cuando se acerque tu día."
-              : "Guardamos tu cumpleaños. Te avisaremos cuando se acerque tu día.";
-            return (
-              <div style={{ textAlign: "center" }}>
-                <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
-                <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 8 }}>
-                  {title}
-                </h3>
-                <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 18px", lineHeight: 1.5 }}>
-                  {sub}
-                </p>
-                <button
-                  onClick={onClose}
-                  className="active:scale-[0.98] transition-transform"
-                  style={{
-                    width: "100%", background: "#F4A623", color: "white",
-                    borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
-                    border: "none", fontFamily: "inherit", cursor: "pointer",
-                    boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
-                  }}
-                >
-                  Continuar
-                </button>
-                <style>{`@keyframes bdayDonePop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
-              </div>
-            );
-          }
-
-          // Cuenta nueva: confirmacion + captura de nombre
+        {/* ── FASE 2: DONE ── */}
+        {phase === "done" && (() => {
+          const firstName = userName.trim() ? formatName(userName.trim()).split(" ")[0] : (existingUser?.name?.split(" ")[0] || null);
+          const isReturning = !!existingUser?.name;
+          const title = firstName ? `¡Listo, ${firstName}! 🎉` : (isReturning ? "¡Bienvenido de vuelta! 🎉" : t(lang, "bdayDoneTitle"));
           return (
             <div style={{ textAlign: "center" }}>
               <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
-              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 4 }}>
-                {t(lang, "bdayDoneTitle")}
+              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 8 }}>
+                {title}
               </h3>
-              <p style={{ fontSize: "0.88rem", color: "#888", margin: "0 0 22px", lineHeight: 1.45 }}>
+              <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 18px", lineHeight: 1.5 }}>
                 {t(lang, "bdayDoneSub")}
               </p>
-
-              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, #eee, transparent)", margin: "0 0 20px" }} />
-
-              <p style={{ fontSize: "0.7rem", color: "#F4A623", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 6 }}>
-                {t(lang, "bdayNameSubtitle")}
-              </p>
-              <p style={{ fontSize: "0.88rem", color: "#666", margin: "0 0 14px", lineHeight: 1.45 }}>
-                {t(lang, "bdayNamePrompt")}
-              </p>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t(lang, "bdayPlaceholderName")}
-                autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter") handleSaveName(); }}
-                style={{
-                  width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                  padding: "12px 16px", color: "#0e0e0e", fontSize: "0.95rem",
-                  outline: "none", fontFamily: "inherit", boxSizing: "border-box", textAlign: "center",
-                  marginBottom: 14,
-                }}
-              />
-              <button
-                onClick={handleSaveName}
-                disabled={nameSaving}
-                className="active:scale-[0.98] transition-transform"
-                style={{
-                  width: "100%", background: "#F4A623", color: "white",
-                  borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
-                  border: "none", fontFamily: "inherit", cursor: "pointer",
-                  boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
-                  opacity: nameSaving ? 0.6 : 1, marginBottom: 8,
-                }}
-              >
-                {t(lang, "bdayNameContinue")}
-              </button>
-              <button
-                onClick={onClose}
-                style={{ background: "none", border: "none", color: "#aaa", fontSize: "0.85rem", cursor: "pointer", fontFamily: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}
-              >
-                {t(lang, "bdayNameSkip")}
-              </button>
-
               <style>{`@keyframes bdayDonePop { 0% { transform: scale(0.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }`}</style>
             </div>
           );

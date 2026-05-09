@@ -136,6 +136,8 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
     }, 200);
   }, [hasPrevPromo, currentPromoIdx, promos, restaurantId]);
 
+  const modalContentRef = useRef<HTMLDivElement>(null);
+
   const handleModalTouchStart = (e: React.TouchEvent) => {
     touchRef2.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
   };
@@ -145,9 +147,17 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
     const dx = touchRef2.current.x - e.changedTouches[0].clientX;
     const dy = touchRef2.current.y - e.changedTouches[0].clientY;
     touchRef2.current = null;
+    // Swipe left/right → navigate promos
     if (Math.abs(dx) > 60 && Math.abs(dy) < 80) {
       if (dx > 0) goNextPromo();
       else goPrevPromo();
+      return;
+    }
+    // Swipe down → close (only when scrolled to top)
+    const el = modalContentRef.current;
+    const atTop = !el || el.scrollTop <= 0;
+    if (atTop && dy < -100 && Math.abs(dx) < 80) {
+      closeModal();
     }
   };
 
@@ -267,27 +277,16 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  {/* Badge: pill solida naranja con dia. Logica:
+                  {/* Badge: pill solida naranja con dia.
                        - sin daysOfWeek → 'OFERTA'
-                       - 1 dia que coincide con hoy → 'SOLO HOY MIÉRCOLES'
-                       - 1 dia distinto a hoy → 'SOLO MIÉRCOLES'
-                       - 2-3 dias → 'SOLO MAR · JUE'
-                       - 4+ dias → 'DÍAS SELECTOS'
+                       - con dias → 'OFERTA MIÉRCOLES' (dia actual)
                   */}
                   {(() => {
                     const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-                    const DAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
                     let label = "OFERTA";
                     if (p.daysOfWeek?.length) {
-                      if (p.daysOfWeek.length === 1) {
-                        const d = p.daysOfWeek[0];
-                        label = d === todayDow ? `SOLO HOY ${DAY_NAMES[d]}` : `SOLO ${DAY_NAMES[d]}S`;
-                      } else if (p.daysOfWeek.length <= 3) {
-                        label = `SOLO ${p.daysOfWeek.map(d => DAY_SHORT[d]).join(" · ")}`;
-                      } else {
-                        label = "DÍAS SELECTOS";
-                      }
+                      label = `OFERTA ${DAY_NAMES[todayDow]}`;
                     }
                     return (
                       <span style={{
@@ -415,19 +414,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                 <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "white" }}>
                   {(() => {
                     const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-                    const DAY_SHORT = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
                     const dow = selectedPromo.daysOfWeek;
                     let label = "OFERTA";
                     if (dow?.length) {
-                      if (dow.length === 1) {
-                        const d = dow[0];
-                        label = d === todayDow ? `SOLO HOY ${DAY_NAMES[d]}` : `SOLO ${DAY_NAMES[d]}S`;
-                      } else if (dow.length <= 3) {
-                        label = `SOLO ${dow.map(d => DAY_SHORT[d]).join(" · ")}`;
-                      } else {
-                        label = "DÍAS SELECTOS";
-                      }
+                      label = `OFERTA ${DAY_NAMES[todayDow]}`;
                     }
                     return (
                       <span style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 999, marginBottom: 10 }}>
@@ -460,7 +451,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
               </div>
             ) : (
               /* PRODUCT PROMO — scrollable content */
-              <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
+              <div ref={modalContentRef} style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
                 {(() => {
                   const allPhotos = selectedPromo.dishes.flatMap(d => (d.photos || []).map(url => ({ url, name: d.name }))).filter(p => p.url);
                   if (allPhotos.length === 0) return null;
@@ -489,10 +480,17 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                 })()}
 
                 <div style={{ padding: "16px 24px 40px" }}>
-                  <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                    <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
-                    <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>OFERTA</span>
-                  </div>
+                  {(() => {
+                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                    const badgeLabel = selectedPromo.daysOfWeek?.length ? `OFERTA ${DAY_NAMES[todayDow]}` : "OFERTA";
+                    return (
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                        <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
+                        <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>{badgeLabel}</span>
+                      </div>
+                    );
+                  })()}
 
                   <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
                     {selectedPromo.name}

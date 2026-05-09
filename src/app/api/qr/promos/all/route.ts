@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
         status: "ACTIVE",
         OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
     // Filter by day of week (Chile timezone)
