@@ -1656,23 +1656,26 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20, overflowX: "auto", scrollbarWidth: "none" }}>
-        {allTabs.map(t => {
-          const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
-          const locked = isAdvancedTab && !hasAdvanced;
-          return (
-            <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
-              padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
-              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
-              background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
-              color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
-              opacity: locked ? 0.5 : 1,
-              transition: "all 0.15s",
-            }}>
-              {t.icon} {t.label} {locked && "🔒"}
-            </button>
-          );
-        })}
+      <div style={{ position: "relative", marginBottom: 20 }}>
+        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24 }}>
+          {allTabs.map(t => {
+            const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
+            const locked = isAdvancedTab && !hasAdvanced;
+            return (
+              <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
+                padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
+                fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
+                background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
+                color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+                opacity: locked ? 0.5 : 1,
+                transition: "all 0.15s",
+              }}>
+                {t.icon} {t.label} {locked && "🔒"}
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
       </div>
 
       {/* Content */}
