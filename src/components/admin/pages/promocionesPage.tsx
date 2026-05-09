@@ -520,15 +520,57 @@ export default function AdminPromociones() {
             const isOpen = expanded === p.id;
             const dishNames = p.dishes?.map(d => d.name) || p.dishNames || [];
             return (
-              <div key={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden" }}>
+              <div key={p.id} data-promo-id={p.id} style={{ background: p.featured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: `1px solid ${p.featured ? "rgba(244,166,35,0.25)" : isOpen ? "rgba(244,166,35,0.3)" : "var(--adm-card-border)"}`, borderRadius: 14, overflow: "hidden", position: "relative" }}>
                 {/* Header */}
                 <div style={{ display: "flex", alignItems: "center" }}>
-                  {/* Reorder + Featured */}
+                  {/* Drag handle + Featured */}
                   {isPanel && (
-                    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "4px 0 4px 8px", gap: 2, flexShrink: 0 }}>
-                      <button onClick={() => movePromo(p.id, "up")} title="Subir" style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.7rem", color: "var(--adm-text3)", lineHeight: 1 }}>▲</button>
-                      <button onClick={() => toggleFeatured(p)} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.85rem", lineHeight: 1 }}>{p.featured ? "⭐" : "☆"}</button>
-                      <button onClick={() => movePromo(p.id, "down")} title="Bajar" style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.7rem", color: "var(--adm-text3)", lineHeight: 1 }}>▼</button>
+                    <div
+                      style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "8px 2px 8px 10px", gap: 6, flexShrink: 0, cursor: "grab", touchAction: "none" }}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        const card = e.currentTarget.closest("[data-promo-id]") as HTMLElement;
+                        if (!card) return;
+                        const container = card.parentElement;
+                        if (!container) return;
+                        const cards = Array.from(container.querySelectorAll("[data-promo-id]")) as HTMLElement[];
+                        const startIdx = cards.indexOf(card);
+                        const startY = e.clientY;
+                        const cardH = card.offsetHeight + 10; // gap
+                        card.style.zIndex = "10";
+                        card.style.opacity = "0.85";
+                        card.style.transition = "none";
+
+                        const onMove = (ev: PointerEvent) => {
+                          const dy = ev.clientY - startY;
+                          card.style.transform = `translateY(${dy}px)`;
+                        };
+                        const onUp = (ev: PointerEvent) => {
+                          document.removeEventListener("pointermove", onMove);
+                          document.removeEventListener("pointerup", onUp);
+                          const dy = ev.clientY - startY;
+                          const steps = Math.round(dy / cardH);
+                          card.style.zIndex = "";
+                          card.style.opacity = "";
+                          card.style.transform = "";
+                          card.style.transition = "";
+                          if (steps !== 0) {
+                            const dir = steps > 0 ? "down" : "up";
+                            const count = Math.abs(steps);
+                            for (let i = 0; i < count; i++) movePromo(p.id, dir);
+                          }
+                        };
+                        document.addEventListener("pointermove", onMove);
+                        document.addEventListener("pointerup", onUp);
+                      }}
+                    >
+                      {/* Grip dots (6 dots, 2×3) */}
+                      <div style={{ display: "grid", gridTemplateColumns: "4px 4px", gap: 3 }}>
+                        {[...Array(6)].map((_, i) => (
+                          <div key={i} style={{ width: 4, height: 4, borderRadius: "50%", background: "var(--adm-text3)" }} />
+                        ))}
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); toggleFeatured(p); }} title={p.featured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: "0.8rem", lineHeight: 1 }}>{p.featured ? "⭐" : "☆"}</button>
                     </div>
                   )}
                   <button onClick={() => setExpanded(isOpen ? null : p.id)} style={{ display: "flex", alignItems: "center", gap: 14, padding: "16px 18px", flex: 1, background: "none", border: "none", cursor: "pointer", textAlign: "left", minWidth: 0 }}>

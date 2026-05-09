@@ -113,6 +113,7 @@ export default async function CartaPage({
     promoType: p.promoType, imageUrl: p.imageUrl,
     discountPct: p.discountPct, promoPrice: p.promoPrice, originalPrice: p.originalPrice,
     validUntil: p.validUntil?.toISOString() || null,
+    daysOfWeek: p.daysOfWeek || [],
     dishes: p.dishIds.map(id => promoDishMap[id]).filter(Boolean),
   }));
 
