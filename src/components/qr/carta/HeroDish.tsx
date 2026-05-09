@@ -158,7 +158,6 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               </a>
             )}
-            <LangSelector enabledLangs={enabledLangs} />
           </div>
         )}
 
@@ -276,6 +275,14 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         </div>
 
       </section>
+
+      {/* Lang selector — OUTSIDE hero to avoid z-index stacking context */}
+      {enabledLangs && (
+        <div style={{ position: "fixed", top: 14, right: 16, zIndex: 100 }}>
+          <LangSelector enabledLangs={enabledLangs} />
+        </div>
+      )}
+
       <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }`}</style>
     </>
   );
