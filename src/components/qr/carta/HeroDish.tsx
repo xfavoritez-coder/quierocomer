@@ -94,7 +94,8 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: "70vh", maxHeight: "60vh" }}
+        style={{ height: "70vh", maxHeight: "60vh", cursor: dish ? "pointer" : undefined }}
+        onClick={dish ? () => { trackHeroClick(restaurant.id, dish.id, "premium"); onDishSelect?.(dish); } : undefined}
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
       >
