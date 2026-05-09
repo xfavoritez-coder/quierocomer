@@ -381,6 +381,13 @@ export async function GET(req: NextRequest) {
         visitDaysByGuestRest[key] = days.size;
       }
     }
+    // Session count per guest+restaurant
+    const sessionCountByGuestRest: Record<string, number> = {};
+    for (const s of allGuestSessions) {
+      const key = `${s.guestId}|${s.restaurantId}`;
+      sessionCountByGuestRest[key] = (sessionCountByGuestRest[key] || 0) + 1;
+    }
+
     // Fallback compat: el código viejo usaba visitDaysByGuest indexado solo por guestId
     const visitDaysByGuest: Record<string, number> = {};
     for (const [key, count] of Object.entries(visitDaysByGuestRest)) {
@@ -564,7 +571,7 @@ export async function GET(req: NextRequest) {
         genioData: genioDataByDbSession[s.id] || null,
         personalizationData: recDataBySession[s.id] || null,
         visitDays: visitDaysByGuestRest[`${s.guestId}|${s.restaurantId}`] || 1,
-        guestSessionCount: s.guest?.totalSessions || 1,
+        guestSessionCount: sessionCountByGuestRest[`${s.guestId}|${s.restaurantId}`] || 1,
         visitsToday: visitsTodayBySession[s.id]?.totalToday || 1,
         visitNumToday: visitsTodayBySession[s.id]?.numToday || 1,
         // Visitas totales de este guest a ESTE restaurante (no global del guest profile)
