@@ -97,7 +97,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
         const me = await fetch("/api/qr/user/me").then((r) => r.json());
         if (cancelled) return;
         if (me.user) {
-          if (!me.user.birthDate) {
+          if (!me.user.birthDate || isDebug) {
             setExistingUser({ name: me.user.name, email: me.user.email });
             setModalOpen(true);
             localStorage.setItem(`qc_bday_modal_shown_${restaurantId}`, "1");
