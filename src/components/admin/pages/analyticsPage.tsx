@@ -1554,7 +1554,7 @@ const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
   { key: "busquedas", label: "Búsquedas", icon: "🔍" },
 ];
 
-type DatePreset = "hoy" | "ayer" | "semana" | "custom";
+type DatePreset = "hoy" | "ayer" | "semana" | "mes" | "custom";
 
 function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string): { from: string; to: string } {
   // Use Chile timezone so "hoy"/"ayer" match the user's local day
@@ -1563,6 +1563,7 @@ function getDateRange(preset: DatePreset, customFrom?: string, customTo?: string
   if (preset === "hoy") return { from: fmt(today), to: fmt(today) };
   if (preset === "ayer") { const y = new Date(today); y.setDate(y.getDate() - 1); return { from: fmt(y), to: fmt(y) }; }
   if (preset === "semana") { const w = new Date(today); w.setDate(w.getDate() - 7); return { from: fmt(w), to: fmt(today) }; }
+  if (preset === "mes") { const m = new Date(today); m.setDate(m.getDate() - 30); return { from: fmt(m), to: fmt(today) }; }
   return { from: customFrom || fmt(new Date(today.getTime() - 28 * 86400000)), to: customTo || fmt(today) };
 }
 
@@ -1620,14 +1621,14 @@ export default function AnalyticsDashboard() {
       {/* Date filters */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-          {(["hoy", "ayer", "semana"] as DatePreset[]).map(p => (
+          {(["hoy", "ayer", "semana", "mes"] as DatePreset[]).map(p => (
             <button key={p} onClick={() => setDatePreset(p)} style={{
               padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
               background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
               color: datePreset === p ? "#fff" : "var(--adm-text3)",
             }}>
-              {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : "Esta semana"}
+              {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : p === "semana" ? "Esta semana" : "Este mes"}
             </button>
           ))}
           <button
