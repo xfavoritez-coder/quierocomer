@@ -101,6 +101,11 @@ export default function PanelDashboard() {
 
   return (
     <div style={{ maxWidth: 640 }}>
+      {/* ═══ Saludo ═══ */}
+      <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 14px" }}>
+        {greeting}, {ownerName?.split(" ")[0] || ""} 👋
+      </p>
+
       {/* ═══ HERO — En vivo ═══ */}
       <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px 22px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
@@ -111,9 +116,6 @@ export default function PanelDashboard() {
           <span style={{ fontFamily: F, fontSize: "2.8rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1 }}>{data.todayUniqueVisitors}</span>
           <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>visitantes hoy</p>
         </div>
-        <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", margin: "10px 0 0", fontWeight: 600 }}>
-          {greeting}, {ownerName?.split(" ")[0] || ""} 👋
-        </p>
         <style>{`@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
       </div>
 
@@ -147,8 +149,9 @@ export default function PanelDashboard() {
       <h2 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px", fontWeight: 600 }}>Hoy</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
         {[
-          { icon: "📱", label: "Escaneos", value: data.todayScans },
+          { icon: "📱", label: "Sesiones", value: data.todayScans },
           { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
+          { icon: "🎂", label: "Cumpleaños", value: (data as any).todayBirthdays || 0 },
         ].map((s, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>

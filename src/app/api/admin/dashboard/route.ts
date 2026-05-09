@@ -73,6 +73,7 @@ export async function GET(req: NextRequest) {
       uniqueVisitorsToday,
       weekBirthdays,
       genioToday,
+      todayBirthdays,
       todayDurationAgg,
       topSearches,
     ] = await Promise.all([
@@ -141,9 +142,9 @@ export async function GET(req: NextRequest) {
           })
         : Promise.resolve([]),
       // ── Owner-relevant KPIs ──
-      // Today's scans
-      prisma.statEvent.count({
-        where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: todayStart } },
+      // Today's sessions (use Session table, not SESSION_START events, for consistency with analytics)
+      prisma.session.count({
+        where: { ...restaurantFilter, startedAt: { gte: todayStart } },
       }),
       // Today's waiter calls (answered)
       prisma.waiterCall.count({
@@ -184,6 +185,10 @@ export async function GET(req: NextRequest) {
       // Genio used today
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: todayStart } },
+      }),
+      // Birthdays saved today
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: todayStart } },
       }),
       // Today's avg session duration
       prisma.session.aggregate({
@@ -263,6 +268,7 @@ export async function GET(req: NextRequest) {
       weekWaiterCalls,
       todayUniqueVisitors: uniqueVisitorsToday.length,
       genioToday,
+      todayBirthdays,
       todayAvgDuration: Math.round((todayDurationAgg._avg?.durationMs || 0) / 1000),
       weekBirthdays,
       topSearches: (topSearches as any[]).map((s: any) => ({ name: s.query || "—", count: s._count.id })),
