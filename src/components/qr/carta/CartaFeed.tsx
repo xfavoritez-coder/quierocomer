@@ -332,7 +332,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
         <div style={{ flex: 1, minWidth: 0 }}>
           {/* Name + NEW pill */}
           <div style={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 18, fontWeight: 600, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 19, fontWeight: 600, color: "#1a1a1a", letterSpacing: "-0.2px" }}>
               {dish.name}
             </span>
             {isNew && (
@@ -344,7 +344,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
           {/* Description */}
           {dish.description && (
             <p className="font-[family-name:var(--font-dm)]" style={{
-              fontSize: 15, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
+              fontSize: 17, color: "#5a5a5a", lineHeight: 1.5, margin: 0,
               display: "-webkit-box", WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical" as any, overflow: "hidden",
             }}>
@@ -695,9 +695,17 @@ export default function CartaFeed({
       </div>
 
       {/* ═══ FLOATING ELEMENTS ═══ */}
-      <VeganFloatingPill />
-      <VegetarianFloatingPill />
-      <GlutenFreeFloatingPill />
+      {(() => {
+        const diet = localStorage.getItem("qr_diet");
+        const isOmnivoreRest = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
+        return (
+          <>
+            {diet === "vegan" && isOmnivoreRest && <VeganFloatingPill />}
+            {diet === "vegetarian" && isOmnivoreRest && <VegetarianFloatingPill />}
+            <GlutenFreeFloatingPill />
+          </>
+        );
+      })()}
 
       <div className="fixed flex flex-col items-center gap-2 z-30" style={{ bottom: 24, right: 16 }}>
         {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
