@@ -32,6 +32,74 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function EarningsCalculator() {
+  const [perWeek, setPerWeek] = useState(2);
+  const [plan, setPlan] = useState<"gold" | "premium" | "mix">("gold");
+  const [cycle, setCycle] = useState<"mensual" | "anual">("mensual");
+
+  const goldM = vendorCommissionDirect("GOLD").total;
+  const premM = vendorCommissionDirect("PREMIUM").total;
+  const goldA = vendorCommissionAnnual("GOLD");
+  const premA = vendorCommissionAnnual("PREMIUM");
+
+  const perClose = cycle === "mensual"
+    ? (plan === "gold" ? goldM : plan === "premium" ? premM : Math.round((goldM + premM) / 2))
+    : (plan === "gold" ? goldA : plan === "premium" ? premA : Math.round((goldA + premA) / 2));
+  const monthly = perWeek * 4 * perClose;
+  const yearly = monthly * 12;
+
+  return (
+    <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 16, padding: "28px 24px", maxWidth: 480, margin: "0 auto" }}>
+      {/* Slider */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+          <span style={{ fontFamily: F, fontSize: 13, color: "#888", fontWeight: 600 }}>Cierres por semana</span>
+          <span style={{ fontFamily: F, fontSize: 20, fontWeight: 700, color: "#111" }}>{perWeek}</span>
+        </div>
+        <input
+          type="range" min={1} max={10} value={perWeek}
+          onChange={e => setPerWeek(Number(e.target.value))}
+          style={{ width: "100%", accentColor: BRAND }}
+        />
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: "#bbb", fontFamily: F }}>
+          <span>1</span><span>5</span><span>10</span>
+        </div>
+      </div>
+
+      {/* Plan toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 12 }}>
+        {([["gold", "Gold"], ["premium", "Premium"], ["mix", "Mix"]] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setPlan(k)} style={{
+            flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: 12, fontWeight: 600,
+            background: plan === k ? BRAND : "#f5f4f1",
+            color: plan === k ? "#fff" : "#888",
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* Cycle toggle */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 24 }}>
+        {([["mensual", "Mensual"], ["anual", "Anual"]] as const).map(([k, label]) => (
+          <button key={k} onClick={() => setCycle(k)} style={{
+            flex: 1, padding: "8px 0", borderRadius: 8, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: 12, fontWeight: 600,
+            background: cycle === k ? "#1a1a1a" : "#f5f4f1",
+            color: cycle === k ? "#fff" : "#888",
+          }}>{label}</button>
+        ))}
+      </div>
+
+      {/* Results */}
+      <div style={{ textAlign: "center" }}>
+        <p style={{ fontFamily: F, fontSize: 11, color: "#999", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 4 }}>Ingreso mensual estimado</p>
+        <p style={{ fontFamily: F, fontSize: 36, fontWeight: 700, color: "#111", letterSpacing: "-1px", marginBottom: 2, transition: "all 0.2s" }}>{fmt(monthly)}</p>
+        <p style={{ fontFamily: F, fontSize: 13, color: BRAND, fontWeight: 600, marginBottom: 0 }}>{fmt(yearly)} proyectado al año</p>
+      </div>
+    </div>
+  );
+}
+
 export default function VendedoresPage() {
   return (
     <div style={{ fontFamily: B, color: "#111", overflowX: "hidden" }}>
@@ -172,31 +240,35 @@ export default function VendedoresPage() {
         <div style={{ maxWidth: 760, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 36 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Cuánto puedes ganar</p>
-            <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Tres ejemplos reales</h2>
-            <p style={{ fontSize: 14, color: "#666", marginTop: 8, lineHeight: 1.5 }}>Cierres directos a Gold o Premium · total en 2 meses</p>
+            <h2 style={{ fontFamily: F, fontSize: "clamp(24px, 3.5vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", color: "#111" }}>Calcula tu ingreso</h2>
           </div>
 
+          <EarningsCalculator />
+
+          {/* Ejemplos rápidos */}
           {(() => {
             const goldDirect = vendorCommissionDirect("GOLD");
             const premDirect = vendorCommissionDirect("PREMIUM");
+            const goldAnnual = vendorCommissionAnnual("GOLD");
             const examples = [
-              { label: "2 restaurantes Gold", total: 2 * goldDirect.total, dark: false },
-              { label: "5 Gold + 1 Premium", total: 5 * goldDirect.total + 1 * premDirect.total, dark: false },
-              { label: "10 Gold + 3 Premium", total: 10 * goldDirect.total + 3 * premDirect.total, dark: true },
+              { label: "3 Gold mensuales", total: 3 * goldDirect.total },
+              { label: "5 Gold + 2 Premium", total: 5 * goldDirect.total + 2 * premDirect.total },
+              { label: "4 Gold anuales", total: 4 * goldAnnual },
             ];
             return (
-              <div className="vnd-examples" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginBottom: 16 }}>
-                {examples.map((ex) => (
-                  <div key={ex.label} style={{ background: ex.dark ? "#1a1a1a" : "#fff", border: ex.dark ? "none" : "1px solid #eeeae0", borderRadius: 14, padding: 24, textAlign: "center" }}>
-                    <p style={{ fontFamily: F, fontSize: 13, color: ex.dark ? "#999" : "#888", marginBottom: 8 }}>{ex.label}</p>
-                    <p style={{ fontFamily: F, fontSize: 28, fontWeight: 700, color: ex.dark ? "#FAC775" : "#111", letterSpacing: "-0.5px" }}>{fmt(ex.total)}</p>
-                    <p style={{ fontSize: 12, color: ex.dark ? "#777" : "#999" }}>en total</p>
-                  </div>
-                ))}
-              </div>
+              <>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#999", textTransform: "uppercase", letterSpacing: "1px", textAlign: "center", marginBottom: 12, marginTop: 32, fontWeight: 600 }}>Ejemplos</p>
+                <div className="vnd-examples" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
+                  {examples.map((ex, i) => (
+                    <div key={ex.label} style={{ background: i === 2 ? "#1a1a1a" : "#fff", border: i === 2 ? "none" : "1px solid #eeeae0", borderRadius: 14, padding: 20, textAlign: "center" }}>
+                      <p style={{ fontFamily: F, fontSize: 12, color: i === 2 ? "#999" : "#888", marginBottom: 6 }}>{ex.label}</p>
+                      <p style={{ fontFamily: F, fontSize: 24, fontWeight: 700, color: i === 2 ? "#FAC775" : "#111", letterSpacing: "-0.5px" }}>{fmt(ex.total)}</p>
+                    </div>
+                  ))}
+                </div>
+              </>
             );
           })()}
-
         </div>
       </section>
 
