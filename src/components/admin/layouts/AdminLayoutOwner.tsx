@@ -41,7 +41,6 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
     { icon: Bell, label: "Garzón", href: `${base}/garzon` },
-    { icon: Zap, label: "Automatizaciones", href: `${base}/automatizaciones` },
     { icon: Mail, label: "Campañas", href: `${base}/campanias` },
   ];
   const BOTTOM_TABS = [
