@@ -150,7 +150,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
     Promise.all([make("metrics"), make("clientes"), make("dishes"), make("searches"), make("popular-by-hour"), crossPromise])
       .then(([m, c, d, s, ph, cv]) => {
         setMetrics(m); setClientes(c); setDishes(d);
-        setSearches(Array.isArray(s) ? s : []);
+        setSearches(Array.isArray(s) ? s.map((x: any) => ({ ...x, count: x.timesSearched || x.count || 0 })) : []);
         setPopularByHour(Array.isArray(ph) ? ph : []);
         setCross(cv && !cv.error ? cv : null);
       })
@@ -570,42 +570,6 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      {/* 🩺 Salud de tu carta — PRIMER bloque (siempre arriba). Solo se muestra si
-         hay al menos un problema editorial (healthScore < 100). Si la carta esta
-         perfecta, ocultamos para no robar atencion al resto del Resumen. */}
-      {menuHealth && menuHealth.total > 0 && menuHealth.healthScore < 100 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-              <span>🩺 Salud de tu carta</span>
-              <InfoTip text="Detecta platos activos sin foto, sin descripción, con descripción muy corta o sin precio. El score 0-100 baja por cada problema; 100 = carta perfecta." />
-            </p>
-            <span style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)" }}>{menuHealth.total} plato{menuHealth.total !== 1 ? "s" : ""} activo{menuHealth.total !== 1 ? "s" : ""}</span>
-            <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "1rem", fontWeight: 700, color: menuHealth.healthScore >= 80 ? "#16a34a" : menuHealth.healthScore >= 50 ? "#F4A623" : "#ef4444" }}>{menuHealth.healthScore}/100</span>
-          </div>
-          <div className="adm-kpi-grid">
-            {[
-              { key: "withoutPhoto", icon: "📷", label: "Sin foto", data: menuHealth.withoutPhoto },
-              { key: "withoutDescription", icon: "📝", label: "Sin descripción", data: menuHealth.withoutDescription },
-              { key: "weakDescription", icon: "✏️", label: "Descripción muy corta", data: menuHealth.weakDescription },
-              { key: "withoutPrice", icon: "💰", label: "Sin precio", data: menuHealth.withoutPrice },
-            ].map((item) => (
-              <div key={item.key} style={{ background: item.data.count > 0 ? "rgba(244,166,35,0.08)" : "rgba(22,163,74,0.06)", border: `1px solid ${item.data.count > 0 ? "rgba(244,166,35,0.2)" : "rgba(22,163,74,0.15)"}`, borderRadius: 10, padding: "10px 12px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                  <span style={{ fontSize: "0.95rem" }}>{item.icon}</span>
-                  <span style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: item.data.count > 0 ? "#F4A623" : "#16a34a" }}>{item.data.count}</span>
-                </div>
-                <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>{item.label}</p>
-                {item.data.count > 0 && item.data.samples?.length > 0 && (
-                  <p style={{ fontFamily: FB, fontSize: "0.62rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
-                    Ej: {item.data.samples.slice(0, 2).map((s: any) => s.name).join(", ")}{item.data.count > 2 ? "…" : ""}
-                  </p>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* 🎖️ Acierto de los badges — premium + sales in window */}
       {showBadgeAccuracy && <BadgeAccuracySection badges={badges} />}
@@ -1179,7 +1143,10 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
     setLoading(true);
     const p = new URLSearchParams({ type: "searches", from, to });
     if (rid) p.set("restaurantId", rid);
-    fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(d => setData(Array.isArray(d) ? d : [])).catch(() => {}).finally(() => setLoading(false));
+    fetch(`/api/admin/analytics?${p}`).then(r => r.json()).then(d => {
+      const arr = Array.isArray(d) ? d : [];
+      setData(arr.map((s: any) => ({ ...s, count: s.timesSearched || s.count || 0 })));
+    }).catch(() => {}).finally(() => setLoading(false));
   }, [rid, from, to]);
 
   if (loading) return <SkeletonLoading type="list" />;
@@ -1659,28 +1626,36 @@ export default function AnalyticsDashboard() {
       </div>
 
       {/* Tabs */}
-      <div style={{ position: "relative", marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24 }}>
-          {allTabs.map(t => {
-            const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
-            const locked = isAdvancedTab && !hasAdvanced;
-            return (
-              <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
-                padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
-                fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
-                background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
-                color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
-                opacity: locked ? 0.5 : 1,
-                transition: "all 0.15s",
-              }}>
-                {t.icon} {t.label} {locked && "🔒"}
-              </button>
-            );
-          })}
-        </div>
-        <div style={{ position: "absolute", top: 0, left: 0, width: 32, height: "100%", background: "linear-gradient(to left, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
-        <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
-      </div>
+      {(() => {
+        const [tabsScrolled, setTabsScrolled] = useState(false);
+        return (
+          <div style={{ position: "relative", marginBottom: 20 }}>
+            <div
+              onScroll={(e) => setTabsScrolled((e.target as HTMLElement).scrollLeft > 8)}
+              style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24 }}
+            >
+              {allTabs.map(t => {
+                const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
+                const locked = isAdvancedTab && !hasAdvanced;
+                return (
+                  <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
+                    padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
+                    background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
+                    color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+                    opacity: locked ? 0.5 : 1,
+                    transition: "all 0.15s",
+                  }}>
+                    {t.icon} {t.label} {locked && "🔒"}
+                  </button>
+                );
+              })}
+            </div>
+            {tabsScrolled && <div style={{ position: "absolute", top: 0, left: 0, width: 32, height: "100%", background: "linear-gradient(to left, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />}
+            <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
+          </div>
+        );
+      })()}
 
       {/* Content */}
       {tab === "resumen" && <TabResumen rid={effectiveRid} from={dateFrom} to={dateTo} />}
