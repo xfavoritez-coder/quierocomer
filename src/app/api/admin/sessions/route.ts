@@ -50,16 +50,17 @@ export async function GET(req: NextRequest) {
     const where: any = {};
 
     // Si hay guestId, ignoramos el rango de fechas para mostrar TODO el historial de ese guest
+    // Chile timezone offset (-04:00) so date boundaries match local midnight
     if (guestIdFilter) {
       where.guestId = guestIdFilter;
     } else if (dateFilter) {
-      const start = new Date(dateFilter + "T00:00:00");
-      const end = new Date(dateFilter + "T23:59:59.999");
+      const start = new Date(dateFilter + "T00:00:00.000-04:00");
+      const end = new Date(dateFilter + "T23:59:59.999-04:00");
       where.startedAt = { gte: start, lte: end };
     } else if (dateFrom || dateTo) {
       where.startedAt = {};
-      if (dateFrom) where.startedAt.gte = new Date(dateFrom + "T00:00:00");
-      if (dateTo) where.startedAt.lte = new Date(dateTo + "T23:59:59.999");
+      if (dateFrom) where.startedAt.gte = new Date(dateFrom + "T00:00:00.000-04:00");
+      if (dateTo) where.startedAt.lte = new Date(dateTo + "T23:59:59.999-04:00");
     }
 
     if (restaurantId) {
