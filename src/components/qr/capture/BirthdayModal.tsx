@@ -257,6 +257,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
       style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
       onClick={(e) => { if (e.target === e.currentTarget && phase === "form") handleDismiss(); }}
     >
+      <style>{`.bday-input::placeholder { color: #999 !important; opacity: 1; }`}</style>
       <div
         style={{
           background: "white",
@@ -310,6 +311,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
               {!existingUser && (
                 <>
                   <input
+                    className="bday-input"
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
@@ -321,6 +323,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     }}
                   />
                   <input
+                    className="bday-input"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
@@ -336,6 +339,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
               )}
               {existingUser && !existingUser.name && (
                 <input
+                  className="bday-input"
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
@@ -350,9 +354,10 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
               <div style={{ position: "relative" }}>
                 <div style={{ position: "relative" }}>
                   <input
+                    className="bday-input"
                     type="text"
                     inputMode="numeric"
-                    placeholder="DD/MM/AAAA"
+                    placeholder="Fecha de cumpleaños"
                     value={birthDateText}
                     onChange={(e) => handleDateTextChange(e.target.value)}
                     maxLength={10}
