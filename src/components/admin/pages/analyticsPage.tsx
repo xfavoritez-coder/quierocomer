@@ -1657,7 +1657,7 @@ export default function AnalyticsDashboard() {
 
       {/* Tabs */}
       <div style={{ position: "relative", marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24 }}>
+        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24, paddingLeft: 24 }}>
           {allTabs.map(t => {
             const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
             const locked = isAdvancedTab && !hasAdvanced;
@@ -1675,6 +1675,7 @@ export default function AnalyticsDashboard() {
             );
           })}
         </div>
+        <div style={{ position: "absolute", top: 0, left: 0, width: 32, height: "100%", background: "linear-gradient(to left, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: 0, right: 0, width: 32, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
       </div>
 
