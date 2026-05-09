@@ -130,7 +130,7 @@ export default function VendedoresPage() {
               <p style={{ fontFamily: F, fontSize: 32, fontWeight: 700, color: "#111", letterSpacing: "-1px", marginBottom: 4 }}>{fmt(vendorCommissionAnnual("GOLD"))}</p>
               <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>por restaurante cerrado</p>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 10, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
-                <div>3 meses × <strong style={{ color: "#111" }}>$35.000</strong> = pago único</div>
+                <div>3 meses × <strong style={{ color: "#111" }}>$35.000</strong></div>
               </div>
             </div>
             <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: 24 }}>
@@ -138,7 +138,7 @@ export default function VendedoresPage() {
               <p style={{ fontFamily: F, fontSize: 32, fontWeight: 700, color: "#111", letterSpacing: "-1px", marginBottom: 4 }}>{fmt(vendorCommissionAnnual("PREMIUM"))}</p>
               <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>por restaurante cerrado</p>
               <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 10, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
-                <div>3 meses × <strong style={{ color: "#111" }}>$49.900</strong> = pago único</div>
+                <div>3 meses × <strong style={{ color: "#111" }}>$49.900</strong></div>
               </div>
             </div>
           </div>
