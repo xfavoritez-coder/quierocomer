@@ -240,7 +240,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       {clientes?.timeOfDay && clientes.totalSessions > 0 && (() => {
         const isSingleDay = from === to;
         const nowH = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
-        const slotStartH: Record<string, number> = { morning: 6, lunch: 11, afternoon: 15, dinner: 19, late: 23 };
+        const slotStartH: Record<string, number> = { MORNING: 6, LUNCH: 11, AFTERNOON: 15, DINNER: 19, LATE: 23 };
         const filteredTod = isSingleDay ? clientes.timeOfDay.filter((t: any) => (slotStartH[t.key] ?? 0) <= nowH) : clientes.timeOfDay;
         const filteredMax = Math.max(...filteredTod.map((t: any) => t.count), 1);
         if (filteredTod.length === 0) return null;
@@ -1566,7 +1566,7 @@ export default function AnalyticsDashboard() {
   // Read state from URL params
   const restaurantId = searchParams.get("restaurantId") || "";
   const tab = (searchParams.get("tab") as Tab) || "resumen";
-  const datePreset = (searchParams.get("preset") as DatePreset) || "semana";
+  const datePreset = (searchParams.get("preset") as DatePreset) || "hoy";
   const customFrom = searchParams.get("from") || "";
   const customTo = searchParams.get("to") || "";
 
