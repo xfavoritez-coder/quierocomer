@@ -384,7 +384,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               {billingMode === "anual" && (
                 <>
                   <p style={{ fontSize: 12, color: "#999", margin: "2px 0 0" }}>Antes <span style={{ textDecoration: "line-through" }}>${planNetAmount("GOLD").toLocaleString("es-CL")}/mes</span></p>
-                  <p style={{ fontSize: 12, color: BRAND, fontWeight: 600, margin: "2px 0 4px" }}>${planAnnualNetTotal("GOLD").toLocaleString("es-CL")} anual</p>
+                  <p style={{ fontSize: 12, color: BRAND, fontWeight: 600, margin: "2px 0 0" }}>${planAnnualNetTotal("GOLD").toLocaleString("es-CL")} anual</p>
+                  <p style={{ fontSize: 11, color: "#16a34a", margin: "2px 0 4px" }}>Ahorras ${(planNetAmount("GOLD") * 12 - planAnnualNetTotal("GOLD")).toLocaleString("es-CL")} al año</p>
                 </>
               )}
               <p style={{ fontFamily: F, fontSize: 13, color: "#888", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.GOLD}</p>
@@ -413,7 +414,8 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
               {billingMode === "anual" && (
                 <>
                   <p style={{ fontSize: 12, color: "#6b7280", margin: "2px 0 0" }}>Antes <span style={{ textDecoration: "line-through" }}>${planNetAmount("PREMIUM").toLocaleString("es-CL")}/mes</span></p>
-                  <p style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600, margin: "2px 0 4px" }}>${planAnnualNetTotal("PREMIUM").toLocaleString("es-CL")} anual</p>
+                  <p style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600, margin: "2px 0 0" }}>${planAnnualNetTotal("PREMIUM").toLocaleString("es-CL")} anual</p>
+                  <p style={{ fontSize: 11, color: "#16a34a", margin: "2px 0 4px" }}>Ahorras ${(planNetAmount("PREMIUM") * 12 - planAnnualNetTotal("PREMIUM")).toLocaleString("es-CL")} al año</p>
                 </>
               )}
               <p style={{ fontFamily: F, fontSize: 13, color: "#555", marginBottom: 20, lineHeight: 1.4 }}>{PLAN_TAGLINES.PREMIUM}</p>
