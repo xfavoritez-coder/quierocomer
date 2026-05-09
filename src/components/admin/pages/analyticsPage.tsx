@@ -1192,41 +1192,18 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 
 /* ═══ TAB: Sesiones ═══ */
 function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const sp = useSearchParams();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [hideEmpty, setHideEmpty] = useState(false);
-  // El filtro por guest se sincroniza con el URL (?guestId=xxx&guestName=yyy)
-  // — así "ver historial" cambia la navegación (back button, share link, refresh).
-  const guestIdFromUrl = sp?.get("guestId") || null;
-  const guestNameFromUrl = sp?.get("guestName") || null;
-  const guestFilter = guestIdFromUrl ? { id: guestIdFromUrl, name: guestNameFromUrl || `Fantasma #${guestIdFromUrl.slice(0, 8)}` } : null;
-  const setGuestFilter = (g: { id: string; name: string } | null) => {
-    const params = new URLSearchParams(sp?.toString() || "");
-    if (g) {
-      params.set("guestId", g.id);
-      params.set("guestName", g.name);
-    } else {
-      params.delete("guestId");
-      params.delete("guestName");
-    }
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  };
+  const [guestFilter, setGuestFilter] = useState<{ id: string; name: string } | null>(null);
+  const guestIdFromUrl = guestFilter?.id || null;
 
-  // Si el admin cambia de restaurante mientras filtraba por guest, el filtro queda obsoleto
-  // (otro local probablemente no tiene sesiones de ese visitante). Lo limpiamos automáticamente.
+  // Si el admin cambia de restaurante, limpiar filtro de guest
   const prevRidRef = useRef<string>(rid);
   useEffect(() => {
-    if (prevRidRef.current !== rid && guestIdFromUrl) {
-      const params = new URLSearchParams(sp?.toString() || "");
-      params.delete("guestId");
-      params.delete("guestName");
-      router.replace(`${pathname}?${params.toString()}`);
-    }
+    if (prevRidRef.current !== rid && guestFilter) setGuestFilter(null);
     prevRidRef.current = rid;
   }, [rid]);
 
