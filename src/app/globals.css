@@ -148,10 +148,10 @@ textarea::placeholder {
     grid-template-columns: 1fr;
   }
 }
-/* KPIs en mobile chico (iPhone normal) se stackean — 3 en fila quedan apretados */
+/* KPIs en mobile: 2x2 siempre */
 @media (max-width: 560px) {
   .adm-kpi-grid {
-    grid-template-columns: 1fr !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
 }

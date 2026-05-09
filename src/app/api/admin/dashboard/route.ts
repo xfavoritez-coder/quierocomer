@@ -101,17 +101,13 @@ export async function GET(req: NextRequest) {
       }),
       prisma.statEvent.groupBy({
         by: ["dishId"],
-        where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: monthAgo } },
+        where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: weekAgo } },
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
         take: 5,
       }),
-      // Sessions this month for "Más tiempo en detalle" ranking (detailMs from dishesViewed JSON)
-      prisma.session.findMany({
-        where: { ...restaurantFilter, startedAt: { gte: monthAgo } },
-        select: { dishesViewed: true },
-        take: 5000,
-      }),
+      // (placeholder — sessionsForDetailTime no longer used)
+      Promise.resolve([]),
       prisma.qRUser.groupBy({
         by: ["dietType"],
         where: { dietType: { not: null } },
@@ -182,10 +178,10 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: weekAgo } },
       }),
-      // Top searches this month
+      // Top searches this week
       prisma.statEvent.groupBy({
         by: ["query"],
-        where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: monthAgo } },
+        where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: weekAgo } },
         _count: { id: true },
         orderBy: { _count: { id: "desc" } },
         take: 5,

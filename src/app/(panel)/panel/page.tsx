@@ -151,14 +151,14 @@ export default function PanelDashboard() {
       {/* Week */}
       <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Esta semana</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <Stat icon="👥" label="Visitas" value={data.visitsThisWeek} sub={deltaText} color={data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : undefined} />
         <Stat icon="⏱️" label="Duración promedio" value={avgText} />
-        <Stat icon="🧞" label="Usaron el Genio" value={data.genioUsedThisWeek} color={GOLD} />
-        <Stat icon="🔔" label="Llamados garzón" value={data.weekWaiterCalls || 0} />
+        <Stat icon="🧞" label="Abrieron el Genio" value={data.genioUsedThisWeek} color={GOLD} />
         <Stat icon="🎂" label="Cumpleaños registrados" value={data.weekBirthdays || 0} />
       </div>
 
-
-      {/* Rankings */}
+      {/* Rankings — this week */}
+      <h2 style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 10 }}>Ranking esta semana</h2>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }} className="adm-grid-2">
         <RankList title="🔥 Más vistos" items={data.topDishesViewed} />
         <RankList title="🔍 Más buscados" items={data.topSearches || []} />
