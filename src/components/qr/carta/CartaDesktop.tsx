@@ -327,17 +327,12 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
       <div ref={contentRef} style={{ maxWidth: 1200, margin: "0 auto", padding: "32px 40px 80px" }}>
         {/* Promos banner */}
         {marketingPromos && marketingPromos.length > 0 && (
-          <>
-            <div style={{ marginBottom: 16 }}>
-              <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
-                const dish = dishes.find(d => d.id === dishId);
-                if (dish) setSelectedDish(dish);
-              }} />
-            </div>
-            <div style={{ padding: "0 40px 24px" }}>
-              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(244,166,35,0.25) 30%, rgba(244,166,35,0.25) 70%, transparent)" }} />
-            </div>
-          </>
+          <div style={{ marginBottom: 20 }}>
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
         )}
 
         {/* Diet carousels */}

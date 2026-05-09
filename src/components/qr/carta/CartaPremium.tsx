@@ -568,17 +568,12 @@ export default function CartaPremium({
       <main style={{ paddingBottom: 55 }}>
         {/* Ofertas section — inside main as first "category" */}
         {hasPromos && (
-          <>
-            <div id="cat-promos" style={{ paddingTop: 16 }}>
-              <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
-                const dish = dishes.find(d => d.id === dishId);
-                if (dish) setSelectedDish(dish);
-              }} />
-            </div>
-            <div style={{ padding: "16px 24px 0" }}>
-              <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(244,166,35,0.25) 30%, rgba(244,166,35,0.25) 70%, transparent)" }} />
-            </div>
-          </>
+          <div id="cat-promos" style={{ paddingTop: 12 }}>
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
         )}
 
         {/* Genio diet carousels */}

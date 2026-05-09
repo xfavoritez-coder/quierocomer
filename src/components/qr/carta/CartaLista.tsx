@@ -492,17 +492,12 @@ export default function CartaLista({
 
       {/* OFERTAS section */}
       {hasPromos && (
-        <>
-          <section id="lista-cat-promos" style={{ padding: "16px 12px 0" }}>
-            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
-              const dish = dishes.find(d => d.id === dishId);
-              if (dish) setSelectedDish(dish);
-            }} />
-          </section>
-          <div style={{ padding: "16px 24px 0" }}>
-            <div style={{ height: 1, background: "linear-gradient(90deg, transparent, rgba(244,166,35,0.25) 30%, rgba(244,166,35,0.25) 70%, transparent)" }} />
-          </div>
-        </>
+        <section id="lista-cat-promos" style={{ padding: "12px 12px 0" }}>
+          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
+            const dish = dishes.find(d => d.id === dishId);
+            if (dish) setSelectedDish(dish);
+          }} />
+        </section>
       )}
 
       {/* Genio diet carousels */}
