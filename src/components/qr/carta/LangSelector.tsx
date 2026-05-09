@@ -26,9 +26,9 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
   if (!mounted || availableLangs.length < 2) return null;
 
   return (
-    <>
+    <div style={{ position: "relative" }}>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => setOpen(!open)}
         style={{
           width: 32, height: 32, borderRadius: "50%",
           background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
@@ -38,45 +38,37 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
       >
         {FLAGS[lang] || "🌐"}
       </button>
-
       {open && (
-        <div
-          onClick={() => setOpen(false)}
-          style={{
-            position: "fixed", inset: 0, zIndex: 200,
-            background: "rgba(0,0,0,0.5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: "rgba(20,20,20,0.95)", backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
-              borderRadius: 16, padding: "8px 6px", minWidth: 180,
-              boxShadow: "0 12px 40px rgba(0,0,0,0.4)",
-            }}
-          >
-            <p style={{ fontSize: "0.68rem", color: "rgba(255,255,255,0.4)", textAlign: "center", margin: "8px 0 6px", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>Idioma</p>
+        <>
+          {/* Invisible backdrop to close */}
+          <div onClick={() => setOpen(false)} style={{ position: "fixed", inset: 0, zIndex: 49 }} />
+          {/* Dropdown */}
+          <div style={{
+            position: "absolute", top: 38, right: 0, zIndex: 50,
+            background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)",
+            borderRadius: 12, padding: 4, minWidth: 140,
+            boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+          }}>
             {availableLangs.map(l => (
               <a
                 key={l}
                 href={buildLangUrl(l)}
                 onClick={() => localStorage.setItem("qc_lang", l)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 10, width: "100%",
-                  padding: "10px 16px", borderRadius: 10, textDecoration: "none",
-                  background: l === lang ? "rgba(244,166,35,0.15)" : "transparent",
-                  color: "white", fontSize: "0.9rem", fontWeight: l === lang ? 600 : 400,
+                  display: "flex", alignItems: "center", gap: 8,
+                  padding: "9px 14px", borderRadius: 8, textDecoration: "none",
+                  background: l === lang ? "rgba(244,166,35,0.2)" : "transparent",
+                  color: "white", fontSize: "0.85rem", fontWeight: l === lang ? 600 : 400,
                 }}
               >
-                <span style={{ fontSize: "1.2rem" }}>{FLAGS[l]}</span>
+                <span style={{ fontSize: "1.1rem" }}>{FLAGS[l]}</span>
                 {NAMES[l]}
-                {l === lang && <span style={{ marginLeft: "auto", fontSize: "0.75rem", color: "#F4A623" }}>✓</span>}
+                {l === lang && <span style={{ marginLeft: "auto", color: "#F4A623", fontSize: "0.7rem" }}>✓</span>}
               </a>
             ))}
           </div>
-        </div>
+        </>
       )}
-    </>
+    </div>
   );
 }
