@@ -110,11 +110,12 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   const isHidden = !category.isActive;
 
   // Close menu/type dropdown on outside click
+  const typeRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!menuOpen && !changingType) return;
     const handler = (e: MouseEvent) => {
       if (menuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-      if (changingType) setChangingType(false);
+      if (changingType && typeRef.current && !typeRef.current.contains(e.target as Node)) setChangingType(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -185,7 +186,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
         {!editing && (
           <div style={{ flexShrink: 0, display: "flex", gap: 2, alignItems: "center" }} onClick={e => e.stopPropagation()}>
             {/* Type badge */}
-            <div style={{ position: "relative" }}>
+            <div ref={typeRef} style={{ position: "relative" }}>
               <span onClick={() => setChangingType(!changingType)} style={{ fontFamily: F, fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "#F5F0E8", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
                 {dt.label} ▾
               </span>
