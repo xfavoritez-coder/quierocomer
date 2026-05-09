@@ -83,7 +83,8 @@ function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp, popularDishIds: popularDishIdsProp }: Props) {
   useEffect(() => { onReady?.(); }, [readyKey]);
   const lang = useLang();
-  const hasCompletedGenio = typeof window !== "undefined" && !!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"));
+  const [hasCompletedGenio, setHasCompletedGenio] = useState(false);
+  useEffect(() => { setHasCompletedGenio(!!(localStorage.getItem("qr_diet") && localStorage.getItem("qr_restrictions"))); }, []);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);
