@@ -125,10 +125,10 @@ textarea::placeholder {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
-/* KPI grid: 3 en desktop, 1 col en mobile chico (cambia abajo a 768px) */
+/* KPI grid: 2x2 en desktop, 1 col en mobile chico (cambia abajo a 560px) */
 .adm-kpi-grid {
   display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   gap: 10px;
 }
 /* Carousel horizontal mobile-first: cards de ancho fijo con scroll */

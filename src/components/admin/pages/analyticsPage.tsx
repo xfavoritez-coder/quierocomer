@@ -195,11 +195,12 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {/* ═══ Hero KPIs (3) ═══ */}
+      {/* ═══ Hero KPIs (2×2) ═══ */}
       <div className="adm-kpi-grid">
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
+        <HeroKpi icon="🧞" value={metrics.genioUsers || 0} label="Abrieron el Genio" sub={metrics.totalVisitors > 0 ? `${metrics.genioUsedPct || 0}% de tus visitantes` : ""} color="#4ade80" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(74,222,128,0.10) 100%)" />
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
