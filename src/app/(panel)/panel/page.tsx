@@ -96,8 +96,6 @@ export default function PanelDashboard() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Buenos días" : hour < 20 ? "Buenas tardes" : "Buenas noches";
-  const deltaColor = data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : "var(--adm-text3)";
-  const deltaArrow = data.visitsDelta !== null && data.visitsDelta > 0 ? "↑" : data.visitsDelta !== null && data.visitsDelta < 0 ? "↓" : "";
   const topViewed = data.topDishesViewed || [];
   const maxCount = topViewed[0]?.count || 1;
 
@@ -111,14 +109,7 @@ export default function PanelDashboard() {
         </div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
           <span style={{ fontFamily: F, fontSize: "2.8rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1 }}>{data.todayUniqueVisitors}</span>
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>visitantes hoy</p>
-            {data.visitsDelta !== null && (
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: deltaColor, margin: "2px 0 0", fontWeight: 600 }}>
-                {deltaArrow} {Math.abs(data.visitsDelta)}% vs semana pasada
-              </p>
-            )}
-          </div>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>visitantes hoy</p>
         </div>
         <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", margin: "10px 0 0", fontWeight: 600 }}>
           {greeting}, {ownerName?.split(" ")[0] || ""} 👋
@@ -155,16 +146,17 @@ export default function PanelDashboard() {
       {/* ═══ Snapshot hoy — 2×2 ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
         {[
-          { icon: "📱", label: "Escaneos", value: data.todayScans },
+          { icon: "📱", label: "Escaneos hoy", value: data.todayScans },
           { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
-          { icon: "⏱️", label: "Duración prom.", value: fmtDuration(data.todayAvgDuration || 0) },
+          { icon: "👥", label: "Visitas semana", value: data.visitsThisWeek, sub: data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs ant.` : undefined, subColor: data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : undefined },
           { icon: "🎂", label: "Cumpleaños sem.", value: data.weekBirthdays || 0 },
-        ].map((s, i) => (
+        ].map((s: any, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
             <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
             <div>
               <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{s.value}</p>
               <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{s.label}</p>
+              {s.sub && <p style={{ fontFamily: F, fontSize: "0.6rem", color: s.subColor || "var(--adm-text3)", margin: "1px 0 0", fontWeight: 600 }}>{s.sub}</p>}
             </div>
           </div>
         ))}
@@ -223,18 +215,6 @@ export default function PanelDashboard() {
           </div>
         </div>
       )}
-
-      {/* ═══ Resumen semana ═══ */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px" }}>
-          <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{data.visitsThisWeek}</p>
-          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Visitas semana</p>
-        </div>
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px" }}>
-          <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{fmtDuration(data.avgSessionDuration)}</p>
-          <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Duración prom. sem.</p>
-        </div>
-      </div>
 
       {/* ═══ Insights del Genio ═══ */}
       {insights.length > 0 && (
