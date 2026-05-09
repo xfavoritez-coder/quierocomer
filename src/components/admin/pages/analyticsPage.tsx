@@ -243,7 +243,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
               const isPeak = t.key === peakHour?.key;
               return (
                 <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.7rem", color: isPeak ? "#a78bfa" : "var(--adm-text2)", fontWeight: 700 }}>{t.count}</span>
+                  <span style={{ fontFamily: F, fontSize: isPeak ? "0.78rem" : "0.7rem", color: isPeak ? "#c4b5fd" : "var(--adm-text2)", fontWeight: 700 }}>{t.count}</span>
                   <div style={{ width: "100%", height: Math.max(4, (t.count / maxTime) * 80), background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease" }} />
                   <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
                   <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
@@ -1658,7 +1658,7 @@ export default function AnalyticsDashboard() {
 
       {/* Tabs */}
       <div style={{ position: "relative", marginBottom: 20 }}>
-        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24, paddingLeft: 24 }}>
+        <div style={{ display: "flex", gap: 4, overflowX: "auto", scrollbarWidth: "none", paddingRight: 24 }}>
           {allTabs.map(t => {
             const isAdvancedTab = TABS_ADVANCED.some(a => a.key === t.key);
             const locked = isAdvancedTab && !hasAdvanced;
