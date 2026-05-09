@@ -92,7 +92,7 @@ export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
     { text: "4 vistas de carta", tip: "Lista, galeria, feed y espacial — elige la que mejor represente tu local." },
     { text: "Estadisticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, busquedas y estadisticas del garzon." },
     { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push al instante." },
-    { text: "Venta cruzada", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa." },
+    { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa." },
     { text: "Automatizaciones", tip: "Emails automaticos: bienvenida, cumpleaños y reactivacion de clientes inactivos." },
     { text: "Campañas y email marketing", tip: "Envia comunicaciones masivas a tus clientes registrados." },
     { text: "Clientes ilimitados + CSV", tip: "Ve todos los registrados y exporta la lista." },
