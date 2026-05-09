@@ -888,17 +888,16 @@ export default function AdminMenus() {
   const recCount = dishes.filter(d => d.tags?.includes("RECOMMENDED") && d.isActive && d.id !== selectedDish?.id).length;
   const toggleTag = async (t: string) => {
     if (!selectedDish) return;
-    // Gating por plan: destacar (RECOMMENDED) requiere Gold o superior.
-    // Si el usuario es FREE, abrimos el modal de upgrade en vez de aplicar.
     if (t === "RECOMMENDED" && !eTags.includes(t) && !canHighlight) {
       window.dispatchEvent(new CustomEvent("show-plan-modal"));
       return;
     }
     if (t === "RECOMMENDED" && !eTags.includes(t) && recCount >= MAX_RECOMMENDED) return;
+    const dishId = selectedDish.id; // capture before await
     const newTags = eTags.includes(t) ? eTags.filter(x => x !== t) : [...eTags, t];
     setETags(newTags);
-    await fetch(`/api/admin/dishes/${selectedDish.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
-    setDishes(prev => prev.map(x => x.id === selectedDish.id ? { ...x, tags: newTags } : x));
+    setDishes(prev => prev.map(x => x.id === dishId ? { ...x, tags: newTags, isHero: newTags.includes("RECOMMENDED") } : x));
+    fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
   };
 
   if (selectedDish && editMode) return (
