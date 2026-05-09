@@ -44,6 +44,13 @@ export async function POST(request: Request) {
       },
     });
 
+    // Ensure RestaurantClient record exists for this user + restaurant
+    await prisma.restaurantClient.upsert({
+      where: { qrUserId_restaurantId: { qrUserId: user.id, restaurantId } },
+      create: { qrUserId: user.id, restaurantId, source: source || "unknown", registeredAt: new Date() },
+      update: { isActive: true }, // reactivate if previously "deleted"
+    });
+
     // Merge guest profile with registered user
     if (guestId) {
       // Link GuestProfile to this user

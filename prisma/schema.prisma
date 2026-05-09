@@ -482,6 +482,7 @@ model Restaurant {
   schedules             RestaurantScheduleRule[]
   waiterSubscriptions   WaiterPushSubscription[]
   qrUserInteractions    QRUserInteraction[]
+  restaurantClients     RestaurantClient[]
   segments              Segment[]
   campaigns             Campaign[]
   promotionsMarketing   Promotion[]
@@ -1205,6 +1206,26 @@ model QRUser {
   statEvents   StatEvent[]
   campaignRecipients CampaignRecipient[]
   dishFavorites DishFavorite[]
+  restaurantClients RestaurantClient[]
+}
+
+model RestaurantClient {
+  id             String    @id @default(cuid())
+  qrUserId       String
+  restaurantId   String
+  source         String    @default("unknown") // birthday_banner, post_genio, etc.
+  isActive       Boolean   @default(true)
+  registeredAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  qrUser     QRUser     @relation(fields: [qrUserId], references: [id])
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+
+  @@unique([qrUserId, restaurantId])
+  @@index([restaurantId, isActive])
+  @@index([qrUserId])
 }
 
 model QRMagicToken {
