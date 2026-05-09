@@ -197,7 +197,6 @@ export default function VendedoresPage() {
             );
           })()}
 
-          <p style={{ fontSize: 13, color: "#999", textAlign: "center" }}>Sin techo. No hay metas máximas — vende todo lo que puedas</p>
         </div>
       </section>
 
