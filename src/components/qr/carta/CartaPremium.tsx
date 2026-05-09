@@ -568,7 +568,7 @@ export default function CartaPremium({
       <main style={{ paddingBottom: 55 }}>
         {/* Ofertas section — inside main as first "category" */}
         {hasPromos && (
-          <div id="cat-promos" style={{ paddingTop: 12 }}>
+          <div id="cat-promos" style={{ paddingTop: 18 }}>
             <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
               const dish = dishes.find(d => d.id === dishId);
               if (dish) setSelectedDish(dish);

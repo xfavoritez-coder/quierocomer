@@ -621,7 +621,7 @@ export default function CartaFeed({
 
       {/* ═══ PROMOS ═══ */}
       {hasPromos && (
-        <section id="feed-cat-promos" style={{ padding: "12px 14px 0" }}>
+        <section id="feed-cat-promos" style={{ padding: "18px 14px 0" }}>
           <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
