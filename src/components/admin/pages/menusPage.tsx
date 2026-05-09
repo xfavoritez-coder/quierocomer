@@ -1333,23 +1333,27 @@ export default function AdminMenus() {
           <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
         </div>
       </div>
-      {/* Restricciones (fila 3) — separadas para que no compitan con los dropdowns */}
-      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: creatingDish ? 10 : 16, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4, flexWrap: "wrap" }}>
-        <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
-          🌶️ Picante
-        </button>
-        <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "#F5F4F1", color: glutenFreeFilter ? "#8B6914" : "#1a1a1a" }}>
-          🌾 Sin gluten
-        </button>
-        <button onClick={() => setLactoseFreeFilter(!lactoseFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: lactoseFreeFilter ? "rgba(59,130,246,0.15)" : "#F5F4F1", color: lactoseFreeFilter ? "#2563EB" : "#1a1a1a" }}>
-          🥛 Sin lactosa
-        </button>
-        <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
-          🫘 Sin soya
-        </button>
-        <button onClick={() => setNutsFilter(!nutsFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: nutsFilter ? "rgba(160,106,58,0.15)" : "#F5F4F1", color: nutsFilter ? "#a06a3a" : "#1a1a1a" }}>
-          🥜 Frutos secos
-        </button>
+      {/* Restricciones (fila 3) — scroll horizontal con fades */}
+      <div style={{ position: "relative", marginBottom: creatingDish ? 10 : 16 }}>
+        <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24, paddingLeft: 24 }}>
+          <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
+            🌶️ Picante
+          </button>
+          <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "#F5F4F1", color: glutenFreeFilter ? "#8B6914" : "#1a1a1a" }}>
+            🌾 Sin gluten
+          </button>
+          <button onClick={() => setLactoseFreeFilter(!lactoseFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: lactoseFreeFilter ? "rgba(59,130,246,0.15)" : "#F5F4F1", color: lactoseFreeFilter ? "#2563EB" : "#1a1a1a" }}>
+            🥛 Sin lactosa
+          </button>
+          <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
+            🫘 Sin soya
+          </button>
+          <button onClick={() => setNutsFilter(!nutsFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: nutsFilter ? "rgba(160,106,58,0.15)" : "#F5F4F1", color: nutsFilter ? "#a06a3a" : "#1a1a1a" }}>
+            🥜 Frutos secos
+          </button>
+        </div>
+        <div style={{ position: "absolute", top: 0, left: 0, width: 24, height: "100%", background: "linear-gradient(to left, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
+        <div style={{ position: "absolute", top: 0, right: 0, width: 24, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
       </div>
 
       {/* Bulk actions bar */}
@@ -1773,8 +1777,7 @@ export default function AdminMenus() {
         @media (max-width: 768px) { .mcarta-fab { display: flex !important; } .lnd-desktop-only { display: none !important; } }
         @media (min-width: 769px) { .mcarta-fab { display: none !important; } }
         .adm-dish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
-        /* En desktop, los chips de filtro hacen wrap en vez de cortarse */
-        @media (min-width: 769px) { .adm-filter-chips { flex-wrap: wrap !important; overflow-x: visible !important; } }
+        /* En desktop, los chips de filtro se ven todos en una línea */
       `}</style>
     </div>
   );
