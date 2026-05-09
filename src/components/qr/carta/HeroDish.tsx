@@ -6,8 +6,7 @@ import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 import { useLang } from "@/contexts/LangContext";
-import { SUPPORTED_LANGS, type Lang } from "@/lib/qr/i18n";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { SUPPORTED_LANGS } from "@/lib/qr/i18n";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
@@ -45,32 +44,19 @@ function isReal(url: string | null | undefined): boolean {
 export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
   const lang = useLang();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [langOpen, setLangOpen] = useState(false);
-  const [optimisticLang, setOptimisticLang] = useState<Lang | null>(null);
-  const [langToast, setLangToast] = useState<string | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
   const availableLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
   const showLangSelector = availableLangs.length > 1;
-  const activeLang = optimisticLang || lang;
 
-  const LANG_NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano" };
-
-  const handleLangChange = (next: Lang) => {
-    if (next === lang && !optimisticLang) return;
-    setOptimisticLang(next);
+  const handleLangChange = (next: string) => {
+    if (next === lang) return;
     localStorage.setItem("qc_lang", next);
     setLangOpen(false);
-    setLangToast(LANG_NAMES[next] || next);
-    // Full navigation — server component needs hard refresh to re-render with new lang
     const params = new URLSearchParams(window.location.search);
     params.set("lang", next);
-    setTimeout(() => { window.location.search = params.toString(); }, 800);
+    window.location.href = window.location.pathname + "?" + params.toString();
   };
-
-  useEffect(() => { setOptimisticLang(null); }, [lang]);
 
   useEffect(() => {
     if (!langOpen) return;
@@ -211,7 +197,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   onClick={(e) => { e.stopPropagation(); setLangOpen(!langOpen); }}
                   style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", fontSize: "0.9rem" }}
                 >
-                  <FlagCircle lang={activeLang} size={20} />
+                  <FlagCircle lang={lang} size={20} />
                 </button>
                 {langOpen && (
                   <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
@@ -219,7 +205,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                       <button
                         key={l}
                         onClick={(e) => { e.stopPropagation(); handleLangChange(l); }}
-                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === activeLang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === activeLang ? 600 : 400 }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}
                       >
                         <FlagCircle lang={l} size={18} />
                         {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
@@ -346,29 +332,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         </div>
 
       </section>
-      <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
-        @keyframes langToastIn { from { opacity: 0; transform: translate(-50%, 10px) scale(0.95); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
-        @keyframes langToastOut { from { opacity: 1; } to { opacity: 0; } }
-      `}</style>
-
-      {/* Language change toast */}
-      {langToast && (
-        <div
-          style={{
-            position: "fixed", top: "45%", left: "50%", transform: "translateX(-50%)",
-            zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)", borderRadius: 16, padding: "16px 28px",
-            display: "flex", alignItems: "center", gap: 10,
-            animation: "langToastIn 0.3s ease-out",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-          }}
-        >
-          <FlagCircle lang={activeLang} size={24} />
-          <span style={{ color: "white", fontSize: "0.95rem", fontWeight: 600, fontFamily: "var(--font-dm), system-ui" }}>
-            Carta en {langToast}
-          </span>
-        </div>
-      )}
+      <style>{`@keyframes heroKenBurns { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }`}</style>
     </>
   );
 }

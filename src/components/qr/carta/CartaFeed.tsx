@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Search, X, Globe } from "lucide-react";
 import { trackCategoryDwell } from "@/lib/sessionTracker";
@@ -80,20 +79,13 @@ function FlagCircle({ lang: l, size = 20 }: { lang: string; size?: number }) {
 
 function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restaurant: Restaurant; onDishSelect: (d: Dish) => void }) {
   const lang = useLang();
-  const router = useRouter();
-  const pathname = usePathname();
-  const sp = useSearchParams();
   const [langOpen, setLangOpen] = useState(false);
-  const [optimisticLang, setOptimisticLang] = useState<string | null>(null);
-  const [langToast, setLangToast] = useState<string | null>(null);
   const langRef = useRef<HTMLDivElement>(null);
   const enabledLangs = (restaurant as any).enabledLangs as string[] | undefined;
   const availLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
   const showLangSelector = availLangs.length > 1;
-  const activeLang = optimisticLang || lang;
   const LANG_NAMES: Record<string, string> = { es: "Español", en: "English", pt: "Português", it: "Italiano" };
 
-  useEffect(() => { setOptimisticLang(null); }, [lang]);
   useEffect(() => {
     if (!langOpen) return;
     const h = (e: MouseEvent) => { if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false); };
@@ -197,11 +189,11 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
             {hasWeb && <a href={r.website.startsWith("http") ? r.website : `https://${r.website}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center" }}><Globe size={14} color="#fff" /></a>}
             {showLangSelector && (
               <div ref={langRef} style={{ position: "relative" }}>
-                <button onClick={() => setLangOpen(!langOpen)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}><FlagCircle lang={activeLang} size={20} /></button>
+                <button onClick={() => setLangOpen(!langOpen)} style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}><FlagCircle lang={lang} size={20} /></button>
                 {langOpen && (
                   <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120, zIndex: 50 }}>
                     {availLangs.map(l => (
-                      <button key={l} onClick={() => { setOptimisticLang(l); localStorage.setItem("qc_lang", l); setLangOpen(false); setLangToast(LANG_NAMES[l]); const p = new URLSearchParams(window.location.search); p.set("lang", l); setTimeout(() => { window.location.search = p.toString(); }, 800); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === activeLang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === activeLang ? 600 : 400 }}>
+                      <button key={l} onClick={() => { localStorage.setItem("qc_lang", l); setLangOpen(false); const p = new URLSearchParams(window.location.search); p.set("lang", l); window.location.href = window.location.pathname + "?" + p.toString(); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
                         <FlagCircle lang={l} size={18} />{LANG_NAMES[l]}
                       </button>
                     ))}
@@ -209,12 +201,6 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
                 )}
               </div>
             )}
-          </div>
-        )}
-        {langToast && (
-          <div style={{ position: "fixed", top: "45%", left: "50%", transform: "translateX(-50%)", zIndex: 200, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 16, padding: "16px 28px", display: "flex", alignItems: "center", gap: 10, boxShadow: "0 8px 30px rgba(0,0,0,0.3)" }}>
-            <FlagCircle lang={activeLang} size={24} />
-            <span style={{ color: "white", fontSize: "0.95rem", fontWeight: 600 }}>Carta en {langToast}</span>
           </div>
         )}
       </div>
