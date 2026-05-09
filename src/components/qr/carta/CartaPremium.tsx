@@ -478,7 +478,7 @@ export default function CartaPremium({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (

@@ -1,10 +1,13 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
+import { useLang } from "@/contexts/LangContext";
+import { SUPPORTED_LANGS, type Lang } from "@/lib/qr/i18n";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
@@ -15,6 +18,8 @@ interface QRUserData {
   email: string;
 }
 
+const FLAG_EMOJIS: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+
 interface HeroDishProps {
   restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl" | "instagram" | "website" | "whatsapp"> & { id: string };
   heroDishes: Dish[];
@@ -22,14 +27,40 @@ interface HeroDishProps {
   onProfileOpen?: () => void;
   onDishSelect?: (dish: Dish) => void;
   viewSelectorSlot?: React.ReactNode;
+  enabledLangs?: string[];
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot }: HeroDishProps) {
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
+  const lang = useLang();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+  const availableLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
+  const showLangSelector = availableLangs.length > 1;
+
+  const handleLangChange = (next: Lang) => {
+    localStorage.setItem("qc_lang", next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lang", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    setLangOpen(false);
+  };
+
+  useEffect(() => {
+    if (!langOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, [langOpen]);
 
   const logoSrc = isReal(restaurant.logoUrl) ? restaurant.logoUrl! : null;
   const initial = restaurant.name.charAt(0).toUpperCase();
@@ -138,8 +169,8 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
         </button>
 
 
-        {/* Social icons */}
-        {(restaurant.instagram || restaurant.website || restaurant.whatsapp) && (
+        {/* Social icons + lang selector */}
+        {(restaurant.instagram || restaurant.website || restaurant.whatsapp || showLangSelector) && (
           <div className="absolute z-10 flex items-center gap-2" style={{ top: 14, right: 16 }}>
             {restaurant.instagram && (
               <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -155,6 +186,30 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
               <a href={restaurant.website.startsWith("http") ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               </a>
+            )}
+            {showLangSelector && (
+              <div ref={langRef} style={{ position: "relative" }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setLangOpen(!langOpen); }}
+                  style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", fontSize: "0.9rem" }}
+                >
+                  {FLAG_EMOJIS[lang] || "🌐"}
+                </button>
+                {langOpen && (
+                  <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
+                    {availableLangs.map(l => (
+                      <button
+                        key={l}
+                        onClick={(e) => { e.stopPropagation(); handleLangChange(l); }}
+                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}
+                      >
+                        <span style={{ fontSize: "1rem" }}>{FLAG_EMOJIS[l]}</span>
+                        {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}

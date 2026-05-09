@@ -17,6 +17,7 @@ import { useCartaView } from "./hooks/useCartaView";
 import { useLang } from "@/contexts/LangContext";
 import { t, chapterWord } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
 interface Props {
@@ -66,6 +67,51 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   const photo = getDishPhoto(dish);
   if (photo) return <Image src={photo} alt={dish.name} fill className={`object-cover ${className || ""}`} sizes="100vw" style={style} quality={95} />;
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
+}
+
+const FLAG_E: Record<string, string> = { es: "🇪🇸", en: "🇺🇸", pt: "🇧🇷", it: "🇮🇹" };
+function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
+  const enabledLangs = (restaurant as any).enabledLangs as string[] | undefined;
+  const availLangs = enabledLangs ? (["es","en","pt","it"] as const).filter(l => enabledLangs.includes(l)) : [];
+  const showLang = availLangs.length > 1;
+  const lang = useLang();
+  const [lOpen, setLOpen] = useState(false);
+  const lRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+
+  useEffect(() => {
+    if (!lOpen) return;
+    const h = (e: MouseEvent) => { if (lRef.current && !lRef.current.contains(e.target as Node)) setLOpen(false); };
+    document.addEventListener("click", h);
+    return () => document.removeEventListener("click", h);
+  }, [lOpen]);
+
+  if (!restaurant.instagram && !restaurant.website && !restaurant.whatsapp && !showLang) return null;
+  const iconStyle = { width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" } as const;
+  return (
+    <div className="fixed z-50 flex items-center gap-2" style={{ top: 17, right: 16 }}>
+      {restaurant.instagram && <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>}
+      {restaurant.whatsapp && <a href={`https://wa.me/${restaurant.whatsapp.replace(/[^0-9+]/g, "")}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></a>}
+      {restaurant.website && <a href={restaurant.website.startsWith("http") ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>}
+      {showLang && (
+        <div ref={lRef} style={{ position: "relative" }}>
+          <button onClick={(e) => { e.stopPropagation(); setLOpen(!lOpen); }} style={{ ...iconStyle, border: "none", cursor: "pointer", fontSize: "0.9rem" }}>{FLAG_E[lang] || "🌐"}</button>
+          {lOpen && (
+            <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
+              {availLangs.map(l => (
+                <button key={l} onClick={(e) => { e.stopPropagation(); localStorage.setItem("qc_lang", l); const p = new URLSearchParams(sp.toString()); p.set("lang", l); router.replace(pathname + "?" + p.toString(), { scroll: false }); setLOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
+                  <span style={{ fontSize: "1rem" }}>{FLAG_E[l]}</span>
+                  {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default function CartaViaje({ restaurant, categories, dishes, ratingMap, reviews, tableId, qrUser, onProfileOpen, onReady, readyKey, showWaiter, timeOfDay: timeOfDayProp, weather: weatherProp, popularDishIds: popularDishIdsProp }: Props) {
@@ -167,6 +213,9 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
           </span>
         </button>
 
+
+        {/* Social + lang — top right */}
+        <SocialLangBar restaurant={restaurant} />
 
         {/* Floating buttons — cinematic style */}
         <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
@@ -537,7 +586,6 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
     const words = dish.name.split(" ");
     const firstWord = words[0];
     const restWords = words.slice(1).join(" ");
-    const eyebrowText = dish.ingredients?.split(/[,;]/)[0]?.trim() || "";
     // Dynamic photo height: shorter when description is long
     const descLen = pitch.length;
     const photoHeight = descLen > 80 ? "52%" : descLen > 40 ? "57%" : "62%";
@@ -559,14 +607,12 @@ function DishSlide({ dish, variant, palette, index, restaurantName, autoRecommen
   }
 
   if (variant === "stage") {
-    const eyebrow = dish.ingredients?.split(/[,;]/)[0]?.trim() || "";
     return (
       <div className="vj-slide-item vj-dish vj-v-stage" data-slide-idx={index}>
         {toastEl}
         <div className="vj-stage-photo"><PhotoBg dish={dish} /></div>
         <div className="vj-stage-overlay" />
         <div className="vj-stage-top">
-          {eyebrow && <span className="vj-stage-eyebrow font-[family-name:var(--font-dm)]">{eyebrow.toUpperCase()}</span>}
           <h3 className="vj-stage-title font-[family-name:var(--font-fraunces)]">
             <span style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", justifyContent: "center" }}>
               <span>{dish.name}</span>{vjBadges}
@@ -818,7 +864,7 @@ const CSS = `
   .vj-meta { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
   .vj-v-light .vj-meta, .vj-v-spotlight .vj-meta { justify-content: center; }
   .vj-dish.in-view .vj-meta { opacity: 1; transform: translateY(0); }
-  .vj-price { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 500; padding: 6px 16px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.92; }
+  .vj-price { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 4px 12px; border: 1px solid currentColor; border-radius: 100px; opacity: 0.85; }
 
   /* HERO */
   .vj-v-hero { flex-direction: column; justify-content: flex-end; }
@@ -840,7 +886,7 @@ const CSS = `
   .vj-stage-title { font-weight: 300; font-style: italic; font-size: clamp(36px, 11vw, 54px); line-height: 1; letter-spacing: -0.02em; color: #fff; text-shadow: 0 2px 16px rgba(0,0,0,0.5); }
   .vj-stage-bottom { position: relative; z-index: 3; padding: 0 28px calc(60px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
   .vj-v-stage .vj-pitch { color: rgba(255,255,255,0.92); margin-bottom: 4px; max-width: min(36ch, calc(100vw - 56px)); }
-  .vj-stage-price { display: inline-flex; align-items: center; gap: 8px; font-size: 22px; font-weight: 500; padding: 10px 22px; background: rgba(244,166,35,0.92); color: #1a0a04; border-radius: 100px; box-shadow: 0 8px 24px -6px rgba(244,166,35,0.4); opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
+  .vj-stage-price { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; padding: 5px 14px; background: rgba(244,166,35,0.85); color: #1a0a04; border-radius: 100px; box-shadow: 0 4px 16px -4px rgba(244,166,35,0.3); opacity: 0; transform: translateY(16px); transition: all 1s var(--vj-ease) 0.7s; }
   .vj-v-stage.in-view .vj-stage-price { opacity: 1; transform: translateY(0); }
 
   /* SPLIT */
@@ -854,7 +900,7 @@ const CSS = `
   .vj-v-split .vj-title { font-weight: 200; font-size: clamp(34px, 10vw, 42px); line-height: 0.9; letter-spacing: -0.025em; color: white; margin-bottom: 14px; text-align: center; }
   .vj-v-split .vj-title em { font-style: italic; font-weight: 300; color: #F4A623; display: block; }
   .vj-v-split .vj-pitch { font-style: italic; font-weight: 300; font-size: 18px; line-height: 1.45; color: rgba(255,255,255,0.65); margin-bottom: 18px; max-width: 280px; text-align: center; margin-left: auto; margin-right: auto; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .vj-split-price { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 6px 14px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
+  .vj-split-price { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 500; padding: 3px 10px; border: 1px solid rgba(255,255,255,0.25); border-radius: 100px; color: white; }
   .vj-split-price-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; }
 
   /* LIGHT */
