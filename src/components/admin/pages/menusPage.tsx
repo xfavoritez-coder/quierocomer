@@ -1735,6 +1735,9 @@ export default function AdminMenus() {
           const newTags = hasTags ? dish.tags.filter((t: string) => t !== "RECOMMENDED") : [...(dish.tags || []), "RECOMMENDED"];
           setDishes(prev => prev.map(x => x.id === dishId ? { ...x, tags: newTags, isHero: newTags.includes("RECOMMENDED") } : x));
           fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
+        }} onToggleVisibility={(dishId, isActive) => {
+          setDishes(prev => prev.map(x => x.id === dishId ? { ...x, isActive } : x));
+          fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isActive }) });
         }} />
       )}
 

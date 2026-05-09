@@ -27,27 +27,33 @@ interface Props {
   onDishesChange: (dishes: any[]) => void;
   onEditDish?: (dish: any) => void;
   onToggleFeatured?: (dishId: string) => void;
+  onToggleVisibility?: (dishId: string, isActive: boolean) => void;
 }
 
-function SortableDish({ dish, onMove, onEdit, onToggleFeatured, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; categories: Category[]; currentCatId: string }) {
+function SortableDish({ dish, onMove, onEdit, onToggleFeatured, onToggleVisibility, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; onToggleVisibility?: (dishId: string, isActive: boolean) => void; categories: Category[]; currentCatId: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
   const [moving, setMoving] = useState(false);
   const isFeatured = dish.tags?.includes("RECOMMENDED") || false;
 
   return (
     <div ref={setNodeRef} style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", background: isFeatured ? "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)" : "var(--adm-card)", border: isFeatured ? "1px solid rgba(244,166,35,0.35)" : "1px solid var(--adm-card-border)", borderRadius: 8, marginBottom: 4, opacity: dish.isActive === false ? 0.5 : 1 }}>
         <div {...attributes} {...listeners} style={{ cursor: "grab", padding: "4px 2px", color: "var(--adm-text3)", fontSize: "0.8rem", touchAction: "none" }}>⠿</div>
         {dish.photos?.[0] ? (
           <img src={dish.photos[0]} alt="" style={{ width: 32, height: 32, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
         ) : (
           <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--adm-card-border)", flexShrink: 0 }} />
         )}
-        <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
+        <span style={{ fontFamily: F, fontSize: "0.78rem", color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textDecoration: dish.isActive === false ? "line-through" : "none" }}>{dish.name}</span>
         <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
         {onToggleFeatured && (
-          <button onClick={() => onToggleFeatured(dish.id)} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.82rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
+          <button onClick={() => onToggleFeatured(dish.id)} title={isFeatured ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "1rem", lineHeight: 1, flexShrink: 0, color: isFeatured ? "#F4A623" : "var(--adm-text3)" }}>
             {isFeatured ? "★" : "☆"}
+          </button>
+        )}
+        {onToggleVisibility && (
+          <button onClick={() => onToggleVisibility(dish.id, !dish.isActive)} title={dish.isActive === false ? "Mostrar" : "Ocultar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, flexShrink: 0, color: dish.isActive === false ? "var(--adm-text3)" : "var(--adm-text2)" }}>
+            {dish.isActive === false ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         )}
         {onEdit && <button onClick={() => onEdit(dish)} style={{ padding: "3px 8px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#F4A623", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Editar</button>}
@@ -73,13 +79,14 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onRename, onToggle, onDelete, onTypeChange }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onToggleVisibility, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
   onReorder: (catId: string, dishIds: string[]) => void;
   onEditDish?: (dish: Dish) => void;
   onToggleFeatured?: (dishId: string) => void;
+  onToggleVisibility?: (dishId: string, isActive: boolean) => void;
   onMove: (dishId: string, toCatId: string) => void;
   onRename: (id: string, name: string) => void;
   onToggle: (id: string, isActive: boolean) => void;
@@ -283,7 +290,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ paddingTop: 8 }}>
                   {dishes.map(d => (
-                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} onToggleFeatured={onToggleFeatured} categories={allCategories} currentCatId={category.id} />
+                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} onToggleFeatured={onToggleFeatured} onToggleVisibility={onToggleVisibility} categories={allCategories} currentCatId={category.id} />
                   ))}
                 </div>
               </SortableContext>
@@ -300,7 +307,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured, onToggleVisibility }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -435,6 +442,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onMove={moveDish}
               onEditDish={onEditDish}
               onToggleFeatured={onToggleFeatured}
+              onToggleVisibility={onToggleVisibility}
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}
