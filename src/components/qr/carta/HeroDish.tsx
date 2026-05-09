@@ -5,8 +5,7 @@ import Image from "next/image";
 import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
-import { useLang } from "@/contexts/LangContext";
-import { SUPPORTED_LANGS } from "@/lib/qr/i18n";
+import LangSelector from "./LangSelector";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
@@ -17,15 +16,6 @@ interface QRUserData {
   email: string;
 }
 
-function FlagCircle({ lang, size = 20 }: { lang: string; size?: number }) {
-  const flags: Record<string, React.ReactNode> = {
-    es: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fes"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fes)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>,
-    en: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fen"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fen)"><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
-    pt: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fpt"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fpt)"><rect width="100" height="100" fill="#009739"/><rect x="35" width="65" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
-    it: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fit"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fit)"><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
-  };
-  return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[lang] || <span style={{ width: size, height: size, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.5, color: "white" }}>🌐</span>}</span>;
-}
 
 interface HeroDishProps {
   restaurant: Pick<Restaurant, "name" | "logoUrl" | "bannerUrl" | "instagram" | "website" | "whatsapp"> & { id: string };
@@ -43,29 +33,6 @@ function isReal(url: string | null | undefined): boolean {
 
 export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
-  const lang = useLang();
-  const [langOpen, setLangOpen] = useState(false);
-  const langRef = useRef<HTMLDivElement>(null);
-  const availableLangs = enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : [];
-  const showLangSelector = availableLangs.length > 1;
-
-  const handleLangChange = (next: string) => {
-    if (next === lang) return;
-    localStorage.setItem("qc_lang", next);
-    setLangOpen(false);
-    const params = new URLSearchParams(window.location.search);
-    params.set("lang", next);
-    window.location.href = window.location.pathname + "?" + params.toString();
-  };
-
-  useEffect(() => {
-    if (!langOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (langRef.current && !langRef.current.contains(e.target as Node)) setLangOpen(false);
-    };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [langOpen]);
 
   const logoSrc = isReal(restaurant.logoUrl) ? restaurant.logoUrl! : null;
   const initial = restaurant.name.charAt(0).toUpperCase();
@@ -174,7 +141,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
 
         {/* Social icons + lang selector */}
-        {(restaurant.instagram || restaurant.website || restaurant.whatsapp || showLangSelector) && (
+        {(restaurant.instagram || restaurant.website || restaurant.whatsapp || enabledLangs) && (
           <div className="absolute z-10 flex items-center gap-2" style={{ top: 14, right: 16 }} onClick={(e) => e.stopPropagation()}>
             {restaurant.instagram && (
               <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -191,30 +158,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
               </a>
             )}
-            {showLangSelector && (
-              <div ref={langRef} style={{ position: "relative" }} onClick={(e) => e.stopPropagation()}>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setLangOpen(!langOpen); }}
-                  style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", fontSize: "0.9rem" }}
-                >
-                  <FlagCircle lang={lang} size={20} />
-                </button>
-                {langOpen && (
-                  <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
-                    {availableLangs.map(l => (
-                      <button
-                        key={l}
-                        onClick={(e) => { e.stopPropagation(); handleLangChange(l); }}
-                        style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}
-                      >
-                        <FlagCircle lang={l} size={18} />
-                        {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            <LangSelector enabledLangs={enabledLangs} />
           </div>
         )}
 

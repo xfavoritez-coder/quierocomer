@@ -17,7 +17,7 @@ import { useCartaView } from "./hooks/useCartaView";
 import { useLang } from "@/contexts/LangContext";
 import { t, chapterWord } from "@/lib/qr/i18n";
 import type { Lang } from "@/lib/qr/i18n";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import LangSelector from "./LangSelector";
 
 interface Review { id: string; dishId: string; rating: number; customerId: string; createdAt: Date; }
 interface Props {
@@ -69,55 +69,15 @@ function PhotoBg({ dish, className, style }: { dish: Dish; className?: string; s
   return <div style={{ position: "absolute", inset: 0, background: placeholderGradient(dish.id), ...style }} />;
 }
 
-function FlagCircle({ lang, size = 20 }: { lang: string; size?: number }) {
-  const flags: Record<string, React.ReactNode> = {
-    es: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fes2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fes2)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>,
-    en: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fen2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fen2)"><rect width="100" height="100" fill="#002868"/><rect y="0" width="100" height="8" fill="#bf0a30"/><rect y="15" width="100" height="8" fill="white"/><rect y="30" width="100" height="8" fill="#bf0a30"/><rect y="45" width="100" height="8" fill="white"/><rect y="60" width="100" height="8" fill="#bf0a30"/><rect y="75" width="100" height="8" fill="white"/><rect y="90" width="100" height="10" fill="#bf0a30"/><rect width="45" height="55" fill="#002868"/></g></svg>,
-    pt: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fpt2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fpt2)"><rect width="100" height="100" fill="#009739"/><rect width="40" height="100" fill="#002776"/><circle cx="40" cy="50" r="16" fill="#fedd00"/></g></svg>,
-    it: <svg viewBox="0 0 100 100" width={size} height={size}><clipPath id="fit2"><circle cx="50" cy="50" r="50"/></clipPath><g clipPath="url(#fit2)"><rect x="0" width="33" height="100" fill="#009246"/><rect x="33" width="34" height="100" fill="white"/><rect x="67" width="33" height="100" fill="#ce2b37"/></g></svg>,
-  };
-  return <span style={{ display: "inline-flex", borderRadius: "50%", overflow: "hidden", width: size, height: size, flexShrink: 0 }}>{flags[lang] || <span>🌐</span>}</span>;
-}
 function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
-  const enabledLangs = (restaurant as any).enabledLangs as string[] | undefined;
-  const availLangs = enabledLangs ? (["es","en","pt","it"] as const).filter(l => enabledLangs.includes(l)) : [];
-  const showLang = availLangs.length > 1;
-  const lang = useLang();
-  const [lOpen, setLOpen] = useState(false);
-  const lRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-  const pathname = usePathname();
-  const sp = useSearchParams();
-
-  useEffect(() => {
-    if (!lOpen) return;
-    const h = (e: MouseEvent) => { if (lRef.current && !lRef.current.contains(e.target as Node)) setLOpen(false); };
-    document.addEventListener("click", h);
-    return () => document.removeEventListener("click", h);
-  }, [lOpen]);
-
-  if (!restaurant.instagram && !restaurant.website && !restaurant.whatsapp && !showLang) return null;
   const iconStyle = { width: 32, height: 32, borderRadius: "50%", background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center" } as const;
+  if (!restaurant.instagram && !restaurant.website && !restaurant.whatsapp && !(restaurant as any).enabledLangs?.length) return null;
   return (
     <div className="fixed z-50 flex items-center gap-2" style={{ top: 17, right: 16 }}>
       {restaurant.instagram && <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg></a>}
       {restaurant.whatsapp && <a href={`https://wa.me/${restaurant.whatsapp.replace(/[^0-9+]/g, "")}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg></a>}
       {restaurant.website && <a href={restaurant.website.startsWith("http") ? restaurant.website : `https://${restaurant.website}`} target="_blank" rel="noopener noreferrer" style={iconStyle}><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></a>}
-      {showLang && (
-        <div ref={lRef} style={{ position: "relative" }}>
-          <button onClick={(e) => { e.stopPropagation(); setLOpen(!lOpen); }} style={{ ...iconStyle, border: "none", cursor: "pointer", fontSize: "0.9rem" }}><FlagCircle lang={lang} size={20} /></button>
-          {lOpen && (
-            <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
-              {availLangs.map(l => (
-                <button key={l} onClick={(e) => { e.stopPropagation(); localStorage.setItem("qc_lang", l); setLOpen(false); const p = new URLSearchParams(window.location.search); p.set("lang", l); setTimeout(() => { window.location.search = p.toString(); }, 800); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
-                  <FlagCircle lang={l} size={18} />
-                  {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      <LangSelector enabledLangs={(restaurant as any).enabledLangs} />
     </div>
   );
 }
