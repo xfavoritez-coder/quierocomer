@@ -109,7 +109,7 @@ function SocialLangBar({ restaurant }: { restaurant: Restaurant }) {
           {lOpen && (
             <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120 }}>
               {availLangs.map(l => (
-                <button key={l} onClick={(e) => { e.stopPropagation(); localStorage.setItem("qc_lang", l); const p = new URLSearchParams(sp.toString()); p.set("lang", l); router.replace(pathname + "?" + p.toString(), { scroll: false }); setLOpen(false); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
+                <button key={l} onClick={(e) => { e.stopPropagation(); localStorage.setItem("qc_lang", l); setLOpen(false); const p = new URLSearchParams(window.location.search); p.set("lang", l); setTimeout(() => { window.location.search = p.toString(); }, 800); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === lang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === lang ? 600 : 400 }}>
                   <FlagCircle lang={l} size={18} />
                   {l === "es" ? "Español" : l === "en" ? "English" : l === "pt" ? "Português" : "Italiano"}
                 </button>

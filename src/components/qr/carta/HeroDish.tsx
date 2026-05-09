@@ -62,12 +62,12 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
     if (next === lang && !optimisticLang) return;
     setOptimisticLang(next);
     localStorage.setItem("qc_lang", next);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("lang", next);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     setLangOpen(false);
     setLangToast(LANG_NAMES[next] || next);
-    setTimeout(() => setLangToast(null), 2500);
+    // Full navigation — server component needs hard refresh to re-render with new lang
+    const params = new URLSearchParams(window.location.search);
+    params.set("lang", next);
+    setTimeout(() => { window.location.search = params.toString(); }, 800);
   };
 
   useEffect(() => { setOptimisticLang(null); }, [lang]);

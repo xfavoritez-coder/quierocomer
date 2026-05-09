@@ -201,7 +201,7 @@ function FeedHero({ dishes, restaurant, onDishSelect }: { dishes: Dish[]; restau
                 {langOpen && (
                   <div style={{ position: "absolute", top: 38, right: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", borderRadius: 12, padding: 4, display: "flex", flexDirection: "column", gap: 2, minWidth: 120, zIndex: 50 }}>
                     {availLangs.map(l => (
-                      <button key={l} onClick={() => { setOptimisticLang(l); localStorage.setItem("qc_lang", l); const p = new URLSearchParams(sp.toString()); p.set("lang", l); router.replace(`${pathname}?${p.toString()}`, { scroll: false }); setLangOpen(false); setLangToast(LANG_NAMES[l]); setTimeout(() => setLangToast(null), 2500); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === activeLang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === activeLang ? 600 : 400 }}>
+                      <button key={l} onClick={() => { setOptimisticLang(l); localStorage.setItem("qc_lang", l); setLangOpen(false); setLangToast(LANG_NAMES[l]); const p = new URLSearchParams(window.location.search); p.set("lang", l); setTimeout(() => { window.location.search = p.toString(); }, 800); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: l === activeLang ? "rgba(244,166,35,0.2)" : "transparent", border: "none", borderRadius: 8, cursor: "pointer", color: "white", fontSize: "0.82rem", fontWeight: l === activeLang ? 600 : 400 }}>
                         <FlagCircle lang={l} size={18} />{LANG_NAMES[l]}
                       </button>
                     ))}
@@ -406,7 +406,7 @@ function FeedDishCard({ dish, onClick, isPopular, pEntry }: {
               </span>
             </div>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 15, fontWeight: 500, color: "#555", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: 17, fontWeight: 500, color: "rgb(151,151,151)", letterSpacing: "-0.2px", whiteSpace: "nowrap" }}>
               ${dish.price.toLocaleString("es-CL")}
             </span>
           )}
