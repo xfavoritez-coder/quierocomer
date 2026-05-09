@@ -1564,7 +1564,7 @@ export default function AdminMenus() {
                   )}
                   {/* Badge destacado en la foto */}
                   {isRec && (
-                    <span title="Plato destacado" style={{ position: "absolute", top: -4, left: -4, width: 22, height: 22, borderRadius: "50%", background: "#F4A623", color: "white", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(244,166,35,0.4)", fontSize: "0.72rem", fontWeight: 700 }}>★</span>
+                    <span title="Plato destacado" style={{ position: "absolute", top: -4, left: -4, width: 26, height: 26, borderRadius: "50%", background: "#F4A623", color: "white", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(244,166,35,0.4)", fontSize: "0.85rem", fontWeight: 700 }}>★</span>
                   )}
                 </div>
                 {/* Info */}
