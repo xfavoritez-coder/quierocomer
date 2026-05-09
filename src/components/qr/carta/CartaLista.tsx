@@ -28,6 +28,7 @@ import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
 import HeroDish from "./HeroDish";
+import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayBanner from "../capture/BirthdayBanner";
@@ -362,8 +363,12 @@ export default function CartaLista({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      {/* Hero */}
-      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      {/* Hero — FREE gets slim, Gold/Premium get full hero */}
+      {(restaurant as any).plan === "FREE" ? (
+        <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      ) : (
+        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
