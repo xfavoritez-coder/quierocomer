@@ -245,24 +245,26 @@ export default function VendedoresPage() {
 
           <EarningsCalculator />
 
-          {/* Ejemplos rápidos */}
+          {/* Ejemplos impactantes */}
           {(() => {
             const goldDirect = vendorCommissionDirect("GOLD");
-            const premDirect = vendorCommissionDirect("PREMIUM");
             const goldAnnual = vendorCommissionAnnual("GOLD");
+            const premDirect = vendorCommissionDirect("PREMIUM");
             const examples = [
-              { label: "3 Gold mensuales", total: 3 * goldDirect.total },
-              { label: "5 Gold + 2 Premium", total: 5 * goldDirect.total + 2 * premDirect.total },
-              { label: "4 Gold anuales", total: 4 * goldAnnual },
+              { label: "2 locales por semana · Gold", sub: "8 cierres al mes", total: 8 * goldDirect.total },
+              { label: "1 local por día · Gold", sub: "20 cierres al mes (lun-vie)", total: 20 * goldDirect.total },
+              { label: "1 local por día · Gold anual", sub: "20 cierres al mes (lun-vie)", total: 20 * goldAnnual },
             ];
             return (
               <>
-                <p style={{ fontFamily: F, fontSize: 12, color: "#999", textTransform: "uppercase", letterSpacing: "1px", textAlign: "center", marginBottom: 12, marginTop: 32, fontWeight: 600 }}>Ejemplos</p>
+                <p style={{ fontFamily: F, fontSize: 12, color: "#999", textTransform: "uppercase", letterSpacing: "1px", textAlign: "center", marginBottom: 12, marginTop: 32, fontWeight: 600 }}>Ejemplos reales</p>
                 <div className="vnd-examples" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14 }}>
                   {examples.map((ex, i) => (
                     <div key={ex.label} style={{ background: i === 2 ? "#1a1a1a" : "#fff", border: i === 2 ? "none" : "1px solid #eeeae0", borderRadius: 14, padding: 20, textAlign: "center" }}>
-                      <p style={{ fontFamily: F, fontSize: 12, color: i === 2 ? "#999" : "#888", marginBottom: 6 }}>{ex.label}</p>
-                      <p style={{ fontFamily: F, fontSize: 24, fontWeight: 700, color: i === 2 ? "#FAC775" : "#111", letterSpacing: "-0.5px" }}>{fmt(ex.total)}</p>
+                      <p style={{ fontFamily: F, fontSize: 12, color: i === 2 ? "#aaa" : "#888", marginBottom: 4, lineHeight: 1.4 }}>{ex.label}</p>
+                      <p style={{ fontSize: 11, color: i === 2 ? "#666" : "#bbb", marginBottom: 8 }}>{ex.sub}</p>
+                      <p style={{ fontFamily: F, fontSize: 26, fontWeight: 700, color: i === 2 ? "#FAC775" : "#111", letterSpacing: "-0.5px", marginBottom: 2 }}>{fmt(ex.total)}</p>
+                      <p style={{ fontSize: 11, color: i === 2 ? "#777" : "#999" }}>al mes</p>
                     </div>
                   ))}
                 </div>

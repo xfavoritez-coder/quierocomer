@@ -16,7 +16,7 @@ export default function GenieShell({ children }: { children: React.ReactNode }) 
   // Don't render shell for admin, auth, or landing pages
   const isAdmin = pathname.startsWith("/admin");
   const isAuth = pathname.startsWith("/login") || pathname.startsWith("/registro");
-  const isLanding = pathname === "/";
+  const isLanding = pathname === "/" || pathname.startsWith("/vendedores");
 
   // Admin/auth pages skip GenieShell entirely — start ready immediately
   const [ready, setReady] = useState(isAdmin || isAuth || isLanding);
