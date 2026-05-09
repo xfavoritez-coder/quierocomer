@@ -447,6 +447,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       <span>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</span>
                     </div>
                   )}
+                  <p style={{ fontSize: "11.5px", color: "#b0a090", marginTop: 18, textAlign: "center", letterSpacing: "0.02em" }}>Solicítala con el garzón o en caja 🙌</p>
                 </div>
               </div>
             ) : (
@@ -538,6 +539,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       </div>
                     </div>
                   )}
+                  <p style={{ fontSize: "11.5px", color: "#b0a090", marginTop: 18, textAlign: "center", letterSpacing: "0.02em" }}>Solicítala con el garzón o en caja 🙌</p>
                 </div>
               </div>
             )}
