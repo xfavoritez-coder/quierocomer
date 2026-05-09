@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
     const restaurant = await prisma.restaurant.findUnique({
       where: { id: restaurantId },
-      select: { birthdayEmailEnabled: true, birthdayPerk: true },
+      select: { birthdayEmailEnabled: true, birthdayPerk: true, birthdayPerkConditions: true },
     });
 
     // Birthday email history with visit matching
@@ -30,6 +30,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       birthdayEmailEnabled: restaurant?.birthdayEmailEnabled || false,
       birthdayPerk: restaurant?.birthdayPerk || "",
+      birthdayPerkConditions: restaurant?.birthdayPerkConditions || "",
       logs,
       kpi: {
         sent: totalSent,
@@ -49,7 +50,7 @@ export async function PUT(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { restaurantId, birthdayEmailEnabled, birthdayPerk } = await req.json();
+    const { restaurantId, birthdayEmailEnabled, birthdayPerk, birthdayPerkConditions } = await req.json();
     if (!restaurantId) return NextResponse.json({ error: "restaurantId requerido" }, { status: 400 });
     await requireRestaurantForOwner(req, restaurantId);
 
@@ -63,6 +64,7 @@ export async function PUT(req: NextRequest) {
       data: {
         birthdayEmailEnabled: !!birthdayEmailEnabled,
         birthdayPerk: birthdayPerk?.trim() || null,
+        birthdayPerkConditions: birthdayPerkConditions?.trim() || null,
       },
     });
 

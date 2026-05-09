@@ -426,6 +426,7 @@ model Restaurant {
   waiterPanelActive  Boolean    @default(false)
   birthdayPerk       String?    // beneficio que el local le regala al cliente en su cumple (ej: "un postre" / "10% off"). Si esta vacio, el modal de cumple no muestra mensaje de regalo
   birthdayEmailEnabled Boolean @default(false) // si esta activo, se envia email automatico el dia del cumple del cliente
+  birthdayPerkConditions String? // condiciones del regalo de cumpleaños (ej: "Válido solo el día del cumpleaños")
   plan               RestaurantPlan @default(FREE)
   qrActivatedAt      DateTime?  // fecha en que se activó la carta QR para este restaurante
 

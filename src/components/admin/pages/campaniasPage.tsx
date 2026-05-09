@@ -16,6 +16,7 @@ type Tab = "cumpleanos" | "campanas";
 function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; restaurantName: string }) {
   const [enabled, setEnabled] = useState(false);
   const [perk, setPerk] = useState("");
+  const [perkConditions, setPerkConditions] = useState("");
   const [logs, setLogs] = useState<any[]>([]);
   const [kpi, setKpi] = useState({ sent: 0, visited: 0, rate: 0 });
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; r
       .then(d => {
         setEnabled(d.birthdayEmailEnabled || false);
         setPerk(d.birthdayPerk || "");
+        setPerkConditions(d.birthdayPerkConditions || "");
         setLogs(d.logs || []);
         setKpi(d.kpi || { sent: 0, visited: 0, rate: 0 });
       })
@@ -42,7 +44,7 @@ function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; r
     await fetch("/api/admin/restaurant/birthday", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ restaurantId, birthdayEmailEnabled: enabled, birthdayPerk: perk }),
+      body: JSON.stringify({ restaurantId, birthdayEmailEnabled: enabled, birthdayPerk: perk, birthdayPerkConditions: perkConditions }),
     });
     setSaving(false);
   };
@@ -60,9 +62,12 @@ function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; r
   <div style="text-align:center;margin-bottom:24px">
     <p style="font-size:0.95rem;color:#555;line-height:1.6;margin:0">Ven a visitarnos y menciona este correo para recibir tu regalo. ¡Te esperamos!</p>
   </div>
-  <div style="text-align:center">
+  <div style="text-align:center;margin-bottom:${perkConditions ? '16px' : '0'}">
     <a href="#" style="display:inline-block;background:#F4A623;color:#0a0a0a;text-decoration:none;padding:14px 32px;border-radius:50px;font-weight:700;font-size:1rem">Ver la carta</a>
   </div>
+  ${perkConditions ? `<div style="text-align:center;padding-top:16px;border-top:1px solid #f0f0f0">
+    <p style="font-size:0.7rem;color:#bbb;line-height:1.5;margin:0">${perkConditions}</p>
+  </div>` : ""}
 </div>`;
 
   if (loading) return <SkeletonLoading type="cards" />;
@@ -103,6 +108,16 @@ function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; r
                 onChange={e => setPerk(e.target.value)}
                 placeholder="Ej: Un postre de cortesía, 15% de descuento, etc."
                 style={{ width: "100%", padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.85rem", outline: "none", boxSizing: "border-box" }}
+              />
+            </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginBottom: 6 }}>Condiciones del regalo (opcional)</label>
+              <textarea
+                value={perkConditions}
+                onChange={e => setPerkConditions(e.target.value)}
+                placeholder="Ej: Válido solo el día del cumpleaños. No acumulable con otras promociones."
+                rows={2}
+                style={{ width: "100%", padding: "10px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", outline: "none", boxSizing: "border-box", resize: "vertical" }}
               />
             </div>
             <div style={{ display: "flex", gap: 8 }}>
