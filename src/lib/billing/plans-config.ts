@@ -195,3 +195,19 @@ export function formatRut(rut: string): string {
   const formatted = body.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
   return `${formatted}-${dv}`;
 }
+
+// ─── Precios anuales ─────────────────────────────────────────────────
+// 20% descuento sobre el precio mensual neto al pagar anual.
+
+export const ANNUAL_DISCOUNT = 0.20;
+
+/** Precio NETO mensualizado del plan anual. FREE = 0. */
+export function planAnnualNetMonthly(plan: PlanKey): number {
+  if (plan === "FREE") return 0;
+  return Math.round(FLOW_PLANS[plan].amountNet * (1 - ANNUAL_DISCOUNT));
+}
+
+/** Total NETO anual (12 meses con descuento). FREE = 0. */
+export function planAnnualNetTotal(plan: PlanKey): number {
+  return planAnnualNetMonthly(plan) * 12;
+}
