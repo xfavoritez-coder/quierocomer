@@ -51,15 +51,16 @@ export default function LangSelector({ enabledLangs }: Props) {
     if (next === lang) { setOpen(false); return; }
     localStorage.setItem("qc_lang", next);
     setOpen(false);
-    const params = new URLSearchParams(window.location.search);
-    params.set("lang", next);
-    window.location.href = window.location.pathname + "?" + params.toString();
+    // Use assign for a full page reload with the new lang param
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", next);
+    window.location.assign(url.toString());
   };
 
   return (
-    <div ref={ref} style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+    <div ref={ref} style={{ position: "relative" }}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={(e) => { e.stopPropagation(); setOpen(!open); }}
         style={{
           width: 32, height: 32, borderRadius: "50%",
           background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
@@ -78,7 +79,7 @@ export default function LangSelector({ enabledLangs }: Props) {
           {availableLangs.map(l => (
             <button
               key={l}
-              onClick={() => handleChange(l)}
+              onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); handleChange(l); }}
               style={{
                 display: "flex", alignItems: "center", gap: 8,
                 padding: "8px 12px", border: "none", borderRadius: 8, cursor: "pointer",
