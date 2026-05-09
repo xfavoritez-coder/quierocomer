@@ -163,7 +163,7 @@ export function getCrossSellDishes(
       }
     }
   } else if (currentType === "dessert") {
-    // Dessert → hot drinks (café/té) first, then any drink as fallback
+    // Dessert → hot drinks (café/té) first, then any drink, then other desserts
     const hot = getByType("hot");
     const drinks = getByType("drink");
 
@@ -173,10 +173,17 @@ export function getCrossSellDishes(
         usedIds.add(d.id);
       }
     }
-    // Fallback to regular drinks if not enough hot drinks
     if (results.length < MAX) {
       for (const d of pickRandom(drinks.filter(dr => !usedIds.has(dr.id)), MAX - results.length)) {
         results.push({ dish: d, reason: "Para acompañar" });
+        usedIds.add(d.id);
+      }
+    }
+    // If no drinks at all, suggest other desserts
+    if (results.length < MAX) {
+      const otherDesserts = available.filter(d => !usedIds.has(d.id) && catTypeMap.get(d.categoryId) === "dessert" && d.id !== currentDish.id);
+      for (const d of pickRandom(otherDesserts, MAX - results.length)) {
+        results.push({ dish: d, reason: "También te puede gustar" });
         usedIds.add(d.id);
       }
     }
@@ -202,7 +209,12 @@ export function getCrossSellDishes(
   } else if (currentType === "drink" || currentType === "hot") {
     title = "Deja espacio para...";
   } else if (currentType === "dessert") {
-    title = "¿Un café o un té para acompañar?";
+    // Check if we actually found hot drinks or regular drinks
+    const hasHotOrDrink = results.some(r => {
+      const t = catTypeMap.get(r.dish.categoryId);
+      return t === "hot" || t === "drink" || t === "coffee";
+    });
+    title = hasHotOrDrink ? "¿Un café o un té para acompañar?" : "También te puede gustar";
   }
 
   return { title, items: results.slice(0, MAX) };
