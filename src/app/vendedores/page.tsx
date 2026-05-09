@@ -164,9 +164,6 @@ export default function VendedoresPage() {
             </div>
           </div>
 
-          <p style={{ fontSize: 13, color: "#999", textAlign: "center", lineHeight: 1.5, maxWidth: 540, margin: "20px auto 0" }}>
-            Si el cliente se queda en plan Gratis, no hay comisión. Cierra directo a Gold o Premium para llevarte el premio completo
-          </p>
         </div>
       </section>
 
