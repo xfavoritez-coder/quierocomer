@@ -147,6 +147,38 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
             })}
           </div>
 
+          {/* Divider */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "6px 8px" }} />
+
+          {/* Language selector row */}
+          <div style={{ display: "flex", alignItems: "center", gap: 3, padding: "2px" }}>
+            <span style={{ marginLeft: 8, marginRight: 6, color: "rgba(255,255,255,0.5)", fontSize: "0.7rem", fontWeight: 600, flexShrink: 0, letterSpacing: "0.03em" }}>Idioma</span>
+            {(enabledLangs ? SUPPORTED_LANGS.filter(l => enabledLangs.includes(l)) : SUPPORTED_LANGS).map((l) => {
+              const isActive = activeLang === l;
+              return (
+                <button
+                  key={l}
+                  onClick={() => handleLangChange(l)}
+                  className="active:scale-95 transition-transform"
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: 50,
+                    border: "none",
+                    cursor: "pointer",
+                    fontFamily: "inherit",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    letterSpacing: "0.05em",
+                    transition: "all 0.15s",
+                    background: isActive ? "rgba(244,166,35,0.2)" : "transparent",
+                    color: isActive ? "#F4A623" : "rgba(255,255,255,0.55)",
+                  }}
+                >
+                  {LANG_FLAGS[l]}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Arrow pointing right to the trigger button */}
           <div style={{
