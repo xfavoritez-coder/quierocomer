@@ -60,8 +60,12 @@ export function getCrossSellDishes(
   // Filter by user diet if vegan/vegetarian
   const available = allDishes.filter((d) => {
     if (!d.isActive || usedIds.has(d.id) || !d.photos?.[0]) return false;
-    if (userDiet === "vegan" && (d as any).dishDiet !== "VEGAN") return false;
-    if (userDiet === "vegetarian" && (d as any).dishDiet === "OMNIVORE") return false;
+    // Drinks (hot/coffee/drink) are diet-neutral — don't filter by diet
+    const dType = catTypeMap.get(d.categoryId) || "food";
+    if (dType !== "hot" && dType !== "drink" && dType !== "coffee") {
+      if (userDiet === "vegan" && (d as any).dishDiet !== "VEGAN") return false;
+      if (userDiet === "vegetarian" && (d as any).dishDiet === "OMNIVORE") return false;
+    }
     return true;
   });
 
