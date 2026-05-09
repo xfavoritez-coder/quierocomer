@@ -1728,7 +1728,14 @@ export default function AdminMenus() {
 
       {/* ── Categorías tab ── */}
       {menuTab === "categorias" && selectedRestaurantId && (
-        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} />
+        <CategoriesManager restaurantId={selectedRestaurantId} allDishes={dishes} onDishesChange={setDishes} onEditDish={(dish: any) => { editFromCategoriesRef.current = true; handleTabChange("productos"); setSelectedDish(dish); startEditDish(dish); window.scrollTo({ top: 0 }); }} onToggleFeatured={(dishId) => {
+          const dish = dishes.find(d => d.id === dishId);
+          if (!dish) return;
+          const hasTags = dish.tags?.includes("RECOMMENDED");
+          const newTags = hasTags ? dish.tags.filter((t: string) => t !== "RECOMMENDED") : [...(dish.tags || []), "RECOMMENDED"];
+          setDishes(prev => prev.map(x => x.id === dishId ? { ...x, tags: newTags, isHero: newTags.includes("RECOMMENDED") } : x));
+          fetch(`/api/admin/dishes/${dishId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tags: newTags, isHero: newTags.includes("RECOMMENDED") }) });
+        }} />
       )}
 
       {/* ── Modificadores tab ── */}

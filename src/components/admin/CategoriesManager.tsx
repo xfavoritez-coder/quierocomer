@@ -10,7 +10,7 @@ import SkeletonLoading from "@/components/admin/SkeletonLoading";
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 
-interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; }
+interface Dish { id: string; name: string; photos: string[]; price: number; position: number; isActive?: boolean; tags?: string[]; isHero?: boolean; }
 interface Category { id: string; name: string; position: number; isActive: boolean; dishType?: string; _count?: { dishes: number }; }
 const DISH_TYPE_LABELS: Record<string, { label: string; emoji: string }> = {
   food: { label: "Platos de fondo", emoji: "🍽️" },
@@ -25,9 +25,10 @@ interface Props {
   allDishes: any[];
   onDishesChange: (dishes: any[]) => void;
   onEditDish?: (dish: any) => void;
+  onToggleFeatured?: (dishId: string) => void;
 }
 
-function SortableDish({ dish, onMove, onEdit, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; categories: Category[]; currentCatId: string }) {
+function SortableDish({ dish, onMove, onEdit, onToggleFeatured, categories, currentCatId }: { dish: Dish; onMove: (dishId: string, toCatId: string) => void; onEdit?: (dish: Dish) => void; onToggleFeatured?: (dishId: string) => void; categories: Category[]; currentCatId: string }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: dish.id });
   const [moving, setMoving] = useState(false);
 
@@ -42,6 +43,11 @@ function SortableDish({ dish, onMove, onEdit, categories, currentCatId }: { dish
         )}
         <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{dish.name}</span>
         <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", flexShrink: 0 }}>${dish.price?.toLocaleString("es-CL")}</span>
+        {onToggleFeatured && (
+          <button onClick={() => onToggleFeatured(dish.id)} title={dish.tags?.includes("RECOMMENDED") ? "Quitar destacado" : "Destacar"} style={{ background: "none", border: "none", cursor: "pointer", padding: 2, fontSize: "0.9rem", lineHeight: 1, flexShrink: 0, opacity: dish.tags?.includes("RECOMMENDED") ? 1 : 0.3 }}>
+            {dish.tags?.includes("RECOMMENDED") ? "⭐" : "☆"}
+          </button>
+        )}
         {onEdit && <button onClick={() => onEdit(dish)} style={{ padding: "3px 8px", background: "rgba(244,166,35,0.1)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#F4A623", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Editar</button>}
         <button onClick={() => setMoving(!moving)} style={{ padding: "3px 8px", background: "rgba(127,191,220,0.08)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.62rem", color: "#7fbfdc", cursor: "pointer", fontWeight: 600, flexShrink: 0 }}>Mover</button>
       </div>
@@ -65,12 +71,13 @@ const iconBtnStyle: React.CSSProperties = {
   alignItems: "center", justifyContent: "center", padding: 0, flexShrink: 0,
 };
 
-function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onRename, onToggle, onDelete, onTypeChange }: {
+function SortableCategory({ category, allCategories, dishes, onReorder, onMove, onEditDish, onToggleFeatured, onRename, onToggle, onDelete, onTypeChange }: {
   category: Category;
   allCategories: Category[];
   dishes: Dish[];
   onReorder: (catId: string, dishIds: string[]) => void;
   onEditDish?: (dish: Dish) => void;
+  onToggleFeatured?: (dishId: string) => void;
   onMove: (dishId: string, toCatId: string) => void;
   onRename: (id: string, name: string) => void;
   onToggle: (id: string, isActive: boolean) => void;
@@ -273,7 +280,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
                 <div style={{ paddingTop: 8 }}>
                   {dishes.map(d => (
-                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} categories={allCategories} currentCatId={category.id} />
+                    <SortableDish key={d.id} dish={d} onMove={onMove} onEdit={onEditDish} onToggleFeatured={onToggleFeatured} categories={allCategories} currentCatId={category.id} />
                   ))}
                 </div>
               </SortableContext>
@@ -290,7 +297,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
   );
 }
 
-export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish }: Props) {
+export default function CategoriesManager({ restaurantId, allDishes, onDishesChange, onEditDish, onToggleFeatured }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [newCatName, setNewCatName] = useState("");
@@ -424,6 +431,7 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
               onReorder={reorderDishes}
               onMove={moveDish}
               onEditDish={onEditDish}
+              onToggleFeatured={onToggleFeatured}
               onRename={renameCategory}
               onToggle={toggleCategory}
               onDelete={deleteCategory}
