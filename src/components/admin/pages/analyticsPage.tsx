@@ -1344,7 +1344,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                       👁 {visitNumToday} de {visitsToday} hoy
                     </span>
                   )}
-                  {!guestFilter && (visitDays >= 2 || s.qrUser?.id) && (
+                  {!guestFilter && ((s.guestSessionCount || 1) >= 2 || s.qrUser?.id) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || anonName }); }}
                       style={{ fontFamily: F, fontSize: "0.65rem", padding: "2px 8px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}

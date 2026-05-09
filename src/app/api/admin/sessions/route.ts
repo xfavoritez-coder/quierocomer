@@ -564,6 +564,7 @@ export async function GET(req: NextRequest) {
         genioData: genioDataByDbSession[s.id] || null,
         personalizationData: recDataBySession[s.id] || null,
         visitDays: visitDaysByGuestRest[`${s.guestId}|${s.restaurantId}`] || 1,
+        guestSessionCount: s.guest?.totalSessions || 1,
         visitsToday: visitsTodayBySession[s.id]?.totalToday || 1,
         visitNumToday: visitsTodayBySession[s.id]?.numToday || 1,
         // Visitas totales de este guest a ESTE restaurante (no global del guest profile)
