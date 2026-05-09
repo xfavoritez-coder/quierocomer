@@ -188,28 +188,10 @@ export async function GET(req: NextRequest) {
       }),
     ]);
 
-    // Aggregate detailMs from sessions JSON for "Más tiempo en detalle" ranking
-    const detailDwell: Record<string, { totalMs: number; opens: number }> = {};
-    for (const s of sessionsForDetailTime) {
-      const viewed = s.dishesViewed as any[];
-      if (!Array.isArray(viewed)) continue;
-      for (const d of viewed) {
-        if (!d.dishId || !d.detailMs || d.detailMs <= 0) continue;
-        if (!detailDwell[d.dishId]) detailDwell[d.dishId] = { totalMs: 0, opens: 0 };
-        detailDwell[d.dishId].totalMs += d.detailMs;
-        detailDwell[d.dishId].opens++;
-      }
-    }
-    const topDishesByDetailTime = Object.entries(detailDwell)
-      .map(([dishId, d]) => ({ dishId, avgMs: Math.round(d.totalMs / d.opens) }))
-      .sort((a, b) => b.avgMs - a.avgMs)
-      .slice(0, 5);
-
     // Resolve dish names
-    const dishIds = [...new Set([
-      ...topDishesViewed.filter((d) => d.dishId).map((d) => d.dishId!),
-      ...topDishesByDetailTime.map((d) => d.dishId),
-    ])];
+    const dishIds = [...new Set(
+      topDishesViewed.filter((d) => d.dishId).map((d) => d.dishId!),
+    )];
     const dishNames = dishIds.length
       ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true } })
       : [];
@@ -251,7 +233,7 @@ export async function GET(req: NextRequest) {
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
       topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
-      topDishesByDetailTime: topDishesByDetailTime.map((d) => ({ name: dishMap[d.dishId] || d.dishId, count: `${Math.round(d.avgMs / 1000)}s` })),
+      topDishesByDetailTime: [],
       dietDistribution: dietDistribution.map((d) => ({ type: d.dietType || "Sin definir", count: d._count.id })),
       abandonedThisWeek: abandoned,
       activeThisWeek: active,
