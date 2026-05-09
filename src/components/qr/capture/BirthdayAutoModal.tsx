@@ -152,18 +152,9 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
           onClose={() => { setModalOpen(false); sessionStorage.setItem("qr_birthday_dismissed", "1"); }}
           onSuccess={() => {
             sessionStorage.setItem("qr_birthday_dismissed", "1");
-            setShowSuccessToast(true);
-            // Notify any other birthday components (inline banner) to hide themselves
             window.dispatchEvent(new CustomEvent("qc:birthday-saved"));
-            setTimeout(() => setShowSuccessToast(false), 4500);
           }}
-          onNameSaved={(name) => {
-            // El step de captura de nombre se completo: reemplazamos el toast
-            // generico por uno personalizado con el primer nombre del usuario.
-            setSavedName(name.split(" ")[0] || name);
-            setShowSuccessToast(true);
-            setTimeout(() => { setShowSuccessToast(false); setSavedName(null); }, 4500);
-          }}
+          onNameSaved={() => {}}
         />
       )}
       {showSuccessToast && (
