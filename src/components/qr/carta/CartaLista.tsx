@@ -27,7 +27,7 @@ import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/cl
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
-import HeroSlim from "./HeroSlim";
+import HeroDish from "./HeroDish";
 import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import BirthdayBanner from "../capture/BirthdayBanner";
@@ -362,8 +362,8 @@ export default function CartaLista({
 
   return (
     <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
-      {/* Hero Slim */}
-      <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+      {/* Hero */}
+      <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
       <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
