@@ -71,6 +71,8 @@ export async function GET(req: NextRequest) {
       weekWaiterCalls,
       uniqueVisitorsToday,
       weekBirthdays,
+      genioToday,
+      todayDurationAgg,
       topSearches,
     ] = await Promise.all([
       prisma.statEvent.count({
@@ -178,6 +180,15 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.count({
         where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: weekAgo } },
       }),
+      // Genio used today
+      prisma.statEvent.count({
+        where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: todayStart } },
+      }),
+      // Today's avg session duration
+      prisma.session.aggregate({
+        where: { ...restaurantFilter, startedAt: { gte: todayStart }, durationMs: { gt: 0 } },
+        _avg: { durationMs: true },
+      }),
       // Top searches this week
       prisma.statEvent.groupBy({
         by: ["query"],
@@ -192,10 +203,11 @@ export async function GET(req: NextRequest) {
     const dishIds = [...new Set(
       topDishesViewed.filter((d) => d.dishId).map((d) => d.dishId!),
     )];
-    const dishNames = dishIds.length
-      ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true } })
+    const dishRecords = dishIds.length
+      ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true, photos: true } })
       : [];
-    const dishMap = Object.fromEntries(dishNames.map((d) => [d.id, d.name]));
+    const dishMap = Object.fromEntries(dishRecords.map((d) => [d.id, d.name]));
+    const dishPhotoMap = Object.fromEntries(dishRecords.map((d) => [d.id, d.photos?.[0] || null]));
 
     // Resolve restaurant names for superadmin
     const restIds = [...new Set([
@@ -232,7 +244,8 @@ export async function GET(req: NextRequest) {
       genioUsedThisWeek,
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
-      topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id })),
+      topDishesViewed: topDishesViewed.map((d) => ({ name: dishMap[d.dishId!] || d.dishId, count: d._count.id, photo: dishPhotoMap[d.dishId!] || null })),
+      starDish: topDishesViewed[0] ? { name: dishMap[topDishesViewed[0].dishId!] || "—", count: topDishesViewed[0]._count.id, photo: dishPhotoMap[topDishesViewed[0].dishId!] || null } : null,
       topDishesByDetailTime: [],
       dietDistribution: dietDistribution.map((d) => ({ type: d.dietType || "Sin definir", count: d._count.id })),
       abandonedThisWeek: abandoned,
@@ -248,6 +261,8 @@ export async function GET(req: NextRequest) {
       weekDetailViews,
       weekWaiterCalls,
       todayUniqueVisitors: uniqueVisitorsToday.length,
+      genioToday,
+      todayAvgDuration: Math.round((todayDurationAgg._avg?.durationMs || 0) / 1000),
       weekBirthdays,
       topSearches: (topSearches as any[]).map((s: any) => ({ name: s.query || "—", count: s._count.id })),
     });
