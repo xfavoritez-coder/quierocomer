@@ -197,17 +197,18 @@ export function formatRut(rut: string): string {
 }
 
 // ─── Precios anuales ─────────────────────────────────────────────────
-// 20% descuento sobre el precio mensual neto al pagar anual.
+// Pagas 10 meses, llevas 12 → 2 meses gratis (~16.67% descuento).
 
-export const ANNUAL_DISCOUNT = 0.20;
+export const ANNUAL_MONTHS_PAID = 10;
 
-/** Precio NETO mensualizado del plan anual. FREE = 0. */
-export function planAnnualNetMonthly(plan: PlanKey): number {
+/** Total NETO anual (10 meses al precio mensual). FREE = 0. */
+export function planAnnualNetTotal(plan: PlanKey): number {
   if (plan === "FREE") return 0;
-  return Math.round(FLOW_PLANS[plan].amountNet * (1 - ANNUAL_DISCOUNT));
+  return FLOW_PLANS[plan].amountNet * ANNUAL_MONTHS_PAID;
 }
 
-/** Total NETO anual (12 meses con descuento). FREE = 0. */
-export function planAnnualNetTotal(plan: PlanKey): number {
-  return planAnnualNetMonthly(plan) * 12;
+/** Precio NETO mensualizado del plan anual (total / 12). FREE = 0. */
+export function planAnnualNetMonthly(plan: PlanKey): number {
+  if (plan === "FREE") return 0;
+  return Math.round(planAnnualNetTotal(plan) / 12);
 }

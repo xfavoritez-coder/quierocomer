@@ -70,7 +70,7 @@ const BG_WARM = "#FAF9F7";
 
 const WHATSAPP_NUMBER = "56999946208";
 const annualWhatsappUrl = (planName: string) => {
-  const msg = encodeURIComponent(`Hola, quiero activar el plan ${planName} anual con 20% de descuento en QuieroComer`);
+  const msg = encodeURIComponent(`Hola, quiero activar el plan ${planName} anual con 2 meses gratis en QuieroComer`);
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`;
 };
 
@@ -348,12 +348,12 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
                     transition: "all 0.2s",
                   }}
                 >
-                  {mode === "mensual" ? "Mensual" : "Anual −20%"}
+                  {mode === "mensual" ? "Mensual" : "Anual · 2 meses gratis"}
                 </button>
               ))}
             </div>
             <p style={{ fontSize: 13, color: "#999", marginTop: 10 }}>
-              {billingMode === "anual" ? "Equivalente a 2,4 meses gratis al año" : "Cambia a anual y ahorra 20%"}
+              {billingMode === "anual" ? "Pagas 10 meses, llevas 12" : "Cambia a anual y llévate 2 meses gratis"}
             </p>
           </div>
           <div className="lnd-plans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 16, maxWidth: 1000, margin: "0 auto" }}>
