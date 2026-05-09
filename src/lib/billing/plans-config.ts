@@ -112,21 +112,24 @@ export function planNetAmount(plan: PlanKey): number {
 //
 // Reglas:
 // - Plan Gratis: sin comision.
-// - Cliente entra DIRECTO a Gold/Premium: 100% del primer mes + 50% del segundo.
+// - Cliente entra DIRECTO mensual a Gold/Premium: 100% del primer mes + 50% del segundo.
+// - Cliente entra DIRECTO anual a Gold/Premium: 3 meses del precio mensual.
 // - Cliente entra Gratis y luego hace UPGRADE a Gold/Premium: 50% del plan, una vez.
 
 export const VENDOR_COMMISSION = {
-  /** Fraccion del plan neto pagada al vendedor por cierre directo, mes 1. */
+  /** Fraccion del plan neto pagada al vendedor por cierre directo mensual, mes 1. */
   directFirstMonthRate: 1.0,
-  /** Fraccion del plan neto pagada al vendedor por cierre directo, mes 2. */
+  /** Fraccion del plan neto pagada al vendedor por cierre directo mensual, mes 2. */
   directSecondMonthRate: 0.5,
+  /** Meses del precio mensual pagados al vendedor por cierre directo anual. */
+  directAnnualMonths: 3,
   /** Fraccion del plan neto pagada al vendedor cuando un cliente Gratis hace upgrade. */
   upgradeFromFreeRate: 0.5,
   /** Comision en CLP cuando el cierre fue en plan Gratis. */
   freeAmount: 0,
 } as const;
 
-/** Comision por cerrar un cliente directo en plan pago. */
+/** Comision por cerrar un cliente directo en plan mensual. */
 export function vendorCommissionDirect(plan: Exclude<PlanKey, "FREE">): {
   firstMonth: number;
   secondMonth: number;
@@ -136,6 +139,11 @@ export function vendorCommissionDirect(plan: Exclude<PlanKey, "FREE">): {
   const firstMonth = Math.round(net * VENDOR_COMMISSION.directFirstMonthRate);
   const secondMonth = Math.round(net * VENDOR_COMMISSION.directSecondMonthRate);
   return { firstMonth, secondMonth, total: firstMonth + secondMonth };
+}
+
+/** Comision por cerrar un cliente directo en plan anual. */
+export function vendorCommissionAnnual(plan: Exclude<PlanKey, "FREE">): number {
+  return planNetAmount(plan) * VENDOR_COMMISSION.directAnnualMonths;
 }
 
 /** Comision por upgrade desde Gratis hacia un plan pago. Pago unico. */

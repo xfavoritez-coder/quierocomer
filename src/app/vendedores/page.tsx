@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   vendorCommissionDirect,
+  vendorCommissionAnnual,
   vendorCommissionUpgrade,
 } from "@/lib/billing/plans-config";
 
@@ -72,9 +73,9 @@ export default function VendedoresPage() {
             <p style={{ fontSize: 15, color: "#666", lineHeight: 1.5 }}>El cliente que entra directo a un plan pago te deja la comisión más alta</p>
           </div>
 
-          {/* CIERRE DIRECTO */}
+          {/* CIERRE DIRECTO MENSUAL */}
           <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, textAlign: "center" }}>
-            Cliente entra directo a Gold o Premium
+            Cierre directo mensual
           </p>
           <p style={{ fontSize: 14, color: "#666", textAlign: "center", marginBottom: 16, lineHeight: 1.5 }}>
             <strong style={{ color: "#111" }}>100% del primer mes</strong> + <strong style={{ color: "#111" }}>50% del segundo</strong>
@@ -112,6 +113,34 @@ export default function VendedoresPage() {
                 </div>
               );
             })()}
+          </div>
+
+          {/* CIERRE DIRECTO ANUAL */}
+          <p style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#111", textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 12, textAlign: "center" }}>
+            Cierre directo anual
+          </p>
+          <p style={{ fontSize: 14, color: "#666", textAlign: "center", marginBottom: 16, lineHeight: 1.5 }}>
+            <strong style={{ color: "#111" }}>3 meses</strong> del precio mensual · pago único
+          </p>
+
+          <div className="vnd-plans" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 32 }}>
+            <div style={{ background: "#fff", border: `2px solid ${BRAND}`, borderRadius: 14, padding: 24, position: "relative" }}>
+              <span style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "#16a34a", color: "#fff", fontFamily: F, fontSize: "10px", fontWeight: 700, padding: "3px 10px", borderRadius: 999, letterSpacing: "0.5px", textTransform: "uppercase", whiteSpace: "nowrap" }}>Mayor comisión</span>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#854F0B", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Gold anual</p>
+              <p style={{ fontFamily: F, fontSize: 32, fontWeight: 700, color: "#111", letterSpacing: "-1px", marginBottom: 4 }}>{fmt(vendorCommissionAnnual("GOLD"))}</p>
+              <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>por restaurante cerrado</p>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 10, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                <div>3 meses × <strong style={{ color: "#111" }}>$35.000</strong> = pago único</div>
+              </div>
+            </div>
+            <div style={{ background: "#fff", border: "1px solid #eeeae0", borderRadius: 14, padding: 24 }}>
+              <p style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 8 }}>Premium anual</p>
+              <p style={{ fontFamily: F, fontSize: 32, fontWeight: 700, color: "#111", letterSpacing: "-1px", marginBottom: 4 }}>{fmt(vendorCommissionAnnual("PREMIUM"))}</p>
+              <p style={{ fontSize: 13, color: "#888", marginBottom: 12 }}>por restaurante cerrado</p>
+              <div style={{ borderTop: "1px solid #eeeae0", paddingTop: 10, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+                <div>3 meses × <strong style={{ color: "#111" }}>$49.900</strong> = pago único</div>
+              </div>
+            </div>
           </div>
 
           {/* UPGRADE DESDE GRATIS */}
@@ -246,7 +275,7 @@ export default function VendedoresPage() {
             <FaqItem q="¿Y si el cliente cancela antes del segundo mes?" a="Te llevas íntegra la comisión del primer mes. La del segundo mes solo se paga si efectivamente paga su segundo mes — si cancela antes, esa parte no se paga." />
             <FaqItem q="¿Y si el cliente entra Gratis y nunca sube de plan?" a="No hay comisión por planes gratis. Tu objetivo es cerrar directo en Gold o Premium. Si después el cliente sube de plan por su cuenta, te pagamos 50% del plan en una sola cuota." />
             <FaqItem q="¿Tengo que cargar yo la carta del restaurante?" a="Sí. Tú haces el onboarding completo: subes los platos con sus fotos y precios, configuras los QR de las mesas y dejas el local listo para recibir clientes. Te entrenamos para hacerlo bien." />
-            <FaqItem q="¿Hay comisiones recurrentes mes a mes?" a="No. Cobras máximo dos veces por cada cierre directo (mes 1 y mes 2) y una vez por cada upgrade desde Gratis. Después del mes 2 no hay más comisiones por ese cliente." />
+            <FaqItem q="¿Hay comisiones recurrentes mes a mes?" a="No. En plan mensual cobras máximo dos veces (mes 1 y mes 2). En plan anual cobras un pago único de 3 meses. Upgrade desde Gratis es un pago único. Después no hay más comisiones por ese cliente." />
             <FaqItem q="¿Necesito experiencia en ventas?" a="No. Si tienes una red de contactos en gastronomía o conoces dueños de restaurantes, ya tienes lo que se necesita." />
             <FaqItem q="¿Cómo me pagan?" a="Transferencia bancaria. Necesitas tener boleta de honorarios para emitir el documento por el monto recibido." />
             <FaqItem q="¿Hay un mínimo de ventas?" a="No. Vendes uno, cobras uno. Vendes diez, cobras diez. No te exigimos nada." />
