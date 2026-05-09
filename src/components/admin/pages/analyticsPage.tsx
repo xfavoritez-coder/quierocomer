@@ -1214,7 +1214,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
       params.delete("guestId");
       params.delete("guestName");
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
   // Si el admin cambia de restaurante mientras filtraba por guest, el filtro queda obsoleto
