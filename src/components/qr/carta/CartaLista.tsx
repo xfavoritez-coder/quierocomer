@@ -506,9 +506,9 @@ export default function CartaLista({
       )}
 
       {/* Genio diet carousels */}
-      {typeof window !== "undefined" && (() => {
-        const diet = localStorage.getItem("qr_diet");
-        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+      {hasCompletedGenio && (() => {
+        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
+        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
         const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
         const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
@@ -607,9 +607,9 @@ export default function CartaLista({
       </footer>
 
       {/* Floating diet pills */}
-      {typeof window !== "undefined" && (() => {
-        const diet = localStorage.getItem("qr_diet");
-        const restrictions = (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })();
+      {hasCompletedGenio && (() => {
+        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
+        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
         const isOmnivoreRestaurant = (restaurant as any).dietType !== "VEGAN" && (restaurant as any).dietType !== "VEGETARIAN";
         return (
           <>

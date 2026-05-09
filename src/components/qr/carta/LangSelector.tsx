@@ -23,12 +23,6 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
 
   useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    if (mounted) {
-      console.log("[LangSelector] enabledLangs:", enabledLangs, "availableLangs:", availableLangs, "lang:", lang);
-    }
-  }, [mounted]);
-
   if (!mounted || availableLangs.length < 2) return null;
 
   return (
