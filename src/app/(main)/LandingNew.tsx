@@ -408,9 +408,10 @@ section{position:relative}
 .product-proof::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(232,163,61,.06) 0%,transparent 70%);pointer-events:none}
 .product-proof::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border:1px solid rgba(232,163,61,.08);border-radius:50%;pointer-events:none;animation:pulse-ring 4s ease-in-out infinite}
 @keyframes pulse-ring{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
-.product-proof .container::before{content:'';position:absolute;top:-40px;left:20%;width:300px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,163,61,.3),transparent);animation:shimmer 6s ease-in-out infinite}
-.product-proof .container::after{content:'';position:absolute;bottom:-40px;right:20%;width:200px;height:1px;background:linear-gradient(90deg,transparent,rgba(232,163,61,.2),transparent);animation:shimmer 6s ease-in-out infinite 3s}
-@keyframes shimmer{0%,100%{opacity:0;transform:translateX(-50px)}50%{opacity:1;transform:translateX(50px)}}
+.product-proof .container::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(232,163,61,.1) 0%,rgba(232,163,61,.03) 40%,transparent 70%);pointer-events:none;animation:glow-pulse 5s ease-in-out infinite}
+.product-proof .container::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:2px;background:linear-gradient(90deg,transparent,rgba(232,163,61,.25),rgba(232,163,61,.4),rgba(232,163,61,.25),transparent);animation:shimmer 4s ease-in-out infinite;pointer-events:none}
+@keyframes shimmer{0%,100%{opacity:0;transform:translate(-50%,-50%) scaleX(.3)}50%{opacity:1;transform:translate(-50%,-50%) scaleX(1)}}
+@keyframes glow-pulse{0%,100%{opacity:.4;transform:translateX(-50%) scale(.9)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
 .product-copy{text-align:center}
 .product-copy h2{font-size:clamp(36px,5vw,62px);line-height:1.1;margin-bottom:24px}
 .product-copy p{font-size:17px;color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
