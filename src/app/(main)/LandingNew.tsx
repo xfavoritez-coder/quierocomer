@@ -369,15 +369,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/hero-restaurante.jpg');background-size:cover;background-position:center;transform:scale(1.03)}
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}.hero-grid>div:first-child{text-align:center}
-.eyebrow{font-size:14px;letter-spacing:.28em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
+.eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
 .hero h1{font-size:clamp(46px,6vw,86px);line-height:1.02;max-width:820px;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .microcopy{font-size:13px;color:var(--cream-soft);margin-top:14px;opacity:.8}
-.phone-demo{width:220px;margin:0 auto;position:relative}
-.phone-frame{background:#0a0908;border-radius:44px;padding:10px;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
+.phone-demo{width:200px;margin:0 auto;position:relative}
+.phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
-.phone-frame img{width:100%;height:auto;display:block;border-radius:34px}
+.phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
 .logos-band{background:var(--black-soft);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1);padding:44px 0;text-align:center;overflow:hidden}
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}
