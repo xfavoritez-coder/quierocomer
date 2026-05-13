@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Footer from "@/components/Footer";
 
 interface Logo {
   slug: string;
@@ -180,17 +181,17 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(41px,8vw,73px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(34px,7vw,66px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
               Tu carta puede estar<br /><span className="accent" style={{ fontStyle: "italic" }}>frenando</span> tus ventas
             </h2>
           </div>
           <div className="pain-grid">
             <div className="pain-card pain-reverse">
               <div className="pain-text">
-                <h3>&ldquo;Mi ticket de venta no aumenta&rdquo;</h3>
+                <h3>&ldquo;Mi ticket de mesa no aumenta&rdquo;</h3>
                 <p>Sin una carta que sugiera, siempre venderás menos.</p>
               </div>
-              <img className="pain-img" src="/landing/1.png" alt="Cuenta del restaurante" />
+              <img className="pain-img" src="/landing/yanose.png" alt="Cuenta del restaurante" />
             </div>
             <div className="pain-card">
               <img className="pain-img" src="/landing/3.png" alt="Garzón corriendo" />
@@ -199,70 +200,119 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 <p>No siempre es el garzón, es la carta que no guía ni sugiere.</p>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* PRODUCT PROOF */}
-      <section className="product-proof">
-        <div className="container" style={{ textAlign: "center" }}>
-          <p className="proof-eyebrow">Por esto nace QuieroComer</p>
-          <h2 className="proof-title">Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
-          <div className="proof-img-wrap">
-            <img src="/landing/555.png" alt="QuieroComer en acción" className="proof-img" />
-          </div>
-          <div className="proof-features">
-            <div className="proof-feat">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/></svg>
-              <span>Recomienda platos</span>
-            </div>
-            <div className="proof-feat">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Vende extras</span>
-            </div>
-            <div className="proof-feat">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
-              <span>Traduce tu carta</span>
-            </div>
-            <div className="proof-feat">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-              <span>Entrega datos avanzados</span>
+            <div className="pain-card pain-reverse">
+              <div className="pain-text">
+                <h3>&ldquo;Mis clientes no vuelven&rdquo;</h3>
+                <p>Sin datos ni contacto, cada cliente que se va es una oportunidad perdida.</p>
+              </div>
+              <img className="pain-img" src="/landing/333.png" alt="Cliente yéndose" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* STEPS */}
-      <section className="steps">
+      {/* ASÍ FUNCIONA */}
+      <section className="how-it-works">
         <div className="container">
-          <div className="section-head">
-            <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center" }}>
-              <div style={{ flex: 1, maxWidth: 100, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
-              <h2>Pruébalo <span className="accent">tú mismo</span></h2>
-              <div style={{ flex: 1, maxWidth: 100, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
+          <p className="hiw-eyebrow">Así funciona QuieroComer</p>
+          <h2 className="hiw-title">En 4 pasos, tu carta empieza a <span className="accent" style={{ fontStyle: "italic", fontWeight: 700 }}>vender por ti</span></h2>
+
+          <div className="hiw-steps">
+            <div className="hiw-step">
+              <div className="hiw-step-content">
+                <div className="hiw-num-col"><div className="hiw-num">1</div><div className="hiw-line" /></div>
+                <div>
+                  <h3>Subes tu carta gratis</h3>
+                  <ul>
+                    <li>PDF, link o fotos.</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="hiw-img-wrap">
+                <img src="/landing/11.png" alt="Subir carta" />
+              </div>
+            </div>
+
+            <div className="hiw-step">
+              <div className="hiw-step-content">
+                <div className="hiw-num-col"><div className="hiw-num">2</div><div className="hiw-line" /></div>
+                <div>
+                  <h3>La transformamos</h3>
+                  <ul>
+                    <li>Diseño visual</li>
+                    <li>Sugerencias inteligentes</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="hiw-img-wrap">
+                <img src="/landing/22.png" alt="Transformación" />
+              </div>
+            </div>
+
+            <div className="hiw-step">
+              <div className="hiw-step-content">
+                <div className="hiw-num-col"><div className="hiw-num">3</div><div className="hiw-line" /></div>
+                <div>
+                  <h3>Tus clientes escanean</h3>
+                  <ul>
+                    <li>Experiencia personalizada</li>
+                    <li>Se antojan más</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="hiw-img-wrap">
+                <img src="/landing/33.png" alt="Clientes escanean" />
+              </div>
+            </div>
+
+            <div className="hiw-step">
+              <div className="hiw-step-content">
+                <div className="hiw-num-col"><div className="hiw-num">4</div><div className="hiw-line" /></div>
+                <div>
+                  <h3>Tu ticket aumenta</h3>
+                  <ul>
+                    <li>Más consumo por mesa</li>
+                    <li>Más entradas, postres y café</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="hiw-img-wrap">
+                <img src="/landing/ultima.png" alt="Ticket aumenta" />
+              </div>
             </div>
           </div>
-          <div className="steps-grid">
-            <div className="step">
-              <img className="step-img" src="/landing/111.png" alt="Sube tu carta" />
-              <div className="step-text"><h3><span className="step-num">01</span> Sube tu carta</h3><p>Una foto de tu carta o el link de tu QR actual.</p></div>
+        </div>
+      </section>
+
+
+      <div className="faq-divider" style={{ margin: "10px auto 0" }} />
+
+      {/* MIENTRAS TÚ ATIENDES */}
+      <section className="mientras-section">
+        <div className="mientras-bg">
+          <img src="/landing/si.png" alt="Restaurante" />
+          <div className="mientras-overlay" />
+        </div>
+        <div className="mientras-content">
+          <h2 className="mientras-title">Haz que tus platos<br /><span className="accent" style={{ fontStyle: "italic" }}>se vendan solos.</span></h2>
+          <a href="/subircarta" className="mientras-chip" style={{ textDecoration: "none" }}>
+            <div className="mientras-chip-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
-            <div className="step reverse">
-              <div className="step-text"><h3><span className="step-num">02</span> Nuestra IA analiza</h3><p>Automáticamente identificamos todos tus platos, precios y categorías.</p></div>
-              <img className="step-img" src="/landing/fondosec2.png" alt="La analizamos" />
+            <div>
+              <div className="mientras-chip-stat">+17% ticket promedio</div>
+              <div className="mientras-chip-sub">últimos 30 días</div>
             </div>
-            <div className="step">
-              <img className="step-img" src="/landing/persona.png" alt="Te la entregamos" />
-              <div className="step-text"><h3><span className="step-num">03</span> Creamos tu nueva carta visual</h3><p>Diseñada para despertar antojos y aumentar ventas.</p></div>
-            </div>
-          </div>
+          </a>
         </div>
       </section>
 
       {/* FAQ */}
       <section className="faq">
         <div className="container">
-          <div className="section-head"><h2><strong>Preguntas más frecuentes</strong></h2></div>
+          <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
+<p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginTop: 20, marginBottom: 8, textAlign: "center" }}>Lo que más nos preguntan</p>
+          </div>
           <div className="faq-list">
             {[
               { q: "¿Qué es QuieroComer?", a: "Transforma tu carta, ya sea física o digital, en una experiencia visual que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes." },
@@ -279,6 +329,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           </div>
         </div>
       </section>
+
+      <div className="faq-divider" />
 
       {/* FINAL CTA */}
       <section className="final-cta" id="cta">
@@ -340,20 +392,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       )}
 
       {/* FOOTER */}
-      <footer>
-        <div className="container footer-content">
-          <div>
-            <div className="footer-copy">© 2026 QuieroComer® · Todos los derechos reservados · Santiago, Chile</div>
-          </div>
-          <div className="footer-links">
-            <a href="#" onClick={(e) => { e.preventDefault(); openRandomCarta(); }}>Carta ejemplo</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); setPlanesOpen(true); }}>Planes</a>
-            <a href="#">Términos</a>
-            <a href="#">Privacidad</a>
-            <a href="mailto:hola@quierocomer.cl">hola@quierocomer.cl</a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </>
   );
 }
@@ -403,7 +442,7 @@ h1,h2,h3{font-family:var(--font-display);font-weight:400;color:var(--cream);lett
 .accent{color:var(--amber);font-style:italic}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)}
 .logo{font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em}
-.lamp-icon{height:26px;width:auto;margin-right:-2px;object-fit:contain}
+.lamp-icon{height:20px;width:auto;margin-right:-2px;object-fit:contain}
 .nav-link{color:var(--cream-soft);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-link:hover{color:var(--amber)}
 .nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:.25s}
@@ -423,9 +462,9 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
-.curve-divider{position:relative;height:80px;margin-top:-80px;z-index:3}
-.curve-svg{position:absolute;bottom:0;left:0;width:100%;height:80px}
-.curve-icon{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
+.curve-divider{position:relative;height:100px;margin-top:-100px;z-index:3}
+.curve-svg{position:absolute;bottom:0;left:0;width:100%;height:100px}
+.curve-icon{position:absolute;left:50%;top:25%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
 .logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:10px 0 20px;text-align:center;overflow:hidden;max-width:100vw}
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,140,130,.7);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}.logos-track:hover{animation-play-state:paused}
@@ -440,7 +479,7 @@ section{position:relative}
 .problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.png');background-size:cover;background-position:center}
 .problem h2{font-size:clamp(41px,6vw,56px);line-height:1.12;max-width:900px;margin:0 auto 22px}
 .problem p{max-width:650px;margin:0 auto;color:var(--cream-soft);font-size:18px}
-.pains{padding:0 0 120px;background:var(--black-soft)}
+.pains{padding:40px 0 120px;background:var(--black-soft)}
 .section-head{text-align:center;margin-bottom:70px}
 .section-head h2{font-size:clamp(38px,4.5vw,50px);line-height:1.12;margin-bottom:16px}
 .section-head p{max-width:620px;margin:0 auto;color:var(--cream-soft);font-size:17px}
@@ -456,50 +495,67 @@ section{position:relative}
 .quote-attr{font-family:var(--font-body);font-style:normal;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);display:block}
 @media(max-width:640px){.transition-narrative{padding:3.5rem 1rem 2.5rem}.restaurant-quote{margin-top:2.5rem}.quote-text{font-size:clamp(26px,7vw,36px)}}
 .pain-grid{display:grid;grid-template-columns:1fr;gap:14px}
-.pain-card{display:grid;grid-template-columns:460px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s;min-height:180px}
+.pain-card{display:grid;grid-template-columns:380px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s;min-height:180px}
 .pain-card:hover{border-color:rgba(232,163,61,.45);transform:translateY(-4px)}
-.pain-img{width:100%;height:180px;object-fit:cover;display:block}
-.pain-reverse{grid-template-columns:1fr 460px}
+.pain-img{width:100%;height:180px;object-fit:cover;object-position:center top;display:block}
+.pain-reverse{grid-template-columns:1fr 380px}
 .pain-reverse .pain-text{padding:32px 0 32px 32px}
 .pain-text{padding:32px 32px 32px 0}
 .pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
 .pain-card h3{font-size:29px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700;font-family:var(--font-display);font-style:italic}
 .pain-card p{color:var(--cream-soft);font-size:17px}
 .pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
-.product-proof{padding:120px 0;background:var(--black);position:relative;overflow:hidden}
-.proof-eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:18px}
-.proof-title{font-family:var(--font-display);font-size:clamp(33px,5.5vw,59px);line-height:1.08;margin-bottom:40px;max-width:800px;margin-left:auto;margin-right:auto;font-weight:500}
-.proof-features{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:40px}
-.proof-feat{display:flex;align-items:center;gap:10px;color:var(--cream-soft);font-size:24px;font-family:var(--font-display);font-style:italic}
-.proof-feat svg{color:var(--amber);flex-shrink:0}
-.proof-img-wrap{max-width:720px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid rgba(232,163,61,.12);box-shadow:0 30px 80px rgba(0,0,0,.4)}
-.proof-img{width:100%;display:block}
+.how-it-works{padding:40px 0 80px;background:var(--black);position:relative}
+.hiw-eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:18px;text-align:center}
+.hiw-title{font-family:var(--font-display);font-size:clamp(33px,5.5vw,59px);line-height:1.08;margin-bottom:36px;text-align:center;font-weight:500;max-width:800px;margin-left:auto;margin-right:auto}
+.hiw-steps{display:flex;flex-direction:column;gap:0;max-width:600px;margin:0 auto}
+.hiw-step{display:grid;grid-template-columns:1fr 180px;gap:20px;align-items:center;padding-bottom:30px}
+.hiw-step-content{display:flex;gap:14px;align-items:flex-start;position:relative}
+.hiw-num-col{display:flex;flex-direction:column;align-items:center;flex-shrink:0;align-self:stretch}
+.hiw-num{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--amber);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:18px;font-weight:600;color:var(--amber);flex-shrink:0;background:rgba(232,163,61,.06);position:relative;z-index:2}
+.hiw-line{width:1.5px;flex:1;background:rgba(232,163,61,.2);margin-top:6px}
+.hiw-step:last-child .hiw-line{display:none}.hiw-step:last-child{padding-bottom:0}
+.hiw-step h3{font-size:26px;font-weight:700;color:var(--cream);margin-bottom:6px}
+.hiw-step ul{list-style:none;padding:0;margin:0}
+.hiw-step li{color:rgba(232,221,200,.55);font-size:16px;line-height:1.5;padding-left:14px;position:relative}
+.hiw-step li::before{content:'·';position:absolute;left:0;color:var(--amber);font-weight:700}
+.hiw-img-wrap{border-radius:12px;overflow:hidden;border:1px solid rgba(232,163,61,.1);box-shadow:0 12px 40px rgba(0,0,0,.3);aspect-ratio:1/1}
+.hiw-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
 .capabilities-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;margin-top:24px}
 .capability{display:flex;align-items:center;gap:12px;text-align:left}
 .capability-circle{width:44px;height:44px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(232,163,61,.12),rgba(232,163,61,.04));border:.5px solid rgba(232,163,61,.35);display:flex;align-items:center;justify-content:center;color:var(--amber)}
 .capability-verb{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--amber);font-weight:500;line-height:1.2;margin:0}
 .capability-detail{font-family:var(--font-body);font-size:11px;line-height:1.3;color:rgba(232,221,200,.6);margin:2px 0 0}
 .product-copy p{font-size:clamp(19px,2.5vw,17px);color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
-.steps{padding:120px 0;background:var(--black)}
-.steps-grid{display:grid;grid-template-columns:1fr;gap:32px}
-.step{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:center;background:var(--black-soft);border:1px solid var(--gray-deep);overflow:hidden}
-.step.reverse{grid-template-columns:1fr 280px}
-.step-img{width:100%;height:320px;object-fit:cover;display:block}
-.step-text{padding:36px 32px;text-align:center}
-.step-num{font-family:var(--font-display);font-size:40px;font-style:italic;color:var(--amber);opacity:.75;display:inline}
+.mientras-section{position:relative;min-height:360px;display:flex;align-items:center;overflow:hidden;margin-top:0}
+.mientras-bg{position:absolute;inset:0}.mientras-bg img{width:100%;height:100%;object-fit:cover;object-position:70% 30%;transform:scale(1.15)}
+.mientras-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,8,6,.95) 0%,rgba(9,8,6,.7) 45%,rgba(9,8,6,.1) 100%)}
+.mientras-content{position:relative;z-index:2;padding:80px clamp(22px,4vw,64px);text-align:center;max-width:1200px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center}
+.mientras-title{font-family:var(--font-display);font-size:clamp(34px,6vw,56px);max-width:600px;line-height:1.1;font-weight:500;color:var(--cream);margin-bottom:20px}
+.mientras-chip{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;background:rgba(20,18,14,.75);border:1px solid rgba(232,163,61,.2);border-radius:10px;backdrop-filter:blur(8px)}
+.mientras-chip-icon{width:28px;height:28px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;color:#160e06;flex-shrink:0}
+.mientras-chip-icon svg{width:14px;height:14px}
+.mientras-chip-stat{font-size:14px;font-weight:700;color:var(--cream)}
+.mientras-chip-sub{font-size:11px;color:rgba(232,221,200,.5)}
+.banner-section{padding:100px 0;background:var(--black)}
+.banner-title{font-family:var(--font-display);font-size:clamp(28px,4.5vw,46px);line-height:1.12;font-weight:500;margin-bottom:40px;color:var(--cream);max-width:800px;margin-left:auto;margin-right:auto}
+.banner-img-wrap{max-width:900px;margin:0 auto;border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.banner-img-wrap img{width:100%;display:block}
 .step h3{font-size:32px;display:inline;font-weight:700;margin-bottom:14px}
 .step p{color:var(--cream-soft);font-size:22px;margin-top:18px}
-.faq{padding:100px 0;background:var(--black)}
+.faq{padding:60px 0 60px;background:var(--black)}
 .faq .section-head{text-align:center}
-.faq-list{max-width:760px;margin:0 auto}
-.faq-item{border-bottom:1px solid var(--gray-deep)}
-.faq-q{font-family:var(--font-display);font-size:24px;color:var(--cream);padding:22px 0;cursor:pointer;display:flex;justify-content:center;align-items:center;gap:16px;text-align:center}
-.faq-q::after{content:'+';font-size:28px;color:var(--amber);transition:.3s;flex-shrink:0}
-.faq-item.open .faq-q::after{content:'−';transform:rotate(180deg)}
-.faq-a{color:var(--cream-soft);font-size:16px;line-height:1.7;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0;text-align:center}
-.faq-item.open .faq-a{max-height:200px;padding:0 0 22px}
-.final-cta{padding:150px 0;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
-.final-cta h2{font-size:clamp(42px,6vw,68px);line-height:1.06;margin-bottom:34px}
+.faq-list{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.faq-item{border:1px solid rgba(232,163,61,.15);border-radius:14px;background:rgba(255,255,255,.025);transition:border-color .2s,background .2s}
+.faq-item:hover,.faq-item.open{border-color:rgba(232,163,61,.3);background:rgba(232,163,61,.04)}
+.faq-q{font-family:var(--font-display);font-size:20px;color:var(--cream);padding:18px 22px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;text-align:left}
+.faq-q::after{content:'+';font-size:24px;color:var(--amber);transition:.3s;flex-shrink:0}
+.faq-item.open .faq-q::after{content:'−'}
+.faq-a{color:var(--cream-soft);font-size:15px;line-height:1.6;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0 22px;text-align:left}
+.faq-item.open .faq-a{max-height:200px;padding:0 22px 18px}
+.faq-divider{max-width:250px;height:1px;margin:0 auto;background:linear-gradient(90deg,transparent,rgba(232,163,61,.35),transparent)}
+.final-cta{padding:50px 0 80px;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
+.final-cta h2{font-size:clamp(34px,5vw,52px);line-height:1.06;margin-bottom:34px}
 .final-cta p{font-family:var(--font-display);font-style:italic;font-size:26px;color:var(--cream-soft);margin-bottom:34px}
 .fine{font-size:17px;color:var(--cream-soft);margin-top:16px;letter-spacing:.03em}
 .btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
@@ -530,9 +586,8 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
   .hero{padding:70px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
-  .problem,.product-proof,.steps{padding:82px 0}.pains{padding:54px 0 82px}.section-head{margin-bottom:42px}.proof-features{gap:14px}.proof-feat{font-size:20px}.proof-img-wrap{max-width:100%;border-radius:12px}
-  .pain-card{grid-template-columns:45% 1fr;gap:10px}.pain-reverse{grid-template-columns:1fr 45%}.pain-img{height:100%;min-height:200px;max-height:230px}.pain-text{padding:16px!important;display:flex;flex-direction:column;justify-content:center;text-align:left}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
-  .step{grid-template-columns:35% 1fr;gap:0}.step.reverse{grid-template-columns:1fr 35%}.step-img{height:220px}.step-text{padding:16px}.step-num{font-size:32px}.step h3{font-size:26px}.step p{font-size:16px}
+  .problem,.how-it-works{padding:82px 0}.mientras-section{min-height:240px}.mientras-content{padding:40px 28px;text-align:left;align-items:flex-start}.mientras-bg img{object-position:60% 30%;transform:scale(1.4)}.try-overlay{background:linear-gradient(180deg,rgba(9,8,6,.88),rgba(9,8,6,.95))}.pains{padding:54px 0 50px}.section-head{margin-bottom:42px}.hiw-title{margin-bottom:40px}.hiw-step{grid-template-columns:1fr 120px;gap:10px;padding-bottom:38px}.hiw-img-wrap{aspect-ratio:1/1}.hiw-img-wrap img{height:100%;object-fit:cover;object-position:center 20%}
+  .pain-card{grid-template-columns:38% 1fr;gap:10px}.pain-reverse{grid-template-columns:1fr 38%}.pain-img{height:100%;min-height:200px;max-height:230px}.pain-text{padding:16px!important;display:flex;flex-direction:column;justify-content:center;text-align:left}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .planes-grid{grid-template-columns:1fr}
   .footer-content{flex-direction:column;text-align:center}.footer-links{justify-content:center}
   .btn-primary{padding:18px 28px;font-size:17px}.final-cta{padding:100px 0}

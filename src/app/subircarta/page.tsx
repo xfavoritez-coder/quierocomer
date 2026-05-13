@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
   title: "Subir mi carta · QuieroComer",
@@ -10,6 +11,7 @@ export default function SubirCartaPage() {
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
       <div dangerouslySetInnerHTML={{ __html: BODY }} />
+      <Footer />
       <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />
     </>
   );
@@ -76,7 +78,7 @@ const BODY = `
 <main class="page">
   <nav style="position:fixed;top:0;left:0;right:0;z-index:50;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)">
     <a href="/landing" style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none">
-      <img src="/landing/logo.png" alt="" style="height:22px;width:auto;margin-right:-8px" />
+      <img src="/landing/logo.png" alt="" style="height:20px;width:auto;margin-right:-8px" />
       QuieroComer
     </a>
     <a href="mailto:hola@quierocomer.cl" style="color:var(--cream-2);font-size:13px;text-decoration:none;letter-spacing:.04em">Ayuda</a>
@@ -156,17 +158,6 @@ const BODY = `
   </section>
 </main>
 
-<footer class="sc-footer">
-  <div style="max-width:1220px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:center">
-    <div style="font-size:13px;color:rgba(120,110,100,.6);margin-bottom:10px">© 2026 QuieroComer® · Santiago, Chile</div>
-    <div style="display:flex;gap:24px;justify-content:center">
-      <a href="/landing" style="color:var(--muted);text-decoration:none;font-size:13px">Inicio</a>
-      <a href="#" style="color:var(--muted);text-decoration:none;font-size:13px">Términos</a>
-      <a href="#" style="color:var(--muted);text-decoration:none;font-size:13px">Privacidad</a>
-      <a href="mailto:hola@quierocomer.cl" style="color:var(--muted);text-decoration:none;font-size:13px">hola@quierocomer.cl</a>
-    </div>
-  </div>
-</footer>
 `;
 
 const SCRIPT = `
