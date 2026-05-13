@@ -26,11 +26,9 @@ const STYLES = `
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body { min-height: 100vh; background: var(--black); color: var(--cream); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
-.sc-bg { position: fixed; inset: 0; z-index: -3; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat; filter: saturate(.78) brightness(.68); transform: scale(1.02); }
-.sc-overlay { position: fixed; inset: 0; z-index: -2; pointer-events: none; background: radial-gradient(circle at 82% 16%, rgba(232,163,61,.20), transparent 28%), radial-gradient(circle at 50% 54%, rgba(232,163,61,.12), transparent 36%), linear-gradient(90deg, rgba(0,0,0,.42), transparent 42%, rgba(0,0,0,.44)); }
 .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
 a { color: inherit; text-decoration: none; }
-.page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; }
+.page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
 .steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 24px auto 34px; max-width: 480px; }
 .step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .step-line { width: 28px; height: 1px; background: rgba(232,163,61,.15); margin: 0 6px; }
@@ -67,18 +65,18 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .below-cta { margin: 10px auto 0; max-width: 520px; }
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; margin-top: 20px; }
 .cta:hover { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-.sc-footer { padding: 44px 0; background: var(--black); border-top: 1px solid rgba(58,52,45,1); }
+.sc-footer { padding: 44px 0; background: var(--black); border-top: 1px solid rgba(58,52,45,1); position: relative; z-index: 2; }
 @media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 70px; } .methods { gap: 14px; } }
 @media (max-width: 390px) { h1 { font-size: 44px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 `;
 
 const BODY = `
-<div style="position:fixed;inset:0;z-index:-3;background:linear-gradient(180deg,rgba(9,8,6,.72),rgba(9,8,6,.96)),url('/landing/fondo.png') center/cover no-repeat;filter:saturate(.78) brightness(.68);transform:scale(1.02)"></div>
-<div style="position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(circle at 82% 16%,rgba(232,163,61,.20),transparent 28%),radial-gradient(circle at 50% 54%,rgba(232,163,61,.12),transparent 36%),linear-gradient(90deg,rgba(0,0,0,.42),transparent 42%,rgba(0,0,0,.44))"></div>
+<div style="position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,rgba(9,8,6,.72),rgba(9,8,6,.96)),url('/landing/fondo.png') center/cover no-repeat;filter:saturate(.78) brightness(.68);transform:scale(1.02)"></div>
+<div style="position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 82% 16%,rgba(232,163,61,.20),transparent 28%),radial-gradient(circle at 50% 54%,rgba(232,163,61,.12),transparent 36%),linear-gradient(90deg,rgba(0,0,0,.42),transparent 42%,rgba(0,0,0,.44))"></div>
 <div class="grain"></div>
 
 <main class="page">
-  <nav style="position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)">
+  <nav style="position:fixed;top:0;left:0;right:0;z-index:50;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)">
     <a href="/landing" style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none">
       <img src="/landing/logo.png" alt="" style="height:22px;width:auto;margin-right:-8px" />
       QuieroComer
