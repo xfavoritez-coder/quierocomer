@@ -76,6 +76,11 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       .catch(() => {});
   }, []);
 
+  // Open planes modal if #planes hash
+  useEffect(() => {
+    if (window.location.hash === "#planes") setPlanesOpen(true);
+  }, []);
+
   const trackCtaClick = useCallback(() => {
     fetch("/api/qr/stat-events", {
       method: "POST",
@@ -348,7 +353,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {planesOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(6px)" }} onClick={(e) => { if (e.target === e.currentTarget) setPlanesOpen(false); }}>
           <div style={{ background: "var(--black-soft)", border: "1px solid var(--gray-deep)", maxWidth: 1000, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 40, position: "relative" }}>
-            <button onClick={() => setPlanesOpen(false)} style={{ position: "sticky", top: 0, float: "right", background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", color: "var(--amber)", fontSize: 24, width: 40, height: 40, cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>×</button>
+            <button onClick={() => setPlanesOpen(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", color: "var(--amber)", fontSize: 18, width: 32, height: 32, cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>×</button>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div className="eyebrow">Planes</div>
               <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(30px,4vw,48px)", color: "var(--cream)" }}>Empieza gratis. <span className="accent">Crece cuando quieras.</span></h2>

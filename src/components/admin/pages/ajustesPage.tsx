@@ -43,7 +43,7 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
       <div style={{
         width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
         left: active ? 23 : 3, transition: "left 0.2s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.2)", pointerEvents: "none",
       }} />
     </button>
   );
