@@ -177,6 +177,7 @@ const BODY = `
 `;
 
 const SCRIPT = `
+document.querySelector('.cta').addEventListener('click', function() { alert('Estamos creando el paso 2. Pronto estará disponible.'); });
 document.querySelectorAll('.method').forEach(function(button) {
   button.addEventListener('click', function() {
     document.querySelectorAll('.method').forEach(function(b) { b.classList.remove('active'); });
