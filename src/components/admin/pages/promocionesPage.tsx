@@ -23,6 +23,7 @@ interface Promo {
   daysOfWeek?: number[];
   position?: number;
   featured?: boolean;
+  modifierTemplates?: { id: string; name: string }[];
 }
 
 export default function AdminPromociones() {
@@ -60,6 +61,9 @@ export default function AdminPromociones() {
   const [localDishes, setLocalDishes] = useState<{ id: string; name: string; price: number; photos: string[] }[]>([]);
   const [savingNew, setSavingNew] = useState(false);
   const [dishSearch, setDishSearch] = useState("");
+  const [availableTemplates, setAvailableTemplates] = useState<{ id: string; name: string }[]>([]);
+  const [cModifierTemplateIds, setCModifierTemplateIds] = useState<string[]>([]);
+  const [editModifierTemplateIds, setEditModifierTemplateIds] = useState<string[]>([]);
   const editRef = React.useRef<HTMLDivElement>(null);
 
   // Auto-set selectedLocal from session (for owners)
@@ -69,9 +73,13 @@ export default function AdminPromociones() {
 
   // Load dishes when local changes
   useEffect(() => {
-    if (!selectedLocal) { setLocalDishes([]); return; }
+    if (!selectedLocal) { setLocalDishes([]); setAvailableTemplates([]); return; }
     fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setLocalDishes(d); })
+      .catch(() => {});
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`)
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
       .catch(() => {});
   }, [selectedLocal]);
 
@@ -125,6 +133,7 @@ export default function AdminPromociones() {
       body.promoPrice = cPromoPrice ? Number(cPromoPrice) : null;
       body.discountPct = cDiscountPct ? Number(cDiscountPct) : null;
     }
+    if (cModifierTemplateIds.length > 0) body.modifierTemplateIds = cModifierTemplateIds;
     const res = await fetch("/api/admin/promotions", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
@@ -137,7 +146,7 @@ export default function AdminPromociones() {
 
   const resetCreate = () => {
     setCreating(false); setCreateType(null);
-    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch("");
+    setCName(""); setCDesc(""); setCImageUrl(""); setCThumbUrl(""); setCPromoPrice(""); setCOriginalPrice(""); setCDiscountPct(""); setCSelectedDishes([]); setDishSearch(""); setCModifierTemplateIds([]);
   };
 
   useEffect(() => {
@@ -187,6 +196,7 @@ export default function AdminPromociones() {
     setEditOriginalPrice(p.originalPrice?.toString() || "");
     setEditImageUrl(p.imageUrl || "");
     setEditDaysOfWeek(p.daysOfWeek || []);
+    setEditModifierTemplateIds((p.modifierTemplates || []).map(t => t.id));
     setTimeout(() => editRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
@@ -220,6 +230,7 @@ export default function AdminPromociones() {
       originalPrice: editOriginalPrice ? Number(editOriginalPrice) : null,
       imageUrl: editImageUrl || null,
       daysOfWeek: editDaysOfWeek.length > 0 ? editDaysOfWeek : [],
+      modifierTemplateIds: editModifierTemplateIds,
     };
     const res = await fetch("/api/admin/promotions", {
       method: "PUT", headers: { "Content-Type": "application/json" },
@@ -368,6 +379,21 @@ export default function AdminPromociones() {
             <input type="number" placeholder="Precio promo (opcional)" value={cPromoPrice} onChange={e => setCPromoPrice(e.target.value)} style={{ ...INP, flex: 1, marginBottom: 0 }} />
           </div>
 
+          {/* Modifier templates */}
+          {availableTemplates.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {availableTemplates.map(t => (
+                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={cModifierTemplateIds.includes(t.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Days of week */}
           <div style={{ marginBottom: 12 }}>
             <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginBottom: 6 }}>Días de la semana (vacío = todos los días)</p>
@@ -428,6 +454,21 @@ export default function AdminPromociones() {
                   <label style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text2)", display: "block", marginBottom: 4 }}>% descuento</label>
                   <input type="number" placeholder="%" value={cDiscountPct} onChange={e => setCDiscountPct(e.target.value)} style={{ ...INP, marginBottom: 0 }} />
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modifier templates — only for multi-dish product promos */}
+          {cSelectedDishes.length > 1 && availableTemplates.length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {availableTemplates.map(t => (
+                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: cModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={cModifierTemplateIds.includes(t.id)} onChange={() => setCModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: cModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                  </label>
+                ))}
               </div>
             </div>
           )}
@@ -493,6 +534,20 @@ export default function AdminPromociones() {
                 </label>
               )}
             </>
+          )}
+          {/* Modifier templates edit */}
+          {availableTemplates.length > 0 && (editing.promoType === "graphic" || (editing.promoType === "product" && (editing.dishIds?.length || 0) > 1)) && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {availableTemplates.map(t => (
+                  <label key={t.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", background: editModifierTemplateIds.includes(t.id) ? "rgba(244,166,35,0.08)" : "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, cursor: "pointer" }}>
+                    <input type="checkbox" checked={editModifierTemplateIds.includes(t.id)} onChange={() => setEditModifierTemplateIds(prev => prev.includes(t.id) ? prev.filter(x => x !== t.id) : [...prev, t.id])} style={{ accentColor: "#F4A623" }} />
+                    <span style={{ fontFamily: F, fontSize: "0.82rem", color: editModifierTemplateIds.includes(t.id) ? "#F4A623" : "var(--adm-text)" }}>{t.name}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           )}
           {/* Days of week edit */}
           <div style={{ marginTop: 10 }}>

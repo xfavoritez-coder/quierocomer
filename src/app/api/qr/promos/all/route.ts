@@ -6,11 +6,23 @@ export async function GET(req: NextRequest) {
     const restaurantId = req.nextUrl.searchParams.get("restaurantId");
     if (!restaurantId) return NextResponse.json({ promos: [] });
 
+    const modifierInclude = {
+      groups: {
+        orderBy: { position: "asc" as const },
+        include: {
+          options: { orderBy: { position: "asc" as const }, where: { isHidden: false } },
+        },
+      },
+    };
+
     const allPromotions = await prisma.promotion.findMany({
       where: {
         restaurantId,
         status: "ACTIVE",
         OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+      },
+      include: {
+        modifierTemplates: { include: modifierInclude },
       },
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
@@ -26,23 +38,37 @@ export async function GET(req: NextRequest) {
     const allDishIds = promotions.flatMap(p => p.dishIds);
     const dishes = allDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: allDishIds } },
-      select: { id: true, name: true, description: true, price: true, photos: true, ingredients: true },
+      select: {
+        id: true, name: true, description: true, price: true, photos: true, ingredients: true,
+        modifierTemplates: { include: modifierInclude },
+      },
     }) : [];
     const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
 
-    const promos = promotions.map(p => ({
-      id: p.id,
-      name: p.name,
-      description: p.description,
-      promoType: p.promoType,
-      imageUrl: p.imageUrl,
-      discountPct: p.discountPct,
-      promoPrice: p.promoPrice,
-      originalPrice: p.originalPrice,
-      validUntil: p.validUntil,
-      daysOfWeek: p.daysOfWeek || [],
-      dishes: p.dishIds.map(id => dishMap[id]).filter(Boolean),
-    }));
+    const promos = promotions.map(p => {
+      const promoDishes = p.dishIds.map(id => dishMap[id]).filter(Boolean);
+      // Single-dish product promos inherit modifiers from the dish;
+      // multi-dish or graphic promos use their own modifierTemplates.
+      const isSingleDishProduct = p.promoType === "product" && promoDishes.length === 1;
+      const resolvedModifiers = isSingleDishProduct && promoDishes[0]?.modifierTemplates?.length
+        ? promoDishes[0].modifierTemplates
+        : p.modifierTemplates;
+
+      return {
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        promoType: p.promoType,
+        imageUrl: p.imageUrl,
+        discountPct: p.discountPct,
+        promoPrice: p.promoPrice,
+        originalPrice: p.originalPrice,
+        validUntil: p.validUntil,
+        daysOfWeek: p.daysOfWeek || [],
+        dishes: promoDishes,
+        modifierTemplates: resolvedModifiers,
+      };
+    });
 
     return NextResponse.json({ promos });
   } catch (error) {

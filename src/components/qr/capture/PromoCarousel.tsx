@@ -15,6 +15,29 @@ interface PromoDish {
   ingredients?: string | null;
 }
 
+interface ModifierOption {
+  id: string;
+  name: string;
+  priceAdjustment: number;
+  isDefault: boolean;
+  position: number;
+}
+
+interface ModifierGroup {
+  id: string;
+  name: string;
+  minSelect: number;
+  maxSelect: number;
+  position: number;
+  options: ModifierOption[];
+}
+
+interface ModifierTemplate {
+  id: string;
+  name: string;
+  groups: ModifierGroup[];
+}
+
 interface Promo {
   id: string;
   name: string;
@@ -27,6 +50,7 @@ interface Promo {
   validUntil: string | null;
   daysOfWeek?: number[];
   dishes: PromoDish[];
+  modifierTemplates?: ModifierTemplate[];
 }
 
 interface Props {
@@ -48,8 +72,42 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
+  const [modifierSelections, setModifierSelections] = useState<Record<string, Set<string>>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const trackedRef = useRef(new Set<string>());
+
+  // Reset modifier selections when switching promos (initialize with defaults)
+  useEffect(() => {
+    if (!selectedPromo?.modifierTemplates?.length) {
+      setModifierSelections({});
+      return;
+    }
+    const initial: Record<string, Set<string>> = {};
+    for (const tpl of selectedPromo.modifierTemplates) {
+      for (const g of tpl.groups) {
+        const defaults = g.options.filter(o => o.isDefault).map(o => o.id);
+        initial[g.id] = new Set(defaults);
+      }
+    }
+    setModifierSelections(initial);
+  }, [selectedPromo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const toggleModifierOption = useCallback((group: ModifierGroup, optionId: string) => {
+    setModifierSelections(prev => {
+      const current = new Set(prev[group.id] || []);
+      if (group.maxSelect === 1) {
+        // Radio behavior
+        return { ...prev, [group.id]: new Set([optionId]) };
+      }
+      // Checkbox behavior
+      if (current.has(optionId)) {
+        current.delete(optionId);
+      } else if (current.size < group.maxSelect) {
+        current.add(optionId);
+      }
+      return { ...prev, [group.id]: new Set(current) };
+    });
+  }, []);
 
   useEffect(() => {
     if (initialPromos?.length) return; // Skip fetch if server provided promos
@@ -440,6 +498,61 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                     </div>
                   )}
+                  {/* Modifier templates */}
+                  {selectedPromo.modifierTemplates && selectedPromo.modifierTemplates.length > 0 && (
+                    <div style={{ marginTop: 16 }}>
+                      <p style={{ fontSize: "15px", fontWeight: 700, color: "#0e0e0e", margin: "0 0 10px" }}>Personaliza</p>
+                      {selectedPromo.modifierTemplates.flatMap(tpl => [...tpl.groups].sort((a, b) => a.position - b.position)).map(group => (
+                        <div key={group.id} style={{ marginBottom: 14 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{group.name}</p>
+                            {group.minSelect > 0 && (
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
+                            )}
+                          </div>
+                          <div style={{ background: "#fafaf8", borderRadius: 12, padding: 4 }}>
+                            {[...group.options].sort((a, b) => a.position - b.position).map(opt => {
+                              const selected = modifierSelections[group.id]?.has(opt.id) || false;
+                              const isRadio = group.maxSelect === 1;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  onClick={() => toggleModifierOption(group, opt.id)}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 10, width: "100%",
+                                    padding: "9px 11px", borderRadius: 8, border: "none",
+                                    background: selected ? "#fff8ee" : "white",
+                                    cursor: "pointer", marginBottom: 2, textAlign: "left",
+                                    outline: selected ? "2px solid #F4A623" : "1px solid transparent",
+                                    transition: "all 0.15s ease",
+                                  }}
+                                >
+                                  <div style={{
+                                    width: 18, height: 18, borderRadius: isRadio ? "50%" : 4, flexShrink: 0,
+                                    border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    background: selected ? "#F4A623" : "white",
+                                    transition: "all 0.15s ease",
+                                  }}>
+                                    {selected && (
+                                      isRadio
+                                        ? <div style={{ width: 7, height: 7, borderRadius: "50%", background: "white" }} />
+                                        : <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    )}
+                                  </div>
+                                  <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "#0e0e0e" }}>{opt.name}</span>
+                                  {opt.priceAdjustment > 0 && (
+                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {selectedPromo.validUntil && (
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, fontSize: "12px", color: "#8a8a8a" }}>
                       <span style={{ fontSize: "14px" }}>⏰</span>
@@ -524,6 +637,62 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* Modifier templates */}
+                  {selectedPromo.modifierTemplates && selectedPromo.modifierTemplates.length > 0 && (
+                    <div style={{ marginBottom: 24 }}>
+                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 14px" }}>Personaliza</h3>
+                      {selectedPromo.modifierTemplates.flatMap(tpl => [...tpl.groups].sort((a, b) => a.position - b.position)).map(group => (
+                        <div key={group.id} style={{ marginBottom: 18 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                            <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{group.name}</p>
+                            {group.minSelect > 0 && (
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
+                            )}
+                          </div>
+                          <div style={{ background: "#fafaf8", borderRadius: 14, padding: 4 }}>
+                            {[...group.options].sort((a, b) => a.position - b.position).map(opt => {
+                              const selected = modifierSelections[group.id]?.has(opt.id) || false;
+                              const isRadio = group.maxSelect === 1;
+                              return (
+                                <button
+                                  key={opt.id}
+                                  onClick={() => toggleModifierOption(group, opt.id)}
+                                  style={{
+                                    display: "flex", alignItems: "center", gap: 10, width: "100%",
+                                    padding: "10px 12px", borderRadius: 10, border: "none",
+                                    background: selected ? "#fff8ee" : "white",
+                                    cursor: "pointer", marginBottom: 2, textAlign: "left",
+                                    outline: selected ? "2px solid #F4A623" : "1px solid transparent",
+                                    transition: "all 0.15s ease",
+                                  }}
+                                >
+                                  {/* Radio / Checkbox indicator */}
+                                  <div style={{
+                                    width: 20, height: 20, borderRadius: isRadio ? "50%" : 5, flexShrink: 0,
+                                    border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
+                                    display: "flex", alignItems: "center", justifyContent: "center",
+                                    background: selected ? "#F4A623" : "white",
+                                    transition: "all 0.15s ease",
+                                  }}>
+                                    {selected && (
+                                      isRadio
+                                        ? <div style={{ width: 8, height: 8, borderRadius: "50%", background: "white" }} />
+                                        : <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    )}
+                                  </div>
+                                  <span style={{ flex: 1, fontSize: "13.5px", fontWeight: 500, color: "#0e0e0e" }}>{opt.name}</span>
+                                  {opt.priceAdjustment > 0 && (
+                                    <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   )}
 

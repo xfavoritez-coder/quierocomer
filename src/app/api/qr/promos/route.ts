@@ -11,12 +11,24 @@ export async function GET(req: NextRequest) {
     const guestId = req.nextUrl.searchParams.get("guestId");
     if (!restaurantId) return NextResponse.json({ promo: null });
 
+    const modifierInclude = {
+      groups: {
+        orderBy: { position: "asc" as const },
+        include: {
+          options: { orderBy: { position: "asc" as const }, where: { isHidden: false } },
+        },
+      },
+    };
+
     // Get active promos
     const allPromos = await prisma.promotion.findMany({
       where: {
         restaurantId,
         status: "ACTIVE",
         OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+      },
+      include: {
+        modifierTemplates: { include: modifierInclude },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -32,7 +44,10 @@ export async function GET(req: NextRequest) {
     const allDishIds = promos.flatMap(p => p.dishIds);
     const dishes = allDishIds.length ? await prisma.dish.findMany({
       where: { id: { in: allDishIds } },
-      select: { id: true, name: true, photos: true, price: true },
+      select: {
+        id: true, name: true, photos: true, price: true,
+        modifierTemplates: { include: modifierInclude },
+      },
     }) : [];
     const dishMap = Object.fromEntries(dishes.map(d => [d.id, d]));
 
@@ -74,6 +89,12 @@ export async function GET(req: NextRequest) {
       }
     }
 
+    const promoDishes = bestPromo.dishIds.map(id => dishMap[id]).filter(Boolean);
+    const isSingleDishProduct = bestPromo.promoType === "product" && promoDishes.length === 1;
+    const resolvedModifiers = isSingleDishProduct && promoDishes[0]?.modifierTemplates?.length
+      ? promoDishes[0].modifierTemplates
+      : (bestPromo as any).modifierTemplates;
+
     return NextResponse.json({
       promo: {
         id: bestPromo.id,
@@ -82,7 +103,8 @@ export async function GET(req: NextRequest) {
         discountPct: bestPromo.discountPct,
         promoPrice: bestPromo.promoPrice,
         originalPrice: bestPromo.originalPrice,
-        dishes: bestPromo.dishIds.map(id => dishMap[id]).filter(Boolean),
+        dishes: promoDishes,
+        modifierTemplates: resolvedModifiers,
       },
     });
   } catch (error) {

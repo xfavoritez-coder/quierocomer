@@ -760,6 +760,7 @@ model ModifierTemplate {
   restaurant Restaurant              @relation(fields: [restaurantId], references: [id])
   groups     ModifierTemplateGroup[]
   dishes     Dish[]                          // many-to-many: platos que usan esta plantilla
+  promotions Promotion[]                    // many-to-many: ofertas que usan esta plantilla
 
   @@index([restaurantId])
 }
@@ -1420,7 +1421,8 @@ model Promotion {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
-  restaurant      Restaurant @relation(fields: [restaurantId], references: [id])
+  restaurant        Restaurant          @relation(fields: [restaurantId], references: [id])
+  modifierTemplates ModifierTemplate[]  // modificadores propios de la oferta
 
   @@index([restaurantId])
   @@index([status])

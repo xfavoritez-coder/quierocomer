@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
 
     const promotions = await prisma.promotion.findMany({
       where,
-      include: { restaurant: { select: { name: true, logoUrl: true } } },
+      include: {
+        restaurant: { select: { name: true, logoUrl: true } },
+        modifierTemplates: { select: { id: true, name: true } },
+      },
       orderBy: [{ position: "asc" }, { createdAt: "desc" }],
     });
 
@@ -83,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Create manual promotion
-    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek } = body;
+    const { restaurantId, name, description, promoType, imageUrl, thumbUrl, dishIds, originalPrice, promoPrice, discountPct, validFrom, validUntil, daysOfWeek, modifierTemplateIds } = body;
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId and name required" }, { status: 400 });
 
     await assertOwnsRestaurant(req, restaurantId);
@@ -98,8 +101,11 @@ export async function POST(req: NextRequest) {
       validUntil: validUntil ? new Date(validUntil) : null,
       daysOfWeek: Array.isArray(daysOfWeek) ? daysOfWeek : [],
       status: "ACTIVE", generatedBy: "manual",
+      modifierTemplates: Array.isArray(modifierTemplateIds) && modifierTemplateIds.length
+        ? { connect: modifierTemplateIds.map((id: string) => ({ id })) }
+        : undefined,
     };
-    const promo = await prisma.promotion.create({ data: promoData });
+    const promo = await prisma.promotion.create({ data: promoData, include: { modifierTemplates: { select: { id: true, name: true } } } });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
     if (e.status === 403) return authErrorResponse(e);
@@ -124,7 +130,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
-    const { id, status, ...data } = body;
+    const { id, status, modifierTemplateIds, ...data } = body;
     if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
     // Ownership check
@@ -146,7 +152,9 @@ export async function PUT(req: NextRequest) {
         ...(data.daysOfWeek !== undefined && { daysOfWeek: Array.isArray(data.daysOfWeek) ? data.daysOfWeek : [] }),
         ...(data.position !== undefined && { position: data.position }),
         ...(data.featured !== undefined && { featured: data.featured }),
+        ...(Array.isArray(modifierTemplateIds) && { modifierTemplates: { set: modifierTemplateIds.map((mid: string) => ({ id: mid })) } }),
       },
+      include: { modifierTemplates: { select: { id: true, name: true } } },
     });
     return NextResponse.json({ promotion: promo });
   } catch (e: any) {
