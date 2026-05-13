@@ -44,26 +44,26 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={20} top={4} left={4} />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "#0e0e0e", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {dish.name}{" "}<DishBadges dish={dish} />
           {dish.tags?.includes("NEW") && <>{" "}<span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
         </h3>
         {(isRec || isPopular) && (
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
             {isRec && (
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>
             )}
             {isPopular && (
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
                 🔥 Popular hoy
               </span>
             )}
           </div>
         )}
         {dish.description && (
-          <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.9rem", color: "#999", lineHeight: 1.4 }}>
+          <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.9rem", color: "var(--carta-text3)", lineHeight: 1.4 }}>
             {dish.description}
           </p>
         )}
@@ -71,14 +71,14 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           {dish.discountPrice ? (
             <>
               <span className="line-through font-[family-name:var(--font-dm)]" style={{ color: "#ccc", fontSize: "0.8rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span className="font-[family-name:var(--font-dm)]" style={{ color: "#888", fontWeight: 500, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-text3)", fontWeight: 500, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
             </>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ color: "#888", fontWeight: 500, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
+            <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-text3)", fontWeight: 500, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
           )}
           {averageRating && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "#F4A623" }}>
-              ★ <span style={{ color: "#999" }}>{averageRating.avg.toFixed(1)}</span>
+              ★ <span style={{ color: "var(--carta-text3)" }}>{averageRating.avg.toFixed(1)}</span>
             </span>
           )}
         </div>
@@ -103,7 +103,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
   }
 
   return (
-    <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "16px 0", borderBottom: "1px solid #f0f0f0" }}>{inner}</button>
+    <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "16px 0", borderBottom: "1px solid var(--carta-border)" }}>{inner}</button>
   );
 }
 

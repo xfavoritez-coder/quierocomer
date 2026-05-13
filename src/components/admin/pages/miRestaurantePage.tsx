@@ -404,6 +404,32 @@ export default function MiRestaurantePage() {
         </div>
       </div>
 
+      {/* ── Modo oscuro carta ── */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>🌙 Modo oscuro</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
+              {(data as any)?.cartaColorMode === "DARK" ? "Tu carta se muestra en modo oscuro" : "Tu carta se muestra en modo claro"}
+            </p>
+          </div>
+          <button
+            onClick={() => save({ cartaColorMode: (data as any)?.cartaColorMode === "DARK" ? "LIGHT" : "DARK" })}
+            style={{
+              width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+              background: (data as any)?.cartaColorMode === "DARK" ? GOLD : "var(--adm-input-border)",
+              transition: "background 0.2s",
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: (data as any)?.cartaColorMode === "DARK" ? 23 : 3, transition: "left 0.2s",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
+            }} />
+          </button>
+        </div>
+      </div>
+
       {/* QR Modal */}
       {qrModalOpen && selectedRestaurant && (
         <QRGeneratorModal restaurant={selectedRestaurant} onClose={() => setQrModalOpen(false)} />

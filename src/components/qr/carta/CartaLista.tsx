@@ -362,7 +362,7 @@ export default function CartaLista({
   };
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)" }}>
       {/* Hero — FREE gets slim, Gold/Premium get full hero */}
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
@@ -371,10 +371,10 @@ export default function CartaLista({
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
-      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
+      <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}>
         {searchOpen ? (
           <div style={{ height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}>
-            <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
+            <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
             <input
               autoFocus
               type="search"
@@ -382,10 +382,10 @@ export default function CartaLista({
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t(lang, "search")}
               className="font-[family-name:var(--font-dm)]"
-              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "#0e0e0e", background: "transparent", fontFamily: "inherit" }}
+              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent", fontFamily: "inherit" }}
             />
             <button onClick={() => { setSearchOpen(false); setQuery(""); }} style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-              <X size={18} color="rgba(14,14,14,0.4)" />
+              <X size={18} color="var(--carta-text-muted)" />
             </button>
           </div>
         ) : (
@@ -409,7 +409,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
                   >{dietNavItem.name}</button>
                 );
               })()}
@@ -421,7 +421,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "#0e0e0e" : "#999", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
                   >Ofertas</button>
                 );
               })()}
@@ -447,7 +447,7 @@ export default function CartaLista({
                       padding: "0 2px",
                       fontSize: "1rem",
                       fontWeight: isActive ? 700 : 500,
-                      color: isActive ? "#0e0e0e" : "#999",
+                      color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
                       background: "none",
                       border: "none",
                       borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
@@ -466,10 +466,10 @@ export default function CartaLista({
               <button
                 onClick={() => setSearchOpen(true)}
                 className="flex items-center justify-center"
-                style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(14,14,14,0.06)", border: "none", cursor: "pointer" }}
+                style={{ width: 32, height: 32, borderRadius: "50%", background: "var(--carta-search-bg)", border: "none", cursor: "pointer" }}
                 aria-label="Buscar"
               >
-                <Search size={19} color="#666" />
+                <Search size={19} color="var(--carta-text2)" />
               </button>
               <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
@@ -483,7 +483,7 @@ export default function CartaLista({
       {/* EMPTY STATE */}
       {grouped.length === 0 && (
         <div style={{ padding: "64px 32px", textAlign: "center" }}>
-          <p style={{ color: "rgba(14,14,14,0.45)", fontSize: "0.9rem" }}>
+          <p style={{ color: "var(--carta-text-muted)", fontSize: "0.9rem" }}>
             No encontramos platos que coincidan.
           </p>
           <button
@@ -540,7 +540,7 @@ export default function CartaLista({
           <div style={{ padding: "0 8px", margin: "14px 0 10px" }}>
             <h2
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.3rem", fontWeight: 600, color: "#777" }}
+              style={{ fontSize: "1.3rem", fontWeight: 600, color: "var(--carta-text2)" }}
             >
               {category.name}
             </h2>
@@ -598,12 +598,12 @@ export default function CartaLista({
           rel="noopener noreferrer"
           style={{ display: "flex", alignItems: "center", gap: 6, textDecoration: "none" }}
         >
-          <span style={{ color: "#bbb", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
-          <span className="font-[family-name:var(--font-playfair)]" style={{ color: "#999", fontSize: "0.82rem", fontWeight: 700 }}>
+          <span style={{ color: "var(--carta-text-muted)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
+          <span className="font-[family-name:var(--font-playfair)]" style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}>
             QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
           </span>
         </a>
-        <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
+        <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
       {/* Floating diet pills */}
@@ -699,8 +699,8 @@ function DishListCard({
   const isPromo = dish.tags?.includes("PROMOTION");
   const isRec = dish.tags?.includes("RECOMMENDED");
 
-  const cardBg = isRec ? "rgba(244,166,35,0.04)" : "white";
-  const cardBorder = isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid rgba(0,0,0,0.07)";
+  const cardBg = isRec ? "rgba(244,166,35,0.04)" : "var(--carta-surface)";
+  const cardBorder = isRec ? "2px solid rgba(244,166,35,0.3)" : "1px solid var(--carta-card-border)";
   // Sombra sutil para separar cards entre si — un poco mas marcada en las recomendadas
   const cardShadow = isRec
     ? "0 2px 6px rgba(244,166,35,0.08), 0 1px 2px rgba(0,0,0,0.04)"
@@ -725,7 +725,7 @@ function DishListCard({
         fontFamily: "inherit",
       }}
     >
-      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "#e8e4dc" : "linear-gradient(135deg, #f7f7f5, #e8e4d8)" }}>
+      <div style={{ width: 140, minHeight: 140, alignSelf: "stretch", overflow: "hidden", flexShrink: 0, position: "relative", background: photo ? "var(--carta-img-placeholder)" : "linear-gradient(135deg, var(--carta-bg), var(--carta-img-placeholder))" }}>
         {photo ? (
           <>
             {!imgLoaded && <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
@@ -741,12 +741,12 @@ function DishListCard({
         {(isRec || isPopular) && (
           <div style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap", marginBottom: 3 }}>
             {isRec && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
                 ⭐ Recomendado
               </span>
             )}
             {isPopular && (
-              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "#d97706", background: "rgba(244,166,35,0.12)", padding: "2px 8px", borderRadius: 50 }}>
+              <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.72rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
                 🔥 Popular hoy
               </span>
             )}
@@ -754,7 +754,7 @@ function DishListCard({
         )}
         <h3
           className="font-[family-name:var(--font-playfair)]"
-          style={{ fontSize: "1.1rem", fontWeight: 600, color: "#0e0e0e", marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}
+          style={{ fontSize: "1.1rem", fontWeight: 600, color: "var(--carta-text)", marginBottom: 2, display: "flex", alignItems: "center", gap: 4 }}
         >
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{dish.name}</span>
           {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
@@ -765,7 +765,7 @@ function DishListCard({
           <p
             style={{
               fontSize: "1rem",
-              color: "rgba(14,14,14,0.5)",
+              color: "var(--carta-text-muted)",
               lineHeight: 1.4,
               marginBottom: 6,
               display: "-webkit-box",
@@ -780,22 +780,22 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span
             className="font-[family-name:var(--font-dm)]"
-            style={{ fontSize: "0.94rem", fontWeight: 500, color: dish.discountPrice ? "#F4A623" : "#888" }}
+            style={{ fontSize: "0.94rem", fontWeight: 500, color: dish.discountPrice ? "#F4A623" : "var(--carta-text3)" }}
           >
             ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
           </span>
           {dish.discountPrice && (
-            <span style={{ fontSize: "0.78rem", color: "#999", textDecoration: "line-through" }}>
+            <span style={{ fontSize: "0.78rem", color: "var(--carta-text3)", textDecoration: "line-through" }}>
               ${dish.price?.toLocaleString("es-CL")}
             </span>
           )}
           {isPromo && (
-            <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 6px", background: "rgba(244,166,35,0.12)", color: "#F4A623", borderRadius: 4 }}>
+            <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 6px", background: "var(--carta-badge-bg)", color: "#F4A623", borderRadius: 4 }}>
               Promo
             </span>
           )}
           {rating && rating.count > 0 && (
-            <span style={{ fontSize: "0.72rem", color: "rgba(14,14,14,0.45)" }}>
+            <span style={{ fontSize: "0.72rem", color: "var(--carta-text-muted)" }}>
               ★ {rating.avg.toFixed(1)}
             </span>
           )}

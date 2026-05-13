@@ -17,6 +17,55 @@
   --qc-border: #E0E0E0;
 }
 
+/* ── Carta color mode tokens ── */
+:root, .carta-light {
+  --carta-bg: #f7f7f5;
+  --carta-bg-solid: #ffffff;
+  --carta-surface: #ffffff;
+  --carta-surface-rec: rgba(244,166,35,0.04);
+  --carta-text: #0e0e0e;
+  --carta-text2: #777;
+  --carta-text3: #999;
+  --carta-text-muted: rgba(14,14,14,0.5);
+  --carta-border: #f0f0f0;
+  --carta-card-border: rgba(0,0,0,0.07);
+  --carta-card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 1px rgba(0,0,0,0.02);
+  --carta-skeleton: linear-gradient(90deg, #F0F0F0 25%, #E0E0E0 50%, #F0F0F0 75%);
+  --carta-img-placeholder: #e8e4dc;
+  --carta-search-bg: rgba(14,14,14,0.06);
+  --carta-search-icon: #666;
+  --carta-badge-bg: rgba(244,166,35,0.12);
+  --carta-badge-text: #d97706;
+  --carta-detail-bg: #fff;
+  --carta-detail-heading: #1a1a1a;
+  --carta-detail-sub: #666;
+  --carta-detail-price: #555;
+}
+
+.carta-dark {
+  --carta-bg: #0e0e0e;
+  --carta-bg-solid: #1a1a1a;
+  --carta-surface: #1a1a1a;
+  --carta-surface-rec: rgba(244,166,35,0.08);
+  --carta-text: #f0f0f0;
+  --carta-text2: #aaa;
+  --carta-text3: #888;
+  --carta-text-muted: rgba(255,255,255,0.5);
+  --carta-border: rgba(255,255,255,0.1);
+  --carta-card-border: rgba(255,255,255,0.08);
+  --carta-card-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --carta-skeleton: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+  --carta-img-placeholder: #2a2a2a;
+  --carta-search-bg: rgba(255,255,255,0.1);
+  --carta-search-icon: #aaa;
+  --carta-badge-bg: rgba(244,166,35,0.15);
+  --carta-badge-text: #F4A623;
+  --carta-detail-bg: #0e0e0e;
+  --carta-detail-heading: #f0f0f0;
+  --carta-detail-sub: #aaa;
+  --carta-detail-price: #ccc;
+}
+
 /* ── Admin theme tokens ── */
 .theme-dark {
   --adm-bg: #111111;

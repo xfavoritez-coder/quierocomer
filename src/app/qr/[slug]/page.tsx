@@ -150,24 +150,29 @@ export default async function CartaPage({
     announcements: activeAnnouncements,
   };
 
+  const colorMode = (restaurant as any).cartaColorMode || "LIGHT";
+  const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
+
   return (
-    <DesktopWrapper
-      restaurantName={restaurant.name}
-      slug={slug}
-      restaurant={restaurant as any}
-      categories={categories as any}
-      dishes={dishes as any}
-      popularDishIds={new Set(cartaProps.popularDishIds || [])}
-      tableId={tableId}
-      isQrScan={isQrScan}
-      lang={lang}
-      marketingPromos={marketingPromos}
-    >
-      {isPremium ? (
-        <CartaRouter {...cartaProps} />
-      ) : (
-        <CartaBasic {...cartaProps} />
-      )}
-    </DesktopWrapper>
+    <div className={themeClass}>
+      <DesktopWrapper
+        restaurantName={restaurant.name}
+        slug={slug}
+        restaurant={restaurant as any}
+        categories={categories as any}
+        dishes={dishes as any}
+        popularDishIds={new Set(cartaProps.popularDishIds || [])}
+        tableId={tableId}
+        isQrScan={isQrScan}
+        lang={lang}
+        marketingPromos={marketingPromos}
+      >
+        {isPremium ? (
+          <CartaRouter {...cartaProps} />
+        ) : (
+          <CartaBasic {...cartaProps} />
+        )}
+      </DesktopWrapper>
+    </div>
   );
 }

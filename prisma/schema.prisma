@@ -420,6 +420,7 @@ model Restaurant {
   scheduleJson Json?      // { "lun": "12:00-23:00", ..., "dom": "closed" }
   allPhotosReferential Boolean    @default(false)
   cartaTheme  CartaTheme @default(BASIC)
+  cartaColorMode CartaColorMode @default(LIGHT)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta
@@ -628,6 +629,11 @@ model Announcement {
 enum CartaTheme {
   BASIC
   PREMIUM
+}
+
+enum CartaColorMode {
+  LIGHT
+  DARK
 }
 
 model Category {

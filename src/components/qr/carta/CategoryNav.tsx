@@ -43,7 +43,7 @@ export default function CategoryNav({
   return (
     <nav
       className="sticky top-0 z-40"
-      style={{ position: "sticky", top: 0, background: "#ffffff", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
+      style={{ position: "sticky", top: 0, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
     >
       {leftSlot && (
         <div style={{ flexShrink: 0, paddingLeft: 12, paddingRight: 4, display: "flex", alignItems: "center", height: "100%" }}>
@@ -85,7 +85,7 @@ export default function CategoryNav({
                 padding: "0 2px",
                 fontSize: "1rem",
                 fontWeight: isActive ? 700 : 500,
-                color: isActive ? "#0e0e0e" : "#999",
+                color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
                 background: "none",
                 border: "none",
                 borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",

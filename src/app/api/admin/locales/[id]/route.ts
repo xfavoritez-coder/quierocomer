@@ -9,6 +9,7 @@ const OWNER_EDITABLE_FIELDS = [
   "instagram", "website", "scheduleJson",
   "waiterPanelActive",
   "birthdayPerk",
+  "cartaColorMode",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
   "billingCompanyName", "billingRut", "billingGiro",
   "billingAddress", "billingCity", "billingEmail",

@@ -156,7 +156,7 @@ export default function DishDetail({
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", inset: -1,
-        zIndex: 120, background: "#fff",
+        zIndex: 120, background: "var(--carta-detail-bg)",
         opacity: visible ? 1 : 0, transition: "opacity 0.2s ease-out",
       }}
     >
@@ -325,13 +325,13 @@ function DishSlide({
         if (el && el.scrollTop <= 0 && dy > 100) onClose();
       }}
       style={{
-        flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "#fff",
+        flex: "0 0 100%", width: "100vw", minHeight: "100%", scrollSnapAlign: "start", scrollSnapStop: "always", overflowY: "auto", overflowX: "hidden", scrollbarWidth: "none", background: "var(--carta-detail-bg)",
       }}
     >
       {/* Photo */}
       <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length === 0 && (
-          <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #f5f5f3 0%, #e8e4dc 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+          <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
             <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
           </div>
         )}
@@ -383,7 +383,7 @@ function DishSlide({
       {/* Close button — fixed, always visible */}
       <button onClick={onClose} className="flex items-center justify-center" style={{ position: "fixed", top: 16, right: 16, zIndex: 130, width: 34, height: 34, borderRadius: "50%", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)", border: "none", color: "white", fontSize: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}>✕</button>
 
-      <div style={{ position: "relative", zIndex: 1, background: "#fff", padding: "20px 20px 60px" }}>
+      <div style={{ position: "relative", zIndex: 1, background: "var(--carta-detail-bg)", padding: "20px 20px 60px" }}>
 
         {/* "Recomendado" explanation toggle */}
         {showRecTooltip && isRec && (
@@ -391,7 +391,7 @@ function DishSlide({
             onClick={() => setShowRecTooltip(false)}
             style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
-            <p style={{ margin: 0, fontSize: "0.88rem", color: "rgba(0,0,0,0.85)", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--carta-text)", lineHeight: 1.4 }}>
               ⭐ {restaurantName || "El local"} recomienda este plato.
             </p>
           </div>
@@ -403,7 +403,7 @@ function DishSlide({
             onClick={() => setShowPopularTooltip(false)}
             style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
-            <p style={{ margin: 0, fontSize: "0.88rem", color: "rgba(0,0,0,0.85)", lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--carta-text)", lineHeight: 1.4 }}>
               🔥 Muy pedido hoy por los clientes.
             </p>
           </div>
@@ -412,18 +412,18 @@ function DishSlide({
         {/* BLOQUE 1: Header — name left + badges right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 12 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            {categoryName && <span style={{ color: "#666", fontSize: "13.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
-            <h2 style={{ fontSize: "32px", fontWeight: 800, color: "#1a1a1a", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
+            {categoryName && <span style={{ color: "var(--carta-detail-sub)", fontSize: "13.5px", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.8px", marginBottom: 4, display: "block" }}>{categoryName}</span>}
+            <h2 style={{ fontSize: "32px", fontWeight: 800, color: "var(--carta-detail-heading)", lineHeight: 1.1, margin: 0, letterSpacing: "-0.5px" }}>
               {dish.name}
             </h2>
             <div style={{ marginTop: 6 }}>
               {dish.discountPrice ? (
                 <>
-                  <span className="line-through" style={{ color: "rgba(0,0,0,0.45)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
-                  <span style={{ color: "#555", fontSize: "17px" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+                  <span className="line-through" style={{ color: "var(--carta-text3)", fontSize: "13px", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
+                  <span style={{ color: "var(--carta-detail-price)", fontSize: "17px" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
                 </>
               ) : (
-                <span style={{ color: "#555", fontSize: "17px" }}>${dish.price.toLocaleString("es-CL")}</span>
+                <span style={{ color: "var(--carta-detail-price)", fontSize: "17px" }}>${dish.price.toLocaleString("es-CL")}</span>
               )}
             </div>
           </div>
@@ -433,14 +433,14 @@ function DishSlide({
               {isRec ? (
                 <button
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.35)", color: "#92400e", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ background: "var(--carta-badge-bg)", border: "1px solid rgba(244,166,35,0.35)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   ⭐ Recomendado
                 </button>
               ) : (
                 <button
                   onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
-                  style={{ background: "rgba(244,166,35,0.12)", border: "1px solid rgba(244,166,35,0.35)", color: "#92400e", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ background: "var(--carta-badge-bg)", border: "1px solid rgba(244,166,35,0.35)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   🔥 Popular hoy
                 </button>
@@ -452,8 +452,8 @@ function DishSlide({
         {/* Rating + Stock */}
         {(averageRating || (dish.stockCountdown != null && dish.stockCountdown > 0)) && (
           <div className="flex items-center" style={{ gap: 6, marginBottom: 10 }}>
-            {averageRating && <span style={{ background: "rgba(0,0,0,0.05)", color: "#1a1a1a", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
-            {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "rgba(0,0,0,0.05)", color: "#1a1a1a", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
+            {averageRating && <span style={{ background: "var(--carta-badge-bg)", color: "var(--carta-detail-heading)", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>★ {averageRating.avg.toFixed(1)}</span>}
+            {dish.stockCountdown != null && dish.stockCountdown > 0 && <span style={{ background: "var(--carta-badge-bg)", color: "var(--carta-detail-heading)", fontSize: "0.68rem", fontWeight: 600, padding: "3px 10px", borderRadius: 50 }}>🔥 Quedan {dish.stockCountdown}</span>}
           </div>
         )}
 
@@ -462,7 +462,7 @@ function DishSlide({
         {desc && (
           <p
             onClick={() => isLongDesc && setExpandedDescs((s) => { const n = new Set(s); if (n.has(dish.id)) n.delete(dish.id); else n.add(dish.id); return new Set(n); })}
-            style={{ margin: 0, fontSize: "18px", color: "rgba(0,0,0,0.7)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
+            style={{ margin: 0, fontSize: "18px", color: "var(--carta-detail-sub)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: expandDesc ? 999 : 5, WebkitBoxOrient: "vertical", overflow: "hidden", width: "100%", cursor: isLongDesc ? "pointer" : "default" }}
           >{desc}</p>
         )}
 
@@ -566,23 +566,23 @@ function DishSlide({
 
                 return (
                   <div key={g.id} style={{ marginBottom: 16 }}>
-                    <p style={{ color: "#666", fontSize: "13.5px", fontWeight: 500, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
+                    <p style={{ color: "var(--carta-detail-sub)", fontSize: "13.5px", fontWeight: 500, margin: "0 0 4px", textTransform: "uppercase", letterSpacing: "0.8px" }}>{g.name}</p>
                     <div>
                       {rows.map((row, i) => (
-                        <div key={i} style={{ padding: "10px 0", borderBottom: i < rows.length - 1 ? "1px solid rgba(0,0,0,0.08)" : "none" }}>
+                        <div key={i} style={{ padding: "10px 0", borderBottom: i < rows.length - 1 ? "1px solid var(--carta-card-border)" : "none" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             {row.imageUrl && (
                               <img src={row.imageUrl} alt="" style={{ width: 36, height: 36, borderRadius: 6, objectFit: "cover", flexShrink: 0 }} />
                             )}
-                            <span style={{ color: "rgba(0,0,0,0.88)", fontSize: "0.92rem", fontWeight: 600, flex: 1 }}>{row.name}</span>
+                            <span style={{ color: "var(--carta-text)", fontSize: "0.92rem", fontWeight: 600, flex: 1 }}>{row.name}</span>
                             {row.price !== 0 && (
-                              <span style={{ color: "rgba(0,0,0,0.5)", fontSize: "0.85rem", fontWeight: 400, flexShrink: 0, marginLeft: 12 }}>
+                              <span style={{ color: "var(--carta-detail-sub)", fontSize: "0.85rem", fontWeight: 400, flexShrink: 0, marginLeft: 12 }}>
                                 +${Math.abs(row.price).toLocaleString("es-CL")}
                               </span>
                             )}
                           </div>
                           {row.description && (
-                            <p style={{ color: "rgba(0,0,0,0.45)", fontSize: "0.85rem", margin: "4px 0 0", lineHeight: 1.4 }}>{row.description}</p>
+                            <p style={{ color: "var(--carta-text3)", fontSize: "0.85rem", margin: "4px 0 0", lineHeight: 1.4 }}>{row.description}</p>
                           )}
                         </div>
                       ))}
@@ -601,16 +601,16 @@ function DishSlide({
           if (suggestions.length === 0) return null;
           return (
             <div style={{ marginTop: 32 }}>
-              <p style={{ fontSize: "0.82rem", color: "rgba(0,0,0,0.45)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
+              <p style={{ fontSize: "0.82rem", color: "var(--carta-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {suggestions.map((s) => (
                   <div
                     key={s.dish.id}
                     onClick={() => onChangeDish(s.dish)}
-                    style={{ display: "flex", gap: 14, padding: "16px 18px", background: "rgba(0,0,0,0.03)", borderRadius: 16, cursor: "pointer" }}
+                    style={{ display: "flex", gap: 14, padding: "16px 18px", background: "var(--carta-card-border)", borderRadius: 16, cursor: "pointer" }}
                   >
                     {s.dish.photos?.[0] && !failedImages.has(s.dish.id) ? (
-                      <div style={{ position: "relative", width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "rgba(0,0,0,0.04)" }}>
+                      <div style={{ position: "relative", width: 78, height: 78, borderRadius: "50%", overflow: "hidden", flexShrink: 0, background: "var(--carta-img-placeholder)" }}>
                         <Image
                           src={s.dish.photos[0]}
                           alt={s.dish.name}
@@ -622,25 +622,25 @@ function DishSlide({
                         />
                       </div>
                     ) : (
-                      <div style={{ width: 78, height: 78, borderRadius: "50%", background: "rgba(0,0,0,0.04)", flexShrink: 0 }} />
+                      <div style={{ width: 78, height: 78, borderRadius: "50%", background: "var(--carta-img-placeholder)", flexShrink: 0 }} />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       {(s.dish.tags?.includes("RECOMMENDED") || popularDishIds?.has(s.dish.id)) && (
                         <div style={{ display: "flex", gap: 5, marginBottom: 4 }}>
-                          {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(244,166,35,0.12)", color: "#92400e" }}>⭐ Recomendado</span>}
+                          {s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "var(--carta-badge-bg)", color: "var(--carta-badge-text)" }}>⭐ Recomendado</span>}
                           {popularDishIds?.has(s.dish.id) && !s.dish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 7px", borderRadius: 4, background: "rgba(239,68,68,0.10)", color: "#dc2626" }}>🔥 Popular hoy</span>}
                         </div>
                       )}
-                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--carta-detail-heading)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {s.dish.name}
                         {(s.dish as any).dishDiet === "VEGAN" && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌿</span></>}
                         {(s.dish as any).dishDiet === "VEGETARIAN" && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🥗</span></>}
                         {(s.dish as any).isSpicy && <>{" "}<span style={{ fontSize: "12px", verticalAlign: "middle" }}>🌶️</span></>}
                       </p>
                       {s.dish.description && (
-                        <p style={{ fontSize: "0.92rem", color: "rgba(0,0,0,0.5)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
+                        <p style={{ fontSize: "0.92rem", color: "var(--carta-detail-sub)", margin: "4px 0 0", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", lineHeight: 1.4 }}>{s.dish.description}</p>
                       )}
-                      <span style={{ fontSize: "0.9rem", color: "rgb(126,126,126)", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
+                      <span style={{ fontSize: "0.9rem", color: "var(--carta-detail-price)", fontWeight: 400, marginTop: 4, display: "block" }}>${s.dish.price.toLocaleString("es-CL")}</span>
                     </div>
                   </div>
                 ))}
