@@ -754,6 +754,7 @@ model ModifierTemplate {
   id           String   @id @default(cuid())
   restaurantId String
   name         String                        // "Envolturas", "Salsas", "Tamaño"
+  scope        String   @default("product")  // "product" | "promotion"
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -763,6 +764,7 @@ model ModifierTemplate {
   promotions Promotion[]                    // many-to-many: ofertas que usan esta plantilla
 
   @@index([restaurantId])
+  @@index([restaurantId, scope])
 }
 
 model ModifierTemplateGroup {

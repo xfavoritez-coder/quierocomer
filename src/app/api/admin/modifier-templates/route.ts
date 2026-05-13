@@ -24,8 +24,9 @@ export async function GET(req: NextRequest) {
     return authErrorResponse(e);
   }
 
+  const scope = req.nextUrl.searchParams.get("scope"); // "product" | "promotion" | null (all)
   const templates = await prisma.modifierTemplate.findMany({
-    where: { restaurantId },
+    where: { restaurantId, ...(scope ? { scope } : {}) },
     orderBy: { createdAt: "desc" },
     include: INCLUDE_FULL,
   });
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (authErr) return authErr;
 
   try {
-    const { restaurantId, name, groups } = await req.json();
+    const { restaurantId, name, groups, scope } = await req.json();
     if (!restaurantId || !name) return NextResponse.json({ error: "restaurantId y name requeridos" }, { status: 400 });
     await requireRestaurantForOwner(req, restaurantId);
 
@@ -47,6 +48,7 @@ export async function POST(req: NextRequest) {
       data: {
         restaurantId,
         name,
+        scope: scope || "product",
         groups: groups?.length ? {
           create: groups.map((g: any, gi: number) => ({
             name: g.name,

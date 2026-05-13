@@ -107,7 +107,7 @@ export default function AdminPromociones() {
     fetch(`/api/admin/dishes?restaurantId=${selectedLocal}`)
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setLocalDishes(d); })
       .catch(() => {});
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`)
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
       .catch(() => {});
@@ -313,7 +313,7 @@ export default function AdminPromociones() {
   useEffect(() => {
     if (activeTab !== "modificadores" || !selectedLocal) { setModTemplates([]); return; }
     setModLoading(true);
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`)
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setModTemplates(d); })
       .catch(() => {})
@@ -322,7 +322,7 @@ export default function AdminPromociones() {
 
   const modRefresh = async () => {
     if (!selectedLocal) return;
-    const r = await fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`);
+    const r = await fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`);
     const d = await r.json();
     if (Array.isArray(d)) setModTemplates(d);
   };
@@ -333,12 +333,12 @@ export default function AdminPromociones() {
     try {
       await fetch("/api/admin/modifier-templates", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: selectedLocal, name: modNewName.trim() }),
+        body: JSON.stringify({ restaurantId: selectedLocal, name: modNewName.trim(), scope: "promotion" }),
       });
       setModNewName("");
       await modRefresh();
       // Also refresh simple list for ofertas tab
-      fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`)
+      fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
         .then(r => r.json()).then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); }).catch(() => {});
     } catch {}
     setModCreating(false);
@@ -348,7 +348,7 @@ export default function AdminPromociones() {
     if (!confirm("¿Eliminar este template de modificadores y todos sus grupos/opciones?")) return;
     await fetch("/api/admin/modifier-templates", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ templateId: id }) });
     await modRefresh();
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}`)
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedLocal}&scope=promotion`)
       .then(r => r.json()).then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); }).catch(() => {});
   };
 

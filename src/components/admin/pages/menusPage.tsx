@@ -296,7 +296,7 @@ function InlineModifierEditor({ templateId, restaurantId }: { templateId: string
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}`)
+    fetch(`/api/admin/modifier-templates?restaurantId=${restaurantId}&scope=product`)
       .then(r => r.json())
       .then((templates: any[]) => {
         const t = templates.find((x: any) => x.id === templateId);
@@ -722,7 +722,7 @@ export default function AdminMenus() {
     setAssignedTemplateIds(((selectedDish as any).modifierTemplates || []).map((t: any) => t.id));
     setEditModPickerOpen(false);
     setEditModExpanded(null);
-    fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
+    fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}&scope=product`)
       .then(r => r.json())
       .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
       .catch(() => {});
@@ -814,7 +814,7 @@ export default function AdminMenus() {
     setAssignedTemplateIds(((d as any).modifierTemplates || []).map((t: any) => t.id));
     // Load templates + ingredients
     if (selectedRestaurantId) {
-      fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}`)
+      fetch(`/api/admin/modifier-templates?restaurantId=${selectedRestaurantId}&scope=product`)
         .then(r => r.json())
         .then(d => { if (Array.isArray(d)) setAvailableTemplates(d.map((t: any) => ({ id: t.id, name: t.name }))); })
         .catch(() => {});
