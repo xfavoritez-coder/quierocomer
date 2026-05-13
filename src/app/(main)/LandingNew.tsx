@@ -503,7 +503,7 @@ section{position:relative}
 .pain-reverse .pain-text{padding:32px 0 32px 32px}
 .pain-text{padding:32px 32px 32px 0}
 .pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
-.pain-card h3{font-size:27px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700;font-family:var(--font-display);font-style:italic}
+.pain-card h3{font-size:27px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:400;font-family:var(--font-display);font-style:italic;color:rgba(200,190,180,.7)}
 .pain-card p{color:var(--cream-soft);font-size:17px}
 .pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
 .how-it-works{padding:40px 0 80px;background:var(--black);position:relative}
