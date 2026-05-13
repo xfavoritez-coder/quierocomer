@@ -271,7 +271,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Email automático de cumpleaños", "Envía felicitaciones y ofertas especiales en el cumpleaños de tus clientes"],
                 ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Clientes ilimitados + CSV", "Sin límite de clientes registrados y exporta tu base en CSV"],
-                ["Integración Toteat", "Sincroniza tu carta automáticamente con el POS Toteat"],
+                ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
             </div>
           </div>
