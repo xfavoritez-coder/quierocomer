@@ -158,6 +158,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     position: "relative",
     zIndex: 1,
+    textAlign: "center" as const,
   },
   badge: {
     display: "inline-flex",
@@ -188,8 +189,10 @@ const styles: Record<string, React.CSSProperties> = {
   divider: {
     width: 48,
     height: 2,
-    background: "linear-gradient(90deg, #E8A33D, rgba(232,163,61,0.2))",
+    background: "linear-gradient(90deg, rgba(232,163,61,0.2), #E8A33D, rgba(232,163,61,0.2))",
     marginBottom: 20,
+    marginLeft: "auto",
+    marginRight: "auto",
   },
   desc: {
     color: "rgba(245,239,227,0.45)",
@@ -199,15 +202,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   qrCard: {
     background: "#ffffff",
-    borderRadius: 20,
-    padding: 20,
-    width: 200,
+    borderRadius: 14,
+    padding: 14,
+    width: 180,
     marginBottom: 20,
+    marginLeft: "auto",
+    marginRight: "auto",
     boxShadow: "0 20px 60px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
   },
   qrImg: {
     width: "100%",
-    borderRadius: 12,
+    borderRadius: 8,
     display: "block",
   },
   qrFooter: {
