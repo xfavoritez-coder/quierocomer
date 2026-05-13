@@ -25,7 +25,7 @@ const STYLES = `
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { min-height: 100vh; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat; background-attachment: fixed; color: var(--cream); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body { min-height: 100vh!important; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat!important; background-size: cover!important; background-attachment: fixed!important; color: var(--cream)!important; font-family: var(--font-body)!important; line-height: 1.55!important; -webkit-font-smoothing: antialiased; overflow-x: hidden!important; }
 .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
 a { color: inherit; text-decoration: none; }
 .page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
@@ -92,6 +92,7 @@ const BODY = `
 
   <section class="shell centered-shell">
     <div class="center-copy">
+      <p style="color:var(--amber-2);font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Paso 1 de 3</p>
       <h1>Tu nueva carta<br>comienza <span>aquí.</span></h1>
     </div>
     <div class="form-side centered-form">
