@@ -352,7 +352,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .lamp-icon{width:28px;height:28px;color:var(--amber)}
 .nav-link{color:var(--cream-soft);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-link:hover{color:var(--amber)}
-.nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.25s}
+.nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-cta:hover{background:var(--amber);color:var(--black)}
 .hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 0 80px}
 .hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/hero-restaurante.jpg');background-size:cover;background-position:center;transform:scale(1.03)}
