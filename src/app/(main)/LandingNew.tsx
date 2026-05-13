@@ -254,7 +254,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Carta QR digital", "Tu carta lista para escanear con QR"],
                 ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
               ]} btnText="Comenzar gratis" btnPrimary={false} />
-              <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "$358.800/año" : "/mes neto"} desc="Todo lo gratis + El Genio IA para vender más" featured features={[
+              <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes neto · $358.800/año" : "/mes neto"} discount={anual ? "-15%" : undefined} desc="Todo lo gratis + El Genio IA para vender más" featured features={[
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
                 ["2 vistas de carta", "Muestra tu carta en formato lista o grilla con fotos"],
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
@@ -263,7 +263,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Publicidad en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
                 ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
-              <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "$478.800/año" : "/mes neto"} desc="Todo lo Gold + herramientas avanzadas de retención" features={[
+              <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes neto · $478.800/año" : "/mes neto"} discount={anual ? "-20%" : undefined} desc="Todo lo Gold + herramientas avanzadas de retención" features={[
                 ["4 vistas de carta", "Lista, grilla, destacados y vista por categorías"],
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
@@ -304,15 +304,18 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   );
 }
 
-function PlanCard({ name, price, period, desc, features, btnText, btnPrimary, featured }: {
+function PlanCard({ name, price, period, desc, features, btnText, btnPrimary, featured, discount }: {
   name: string; price: string; period: string; desc: string;
-  features: [string, string][]; btnText: string; btnPrimary: boolean; featured?: boolean;
+  features: [string, string][]; btnText: string; btnPrimary: boolean; featured?: boolean; discount?: string;
 }) {
   return (
     <div className={`plan-card${featured ? " plan-featured" : ""}`}>
       {featured && <div className="plan-badge">Popular</div>}
       <div className="plan-name">{name}</div>
-      <div className="plan-price">{price}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, justifyContent: "flex-start" }}>
+        <div className="plan-price">{price}</div>
+        {discount && <span className="plan-discount">{discount}</span>}
+      </div>
       <div className="plan-period">{period}</div>
       <p className="plan-desc">{desc}</p>
       <ul className="plan-features">
@@ -453,6 +456,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 .plan-name{font-family:var(--font-display);font-size:24px;font-style:italic;color:var(--amber);margin-bottom:10px}
 .plan-price{font-family:var(--font-display);font-size:38px;color:var(--cream);line-height:1}
 .plan-period{font-size:13px;color:var(--gray-warm);margin-bottom:16px}
+.plan-discount{background:rgba(142,207,142,.15);color:#8ECF8E;font-size:12px;font-weight:700;padding:4px 8px;border-radius:4px;border:1px solid rgba(142,207,142,.25)}
 .plan-desc{font-size:14px;color:var(--cream-soft);padding-bottom:18px;border-bottom:1px solid var(--gray-deep);min-height:60px}
 .plan-features{list-style:none;margin-top:18px;display:grid;gap:10px}
 .plan-features li{font-size:13px;color:var(--cream-soft);padding-left:20px;position:relative}
