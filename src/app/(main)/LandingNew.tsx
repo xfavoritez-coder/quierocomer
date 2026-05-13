@@ -201,11 +201,11 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               { q: "¿Para qué tengo que subir mi carta?", a: "Nuestra IA analiza tu carta, física o QR, y en segundos te deja una Carta Viva lista para usar." },
               { q: "Ya tengo una carta QR. ¿Sirve igual?", a: "Sí. Puedes subir el link de tu QR actual y te mostramos cómo se vería mejorada con QuieroComer." },
               { q: "¿Tengo que dejar de usar cartas físicas?", a: "No. Puedes seguir usando cartas físicas. QuieroComer funciona como complemento digital para mostrar fotos, recomendaciones, traducciones y datos." },
-              { q: "¿Es gratis?", a: "Sí. Puedes empezar gratis y probar la experiencia antes de decidir si sigues con un plan pagado." },
+              { q: "¿Es gratis?", a: "plan_link" },
             ].map((item, i) => (
               <div key={i} className={`faq-item${faqOpen === i ? " open" : ""}`}>
                 <div className="faq-q" onClick={() => setFaqOpen(faqOpen === i ? null : i)}>{item.q}</div>
-                <div className="faq-a">{item.a}</div>
+                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y probar la experiencia antes de decidir si sigues con un <a href="#" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlanesOpen(true); }} style={{ color: "var(--amber)", textDecoration: "underline", cursor: "pointer" }}>plan pagado</a>.</> : item.a}</div>
               </div>
             ))}
           </div>
