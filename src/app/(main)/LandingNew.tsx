@@ -159,7 +159,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <p>Por esto nace <span>QuieroComer</span></p>
             </div>
             <h2>Un Genio que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
-            <p>Recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
+            <p>A través de una nueva carta QR viva, recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
           </div>
         </div>
       </section>
