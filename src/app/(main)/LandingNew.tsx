@@ -82,8 +82,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
+            <p className="hero-sub-text">Transformamos tu carta actual en una experiencia visual que despierta antojo y <span className="accent">aumenta tus ventas</span></p>
             <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-            <div className="microcopy">Nuestra IA te mostrará gratis como se verá tu Carta QR Viva</div>
+            <div className="microcopy">Foto o link · Te mostramos gratis como queda</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
@@ -127,7 +128,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center", marginBottom: 40 }}>
               <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
               <div style={{ fontFamily: "var(--font-display)", fontSize: "clamp(31px,4vw,45px)", fontStyle: "italic", color: "var(--cream)", lineHeight: 1.2 }}>
-                Tu mayor problema como dueño de restaurant
+                Pero antes, ¿te suena alguno de estos?
               </div>
               <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
             </div>
@@ -158,8 +159,14 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="nace-banner">
               <p>Por esto nace <span>QuieroComer</span></p>
             </div>
-            <h2>Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
-            <p>Una carta QR inteligente y avanzada que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
+            <div className="product-grid">
+              <img src="/landing/555.png" alt="QuieroComer en acción" className="product-img" />
+              <div className="product-text">
+                <h2>Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
+                <img src="/landing/555.png" alt="QuieroComer en acción" className="product-img-mobile" />
+                <p>Recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -180,12 +187,12 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="step-text"><h3><span className="step-num">01</span> Sube tu carta</h3><p>Una foto de tu carta o el link de tu QR actual.</p></div>
             </div>
             <div className="step reverse">
-              <div className="step-text"><h3><span className="step-num">02</span> La analizamos y transformamos</h3><p>Automáticamente identificamos todos tus platos y te mostramos como se vería.</p></div>
+              <div className="step-text"><h3><span className="step-num">02</span> Nuestra IA analiza</h3><p>Automáticamente identificamos todos tus platos, precios y categorías.</p></div>
               <img className="step-img" src="/landing/fondosec2.png" alt="La analizamos" />
             </div>
             <div className="step">
               <img className="step-img" src="/landing/persona.png" alt="Te la entregamos" />
-              <div className="step-text"><h3><span className="step-num">03</span> Te la entregamos</h3><p>En segundos tu nueva Carta QR Viva lista para probar.</p></div>
+              <div className="step-text"><h3><span className="step-num">03</span> Creamos tu nueva carta visual</h3><p>Diseñada para despertar antojos y aumentar ventas.</p></div>
             </div>
           </div>
         </div>
@@ -353,7 +360,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
-.microcopy{font-size:clamp(18px,2vw,18px);color:var(--cream-soft);margin-top:14px;opacity:.8}
+.hero-sub-text{font-size:clamp(17px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px}
+.microcopy{font-size:clamp(16px,2vw,16px);opacity:.5;color:var(--cream-soft);margin-top:14px;opacity:.8}
 .phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
@@ -399,7 +407,10 @@ section{position:relative}
 .nace-banner{background:rgba(232,163,61,.08)!important;border-top:1px solid rgba(232,163,61,.15)!important;border-bottom:1px solid rgba(232,163,61,.15)!important;padding:14px 16px!important;margin-bottom:28px!important;text-align:center!important}
 .nace-banner p{font-family:var(--font-display)!important;font-size:clamp(24px,3.5vw,34px)!important;font-style:italic!important;color:var(--cream)!important;letter-spacing:.01em!important;margin:0 auto!important;padding:0!important;text-align:center!important}
 .nace-banner span{color:var(--cream)!important;text-decoration:underline!important;text-decoration-color:var(--amber)!important;text-underline-offset:4px!important}
-.product-proof{padding:120px 0;background:linear-gradient(rgba(10,9,8,.93),rgba(10,9,8,.93)),url('/landing/estoes.png');background-size:cover;background-position:center;position:relative;overflow:hidden}
+.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;max-width:1100px;margin:0 auto;text-align:left}
+.product-img{width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1)}
+.product-img-mobile{display:none}
+.product-proof{padding:120px 0;background:var(--black);position:relative;overflow:hidden}
 .product-copy{text-align:center}
 .product-copy h2{font-size:clamp(40px,5.5vw,64px);line-height:1.1;margin-bottom:24px}
 .product-copy p{font-size:clamp(19px,2.5vw,17px);color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
@@ -452,7 +463,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
   .hero{padding:110px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
-  .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}
+  .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}.product-grid{grid-template-columns:1fr;text-align:center}.product-img{display:none}.product-img-mobile{display:block;width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1);margin:20px 0}
   .pain-card{grid-template-columns:35% 1fr;gap:12px}.pain-img{height:100%;min-height:200px}.pain-text{padding:16px 16px 16px 0;display:flex;flex-direction:column;justify-content:center;text-align:center}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .step{grid-template-columns:35% 1fr;gap:0}.step.reverse{grid-template-columns:1fr 35%}.step-img{height:220px}.step-text{padding:16px}.step-num{font-size:32px}.step h3{font-size:26px}.step p{font-size:16px}
   .planes-grid{grid-template-columns:1fr}
