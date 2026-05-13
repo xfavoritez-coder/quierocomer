@@ -198,7 +198,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="faq-list">
             {[
               { q: "¿Qué es QuieroComer?", a: "Transforma tu carta, ya sea física o digital, en una experiencia visual que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes." },
-              { q: "¿Para qué tengo que subir mi carta?", a: "Para que nuestra IA la analice y en segundos te muestre cómo se vería tu carta física o QR actual transformada en una Carta Viva de QuieroComer. Verás una versión mejorada con fotos, recomendaciones y todo lo que necesitas para vender más. Sin compromiso." },
+              { q: "¿Para qué tengo que subir mi carta?", a: "Nuestra IA analiza tu carta, física o QR, y en segundos te deja una Carta Viva lista para usar." },
               { q: "Ya tengo una carta QR. ¿Sirve igual?", a: "Sí. Puedes subir el link de tu QR actual y te mostramos cómo se vería mejorada con QuieroComer." },
               { q: "¿Tengo que dejar de usar cartas físicas?", a: "No. Puedes seguir usando cartas físicas. QuieroComer funciona como complemento digital para mostrar fotos, recomendaciones, traducciones y datos." },
               { q: "¿Es gratis?", a: "Sí. Puedes empezar gratis y probar la experiencia antes de decidir si sigues con un plan pagado." },
