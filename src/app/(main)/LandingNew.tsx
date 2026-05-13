@@ -443,7 +443,7 @@ h1,h2,h3{font-family:var(--font-display);font-weight:400;color:var(--cream);lett
 .accent{color:var(--amber);font-style:italic}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)}
 .logo{font-family:var(--font-display);font-size:21px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em}
-.lamp-icon{height:20px;width:auto;margin-right:-2px;object-fit:contain}
+.lamp-icon{height:20px;width:auto;margin-right:-4px;object-fit:contain}
 .nav-link{color:var(--cream-soft);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-link:hover{color:var(--amber)}
 .nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:.25s}
@@ -457,7 +457,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
-.hero-sub-text{font-size:clamp(17px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px}
+.hero-sub-text{font-size:clamp(18px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px}
 .microcopy{font-size:clamp(16px,2vw,16px);color:var(--cream-soft);margin-top:8px;opacity:.8}
 .phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
@@ -503,7 +503,7 @@ section{position:relative}
 .pain-reverse .pain-text{padding:32px 0 32px 32px}
 .pain-text{padding:32px 32px 32px 0}
 .pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
-.pain-card h3{font-size:27px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:400;font-family:var(--font-display);font-style:italic;color:rgba(200,190,180,.7)}
+.pain-card h3{font-size:27px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700;font-family:var(--font-display);font-style:italic;color:var(--cream)}
 .pain-card p{color:var(--cream-soft);font-size:17px}
 .pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
 .how-it-works{padding:40px 0 80px;background:var(--black);position:relative}
