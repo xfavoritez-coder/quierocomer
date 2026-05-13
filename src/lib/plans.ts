@@ -40,7 +40,6 @@ const PLAN_FEATURES: Record<Plan, Set<Feature>> = {
     "highlight_dishes",
     "promotions",
     "stats_basic",
-    "multilang",
     "announcements",
     "genio",
   ]),

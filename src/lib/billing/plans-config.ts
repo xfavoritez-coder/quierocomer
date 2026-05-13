@@ -86,10 +86,10 @@ export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
     { text: "Ofertas y promociones", tip: "Publica descuentos que se muestran automaticamente en la carta." },
     { text: "Estadisticas basicas", tip: "Visitantes, sesiones, platos mas vistos y duracion promedio." },
     { text: "Anuncios en la carta", tip: "Banner de novedades visible al abrir la carta." },
-    { text: "Multilenguaje (ES · EN · PT)", tip: "Carta traducida automaticamente al idioma del cliente." },
   ],
   PREMIUM: [
     { text: "4 vistas de carta", tip: "Lista, galeria, feed y espacial — elige la que mejor represente tu local." },
+    { text: "Multilenguaje (ES · EN · PT)", tip: "Carta traducida automaticamente al idioma del cliente." },
     { text: "Estadisticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, busquedas y estadisticas del garzon." },
     { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push al instante." },
     { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa." },

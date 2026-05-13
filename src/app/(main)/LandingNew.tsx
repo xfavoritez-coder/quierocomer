@@ -254,21 +254,21 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Carta QR digital", "Tu carta lista para escanear con QR"],
                 ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
               ]} btnText="Comenzar gratis" btnPrimary={false} />
-              <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes neto · $358.800/año" : "/mes neto"} discount={anual ? "-15%" : undefined} desc="Todo lo gratis + El Genio IA para vender más" featured features={[
+              <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes + IVA · $358.800/año" : "/mes + IVA"} discount={anual ? "-15%" : undefined} desc="Gratis + herramientas para destacar tus platos y mejorar la experiencia de tus clientes" featured features={[
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
                 ["2 vistas de carta", "Muestra tu carta en formato lista o grilla con fotos"],
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
                 ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
                 ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
-                ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
-              <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes neto · $478.800/año" : "/mes neto"} discount={anual ? "-20%" : undefined} desc="Todo lo Gold + herramientas avanzadas de retención" features={[
+              <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes + IVA · $478.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
+                ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
                 ["4 vistas de carta", "Lista, grilla, destacados y vista por categorías"],
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Productos sugeridos", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
-                ["Email automático de cumpleaños", "Envía felicitaciones y ofertas especiales en el cumpleaños de tus clientes"],
+                ["Automatización cumpleaños", "Envía felicitaciones y ofertas especiales en el cumpleaños de tus clientes"],
                 ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],
                 ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
