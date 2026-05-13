@@ -10,6 +10,8 @@ const OWNER_EDITABLE_FIELDS = [
   "waiterPanelActive",
   "birthdayPerk",
   "cartaColorMode",
+  "allPhotosReferential",
+  "defaultView",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
   "billingCompanyName", "billingRut", "billingGiro",
   "billingAddress", "billingCity", "billingEmail",
