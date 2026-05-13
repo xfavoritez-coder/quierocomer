@@ -60,9 +60,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
       <div style={{ minHeight: "100dvh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", gap: 60, padding: "40px 60px", fontFamily: "'Inter', sans-serif" }}>
         <div style={{ maxWidth: 360, flexShrink: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
-            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#E8A33D", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" /></svg>
-            </div>
+            <span style={{ color: "#E8A33D", fontSize: "1.2rem", letterSpacing: "4px" }}>✦ ✦ ✦</span>
             <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 500 }}>Carta QR Viva</span>
           </div>
           <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", fontWeight: 800, color: "white", lineHeight: 1.1, marginBottom: 16 }}>{restaurantName}</h1>
@@ -78,7 +76,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
             <span style={{ fontFamily: "'Cormorant Garamond', serif", color: "rgba(255,255,255,0.3)", fontSize: "0.9rem", fontWeight: 700 }}>QuieroComer<span style={{ color: "#E8A33D" }}>.cl</span></span>
           </div>
         </div>
-        <div style={{ width: 320, height: 692, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+        <div style={{ width: 290, height: 630, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 28, background: "#111", borderRadius: "0 0 18px 18px", zIndex: 10 }} />
           <iframe src={`/qr/${slug}`} style={{ width: "100%", height: "100%", border: "none", borderRadius: 38, background: "#f7f7f5" }} />
         </div>
