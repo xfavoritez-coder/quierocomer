@@ -2,12 +2,26 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  const action = process.argv[2];
+  if (action === "off") {
+    await prisma.abExperiment.update({ where: { slug: "landing-hero" }, data: { isActive: false } });
+    console.log("Deactivated");
+    await prisma.$disconnect();
+    return;
+  }
+  if (action === "on") {
+    await prisma.abExperiment.update({ where: { slug: "landing-hero" }, data: { isActive: true } });
+    console.log("Activated");
+    await prisma.$disconnect();
+    return;
+  }
+
   const exp = await prisma.abExperiment.findUnique({
     where: { slug: "landing-hero" },
     include: { variants: true },
   });
   if (exp) {
-    console.log(`${exp.name}: ${exp.variants.length} variants`);
+    console.log(`${exp.name}: ${exp.variants.length} variants (active: ${exp.isActive})`);
     exp.variants.forEach((v) => console.log(`  [${v.slot}] ${v.text}`));
   } else {
     console.log("NOT FOUND — seeding...");

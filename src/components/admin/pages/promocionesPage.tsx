@@ -762,8 +762,8 @@ export default function AdminPromociones() {
             </div>
           )}
 
-          {/* Modifier templates — only for multi-dish product promos */}
-          {cSelectedDishes.length > 1 && availableTemplates.length > 0 && (
+          {/* Modifier templates */}
+          {availableTemplates.length > 0 && (
             <div style={{ marginBottom: 12 }}>
               <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -840,7 +840,7 @@ export default function AdminPromociones() {
             </>
           )}
           {/* Modifier templates edit */}
-          {availableTemplates.length > 0 && (editing.promoType === "graphic" || (editing.promoType === "product" && (editing.dishIds?.length || 0) > 1)) && (
+          {availableTemplates.length > 0 && (
             <div style={{ marginTop: 10 }}>
               <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Modificadores</p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
