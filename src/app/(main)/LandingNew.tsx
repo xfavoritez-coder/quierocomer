@@ -24,7 +24,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   const [anual, setAnual] = useState(false);
 
   const openCarta = useCallback((slug: string) => {
-    window.open(`https://quierocomer.cl/qr/${slug}`, "_blank");
+    window.open(`/qr/${slug}?from=landing`, "_blank");
   }, []);
 
   const openRandomCarta = useCallback(() => {

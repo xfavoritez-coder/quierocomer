@@ -22,22 +22,71 @@ interface DesktopWrapperProps {
 
 export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang, marketingPromos }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
+  const [fromLanding, setFromLanding] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState("");
 
   useEffect(() => {
     const check = () => {
       const wide = window.innerWidth >= 1024;
       const hasCoarsePointer = window.matchMedia("(pointer: coarse)").matches;
       const hasFinePointer = window.matchMedia("(pointer: fine)").matches;
-      // Desktop = wide screen + fine pointer (mouse/trackpad), OR wide + no coarse pointer
-      // Mobile/tablet = coarse pointer (touch) without fine pointer
       setIsDesktop(wide && (hasFinePointer || !hasCoarsePointer));
     };
     check();
     window.addEventListener("resize", check);
+    setFromLanding(new URLSearchParams(window.location.search).get("from") === "landing");
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  if (isDesktop === null || !isDesktop) return <>{children}</>;
+  useEffect(() => {
+    if (!fromLanding || !isDesktop) return;
+    const url = `https://quierocomer.cl/qr/${slug}`;
+    const canvas = document.createElement("canvas");
+    const size = 400;
+    canvas.width = size;
+    canvas.height = size;
+    import("qrcode").then((QRCode) => {
+      QRCode.toDataURL(url, { width: size, margin: 1, errorCorrectionLevel: "H", color: { dark: "#0e0e0e", light: "#ffffff" } })
+        .then(setQrDataUrl).catch(() => {});
+    }).catch(() => {});
+  }, [fromLanding, isDesktop, slug]);
+
+  if (isDesktop === null) return <div style={{ minHeight: "100dvh", background: "#0a0a0a" }} />;
+  if (!isDesktop) return <>{children}</>;
+
+  // Landing preview: phone mockup + QR
+  if (fromLanding) {
+    return (
+      <div style={{ minHeight: "100dvh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", gap: 60, padding: "40px 60px", fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ maxWidth: 360, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
+            <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#E8A33D", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" /></svg>
+            </div>
+            <span style={{ color: "rgba(255,255,255,0.4)", fontSize: "0.85rem", fontWeight: 500 }}>Carta QR Viva</span>
+          </div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "2.8rem", fontWeight: 800, color: "white", lineHeight: 1.1, marginBottom: 16 }}>{restaurantName}</h1>
+          <p style={{ color: "rgba(255,255,255,0.4)", fontSize: "1.05rem", lineHeight: 1.7, marginBottom: 32 }}>Esta carta está diseñada para verse en tu celular. Escanea el QR o abre el link desde tu teléfono.</p>
+          {qrDataUrl && (
+            <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, marginBottom: 24 }}>
+              <img src={qrDataUrl} alt="QR" style={{ width: "100%", borderRadius: 8 }} />
+            </div>
+          )}
+          <p style={{ color: "rgba(255,255,255,0.25)", fontSize: "0.82rem" }}>quierocomer.cl/qr/{slug}</p>
+          <div style={{ marginTop: 40, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ color: "rgba(255,255,255,0.15)", fontSize: "0.75rem" }}>Powered by</span>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", color: "rgba(255,255,255,0.3)", fontSize: "0.9rem", fontWeight: 700 }}>QuieroComer<span style={{ color: "#E8A33D" }}>.cl</span></span>
+          </div>
+        </div>
+        <div style={{ width: 375, height: 812, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+          <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 28, background: "#111", borderRadius: "0 0 18px 18px", zIndex: 10 }} />
+          <div style={{ width: "100%", height: "100%", borderRadius: 38, overflow: "hidden", overflowY: "auto", background: "#f7f7f5", scrollbarWidth: "none" as const }}>
+            {children}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Desktop: full-width carta with grid layout
   if (restaurant && categories && dishes) {
@@ -48,6 +97,5 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
     );
   }
 
-  // Fallback if no data passed
   return <>{children}</>;
 }
