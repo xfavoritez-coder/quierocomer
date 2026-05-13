@@ -244,8 +244,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             </div>
             <div className="planes-grid">
               <PlanCard name="Gratis" price="$0" period="para siempre" desc="Carta QR digital para empezar a vender" features={[
-                ["Vista en lista", "Tus platos se muestran en formato lista, simple y directo"],
-                ["Panel autogestionable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
+                ["Carta QR digital", "Tu carta lista para escanear con QR"],
+                ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
               ]} btnText="Comenzar gratis" btnPrimary={false} />
               <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "$358.800/año" : "/mes neto"} desc="Todo lo gratis + El Genio IA para vender más" featured features={[
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
