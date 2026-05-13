@@ -25,7 +25,7 @@ const STYLES = `
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
-body { min-height: 100vh; background: var(--black); color: var(--cream); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body { min-height: 100vh; background: linear-gradient(180deg, rgba(9,8,6,.72), rgba(9,8,6,.96)), url('/landing/fondo.png') center/cover no-repeat; background-attachment: fixed; color: var(--cream); font-family: var(--font-body); line-height: 1.55; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
 .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
 a { color: inherit; text-decoration: none; }
 .page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
@@ -71,8 +71,6 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 `;
 
 const BODY = `
-<div style="position:fixed;inset:0;z-index:0;background:linear-gradient(180deg,rgba(9,8,6,.72),rgba(9,8,6,.96)),url('/landing/fondo.png') center/cover no-repeat;filter:saturate(.78) brightness(.68);transform:scale(1.02)"></div>
-<div style="position:fixed;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 82% 16%,rgba(232,163,61,.20),transparent 28%),radial-gradient(circle at 50% 54%,rgba(232,163,61,.12),transparent 36%),linear-gradient(90deg,rgba(0,0,0,.42),transparent 42%,rgba(0,0,0,.44))"></div>
 <div class="grain"></div>
 
 <main class="page">
