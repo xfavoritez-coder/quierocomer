@@ -6,6 +6,7 @@ import { sampleBeta } from "@/lib/ab/sampling";
 
 const EXPERIMENTS = [
   { slug: "birthday-modal", impressionEvent: "BIRTHDAY_MODAL_AUTO_SHOWN", conversionEvent: "BIRTHDAY_SAVED" },
+  { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK" },
 ] as const;
 
 /**

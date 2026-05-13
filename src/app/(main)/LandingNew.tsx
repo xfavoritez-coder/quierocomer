@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 interface Logo {
   slug: string;
@@ -18,10 +18,23 @@ const RESTAURANTS: [string, string][] = [
   ["nascosto-pizzeria", "Nascosto Pizzeria"],
 ];
 
+const AB_DEFAULTS = {
+  titleText: "Tu carta puede vender mucho m\u00e1s",
+  subtitleText: "Transformamos tu carta actual en una experiencia visual que despierta antojo y aumenta tus ventas",
+  ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
+};
+
 export default function LandingNew({ logos }: { logos: Logo[] }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
+
+  // A/B testing state
+  const [abTitle, setAbTitle] = useState(AB_DEFAULTS.titleText);
+  const [abSubtitle, setAbSubtitle] = useState(AB_DEFAULTS.subtitleText);
+  const [abCta, setAbCta] = useState(AB_DEFAULTS.ctaText);
+  const abIds = useRef<{ titleId: string | null; subtitleId: string | null; ctaId: string | null }>({ titleId: null, subtitleId: null, ctaId: null });
+  const impressionSent = useRef(false);
 
   const openCarta = useCallback((slug: string) => {
     window.open(`/qr/${slug}?from=landing`, "_blank");
@@ -31,6 +44,47 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
     const r = RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)];
     openCarta(r[0]);
   }, [openCarta]);
+
+  // Fetch A/B variants on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const forced = params.get("v");
+    const url = forced ? `/api/landing/ab?v=${forced}` : "/api/landing/ab";
+
+    fetch(url)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.titleText) setAbTitle(d.titleText);
+        if (d.subtitleText) setAbSubtitle(d.subtitleText);
+        if (d.ctaText) setAbCta(d.ctaText);
+        abIds.current = { titleId: d.titleId || null, subtitleId: d.subtitleId || null, ctaId: d.ctaId || null };
+
+        // Track impression
+        if (!impressionSent.current) {
+          impressionSent.current = true;
+          fetch("/api/qr/stat-events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              eventType: "LANDING_VIEWED",
+              metadata: { abExperiment: "landing-hero", titleId: d.titleId, subtitleId: d.subtitleId, ctaId: d.ctaId },
+            }),
+          }).catch(() => {});
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const trackCtaClick = useCallback(() => {
+    fetch("/api/qr/stat-events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventType: "LANDING_CTA_CLICK",
+        metadata: { abExperiment: "landing-hero", ...abIds.current },
+      }),
+    }).catch(() => {});
+  }, []);
 
   // Close modals on Escape
   useEffect(() => {
@@ -81,9 +135,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container hero-grid">
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
-            <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
-            <p className="hero-sub-text">Transformamos tu carta actual en una experiencia visual que despierta antojo y <span className="accent">aumenta tus ventas</span></p>
-            <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
+            <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(mucho más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
+            <p className="hero-sub-text" dangerouslySetInnerHTML={{ __html: abSubtitle.replace(/(aumenta tus ventas)/i, '<span class="accent">$1</span>') }} />
+            <a href="#cta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Foto o link · Te mostramos gratis como queda</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
@@ -224,7 +278,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Empieza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href="#" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
+          <a href="#" className="btn-primary" onClick={(e) => { e.preventDefault(); trackCtaClick(); }}>{abCta}</a>
           <div className="fine">Te mostramos gratis como queda</div>
         </div>
       </section>
