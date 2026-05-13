@@ -76,7 +76,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
             <span style={{ fontFamily: "'Cormorant Garamond', serif", color: "rgba(255,255,255,0.3)", fontSize: "0.9rem", fontWeight: 700 }}>QuieroComer<span style={{ color: "#E8A33D" }}>.cl</span></span>
           </div>
         </div>
-        <div style={{ width: 290, height: 630, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
+        <div style={{ width: 340, height: 692, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 28, background: "#111", borderRadius: "0 0 18px 18px", zIndex: 10 }} />
           <iframe src={`/qr/${slug}`} style={{ width: "100%", height: "100%", border: "none", borderRadius: 38, background: "#f7f7f5" }} />
         </div>
