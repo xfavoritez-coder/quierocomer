@@ -260,7 +260,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
                 ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
                 ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
-                ["Publicidad en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
+                ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
                 ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
               <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes neto · $478.800/año" : "/mes neto"} discount={anual ? "-20%" : undefined} desc="Todo lo Gold + herramientas avanzadas de retención" features={[
