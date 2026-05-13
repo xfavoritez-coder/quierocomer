@@ -222,9 +222,10 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">1</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Subes tu carta gratis</h3>
+                  <h3>Subes tu carta</h3>
                   <ul>
-                    <li>PDF, link o fotos.</li>
+                    <li>Gratis</li>
+                    <li>PDF, link o fotos</li>
                   </ul>
                 </div>
               </div>
@@ -517,7 +518,7 @@ section{position:relative}
 .hiw-step:last-child .hiw-line{display:none}.hiw-step:last-child{padding-bottom:0}
 .hiw-step h3{font-size:24px;font-weight:700;color:var(--cream);margin-bottom:6px;line-height:1.05}
 .hiw-step ul{list-style:none;padding:0;margin:0}
-.hiw-step li{color:rgba(232,221,200,.55);font-size:16px;line-height:1.5;padding-left:14px;position:relative}
+.hiw-step li{color:rgba(232,221,200,.65);font-size:17px;line-height:1.5;padding-left:14px;position:relative}
 .hiw-step li::before{content:'·';position:absolute;left:0;color:var(--amber);font-weight:700}
 .hiw-img-wrap{border-radius:12px;overflow:hidden;border:1px solid rgba(232,163,61,.1);box-shadow:0 12px 40px rgba(0,0,0,.3);aspect-ratio:1/1}
 .hiw-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
