@@ -205,7 +205,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             ].map((item, i) => (
               <div key={i} className={`faq-item${faqOpen === i ? " open" : ""}`}>
                 <div className="faq-q" onClick={() => setFaqOpen(faqOpen === i ? null : i)}>{item.q}</div>
-                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y probar la experiencia antes de decidir si sigues con un <a href="#" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlanesOpen(true); }} style={{ color: "var(--amber)", textDecoration: "underline", cursor: "pointer" }}>plan pagado</a>.</> : item.a}</div>
+                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y cuando quieras ver nuestros <a href="#" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlanesOpen(true); }} style={{ color: "var(--amber)", textDecoration: "underline", cursor: "pointer" }}>planes</a>.</> : item.a}</div>
               </div>
             ))}
           </div>
