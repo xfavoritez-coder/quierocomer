@@ -82,9 +82,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
-            <p className="hero-ia-text">Nuestra IA lo transforma automáticamente en una carta visual lista para compartir</p>
             <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-            <div className="microcopy">Gratis · Una foto o el link QR actual</div>
+            <div className="microcopy">Nuestra IA transforma gratis tu carta en segundos</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
