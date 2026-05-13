@@ -93,7 +93,7 @@ export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
     { text: "Estadisticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, busquedas y estadisticas del garzon." },
     { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push al instante." },
     { text: "Productos sugeridos", tip: "El Genio sugiere acompañamientos para subir el ticket de cada mesa." },
-    { text: "Email de cumpleaños automático", tip: "Cada cliente recibe un correo con un regalo personalizado el dia de su cumpleaños. Ves quien lo abrió y si realmente vino al local." },
+    { text: "Cumpleaños automáticos", tip: "Cada cliente recibe un correo con un regalo personalizado el dia de su cumpleaños. Ves quien lo abrió y si realmente vino al local." },
     { text: "Email marketing", tip: "Envia correos masivos a tus clientes con plantillas listas: ofertas, novedades, reactivacion." },
     { text: "Clientes ilimitados + CSV", tip: "Ve todos los registrados y exporta la lista." },
     { text: "Integracion con Toteat", tip: "Sincronizamos ventas reales con la carta. Dashboard en vivo y badges como 'lo mas pedido hoy'." },

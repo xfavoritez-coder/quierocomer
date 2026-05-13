@@ -268,7 +268,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Productos sugeridos", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
-                ["Automatización cumpleaños", "Envía felicitaciones y ofertas especiales en el cumpleaños de tus clientes"],
+                ["Cumpleaños automáticos", "Enviamos invitaciones especiales a clientes de cumpleaños para que lo celebren en tu restaurante"],
                 ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],
                 ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
