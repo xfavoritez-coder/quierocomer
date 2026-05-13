@@ -70,9 +70,6 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
 
           <div style={styles.qrCard}>
             <img src={qrUrl} alt="QR" style={styles.qrImg} />
-            <div style={styles.qrFooter}>
-              <span style={styles.qrLabel}>ESCANEA CON TU CÁMARA</span>
-            </div>
           </div>
 
           <p style={styles.url}>quierocomer.cl/qr/{slug}</p>
