@@ -73,8 +73,8 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 `;
 
 const BODY = `
-<div class="sc-bg"></div>
-<div class="sc-overlay"></div>
+<div style="position:fixed;inset:0;z-index:-3;background:linear-gradient(180deg,rgba(9,8,6,.72),rgba(9,8,6,.96)),url('/landing/fondo.png') center/cover no-repeat;filter:saturate(.78) brightness(.68);transform:scale(1.02)"></div>
+<div style="position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(circle at 82% 16%,rgba(232,163,61,.20),transparent 28%),radial-gradient(circle at 50% 54%,rgba(232,163,61,.12),transparent 36%),linear-gradient(90deg,rgba(0,0,0,.42),transparent 42%,rgba(0,0,0,.44))"></div>
 <div class="grain"></div>
 
 <main class="page">
