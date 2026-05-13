@@ -114,17 +114,13 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* NAV */}
       <nav>
         <div className="logo">
-          <svg className="lamp-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="13" cy="20" rx="9" ry="2.5" fill="currentColor" />
-            <path d="M19 20.5C23 20.5 27 18 27 13.5C27 11 25.5 9 23.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <path d="M19 15.5L23 14L21 11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <img src="/landing/logo.png" alt="" className="lamp-icon" />
           QuieroComer
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <a href="#" onClick={(e) => { e.preventDefault(); openRandomCarta(); }} className="nav-link">Carta ejemplo</a>
           <a href="#" onClick={(e) => { e.preventDefault(); setPlanesOpen(true); }} className="nav-link">Planes</a>
-          <a href="#cta" className="nav-cta">Subir carta</a>
+          <a href="/subircarta.html" className="nav-cta">Subir carta</a>
         </div>
       </nav>
 
@@ -137,7 +133,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(mucho más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
             <p className="hero-sub-text" dangerouslySetInnerHTML={{ __html: abSubtitle.replace(/(aumenta tus ventas)/i, '<span class="accent">$1</span>') }} />
-            <a href="#cta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
+            <a href="/subircarta.html" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Foto o link · Te mostramos gratis como queda</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
@@ -278,7 +274,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Empieza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href="#" className="btn-primary" onClick={(e) => { e.preventDefault(); trackCtaClick(); }}>{abCta}</a>
+          <a href="/subircarta.html" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
           <div className="fine">Te mostramos gratis como queda</div>
         </div>
       </section>
@@ -337,10 +333,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container footer-content">
           <div>
             <div className="logo">
-              <svg className="lamp-icon" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <ellipse cx="13" cy="20" rx="9" ry="2.5" fill="currentColor" />
-                <path d="M19 20.5C23 20.5 27 18 27 13.5C27 11 25.5 9 23.5 8.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
+              <img src="/landing/logo.png" alt="" className="lamp-icon" />
               QuieroComer
             </div>
             <div className="footer-copy">© 2026 QuieroComer® · Santiago, Chile</div>
