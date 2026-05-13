@@ -20,29 +20,22 @@ const RESTAURANTS: [string, string][] = [
 
 export default function LandingNew({ logos }: { logos: Logo[] }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
-  const [cartaModal, setCartaModal] = useState<{ slug: string; name: string } | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
 
-  const openCarta = useCallback((slug: string, name: string) => {
-    const isMobile = window.innerWidth < 1024 || window.matchMedia("(pointer:coarse)").matches;
-    if (isMobile) {
-      window.open(`https://quierocomer.cl/qr/${slug}`, "_blank");
-      return;
-    }
-    setCartaModal({ slug, name });
+  const openCarta = useCallback((slug: string) => {
+    window.open(`https://quierocomer.cl/qr/${slug}`, "_blank");
   }, []);
 
   const openRandomCarta = useCallback(() => {
     const r = RESTAURANTS[Math.floor(Math.random() * RESTAURANTS.length)];
-    openCarta(r[0], r[1]);
+    openCarta(r[0]);
   }, [openCarta]);
 
   // Close modals on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        setCartaModal(null);
         setPlanesOpen(false);
       }
     };
@@ -106,7 +99,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="logos-scroller">
           <div className="logos-track">
             {duplicatedLogos.map((l, i) => (
-              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug, l.name); }} className="logo-chip">
+              <a key={i} href="#" onClick={(e) => { e.preventDefault(); openCarta(l.slug); }} className="logo-chip">
                 {l.logoUrl ? (
                   <img src={l.logoUrl} alt={l.name} />
                 ) : (
@@ -228,34 +221,6 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
-      {/* CARTA MODAL */}
-      {cartaModal && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", gap: 60, padding: "40px 60px" }}>
-          <div style={{ maxWidth: 360, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 32 }}>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--amber)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0a0a0a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" /></svg>
-              </div>
-              <span style={{ color: "rgba(255,255,255,.4)", fontSize: 14, fontWeight: 500 }}>Carta QR Viva</span>
-            </div>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "2.8rem", fontWeight: 800, color: "white", lineHeight: 1.1, marginBottom: 16 }}>{cartaModal.name}</h2>
-            <p style={{ color: "rgba(255,255,255,.4)", fontSize: "1.05rem", lineHeight: 1.7, marginBottom: 32 }}>Esta carta está diseñada para verse en tu celular. Escanea el QR o abre el link desde tu teléfono.</p>
-            <div style={{ background: "white", borderRadius: 16, padding: 16, width: 180, marginBottom: 24 }}>
-              <img src={`https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://quierocomer.cl/qr/${cartaModal.slug}`} alt="QR" style={{ width: "100%", borderRadius: 8 }} />
-            </div>
-            <p style={{ color: "rgba(255,255,255,.25)", fontSize: 13 }}>quierocomer.cl/qr/{cartaModal.slug}</p>
-            <button onClick={() => setCartaModal(null)} style={{ marginTop: 32, background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", color: "var(--cream)", padding: "10px 20px", fontSize: 13, cursor: "pointer" }}>Cerrar</button>
-            <div style={{ marginTop: 40, display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: "rgba(255,255,255,.15)", fontSize: 12 }}>Powered by</span>
-              <span style={{ fontFamily: "var(--font-display)", color: "rgba(255,255,255,.3)", fontSize: 14, fontWeight: 700 }}>QuieroComer<span style={{ color: "var(--amber)" }}>.cl</span></span>
-            </div>
-          </div>
-          <div style={{ width: 375, height: 750, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
-            <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 28, background: "#111", borderRadius: "0 0 18px 18px", zIndex: 10 }} />
-            <iframe src={`https://quierocomer.cl/qr/${cartaModal.slug}`} style={{ width: "100%", height: "100%", border: "none", borderRadius: 38, background: "#f7f7f5" }} />
-          </div>
-        </div>
-      )}
 
       {/* PLANES MODAL */}
       {planesOpen && (
@@ -319,6 +284,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="footer-copy">© 2026 QuieroComer® · Santiago, Chile</div>
           </div>
           <div className="footer-links">
+            <a href="#" onClick={(e) => { e.preventDefault(); openRandomCarta(); }}>Carta ejemplo</a>
             <a href="#" onClick={(e) => { e.preventDefault(); setPlanesOpen(true); }}>Planes</a>
             <a href="#">Términos</a>
             <a href="#">Privacidad</a>
@@ -385,7 +351,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:820px;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
-.microcopy{font-size:13px;color:var(--cream-soft);margin-top:14px;opacity:.8}
+.microcopy{font-size:clamp(15px,2vw,13px);color:var(--cream-soft);margin-top:14px;opacity:.8}
 .phone-demo{width:200px;margin-left:-80px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
@@ -432,13 +398,6 @@ section{position:relative}
 .nace-banner p{font-family:var(--font-display)!important;font-size:clamp(24px,3.5vw,34px)!important;font-style:italic!important;color:var(--cream)!important;letter-spacing:.01em!important;margin:0 auto!important;padding:0!important;text-align:center!important}
 .nace-banner span{color:var(--cream)!important;text-decoration:underline!important;text-decoration-color:var(--amber)!important;text-underline-offset:4px!important}
 .product-proof{padding:120px 0;background:linear-gradient(rgba(10,9,8,.93),rgba(10,9,8,.93)),url('/landing/estoes.png');background-size:cover;background-position:center;position:relative;overflow:hidden}
-.product-proof::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(232,163,61,.06) 0%,transparent 70%);pointer-events:none}
-.product-proof::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border:1px solid rgba(232,163,61,.08);border-radius:50%;pointer-events:none;animation:pulse-ring 4s ease-in-out infinite}
-@keyframes pulse-ring{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
-.product-proof .container::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:400px;height:400px;background:radial-gradient(circle,rgba(232,163,61,.1) 0%,rgba(232,163,61,.03) 40%,transparent 70%);pointer-events:none;animation:glow-pulse 5s ease-in-out infinite}
-.product-proof .container::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:2px;background:linear-gradient(90deg,transparent,rgba(232,163,61,.25),rgba(232,163,61,.4),rgba(232,163,61,.25),transparent);animation:shimmer 4s ease-in-out infinite;pointer-events:none}
-@keyframes shimmer{0%,100%{opacity:0;transform:translate(-50%,-50%) scaleX(.3)}50%{opacity:1;transform:translate(-50%,-50%) scaleX(1)}}
-@keyframes glow-pulse{0%,100%{opacity:.4;transform:translateX(-50%) scale(.9)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
 .product-copy{text-align:center}
 .product-copy h2{font-size:clamp(40px,5.5vw,64px);line-height:1.1;margin-bottom:24px}
 .product-copy p{font-size:clamp(19px,2.5vw,17px);color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
@@ -461,9 +420,11 @@ section{position:relative}
 .faq-a{color:var(--cream-soft);font-size:16px;line-height:1.7;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0;text-align:center}
 .faq-item.open .faq-a{max-height:200px;padding:0 0 22px}
 .final-cta{padding:150px 0;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
-.final-cta h2{font-size:clamp(36px,5vw,62px);line-height:1.06;margin-bottom:34px}
+.final-cta h2{font-size:clamp(42px,6vw,68px);line-height:1.06;margin-bottom:34px}
 .final-cta p{font-family:var(--font-display);font-style:italic;font-size:24px;color:var(--cream-soft);margin-bottom:34px}
 .fine{font-size:13px;color:var(--gray-warm);margin-top:16px;letter-spacing:.05em}
+.btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
+.btn-secondary:hover{border-color:var(--amber);color:var(--cream)}
 .tip{display:inline-block;width:16px;height:16px;border-radius:50%;background:rgba(232,163,61,.15);color:var(--amber);font-size:10px;text-align:center;line-height:16px;margin-left:6px;cursor:help;position:relative;font-style:normal;font-weight:700;vertical-align:middle}
 .tip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--black);border:1px solid var(--amber);color:var(--cream-soft);font-size:12px;font-weight:400;padding:8px 12px;border-radius:6px;width:200px;white-space:normal;z-index:10;line-height:1.4;pointer-events:none}
 footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-deep)}
@@ -487,13 +448,13 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 .plan-btn{background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream)}
 .plan-btn-primary{background:var(--amber);color:var(--black);font-weight:700;border:none}
 @media(max-width:900px){
-  nav{padding:16px 20px}.logo{font-size:20px}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
-  .hero{padding:110px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(36px,10vw,52px)}.phone-demo{display:none}
+  nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
+  .hero{padding:110px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
   .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}
   .pain-card{grid-template-columns:35% 1fr;gap:12px}.pain-img{height:100%;min-height:200px}.pain-text{padding:16px 16px 16px 0;display:flex;flex-direction:column;justify-content:center;text-align:center}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .step{grid-template-columns:35% 1fr;gap:0}.step.reverse{grid-template-columns:1fr 35%}.step-img{height:220px}.step-text{padding:16px}.step-num{font-size:32px}.step h3{font-size:26px}.step p{font-size:16px}
   .planes-grid{grid-template-columns:1fr}
   .footer-content{flex-direction:column;text-align:center}.footer-links{justify-content:center}
-  .btn-primary{padding:17px 24px;font-size:14px}.final-cta{padding:100px 0}
+  .btn-primary{padding:18px 28px;font-size:17px}.final-cta{padding:100px 0}
 }
 `;
