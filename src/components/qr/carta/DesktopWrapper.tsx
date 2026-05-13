@@ -33,7 +33,13 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
     };
     check();
     window.addEventListener("resize", check);
-    setFromLanding(new URLSearchParams(window.location.search).get("from") === "landing");
+    const params = new URLSearchParams(window.location.search);
+    setFromLanding(params.get("from") === "landing");
+    // If embedded as mobile inside phone mockup, force mobile view
+    if (params.get("embed") === "mobile") {
+      setIsDesktop(false);
+      return () => window.removeEventListener("resize", check);
+    }
     return () => window.removeEventListener("resize", check);
   }, []);
 
@@ -93,7 +99,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
               </div>
             </div>
             <iframe
-              src={`/qr/${slug}`}
+              src={`/qr/${slug}?embed=mobile`}
               style={styles.screen}
               title={`Carta de ${restaurantName}`}
             />
