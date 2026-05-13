@@ -214,7 +214,24 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="product-text">
                 <h2>Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
                 <img src="/landing/555.png" alt="QuieroComer en acción" className="product-img-mobile" />
-                <p>Recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
+                <div className="capabilities-grid">
+                  <div className="capability">
+                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/></svg></div>
+                    <div><p className="capability-verb">Recomienda</p><p className="capability-detail">platos a cada mesa</p></div>
+                  </div>
+                  <div className="capability">
+                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
+                    <div><p className="capability-verb">Sugiere</p><p className="capability-detail">entradas, postres, café</p></div>
+                  </div>
+                  <div className="capability">
+                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg></div>
+                    <div><p className="capability-verb">Traduce</p><p className="capability-detail">tu carta al instante</p></div>
+                  </div>
+                  <div className="capability">
+                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+                    <div><p className="capability-verb">Entrega</p><p className="capability-detail">datos de qué miran</p></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -463,6 +480,11 @@ section{position:relative}
 .product-proof{padding:120px 0;background:var(--black);position:relative;overflow:hidden}
 .product-copy{text-align:center}
 .product-copy h2{font-size:clamp(40px,5.5vw,64px);line-height:1.1;margin-bottom:24px}
+.capabilities-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;margin-top:24px}
+.capability{display:flex;align-items:center;gap:12px;text-align:left}
+.capability-circle{width:44px;height:44px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(232,163,61,.12),rgba(232,163,61,.04));border:.5px solid rgba(232,163,61,.35);display:flex;align-items:center;justify-content:center;color:var(--amber)}
+.capability-verb{font-family:var(--font-display);font-style:italic;font-size:15px;color:var(--amber);font-weight:500;line-height:1.2;margin:0}
+.capability-detail{font-family:var(--font-body);font-size:11px;line-height:1.3;color:rgba(232,221,200,.6);margin:2px 0 0}
 .product-copy p{font-size:clamp(19px,2.5vw,17px);color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
 .steps{padding:120px 0;background:var(--black)}
 .steps-grid{display:grid;grid-template-columns:1fr;gap:32px}
@@ -514,7 +536,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
   .hero{padding:110px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
-  .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}.product-grid{grid-template-columns:1fr;text-align:center}.product-img{display:none}.product-img-mobile{display:block;width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1);margin:20px 0}
+  .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}.product-grid{grid-template-columns:1fr;text-align:center}.capabilities-grid{grid-template-columns:1fr;gap:14px}.product-img{display:none}.product-img-mobile{display:block;width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1);margin:20px 0}
   .pain-card{grid-template-columns:35% 1fr;gap:12px}.pain-img{height:100%;min-height:200px}.pain-text{padding:16px 16px 16px 0;display:flex;flex-direction:column;justify-content:center;text-align:center}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .step{grid-template-columns:35% 1fr;gap:0}.step.reverse{grid-template-columns:1fr 35%}.step-img{height:220px}.step-text{padding:16px}.step-num{font-size:32px}.step h3{font-size:26px}.step p{font-size:16px}
   .planes-grid{grid-template-columns:1fr}
