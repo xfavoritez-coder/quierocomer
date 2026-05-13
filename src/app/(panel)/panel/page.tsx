@@ -150,7 +150,6 @@ export default function PanelDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
         {[
           { icon: "📱", label: "Sesiones", value: data.todayScans },
-          { icon: "🧞", label: "Abrieron Genio", value: data.genioToday || 0 },
           { icon: "🎂", label: "Cumple registrados", value: (data as any).todayBirthdays || 0 },
         ].map((s, i) => (
           <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>

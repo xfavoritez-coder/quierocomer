@@ -202,7 +202,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
         <HeroKpi icon="🔁" value={metrics.returningVisitors} label="Clientes que volvieron" sub={metrics.totalVisitors > 0 ? `${metrics.returningPct}% del total ya te conocía` : ""} color="#a78bfa" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.10) 100%)" />
         <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
-        <HeroKpi icon="🧞" value={metrics.genioUsers || 0} label="Abrieron el Genio" sub={metrics.totalVisitors > 0 ? `${metrics.genioUsedPct || 0}% de tus visitantes` : ""} color="#4ade80" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(74,222,128,0.10) 100%)" />
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
@@ -221,16 +220,6 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                 <strong style={{ color: "#F4A623" }}>{topDish.count} {typeof topDish.count === "number" ? "vistas" : "veces"}</strong>
                 {hasToteat && salesByName.has(topDish.name) && <> · <strong style={{ color: "#16a34a" }}>{salesByName.get(topDish.name)} ventas</strong></>}
               </p>
-            </div>
-          </div>
-        )}
-        {peakHour && peakHour.count > 0 && (
-          <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(167,139,250,0.06) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", display: "flex", gap: 14, alignItems: "center" }}>
-            <div style={{ width: 70, height: 70, borderRadius: 12, background: "rgba(167,139,250,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.4rem", flexShrink: 0 }}>🕐</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "0.66rem", color: "#a78bfa", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Hora dorada</p>
-              <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>{peakHour.label} <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text3)", fontWeight: 400 }}>({peakHour.hint})</span></p>
-              <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", margin: 0 }}><strong style={{ color: "#a78bfa" }}>{peakHour.count} sesiones</strong> · cuándo más miran la carta</p>
             </div>
           </div>
         )}
