@@ -80,9 +80,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
         </div>
         <div style={{ width: 320, height: 692, background: "#111", borderRadius: 50, padding: 12, boxShadow: "0 50px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06), inset 0 0 0 1px rgba(255,255,255,0.04)", flexShrink: 0, position: "relative", overflow: "hidden" }}>
           <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 120, height: 28, background: "#111", borderRadius: "0 0 18px 18px", zIndex: 10 }} />
-          <div style={{ width: "100%", height: "100%", borderRadius: 38, overflow: "hidden", overflowY: "auto", background: "#f7f7f5", scrollbarWidth: "none" as const }}>
-            {children}
-          </div>
+          <iframe src={`/qr/${slug}`} style={{ width: "100%", height: "100%", border: "none", borderRadius: 38, background: "#f7f7f5" }} />
         </div>
       </div>
     );
