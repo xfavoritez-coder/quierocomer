@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Grid3X3, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Grid3X3, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -42,6 +42,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
     { icon: Bell, label: "Garzón", href: `${base}/garzon` },
     { icon: Mail, label: "Email Marketing", href: `${base}/campanias` },
+    { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
   ];
   const BOTTOM_TABS = [
     { icon: Home, label: "Inicio", href: base },
