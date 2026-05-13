@@ -454,7 +454,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 .plan-price{font-family:var(--font-display);font-size:38px;color:var(--cream);line-height:1}
 .plan-period{font-size:13px;color:var(--gray-warm);margin-bottom:16px}
 .plan-desc{font-size:14px;color:var(--cream-soft);padding-bottom:18px;border-bottom:1px solid var(--gray-deep);min-height:60px}
-.plan-features{list-style:none;margin-top:18px;display:grid;gap:10px;flex:1}
+.plan-features{list-style:none;margin-top:18px;display:grid;gap:10px}
 .plan-features li{font-size:13px;color:var(--cream-soft);padding-left:20px;position:relative}
 .plan-check{position:absolute;left:0;color:var(--amber);font-weight:800}
 .plan-btn,.plan-btn-primary{display:block;text-align:center;margin-top:22px;padding:14px;font-size:14px;font-weight:600;text-decoration:none;transition:.25s}
