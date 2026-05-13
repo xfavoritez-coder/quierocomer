@@ -162,7 +162,7 @@ const BODY = `
 
 <footer class="sc-footer">
   <div style="max-width:1220px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:center">
-    <div style="font-size:12px;color:var(--muted);margin-top:6px">© 2026 QuieroComer® · Santiago, Chile</div>
+    <div style="font-size:14px;color:var(--muted);margin-top:6px">© 2026 QuieroComer® · Todos los derechos reservados · Santiago, Chile</div>
     <div style="display:flex;gap:24px;justify-content:center;margin-top:12px">
       <a href="/landing" style="color:var(--muted);text-decoration:none;font-size:13px">Inicio</a>
       <a href="#" style="color:var(--muted);text-decoration:none;font-size:13px">Términos</a>

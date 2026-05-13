@@ -349,11 +349,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <footer>
         <div className="container footer-content">
           <div>
-            <div className="logo">
-              <img src="/landing/logo.png" alt="" className="lamp-icon" />
-              QuieroComer
-            </div>
-            <div className="footer-copy">© 2026 QuieroComer® · Santiago, Chile</div>
+            <div className="footer-copy">© 2026 QuieroComer® · Todos los derechos reservados · Santiago, Chile</div>
           </div>
           <div className="footer-links">
             <a href="#" onClick={(e) => { e.preventDefault(); openRandomCarta(); }}>Carta ejemplo</a>
@@ -514,7 +510,7 @@ section{position:relative}
 .tip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--black);border:1px solid var(--amber);color:var(--cream-soft);font-size:12px;font-weight:400;padding:8px 12px;border-radius:6px;width:200px;white-space:normal;z-index:10;line-height:1.4;pointer-events:none}
 footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-deep)}
 .footer-content{display:flex;justify-content:space-between;gap:20px;align-items:center;flex-wrap:wrap}
-.footer-copy{font-size:12px;color:var(--gray-warm);margin-top:6px}
+.footer-copy{font-size:14px;color:var(--gray-warm);margin-top:6px}
 .footer-links{display:flex;gap:24px}
 .footer-links a{color:var(--gray-warm);text-decoration:none;font-size:13px;cursor:pointer}
 .footer-links a:hover{color:var(--amber)}
