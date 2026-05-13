@@ -218,7 +218,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Empieza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="#" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-          <div className="fine">Gratis · Una foto o link QR</div>
+          <div className="fine">Te mostramos gratis como queda</div>
         </div>
       </section>
 
@@ -424,7 +424,7 @@ section{position:relative}
 .final-cta{padding:150px 0;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
 .final-cta h2{font-size:clamp(42px,6vw,68px);line-height:1.06;margin-bottom:34px}
 .final-cta p{font-family:var(--font-display);font-style:italic;font-size:24px;color:var(--cream-soft);margin-bottom:34px}
-.fine{font-size:13px;color:var(--gray-warm);margin-top:16px;letter-spacing:.05em}
+.fine{font-size:17px;color:var(--cream-soft);margin-top:16px;letter-spacing:.03em}
 .btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
 .btn-secondary:hover{border-color:var(--amber);color:var(--cream)}
 .tip{display:inline-block;width:16px;height:16px;border-radius:50%;background:rgba(232,163,61,.15);color:var(--amber);font-size:10px;text-align:center;line-height:16px;margin-left:6px;cursor:help;position:relative;font-style:normal;font-weight:700;vertical-align:middle}
