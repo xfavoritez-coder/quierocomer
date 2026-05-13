@@ -341,7 +341,7 @@ const LANDING_CSS = `
   --font-display:'Cormorant Garamond',serif;--font-body:'Inter',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw}
 body{background:var(--black);color:var(--cream);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body:before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.64 0 0 0 0 0.24 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.25;pointer-events:none;z-index:999;mix-blend-mode:overlay}
 h1,h2,h3{font-family:var(--font-display);font-weight:400;color:var(--cream);letter-spacing:-.01em}
@@ -369,7 +369,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
-.logos-band{background:var(--black-soft);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1);padding:44px 0;text-align:center;overflow:hidden}
+.logos-band{background:var(--black-soft);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1);padding:44px 0;text-align:center;overflow:hidden;max-width:100vw}
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}.logos-track:hover{animation-play-state:paused}
 .logos-scroller{overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent)}
