@@ -9,7 +9,7 @@ const VARIANTS: { slot: string; text: string }[] = [
   { slot: "title", text: "\u00bfC\u00f3mo se ver\u00eda tu carta si vendiera sola?" },
   { slot: "title", text: "Tu carta no es el problema. C\u00f3mo la muestras, s\u00ed." },
   // subtitle
-  { slot: "subtitle", text: "Transformamos tu carta actual en una experiencia visual que despierta antojo y aumenta tus ventas" },
+  { slot: "subtitle", text: "Transformamos tu carta actual en una que despierta antojo y aumenta tus ventas" },
   { slot: "subtitle", text: "Descúbrelo gratis en segundos" },
   { slot: "subtitle", text: "Te mostramos gratis cómo se vería mejorada" },
   // cta

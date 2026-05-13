@@ -8,7 +8,7 @@ const EXPERIMENT_SLUG = "landing-hero";
 
 const DEFAULTS = {
   titleText: "Tu carta puede vender mucho m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una experiencia visual que despierta antojo y aumenta tus ventas",
+  subtitleText: "Transformamos tu carta actual en una que despierta antojo y aumenta tus ventas",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 

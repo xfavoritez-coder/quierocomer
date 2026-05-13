@@ -21,7 +21,7 @@ const RESTAURANTS: [string, string][] = [
 
 const AB_DEFAULTS = {
   titleText: "Tu carta puede vender mucho m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una experiencia visual que despierta antojo y aumenta tus ventas",
+  subtitleText: "Transformamos tu carta actual en una que despierta antojo y aumenta tus ventas",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
@@ -135,7 +135,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(mucho más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
             <p className="hero-sub-text" dangerouslySetInnerHTML={{ __html: abSubtitle.replace(/(aumenta tus ventas)/i, '<span class="accent">$1</span>') }} />
             <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
-            <div className="microcopy">Foto o link · Te mostramos gratis como queda</div>
+            <div className="microcopy">Te mostramos gratis como queda</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
@@ -458,7 +458,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
 .hero-sub-text{font-size:clamp(17px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px}
-.microcopy{font-size:clamp(16px,2vw,16px);opacity:.5;color:var(--cream-soft);margin-top:14px;opacity:.8}
+.microcopy{font-size:clamp(16px,2vw,16px);color:var(--cream-soft);margin-top:8px;opacity:.8}
 .phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
