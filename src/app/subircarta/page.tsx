@@ -151,19 +151,15 @@ const BODY = `
         </div>
       </div>
 
-      <button class="cta" type="button">Continuar paso 2 <span>→</span></button>
-      <div class="trust below-cta">
-        <svg viewBox="0 0 24 24" fill="none" style="width:16px;height:16px;flex-shrink:0;color:var(--amber-2)"><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v10H6V11z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        Tu información está protegida
-      </div>
+      <button class="cta" type="button">Continuar <span>→</span></button>
     </div>
   </section>
 </main>
 
 <footer class="sc-footer">
   <div style="max-width:1220px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:center">
-    <div style="font-size:14px;color:var(--muted);margin-top:6px">© 2026 QuieroComer® · Todos los derechos reservados · Santiago, Chile</div>
-    <div style="display:flex;gap:24px;justify-content:center;margin-top:12px">
+    <div style="font-size:13px;color:rgba(120,110,100,.6);margin-bottom:10px">© 2026 QuieroComer® · Santiago, Chile</div>
+    <div style="display:flex;gap:24px;justify-content:center">
       <a href="/landing" style="color:var(--muted);text-decoration:none;font-size:13px">Inicio</a>
       <a href="#" style="color:var(--muted);text-decoration:none;font-size:13px">Términos</a>
       <a href="#" style="color:var(--muted);text-decoration:none;font-size:13px">Privacidad</a>

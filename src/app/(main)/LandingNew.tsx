@@ -144,9 +144,19 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
+      {/* CURVE DIVIDER */}
+      <div className="curve-divider">
+        <svg viewBox="0 0 1440 120" preserveAspectRatio="none" className="curve-svg">
+          <path d="M0,0 C360,50 1080,50 1440,0 L1440,120 L0,120 Z" fill="var(--black-soft)" />
+        </svg>
+        <div className="curve-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+      </div>
+
       {/* LOGOS */}
       <section className="logos-band">
-        <div className="logos-eyebrow">Los que ya la usan</div>
+        <div className="logos-eyebrow">Ya trabajan con nosotros</div>
         <div className="logos-scroller">
           <div className="logos-track">
             {duplicatedLogos.map((l, i) => (
@@ -164,75 +174,59 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
       </section>
 
-      {/* PROBLEM */}
-      <section className="problem">
-        <div className="container">
-          <h2>Transformamos tu carta en una experiencia diseñada para <span className="accent">despertar antojo y aumentar ventas</span></h2>
-        </div>
-      </section>
 
       {/* PAINS */}
       <section className="pains">
         <div className="container">
-          <div className="section-head">
-            <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center", marginBottom: 40 }}>
-              <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
-              <div style={{ fontFamily: "var(--font-display)", fontSize: "clamp(31px,4vw,45px)", fontStyle: "italic", color: "var(--cream)", lineHeight: 1.2 }}>
-                Pero antes, ¿te suena alguno de estos?
-              </div>
-              <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
-            </div>
+          <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(41px,8vw,73px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
+              Tu carta puede estar<br /><span className="accent" style={{ fontStyle: "italic" }}>frenando</span> tus ventas
+            </h2>
           </div>
           <div className="pain-grid">
-            {[
-              { img: "/landing/1.png", alt: "Cuenta del restaurante", num: "01", title: "Tu ticket de venta ya no aumenta", desc: "Sigues trabajando igual, pero sin una carta que sugiera entradas, té, café, postres.", quote: "No entiendo por qué ese plato casi no sale" },
-              { img: "/landing/3.png", alt: "Garzón corriendo", num: "02", title: "No siempre un garzón es vendedor", desc: "Tiene varias mesas, corre de un lado a otro y termina recomendando lo de siempre.", quote: "Mis garzones no son vendedores" },
-              { img: "/landing/333.png", alt: "Cliente yéndose", num: "03", title: "Y no retienes clientes", desc: "Te visitan una vez y no vuelven más, no captaste sus datos.", quote: "La carta no transmite lo bueno que realmente es el restaurante" },
-            ].map((p, i) => (
-              <div key={i} className="pain-card">
-                <img className="pain-img" src={p.img} alt={p.alt} />
-                <div className="pain-text">
-                  {p.quote && <p className="pain-quote">&ldquo;{p.quote}&rdquo;</p>}
-                  <h3>{p.title}</h3>
-                  <p>{p.desc}</p>
-                </div>
+            <div className="pain-card pain-reverse">
+              <div className="pain-text">
+                <h3>&ldquo;Mi ticket de venta no aumenta&rdquo;</h3>
+                <p>Sin una carta que sugiera, siempre venderás menos.</p>
               </div>
-            ))}
+              <img className="pain-img" src="/landing/1.png" alt="Cuenta del restaurante" />
+            </div>
+            <div className="pain-card">
+              <img className="pain-img" src="/landing/3.png" alt="Garzón corriendo" />
+              <div className="pain-text">
+                <h3>&ldquo;Mis garzones no venden más&rdquo;</h3>
+                <p>No siempre es el garzón, es la carta que no guía ni sugiere.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* PRODUCT PROOF */}
       <section className="product-proof">
-        <div className="container">
-          <div className="product-copy">
-            <div className="nace-banner">
-              <p>Por esto nace <span>QuieroComer</span></p>
+        <div className="container" style={{ textAlign: "center" }}>
+          <p className="proof-eyebrow">Por esto nace QuieroComer</p>
+          <h2 className="proof-title">Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
+          <div className="proof-img-wrap">
+            <img src="/landing/555.png" alt="QuieroComer en acción" className="proof-img" />
+          </div>
+          <div className="proof-features">
+            <div className="proof-feat">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/></svg>
+              <span>Recomienda platos</span>
             </div>
-            <div className="product-grid">
-              <img src="/landing/555.png" alt="QuieroComer en acción" className="product-img" />
-              <div className="product-text">
-                <h2>Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
-                <img src="/landing/555.png" alt="QuieroComer en acción" className="product-img-mobile" />
-                <div className="capabilities-grid">
-                  <div className="capability">
-                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/></svg></div>
-                    <div><p className="capability-verb">Recomienda</p><p className="capability-detail">platos a cada mesa</p></div>
-                  </div>
-                  <div className="capability">
-                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-                    <div><p className="capability-verb">Sugiere</p><p className="capability-detail">entradas, postres, café</p></div>
-                  </div>
-                  <div className="capability">
-                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg></div>
-                    <div><p className="capability-verb">Traduce</p><p className="capability-detail">tu carta al instante</p></div>
-                  </div>
-                  <div className="capability">
-                    <div className="capability-circle"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-                    <div><p className="capability-verb">Entrega</p><p className="capability-detail">datos de qué miran</p></div>
-                  </div>
-                </div>
-              </div>
+            <div className="proof-feat">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Vende extras</span>
+            </div>
+            <div className="proof-feat">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M5 8l6 6"/><path d="M4 14l6-6 2-3"/><path d="M2 5h12"/><path d="M22 22l-5-10-5 10"/><path d="M14 18h6"/></svg>
+              <span>Traduce tu carta</span>
+            </div>
+            <div className="proof-feat">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              <span>Entrega datos avanzados</span>
             </div>
           </div>
         </div>
@@ -429,8 +423,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
-.logos-band{background:var(--black-soft);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1);padding:44px 0;text-align:center;overflow:hidden;max-width:100vw}
-.logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
+.curve-divider{position:relative;height:80px;margin-top:-80px;z-index:3}
+.curve-svg{position:absolute;bottom:0;left:0;width:100%;height:80px}
+.curve-icon{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%);width:36px;height:36px;border-radius:50%;border:1.5px solid var(--amber);background:rgba(10,9,8,.9);display:flex;align-items:center;justify-content:center;color:var(--amber);z-index:4}
+.logos-band{background:var(--black-soft);border-top:none;border-bottom:none;padding:10px 0 20px;text-align:center;overflow:hidden;max-width:100vw}
+.logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,140,130,.7);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}.logos-track:hover{animation-play-state:paused}
 .logos-scroller{overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent)}
 .logo-chip{display:inline-flex;align-items:center;gap:14px;padding:17px 28px;border:1px solid var(--gray-deep);background:rgba(20,18,16,.7);text-decoration:none;color:var(--cream-soft);cursor:pointer}
@@ -443,7 +440,7 @@ section{position:relative}
 .problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.png');background-size:cover;background-position:center}
 .problem h2{font-size:clamp(41px,6vw,56px);line-height:1.12;max-width:900px;margin:0 auto 22px}
 .problem p{max-width:650px;margin:0 auto;color:var(--cream-soft);font-size:18px}
-.pains{padding:120px 0;background:var(--black-soft)}
+.pains{padding:0 0 120px;background:var(--black-soft)}
 .section-head{text-align:center;margin-bottom:70px}
 .section-head h2{font-size:clamp(38px,4.5vw,50px);line-height:1.12;margin-bottom:16px}
 .section-head p{max-width:620px;margin:0 auto;color:var(--cream-soft);font-size:17px}
@@ -458,24 +455,25 @@ section{position:relative}
 .quote-text{font-family:var(--font-display);font-style:italic;font-size:clamp(26px,4vw,36px);line-height:1.25;color:var(--cream);margin:0 0 16px;font-weight:500}
 .quote-attr{font-family:var(--font-body);font-style:normal;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);display:block}
 @media(max-width:640px){.transition-narrative{padding:3.5rem 1rem 2.5rem}.restaurant-quote{margin-top:2.5rem}.quote-text{font-size:clamp(26px,7vw,36px)}}
-.pain-grid{display:grid;grid-template-columns:1fr;gap:32px}
-.pain-card{display:grid;grid-template-columns:280px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s;min-height:280px}
+.pain-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.pain-card{display:grid;grid-template-columns:460px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s;min-height:180px}
 .pain-card:hover{border-color:rgba(232,163,61,.45);transform:translateY(-4px)}
-.pain-img{width:100%;height:280px;object-fit:cover;display:block}
+.pain-img{width:100%;height:180px;object-fit:cover;display:block}
+.pain-reverse{grid-template-columns:1fr 460px}
+.pain-reverse .pain-text{padding:32px 0 32px 32px}
 .pain-text{padding:32px 32px 32px 0}
 .pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
-.pain-card h3{font-size:30px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700}
+.pain-card h3{font-size:29px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700;font-family:var(--font-display);font-style:italic}
 .pain-card p{color:var(--cream-soft);font-size:17px}
 .pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
-.nace-banner{background:rgba(232,163,61,.08)!important;border-top:1px solid rgba(232,163,61,.15)!important;border-bottom:1px solid rgba(232,163,61,.15)!important;padding:14px 16px!important;margin-bottom:28px!important;text-align:center!important}
-.nace-banner p{font-family:var(--font-display)!important;font-size:clamp(24px,3.5vw,34px)!important;font-style:italic!important;color:var(--cream)!important;letter-spacing:.01em!important;margin:0 auto!important;padding:0!important;text-align:center!important}
-.nace-banner span{color:var(--cream)!important;text-decoration:underline!important;text-decoration-color:var(--amber)!important;text-underline-offset:4px!important}
-.product-grid{display:grid;grid-template-columns:1fr 1fr;gap:50px;align-items:center;max-width:1100px;margin:0 auto;text-align:left}
-.product-img{width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1)}
-.product-img-mobile{display:none}
 .product-proof{padding:120px 0;background:var(--black);position:relative;overflow:hidden}
-.product-copy{text-align:center}
-.product-copy h2{font-size:clamp(40px,5.5vw,64px);line-height:1.1;margin-bottom:24px}
+.proof-eyebrow{font-size:13px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:18px}
+.proof-title{font-family:var(--font-display);font-size:clamp(33px,5.5vw,59px);line-height:1.08;margin-bottom:40px;max-width:800px;margin-left:auto;margin-right:auto;font-weight:500}
+.proof-features{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:40px}
+.proof-feat{display:flex;align-items:center;gap:10px;color:var(--cream-soft);font-size:24px;font-family:var(--font-display);font-style:italic}
+.proof-feat svg{color:var(--amber);flex-shrink:0}
+.proof-img-wrap{max-width:720px;margin:0 auto;border-radius:16px;overflow:hidden;border:1px solid rgba(232,163,61,.12);box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.proof-img{width:100%;display:block}
 .capabilities-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;margin-top:24px}
 .capability{display:flex;align-items:center;gap:12px;text-align:left}
 .capability-circle{width:44px;height:44px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,rgba(232,163,61,.12),rgba(232,163,61,.04));border:.5px solid rgba(232,163,61,.35);display:flex;align-items:center;justify-content:center;color:var(--amber)}
@@ -502,7 +500,7 @@ section{position:relative}
 .faq-item.open .faq-a{max-height:200px;padding:0 0 22px}
 .final-cta{padding:150px 0;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
 .final-cta h2{font-size:clamp(42px,6vw,68px);line-height:1.06;margin-bottom:34px}
-.final-cta p{font-family:var(--font-display);font-style:italic;font-size:24px;color:var(--cream-soft);margin-bottom:34px}
+.final-cta p{font-family:var(--font-display);font-style:italic;font-size:26px;color:var(--cream-soft);margin-bottom:34px}
 .fine{font-size:17px;color:var(--cream-soft);margin-top:16px;letter-spacing:.03em}
 .btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
 .btn-secondary:hover{border-color:var(--amber);color:var(--cream)}
@@ -532,8 +530,8 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
   .hero{padding:70px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
-  .problem,.pains,.product-proof,.steps{padding:82px 0}.section-head{margin-bottom:42px}.product-grid{grid-template-columns:1fr;text-align:center}.capabilities-grid{grid-template-columns:1fr;gap:14px}.product-img{display:none}.product-img-mobile{display:block;width:100%;border-radius:12px;border:1px solid rgba(232,163,61,.1);margin:20px 0}
-  .pain-card{grid-template-columns:35% 1fr;gap:12px}.pain-img{height:100%;min-height:200px}.pain-text{padding:16px 16px 16px 0;display:flex;flex-direction:column;justify-content:center;text-align:center}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
+  .problem,.product-proof,.steps{padding:82px 0}.pains{padding:54px 0 82px}.section-head{margin-bottom:42px}.proof-features{gap:14px}.proof-feat{font-size:20px}.proof-img-wrap{max-width:100%;border-radius:12px}
+  .pain-card{grid-template-columns:45% 1fr;gap:10px}.pain-reverse{grid-template-columns:1fr 45%}.pain-img{height:100%;min-height:200px;max-height:230px}.pain-text{padding:16px!important;display:flex;flex-direction:column;justify-content:center;text-align:left}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:30px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .step{grid-template-columns:35% 1fr;gap:0}.step.reverse{grid-template-columns:1fr 35%}.step-img{height:220px}.step-text{padding:16px}.step-num{font-size:32px}.step h3{font-size:26px}.step p{font-size:16px}
   .planes-grid{grid-template-columns:1fr}
   .footer-content{flex-direction:column;text-align:center}.footer-links{justify-content:center}
