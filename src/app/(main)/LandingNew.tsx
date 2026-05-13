@@ -83,7 +83,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
             <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-            <div className="microcopy">Nuestra IA transforma gratis tu carta en segundos</div>
+            <div className="microcopy">Nuestra IA transformará gratis tu carta en una nueva carta viva</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
@@ -352,7 +352,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
-.microcopy{font-size:clamp(15px,2vw,13px);color:var(--cream-soft);margin-top:14px;opacity:.8}
+.microcopy{font-size:clamp(16px,2vw,18px);color:var(--cream-soft);margin-top:14px;opacity:.8}
 .phone-demo{width:200px;margin-left:-80px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
