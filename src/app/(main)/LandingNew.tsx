@@ -273,7 +273,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                   <h3>Tu ticket aumenta</h3>
                   <ul>
                     <li>Más consumo por mesa</li>
-                    <li>Más entradas, postres y café</li>
+                    <li>Diseñada para despertar antojo</li>
                   </ul>
                 </div>
               </div>
@@ -520,7 +520,8 @@ section{position:relative}
 .hiw-step ul{list-style:none;padding:0;margin:0}
 .hiw-step li{color:rgba(232,221,200,.65);font-size:17px;line-height:1.5;padding-left:14px;position:relative}
 .hiw-step li::before{content:'·';position:absolute;left:0;color:var(--amber);font-weight:700}
-.hiw-img-wrap{border-radius:12px;overflow:hidden;border:1px solid rgba(232,163,61,.1);box-shadow:0 12px 40px rgba(0,0,0,.3);aspect-ratio:1/1}
+.hiw-img-wrap{border-radius:0;overflow:hidden;border:none;box-shadow:none;aspect-ratio:1/1;position:relative}
+.hiw-img-wrap::after{content:'';position:absolute;inset:0;background:radial-gradient(circle,transparent 40%,rgba(0,0,0,.6) 100%);pointer-events:none}
 .hiw-img-wrap img{width:100%;height:100%;object-fit:cover;object-position:center 20%}
 .capabilities-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;margin-top:24px}
 .capability{display:flex;align-items:center;gap:12px;text-align:left}
