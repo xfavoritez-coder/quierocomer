@@ -263,14 +263,14 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
               <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes + IVA · $478.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
-                ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
                 ["4 vistas de carta", "Lista, grilla, destacados y vista por categorías"],
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Productos sugeridos", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],
+                ["Multiidioma (ES, EN, PT)", "Tu carta se traduce automáticamente a español, inglés y portugués"],
                 ["Cumpleaños automáticos", "Enviamos invitaciones especiales a clientes de cumpleaños para que lo celebren en tu restaurante"],
-                ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Clientes ilimitados", "Sin límite de clientes registrados"],
+                ["Email marketing", "Envía campañas de email a tu base de clientes registrados"],
                 ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
             </div>
