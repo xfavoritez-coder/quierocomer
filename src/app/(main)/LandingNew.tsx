@@ -83,7 +83,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
             <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-            <div className="microcopy">Nuestra IA te mostrará gratis como se verá mejorada</div>
+            <div className="microcopy">Nuestra IA te mostrará gratis como se verá tu Carta QR Viva</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
@@ -127,16 +127,16 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center", marginBottom: 40 }}>
               <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
               <div style={{ fontFamily: "var(--font-display)", fontSize: "clamp(31px,4vw,45px)", fontStyle: "italic", color: "var(--cream)", lineHeight: 1.2 }}>
-                ¿Te suena? Les sucede a casi todos
+                Tu mayor problema como dueño de restaurant
               </div>
               <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
             </div>
           </div>
           <div className="pain-grid">
             {[
-              { img: "/landing/3.png", alt: "Garzón corriendo", num: "01", title: "No siempre un garzón es vendedor", desc: "Tiene varias mesas, corre de un lado a otro y termina recomendando lo de siempre.", quote: "Mis garzones no son vendedores" },
-              { img: "/landing/333.png", alt: "Cliente yéndose", num: "02", title: "Y no retienes clientes", desc: "Te visitan una vez y no vuelven más, no captaste sus datos.", quote: "La carta no transmite lo bueno que realmente es el restaurante" },
-              { img: "/landing/1.png", alt: "Cuenta del restaurante", num: "03", title: "Tu ticket de venta se estancó", desc: "Sigues trabajando igual, pero sin una carta que sugiera entradas, té, café, postres.", quote: "No entiendo por qué ese plato casi no sale" },
+              { img: "/landing/1.png", alt: "Cuenta del restaurante", num: "01", title: "Tu ticket de venta ya no aumenta", desc: "Sigues trabajando igual, pero sin una carta que sugiera entradas, té, café, postres.", quote: "No entiendo por qué ese plato casi no sale" },
+              { img: "/landing/3.png", alt: "Garzón corriendo", num: "02", title: "No siempre un garzón es vendedor", desc: "Tiene varias mesas, corre de un lado a otro y termina recomendando lo de siempre.", quote: "Mis garzones no son vendedores" },
+              { img: "/landing/333.png", alt: "Cliente yéndose", num: "03", title: "Y no retienes clientes", desc: "Te visitan una vez y no vuelven más, no captaste sus datos.", quote: "La carta no transmite lo bueno que realmente es el restaurante" },
             ].map((p, i) => (
               <div key={i} className="pain-card">
                 <img className="pain-img" src={p.img} alt={p.alt} />
@@ -158,8 +158,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="nace-banner">
               <p>Por esto nace <span>QuieroComer</span></p>
             </div>
-            <h2>Un Genio que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
-            <p>A través de una nueva carta QR viva, recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
+            <h2>Una poderosa arma de ventas que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
+            <p>Una carta QR inteligente y avanzada que recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
           </div>
         </div>
       </section>
@@ -180,12 +180,12 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="step-text"><h3><span className="step-num">01</span> Sube tu carta</h3><p>Una foto de tu carta o el link de tu QR actual.</p></div>
             </div>
             <div className="step reverse">
-              <div className="step-text"><h3><span className="step-num">02</span> La analizamos</h3><p>Identificamos todos tus platos y te mostramos como se vería.</p></div>
+              <div className="step-text"><h3><span className="step-num">02</span> La analizamos y transformamos</h3><p>Automáticamente identificamos todos tus platos y te mostramos como se vería.</p></div>
               <img className="step-img" src="/landing/fondosec2.png" alt="La analizamos" />
             </div>
             <div className="step">
               <img className="step-img" src="/landing/persona.png" alt="Te la entregamos" />
-              <div className="step-text"><h3><span className="step-num">03</span> Te la entregamos</h3><p>En segundos tu Carta Viva lista para probar.</p></div>
+              <div className="step-text"><h3><span className="step-num">03</span> Te la entregamos</h3><p>En segundos tu nueva Carta QR Viva lista para probar.</p></div>
             </div>
           </div>
         </div>
@@ -347,14 +347,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 0 80px}
 .hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/hero-restaurante.jpg');background-size:cover;background-position:center;transform:scale(1.03)}
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
-.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:0;align-items:center}.hero-grid>div:first-child{text-align:center}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:0;max-width:1200px;margin:0 auto;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
 .hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:820px;margin-bottom:28px}
-.btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:12px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
+.btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
 .microcopy{font-size:clamp(18px,2vw,18px);color:var(--cream-soft);margin-top:14px;opacity:.8}
-.phone-demo{width:200px;margin-left:-80px;margin:0 auto;position:relative}
+.phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
@@ -369,7 +369,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logo-chip span:last-child{color:var(--amber)}
 @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 section{position:relative}
-.problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.82),rgba(10,9,8,.82)),url('/landing/fondosec2.png');background-size:cover;background-position:center}
+.problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.png');background-size:cover;background-position:center}
 .problem h2{font-size:clamp(41px,6vw,56px);line-height:1.12;max-width:900px;margin:0 auto 22px}
 .problem p{max-width:650px;margin:0 auto;color:var(--cream-soft);font-size:18px}
 .pains{padding:120px 0;background:var(--black-soft)}
