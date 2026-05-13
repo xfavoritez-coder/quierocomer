@@ -470,7 +470,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(150,140,130,.7);font-weight:600;margin-bottom:22px}
 .logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}
 @media(hover:hover){.logos-track:hover{animation-play-state:paused}}
-.logos-scroller{overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent)}
+.logos-scroller{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent);scrollbar-width:none}
+.logos-scroller::-webkit-scrollbar{display:none}
 .logo-chip{display:inline-flex;align-items:center;gap:14px;padding:17px 28px;border:1px solid var(--gray-deep);background:rgba(20,18,16,.7);text-decoration:none;color:var(--cream-soft);cursor:pointer}
 .logo-chip img,.logo-chip .logo-init{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
 .logo-init{display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}

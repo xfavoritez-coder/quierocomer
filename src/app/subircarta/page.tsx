@@ -77,7 +77,7 @@ const BODY = `
 
 <main class="page">
   <nav style="position:fixed;top:0;left:0;right:0;z-index:50;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)">
-    <a href="/landing" style="font-family:var(--font-display);font-size:22px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none">
+    <a href="/landing" style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none">
       <img src="/landing/logo.png" alt="" style="height:20px;width:auto;margin-right:-8px" />
       QuieroComer
     </a>
@@ -94,11 +94,9 @@ const BODY = `
 
   <section class="shell centered-shell">
     <div class="center-copy">
-      <p style="color:var(--amber-2);font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px">Paso 1 de 3</p>
-      <h1>Tu nueva carta<br>comienza <span>aquí.</span></h1>
+      <h1>Sube tu carta para ver<br>cómo te la <span>mejoramos.</span></h1>
     </div>
     <div class="form-side centered-form">
-      <p class="method-title first-title">¿Cómo tienes tu carta?</p>
       <div class="methods">
         <button class="method" type="button" data-mode="pdf">
           <svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" stroke-width="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
