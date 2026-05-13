@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview títulos</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--black:#0A0908;--black-soft:#131110;--amber:#E8A33D;--cream:#E8DDC8;--cream-soft:#C9BBA0;--gray-deep:#3A342D;--font-display:'Cormorant Garamond',serif;--font-body:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--black);color:var(--cream);font-family:var(--font-body);font-weight:300}
+.option{padding:80px 40px;text-align:center;border-bottom:1px solid var(--gray-deep);max-width:900px;margin:0 auto}
+.label{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);margin-bottom:30px;font-weight:600}
+</style>
+</head>
+<body>
+
+<div class="option">
+  <div class="label">Opción 1 — Dividido</div>
+  <div style="font-family:var(--font-display);font-size:52px;font-style:italic;color:var(--amber);line-height:1.1">¿Te suena?</div>
+  <div style="font-family:var(--font-body);font-size:14px;color:var(--cream-soft);margin-top:12px;letter-spacing:.2em;text-transform:uppercase">Les sucede a casi todos</div>
+</div>
+
+<div class="option">
+  <div class="label">Opción 2 — Estilo cita</div>
+  <div style="font-family:var(--font-display);font-size:46px;font-style:italic;color:var(--cream);line-height:1.2">
+    <span style="color:var(--amber);font-size:64px;vertical-align:top;line-height:0">"</span>
+    ¿Te suena? Les sucede a casi todos
+    <span style="color:var(--amber);font-size:64px;vertical-align:bottom;line-height:0">"</span>
+  </div>
+</div>
+
+<div class="option">
+  <div class="label">Opción 3 — H2 grande + subtexto</div>
+  <div style="font-family:var(--font-display);font-size:58px;color:var(--amber);line-height:1;font-weight:600">¿Te suena?</div>
+  <div style="font-family:var(--font-display);font-size:24px;color:var(--cream-soft);margin-top:14px;font-style:italic">Les sucede a casi todos</div>
+</div>
+
+<div class="option">
+  <div class="label">Opción 4 — Línea + texto</div>
+  <div style="display:flex;align-items:center;gap:20px;justify-content:center">
+    <div style="flex:1;max-width:120px;height:1px;background:linear-gradient(90deg,transparent,var(--amber))"></div>
+    <div style="font-family:var(--font-display);font-size:36px;font-style:italic;color:var(--cream)">¿Te suena? <span style="color:var(--amber)">Les sucede a casi todos</span></div>
+    <div style="flex:1;max-width:120px;height:1px;background:linear-gradient(270deg,transparent,var(--amber))"></div>
+  </div>
+</div>
+
+<div class="option">
+  <div class="label">Opción 5 — Badge + título</div>
+  <div style="display:inline-block;background:rgba(232,163,61,.1);border:1px solid rgba(232,163,61,.25);padding:8px 20px;margin-bottom:16px;font-size:13px;color:var(--amber);font-weight:600;letter-spacing:.08em">¿TE SUENA?</div>
+  <div style="font-family:var(--font-display);font-size:42px;color:var(--cream);font-style:italic">Les sucede a casi todos</div>
+</div>
+
+<div class="option">
+  <div class="label">Opción 6 — Minimal bold</div>
+  <div style="font-family:var(--font-body);font-size:16px;font-weight:700;color:var(--amber);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px">¿Te suena?</div>
+  <div style="font-family:var(--font-display);font-size:48px;color:var(--cream);line-height:1.1;font-style:italic">Les sucede a casi todos</div>
+</div>
+
+</body>
+</html>

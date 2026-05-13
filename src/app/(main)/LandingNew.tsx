@@ -90,7 +90,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1>Tu carta puede vender <span className="accent">mucho más</span></h1>
             <a href="#cta" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
-            <div className="microcopy">Una foto o el link QR actual</div>
+            <div className="microcopy">Gratis · Una foto o el link QR actual</div>
           </div>
           <div className="phone-demo" aria-label="Vista previa de Carta Viva">
             <div className="phone-frame">
@@ -123,8 +123,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* PROBLEM */}
       <section className="problem">
         <div className="container">
-          <h2>Tu mejor plato existe.<br /><span className="accent">Pero casi nadie lo pide.</span></h2>
-          <p>El problema no siempre está en la cocina. Muchas veces está en cómo la carta muestra, ordena y recomienda lo que ya tienes.</p>
+          <h2>Transformamos tu carta en una experiencia diseñada para <span className="accent">despertar antojo y aumentar ventas</span></h2>
         </div>
       </section>
 
@@ -132,18 +131,25 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="pains">
         <div className="container">
           <div className="section-head">
-            <div className="eyebrow">Le sucede a casi todos los dueños de restaurant</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center", marginBottom: 40 }}>
+              <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
+              <div style={{ fontFamily: "var(--font-display)", fontSize: "clamp(31px,4vw,45px)", fontStyle: "italic", color: "var(--cream)", lineHeight: 1.2 }}>
+                ¿Te suena? Les sucede a casi todos
+              </div>
+              <div style={{ flex: 1, maxWidth: 120, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
+            </div>
           </div>
           <div className="pain-grid">
             {[
-              { img: "/landing/3.png", alt: "Garzón corriendo", num: "01", title: "El garzón no alcanza", desc: "Tiene varias mesas, corre de un lado a otro y termina recomendando lo de siempre." },
-              { img: "/landing/333.png", alt: "Cliente yéndose", num: "02", title: "No retienes clientes", desc: "Mira una carta larga, no entiende qué conviene pedir y elige lo conocido." },
-              { img: "/landing/1.png", alt: "Cuenta del restaurante", num: "03", title: "Tu ticket se estanca", desc: "Sigues trabajando igual, pero sin una carta que sugiera extras, combos o platos estrella." },
+              { img: "/landing/3.png", alt: "Garzón corriendo", num: "01", title: "No siempre un garzón es vendedor", desc: "Tiene varias mesas, corre de un lado a otro y termina recomendando lo de siempre.", quote: "Mis garzones no son vendedores" },
+              { img: "/landing/333.png", alt: "Cliente yéndose", num: "02", title: "Y no retienes clientes", desc: "Te visitan una vez y no vuelven más, no captaste sus datos.", quote: "La carta no transmite lo bueno que realmente es el restaurante" },
+              { img: "/landing/1.png", alt: "Cuenta del restaurante", num: "03", title: "Tu ticket de venta se estancó", desc: "Sigues trabajando igual, pero sin una carta que sugiera entradas, té, café, postres.", quote: "No entiendo por qué ese plato casi no sale" },
             ].map((p, i) => (
               <div key={i} className="pain-card">
                 <img className="pain-img" src={p.img} alt={p.alt} />
                 <div className="pain-text">
-                  <h3><span className="pain-num">{p.num}</span> {p.title}</h3>
+                  {p.quote && <p className="pain-quote">&ldquo;{p.quote}&rdquo;</p>}
+                  <h3>{p.title}</h3>
                   <p>{p.desc}</p>
                 </div>
               </div>
@@ -156,9 +162,11 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="product-proof">
         <div className="container">
           <div className="product-copy">
-            <div className="eyebrow">¿Qué es QuieroComer?</div>
-            <h2>Un Genio que no reemplaza a tu equipo. <span className="accent">Lo potencia.</span></h2>
-            <p>Recomienda platos, muestra fotos, sugiere extras, traduce la carta y te entrega datos para saber qué miran tus clientes.</p>
+            <div className="nace-banner">
+              <p>Por esto nace <span>QuieroComer</span></p>
+            </div>
+            <h2>Un Genio que <strong>no reemplaza</strong> a tu equipo. <span className="accent">Lo potencia.</span></h2>
+            <p>Recomienda platos, sugiere entradas, postres, café. Traduce tu carta en varios idiomas y te entrega datos para saber qué miran tus clientes.</p>
           </div>
         </div>
       </section>
@@ -167,7 +175,11 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="steps">
         <div className="container">
           <div className="section-head">
-            <h2>Puedes ver gratis y en segundos <span className="accent">cómo queda tu carta</span></h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 20, justifyContent: "center" }}>
+              <div style={{ flex: 1, maxWidth: 100, height: 1, background: "linear-gradient(90deg,transparent,var(--amber))" }} />
+              <h2>Pruébalo <span className="accent">tú mismo</span></h2>
+              <div style={{ flex: 1, maxWidth: 100, height: 1, background: "linear-gradient(270deg,transparent,var(--amber))" }} />
+            </div>
           </div>
           <div className="steps-grid">
             <div className="step">
@@ -180,7 +192,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             </div>
             <div className="step">
               <img className="step-img" src="/landing/persona.png" alt="Te la entregamos" />
-              <div className="step-text"><h3><span className="step-num">03</span> Te la entregamos</h3><p>Tienes en segundos tu Carta Viva lista para probar.</p></div>
+              <div className="step-text"><h3><span className="step-num">03</span> Te la entregamos</h3><p>En segundos tu Carta Viva lista para probar.</p></div>
             </div>
           </div>
         </div>
@@ -189,7 +201,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FAQ */}
       <section className="faq">
         <div className="container">
-          <div className="section-head"><h2>Preguntas más frecuentes</h2></div>
+          <div className="section-head"><h2><strong>Preguntas más frecuentes</strong></h2></div>
           <div className="faq-list">
             {[
               { q: "¿Qué es QuieroComer?", a: "Una carta digital inteligente para restaurantes. Transforma tu carta en una experiencia visual que recomienda platos, muestra fotos, sugiere extras y ayuda al cliente a decidir mejor." },
@@ -209,7 +221,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta">
         <div className="container">
-          <h2>Tu restaurante puede vender más.<br /><span className="accent">Empieza hoy.</span></h2>
+          <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Empieza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="#" className="btn-primary">Sube tu carta · 60 segundos <span>→</span></a>
           <div className="fine">Gratis · Una foto o link QR</div>
@@ -368,19 +380,19 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 0 80px}
 .hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/hero-restaurante.jpg');background-size:cover;background-position:center;transform:scale(1.03)}
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
-.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center}.hero-grid>div:first-child{text-align:center}
+.hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:0;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
-.hero h1{font-size:clamp(46px,6vw,86px);line-height:1.02;max-width:820px;margin-bottom:28px}
+.hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:820px;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .microcopy{font-size:13px;color:var(--cream-soft);margin-top:14px;opacity:.8}
-.phone-demo{width:200px;margin:0 auto;position:relative}
+.phone-demo{width:200px;margin-left:-80px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
 .phone-frame img{width:100%;height:100%;display:block;border-radius:28px;object-fit:cover;object-position:top}
 .logos-band{background:var(--black-soft);border-top:1px solid rgba(232,163,61,.1);border-bottom:1px solid rgba(232,163,61,.1);padding:44px 0;text-align:center;overflow:hidden}
 .logos-eyebrow{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
-.logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}
+.logos-track{display:flex;gap:14px;width:max-content;animation:scroll 32s linear infinite}.logos-track:hover{animation-play-state:paused}
 .logos-scroller{overflow:hidden;mask-image:linear-gradient(90deg,transparent,black 12%,black 88%,transparent)}
 .logo-chip{display:inline-flex;align-items:center;gap:14px;padding:17px 28px;border:1px solid var(--gray-deep);background:rgba(20,18,16,.7);text-decoration:none;color:var(--cream-soft);cursor:pointer}
 .logo-chip img,.logo-chip .logo-init{width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0}
@@ -390,21 +402,36 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 section{position:relative}
 .problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.82),rgba(10,9,8,.82)),url('/landing/fondosec2.png');background-size:cover;background-position:center}
-.problem h2{font-size:clamp(38px,5.5vw,70px);line-height:1.12;max-width:900px;margin:0 auto 22px}
+.problem h2{font-size:clamp(41px,6vw,56px);line-height:1.12;max-width:900px;margin:0 auto 22px}
 .problem p{max-width:650px;margin:0 auto;color:var(--cream-soft);font-size:18px}
 .pains{padding:120px 0;background:var(--black-soft)}
 .section-head{text-align:center;margin-bottom:70px}
-.section-head h2{font-size:clamp(36px,5vw,62px);line-height:1.12;margin-bottom:16px}
+.section-head h2{font-size:clamp(38px,4.5vw,50px);line-height:1.12;margin-bottom:16px}
 .section-head p{max-width:620px;margin:0 auto;color:var(--cream-soft);font-size:17px}
+.transition-narrative{padding:4rem 1rem 3rem;text-align:center;background:var(--black-soft)}
+.hook{display:flex;align-items:center;justify-content:center;gap:14px;max-width:420px;margin:0 auto}
+.hook-line{flex:1;height:1px;background:rgba(232,163,61,.3)}
+.hook-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2.2vw,22px);color:var(--cream-soft);white-space:nowrap}
+.hook-subtitle{font-family:var(--font-body);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:rgba(232,163,61,.45);margin:14px 0 0}
+.hook-subtitle strong{color:var(--cream-soft)}
+.restaurant-quote{margin:3.5rem auto 0;max-width:800px;padding:0 1.5rem}
+.quote-mark{display:block;font-family:var(--font-display);font-size:64px;line-height:.4;color:rgba(232,163,61,.35);text-align:center;height:28px;margin-bottom:8px}
+.quote-text{font-family:var(--font-display);font-style:italic;font-size:clamp(26px,4vw,36px);line-height:1.25;color:var(--cream);margin:0 0 16px;font-weight:500}
+.quote-attr{font-family:var(--font-body);font-style:normal;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);display:block}
+@media(max-width:640px){.transition-narrative{padding:3.5rem 1rem 2.5rem}.restaurant-quote{margin-top:2.5rem}.quote-text{font-size:clamp(26px,7vw,36px)}}
 .pain-grid{display:grid;grid-template-columns:1fr;gap:32px}
-.pain-card{display:grid;grid-template-columns:280px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s}
+.pain-card{display:grid;grid-template-columns:280px 1fr;gap:32px;align-items:center;background:rgba(10,9,8,.7);border:1px solid var(--gray-deep);padding:0;overflow:hidden;transition:.3s;min-height:280px}
 .pain-card:hover{border-color:rgba(232,163,61,.45);transform:translateY(-4px)}
-.pain-img{width:100%;height:100%;object-fit:cover;display:block}
+.pain-img{width:100%;height:280px;object-fit:cover;display:block}
 .pain-text{padding:32px 32px 32px 0}
-.pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:inline}
+.pain-num{font-family:var(--font-display);font-size:44px;font-style:italic;color:var(--amber);opacity:.7;display:block;margin-bottom:6px}
 .pain-card h3{font-size:30px;line-height:1.1;margin-bottom:14px;display:inline;font-weight:700}
 .pain-card p{color:var(--cream-soft);font-size:17px}
-.product-proof{padding:120px 0;background:var(--black);position:relative;overflow:hidden}
+.pain-quote{font-family:var(--font-display);font-style:italic;color:#D4782A!important;font-size:24px!important;line-height:1.2;margin:0 0 10px}
+.nace-banner{background:rgba(232,163,61,.08)!important;border-top:1px solid rgba(232,163,61,.15)!important;border-bottom:1px solid rgba(232,163,61,.15)!important;padding:14px 16px!important;margin-bottom:28px!important;text-align:center!important}
+.nace-banner p{font-family:var(--font-display)!important;font-size:clamp(24px,3.5vw,34px)!important;font-style:italic!important;color:var(--cream)!important;letter-spacing:.01em!important;margin:0 auto!important;padding:0!important;text-align:center!important}
+.nace-banner span{color:var(--cream)!important;text-decoration:underline!important;text-decoration-color:var(--amber)!important;text-underline-offset:4px!important}
+.product-proof{padding:120px 0;background:linear-gradient(rgba(10,9,8,.93),rgba(10,9,8,.93)),url('/landing/estoes.png');background-size:cover;background-position:center;position:relative;overflow:hidden}
 .product-proof::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(232,163,61,.06) 0%,transparent 70%);pointer-events:none}
 .product-proof::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:200px;height:200px;border:1px solid rgba(232,163,61,.08);border-radius:50%;pointer-events:none;animation:pulse-ring 4s ease-in-out infinite}
 @keyframes pulse-ring{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.5}50%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
@@ -413,16 +440,16 @@ section{position:relative}
 @keyframes shimmer{0%,100%{opacity:0;transform:translate(-50%,-50%) scaleX(.3)}50%{opacity:1;transform:translate(-50%,-50%) scaleX(1)}}
 @keyframes glow-pulse{0%,100%{opacity:.4;transform:translateX(-50%) scale(.9)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
 .product-copy{text-align:center}
-.product-copy h2{font-size:clamp(36px,5vw,62px);line-height:1.1;margin-bottom:24px}
-.product-copy p{font-size:17px;color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
+.product-copy h2{font-size:clamp(40px,5.5vw,64px);line-height:1.1;margin-bottom:24px}
+.product-copy p{font-size:clamp(19px,2.5vw,17px);color:var(--cream-soft);margin-bottom:24px;max-width:700px;margin-left:auto;margin-right:auto}
 .steps{padding:120px 0;background:var(--black)}
 .steps-grid{display:grid;grid-template-columns:1fr;gap:32px}
 .step{display:grid;grid-template-columns:280px 1fr;gap:0;align-items:center;background:var(--black-soft);border:1px solid var(--gray-deep);overflow:hidden}
 .step.reverse{grid-template-columns:1fr 280px}
 .step-img{width:100%;height:320px;object-fit:cover;display:block}
 .step-text{padding:36px 32px;text-align:center}
-.step-num{font-family:var(--font-display);font-size:52px;font-style:italic;color:var(--amber);opacity:.75;display:inline}
-.step h3{font-size:42px;display:inline;font-weight:700;margin-bottom:14px}
+.step-num{font-family:var(--font-display);font-size:40px;font-style:italic;color:var(--amber);opacity:.75;display:inline}
+.step h3{font-size:32px;display:inline;font-weight:700;margin-bottom:14px}
 .step p{color:var(--cream-soft);font-size:22px;margin-top:18px}
 .faq{padding:100px 0;background:var(--black)}
 .faq .section-head{text-align:center}
@@ -434,7 +461,7 @@ section{position:relative}
 .faq-a{color:var(--cream-soft);font-size:16px;line-height:1.7;max-height:0;overflow:hidden;transition:max-height .35s ease,padding .35s ease;padding:0;text-align:center}
 .faq-item.open .faq-a{max-height:200px;padding:0 0 22px}
 .final-cta{padding:150px 0;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
-.final-cta h2{font-size:clamp(42px,6vw,78px);line-height:1.06;margin-bottom:34px}
+.final-cta h2{font-size:clamp(36px,5vw,62px);line-height:1.06;margin-bottom:34px}
 .final-cta p{font-family:var(--font-display);font-style:italic;font-size:24px;color:var(--cream-soft);margin-bottom:34px}
 .fine{font-size:13px;color:var(--gray-warm);margin-top:16px;letter-spacing:.05em}
 .tip{display:inline-block;width:16px;height:16px;border-radius:50%;background:rgba(232,163,61,.15);color:var(--amber);font-size:10px;text-align:center;line-height:16px;margin-left:6px;cursor:help;position:relative;font-style:normal;font-weight:700;vertical-align:middle}
