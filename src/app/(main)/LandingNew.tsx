@@ -396,7 +396,7 @@ h1,h2,h3{font-family:var(--font-display);font-weight:400;color:var(--cream);lett
 .accent{color:var(--amber);font-style:italic}
 nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(180deg,rgba(10,9,8,.92),rgba(10,9,8,.15));backdrop-filter:blur(8px)}
 .logo{font-family:var(--font-display);font-size:24px;font-weight:500;color:var(--cream);display:flex;align-items:center;gap:12px;letter-spacing:.02em}
-.lamp-icon{height:22px;width:auto;margin-right:-8px}
+.lamp-icon{height:26px;width:auto;margin-right:-2px;object-fit:contain}
 .nav-link{color:var(--cream-soft);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-link:hover{color:var(--amber)}
 .nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:.25s}
