@@ -66,6 +66,7 @@ export default function AjustesPage() {
       const res = await fetch(`/api/admin/locales/${rid}`);
       if (!res.ok) { setLoading(false); return; }
       const d = await res.json();
+      console.log("AJUSTES fetch:", JSON.stringify({ cartaColorMode: d.cartaColorMode, waiterPanelActive: d.waiterPanelActive, allPhotosReferential: d.allPhotosReferential, defaultView: d.defaultView }));
       setData(d);
       setBirthdayPerk(d.birthdayPerk || "");
     } catch {}
@@ -84,9 +85,10 @@ export default function AjustesPage() {
         body: JSON.stringify(fields),
       });
       if (res.ok) {
-        toast.success("Guardado");
         const updated = await res.json();
+        console.log("AJUSTES save response:", JSON.stringify({ cartaColorMode: updated.cartaColorMode, waiterPanelActive: updated.waiterPanelActive, allPhotosReferential: updated.allPhotosReferential }));
         setData(updated);
+        toast.success("Guardado");
       } else {
         const err = await res.json();
         toast.error(err.error || "Error al guardar");
