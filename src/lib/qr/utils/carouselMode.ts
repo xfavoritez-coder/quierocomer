@@ -27,7 +27,9 @@ export function getCarouselMode(diet: string | null, restrictions: string[], res
   const hasLactosa = active.includes("lactosa");
   const hasSoja = active.includes("soya") || active.includes("soja");
   const { hasNuts, nonNutCount } = collapseNuts(active);
-  const totalThings = (hasDiet ? 1 : 0) + nonNutCount + (hasNuts ? 1 : 0);
+  // _spicy only reorders, doesn't generate a carousel — exclude from count
+  const spicyCount = active.includes("_spicy") ? 1 : 0;
+  const totalThings = (hasDiet ? 1 : 0) + nonNutCount - spicyCount + (hasNuts ? 1 : 0);
 
   // Single selection → individual banner
   if (totalThings === 1) {
@@ -141,7 +143,7 @@ export function getDietMessage(diet: string | null, restrictions: string[], rest
   // un carousel agrupando casi toda la carta. En su lugar, mostramos un
   // mensaje positivo: la carta ya esta reordenada con los picantes al final
   // (los penaliza dishScoring) y se destacan con el SpicyStamp en la foto.
-  const noEffectiveDiet = !diet || diet === "omnivore";
+  const noEffectiveDiet = !diet || diet === "omnivore" || dietRedundant;
   const onlySpicy = noEffectiveDiet && active.length === 1 && active[0] === "_spicy";
   if (onlySpicy) return "reordered-spicy";
 
