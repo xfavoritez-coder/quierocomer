@@ -34,6 +34,16 @@ export async function PATCH(
       },
     });
 
+    // Fire-and-forget: trigger async processing if this is a LINK lead
+    if (lead.cartaUrl && lead.cartaStatus === "PENDING") {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      fetch(`${baseUrl}/api/subircarta/process`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: lead.id }),
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ id: lead.id });
   } catch (error) {
     console.error("[SubirCarta PATCH]", error);
