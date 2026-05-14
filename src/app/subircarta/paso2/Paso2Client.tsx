@@ -45,21 +45,33 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch lead data
+  // Fetch lead data — redirect to confirmation if already completed
   useEffect(() => {
     if (!leadId) return;
     fetch(`/api/subircarta/${leadId}`)
       .then((r) => r.json())
       .then((data) => {
+        if (data.email) {
+          router.replace(`/subircarta/confirmacion?id=${leadId}`);
+          return;
+        }
         if (data.cartaUrl) setCartaUrl(data.cartaUrl);
         if (data.cartaFileUrl) setCartaFileUrl(data.cartaFileUrl);
         if (data.cartaType) setCartaType(data.cartaType);
       })
       .catch(() => {});
-  }, [leadId]);
+  }, [leadId, router]);
 
-  // Progress animation — ~19s total, non-linear, with staggered check reveals
+  // Progress animation — skip if already seen for this lead
   useEffect(() => {
+    const storageKey = `subircarta_anim_${leadId}`;
+    if (sessionStorage.getItem(storageKey)) {
+      setProgress(100);
+      setCompletedSteps(PROGRESS_STEPS.length);
+      setAnimDone(true);
+      return;
+    }
+
     let cancelled = false;
     const totalDuration = PROGRESS_STEPS.reduce((s, st) => s + st.duration, 0);
     const startTime = Date.now();
@@ -71,7 +83,6 @@ export default function Paso2Client() {
       const eased = easeProgress(linear);
       setProgress(Math.min(Math.round(eased * 100), 100));
 
-      // Stagger check completion — each check appears ~800ms after its time window ends
       let done = 0;
       let acc = 0;
       for (const step of PROGRESS_STEPS) {
@@ -83,10 +94,10 @@ export default function Paso2Client() {
       if (linear < 1) {
         requestAnimationFrame(tick);
       } else {
-        // Final delay before revealing form — let last check appear first
         setTimeout(() => {
           if (!cancelled) {
             setCompletedSteps(PROGRESS_STEPS.length);
+            sessionStorage.setItem(storageKey, "1");
             setTimeout(() => { if (!cancelled) setAnimDone(true); }, 600);
           }
         }, 900);

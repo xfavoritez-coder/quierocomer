@@ -51,7 +51,7 @@ export async function GET(
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },
-      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true },
+      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true, email: true },
     });
 
     if (!lead) {
