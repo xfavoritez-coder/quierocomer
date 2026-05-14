@@ -371,6 +371,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="planes-grid">
               <PlanCard name="Gratis" price="$0" period="para siempre" desc="Carta QR digital para empezar a vender" features={[
                 ["Carta QR digital", "Tu carta lista para escanear con QR"],
+                ["2 vistas de carta", "Muestra tu carta en 2 distintas vistas para que elijas la que mejor represente tu local"],
                 ["Panel autoadministrable", "Edita platos, precios y fotos desde tu panel sin depender de nadie"],
               ]} btnText="Comenzar gratis" btnPrimary={false} />
               <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes + IVA · $358.800/año" : "/mes + IVA"} discount={anual ? "-15%" : undefined} desc="Gratis + herramientas para destacar tus platos y mejorar la experiencia de tus clientes" featured features={[
