@@ -149,11 +149,11 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         style={{
           width: size,
           height: size,
-          background: state === "success" ? "#16a34a" : isInactive ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.55)",
+          background: state === "success" ? "#16a34a" : isInactive ? "var(--carta-surface, rgba(0,0,0,0.35))" : "var(--carta-surface, rgba(0,0,0,0.55))",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
-          border: state === "success" ? "none" : "1px solid rgba(255,255,255,0.08)",
-          boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.2)",
+          border: state === "success" ? "none" : "1px solid var(--carta-card-border, rgba(255,255,255,0.08))",
+          boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.25)",
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
           opacity: isInactive ? 0.6 : 1,
         }}
