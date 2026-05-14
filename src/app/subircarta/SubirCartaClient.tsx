@@ -18,8 +18,9 @@ export default function SubirCartaClient() {
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
+  const normalizedUrl = linkUrl.trim() && !linkUrl.trim().match(/^https?:\/\//) ? `https://${linkUrl.trim()}` : linkUrl.trim();
   const isLinkValid = mode === "link" && (() => {
-    try { new URL(linkUrl); return true; } catch { return false; }
+    try { new URL(normalizedUrl); return true; } catch { return false; }
   })();
 
   const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;
@@ -44,7 +45,7 @@ export default function SubirCartaClient() {
         const res = await fetch("/api/subircarta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ cartaType: "LINK", cartaUrl: linkUrl }),
+          body: JSON.stringify({ cartaType: "LINK", cartaUrl: normalizedUrl }),
         });
         const data = await res.json();
         if (!res.ok) { setError(data.error || "Error al procesar tu carta."); return; }
