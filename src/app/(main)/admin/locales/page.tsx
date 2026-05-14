@@ -296,7 +296,12 @@ export default function AdminLocales() {
           <p style={{ margin: 0 }}>Tema: {selected.cartaTheme}</p>
           <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
             <span>Modo:</span>
-            <div style={{ display: "flex", gap: 4 }}>
+            <div style={{ position: "relative", display: "flex", background: "rgba(255,255,255,0.06)", borderRadius: 8, padding: 2, width: 120 }}>
+              <div style={{
+                position: "absolute", top: 2, left: (selected.cartaColorMode || "LIGHT") === "LIGHT" ? 2 : "50%",
+                width: "calc(50% - 2px)", height: "calc(100% - 4px)", borderRadius: 6,
+                background: "#F4A623", transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+              }} />
               {(["LIGHT", "DARK"] as const).map((m) => (
                 <button
                   key={m}
@@ -304,16 +309,17 @@ export default function AdminLocales() {
                     await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cartaColorMode: m }) });
                     const updated = { ...selected, cartaColorMode: m };
                     setSelected(updated);
-                    setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                    setRestaurants((prev: any[]) => prev.map((x: any) => x.id === selected.id ? updated : x));
                   }}
                   style={{
-                    padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-                    background: (selected.cartaColorMode || "LIGHT") === m ? "#F4A623" : "rgba(255,255,255,0.06)",
+                    flex: 1, padding: "4px 0", borderRadius: 6, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600, position: "relative", zIndex: 1,
+                    background: "transparent",
                     color: (selected.cartaColorMode || "LIGHT") === m ? "#0a0a0a" : "#888",
+                    transition: "color 0.2s",
                   }}
                 >
-                  {m === "LIGHT" ? "Light" : "Dark"}
+                  {m === "LIGHT" ? "☀️ Light" : "🌙 Dark"}
                 </button>
               ))}
             </div>
