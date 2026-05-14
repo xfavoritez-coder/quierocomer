@@ -136,35 +136,21 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Fotos referenciales */}
+      {/* Regalo de cumpleaños */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Fotos referenciales</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>Muestra "Imagen referencial" en todos los platos de tu carta</p>
-          </div>
-          <Toggle
-            active={(data as any).allPhotosReferential}
-            onToggle={() => save({ allPhotosReferential: !(data as any).allPhotosReferential })}
-          />
-        </div>
-      </div>
-
-      {/* Regalo de cumpleanos */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Regalo de cumpleanos</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Regalo de cumpleaños</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
           Si pones algo aqui, aparece en el modal de captura de cumple para invitar al cliente a registrar su fecha.
         </p>
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>
-            Que le regalas al cumpleanero?
+            ¿Qué le regalas al cumpleañero?
           </label>
           <input
             value={birthdayPerk}
             onChange={(e) => setBirthdayPerk(e.target.value.slice(0, 80))}
             style={inputStyle}
-            placeholder="Ej: Postre de cortesia"
+            placeholder="Ej: Postre de cortesía"
           />
           <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
             {birthdayPerk.length}/80
