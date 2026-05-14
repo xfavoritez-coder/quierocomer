@@ -46,7 +46,7 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
   return (
     <div style={{ position: "relative" }}>
       {toastVisible && (
-        <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 36px 10px 14px", borderRadius: 12, maxWidth: 260, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out" }}>
+        <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: -10, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 36px 10px 14px", borderRadius: 12, width: 280, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out" }}>
           {toastText}
           <button
             onClick={(e) => { e.stopPropagation(); dismiss(); }}
