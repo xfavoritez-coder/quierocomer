@@ -136,34 +136,6 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Regalo de cumpleaños */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Incentivo de cumpleaños</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
-          Este texto se muestra en la carta cuando le pedimos al cliente su fecha de cumpleaños. Es lo que lo motiva a registrarse.
-        </p>
-        <div style={{ marginBottom: 12 }}>
-          <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>
-            ¿Qué le ofreces para que registre su cumpleaños?
-          </label>
-          <input
-            value={birthdayPerk}
-            onChange={(e) => setBirthdayPerk(e.target.value.slice(0, 80))}
-            style={inputStyle}
-            placeholder="Ej: Postre de cortesía"
-          />
-          <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>
-            {birthdayPerk.length}/80
-          </p>
-        </div>
-        <button
-          onClick={() => save({ birthdayPerk: birthdayPerk.trim() || null })}
-          disabled={saving}
-          style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}
-        >
-          {saving ? "Guardando..." : "Guardar regalo"}
-        </button>
-      </div>
 
       {/* Vista por defecto */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
