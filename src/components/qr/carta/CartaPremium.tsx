@@ -74,7 +74,7 @@ interface CartaProps {
   announcements?: { id: string; text: string; linkUrl: string | null }[];
 }
 
-function ScrollFade({ color = "#f7f7f5" }: { color?: string }) {
+function ScrollFade({ color = "var(--carta-bg)" }: { color?: string }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showFade, setShowFade] = useState(true);
 
@@ -477,16 +477,16 @@ export default function CartaPremium({
   }, [categories, hasPromos, dietNavItem]);
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "#f7f7f5" }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)" }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* Search overlay on CategoryNav */}
       {searchOpen ? (
         <div
           className="sticky top-0 z-40"
-          style={{ position: "sticky", top: 0, background: "#f7f7f5", borderBottom: "1px solid #f0f0f0", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
+          style={{ position: "sticky", top: 0, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", padding: "0 12px", gap: 8 }}
         >
-          <Search size={16} color="rgba(14,14,14,0.35)" style={{ flexShrink: 0 }} />
+          <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
           <input
             autoFocus
             type="search"
@@ -499,7 +499,7 @@ export default function CartaPremium({
               border: "none",
               outline: "none",
               fontSize: "16px",
-              color: "#0e0e0e",
+              color: "var(--carta-text)",
               background: "transparent",
               fontFamily: "inherit",
             }}
@@ -508,7 +508,7 @@ export default function CartaPremium({
             onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
             style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}
           >
-            <X size={18} color="rgba(14,14,14,0.4)" />
+            <X size={18} color="var(--carta-text-muted)" />
           </button>
         </div>
       ) : (
@@ -540,7 +540,7 @@ export default function CartaPremium({
                 }}
                 aria-label="Buscar"
               >
-                <Search size={19} color="#666" />
+                <Search size={19} color="var(--carta-text2)" />
               </button>
               <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
             </div>
@@ -608,7 +608,7 @@ export default function CartaPremium({
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (norm(d.name || "").includes(norm(searchQuery.trim())) || norm(d.description || "").includes(norm(searchQuery.trim())) || norm(d.ingredients || "").includes(norm(searchQuery.trim()))))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>
             <span style={{ fontSize: "2rem", display: "block", marginBottom: 12 }}>🔍</span>
-            <p style={{ color: "rgba(14,14,14,0.45)", fontSize: "0.95rem" }}>
+            <p style={{ color: "var(--carta-text-muted)", fontSize: "0.95rem" }}>
               No encontramos platos con &ldquo;{searchQuery}&rdquo;
             </p>
             <button
@@ -657,14 +657,14 @@ export default function CartaPremium({
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
                 <h2
                   className="font-[family-name:var(--font-playfair)]"
-                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "#0e0e0e" }}
+                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--carta-text)" }}
                 >
                   {cat.name}
                 </h2>
                 {cat.description && cat.description.length <= 60 && (
                   <p
                     className="font-[family-name:var(--font-dm)] truncate"
-                    style={{ fontSize: "0.8rem", color: "#bbb", marginTop: 2 }}
+                    style={{ fontSize: "0.8rem", color: "var(--carta-text3)", marginTop: 2 }}
                   >
                     {cat.description}
                   </p>
@@ -749,7 +749,7 @@ export default function CartaPremium({
                   style={{
                     position: "absolute", right: 0, top: 0, bottom: 8, width: 56,
                     pointerEvents: "none",
-                    background: "linear-gradient(to right, rgba(247,247,245,0) 0%, rgba(247,247,245,0.4) 70%, rgba(247,247,245,0.6) 100%)",
+                    background: "linear-gradient(to right, var(--carta-bg-fade-0) 0%, var(--carta-bg-fade-40) 70%, var(--carta-bg-fade-60) 100%)",
                     opacity: 0, transition: "opacity 0.18s ease",
                   }}
                 />
@@ -808,15 +808,15 @@ export default function CartaPremium({
             textDecoration: "none",
           }}
         >
-          <span style={{ color: "#bbb", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
+          <span style={{ color: "var(--carta-text3)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
           <span
             className="font-[family-name:var(--font-playfair)]"
-            style={{ color: "#999", fontSize: "0.82rem", fontWeight: 700 }}
+            style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}
           >
             QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
           </span>
         </a>
-        <span style={{ color: "#ccc", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
+        <span style={{ color: "var(--carta-text3)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
       </footer>
 
       {/* Floating diet pills — only show after scrolling */}
@@ -913,7 +913,7 @@ export default function CartaPremium({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white", borderRadius: 20, padding: "36px 28px",
+              background: "var(--carta-surface)", borderRadius: 20, padding: "36px 28px",
               maxWidth: 340, width: "90%", textAlign: "center",
               boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
               animation: "bdaySlideIn 0.4s cubic-bezier(0.16,1,0.3,1)",
@@ -922,11 +922,11 @@ export default function CartaPremium({
             <span style={{ fontSize: "3rem", display: "block", marginBottom: 12 }}>🎉</span>
             <h3
               className="font-[family-name:var(--font-playfair)]"
-              style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.3, margin: "0 0 8px" }}
+              style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--carta-text)", lineHeight: 1.3, margin: "0 0 8px" }}
             >
               ¡Listo, ya estás registrado!
             </h3>
-            <p style={{ fontSize: "0.88rem", color: "#666", lineHeight: 1.5, margin: "0 0 20px" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--carta-text2)", lineHeight: 1.5, margin: "0 0 20px" }}>
               Recibirás un regalo especial en tu cumpleaños. El Genio ahora te conoce y te recomendará mejor.
             </p>
             <button
@@ -955,7 +955,7 @@ export default function CartaPremium({
           <div
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: "white",
+              background: "var(--carta-surface)",
               borderRadius: 20,
               padding: "32px 24px 28px",
               maxWidth: 360,
@@ -969,7 +969,7 @@ export default function CartaPremium({
               onClick={() => setShowEmailModal(false)}
               style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
             >
-              <X size={18} color="#ccc" />
+              <X size={18} color="var(--carta-text3)" />
             </button>
 
             {captureStatus === "success" ? (
@@ -977,11 +977,11 @@ export default function CartaPremium({
                 <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 14 }}>🧞</span>
                 <h3
                   className="font-[family-name:var(--font-playfair)]"
-                  style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", marginBottom: 8 }}
+                  style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--carta-text)", marginBottom: 8 }}
                 >
                   ¡Listo{captureName ? `, ${captureName}` : ""}!
                 </h3>
-                <p style={{ color: "#888", fontSize: "0.9rem", lineHeight: 1.5 }}>
+                <p style={{ color: "var(--carta-text3)", fontSize: "0.9rem", lineHeight: 1.5 }}>
                   Tus gustos quedaron guardados. La próxima vez te recomendaré mejor.
                 </p>
               </div>
@@ -992,11 +992,11 @@ export default function CartaPremium({
                   <span style={{ fontSize: "2.4rem", display: "block", marginBottom: 10 }}>🧞</span>
                   <h3
                     className="font-[family-name:var(--font-playfair)]"
-                    style={{ fontSize: "1.3rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
+                    style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--carta-text)", lineHeight: 1.2 }}
                   >
                     Guarda tus gustos
                   </h3>
-                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--carta-text3)", marginTop: 6, lineHeight: 1.5 }}>
                     Así el Genio te recomienda mejor cada vez
                   </p>
                 </div>
@@ -1009,8 +1009,8 @@ export default function CartaPremium({
                     onChange={(e) => setCaptureName(e.target.value)}
                     placeholder="Tu nombre"
                     style={{
-                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      background: "var(--carta-bg)", border: "1px solid var(--carta-border)", borderRadius: 10,
+                      padding: "12px 16px", color: "var(--carta-text)", fontSize: "0.92rem",
                       outline: "none", fontFamily: "inherit",
                     }}
                   />
@@ -1020,8 +1020,8 @@ export default function CartaPremium({
                     onChange={(e) => setCaptureEmail(e.target.value)}
                     placeholder="tu@email.com"
                     style={{
-                      background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      background: "var(--carta-bg)", border: "1px solid var(--carta-border)", borderRadius: 10,
+                      padding: "12px 16px", color: "var(--carta-text)", fontSize: "0.92rem",
                       outline: "none", fontFamily: "inherit",
                     }}
                   />
@@ -1062,7 +1062,7 @@ export default function CartaPremium({
                   </button>
                 </div>
 
-                <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#bbb", marginTop: 12 }}>
+                <p style={{ textAlign: "center", fontSize: "0.75rem", color: "var(--carta-text3)", marginTop: 12 }}>
                   🔒 Solo usaremos tu email para recordar tus gustos
                 </p>
               </>

@@ -21,7 +21,7 @@ const RESTAURANTS: [string, string][] = [
 
 const AB_DEFAULTS = {
   titleText: "Tu carta puede vender mucho m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una que despierta antojo y aumenta tus ventas",
+  subtitleText: "Transformamos tu carta actual en una que aumenta tus ventas",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
@@ -341,7 +341,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta">
         <div className="container">
-          <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Empieza hoy</span></h2>
+          <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Comienza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
           <div className="fine">Te mostramos gratis como queda</div>
