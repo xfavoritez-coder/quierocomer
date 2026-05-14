@@ -97,7 +97,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Sube tu carta y ve cómo la <span>mejoramos.</span></h1>
+            <h1>Sube tu carta y ve cómo <span>mejora.</span></h1>
           </div>
 
           <div className="form-side centered-form">
