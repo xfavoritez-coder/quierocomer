@@ -18,11 +18,17 @@ const inputStyle: React.CSSProperties = {
 interface SettingsData {
   id: string;
   cartaColorMode: string;
+  cartaAccentColor: string | null;
   waiterPanelActive: boolean;
   allPhotosReferential: boolean;
   birthdayPerk: string | null;
   defaultView: string | null;
 }
+
+const ACCENT_OPTIONS = [
+  { value: null, label: "Amber", color: "#F4A623" },
+  { value: "#C50E2C", label: "Rojo", color: "#C50E2C" },
+];
 
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista" },
@@ -117,6 +123,35 @@ export default function AjustesPage() {
             active={data.cartaColorMode === "DARK"}
             onToggle={() => save({ cartaColorMode: data.cartaColorMode === "DARK" ? "LIGHT" : "DARK" })}
           />
+        </div>
+      </div>
+
+      {/* Color de diseño */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Diseño</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>Color de tu carta: precios, botones y detalles</p>
+        <div style={{ display: "flex", gap: 12 }}>
+          {ACCENT_OPTIONS.map((opt) => {
+            const isActive = (data.cartaAccentColor || null) === opt.value;
+            return (
+              <button
+                key={opt.label}
+                onClick={() => save({ cartaAccentColor: opt.value })}
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  background: "none", border: "none", cursor: "pointer", padding: 4,
+                }}
+              >
+                <div style={{
+                  width: 36, height: 36, borderRadius: "50%", background: opt.color,
+                  border: isActive ? "3px solid var(--adm-text)" : "3px solid transparent",
+                  boxShadow: isActive ? `0 0 0 2px ${opt.color}40` : "none",
+                  transition: "all 0.2s",
+                }} />
+                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--adm-text)" : "var(--adm-text3)" }}>{opt.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
