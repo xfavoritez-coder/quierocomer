@@ -26,8 +26,7 @@ interface SettingsData {
 
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista" },
-  { value: "premium", label: "Galeria" },
-  { value: "viaje", label: "Inmersiva" },
+  { value: "premium", label: "Galería" },
 ];
 
 function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {

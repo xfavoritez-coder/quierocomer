@@ -375,14 +375,12 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               ]} btnText="Comenzar gratis" btnPrimary={false} />
               <PlanCard name="Gold" price={anual ? "$29.900" : "$35.000"} period={anual ? "/mes + IVA · $358.800/año" : "/mes + IVA"} discount={anual ? "-15%" : undefined} desc="Gratis + herramientas para destacar tus platos y mejorar la experiencia de tus clientes" featured features={[
                 ["El Genio (IA) incluido", "Asistente inteligente que recomienda platos según el perfil y preferencias del cliente"],
-                ["2 vistas de carta", "Muestra tu carta en formato lista o grilla con fotos"],
                 ["Destaca platos estrella", "Resalta visualmente los platos que más te conviene vender"],
                 ["Ofertas y promociones", "Crea ofertas temporales y promos visibles en la carta"],
                 ["Estadísticas básicas", "Ve cuántas visitas tiene tu carta y qué platos se miran más"],
                 ["Anuncios en carta", "Muestra anuncios o destacados dentro de tu propia carta"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary />
               <PlanCard name="Premium" price={anual ? "$39.900" : "$49.900"} period={anual ? "/mes + IVA · $478.800/año" : "/mes + IVA"} discount={anual ? "-20%" : undefined} desc="Gold + herramientas automatizadas de venta y retención" features={[
-                ["4 vistas de carta", "Lista, grilla, destacados y vista por categorías"],
                 ["Estadísticas avanzadas", "Métricas detalladas: platos más vistos, horarios pico, conversión y tendencias"],
                 ["Botón llamar garzón", "El cliente puede llamar al garzón directo desde la carta digital"],
                 ["Productos sugeridos", "Sugiere acompañamientos, bebidas o postres junto a cada plato"],

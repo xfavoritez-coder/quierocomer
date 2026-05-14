@@ -81,14 +81,12 @@ export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
   ],
   GOLD: [
     { text: "El Genio incluido 🧞", tip: "El Genio reordena tu carta segun los gustos de cada cliente: dieta, restricciones y alergenos." },
-    { text: "2 vistas de carta", tip: "Vista lista y vista galeria con fotos grandes." },
     { text: "Destaca platos estrella", tip: "Marca tus platos mas vendidos para que aparezcan primero en el hero." },
     { text: "Ofertas y promociones", tip: "Publica descuentos que se muestran automaticamente en la carta." },
     { text: "Estadisticas basicas", tip: "Visitantes, sesiones, platos mas vistos y duracion promedio." },
     { text: "Anuncios en la carta", tip: "Banner de novedades visible al abrir la carta." },
   ],
   PREMIUM: [
-    { text: "4 vistas de carta", tip: "Lista, galeria, feed y espacial — elige la que mejor represente tu local." },
     { text: "Multilenguaje (ES · EN · PT)", tip: "Carta traducida automaticamente al idioma del cliente." },
     { text: "Estadisticas avanzadas", tip: "Sesiones en vivo, recorrido de cada cliente, busquedas y estadisticas del garzon." },
     { text: "Llamar al garzon", tip: "El cliente toca un boton y el garzon recibe la notificacion push al instante." },
