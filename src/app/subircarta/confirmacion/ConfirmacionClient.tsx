@@ -7,6 +7,7 @@ import PlanesModal from "@/components/PlanesModal";
 
 interface SampleDish {
   name: string;
+  description?: string;
   price: number;
   imageUrl: string | null;
   category: string;
@@ -25,6 +26,10 @@ export default function ConfirmacionClient() {
   const leadId = searchParams.get("id");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [localName, setLocalName] = useState("");
+  const [leadEmail, setLeadEmail] = useState("");
+  const [editingEmail, setEditingEmail] = useState(false);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [savingEmail, setSavingEmail] = useState(false);
   const [planesOpen, setPlanesOpen] = useState(false);
 
   useEffect(() => {
@@ -34,11 +39,13 @@ export default function ConfirmacionClient() {
       .then((data) => {
         if (data.preview) setPreview(data.preview);
         if (data.localName) setLocalName(data.localName);
+        if (data.email) setLeadEmail(data.email);
       })
       .catch(() => {});
   }, [leadId]);
 
-  const displayName = preview?.restaurantName || localName || "Tu restaurante";
+  const rawName = preview?.restaurantName || localName || "Tu restaurante";
+  const displayName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
 
   return (
     <>
@@ -66,97 +73,147 @@ export default function ConfirmacionClient() {
         <section className="shell centered-shell">
           <div className="center-copy">
             <h1><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu carta ya está en <span>preparación</span></h1>
-            <p className="subcopy">En unos minutos recibirás un correo con la transformación de tu carta lista para ver y probar.</p>
+            <p className="subcopy">En unos minutos recibirás un correo con tu carta lista para probar.</p>
           </div>
 
           {/* iPhone mockup with preview */}
           <div className="phone-wrap">
-            <div className="phone">
+            <div className="phone phone-generating">
               {/* Phone notch */}
               <div className="phone-notch" />
 
-              {/* Phone screen */}
+              {/* Phone screen — replicates dark mode carta lista exactly */}
               <div className="phone-screen">
-                {/* Mini header */}
-                <div className="ph-header">
-                  {preview?.logoUrl ? (
-                    <img src={preview.logoUrl} alt="" className="ph-logo" style={{ objectFit: "cover" }} />
-                  ) : (
-                    <div className="ph-logo" />
-                  )}
-                  <span className="ph-name">{displayName}</span>
+                {/* Nav bar with logo */}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 10px", background: "#0a0a0a" }}>
+                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#F4A623", fontSize: 7, fontWeight: 700, color: "#0e0e0e", display: "grid", placeItems: "center", flexShrink: 0 }}>{displayName.charAt(0)}</div>
+                  <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)" }}>{displayName}</span>
                 </div>
 
-                {/* Mini hero */}
+                {/* Hero — full photo, dish name centered, Ver button, dots */}
                 <div className="ph-hero">
-                  {preview?.sampleDishes[0]?.imageUrl ? (
-                    <img src={preview.sampleDishes[0].imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {(preview?.sampleDishes[1]?.imageUrl || preview?.sampleDishes[0]?.imageUrl) ? (
+                    <img src={preview.sampleDishes[1]?.imageUrl || preview.sampleDishes[0]?.imageUrl || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.08)" }} />
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1610, #2a2218)" }} />
                   )}
-                  <div className="ph-hero-overlay">
-                    <span className="ph-hero-title">{displayName}</span>
+                  {/* Dark overlay */}
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
+                  {/* Centered dish name + Ver button */}
+                  <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 2, padding: "0 10px" }}>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: "white", textAlign: "center", lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)", fontFamily: "var(--font-display)" }}>{preview?.sampleDishes[1]?.name || preview?.sampleDishes[0]?.name || displayName}</span>
+                    <div style={{ marginTop: 5, padding: "3px 14px", borderRadius: 50, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 8, fontWeight: 500, color: "white" }}>Ver</div>
+                    {/* Dots */}
+                    <div style={{ display: "flex", gap: 3, marginTop: 6 }}>
+                      <div style={{ width: 10, height: 3, borderRadius: 2, background: "#F4A623" }} />
+                      <div style={{ width: 3, height: 3, borderRadius: 2, background: "rgba(244,166,35,0.35)" }} />
+                      <div style={{ width: 3, height: 3, borderRadius: 2, background: "rgba(244,166,35,0.35)" }} />
+                    </div>
                   </div>
                 </div>
 
-                {/* Dish list preview */}
+                {/* Dish cards */}
                 <div className="ph-dishes">
                   {preview?.sampleDishes ? (
-                    preview.sampleDishes.map((d, i) => (
+                    preview.sampleDishes.slice(0, 4).map((d, i) => (
                       <div key={i} className="ph-dish">
                         <div className="ph-dish-img">
                           {d.imageUrl ? (
-                            <img src={d.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 6 }} />
+                            <img src={d.imageUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: 5 }} />
                           ) : (
-                            <div style={{ width: "100%", height: "100%", background: "#2a2218", borderRadius: 6 }} />
+                            <div style={{ width: "100%", height: "100%", background: "#1a1a1a", borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#555" }}>🍽</div>
                           )}
                         </div>
                         <div className="ph-dish-info">
-                          <span className="ph-dish-name">{d.name}</span>
+                          <span className="ph-dish-name">{i === 1 && <span style={{ fontSize: 8, marginRight: 3 }}>⭐</span>}{d.name}</span>
+                          {d.description && <span className="ph-dish-desc">{d.description.length > 35 ? d.description.slice(0, 35) + "…" : d.description}</span>}
                           <span className="ph-dish-price">${d.price.toLocaleString("es-CL")}</span>
                         </div>
                       </div>
                     ))
                   ) : (
-                    // Skeleton
                     Array.from({ length: 4 }).map((_, i) => (
                       <div key={i} className="ph-dish">
-                        <div className="ph-dish-img"><div style={{ width: "100%", height: "100%", background: "#2a2218", borderRadius: 6, animation: "pulse 1.5s infinite" }} /></div>
+                        <div className="ph-dish-img"><div style={{ width: "100%", height: "100%", background: "#1a1a1a", borderRadius: 5, animation: "pulse 1.5s infinite" }} /></div>
                         <div className="ph-dish-info">
-                          <span style={{ width: 80, height: 8, background: "#2a2218", borderRadius: 4, display: "block", animation: "pulse 1.5s infinite" }} />
-                          <span style={{ width: 40, height: 8, background: "#2a2218", borderRadius: 4, display: "block", marginTop: 4, animation: "pulse 1.5s infinite" }} />
+                          <span style={{ width: 70, height: 7, background: "#1a1a1a", borderRadius: 3, display: "block", animation: "pulse 1.5s infinite" }} />
+                          <span style={{ width: 35, height: 7, background: "#1a1a1a", borderRadius: 3, display: "block", marginTop: 3, animation: "pulse 1.5s infinite" }} />
                         </div>
                       </div>
                     ))
                   )}
                 </div>
 
-                {/* Stats bar */}
-                {preview && (
-                  <div className="ph-stats">
-                    <span>{preview.totalCategories} categorías</span>
-                    <span>·</span>
-                    <span>{preview.totalDishes} platos</span>
-                  </div>
-                )}
               </div>
             </div>
           </div>
 
-          {/* Badges */}
+          {/* Badge */}
           <div className="badges">
             <div className="badge">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M3 8l9-5 9 5v8l-9 5-9-5V8z" stroke="currentColor" strokeWidth="1.5"/><path d="M3 8l9 5 9-5M12 13v8" stroke="currentColor" strokeWidth="1.5"/></svg>
-              Revisa tu correo en unos minutos
+              <div className="badge-icon">
+                <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5"/></svg>
+              </div>
+              <div>
+                <div className="badge-title">Revisa tu correo</div>
+                <div className="badge-sub">Si no lo encuentras en unos minutos, revisa spam o promociones.</div>
+              </div>
             </div>
-            <div className="badge">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-              Si no lo ves, revisa spam o promociones
-            </div>
-            <div className="badge">
-              <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              Sin cuenta, sin compromiso
-            </div>
+            {leadEmail && !editingEmail && (
+              <div style={{ textAlign: "center", fontSize: 13, color: "var(--cream-2)", marginTop: 8 }}>
+                Te lo enviamos a <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
+                {" · "}
+                <button
+                  onClick={() => { setEmailDraft(leadEmail); setEditingEmail(true); }}
+                  style={{ background: "none", border: "none", color: "var(--amber-2)", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0, textDecoration: "underline" }}
+                >
+                  Corregir
+                </button>
+              </div>
+            )}
+            {editingEmail && (
+              <div style={{ marginTop: 10, display: "flex", gap: 8, maxWidth: 360, margin: "10px auto 0", alignItems: "center" }}>
+                <input
+                  type="email"
+                  autoFocus
+                  value={emailDraft}
+                  onChange={(e) => setEmailDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      setSavingEmail(true);
+                      fetch(`/api/subircarta/${leadId}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ localName: localName || "Local", ownerName: "Dueño", email: emailDraft.trim() }),
+                      }).then(() => { setLeadEmail(emailDraft.trim()); setEditingEmail(false); }).catch(() => {}).finally(() => setSavingEmail(false));
+                    }
+                    if (e.key === "Escape") setEditingEmail(false);
+                  }}
+                  style={{ flex: 1, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "rgba(0,0,0,.32)", color: "var(--cream)", padding: "0 12px", fontSize: 14, outline: "none" }}
+                />
+                <button
+                  disabled={savingEmail}
+                  onClick={() => {
+                    setSavingEmail(true);
+                    fetch(`/api/subircarta/${leadId}`, {
+                      method: "PATCH",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ localName: localName || "Local", ownerName: "Dueño", email: emailDraft.trim() }),
+                    }).then(() => { setLeadEmail(emailDraft.trim()); setEditingEmail(false); }).catch(() => {}).finally(() => setSavingEmail(false));
+                  }}
+                  style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "var(--amber)", color: "#0e0e0e", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  {savingEmail ? "..." : "Guardar"}
+                </button>
+                <button
+                  onClick={() => setEditingEmail(false)}
+                  style={{ height: 40, padding: "0 12px", borderRadius: 10, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            )}
           </div>
         </section>
       </main>
@@ -196,29 +253,34 @@ h1 { font-family: var(--font-display); font-size: clamp(34px, 9vw, 52px); line-h
 h1 span { color: var(--amber-2); font-style: italic; }
 .subcopy { color: var(--cream-2); font-size: 15px; line-height: 1.45; margin: 0 auto 24px; max-width: 420px; }
 
-/* iPhone mockup */
+/* iPhone mockup — replicates dark mode carta lista */
 .phone-wrap { display: flex; justify-content: center; margin: 8px 0 24px; }
-.phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0c09; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-.phone-notch { width: 80px; height: 22px; background: #0e0c09; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
-.phone-screen { padding: 0; }
-.ph-header { display: flex; align-items: center; gap: 6px; padding: 8px 12px; }
-.ph-logo { width: 18px; height: 18px; border-radius: 50%; background: var(--amber); flex-shrink: 0; overflow: hidden; }
-.ph-name { font-size: 10px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ph-hero { height: 90px; position: relative; overflow: hidden; }
-.ph-hero-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(0,0,0,.7)); display: flex; align-items: flex-end; padding: 8px 12px; }
-.ph-hero-title { font-family: var(--font-display); font-size: 14px; font-weight: 600; color: white; text-shadow: 0 1px 4px rgba(0,0,0,.5); }
-.ph-dishes { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
-.ph-dish { display: flex; align-items: center; gap: 8px; }
-.ph-dish-img { width: 32px; height: 32px; border-radius: 6px; overflow: hidden; flex-shrink: 0; }
-.ph-dish-info { display: flex; flex-direction: column; min-width: 0; }
-.ph-dish-name { font-size: 9px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ph-dish-price { font-size: 8px; color: var(--amber-2); font-weight: 600; }
-.ph-stats { display: flex; justify-content: center; gap: 6px; padding: 8px 0 12px; font-size: 8px; color: var(--muted); font-weight: 600; }
+.phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.phone-generating { animation: phoneBreath 4s ease-in-out infinite; }
+@keyframes phoneBreath { 0%, 100% { filter: blur(1.2px); } 50% { filter: blur(0.3px); } }
+.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(14,14,14,0.25); pointer-events: none; }
+.phone-generating::after { content: ''; position: absolute; inset: 0; z-index: 10; border-radius: 25px; background: linear-gradient(180deg, transparent 0%, rgba(232,163,61,0.06) 50%, transparent 100%); background-size: 100% 200%; animation: phoneScan 3s ease-in-out infinite; pointer-events: none; }
+@keyframes phoneScan { 0% { background-position: 0 -100%; } 100% { background-position: 0 200%; } }
+.phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
+.phone-screen { background: #0e0e0e; }
+.ph-hero { height: 130px; position: relative; overflow: hidden; }
+.ph-dishes { padding: 0 10px; padding-top: 12px; display: flex; flex-direction: column; }
+.ph-dish { display: flex; align-items: center; gap: 7px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,.06); }
+.ph-dish:last-child { border-bottom: none; }
+.ph-dish-img { width: 46px; height: 46px; border-radius: 6px; overflow: hidden; flex-shrink: 0; background: #1a1a1a; }
+.ph-dish-info { display: flex; flex-direction: column; min-width: 0; gap: 2px; flex: 1; text-align: left; }
+.ph-dish-name { font-size: 10px; font-weight: 700; color: #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.ph-dish-desc { font-size: 8px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; line-height: 1.3; }
+.ph-dish-price { font-size: 9px; color: #F4A623; font-weight: 400; }
+.ph-stats { display: flex; justify-content: center; gap: 5px; padding: 8px 0 12px; font-size: 8.5px; color: #888; font-weight: 600; }
 
 /* Badges */
-.badges { display: flex; flex-direction: column; gap: 8px; max-width: 400px; margin: 0 auto; }
-.badge { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; background: rgba(255,255,255,.03); border: 1px solid var(--line); font-size: 13px; color: var(--cream-2); text-align: left; }
-.badge svg { color: var(--amber-2); flex-shrink: 0; }
+.badges { display: flex; flex-direction: column; gap: 10px; max-width: 420px; margin: 36px auto 0; }
+.badge { display: flex; align-items: flex-start; gap: 14px; padding: 16px 20px; border-radius: 16px; background: rgba(255,255,255,.03); border: 1px solid var(--line); text-align: left; }
+.badge-icon { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex-shrink: 0; color: var(--amber-2); background: rgba(232,163,61,0.12); }
+.badge-icon svg { color: var(--amber-2) !important; }
+.badge-title { font-size: 15px; font-weight: 600; color: var(--cream); line-height: 1.2; }
+.badge-sub { font-size: 14px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
 
 @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: .15; } }
 @media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } .phone { width: 260px; } .ph-hero { height: 110px; } }

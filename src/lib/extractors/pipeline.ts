@@ -104,7 +104,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const restaurant = await prisma.restaurant.create({
       data: {
-        name: baseName.split("|")[0].trim(), // clean "Name | Pide online" etc.
+        name: baseName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),
         slug,
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",

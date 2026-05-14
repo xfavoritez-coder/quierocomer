@@ -11,6 +11,7 @@ export interface LeadPreview {
   totalCategories: number;
   sampleDishes: {
     name: string;
+    description: string;
     price: number;
     imageUrl: string | null;
     category: string;
@@ -82,14 +83,15 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
     const uploadedUrl = result.status === "fulfilled" ? result.value : null;
     return {
       name: d.name,
+      description: d.description || "",
       price: d.price,
-      imageUrl: uploadedUrl || null, // only use Supabase URLs, never external
+      imageUrl: uploadedUrl || null,
       category: d.category,
     };
   });
 
   const preview: LeadPreview = {
-    restaurantName: extraction.restaurantName.split("|")[0].trim(),
+    restaurantName: extraction.restaurantName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),
     logoUrl: extraction.logoUrl,
     totalDishes: extraction.dishes.length,
     totalCategories: categories.size,
