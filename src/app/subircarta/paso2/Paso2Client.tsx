@@ -270,7 +270,7 @@ export default function Paso2Client() {
             <div className="form-section form-reveal">
               <div className="form-title">
                 <h2>¿Dónde te la enviamos?</h2>
-                <p className="form-sub">Déjanos tus datos para enviarte la propuesta.</p>
+                <p className="form-sub">Déjanos tus datos para enviar tu carta viva lista.</p>
               </div>
 
               <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
