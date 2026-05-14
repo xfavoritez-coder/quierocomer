@@ -153,6 +153,13 @@ export default function Paso2Client() {
         return;
       }
 
+      // Trigger async processing from client (more reliable than server fire-and-forget)
+      fetch("/api/subircarta/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      }).catch(() => {});
+
       router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch {
       setError("Error de conexión. Intenta de nuevo.");

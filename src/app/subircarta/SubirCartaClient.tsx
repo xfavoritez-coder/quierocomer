@@ -276,6 +276,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .formats { margin-top: 16px; color: var(--muted); font-size: 13px; }
 .field-label { display: block; text-align: left; margin: 0 0 8px; color: var(--amber-2); font-size: 13px; font-weight: 700; }
 input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; }
+input::placeholder { color: rgba(136,123,104,.5) !important; }
 input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
 .trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
 .trust svg { flex-shrink: 0; color: var(--amber-2); width: 16px; height: 16px; }

@@ -19,7 +19,10 @@ export async function PATCH(
       );
     }
 
-    const existing = await prisma.lead.findUnique({ where: { id } });
+    const existing = await prisma.lead.findUnique({
+      where: { id },
+      include: { detectedProvider: { select: { name: true } } },
+    });
     if (!existing) {
       return NextResponse.json({ error: "Lead no encontrado." }, { status: 404 });
     }
@@ -35,22 +38,19 @@ export async function PATCH(
       },
     });
 
-    // Step 1 (sync): fast preview extraction — logo + first 5 dishes (~3s)
+    // Step 1 (sync): fast preview — only for Justo (direct HTML, ~3s)
+    // Other providers use Jina+Claude which is too slow for sync (~15-20s)
     let preview = null;
+    const isJusto = existing.detectedProvider?.name === "Justo";
     if (lead.cartaUrl && lead.cartaStatus === "PENDING") {
-      try {
-        preview = await generatePreview(lead.id);
-      } catch (e) {
-        console.error("[SubirCarta Preview]", e);
+      if (isJusto) {
+        try {
+          preview = await generatePreview(lead.id);
+        } catch (e) {
+          console.error("[SubirCarta Preview]", e);
+        }
       }
 
-      // Step 2 (async): full processing — all dishes, photos, restaurant creation
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-      fetch(`${baseUrl}/api/subircarta/process`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId: lead.id }),
-      }).catch(() => {});
     }
 
     return NextResponse.json({ id: lead.id, preview });
