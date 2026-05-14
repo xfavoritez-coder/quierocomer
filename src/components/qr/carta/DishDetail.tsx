@@ -503,18 +503,18 @@ function DishSlide({
 
           const seals: { emoji: string; label: string; bg: string; color: string; forYou?: boolean; warning?: boolean }[] = [];
           // UNIVERSAL: dieta
-          if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.12)", color: "#15803d" });
-          else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(34,197,94,0.10)", color: "#16a34a" });
+          if (d.dishDiet === "VEGAN") seals.push({ emoji: "🌿", label: "Vegano", bg: "rgba(34,197,94,0.15)", color: "#4ade80" });
+          else if (d.dishDiet === "VEGETARIAN") seals.push({ emoji: "🥗", label: "Vegetariano", bg: "rgba(34,197,94,0.12)", color: "#4ade80" });
           // UNIVERSAL: picante
-          if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.10)", color: "#dc2626" });
+          if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.12)", color: "#f87171" });
           // UNIVERSAL: sin gluten
-          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#854d0e" });
+          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#F4A623" });
           // UNIVERSAL: contiene frutos secos (informativo, mismo estilo que el resto)
-          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.10)", color: "#9a3412" });
+          if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.12)", color: "#fb923c" });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)
-          if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.12)", color: "#1d4ed8", forYou: true });
+          if (lactoseFree && userWantsLactose) seals.push({ emoji: "🥛", label: "Sin lactosa", bg: "rgba(96,165,250,0.15)", color: "#60a5fa", forYou: true });
           // CONDICIONAL: sin soya
-          if (soyFree && userWantsSoy) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.12)", color: "#047857", forYou: true });
+          if (soyFree && userWantsSoy) seals.push({ emoji: "🫘", label: "Sin soya", bg: "rgba(52,211,153,0.15)", color: "#34d399", forYou: true });
           // CONDICIONAL: sin frutos secos (solo si usuario tiene la restriccion Y el plato lo confirma explicito)
           if (explicitlyNutsFree && userWantsNutsFree) seals.push({ emoji: "🥜", label: "Sin frutos secos", bg: "rgba(192,138,91,0.14)", color: "#854d0e", forYou: true });
 

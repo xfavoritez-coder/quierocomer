@@ -1572,6 +1572,8 @@ export default function AdminMenus() {
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.name}
+                      {(d as any).dietType === "VEGAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegano">🌿</span>}
+                      {(d as any).dietType === "VEGETARIAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegetariano">🥗</span>}
                     </p>
                     {isRec && (
                       <span style={{ fontFamily: F, fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", padding: "2px 7px", borderRadius: 999, letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>★ Destacado</span>
