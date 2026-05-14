@@ -342,9 +342,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="final-cta" id="cta">
         <div className="container">
           <h2>Tu restaurante puede vender más. <span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Comienza hoy</span></h2>
-          <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
+          <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
-          <div className="fine">Te mostramos gratis como queda</div>
         </div>
       </section>
 
@@ -565,7 +564,7 @@ section{position:relative}
 .faq-item.open .faq-a{max-height:200px;padding:0 22px 18px}
 .faq-divider{max-width:250px;height:1px;margin:0 auto;background:linear-gradient(90deg,transparent,rgba(232,163,61,.35),transparent)}
 .final-cta{padding:50px 0 80px;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
-.final-cta h2{font-size:clamp(34px,5vw,52px);line-height:1.06;margin-bottom:34px}
+.final-cta h2{font-size:clamp(34px,4vw,42px);line-height:1.06;margin-bottom:34px}
 .final-cta p{font-family:var(--font-display);font-style:italic;font-size:25px;color:var(--cream-soft);margin-bottom:28px}
 .fine{font-size:17px;color:var(--cream-soft);margin-top:8px;letter-spacing:.03em}
 .btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
