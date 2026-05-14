@@ -45,9 +45,17 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch lead data — redirect to confirmation if already completed
+  // Fetch lead data + start async processing immediately (while animation plays)
   useEffect(() => {
     if (!leadId) return;
+
+    // Fire processing NOW — runs during the 19s animation + form fill time
+    fetch("/api/subircarta/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId }),
+    }).catch(() => {});
+
     fetch(`/api/subircarta/${leadId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -152,13 +160,6 @@ export default function Paso2Client() {
         setError(data.error || "Error al guardar.");
         return;
       }
-
-      // Trigger async processing from client (more reliable than server fire-and-forget)
-      fetch("/api/subircarta/process", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ leadId }),
-      }).catch(() => {});
 
       router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch {
