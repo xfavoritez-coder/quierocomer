@@ -212,7 +212,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   fontWeight: 700,
                   padding: "5px 22px",
                   borderRadius: 50,
-                  border: "2px solid rgba(255,255,255,0.5)",
+                  border: "2px solid #F4A623",
                 }}
               >
                 Ver
