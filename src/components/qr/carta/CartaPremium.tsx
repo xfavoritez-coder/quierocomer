@@ -658,7 +658,7 @@ export default function CartaPremium({
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
                 <h2
                   className="font-[family-name:var(--font-playfair)]"
-                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--carta-text)" }}
+                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--carta-text2)" }}
                 >
                   {cat.name}
                 </h2>
@@ -707,7 +707,7 @@ export default function CartaPremium({
                         minWidth: 205,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
-                        marginLeft: i === 0 ? 20 : 10,
+                        marginLeft: i === 0 ? 20 : 14,
                         marginRight: i === catDishes.length - 1 ? 20 : 0,
                       }}
                     >

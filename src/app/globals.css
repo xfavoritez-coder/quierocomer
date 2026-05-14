@@ -40,6 +40,10 @@
   --carta-detail-heading: #1a1a1a;
   --carta-detail-sub: #666;
   --carta-detail-price: #555;
+  --carta-promo-bg: linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%);
+  --carta-promo-border: rgba(244,166,35,0.25);
+  --carta-promo-shadow: 0 2px 12px rgba(244,166,35,0.08);
+  --carta-promo-desc: #8a7060;
 }
 
 .carta-dark {
@@ -64,6 +68,10 @@
   --carta-detail-heading: #f0f0f0;
   --carta-detail-sub: #aaa;
   --carta-detail-price: #F4A623;
+  --carta-promo-bg: linear-gradient(135deg, rgba(244,166,35,0.06) 0%, rgba(244,166,35,0.02) 100%);
+  --carta-promo-border: rgba(244,166,35,0.2);
+  --carta-promo-shadow: 0 4px 20px rgba(0,0,0,0.3), inset 0 1px 0 rgba(244,166,35,0.08);
+  --carta-promo-desc: #aaa;
 }
 
 /* ── Admin theme tokens ── */

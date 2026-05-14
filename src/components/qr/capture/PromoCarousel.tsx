@@ -298,13 +298,14 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   flex: isSingle ? "1 1 100%" : "0 0 290px",
                   minWidth: isSingle ? undefined : 290,
                   scrollSnapAlign: "start",
-                  background: "linear-gradient(135deg, #FFF7E8 0%, #FFEDD0 100%)",
-                  border: "1px solid rgba(244,166,35,0.25)",
+                  background: "var(--carta-promo-bg)",
+                  border: `1px solid var(--carta-promo-border)`,
                   borderRadius: 16,
                   display: "flex", alignItems: "stretch", gap: 0,
                   padding: 0,
                   cursor: "pointer",
-                  boxShadow: "0 2px 12px rgba(244,166,35,0.08)",
+                  boxShadow: "var(--carta-promo-shadow)",
+                  backdropFilter: "blur(8px)",
                   position: "relative",
                   overflow: "hidden",
                   textAlign: "left",
@@ -367,7 +368,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     {p.name}
                   </p>
                   {p.description && (
-                    <p style={{ fontSize: "12.5px", color: "#8a7060", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
+                    <p style={{ fontSize: "12.5px", color: "var(--carta-promo-desc)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
                   )}
                   {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 5 }}>
