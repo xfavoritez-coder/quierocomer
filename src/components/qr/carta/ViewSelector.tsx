@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Layers, List, BookOpen, Rocket, LayoutGrid } from "lucide-react";
+import { Layers, List, BookOpen, Rocket, LayoutGrid, Sun, Moon } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
@@ -33,7 +33,23 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isDark, setIsDark] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Detect current theme on mount
+  useEffect(() => {
+    const container = document.querySelector(".carta-dark, .carta-light");
+    setIsDark(container?.classList.contains("carta-dark") || false);
+  }, []);
+
+  const toggleTheme = () => {
+    const container = document.querySelector(".carta-dark, .carta-light");
+    if (!container) return;
+    const newDark = !isDark;
+    container.classList.toggle("carta-dark", newDark);
+    container.classList.toggle("carta-light", !newDark);
+    setIsDark(newDark);
+  };
 
   // Notify other components when view selector opens/closes
   useEffect(() => {
@@ -140,6 +156,21 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
               );
             })}
           </div>
+
+          {/* Divider + theme toggle */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.1)", margin: "4px 4px" }} />
+          <button
+            onClick={toggleTheme}
+            className="flex items-center justify-center active:scale-95 transition-transform"
+            style={{
+              gap: 6, padding: "7px 14px", borderRadius: 50, border: "none", cursor: "pointer",
+              fontFamily: "inherit", fontSize: "0.78rem", fontWeight: 600, transition: "all 0.15s",
+              background: "transparent", color: "rgba(255,255,255,0.78)", whiteSpace: "nowrap", width: "100%",
+            }}
+          >
+            {isDark ? <Sun size={13} strokeWidth={1.75} /> : <Moon size={13} strokeWidth={1.75} />}
+            {isDark ? "Light" : "Dark"}
+          </button>
 
           {/* Arrow pointing right to the trigger button */}
           <div style={{
