@@ -94,8 +94,8 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
       style={{
         margin: "0 12px 10px",
         padding: "12px 38px 12px 14px",
-        background: "#F5F4F1",
-        border: "0.5px solid rgba(0,0,0,0.06)",
+        background: "var(--carta-surface)",
+        border: "0.5px solid var(--carta-card-border)",
         borderRadius: 14,
         position: "relative",
         display: "flex",
@@ -104,7 +104,7 @@ export default function GenioDietMessage({ type, diet, restrictions, restaurantN
       }}
     >
       <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>🧞</span>
-      <p style={{ fontSize: "0.82rem", color: "#555", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+      <p style={{ fontSize: "0.82rem", color: "var(--carta-text2)", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
         {message}
       </p>
       <button
@@ -161,8 +161,8 @@ function ReorderedSpicyMessage() {
       style={{
         margin: "0 12px 10px",
         padding: "12px 38px 12px 14px",
-        background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
-        border: "1px solid rgba(16,185,129,0.25)",
+        background: "var(--carta-surface)",
+        border: "1px solid var(--carta-card-border)",
         borderRadius: 14,
         position: "relative",
         display: "flex",
@@ -171,7 +171,7 @@ function ReorderedSpicyMessage() {
       }}
     >
       <span style={{ fontSize: "1.3rem", flexShrink: 0, lineHeight: 1 }}>✅</span>
-      <p style={{ fontSize: "0.82rem", color: "#065F46", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
+      <p style={{ fontSize: "0.82rem", color: "var(--carta-text2)", margin: 0, lineHeight: 1.4, fontWeight: 500 }}>
         {fromGenio
           ? "Listo. Reordenamos la carta para ti dejando lo picante al final, y marcamos cada plato picante con 🌶️ en su foto para que no te confundas."
           : "Esta carta está reordenada para ti: los platos picantes quedan al final y los marcamos con 🌶️ en su foto."}
@@ -180,7 +180,7 @@ function ReorderedSpicyMessage() {
         onClick={handleClose}
         style={{ position: "absolute", top: 8, right: 8, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1 }}
       >
-        <X size={14} color="#059669" />
+        <X size={14} color="var(--carta-text3)" />
       </button>
     </div>
   );
