@@ -621,7 +621,7 @@ export default function CartaLista({
       })()}
 
       {/* Floating buttons */}
-      <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
+      <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 10 }}>
         {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
       </div>

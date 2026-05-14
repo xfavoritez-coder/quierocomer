@@ -185,7 +185,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
         <SocialLangBar restaurant={restaurant} />
 
         {/* Floating buttons — cinematic style */}
-        <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(54px + env(safe-area-inset-bottom))", gap: 10 }}>
+        <div className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 10 }}>
           <button
             onClick={() => setGenioOpen(true)}
             className="flex items-center justify-center rounded-full active:scale-95 transition-transform"

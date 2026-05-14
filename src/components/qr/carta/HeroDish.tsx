@@ -206,13 +206,14 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                 className="font-[family-name:var(--font-dm)] active:scale-95 transition-transform"
                 style={{
                   marginTop: 12,
-                  background: "transparent",
+                  background: "rgba(244,166,35,0.15)",
                   color: "white",
                   fontSize: "0.95rem",
-                  fontWeight: 700,
-                  padding: "5px 22px",
+                  fontWeight: 500,
+                  padding: "6px 24px",
                   borderRadius: 50,
-                  border: "2px solid #F4A623",
+                  border: "1.5px solid #F4A623",
+                  boxShadow: "0 0 12px rgba(244,166,35,0.3), 0 0 4px rgba(244,166,35,0.2)",
                 }}
               >
                 Ver
@@ -229,7 +230,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                         width: i === current ? 18 : 6,
                         height: 6,
                         borderRadius: 3,
-                        background: i === current ? "white" : "rgba(255,255,255,0.4)",
+                        background: i === current ? "#F4A623" : "rgba(244,166,35,0.35)",
                         border: "none",
                         padding: 0,
                         transition: "all 0.3s ease",
