@@ -71,10 +71,10 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           {dish.discountPrice ? (
             <>
               <span className="line-through font-[family-name:var(--font-dm)]" style={{ color: "#ccc", fontSize: "0.8rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 500, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 400, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
             </>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 500, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
+            <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 400, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
           )}
           {averageRating && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "#F4A623" }}>
