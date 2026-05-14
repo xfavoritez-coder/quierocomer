@@ -152,7 +152,7 @@ export default function ConfirmacionClient() {
           </div>
           ) : (
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>&#127860;</div>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🧞‍♂️ ✨</div>
             <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Estamos trabajando en tu carta</p>
             <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>Tu carta necesita un poco más de atención. Nuestro equipo la está revisando para darte la mejor propuesta posible.</p>
           </div>
