@@ -94,7 +94,7 @@ const BODY = `
 
   <section class="shell centered-shell">
     <div class="center-copy">
-      <h1>Sube tu carta y ve<br>cómo la <span>mejoramos.</span></h1>
+      <h1>Sube tu carta y ve cómo la <span>mejoramos.</span></h1>
     </div>
     <div class="form-side centered-form">
       <div class="methods">
