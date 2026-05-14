@@ -214,7 +214,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     // Mark lead as READY and link to restaurant
     await prisma.lead.update({
       where: { id: leadId },
-      data: { cartaStatus: "READY" },
+      data: { cartaStatus: "READY", generatedSlug: restaurant.slug },
     });
 
     console.log(`[Pipeline] Lead ${leadId} processed: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);

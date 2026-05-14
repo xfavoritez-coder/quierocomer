@@ -1697,6 +1697,7 @@ model Lead {
   cartaFileUrl       String?
   detectedProviderId String?
   cartaStatus        CartaStatus   @default(PENDING)
+  generatedSlug      String?
   preview            Json?
   activated          Boolean       @default(false)
   convertedToOwnerId String?

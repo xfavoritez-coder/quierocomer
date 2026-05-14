@@ -12,6 +12,7 @@ interface Lead {
   cartaUrl: string | null;
   cartaFileUrl: string | null;
   cartaStatus: string;
+  generatedSlug: string | null;
   activated: boolean;
   detectedProvider: { name: string } | null;
   createdAt: string;
@@ -79,11 +80,12 @@ export default function FunnelPage() {
               <th style={th}>Proveedor</th>
               <th style={th}>URL carta</th>
               <th style={th}>Estado</th>
+              <th style={th}>Carta</th>
             </tr>
           </thead>
           <tbody>
             {leads.length === 0 && (
-              <tr><td colSpan={9} style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavía.</td></tr>
+              <tr><td colSpan={10} style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavía.</td></tr>
             )}
             {leads.map((lead) => {
               const completed = !!lead.email;
@@ -104,6 +106,13 @@ export default function FunnelPage() {
                     {lead.cartaUrl ? <a href={lead.cartaUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623" }}>{domain}</a> : "—"}
                   </td>
                   <td style={td}><StatusBadge status={lead.cartaStatus} /></td>
+                  <td style={td}>
+                    {lead.generatedSlug ? (
+                      <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontWeight: 600, fontSize: 12 }}>
+                        Ver carta
+                      </a>
+                    ) : <span style={{ color: "#555" }}>—</span>}
+                  </td>
                 </tr>
               );
             })}

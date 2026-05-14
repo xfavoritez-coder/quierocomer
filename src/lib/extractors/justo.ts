@@ -39,10 +39,9 @@ function parsePrice(raw: string): number {
   return parseInt(cleaned, 10) || 0;
 }
 
-/** Upgrade image URL to higher resolution */
-function upgradeImageUrl(url: string): string {
-  // Replace -x-300 or -300-x with -x-600 for better quality
-  return url.replace(/-x-300\.webp/, "-x-600.webp").replace(/-300-x\.webp/, "-600-x.webp");
+/** Clean image URL — keep original 300px resolution (600px returns 403 on Justo CDN) */
+function cleanImageUrl(url: string): string {
+  return url.trim();
 }
 
 export async function extractJusto(cartaUrl: string): Promise<ExtractionResult> {
@@ -154,7 +153,7 @@ function extractDishFromLink(
   link.find("img").each((_, img) => {
     const src = $(img).attr("src") || "";
     if (src.includes("tofuu.getjusto.com") && !imageUrl) {
-      imageUrl = upgradeImageUrl(src);
+      imageUrl = cleanImageUrl(src);
     }
   });
 
