@@ -658,7 +658,7 @@ export default function CartaPremium({
               <div style={{ padding: "0 20px", marginBottom: 10 }}>
                 <h2
                   className="font-[family-name:var(--font-playfair)]"
-                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--carta-text2)" }}
+                  style={{ fontSize: "1.5rem", fontWeight: 800, color: "#8d8d8d" }}
                 >
                   {cat.name}
                 </h2>
