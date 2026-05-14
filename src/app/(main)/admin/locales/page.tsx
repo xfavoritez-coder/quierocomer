@@ -21,6 +21,7 @@ interface Restaurant {
   enabledLangs: string[];
   cartaTheme: string;
   cartaColorMode: string;
+  cartaAccentColor: string | null;
   defaultView: string | null;
   qrActivatedAt: string | null;
   qrToken: string | null;
@@ -313,6 +314,33 @@ export default function AdminLocales() {
                   }}
                 >
                   {m === "LIGHT" ? "Light" : "Dark"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+            <span>Color:</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {[
+                { value: null, label: "Amber", color: "#F4A623" },
+                { value: "#8B2252", label: "Burdeo", color: "#8B2252" },
+              ].map((c) => (
+                <button
+                  key={c.label}
+                  onClick={async () => {
+                    await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cartaAccentColor: c.value }) });
+                    const updated = { ...selected, cartaAccentColor: c.value };
+                    setSelected(updated);
+                    setRestaurants((prev: any[]) => prev.map((x: any) => x.id === selected.id ? updated : x));
+                  }}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                    background: (selected.cartaAccentColor || null) === c.value ? c.color : "rgba(255,255,255,0.06)",
+                    color: (selected.cartaAccentColor || null) === c.value ? "#fff" : "#888",
+                  }}
+                >
+                  {c.label}
                 </button>
               ))}
             </div>

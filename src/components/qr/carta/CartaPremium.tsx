@@ -615,7 +615,7 @@ export default function CartaPremium({
             <button
               onClick={() => { setSearchQuery(""); }}
               className="font-[family-name:var(--font-dm)]"
-              style={{ marginTop: 12, fontSize: "0.88rem", color: "#F4A623", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+              style={{ marginTop: 12, fontSize: "0.88rem", color: "var(--carta-accent, #F4A623)", fontWeight: 600, background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             >
               Limpiar búsqueda
             </button>
@@ -814,7 +814,7 @@ export default function CartaPremium({
             className="font-[family-name:var(--font-playfair)]"
             style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}
           >
-            QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
+            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.cl</span>
           </span>
         </a>
         <span style={{ color: "var(--carta-text3)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
@@ -940,7 +940,7 @@ export default function CartaPremium({
               onClick={() => setShowVerifiedModal(false)}
               className="active:scale-[0.97] transition-transform"
               style={{
-                background: "#F4A623", color: "white", border: "none",
+                background: "var(--carta-accent, #F4A623)", color: "white", border: "none",
                 borderRadius: 50, padding: "12px 28px", fontSize: "0.92rem",
                 fontWeight: 700, cursor: "pointer", fontFamily: "inherit",
                 boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
@@ -1058,7 +1058,7 @@ export default function CartaPremium({
                       setCaptureStatus("success");
                     }}
                     style={{
-                      width: "100%", marginTop: 4, background: "#F4A623", color: "white",
+                      width: "100%", marginTop: 4, background: "var(--carta-accent, #F4A623)", color: "white",
                       borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
                       border: "none", fontFamily: "inherit", cursor: "pointer",
                       boxShadow: "0 4px 14px rgba(244,166,35,0.3)",

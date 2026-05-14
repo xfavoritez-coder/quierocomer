@@ -6,11 +6,12 @@
 
 import type { ExtractionResult, ExtractedDish } from "./types";
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+// Read at call time, not import time, to ensure env is loaded
+function getApiKey() { return process.env.ANTHROPIC_API_KEY; }
 const MODEL = "claude-sonnet-4-6";
 
-// Domains where Jina is needed (heavy JS rendering)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app"];
+// Domains where Jina is needed (heavy JS rendering / SPAs)
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["queresto.com", "thefork.com", "lafourchette.com"];
@@ -85,10 +86,11 @@ function cleanContent(html: string): string {
 }
 
 async function callClaude(prompt: string, maxTokens = 16000): Promise<string> {
-  if (!ANTHROPIC_API_KEY) throw new Error("ANTHROPIC_API_KEY not configured");
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
-    headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] }),
   });
   if (!res.ok) throw new Error(`Claude error: ${res.status}`);
@@ -120,9 +122,15 @@ function cleanName(name: string): string {
 export async function extractWithScraper(cartaUrl: string): Promise<ExtractionResult> {
   const baseUrl = new URL(cartaUrl).origin;
 
+  console.log("[Scraper] Fetching page:", cartaUrl);
   const pageContent = await fetchPage(cartaUrl);
-  const cleaned = cleanContent(pageContent);
+  console.log("[Scraper] Raw content length:", pageContent.length);
+  // If content looks like markdown (from Jina), skip HTML cleaning
+  const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
+  const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
+  console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");
   const content = cleaned.length > 20000 ? cleaned.slice(0, 20000) : cleaned;
+  console.log("[Scraper] Trimmed to:", content.length, "| Calling Claude...");
 
   const result = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
 URL: ${cartaUrl}
@@ -140,7 +148,9 @@ REGLAS IMPORTANTES:
 - NO dejes price en 0 si hay un precio visible en la página
 - SOLO JSON, sin texto adicional.`);
 
+  console.log("[Scraper] Claude response length:", result.length);
   const parsed = parseJSON(result);
+  console.log("[Scraper] Parsed categories:", parsed.categories?.length || 0);
 
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {

@@ -152,9 +152,23 @@ export default async function CartaPage({
 
   const colorMode = (restaurant as any).cartaColorMode || "LIGHT";
   const themeClass = colorMode === "DARK" ? "carta-dark" : "carta-light";
+  const accentColor = (restaurant as any).cartaAccentColor || null;
 
   return (
     <div className={themeClass}>
+      {accentColor && (
+        <style dangerouslySetInnerHTML={{ __html: `
+          .${themeClass} {
+            --carta-accent: ${accentColor};
+            --carta-badge-bg: ${accentColor}22;
+            --carta-badge-text: ${accentColor};
+            --carta-detail-price: ${accentColor};
+            --carta-promo-border: ${accentColor}40;
+            --carta-promo-shadow: 0 2px 12px ${accentColor}15;
+            --carta-surface-rec: ${accentColor}14;
+          }
+        `}} />
+      )}
       <DesktopWrapper
         restaurantName={restaurant.name}
         slug={slug}

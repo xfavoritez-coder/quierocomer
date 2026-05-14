@@ -421,6 +421,7 @@ model Restaurant {
   allPhotosReferential Boolean    @default(false)
   cartaTheme  CartaTheme @default(BASIC)
   cartaColorMode CartaColorMode @default(LIGHT)
+  cartaAccentColor String?       // hex color override, default #F4A623 (amber)
   defaultView        String?    // "premium" | "lista" | "viaje" — vista por defecto para nuevos visitantes
   dietType           DishDietType @default(OMNIVORE)  // tipo de dieta del local: OMNIVORE, VEGETARIAN, VEGAN
   enabledLangs       String[]    @default(["es", "en", "pt"])  // idiomas habilitados para la carta

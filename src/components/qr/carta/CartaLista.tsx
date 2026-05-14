@@ -409,7 +409,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
                   >{dietNavItem.name}</button>
                 );
               })()}
@@ -421,7 +421,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent", cursor: "pointer" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent", cursor: "pointer" }}
                   >Ofertas</button>
                 );
               })()}
@@ -450,7 +450,7 @@ export default function CartaLista({
                       color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
                       background: "none",
                       border: "none",
-                      borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
+                      borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent",
                       cursor: "pointer",
                       whiteSpace: "nowrap",
                       transition: "color 0.15s, border-color 0.15s",
@@ -488,7 +488,7 @@ export default function CartaLista({
           </p>
           <button
             onClick={() => { setQuery(""); }}
-            style={{ marginTop: 12, fontSize: "0.88rem", color: "#F4A623", fontWeight: 600, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}
+            style={{ marginTop: 12, fontSize: "0.88rem", color: "var(--carta-accent, #F4A623)", fontWeight: 600, background: "none", border: "none", textDecoration: "underline", cursor: "pointer", fontFamily: "inherit" }}
           >
             Limpiar filtros
           </button>
@@ -515,7 +515,7 @@ export default function CartaLista({
         const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
         // reordered-spicy is now shown as GenioFab toast, not inline banner
         const msgType = dietMsg === "reordered-spicy" ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
-        if (msgType) return <div style={{ marginTop: 10, paddingTop: 10 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
+        if (msgType) return <div style={{ marginTop: 16, paddingTop: 6 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
         if (!mode) return null;
         return (
           <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
@@ -600,7 +600,7 @@ export default function CartaLista({
         >
           <span style={{ color: "var(--carta-text-muted)", fontSize: "0.72rem", fontWeight: 500 }}>Powered by</span>
           <span className="font-[family-name:var(--font-playfair)]" style={{ color: "var(--carta-text3)", fontSize: "0.82rem", fontWeight: 700 }}>
-            QuieroComer<span style={{ color: "#F4A623" }}>.cl</span>
+            QuieroComer<span style={{ color: "var(--carta-accent, #F4A623)" }}>.cl</span>
           </span>
         </a>
         <span style={{ color: "var(--carta-text-muted)", fontSize: "0.62rem" }}>© {new Date().getFullYear()}</span>
@@ -785,7 +785,7 @@ function DishListCard({
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span
             className="font-[family-name:var(--font-dm)]"
-            style={{ fontSize: "0.94rem", fontWeight: 400, color: "#F4A623" }}
+            style={{ fontSize: "0.94rem", fontWeight: 400, color: "var(--carta-accent, #F4A623)" }}
           >
             ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
           </span>
@@ -795,7 +795,7 @@ function DishListCard({
             </span>
           )}
           {isPromo && (
-            <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 6px", background: "var(--carta-badge-bg)", color: "#F4A623", borderRadius: 4 }}>
+            <span style={{ fontSize: "0.62rem", fontWeight: 600, padding: "2px 6px", background: "var(--carta-badge-bg)", color: "var(--carta-accent, #F4A623)", borderRadius: 4 }}>
               Promo
             </span>
           )}

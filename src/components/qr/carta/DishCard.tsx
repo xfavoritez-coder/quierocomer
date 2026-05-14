@@ -71,13 +71,13 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           {dish.discountPrice ? (
             <>
               <span className="line-through font-[family-name:var(--font-dm)]" style={{ color: "#ccc", fontSize: "0.8rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 400, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 400, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
             </>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ color: "#F4A623", fontWeight: 400, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
+            <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 400, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
           )}
           {averageRating && (
-            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "#F4A623" }}>
+            <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "var(--carta-accent, #F4A623)" }}>
               ★ <span style={{ color: "var(--carta-text3)" }}>{averageRating.avg.toFixed(1)}</span>
             </span>
           )}
@@ -143,7 +143,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         {dish.name}{" "}<DishBadges dish={dish} />
         {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
       </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 500, color: "#F4A623" }}>
+      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 500, color: "var(--carta-accent, #F4A623)" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
       </span>
     </button>

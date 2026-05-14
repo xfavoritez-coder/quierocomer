@@ -78,7 +78,7 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
       <button
         onClick={() => { dismiss(); onOpen(); }}
         className="flex items-center justify-center rounded-full active:scale-95"
-        style={{ height: 52, width: 52, background: "#F4A623", boxShadow: toastVisible ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
+        style={{ height: 52, width: 52, background: "var(--carta-accent, #F4A623)", boxShadow: toastVisible ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
       >
         <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: toastVisible ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
         {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}

@@ -19,6 +19,7 @@
 
 /* ── Carta color mode tokens ── */
 :root, .carta-light {
+  --carta-accent: #F4A623;
   --carta-bg: #f7f7f5;
   --carta-bg-solid: #ffffff;
   --carta-surface: #ffffff;
@@ -95,8 +96,10 @@
 }
 
 .carta-dark {
+  --carta-accent: #F4A623;
   --carta-bg: #0e0e0e;
-  --carta-bg-solid: #1a1a1a;
+  --carta-bg-solid: #161616;
+  --carta-nav-bg: #131313;
   --carta-surface: #1a1a1a;
   --carta-surface-rec: rgba(244,166,35,0.08);
   --carta-text: #f0f0f0;

@@ -10,6 +10,7 @@ const OWNER_EDITABLE_FIELDS = [
   "waiterPanelActive",
   "birthdayPerk",
   "cartaColorMode",
+  "cartaAccentColor",
   "allPhotosReferential",
   "defaultView",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
@@ -81,6 +82,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.scheduleJson !== undefined && { scheduleJson: body.scheduleJson }),
         ...(body.waiterPanelActive !== undefined && { waiterPanelActive: body.waiterPanelActive }),
         ...(body.cartaColorMode !== undefined && { cartaColorMode: body.cartaColorMode }),
+        ...(body.cartaAccentColor !== undefined && { cartaAccentColor: body.cartaAccentColor }),
         ...(body.allPhotosReferential !== undefined && { allPhotosReferential: body.allPhotosReferential }),
         ...(body.birthdayPerk !== undefined && { birthdayPerk: body.birthdayPerk }),
         ...(body.dietType !== undefined && { dietType: body.dietType }),
