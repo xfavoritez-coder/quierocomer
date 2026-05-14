@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
@@ -14,39 +14,57 @@ export default function SubirCartaClient() {
   const [linkUrl, setLinkUrl] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [fileName, setFileName] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const photoRef = useRef<HTMLInputElement>(null);
 
   const isLinkValid = mode === "link" && (() => {
     try { new URL(linkUrl); return true; } catch { return false; }
   })();
 
-  const ctaEnabled = mode === "link" ? isLinkValid : mode === "pdf" || mode === "photo";
+  const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;
+  const ctaEnabled = mode === "link" ? isLinkValid : hasFile;
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFileName(file.name);
+      setError("");
+    }
+  };
 
   const handleSubmit = async () => {
     if (!ctaEnabled || loading) return;
-
-    if (mode !== "link") {
-      alert("Los modos PDF y foto estarán disponibles pronto.");
-      return;
-    }
 
     setLoading(true);
     setError("");
 
     try {
-      const res = await fetch("/api/subircarta", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cartaType: "LINK", cartaUrl: linkUrl }),
-      });
+      if (mode === "link") {
+        const res = await fetch("/api/subircarta", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cartaType: "LINK", cartaUrl: linkUrl }),
+        });
+        const data = await res.json();
+        if (!res.ok) { setError(data.error || "Error al procesar tu carta."); return; }
+        router.push(`/subircarta/paso2?id=${data.id}`);
+      } else {
+        const inputRef = mode === "pdf" ? fileRef : photoRef;
+        const file = inputRef.current?.files?.[0];
+        if (!file) { setError("Selecciona un archivo primero."); return; }
 
-      const data = await res.json();
+        const formData = new FormData();
+        formData.append("file", file);
 
-      if (!res.ok) {
-        setError(data.error || "Error al procesar tu carta.");
-        return;
+        const res = await fetch("/api/subircarta/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) { setError(data.error || "Error al subir el archivo."); return; }
+        router.push(`/subircarta/paso2?id=${data.id}`);
       }
-
-      router.push(`/subircarta/paso2?id=${data.id}`);
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
     } finally {
@@ -90,7 +108,7 @@ export default function SubirCartaClient() {
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
                   type="button"
-                  onClick={() => { setMode(m); setError(""); }}
+                  onClick={() => { setMode(m); setError(""); setFileName(""); }}
                 >
                   {m === "pdf" && (
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
@@ -108,14 +126,24 @@ export default function SubirCartaClient() {
             {/* PDF panel */}
             {mode === "pdf" && (
               <div className="input-panel">
-                <div className="upload-card compact-upload" role="button" tabIndex={0}>
+                <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx" style={{ display: "none" }} onChange={handleFileSelect} />
+                <div className="upload-card compact-upload" role="button" tabIndex={0} onClick={() => fileRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter") fileRef.current?.click(); }}>
                   <div>
                     <div className="upload-icon">
                       <svg viewBox="0 0 64 64" fill="none"><path d="M22 46H18a12 12 0 0 1-1.2-23.9A16 16 0 0 1 48 26a10 10 0 0 1-2 20h-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M32 46V26M24 34l8-8 8 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
                     </div>
-                    <div className="upload-title">Sube tu carta en PDF</div>
-                    <div className="upload-link">Haz clic para seleccionar archivo</div>
-                    <div className="formats">PDF · Máx. 10MB</div>
+                    {fileName ? (
+                      <>
+                        <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
+                        <div className="upload-link">Haz clic para cambiar archivo</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="upload-title">Sube tu carta en PDF</div>
+                        <div className="upload-link">Haz clic para seleccionar archivo</div>
+                        <div className="formats">PDF, Word, Excel · Máx. 10MB</div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -147,14 +175,24 @@ export default function SubirCartaClient() {
             {/* Photo panel */}
             {mode === "photo" && (
               <div className="input-panel">
-                <div className="upload-card compact-upload" role="button" tabIndex={0}>
+                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleFileSelect} />
+                <div className="upload-card compact-upload" role="button" tabIndex={0} onClick={() => photoRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter") photoRef.current?.click(); }}>
                   <div>
                     <div className="upload-icon">
                       <svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg>
                     </div>
-                    <div className="upload-title">Sube fotos de tu menú</div>
-                    <div className="upload-link">Puede ser una o varias fotos de tu carta tomada con tu celular</div>
-                    <div className="formats">JPG o PNG · Máx. 10MB</div>
+                    {fileName ? (
+                      <>
+                        <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
+                        <div className="upload-link">Haz clic para cambiar foto</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="upload-title">Sube una foto de tu menú</div>
+                        <div className="upload-link">Puede ser una foto tomada con el celular</div>
+                        <div className="formats">JPG o PNG · Máx. 10MB</div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
