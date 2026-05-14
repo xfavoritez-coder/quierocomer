@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { normalizePhone } from "@/lib/normalizePhone";
 
 export async function PATCH(
   req: Request,
@@ -28,7 +29,7 @@ export async function PATCH(
         localName,
         ownerName,
         email,
-        whatsapp: whatsapp || null,
+        whatsapp: normalizePhone(whatsapp),
       },
     });
 

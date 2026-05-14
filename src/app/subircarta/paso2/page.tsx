@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import Paso2Client from "./Paso2Client";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function Paso2Page() {
-  return <Paso2Client />;
+  return (
+    <Suspense>
+      <Paso2Client />
+    </Suspense>
+  );
 }

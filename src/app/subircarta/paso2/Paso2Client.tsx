@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { normalizePhone } from "@/lib/normalizePhone";
 
 const PROGRESS_STEPS = [
   { label: "Detectando platos y categorías", duration: 2000 },
@@ -25,6 +26,7 @@ export default function Paso2Client() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [phoneWarning, setPhoneWarning] = useState("");
 
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
@@ -90,6 +92,14 @@ export default function Paso2Client() {
 
     setLoading(true);
     setError("");
+    setPhoneWarning("");
+
+    // Normalize whatsapp on client side for immediate feedback
+    const rawWa = whatsapp.trim();
+    const normalizedWa = rawWa ? normalizePhone(rawWa) : null;
+    if (rawWa && !normalizedWa) {
+      setPhoneWarning("No pudimos validar este número. Se guardará sin WhatsApp.");
+    }
 
     try {
       const res = await fetch(`/api/subircarta/${leadId}`, {
@@ -99,7 +109,7 @@ export default function Paso2Client() {
           localName: localName.trim(),
           ownerName: ownerName.trim(),
           email: email.trim(),
-          whatsapp: whatsapp.trim() || null,
+          whatsapp: rawWa || null,
         }),
       });
 
@@ -225,8 +235,13 @@ export default function Paso2Client() {
                     type="tel"
                     placeholder="WhatsApp (opcional)"
                     value={whatsapp}
-                    onChange={(e) => { setWhatsapp(e.target.value); setError(""); }}
+                    onChange={(e) => { setWhatsapp(e.target.value); setError(""); setPhoneWarning(""); }}
                   />
+                  {phoneWarning && (
+                    <div style={{ color: "#e8a33d", fontSize: 12, marginTop: 4, textAlign: "left", paddingLeft: 4 }}>
+                      {phoneWarning}
+                    </div>
+                  )}
                 </div>
                 <div className="field-row" style={{ marginBottom: 14 }}>
                   <input

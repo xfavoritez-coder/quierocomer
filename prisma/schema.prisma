@@ -1676,6 +1676,7 @@ model MenuProvider {
   id               String             @id @default(cuid())
   name             String
   domainPatterns   String[]
+  htmlSignatures   String[]
   status           MenuProviderStatus
   extractionConfig Json?
   notes            String?
