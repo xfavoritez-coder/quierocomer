@@ -54,11 +54,18 @@ export async function extractJusto(cartaUrl: string): Promise<ExtractionResult> 
     $("title").text().split("|")[0]?.trim().split("-")[0]?.trim() ||
     "Restaurante";
 
-  // Extract logo
-  const logoUrl =
-    $('link[rel="apple-touch-icon"]').attr("href") ||
-    $('link[rel="icon"]').attr("href") ||
-    null;
+  // Extract logo — Justo puts it in an img with alt containing "Logo" or "logo"
+  let logoUrl: string | null = null;
+  $('img[alt*="Logo"], img[alt*="logo"]').each((_, el) => {
+    const src = $(el).attr("src");
+    if (src && !logoUrl) logoUrl = src;
+  });
+  if (!logoUrl) {
+    logoUrl =
+      $('link[rel="apple-touch-icon"]').attr("href") ||
+      $('link[rel="icon"]').attr("href") ||
+      null;
+  }
 
   // Find all product links — Justo uses /pedir/{id}/{slug} pattern
   const dishes: ExtractedDish[] = [];

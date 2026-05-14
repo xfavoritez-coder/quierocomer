@@ -65,7 +65,7 @@ export default function ConfirmacionClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Tu carta está en <span>preparación</span></h1>
+            <h1><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu carta ya está en <span>preparación</span></h1>
             <p className="subcopy">En unos minutos recibirás un correo con la transformación de tu carta lista para ver y probar.</p>
           </div>
 
@@ -79,7 +79,11 @@ export default function ConfirmacionClient() {
               <div className="phone-screen">
                 {/* Mini header */}
                 <div className="ph-header">
-                  <div className="ph-logo" />
+                  {preview?.logoUrl ? (
+                    <img src={preview.logoUrl} alt="" className="ph-logo" style={{ objectFit: "cover" }} />
+                  ) : (
+                    <div className="ph-logo" />
+                  )}
                   <span className="ph-name">{displayName}</span>
                 </div>
 
@@ -198,7 +202,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .phone-notch { width: 80px; height: 22px; background: #0e0c09; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { padding: 0; }
 .ph-header { display: flex; align-items: center; gap: 6px; padding: 8px 12px; }
-.ph-logo { width: 18px; height: 18px; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
+.ph-logo { width: 18px; height: 18px; border-radius: 50%; background: var(--amber); flex-shrink: 0; overflow: hidden; }
 .ph-name { font-size: 10px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ph-hero { height: 90px; position: relative; overflow: hidden; }
 .ph-hero-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(0,0,0,.7)); display: flex; align-items: flex-end; padding: 8px 12px; }
