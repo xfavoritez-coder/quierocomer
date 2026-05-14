@@ -34,14 +34,32 @@ export default function ConfirmacionClient() {
 
   useEffect(() => {
     if (!leadId) return;
-    fetch(`/api/subircarta/${leadId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.preview) setPreview(data.preview);
-        if (data.localName) setLocalName(data.localName);
-        if (data.email) setLeadEmail(data.email);
-      })
-      .catch(() => {});
+    let polling: ReturnType<typeof setInterval> | null = null;
+
+    const fetchLead = () => {
+      fetch(`/api/subircarta/${leadId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.localName) setLocalName(data.localName);
+          if (data.email) setLeadEmail(data.email);
+          if (data.preview?.sampleDishes?.length > 0) {
+            setPreview(data.preview);
+            if (polling) { clearInterval(polling); polling = null; }
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchLead();
+    // Poll every 5s until preview appears
+    polling = setInterval(fetchLead, 5000);
+    // Stop polling after 2 minutes max
+    const maxTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 120000);
+
+    return () => {
+      if (polling) clearInterval(polling);
+      clearTimeout(maxTimeout);
+    };
   }, [leadId]);
 
   const rawName = preview?.restaurantName || localName || "Tu restaurante";

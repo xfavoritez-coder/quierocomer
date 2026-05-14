@@ -95,6 +95,25 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       throw new Error("No dishes extracted from the menu");
     }
 
+    // Save preview to lead (for confirmation page)
+    if (!lead.preview || !(lead.preview as any)?.sampleDishes?.length) {
+      const categories = new Set(extraction.dishes.map((d) => d.category));
+      const previewData = {
+        restaurantName: extraction.restaurantName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),
+        logoUrl: extraction.logoUrl,
+        totalDishes: extraction.dishes.length,
+        totalCategories: categories.size,
+        sampleDishes: extraction.dishes.slice(0, 5).map((d) => ({
+          name: d.name,
+          description: d.description || "",
+          price: d.price,
+          imageUrl: d.imageUrl,
+          category: d.category,
+        })),
+      };
+      await prisma.lead.update({ where: { id: leadId }, data: { preview: previewData as any } });
+    }
+
     // Generate unique slug
     const baseName = lead.localName || extraction.restaurantName;
     let slug = slugify(baseName);
