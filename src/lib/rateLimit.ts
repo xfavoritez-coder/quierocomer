@@ -65,6 +65,7 @@ export const RATE_LIMITS = {
   login: { limit: 5, windowMs: 15 * 60 * 1000 },          // 5 per 15 min
   forgotPassword: { limit: 3, windowMs: 60 * 60 * 1000 },  // 3 per hour
   resetPassword: { limit: 10, windowMs: 15 * 60 * 1000 },  // 10 per 15 min
+  subircarta: { limit: 5, windowMs: 60 * 60 * 1000 },      // 5 per hour
 } as const;
 
 /** Extract client IP from request */

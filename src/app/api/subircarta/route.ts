@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 
 /** Try to detect the menu provider: first by domain, then by fetching HTML and scanning for signatures. */
 async function detectProvider(
@@ -60,6 +61,16 @@ async function detectProvider(
 
 export async function POST(req: Request) {
   try {
+    // Rate limit
+    const ip = getClientIp(req);
+    const rl = rateLimit(`subircarta:${ip}`, RATE_LIMITS.subircarta);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: `Demasiados intentos. Intenta de nuevo en ${formatRetryAfter(rl.retryAfterMs)}.` },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const { cartaType, cartaUrl } = body;
 
@@ -85,6 +96,16 @@ export async function POST(req: Request) {
         { error: "La URL ingresada no es válida." },
         { status: 400 },
       );
+    }
+
+    // Check for duplicate: reuse incomplete lead with same URL
+    const existing = await prisma.lead.findFirst({
+      where: { cartaUrl, email: "" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (existing) {
+      return NextResponse.json({ id: existing.id, detectedProviderId: existing.detectedProviderId });
     }
 
     const providers = await prisma.menuProvider.findMany({
