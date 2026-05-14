@@ -39,7 +39,6 @@ function BirthdayTab({ restaurantId, restaurantName }: { restaurantId: string; r
   }, [restaurantId]);
 
   const handleSave = async () => {
-    if (enabled && !perk.trim()) { alert("Debes indicar el regalo para activar"); return; }
     setSaving(true);
     await fetch("/api/admin/restaurant/birthday", {
       method: "PUT",
