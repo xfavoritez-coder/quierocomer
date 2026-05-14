@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
+import { extractWithScraper } from "./scrape";
 import type { ExtractionResult } from "./types";
 
 export interface LeadPreview {
@@ -64,8 +65,12 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
     case "Justo":
       extraction = await extractJusto(lead.cartaUrl);
       break;
+    case "Fudo":
+    case "Mercat":
+    case "Gourmedia":
     default:
-      throw new Error(`No extractor for provider: ${lead.detectedProvider?.name || "unknown"}`);
+      extraction = await extractWithScraper(lead.cartaUrl);
+      break;
   }
 
   const categories = new Set(extraction.dishes.map((d) => d.category));

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
+import { extractWithScraper } from "./scrape";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult } from "./types";
 
@@ -61,11 +62,12 @@ async function extractMenu(cartaUrl: string, providerName: string | null): Promi
   switch (providerName) {
     case "Justo":
       return extractJusto(cartaUrl);
-    // Future: case "Fudo": return extractFudo(cartaUrl);
-    // Future: case "Mercat": return extractMercat(cartaUrl);
-    // Future: case "Gourmedia": return extractGourmedia(cartaUrl);
+    case "Fudo":
+    case "Mercat":
+    case "Gourmedia":
     default:
-      throw new Error(`No extractor available for provider: ${providerName || "unknown"}`);
+      // Generic scraper: Jina AI + Claude. Works with any provider.
+      return extractWithScraper(cartaUrl);
   }
 }
 
