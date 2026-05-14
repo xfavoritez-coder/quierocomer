@@ -363,7 +363,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       </span>
                     );
                   })()}
-                  <p style={{ fontSize: "14px", fontWeight: 700, color: "#0e0e0e", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--carta-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
                   {p.description && (
@@ -375,7 +375,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                         ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
                       {p.originalPrice && (
-                        <span style={{ fontSize: "13px", color: "#999999", textDecoration: "line-through" }}>
+                        <span style={{ fontSize: "13px", color: "var(--carta-text3)", textDecoration: "line-through" }}>
                           ${p.originalPrice.toLocaleString("es-CL")}
                         </span>
                       )}
@@ -388,7 +388,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
         </div>
         {/* Fade right — hide when at last card */}
         {promos.length > 1 && activeIdx < promos.length - 1 && (
-          <div style={{ position: "absolute", top: 0, right: -20, width: 40, height: "100%", background: "linear-gradient(to right, transparent, #f7f7f5)", pointerEvents: "none", zIndex: 2, transition: "opacity 0.2s ease" }} />
+          <div style={{ position: "absolute", top: 0, right: -20, width: 40, height: "100%", background: "linear-gradient(to right, transparent, var(--carta-bg))", pointerEvents: "none", zIndex: 2, transition: "opacity 0.2s ease" }} />
         )}
         </div>
 
@@ -427,7 +427,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
               width: "100%", maxWidth: "100%",
               height: "100dvh",
               touchAction: "pan-y",
-              background: "white",
+              background: "var(--carta-detail-bg)",
               borderRadius: 0,
               zIndex: 101, display: "flex", flexDirection: "column",
               transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -439,11 +439,11 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
               <X size={16} color="white" strokeWidth={2} />
             </button>
             {/* Handle bar — only for product type */}
-            {!isGraphic && <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "rgba(0,0,0,0.15)", borderRadius: 100, zIndex: 10 }} />}
+            {!isGraphic && <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", width: 36, height: 4, background: "var(--carta-card-border)", borderRadius: 100, zIndex: 10 }} />}
 
             {/* Promo counter */}
             {promos.length > 1 && (
-              <div style={{ position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", fontSize: "11px", fontWeight: 600, color: isGraphic ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.3)", zIndex: 10, letterSpacing: "0.05em" }}>
+              <div style={{ position: "absolute", top: 18, left: "50%", transform: "translateX(-50%)", fontSize: "11px", fontWeight: 600, color: isGraphic ? "rgba(255,255,255,0.5)" : "var(--carta-card-border)", zIndex: 10, letterSpacing: "0.05em" }}>
                 {currentPromoIdx + 1} / {promos.length}
               </div>
             )}
@@ -469,7 +469,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
                 </div>
                 {/* Panel blanco abajo con info */}
-                <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "white" }}>
+                <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "var(--carta-detail-bg)" }}>
                   {(() => {
                     const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
@@ -484,33 +484,33 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       </span>
                     );
                   })()}
-                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 700, lineHeight: 1.15, color: "#0e0e0e", margin: "0 0 8px" }}>
+                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 700, lineHeight: 1.15, color: "var(--carta-text)", margin: "0 0 8px" }}>
                     {selectedPromo.name}
                   </h2>
                   {selectedPromo.description && (
-                    <p style={{ fontSize: "13.5px", lineHeight: 1.55, color: "#4a4a4a", margin: "0 0 14px" }}>
+                    <p style={{ fontSize: "13.5px", lineHeight: 1.55, color: "var(--carta-text2)", margin: "0 0 14px" }}>
                       {selectedPromo.description}
                     </p>
                   )}
                   {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
                       {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "#F4A623", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
-                      {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                      {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "var(--carta-text3)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                     </div>
                   )}
                   {/* Modifier templates */}
                   {selectedPromo.modifierTemplates && selectedPromo.modifierTemplates.length > 0 && (
                     <div style={{ marginTop: 16 }}>
-                      <p style={{ fontSize: "15px", fontWeight: 700, color: "#0e0e0e", margin: "0 0 10px" }}>Personaliza</p>
+                      <p style={{ fontSize: "15px", fontWeight: 700, color: "var(--carta-text)", margin: "0 0 10px" }}>Personaliza</p>
                       {selectedPromo.modifierTemplates.flatMap(tpl => [...tpl.groups].sort((a, b) => a.position - b.position)).map(group => (
                         <div key={group.id} style={{ marginBottom: 14 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                            <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{group.name}</p>
+                            <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>{group.name}</p>
                             {group.minSelect > 0 && (
                               <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
                             )}
                           </div>
-                          <div style={{ background: "#fafaf8", borderRadius: 12, padding: 4 }}>
+                          <div style={{ background: "var(--carta-bg)", borderRadius: 12, padding: 4 }}>
                             {[...group.options].sort((a, b) => a.position - b.position).map(opt => {
                               const selected = modifierSelections[group.id]?.has(opt.id) || false;
                               const isRadio = group.maxSelect === 1;
@@ -521,7 +521,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                                     padding: "9px 11px", borderRadius: 8, border: "none",
-                                    background: selected ? "#fff8ee" : "white",
+                                    background: selected ? "rgba(244,166,35,0.08)" : "var(--carta-surface)",
                                     cursor: "pointer", marginBottom: 2, textAlign: "left",
                                     outline: selected ? "2px solid #F4A623" : "1px solid transparent",
                                     transition: "all 0.15s ease",
@@ -531,7 +531,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                     width: 18, height: 18, borderRadius: isRadio ? "50%" : 4, flexShrink: 0,
                                     border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    background: selected ? "#F4A623" : "white",
+                                    background: selected ? "#F4A623" : "var(--carta-surface)",
                                     transition: "all 0.15s ease",
                                   }}>
                                     {selected && (
@@ -540,7 +540,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                         : <svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                     )}
                                   </div>
-                                  <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "#0e0e0e" }}>{opt.name}</span>
+                                  <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "var(--carta-text)" }}>{opt.name}</span>
                                   {opt.priceAdjustment > 0 && (
                                     <span style={{ fontSize: "12px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
                                   )}
@@ -554,7 +554,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   )}
 
                   {selectedPromo.validUntil && (
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, fontSize: "12px", color: "#8a8a8a" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 16, fontSize: "12px", color: "var(--carta-text3)" }}>
                       <span style={{ fontSize: "14px" }}>⏰</span>
                       <span>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</span>
                     </div>
@@ -604,35 +604,35 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     );
                   })()}
 
-                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "#0e0e0e", margin: "0 0 12px" }}>
+                  <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 600, lineHeight: 1.1, letterSpacing: "-0.01em", color: "var(--carta-text)", margin: "0 0 12px" }}>
                     {selectedPromo.name}
                   </h2>
 
                   {selectedPromo.description && (
-                    <p style={{ fontSize: "14px", lineHeight: 1.5, color: "#4a4a4a", margin: "0 0 20px" }}>{selectedPromo.description}</p>
+                    <p style={{ fontSize: "14px", lineHeight: 1.5, color: "var(--carta-text2)", margin: "0 0 20px" }}>{selectedPromo.description}</p>
                   )}
 
                   {selectedPromo.promoPrice && (
-                    <div style={{ padding: "18px 0", borderTop: "1px solid rgba(0,0,0,0.08)", borderBottom: "1px solid rgba(0,0,0,0.08)", marginBottom: 24 }}>
-                      <p style={{ fontSize: "11px", fontWeight: 500, color: "#8a8a8a", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO OFERTA</p>
+                    <div style={{ padding: "18px 0", borderTop: "1px solid var(--carta-card-border)", borderBottom: "1px solid var(--carta-card-border)", marginBottom: 24 }}>
+                      <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--carta-text3)", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO OFERTA</p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
                         <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
-                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "#8a8a8a", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
+                        {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "var(--carta-text3)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                       </div>
                     </div>
                   )}
 
                   {multiDish && (
                     <div style={{ marginBottom: 24 }}>
-                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 4px" }}>Qué incluye</h3>
-                      <p style={{ fontSize: "12.5px", color: "#8a8a8a", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta oferta</p>
-                      <div style={{ background: "#fafaf8", borderRadius: 18, padding: 6 }}>
+                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "var(--carta-text)", margin: "0 0 4px" }}>Qué incluye</h3>
+                      <p style={{ fontSize: "12.5px", color: "var(--carta-text3)", margin: "0 0 14px" }}>{selectedPromo.dishes.length} platos en esta oferta</p>
+                      <div style={{ background: "var(--carta-bg)", borderRadius: 18, padding: 6 }}>
                         {selectedPromo.dishes.map(d => (
-                          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "white", marginBottom: 4 }}>
+                          <div key={d.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, borderRadius: 14, background: "var(--carta-surface)", marginBottom: 4 }}>
                             {d.photos?.[0] && <div style={{ width: 48, height: 48, borderRadius: 10, overflow: "hidden", position: "relative", flexShrink: 0 }}><Image src={d.photos[0]} alt={d.name} fill className="object-cover" sizes="48px" /></div>}
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <p style={{ fontSize: "14px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{d.name}</p>
-                              <p style={{ fontSize: "11px", color: "#8a8a8a", margin: "2px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
+                              <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>{d.name}</p>
+                              <p style={{ fontSize: "11px", color: "var(--carta-text3)", margin: "2px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                             </div>
                           </div>
                         ))}
@@ -643,16 +643,16 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   {/* Modifier templates */}
                   {selectedPromo.modifierTemplates && selectedPromo.modifierTemplates.length > 0 && (
                     <div style={{ marginBottom: 24 }}>
-                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "#0e0e0e", margin: "0 0 14px" }}>Personaliza</h3>
+                      <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "18px", fontWeight: 600, color: "var(--carta-text)", margin: "0 0 14px" }}>Personaliza</h3>
                       {selectedPromo.modifierTemplates.flatMap(tpl => [...tpl.groups].sort((a, b) => a.position - b.position)).map(group => (
                         <div key={group.id} style={{ marginBottom: 18 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                            <p style={{ fontSize: "13.5px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>{group.name}</p>
+                            <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>{group.name}</p>
                             {group.minSelect > 0 && (
                               <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
                             )}
                           </div>
-                          <div style={{ background: "#fafaf8", borderRadius: 14, padding: 4 }}>
+                          <div style={{ background: "var(--carta-bg)", borderRadius: 14, padding: 4 }}>
                             {[...group.options].sort((a, b) => a.position - b.position).map(opt => {
                               const selected = modifierSelections[group.id]?.has(opt.id) || false;
                               const isRadio = group.maxSelect === 1;
@@ -663,7 +663,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                                     padding: "10px 12px", borderRadius: 10, border: "none",
-                                    background: selected ? "#fff8ee" : "white",
+                                    background: selected ? "rgba(244,166,35,0.08)" : "var(--carta-surface)",
                                     cursor: "pointer", marginBottom: 2, textAlign: "left",
                                     outline: selected ? "2px solid #F4A623" : "1px solid transparent",
                                     transition: "all 0.15s ease",
@@ -674,7 +674,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                     width: 20, height: 20, borderRadius: isRadio ? "50%" : 5, flexShrink: 0,
                                     border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
                                     display: "flex", alignItems: "center", justifyContent: "center",
-                                    background: selected ? "#F4A623" : "white",
+                                    background: selected ? "#F4A623" : "var(--carta-surface)",
                                     transition: "all 0.15s ease",
                                   }}>
                                     {selected && (
@@ -683,7 +683,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                         : <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2.5 6L5 8.5L9.5 3.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                                     )}
                                   </div>
-                                  <span style={{ flex: 1, fontSize: "13.5px", fontWeight: 500, color: "#0e0e0e" }}>{opt.name}</span>
+                                  <span style={{ flex: 1, fontSize: "13.5px", fontWeight: 500, color: "var(--carta-text)" }}>{opt.name}</span>
                                   {opt.priceAdjustment > 0 && (
                                     <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
                                   )}
@@ -700,7 +700,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fef9f0", borderRadius: 14, border: "1px solid #fce8c5" }}>
                       <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
                       <div>
-                        <p style={{ fontSize: "13px", fontWeight: 600, color: "#0e0e0e", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
+                        <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
                         <p style={{ fontSize: "11.5px", color: "#8a5a2c", margin: "2px 0 0" }}>Sujeto a disponibilidad del local</p>
                       </div>
                     </div>
