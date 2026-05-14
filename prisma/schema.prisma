@@ -1699,6 +1699,8 @@ model Lead {
   cartaStatus        CartaStatus   @default(PENDING)
   activated          Boolean       @default(false)
   convertedToOwnerId String?
+  step2At            DateTime?
+  completedAt        DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 

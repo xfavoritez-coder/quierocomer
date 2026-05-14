@@ -30,6 +30,7 @@ export async function PATCH(
         ownerName,
         email,
         whatsapp: normalizePhone(whatsapp),
+        completedAt: existing.completedAt || new Date(),
       },
     });
 
@@ -51,11 +52,16 @@ export async function GET(
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },
-      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true, email: true },
+      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true, email: true, step2At: true },
     });
 
     if (!lead) {
       return NextResponse.json({ error: "Lead no encontrado." }, { status: 404 });
+    }
+
+    // Mark step2At on first visit (fire-and-forget)
+    if (!lead.step2At) {
+      prisma.lead.update({ where: { id }, data: { step2At: new Date() } }).catch(() => {});
     }
 
     return NextResponse.json(lead);

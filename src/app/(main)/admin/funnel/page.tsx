@@ -19,8 +19,11 @@ interface Lead {
 
 interface Stats {
   total: number;
+  reachedStep2: number;
   completed: number;
-  pending: number;
+  abandoned: number;
+  conversionRate: number;
+  step2Rate: number;
   byType: { LINK: number; DOCUMENT: number; PHOTO: number };
 }
 
@@ -53,8 +56,9 @@ export default function FunnelPage() {
       {stats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
           <StatCard label="Total leads" value={stats.total} />
-          <StatCard label="Completados" value={stats.completed} color="#43d17b" />
-          <StatCard label="Abandonados" value={stats.pending} color="#e85d5d" />
+          <StatCard label="Llegaron al paso 2" value={stats.reachedStep2} suffix={`${stats.step2Rate}%`} />
+          <StatCard label="Completados" value={stats.completed} color="#43d17b" suffix={`${stats.conversionRate}%`} />
+          <StatCard label="Abandonados" value={stats.abandoned} color="#e85d5d" />
           <StatCard label="Modo Link" value={stats.byType.LINK} />
           <StatCard label="Modo PDF" value={stats.byType.DOCUMENT} />
           <StatCard label="Modo Foto" value={stats.byType.PHOTO} />
@@ -110,11 +114,14 @@ export default function FunnelPage() {
   );
 }
 
-function StatCard({ label, value, color }: { label: string; value: number; color?: string }) {
+function StatCard({ label, value, color, suffix }: { label: string; value: number; color?: string; suffix?: string }) {
   return (
     <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "16px 18px", border: "1px solid #2a2a2a" }}>
-      <div style={{ fontSize: 24, fontWeight: 700, color: color || "#fff", marginBottom: 2 }}>{value}</div>
-      <div style={{ fontSize: 12, color: "#888" }}>{label}</div>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+        <span style={{ fontSize: 24, fontWeight: 700, color: color || "#fff" }}>{value}</span>
+        {suffix && <span style={{ fontSize: 13, color: "#888" }}>{suffix}</span>}
+      </div>
+      <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{label}</div>
     </div>
   );
 }
