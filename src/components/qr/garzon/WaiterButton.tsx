@@ -98,6 +98,13 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
   const handleSaveTable = (num: string) => {
     localStorage.setItem(`${TABLE_KEY_PREFIX}${restaurantId}`, num);
     setSavedTable(num);
+    showTableToast(num);
+  };
+
+  const [tableToast, setTableToast] = useState<string | null>(null);
+  const showTableToast = (num: string) => {
+    setTableToast(num);
+    setTimeout(() => setTableToast(null), 3500);
   };
 
   const handleSaveAndCall = (num: string) => {
@@ -139,6 +146,25 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         >
           {toast}
           <div style={{ position: "absolute", top: "50%", right: -4, transform: "translateY(-50%) rotate(45deg)", width: 8, height: 8, background: "#333" }} />
+        </div>
+      )}
+
+      {/* Table saved toast */}
+      {tableToast && !state.match(/calling|success/) && (
+        <div
+          className="font-[family-name:var(--font-dm)]"
+          style={{
+            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
+            background: "var(--carta-accent, #F4A623)", color: "#0e0e0e",
+            padding: "8px 14px", borderRadius: 12, fontSize: "0.78rem", fontWeight: 600,
+            boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 60,
+            whiteSpace: "nowrap", animation: "waiterBubbleIn 0.25s ease-out",
+            maxWidth: 200, lineHeight: 1.4,
+          }}
+        >
+          <div>Mesa {tableToast} guardada 🔔</div>
+          <div style={{ fontSize: "0.7rem", fontWeight: 500, opacity: 0.8, marginTop: 2 }}>Tócame cuando quieras llamar al garzón</div>
+          <div style={{ position: "absolute", top: "50%", right: -5, transform: "translateY(-50%) rotate(45deg)", width: 10, height: 10, background: "var(--carta-accent, #F4A623)" }} />
         </div>
       )}
 

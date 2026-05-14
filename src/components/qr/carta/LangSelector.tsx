@@ -53,7 +53,7 @@ export default function LangSelector({ enabledLangs }: { enabledLangs?: string[]
         onClick={handleToggle}
         style={{
           width: 32, height: 32, borderRadius: "50%",
-          background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)",
+          background: "var(--carta-search-bg)",
           display: "flex", alignItems: "center", justifyContent: "center",
           border: "none", cursor: "pointer", fontSize: "0.95rem", position: "relative", zIndex: 10,
         }}

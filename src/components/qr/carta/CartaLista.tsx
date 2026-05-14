@@ -518,7 +518,7 @@ export default function CartaLista({
         if (msgType) return <div style={{ marginTop: 16, paddingTop: 6 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
         if (!mode) return null;
         return (
-          <div style={{ paddingTop: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
             {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
             {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
             {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
