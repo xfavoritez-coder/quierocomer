@@ -46,6 +46,7 @@ export default function ConfirmacionClient() {
 
   const rawName = preview?.restaurantName || localName || "Tu restaurante";
   const displayName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+  const hasPreviewDishes = preview?.sampleDishes && preview.sampleDishes.length > 0;
 
   return (
     <>
@@ -76,7 +77,8 @@ export default function ConfirmacionClient() {
             <p className="subcopy">En unos minutos recibirás un correo con tu carta lista para probar.</p>
           </div>
 
-          {/* iPhone mockup with preview */}
+          {/* iPhone mockup with preview — or fallback message */}
+          {hasPreviewDishes ? (
           <div className="phone-wrap">
             <div className="phone phone-generating">
               {/* Phone notch */}
@@ -148,6 +150,13 @@ export default function ConfirmacionClient() {
               </div>
             </div>
           </div>
+          ) : (
+          <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>&#127860;</div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Estamos trabajando en tu carta</p>
+            <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>Tu carta necesita un poco más de atención. Nuestro equipo la está revisando para darte la mejor propuesta posible.</p>
+          </div>
+          )}
 
           {/* Badge */}
           <div className="badges">
