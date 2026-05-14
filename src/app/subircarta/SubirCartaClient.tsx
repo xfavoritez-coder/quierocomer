@@ -1,19 +1,196 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
 
+type Mode = "pdf" | "link" | "photo" | null;
+
 export default function SubirCartaClient() {
+  const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>(null);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const isLinkValid = mode === "link" && (() => {
+    try { new URL(linkUrl); return true; } catch { return false; }
+  })();
+
+  const ctaEnabled = mode === "link" ? isLinkValid : mode === "pdf" || mode === "photo";
+
+  const handleSubmit = async () => {
+    if (!ctaEnabled || loading) return;
+
+    if (mode !== "link") {
+      alert("Los modos PDF y foto estarán disponibles pronto.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("/api/subircarta", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cartaType: "LINK", cartaUrl: linkUrl }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Error al procesar tu carta.");
+        return;
+      }
+
+      router.push(`/subircarta/paso2?id=${data.id}`);
+    } catch {
+      setError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: STYLES }} />
-      <div dangerouslySetInnerHTML={{ __html: BODY }} />
+
+      <div className="grain" />
+
+      <main className="page">
+        <nav style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, padding: "20px clamp(22px,4vw,64px)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(9,8,6,.72)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)" }}>
+          <a href="/landing" style={{ fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 600, color: "var(--cream)", display: "flex", alignItems: "center", gap: 10, letterSpacing: ".02em", textDecoration: "none" }}>
+            <img src="/landing/logo.png" alt="" style={{ height: 20, width: "auto", marginRight: -8 }} />
+            QuieroComer
+          </a>
+          <a href="mailto:hola@quierocomer.cl" style={{ color: "var(--cream-2)", fontSize: 13, textDecoration: "none", letterSpacing: ".04em" }}>Ayuda</a>
+        </nav>
+
+        <section className="steps" aria-label="Progreso">
+          <div className="step active"><div className="step-number">1</div><span>Subir carta</span></div>
+          <div className="step-line" />
+          <div className="step"><div className="step-number">2</div><span>Transformación</span></div>
+          <div className="step-line" />
+          <div className="step"><div className="step-number">3</div><span>Carta viva</span></div>
+        </section>
+
+        <section className="shell centered-shell">
+          <div className="center-copy">
+            <h1>Sube tu carta y ve cómo la <span>mejoramos.</span></h1>
+          </div>
+
+          <div className="form-side centered-form">
+            {/* Method selector */}
+            <div className="methods">
+              {(["pdf", "link", "photo"] as const).map((m) => (
+                <button
+                  key={m}
+                  className={`method${mode === m ? " active" : ""}`}
+                  type="button"
+                  onClick={() => { setMode(m); setError(""); }}
+                >
+                  {m === "pdf" && (
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
+                  )}
+                  {m === "link" && (
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo link</strong><span>de mi carta QR</span></>
+                  )}
+                  {m === "photo" && (
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>del menú físico</span></>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* PDF panel */}
+            {mode === "pdf" && (
+              <div className="input-panel">
+                <div className="upload-card compact-upload" role="button" tabIndex={0}>
+                  <div>
+                    <div className="upload-icon">
+                      <svg viewBox="0 0 64 64" fill="none"><path d="M22 46H18a12 12 0 0 1-1.2-23.9A16 16 0 0 1 48 26a10 10 0 0 1-2 20h-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/><path d="M32 46V26M24 34l8-8 8 8" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                    <div className="upload-title">Sube tu carta en PDF</div>
+                    <div className="upload-link">Haz clic para seleccionar archivo</div>
+                    <div className="formats">PDF · Máx. 10MB</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Link panel */}
+            {mode === "link" && (
+              <div className="input-panel">
+                <div className="upload-card compact-upload" style={{ minHeight: 160 }}>
+                  <div style={{ width: "100%" }}>
+                    <div className="upload-icon">
+                      <svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                    </div>
+                    <div className="upload-title">Pega el link de tu carta actual</div>
+                    <div className="upload-link" style={{ marginBottom: 12 }}>Ya sea tu web o link de tu QR</div>
+                    <input
+                      type="url"
+                      placeholder="https://turestaurante.cl/carta"
+                      style={{ maxWidth: 420, margin: "0 auto" }}
+                      value={linkUrl}
+                      onChange={(e) => { setLinkUrl(e.target.value); setError(""); }}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Photo panel */}
+            {mode === "photo" && (
+              <div className="input-panel">
+                <div className="upload-card compact-upload" role="button" tabIndex={0}>
+                  <div>
+                    <div className="upload-icon">
+                      <svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg>
+                    </div>
+                    <div className="upload-title">Sube fotos de tu menú</div>
+                    <div className="upload-link">Puede ser una o varias fotos de tu carta tomada con tu celular</div>
+                    <div className="formats">JPG o PNG · Máx. 10MB</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Error message */}
+            {error && (
+              <div style={{ marginTop: 12, color: "#e85d5d", fontSize: 14, textAlign: "center" }}>
+                {error}
+              </div>
+            )}
+
+            {/* CTA */}
+            <button
+              className="cta"
+              type="button"
+              onClick={handleSubmit}
+              disabled={!ctaEnabled || loading}
+              style={{
+                opacity: ctaEnabled && !loading ? 1 : 0.45,
+                cursor: ctaEnabled && !loading ? "pointer" : "default",
+              }}
+            >
+              {loading ? "Analizando..." : "Analizar mi carta"} <span>→</span>
+            </button>
+
+            <div className="trust below-cta">
+              <svg viewBox="0 0 24 24" fill="none" style={{ width: 16, height: 16, flexShrink: 0, color: "var(--amber-2)" }}><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v10H6V11z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+              Tu información está protegida
+            </div>
+          </div>
+        </section>
+      </main>
+
       <Footer onPlanesClick={() => setPlanesOpen(true)} />
       {planesOpen && <PlanesModal onClose={() => setPlanesOpen(false)} />}
-      <script dangerouslySetInnerHTML={{ __html: SCRIPT }} />
     </>
   );
 }
@@ -52,7 +229,6 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .method svg { width: 32px; height: 32px; margin: 0 auto; color: var(--amber-2); }
 .method span { font-size: 13px; color: var(--cream-2); }
 .input-panel { margin-top: 18px; }
-.hidden { display: none; }
 .upload-card { margin-top: 20px; border: 1px dashed rgba(244,189,105,.75); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.12), transparent 42%), rgba(255,255,255,.035); border-radius: 24px; min-height: 230px; display: grid; place-items: center; text-align: center; padding: 32px 20px; box-shadow: inset 0 0 50px rgba(232,163,61,.055), 0 0 34px rgba(232,163,61,.08); transition: transform .22s ease, border-color .22s ease, background .22s ease; }
 .compact-upload { margin-top: 18px; min-height: 160px; padding: 24px 20px; }
 .upload-card:hover { transform: translateY(-2px); border-color: var(--amber-2); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.18), transparent 44%), rgba(255,255,255,.052); }
@@ -66,109 +242,8 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
 .trust svg { flex-shrink: 0; color: var(--amber-2); width: 16px; height: 16px; }
 .below-cta { margin: 10px auto 0; max-width: 520px; }
-.cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease; margin-top: 20px; }
-.cta:hover { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-.sc-footer { padding: 44px 0; background: var(--black); border-top: 1px solid rgba(58,52,45,1); position: relative; z-index: 2; }
+.cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
+.cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
 @media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 70px; } .methods { gap: 14px; } }
 @media (max-width: 390px) { h1 { font-size: 44px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
-`;
-
-const BODY = `
-<div class="grain"></div>
-
-<main class="page">
-  <nav style="position:fixed;top:0;left:0;right:0;z-index:50;padding:20px clamp(22px,4vw,64px);display:flex;justify-content:space-between;align-items:center;background:rgba(9,8,6,.72);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)">
-    <a href="/landing" style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none">
-      <img src="/landing/logo.png" alt="" style="height:20px;width:auto;margin-right:-8px" />
-      QuieroComer
-    </a>
-    <a href="mailto:hola@quierocomer.cl" style="color:var(--cream-2);font-size:13px;text-decoration:none;letter-spacing:.04em">Ayuda</a>
-  </nav>
-
-  <section class="steps" aria-label="Progreso">
-    <div class="step active"><div class="step-number">1</div><span>Subir carta</span></div>
-    <div class="step-line"></div>
-    <div class="step"><div class="step-number">2</div><span>Transformación</span></div>
-    <div class="step-line"></div>
-    <div class="step"><div class="step-number">3</div><span>Carta viva</span></div>
-  </section>
-
-  <section class="shell centered-shell">
-    <div class="center-copy">
-      <h1>Sube tu carta y ve cómo la <span>mejoramos.</span></h1>
-    </div>
-    <div class="form-side centered-form">
-      <div class="methods">
-        <button class="method" type="button" data-mode="pdf">
-          <svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" stroke-width="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-          <strong>Tengo PDF</strong><span>o archivo</span>
-        </button>
-        <button class="method" type="button" data-mode="link">
-          <svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-          <strong>Tengo link</strong><span>de mi carta QR</span>
-        </button>
-        <button class="method" type="button" data-mode="photo">
-          <svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" stroke-width="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" stroke-width="3"/></svg>
-          <strong>Tengo foto</strong><span>del menú físico</span>
-        </button>
-      </div>
-
-      <div class="input-panel hidden" id="pdfPanel">
-        <div class="upload-card compact-upload" role="button" tabindex="0">
-          <div>
-            <div class="upload-icon">
-              <svg viewBox="0 0 64 64" fill="none"><path d="M22 46H18a12 12 0 0 1-1.2-23.9A16 16 0 0 1 48 26a10 10 0 0 1-2 20h-4" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><path d="M32 46V26M24 34l8-8 8 8" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </div>
-            <div class="upload-title">Sube tu carta en PDF</div>
-            <div class="upload-link">Haz clic para seleccionar archivo</div>
-            <div class="formats">PDF · Máx. 10MB</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="input-panel hidden" id="linkPanel">
-        <div class="upload-card compact-upload" style="min-height:160px">
-          <div style="width:100%">
-            <div class="upload-icon">
-              <svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
-            </div>
-            <div class="upload-title">Pega el link de tu carta actual</div>
-            <div class="upload-link" style="margin-bottom:12px">Ya sea tu web o link de tu QR</div>
-            <input type="url" placeholder="https://turestaurante.cl/carta" style="max-width:420px;margin:0 auto" />
-          </div>
-        </div>
-      </div>
-
-      <div class="input-panel hidden" id="photoPanel">
-        <div class="upload-card compact-upload" role="button" tabindex="0">
-          <div>
-            <div class="upload-icon">
-              <svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" stroke-width="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" stroke-width="3"/></svg>
-            </div>
-            <div class="upload-title">Sube fotos de tu menú</div>
-            <div class="upload-link">Puede ser una o varias fotos de tu carta tomada con tu celular</div>
-            <div class="formats">JPG o PNG · Máx. 10MB</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="cta" type="button">Continuar <span>→</span></button>
-    </div>
-  </section>
-</main>
-
-`;
-
-const SCRIPT = `
-document.querySelector('.cta').addEventListener('click', function() { alert('Estamos creando el paso 2. Pronto estará disponible.'); });
-document.querySelectorAll('.method').forEach(function(button) {
-  button.addEventListener('click', function() {
-    document.querySelectorAll('.method').forEach(function(b) { b.classList.remove('active'); });
-    button.classList.add('active');
-    var panels = { pdf: document.getElementById('pdfPanel'), link: document.getElementById('linkPanel'), photo: document.getElementById('photoPanel') };
-    Object.values(panels).forEach(function(p) { if (p) p.classList.add('hidden'); });
-    var target = panels[button.dataset.mode];
-    if (target) target.classList.remove('hidden');
-  });
-});
 `;

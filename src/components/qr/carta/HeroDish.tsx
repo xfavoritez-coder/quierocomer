@@ -25,15 +25,13 @@ interface HeroDishProps {
   onDishSelect?: (dish: Dish) => void;
   viewSelectorSlot?: React.ReactNode;
   enabledLangs?: string[];
-  variant?: "full" | "compact";
 }
 
 function isReal(url: string | null | undefined): boolean {
   return !!url && !url.includes("picsum");
 }
 
-export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs, variant = "full" }: HeroDishProps) {
-  const isCompact = variant === "compact";
+export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs }: HeroDishProps) {
   const [current, setCurrent] = useState(0);
 
   const logoSrc = isReal(restaurant.logoUrl) ? restaurant.logoUrl! : null;
@@ -99,7 +97,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
 
       <section
         className="relative w-full overflow-hidden"
-        style={{ height: isCompact ? "38vh" : "50vh", maxHeight: isCompact ? 300 : 400 }}
+        style={{ height: "50vh", maxHeight: 400 }}
         onTouchStart={hasSlides ? handleTouchStart : undefined}
         onTouchEnd={hasSlides ? handleTouchEnd : undefined}
       >
@@ -177,7 +175,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
               <h1
                 className="font-[family-name:var(--font-playfair)] text-white text-center"
                 style={{
-                  fontSize: isCompact ? "2rem" : "2.4rem",
+                  fontSize: "2.4rem",
                   fontWeight: 900,
                   lineHeight: 1.1,
                   textShadow: "0 2px 8px rgba(0,0,0,0.5)",
@@ -192,9 +190,9 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   className="font-[family-name:var(--font-dm)] text-center line-clamp-2"
                   style={{
                     color: "rgba(255,255,255,0.75)",
-                    fontSize: isCompact ? "1rem" : "1.2rem",
+                    fontSize: "1.2rem",
                     lineHeight: 1.45,
-                    marginTop: isCompact ? 6 : 8,
+                    marginTop: 8,
                     maxWidth: 300,
                   }}
                 >

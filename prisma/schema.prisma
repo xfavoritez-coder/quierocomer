@@ -1650,3 +1650,60 @@ model PlatformCampaignContact {
   @@index([email])
   @@index([campaignId])
 }
+
+// ─── Lead Funnel (/subircarta) ──────────────────────────────────────────
+
+enum MenuProviderStatus {
+  SUPPORTED
+  IN_RESEARCH
+  UNKNOWN
+}
+
+enum CartaType {
+  LINK
+  DOCUMENT
+  PHOTO
+}
+
+enum CartaStatus {
+  PENDING
+  PROCESSING
+  READY
+  DELIVERED
+}
+
+model MenuProvider {
+  id               String             @id @default(cuid())
+  name             String
+  domainPatterns   String[]
+  status           MenuProviderStatus
+  extractionConfig Json?
+  notes            String?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  leads            Lead[]
+}
+
+model Lead {
+  id                 String        @id @default(cuid())
+  localName          String
+  ownerName          String
+  email              String
+  whatsapp           String?
+  cartaType          CartaType
+  cartaUrl           String?
+  cartaFileUrl       String?
+  detectedProviderId String?
+  cartaStatus        CartaStatus   @default(PENDING)
+  activated          Boolean       @default(false)
+  convertedToOwnerId String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  detectedProvider   MenuProvider? @relation(fields: [detectedProviderId], references: [id])
+
+  @@index([email])
+  @@index([detectedProviderId])
+  @@index([cartaStatus])
+}
