@@ -117,6 +117,10 @@ export default function ConfirmacionClient() {
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1610, #2a2218)" }} />
                   )}
+                  {/* Spanish flag top-right */}
+                  <div style={{ position: "absolute", top: 6, right: 8, zIndex: 3, width: 16, height: 16, borderRadius: "50%", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+                    <svg viewBox="0 0 100 100" width="16" height="16"><defs><clipPath id="phflag"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath="url(#phflag)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>
+                  </div>
                   {/* Dark overlay */}
                   <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
