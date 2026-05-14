@@ -20,6 +20,7 @@ interface Restaurant {
   dietType: string;
   enabledLangs: string[];
   cartaTheme: string;
+  cartaColorMode: string;
   defaultView: string | null;
   qrActivatedAt: string | null;
   qrToken: string | null;
@@ -292,6 +293,30 @@ export default function AdminLocales() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 8, fontSize: "0.85rem", fontFamily: F, color: "#aaa" }}>
           <p style={{ margin: 0 }}>Tema: {selected.cartaTheme}</p>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
+            <span>Modo:</span>
+            <div style={{ display: "flex", gap: 4 }}>
+              {(["LIGHT", "DARK"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={async () => {
+                    await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ cartaColorMode: m }) });
+                    const updated = { ...selected, cartaColorMode: m };
+                    setSelected(updated);
+                    setRestaurants((prev) => prev.map((x) => x.id === selected.id ? updated : x));
+                  }}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+                    fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
+                    background: (selected.cartaColorMode || "LIGHT") === m ? "#F4A623" : "rgba(255,255,255,0.06)",
+                    color: (selected.cartaColorMode || "LIGHT") === m ? "#0a0a0a" : "#888",
+                  }}
+                >
+                  {m === "LIGHT" ? "Light" : "Dark"}
+                </button>
+              ))}
+            </div>
+          </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, margin: 0 }}>
             <span>Vista por defecto:</span>
             <div style={{ display: "flex", gap: 4 }}>
