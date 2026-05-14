@@ -14,6 +14,7 @@ const NAV = [
   { icon: "🥬", label: "Ingredientes", href: "/admin/ingredientes" },
   { icon: "🧪", label: "Tests A/B", href: "/admin/tests-ab" },
   { icon: "⚙️", label: "Ajustes", href: "/admin/ajustes" },
+  { icon: "🎯", label: "Funnel", href: "/admin/funnel" },
 ];
 
 interface Props {
