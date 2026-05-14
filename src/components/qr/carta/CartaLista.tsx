@@ -409,7 +409,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer", whiteSpace: "nowrap" }}
                   >{dietNavItem.name}</button>
                 );
               })()}
@@ -421,7 +421,7 @@ export default function CartaLista({
                     ref={isActive ? activeCatRef : null}
                     onClick={() => { setActiveCategory("promos"); const el = document.getElementById("lista-cat-promos"); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + window.scrollY - 52, behavior: "smooth" }); }}
                     className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent", cursor: "pointer" }}
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer" }}
                   >Ofertas</button>
                 );
               })()}
@@ -450,7 +450,7 @@ export default function CartaLista({
                       color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
                       background: "none",
                       border: "none",
-                      borderBottom: isActive ? "2px solid var(--carta-accent, #F4A623)" : "2px solid transparent",
+                      borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent",
                       cursor: "pointer",
                       whiteSpace: "nowrap",
                       transition: "color 0.15s, border-color 0.15s",
