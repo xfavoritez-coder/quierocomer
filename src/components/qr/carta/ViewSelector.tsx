@@ -16,7 +16,6 @@ const LANG_STORAGE_KEY = "qc_lang";
 const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewSpace" | "viewFeed"; Icon: typeof List }[] = [
   { value: "lista", labelKey: "viewList", Icon: List },
   { value: "premium", labelKey: "viewGallery", Icon: BookOpen },
-  { value: "feed", labelKey: "viewFeed", Icon: LayoutGrid },
   { value: "viaje", labelKey: "viewSpace", Icon: Rocket },
 ];
 
