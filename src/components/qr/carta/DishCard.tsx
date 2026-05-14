@@ -71,10 +71,10 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           {dish.discountPrice ? (
             <>
               <span className="line-through font-[family-name:var(--font-dm)]" style={{ color: "#ccc", fontSize: "0.8rem" }}>${dish.price.toLocaleString("es-CL")}</span>
-              <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 400, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+              <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 700, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
             </>
           ) : (
-            <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 400, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
+            <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 700, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
           )}
           {averageRating && (
             <span className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "var(--carta-accent, #F4A623)" }}>
@@ -131,7 +131,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       ) : (
         <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
       )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.25) 30%, transparent 55%)" }} />
+      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 55%)" }} />
       {/* Top-right para no chocar con los badges Recomendado/Popular en top-left */}
       <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={28} top={9} right={9} />
       <div className="absolute" style={{ top: 7, left: 7, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, zIndex: 2 }}>
@@ -143,7 +143,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         {dish.name}{" "}<DishBadges dish={dish} />
         {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
       </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 500, color: "var(--carta-accent, #F4A623)" }}>
+      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "0.9rem", fontWeight: 700, color: "var(--carta-accent, #F4A623)", textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
         {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
       </span>
     </button>
