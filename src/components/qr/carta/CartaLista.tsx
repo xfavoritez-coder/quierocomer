@@ -367,7 +367,7 @@ export default function CartaLista({
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       ) : (
-        <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
+        <HeroDish variant="compact" restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
       )}
 
       {/* STICKY NAV wrapper — single sticky container so toggling search doesn't break position */}
