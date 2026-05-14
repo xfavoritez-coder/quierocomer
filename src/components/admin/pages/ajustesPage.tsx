@@ -138,13 +138,13 @@ export default function AjustesPage() {
 
       {/* Regalo de cumpleaños */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Regalo de cumpleaños</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Incentivo de cumpleaños</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>
-          Si pones algo aqui, aparece en el modal de captura de cumple para invitar al cliente a registrar su fecha.
+          Este texto se muestra en la carta cuando le pedimos al cliente su fecha de cumpleaños. Es lo que lo motiva a registrarse.
         </p>
         <div style={{ marginBottom: 12 }}>
           <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>
-            ¿Qué le regalas al cumpleañero?
+            ¿Qué le ofreces para que registre su cumpleaños?
           </label>
           <input
             value={birthdayPerk}
