@@ -31,6 +31,24 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
     return () => clearTimeout(timer);
   }, [spicyReordered, hasCompletedGenio]);
 
+  // Re-show toast when Genio closes with new restrictions
+  useEffect(() => {
+    const onGenioClose = () => {
+      sessionStorage.removeItem("qc_spicy_toast_dismissed");
+      // Re-check spicy after a tick (localStorage updated by Genio)
+      setTimeout(() => {
+        try {
+          const restrictions = JSON.parse(localStorage.getItem("qr_restrictions") || "[]");
+          if (restrictions.includes("_spicy")) {
+            setShowSpicy(true);
+          }
+        } catch {}
+      }, 500);
+    };
+    window.addEventListener("genio-closed", onGenioClose);
+    return () => window.removeEventListener("genio-closed", onGenioClose);
+  }, []);
+
   const dismiss = () => {
     setShowNudge(false);
     setShowSpicy(false);

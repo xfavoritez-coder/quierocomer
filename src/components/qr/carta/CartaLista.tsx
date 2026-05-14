@@ -645,7 +645,7 @@ export default function CartaLista({
           categories={categories}
           qrUser={qrUser}
           restaurantDietType={(restaurant as any).dietType}
-          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); }}
+          onClose={() => { setGenioOpen(false); setProfileTrigger((n) => n + 1); window.dispatchEvent(new Event("genio-closed")); }}
           onResult={(dish) => {
             setGenioOpen(false);
             setProfileTrigger((n) => n + 1);
