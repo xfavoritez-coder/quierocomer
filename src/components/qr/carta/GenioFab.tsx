@@ -5,14 +5,17 @@ import { useState, useEffect } from "react";
 interface Props {
   hasCompletedGenio: boolean;
   onOpen: () => void;
+  spicyReordered?: boolean;
 }
 
 /**
  * Genio floating action button with first-visit nudge tooltip.
  * Shows "Ordeno la carta especialmente para ti" on first visit until dismissed.
+ * Also shows spicy-reordered toast when applicable.
  */
-export default function GenioFab({ hasCompletedGenio, onOpen }: Props) {
+export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: Props) {
   const [showNudge, setShowNudge] = useState(false);
+  const [showSpicy, setShowSpicy] = useState(false);
 
   useEffect(() => {
     if (hasCompletedGenio) return;
@@ -21,19 +24,33 @@ export default function GenioFab({ hasCompletedGenio, onOpen }: Props) {
     return () => clearTimeout(timer);
   }, [hasCompletedGenio]);
 
+  useEffect(() => {
+    if (!spicyReordered || !hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_spicy_toast_dismissed") === "1") return;
+    const timer = setTimeout(() => setShowSpicy(true), 1_500);
+    return () => clearTimeout(timer);
+  }, [spicyReordered, hasCompletedGenio]);
+
   const dismiss = () => {
     setShowNudge(false);
+    setShowSpicy(false);
     localStorage.setItem("qc_genio_nudge_shown", "1");
+    if (spicyReordered) sessionStorage.setItem("qc_spicy_toast_dismissed", "1");
   };
+
+  const toastVisible = showNudge || showSpicy;
+  const toastText = showSpicy
+    ? "Reordené la carta para ti: los picantes quedan al final 🌶️"
+    : "Ordeno la carta especialmente para ti";
 
   return (
     <div style={{ position: "relative" }}>
-      {showNudge && (
-        <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "14px", fontWeight: 600, padding: "8px 36px 8px 14px", borderRadius: 10, whiteSpace: "nowrap", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", animation: "fadeToast 0.3s ease-out" }}>
-          Ordeno la carta especialmente para ti
+      {toastVisible && (
+        <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: 0, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 36px 10px 14px", borderRadius: 12, maxWidth: 260, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out" }}>
+          {toastText}
           <button
             onClick={(e) => { e.stopPropagation(); dismiss(); }}
-            style={{ position: "absolute", top: 4, right: 6, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1, fontSize: "16px", color: "#999" }}
+            style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1, fontSize: "14px", color: "#999" }}
           >
             ✕
           </button>
@@ -43,9 +60,9 @@ export default function GenioFab({ hasCompletedGenio, onOpen }: Props) {
       <button
         onClick={() => { dismiss(); onOpen(); }}
         className="flex items-center justify-center rounded-full active:scale-95"
-        style={{ height: 52, width: 52, background: "#F4A623", boxShadow: showNudge ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
+        style={{ height: 52, width: 52, background: "#F4A623", boxShadow: toastVisible ? "0 0 0 4px rgba(244,166,35,0.3), 0 4px 18px rgba(244,166,35,0.35)" : "0 4px 18px rgba(244,166,35,0.35)", borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
       >
-        <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: showNudge ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
+        <span style={{ fontSize: "22px", lineHeight: 1, flexShrink: 0, animation: toastVisible ? "genioNudgePulse 1s ease-in-out infinite" : "genioFabFloat 1.5s ease-in-out infinite" }}>🧞</span>
         {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
       </button>
     </div>
