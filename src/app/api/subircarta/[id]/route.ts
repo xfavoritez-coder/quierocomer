@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { generatePreview } from "@/lib/extractors/preview";
 
 export async function PATCH(
   req: Request,
@@ -34,8 +35,16 @@ export async function PATCH(
       },
     });
 
-    // Fire-and-forget: trigger async processing if this is a LINK lead
+    // Step 1 (sync): fast preview extraction — logo + first 5 dishes (~3s)
+    let preview = null;
     if (lead.cartaUrl && lead.cartaStatus === "PENDING") {
+      try {
+        preview = await generatePreview(lead.id);
+      } catch (e) {
+        console.error("[SubirCarta Preview]", e);
+      }
+
+      // Step 2 (async): full processing — all dishes, photos, restaurant creation
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
       fetch(`${baseUrl}/api/subircarta/process`, {
         method: "POST",
@@ -44,7 +53,7 @@ export async function PATCH(
       }).catch(() => {});
     }
 
-    return NextResponse.json({ id: lead.id });
+    return NextResponse.json({ id: lead.id, preview });
   } catch (error) {
     console.error("[SubirCarta PATCH]", error);
     return NextResponse.json(
@@ -62,7 +71,7 @@ export async function GET(
     const { id } = await params;
     const lead = await prisma.lead.findUnique({
       where: { id },
-      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true, email: true, step2At: true },
+      select: { id: true, cartaUrl: true, cartaFileUrl: true, cartaType: true, cartaStatus: true, email: true, step2At: true, preview: true, localName: true },
     });
 
     if (!lead) {
