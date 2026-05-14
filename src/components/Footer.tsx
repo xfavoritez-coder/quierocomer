@@ -1,6 +1,6 @@
 "use client";
 
-export default function Footer() {
+export default function Footer({ onPlanesClick }: { onPlanesClick?: () => void } = {}) {
   return (
     <footer style={{
       padding: "44px 0",
@@ -29,7 +29,7 @@ export default function Footer() {
           flexWrap: "wrap",
         }}>
           <a href="/landing" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Inicio</a>
-          <a href="/landing#planes" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Planes</a>
+          <a href="/landing#planes" onClick={onPlanesClick ? (e) => { e.preventDefault(); onPlanesClick(); } : undefined} style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Planes</a>
           <a href="mailto:hola@quierocomer.cl" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Contacto</a>
         </div>
       </div>

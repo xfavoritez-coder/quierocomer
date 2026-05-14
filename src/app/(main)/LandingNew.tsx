@@ -341,7 +341,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta">
         <div className="container">
-          <h2>Tu restaurante puede vender más.<br /><span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Comienza hoy</span></h2>
+          <h2>Tu restaurante puede vender más. <span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Comienza hoy</span></h2>
           <p>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
           <div className="fine">Te mostramos gratis como queda</div>
@@ -352,8 +352,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* PLANES MODAL */}
       {planesOpen && (
         <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "rgba(0,0,0,.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20, backdropFilter: "blur(6px)" }} onClick={(e) => { if (e.target === e.currentTarget) setPlanesOpen(false); }}>
-          <div style={{ background: "var(--black-soft)", border: "1px solid var(--gray-deep)", maxWidth: 1000, width: "100%", maxHeight: "90vh", overflowY: "auto", padding: 40, position: "relative" }}>
+          <div style={{ background: "var(--black-soft)", border: "1px solid var(--gray-deep)", maxWidth: 1000, width: "100%", maxHeight: "90vh", display: "flex", flexDirection: "column", position: "relative", borderRadius: 12, overflow: "hidden" }}>
             <button onClick={() => setPlanesOpen(false)} style={{ position: "absolute", top: 12, right: 12, background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", color: "var(--amber)", fontSize: 18, width: 32, height: 32, cursor: "pointer", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 }}>×</button>
+            <div style={{ overflowY: "auto", padding: 40 }}>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div className="eyebrow">Planes</div>
               <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(30px,4vw,48px)", color: "var(--cream)" }}>Empieza gratis. <span className="accent">Crece cuando quieras.</span></h2>
@@ -392,6 +393,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 ["Integración Toteat", "Sincroniza tu carta con el POS Toteat y cruza datos reales de venta con comportamiento de usuario"],
               ]} btnText="Comenzar 7 días gratis" btnPrimary={false} />
             </div>
+          </div>
           </div>
         </div>
       )}
@@ -564,8 +566,8 @@ section{position:relative}
 .faq-divider{max-width:250px;height:1px;margin:0 auto;background:linear-gradient(90deg,transparent,rgba(232,163,61,.35),transparent)}
 .final-cta{padding:50px 0 80px;text-align:center;background:radial-gradient(circle at center,rgba(232,163,61,.15),transparent 48%),var(--black-soft)}
 .final-cta h2{font-size:clamp(34px,5vw,52px);line-height:1.06;margin-bottom:34px}
-.final-cta p{font-family:var(--font-display);font-style:italic;font-size:26px;color:var(--cream-soft);margin-bottom:34px}
-.fine{font-size:17px;color:var(--cream-soft);margin-top:16px;letter-spacing:.03em}
+.final-cta p{font-family:var(--font-display);font-style:italic;font-size:25px;color:var(--cream-soft);margin-bottom:28px}
+.fine{font-size:17px;color:var(--cream-soft);margin-top:8px;letter-spacing:.03em}
 .btn-secondary{display:inline-block;margin-top:18px;padding:12px 28px;background:transparent;border:1px solid rgba(232,163,61,.3);color:var(--cream-soft);font-size:14px;text-decoration:none;transition:.25s;letter-spacing:.02em}
 .btn-secondary:hover{border-color:var(--amber);color:var(--cream)}
 .tip{display:inline-block;width:16px;height:16px;border-radius:50%;background:rgba(232,163,61,.15);color:var(--amber);font-size:10px;text-align:center;line-height:16px;margin-left:6px;cursor:help;position:relative;font-style:normal;font-weight:700;vertical-align:middle}
