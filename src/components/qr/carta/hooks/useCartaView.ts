@@ -32,33 +32,19 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
   const [isReady, setIsReady] = useState(!!serverView);
 
   useEffect(() => {
-    // If we already have a server view, only check localStorage override
-    if (serverView) {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (isValidView(stored) && stored !== view) {
-        setViewState(stored);
-      }
-      return;
-    }
-
-    // Fallback: original resolution logic for cases without serverView
+    // URL param ?vista= wins (for previewing)
     const urlView = searchParams.get("vista");
     if (isValidView(urlView)) {
       setViewState(urlView);
       setIsReady(true);
       return;
     }
-    const stored = typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    if (isValidView(stored)) {
-      setViewState(stored);
-      setIsReady(true);
-      return;
-    }
+    // Otherwise use restaurant default
     if (isValidView(restaurantDefaultView ?? null)) {
       setViewState(restaurantDefaultView as CartaView);
     }
     setIsReady(true);
-  }, [searchParams, restaurantDefaultView, serverView]);
+  }, [searchParams, restaurantDefaultView]);
 
   const setView = useCallback(
     (next: CartaView) => {
