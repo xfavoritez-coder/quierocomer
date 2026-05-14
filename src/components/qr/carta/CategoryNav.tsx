@@ -88,7 +88,7 @@ export default function CategoryNav({
                 color: isActive ? "var(--carta-text)" : "var(--carta-text3)",
                 background: "none",
                 border: "none",
-                borderBottom: isActive ? "2px solid #F4A623" : "2px solid transparent",
+                borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent",
                 transition: "color 0.15s ease, border-color 0.15s ease",
                 cursor: "pointer",
               }}
