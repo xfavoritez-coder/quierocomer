@@ -197,7 +197,7 @@ export default function CartaViaje({ restaurant, categories, dishes, ratingMap, 
               transition: "all 0.3s ease",
             }}
           >
-            <span style={{ fontSize: "22px", lineHeight: 1 }}>🧞</span>
+            <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 32, height: 32, objectFit: "contain" }} />
             {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
           </button>
           {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} size={58} waiterPanelActive={showWaiter} />}
@@ -641,7 +641,7 @@ function OutroSlide({ onGenio, onSwitchView, lang }: { onGenio: () => void; onSw
     <section className="vj-outro" data-section="outro">
       <div className="vj-outro-bg" />
       <div className="vj-outro-inner">
-        <div style={{ fontSize: "3rem", marginBottom: 24, animation: "genioOutroFloat 2s ease-in-out infinite" }}>🧞</div>
+        <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 56, height: 56, objectFit: "contain", marginBottom: 24, animation: "genioOutroFloat 2s ease-in-out infinite" }} />
         <h3 className="font-[family-name:var(--font-fraunces)]">
           {t(lang, "cantDecide")} <em>{t(lang, "whatToOrder")}</em>?
         </h3>

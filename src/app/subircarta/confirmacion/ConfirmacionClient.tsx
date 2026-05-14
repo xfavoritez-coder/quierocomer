@@ -51,8 +51,8 @@ export default function ConfirmacionClient() {
     };
 
     fetchLead();
-    // Poll every 5s until preview appears
-    polling = setInterval(fetchLead, 5000);
+    // Poll every 3s until preview appears
+    polling = setInterval(fetchLead, 3000);
     // Stop polling after 2 minutes max
     const maxTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 120000);
 
@@ -107,7 +107,10 @@ export default function ConfirmacionClient() {
                 {/* Nav bar with logo */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 10px", background: "#0a0a0a" }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#F4A623", fontSize: 7, fontWeight: 700, color: "#0e0e0e", display: "grid", placeItems: "center", flexShrink: 0 }}>{displayName.charAt(0)}</div>
-                  <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)" }}>{displayName}</span>
+                  <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)", flex: 1 }}>{displayName}</span>
+                  <div style={{ width: 14, height: 14, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                    <svg viewBox="0 0 100 100" width="14" height="14"><defs><clipPath id="phflag"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath="url(#phflag)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>
+                  </div>
                 </div>
 
                 {/* Hero — full photo, dish name centered, Ver button, dots */}
@@ -117,10 +120,6 @@ export default function ConfirmacionClient() {
                   ) : (
                     <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1610, #2a2218)" }} />
                   )}
-                  {/* Spanish flag top-right */}
-                  <div style={{ position: "absolute", top: 6, right: 8, zIndex: 3, width: 16, height: 16, borderRadius: "50%", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
-                    <svg viewBox="0 0 100 100" width="16" height="16"><defs><clipPath id="phflag"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath="url(#phflag)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>
-                  </div>
                   {/* Dark overlay */}
                   <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
@@ -174,9 +173,9 @@ export default function ConfirmacionClient() {
           </div>
           ) : (
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🧞‍♂️ ✨</div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Estamos trabajando en tu carta</p>
-            <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.5 }}>Tu carta necesita un poco más de atención. Nuestro equipo la está revisando para darte la mejor propuesta posible.</p>
+            <div style={{ fontSize: 40, marginBottom: 12, animation: "geniePulse 2s ease-in-out infinite" }}>🧞‍♂️ ✨</div>
+            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Preparando tu preview...</p>
+            <div style={{ width: 40, height: 3, borderRadius: 2, background: "var(--amber)", margin: "12px auto 0", animation: "previewLoader 1.5s ease-in-out infinite" }} />
           </div>
           )}
 
@@ -312,6 +311,8 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .badge-sub { font-size: 14px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
 
 @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: .15; } }
+@keyframes geniePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes previewLoader { 0% { width: 30px; opacity: 0.4; } 50% { width: 60px; opacity: 1; } 100% { width: 30px; opacity: 0.4; } }
 @media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } .phone { width: 260px; } .ph-hero { height: 110px; } }
 @media (max-width: 390px) { h1 { font-size: 32px; } .phone { width: 190px; } }
 `;
