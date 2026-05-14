@@ -160,8 +160,6 @@ export default async function CartaPage({
         <style dangerouslySetInnerHTML={{ __html: `
           .${themeClass} {
             --carta-accent: ${accentColor};
-            --carta-badge-bg: ${accentColor}22;
-            --carta-badge-text: ${accentColor};
             --carta-detail-price: ${accentColor};
             --carta-promo-border: ${accentColor}40;
             --carta-promo-shadow: 0 2px 12px ${accentColor}15;
