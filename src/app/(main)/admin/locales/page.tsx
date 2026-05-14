@@ -323,7 +323,7 @@ export default function AdminLocales() {
             <div style={{ display: "flex", gap: 4 }}>
               {[
                 { value: null, label: "Amber", color: "#F4A623" },
-                { value: "#8B2252", label: "Burdeo", color: "#8B2252" },
+                { value: "#C41E3A", label: "Rojo", color: "#C41E3A" },
               ].map((c) => (
                 <button
                   key={c.label}
