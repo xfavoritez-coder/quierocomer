@@ -42,13 +42,13 @@ export default function VeganFloatingPill() {
       style={{
         bottom: "calc(16px + env(safe-area-inset-bottom))", left: "50%", transform: "translateX(-50%)",
         display: "flex", alignItems: "center", gap: 6,
-        padding: "10px 20px", background: "rgba(234,243,222,0.95)", backdropFilter: "blur(8px)",
-        border: "0.5px solid rgba(99,153,34,0.3)", borderRadius: 999,
-        cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.1)",
+        padding: "10px 20px", background: "var(--carta-genio-vegan-bg)", backdropFilter: "blur(8px)",
+        border: "0.5px solid var(--carta-genio-vegan-border2)", borderRadius: 999,
+        cursor: "pointer", boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
       }}
     >
       <span style={{ fontSize: "14px" }}>🌿</span>
-      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#173404" }}>{t(lang, "gMyVeganOptions")}</span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-vegan-title)" }}>{t(lang, "gMyVeganOptions")}</span>
     </button>
   );
 }

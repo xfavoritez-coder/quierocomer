@@ -97,10 +97,10 @@
 
 .carta-dark {
   --carta-accent: #F4A623;
-  --carta-bg: #0e0e0e;
-  --carta-bg-solid: #161616;
-  --carta-nav-bg: #131313;
-  --carta-surface: #1a1a1a;
+  --carta-bg: #070707;
+  --carta-bg-solid: #0d0d0d;
+  --carta-nav-bg: #0a0a0a;
+  --carta-surface: #111111;
   --carta-surface-rec: rgba(244,166,35,0.08);
   --carta-text: #f0f0f0;
   --carta-text2: #aaa;
