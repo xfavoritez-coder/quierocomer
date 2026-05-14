@@ -268,8 +268,6 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .phone-generating { animation: phoneBreath 4s ease-in-out infinite; }
 @keyframes phoneBreath { 0%, 100% { filter: blur(1.2px); } 50% { filter: blur(0.3px); } }
 .phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(14,14,14,0.25); pointer-events: none; }
-.phone-generating::after { content: ''; position: absolute; inset: 0; z-index: 10; border-radius: 25px; background: linear-gradient(180deg, transparent 0%, rgba(232,163,61,0.06) 50%, transparent 100%); background-size: 100% 200%; animation: phoneScan 3s ease-in-out infinite; pointer-events: none; }
-@keyframes phoneScan { 0% { background-position: 0 -100%; } 100% { background-position: 0 200%; } }
 .phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }
 .ph-hero { height: 130px; position: relative; overflow: hidden; }
