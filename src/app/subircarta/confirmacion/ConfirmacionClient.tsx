@@ -30,6 +30,7 @@ export default function ConfirmacionClient() {
   const [modalDismissed, setModalDismissed] = useState(false);
   const [cartaSlug, setCartaSlug] = useState<string | null>(null);
   const [heroIdx, setHeroIdx] = useState(0);
+  const [timedOut, setTimedOut] = useState(false);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -86,8 +87,11 @@ export default function ConfirmacionClient() {
     fetchLead();
     // Poll every 3s until preview appears
     polling = setInterval(fetchLead, 3000);
-    // Stop polling after 2 minutes max
-    const maxTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 120000);
+    // Stop polling after 2 minutes max and show timeout message
+    const maxTimeout = setTimeout(() => {
+      if (polling) clearInterval(polling);
+      if (!cartaReady) setTimedOut(true);
+    }, 60000);
 
     return () => {
       if (polling) clearInterval(polling);
@@ -150,9 +154,10 @@ export default function ConfirmacionClient() {
               <>
                 <h1>{cartaReady
                   ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></>
+                  : timedOut ? <>Nos tomará un poco <span>más</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
-                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : "En unos minutos recibirás un correo con tu carta lista."}</p>
+                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Tu carta necesita atención especial. Te avisaremos por correo cuando esté lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
               </>
             )}
           </div>
@@ -391,7 +396,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 @keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
 
-.phone { width: 200px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.phone { width: 210px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
 .phone-generating .phone-screen { filter: blur(0.8px); transition: filter 1.5s ease; }
 .phone-generating .phone-notch { filter: blur(0.3px); transition: filter 1.5s ease; }
 .phone-ready .phone-screen { filter: blur(0); }
