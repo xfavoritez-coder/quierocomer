@@ -90,7 +90,7 @@ export default function ConfirmacionClient() {
     // Show timeout message after 30s but keep polling
     const maxTimeout = setTimeout(() => {
       if (!cartaReady) setTimedOut(true);
-    }, 30000);
+    }, 20000);
     // Stop polling after 5 minutes max
     const stopTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 300000);
 
