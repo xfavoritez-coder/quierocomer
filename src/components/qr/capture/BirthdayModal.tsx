@@ -257,25 +257,26 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
       style={{ zIndex: 200, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", minHeight: "100dvh" }}
       onClick={(e) => { if (e.target === e.currentTarget && phase === "form") handleDismiss(); }}
     >
-      <style>{`.bday-input::placeholder { color: #999 !important; opacity: 1; }`}</style>
+      <style>{`.bday-input::placeholder { color: var(--carta-text3, #999) !important; opacity: 1; }`}</style>
       <div
         style={{
-          background: "white",
+          background: "var(--carta-detail-bg, white)",
           borderRadius: 20,
           padding: "32px 24px 28px",
           maxWidth: 360,
           width: "90%",
           maxHeight: "90dvh",
           overflowY: "hidden",
-          boxShadow: "0 25px 60px rgba(0,0,0,0.2)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.4)",
           position: "relative",
+          border: "1px solid var(--carta-card-border, transparent)",
         }}
       >
         <button
           onClick={handleDismiss}
           style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
         >
-          <X size={18} color="#ccc" />
+          <X size={18} color="var(--carta-text3, #ccc)" />
         </button>
 
         {/* ── FASE 1: FORM ── */}
@@ -285,7 +286,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
               <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 10 }}>{isPromoVariant ? "🎁" : "🎂"}</span>
               <h3
                 className="font-[family-name:var(--font-playfair)]"
-                style={{ fontSize: "1.4rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2 }}
+                style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--carta-text, #0e0e0e)", lineHeight: 1.2 }}
               >
                 {abVariant?.titleText
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
@@ -300,7 +301,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                 }
                 // Only show subtitle if there's a perk or A/B variant text
                 return subtitle ? (
-                  <p style={{ fontSize: "0.85rem", color: "#888", marginTop: 6, lineHeight: 1.5 }}>
+                  <p style={{ fontSize: "0.85rem", color: "var(--carta-text3, #888)", marginTop: 6, lineHeight: 1.5 }}>
                     {subtitle}
                   </p>
                 ) : null;
@@ -317,8 +318,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     onChange={(e) => setUserName(e.target.value)}
                     placeholder="Nombre"
                     style={{
-                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
+                      padding: "12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
                       outline: "none", fontFamily: "inherit", boxSizing: "border-box",
                     }}
                   />
@@ -329,8 +330,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Email"
                     style={{
-                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
+                      padding: "12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
                       outline: "none", fontFamily: "inherit", boxSizing: "border-box",
                     }}
                   />
@@ -362,8 +363,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     onChange={(e) => handleDateTextChange(e.target.value)}
                     maxLength={10}
                     style={{
-                      width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                      padding: "12px 44px 12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                      width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
+                      padding: "12px 44px 12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
                       outline: "none", fontFamily: "inherit", boxSizing: "border-box",
                       letterSpacing: "0.02em",
                     }}
@@ -376,7 +377,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                       position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)",
                       background: "transparent", border: "none", cursor: "pointer",
                       padding: 6, display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "#888",
+                      color: "var(--carta-text3, #888)",
                     }}
                   >
                     <Calendar size={18} />
@@ -398,7 +399,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                 onClick={handleSubmit}
                 className="active:scale-[0.98] transition-transform"
                 style={{
-                  width: "100%", marginTop: 4, background: "#F4A623", color: "white",
+                  width: "100%", marginTop: 4, background: "var(--carta-accent, #F4A623)", color: "white",
                   borderRadius: 50, padding: "13px 20px", fontSize: "0.95rem", fontWeight: 700,
                   border: "none", fontFamily: "inherit", cursor: "pointer",
                   boxShadow: "0 4px 14px rgba(244,166,35,0.3)",
@@ -420,7 +421,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
           return (
             <div style={{ textAlign: "center" }}>
               <span style={{ fontSize: "2.6rem", display: "block", marginBottom: 8, animation: "bdayDonePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)" }}>🎉</span>
-              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0e0e0e", lineHeight: 1.2, marginBottom: 8 }}>
+              <h3 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "1.35rem", fontWeight: 800, color: "var(--carta-text, #0e0e0e)", lineHeight: 1.2, marginBottom: 8 }}>
                 {title}
               </h3>
               <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 18px", lineHeight: 1.5 }}>
