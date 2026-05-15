@@ -267,7 +267,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/33.png" alt="Clientes escanean" />
+                <img src="/landing/qrrr.png" alt="Clientes escanean" />
               </div>
             </div>
 
