@@ -7,6 +7,7 @@ import DishDetail from "./DishDetail";
 import DishDetailErrorBoundary from "./DishDetailErrorBoundary";
 import GenioOnboarding from "../genio/GenioOnboarding";
 import { Search, X } from "lucide-react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import WaiterButton from "../garzon/WaiterButton";
 import BirthdayBanner from "../capture/BirthdayBanner";
 import BirthdayAutoModal from "../capture/BirthdayAutoModal";
@@ -95,6 +96,8 @@ function ImpactHeroSlider({
   searchQuery: string;
   setSearchQuery: (v: string) => void;
   lang: Lang;
+  cycleLang: () => void;
+  enabledLangs: string[];
 }) {
   const [current, setCurrent] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
@@ -131,7 +134,6 @@ function ImpactHeroSlider({
         isolation: "isolate",
         overflow: "hidden",
       }}
-      onClick={() => onDishSelect(d)}
       onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
       onTouchEnd={(e) => {
         const diff = e.changedTouches[0].clientX - touchStartX.current;
@@ -174,16 +176,16 @@ function ImpactHeroSlider({
 
       {/* Nav is now fixed outside hero */}
 
-      {/* Content */}
-      <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 2 }}>
+      {/* Content — clickable to open dish */}
+      <div onClick={() => onDishSelect(d)} style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 2, cursor: "pointer" }}>
         {badge && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 6,
-            border: "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)",
-            background: "color-mix(in srgb, var(--carta-accent) 14%, transparent)",
-            color: "var(--carta-accent)", fontSize: 10, fontWeight: 900, textTransform: "uppercase",
-            letterSpacing: "0.4px", borderRadius: 999, padding: "6px 10px", marginBottom: 13,
-            boxShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 13%, transparent)",
+            border: "none",
+            background: "rgba(0,0,0,0.5)",
+            backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            color: "white", fontSize: 10, fontWeight: 900, textTransform: "uppercase",
+            letterSpacing: "0.4px", borderRadius: 999, padding: "6px 12px", marginBottom: 13,
           }}>
             {isRec ? "⭐" : "🔥"} {badge}
           </div>
@@ -195,13 +197,13 @@ function ImpactHeroSlider({
         }}>
           {d.name.split(" ").map((w, i, arr) =>
             i === arr.length - 1
-              ? <span key={i} style={{ display: "block", color: "var(--carta-accent)", fontSize: 50, textShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 32%, transparent)" }}>{w}</span>
+              ? <span key={i} style={{ display: "block", color: "var(--carta-accent)", fontSize: 58, fontWeight: 900, textShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 32%, transparent)" }}>{w}</span>
               : <span key={i}>{w} </span>
           )}
         </h1>
         {d.description && (
           <p style={{
-            maxWidth: 300, margin: "15px 0 16px", color: "rgba(255,255,255,0.88)",
+            maxWidth: 300, margin: "15px 0 16px", color: "#b0a89e",
             fontSize: 15, lineHeight: 1.52,
             textShadow: "0 1px 8px rgba(0,0,0,0.6)",
             display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
@@ -278,7 +280,7 @@ function MoodSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "var(--carta-text)",
+        color: "#fff7ed",
       }}>
         {"Que se te antoja?"}
       </h2>
@@ -295,7 +297,7 @@ function MoodSection({
             const isActive = active === m.id;
             return (
               <button key={m.id} onClick={() => handleTap(m.id)} style={{
-                minWidth: 116, height: 140, borderRadius: 28, position: "relative", overflow: "hidden",
+                width: 116, minWidth: 116, height: 140, borderRadius: 28, position: "relative", overflow: "hidden",
                 padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end",
                 border: isActive
                   ? "1px solid color-mix(in srgb, var(--carta-accent) 90%, transparent)"
@@ -311,8 +313,10 @@ function MoodSection({
                 )}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.7))" }} />
                 <b style={{
-                  position: "relative", zIndex: 1, fontSize: 13, lineHeight: 1.15,
+                  position: "relative", zIndex: 1, fontSize: 14, lineHeight: 1.15,
                   textShadow: "0 2px 14px #000", color: "white", textAlign: "left",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  display: "block", width: "100%",
                 }}>{m.label}</b>
               </button>
             );
@@ -373,7 +377,7 @@ function FeaturedSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "var(--carta-text)",
+        color: "#fff7ed",
       }}>Destacados</h2>
       <div style={{ position: "relative" }}>
         <div
@@ -403,13 +407,7 @@ function FeaturedSection({
                 {photo && <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />}
                 <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.18) 62%, transparent)" }} />
                 <div style={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>
-                  <span style={{
-                    display: "inline-block", padding: "6px 9px", borderRadius: 999,
-                    background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
-                    color: "white", fontSize: 10, fontWeight: 900,
-                    textTransform: "uppercase", marginBottom: 8,
-                  }}>Recomendado</span>
-                  <h3 style={{ margin: "0 0 6px", fontSize: 25, letterSpacing: "-0.6px", color: "white" }}>{f.name}</h3>
+                  <h3 style={{ margin: "0 0 6px", fontSize: 24, fontWeight: 800, letterSpacing: "-0.4px", color: "white" }}>⭐ {f.name}</h3>
                   {f.description && (
                     <p style={{
                       margin: "0 0 9px", color: "rgba(255,255,255,0.75)", fontSize: 13, lineHeight: 1.35,
@@ -476,10 +474,15 @@ function ImpactDishCard({
       onClick={onClick}
       className="active:scale-[0.99] transition-transform"
       style={{
-        width: "100%", display: "grid", gridTemplateColumns: "108px 1fr",
-        gap: 12, padding: 10, marginBottom: 11, borderRadius: 26,
-        background: "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
-        border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
+        width: "100%", display: "grid", gridTemplateColumns: "118px 1fr",
+        gap: 16, padding: 10, marginBottom: 11, borderRadius: 26,
+        background: isRec
+          ? "linear-gradient(135deg, color-mix(in srgb, var(--carta-accent) 12%, transparent), color-mix(in srgb, var(--carta-accent) 4%, transparent))"
+          : "linear-gradient(135deg, color-mix(in srgb, var(--carta-text) 7.5%, transparent), color-mix(in srgb, var(--carta-text) 2.5%, transparent))",
+        border: isRec
+          ? "1px solid color-mix(in srgb, var(--carta-accent) 30%, transparent)"
+          : "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)",
+        boxShadow: isRec ? "0 0 16px color-mix(in srgb, var(--carta-accent) 12%, transparent)" : "none",
         position: "relative", overflow: "hidden", textAlign: "left", cursor: "pointer",
         fontFamily: "inherit",
       }}
@@ -491,7 +494,7 @@ function ImpactDishCard({
       }} />
       {/* Photo */}
       <div style={{
-        position: "relative", width: 108, height: 108, borderRadius: 20, overflow: "hidden",
+        position: "relative", width: 118, height: 118, borderRadius: 20, overflow: "hidden",
         background: photo ? "var(--carta-img-placeholder, #222)" : "linear-gradient(135deg, var(--carta-bg), var(--carta-surface))",
       }}>
         {photo ? (
@@ -510,43 +513,46 @@ function ImpactDishCard({
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
         )}
-        {isPopular && (
-          <span style={{
-            position: "absolute", top: 6, left: 6, fontSize: 10, fontWeight: 800,
-            color: "white", background: "rgba(0,0,0,0.4)",
-            backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
-            padding: "3px 9px", borderRadius: 50,
-            border: "1px solid color-mix(in srgb, var(--carta-accent) 40%, transparent)",
-            boxShadow: "0 0 12px color-mix(in srgb, var(--carta-accent) 30%, transparent)",
-          }}>🔥 Popular</span>
-        )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />
       </div>
       {/* Info */}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
-        {(isRec || autoRecommended) && (
-          <div style={{ marginBottom: 3 }}>
-            <span style={{
-              fontSize: "0.72rem", fontWeight: 700,
-              color: "var(--carta-accent)",
-              background: "color-mix(in srgb, var(--carta-accent) 12%, transparent)",
-              padding: "2px 8px", borderRadius: 50,
-            }}>
-              {autoRecommended ? "✨ Para ti" : "⭐ Recomendado"}
-            </span>
+        {(isRec || autoRecommended || isPopular) && (
+          <div style={{ marginBottom: 3, display: "flex", gap: 4, flexWrap: "wrap" }}>
+            {(isRec || autoRecommended) && (
+              <span style={{
+                fontSize: "0.72rem", fontWeight: 700,
+                color: "#F4A623",
+                background: "rgba(244,166,35,0.12)",
+                padding: "2px 8px", borderRadius: 50,
+              }}>
+                {autoRecommended ? "✨ Para ti" : "⭐ Recomendado"}
+              </span>
+            )}
+            {isPopular && (
+              <span style={{
+                fontSize: "0.72rem", fontWeight: 700,
+                color: "#e85530",
+                background: "rgba(232,85,48,0.12)",
+                padding: "2px 8px", borderRadius: 50,
+              }}>
+                🔥 Popular
+              </span>
+            )}
           </div>
         )}
         <h4 style={{
-          margin: "0 0 4px", fontSize: 16, fontWeight: 700,
+          margin: "0 0 4px", fontSize: 18, fontWeight: 700,
           color: "var(--carta-text)", display: "flex", alignItems: "center", gap: 4,
         }}>
           <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>{dish.name}</span>
-          {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🌿</span>}
-          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "12px", flexShrink: 0 }}>🥗</span>}
+          {(dish as any).dishDiet === "VEGAN" && <span style={{ fontSize: "16px", flexShrink: 0 }}>🌿</span>}
+          {(dish as any).dishDiet === "VEGETARIAN" && <span style={{ fontSize: "16px", flexShrink: 0 }}>🥗</span>}
+          {(dish as any).isSpicy && <span style={{ fontSize: "16px", flexShrink: 0 }}>🌶️</span>}
         </h4>
         {dish.description && (
           <p style={{
-            margin: 0, color: "var(--carta-text-muted, #888)", fontSize: 13, lineHeight: 1.42,
+            margin: 0, color: "var(--carta-text-muted, #888)", fontSize: 14, lineHeight: 1.42,
             overflow: "hidden", textOverflow: "ellipsis",
             display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
           }}>{dish.description}</p>
@@ -593,7 +599,21 @@ export default function CartaImpact({
   announcements,
 }: CartaProps) {
   const lang = useLang();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { hasNewLikes, clearNewLikes } = useFavorites();
+
+  // Language cycling
+  const enabledLangs: string[] = (restaurant as any).enabledLangs || ["es"];
+  const cycleLang = useCallback(() => {
+    const currentIdx = enabledLangs.indexOf(lang);
+    const next = enabledLangs[(currentIdx + 1) % enabledLangs.length] as Lang;
+    localStorage.setItem("qc_lang", next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("lang", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }, [lang, enabledLangs, pathname, router, searchParams]);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
@@ -630,7 +650,7 @@ export default function CartaImpact({
   }, [restaurant, hasCompletedGenio, dishes, categories]);
 
   /* ─── Active category tracking ─── */
-  const [activeCategory, setActiveCategory] = useState(hasPromos ? "promos" : (categories[0]?.id || ""));
+  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   useEffect(() => {
@@ -658,7 +678,7 @@ export default function CartaImpact({
   /* ─── IntersectionObserver for active category detection ─── */
   useEffect(() => {
     const observers: IntersectionObserver[] = [];
-    const allCats = hasPromos ? [{ id: "promos" }, ...categories] : categories;
+    const allCats = [...categories];
     for (const cat of allCats) {
       const el = document.getElementById(`impact-cat-${cat.id}`);
       if (!el) continue;
@@ -942,7 +962,7 @@ export default function CartaImpact({
   const allChipCats = useMemo(() => {
     const cats: { id: string; name: string }[] = [];
     if (dietNavItem) cats.push({ id: dietNavItem.id, name: dietNavItem.name });
-    if (hasPromos) cats.push({ id: "promos", name: "Ofertas" });
+    // Ofertas has its own section above menu, not in chips
     for (const s of menuSections) cats.push({ id: s.category.id, name: s.category.name });
     return cats;
   }, [dietNavItem, hasPromos, menuSections]);
@@ -950,7 +970,7 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative", overflow: "hidden" }}
+      style={{ background: "var(--carta-bg)", position: "relative" }}
     >
       {/* Ambient background */}
       <div style={{
@@ -979,6 +999,7 @@ export default function CartaImpact({
         display: "flex", alignItems: "center", justifyContent: "space-between",
         background: "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
         backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+        pointerEvents: "auto",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {(restaurant as any).logoUrl && (
@@ -999,9 +1020,11 @@ export default function CartaImpact({
           >
             <Search size={15} color="white" />
           </button>
-          <button style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer" }}>
-            {lang.toUpperCase()}
-          </button>
+          {enabledLangs.length > 1 && (
+            <button onClick={() => cycleLang()} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
+              {lang.toUpperCase()}
+            </button>
+          )}
         </div>
       </header>
 
@@ -1042,6 +1065,8 @@ export default function CartaImpact({
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           lang={lang}
+          cycleLang={cycleLang}
+          enabledLangs={enabledLangs}
         />
       </div>
 
@@ -1090,11 +1115,93 @@ export default function CartaImpact({
 
       {/* Promos */}
       {hasPromos && (
-        <section id="impact-cat-promos" style={{ padding: "18px 14px 0", position: "relative", zIndex: 1 }}>
-          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
-            const dish = dishes.find((d) => d.id === dishId);
-            if (dish) setSelectedDish(dish);
-          }} />
+        <section id="impact-cat-promos" style={{ padding: "24px 14px 24px", position: "relative", zIndex: 1 }}>
+          <h2 style={{
+            fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
+            letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
+            color: "#fff7ed",
+          }}>Ofertas</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {(marketingPromos || []).map((p: any) => {
+              const dish = p.dishes?.[0];
+              const photo = p.imageUrl || dish?.photos?.[0];
+              const words = p.name.split(" ");
+              const firstWords = words.slice(0, -1).join(" ");
+              const lastWord = words[words.length - 1];
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    if (dish) setSelectedDish(dishes.find(d => d.id === dish.id) || null);
+                  }}
+                  style={{
+                    width: "100%", height: 220, borderRadius: 26, overflow: "hidden", position: "relative",
+                    background: "#111", border: "1px solid color-mix(in srgb, var(--carta-accent) 32%, transparent)",
+                    boxShadow: "0 28px 80px rgba(0,0,0,0.65), inset 0 0 34px color-mix(in srgb, var(--carta-accent) 6%, transparent)",
+                    cursor: "pointer", textAlign: "left",
+                  }}
+                >
+                  {/* Foto fondo con overlay */}
+                  {photo && (
+                    <div style={{ position: "absolute", inset: 0, transform: "scale(1.04)" }}>
+                      <Image src={photo} alt={p.name} fill className="object-cover" sizes="430px" style={{ objectPosition: "center right" }} />
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to right, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.78) 43%, rgba(0,0,0,0.12) 100%), linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 58%)" }} />
+                    </div>
+                  )}
+                  {/* Badge día */}
+                  {(() => {
+                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                    const label = p.daysOfWeek?.length ? `Hoy ${DAY_NAMES[todayDow].charAt(0) + DAY_NAMES[todayDow].slice(1).toLowerCase()}` : "Oferta";
+                    return (
+                      <span style={{
+                        position: "absolute", top: 15, right: 15, zIndex: 2,
+                        fontSize: 11, fontWeight: 900, color: "white",
+                        background: "var(--carta-accent)", padding: "9px 13px",
+                        borderRadius: 999, letterSpacing: "0.6px", textTransform: "uppercase",
+                      }}>{label}</span>
+                    );
+                  })()}
+                  {/* Contenido abajo izquierda */}
+                  <div style={{ position: "absolute", left: 18, right: 18, bottom: 30, zIndex: 2, maxWidth: 200 }}>
+                    <h3 style={{
+                      margin: "0 0 14px", fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif",
+                      fontSize: 34, lineHeight: 0.85, letterSpacing: "0.5px",
+                      textShadow: "0 6px 28px rgba(0,0,0,0.9)", color: "white",
+                      overflow: "hidden", textOverflow: "ellipsis",
+                      display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any,
+                    }}>
+                      <span style={{ color: "var(--carta-accent)" }}>{words[0]}</span>{words.length > 1 ? " " + words.slice(1).join(" ") : ""}
+                    </h3>
+                    {(() => {
+                      const desc = p.description
+                        || (p.dishes?.length > 1 ? p.dishes.map((d: any) => d.name).join(" + ") : null)
+                        || dish?.description;
+                      if (!desc) return null;
+                      return (
+                        <p style={{
+                          margin: "0 0 12px", color: "#b0a89e", fontSize: 14, lineHeight: 1.42,
+                          display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
+                        }}>{desc}</p>
+                      );
+                    })()}
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
+                      {p.promoPrice && (
+                        <span style={{ color: "var(--carta-accent)", fontSize: 19, fontWeight: 900, letterSpacing: "-0.5px" }}>
+                          ${p.promoPrice.toLocaleString("es-CL")}
+                        </span>
+                      )}
+                      {p.originalPrice && p.promoPrice && (
+                        <del style={{ color: "#888", fontSize: 15, fontWeight: 800 }}>
+                          ${p.originalPrice.toLocaleString("es-CL")}
+                        </del>
+                      )}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
         </section>
       )}
 
@@ -1122,24 +1229,24 @@ export default function CartaImpact({
       )}
 
       {/* ═══════ MENÚ ═══════ */}
-      <div style={{ padding: "24px 14px 16px", position: "relative", zIndex: 1 }}>
+      <div style={{ padding: "24px 14px 4px", position: "relative", zIndex: 1 }}>
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
-          letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-          color: "var(--carta-text)",
+          letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
+          color: "#fff7ed",
         }}>
           {"Menú"}
         </h2>
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
-        <div style={{ position: "sticky", top: 56, zIndex: 20, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", background: "color-mix(in srgb, var(--carta-bg) 85%, transparent)", paddingTop: 8, paddingBottom: 8, marginBottom: 8 }}>
+        <div style={{ paddingTop: 10, paddingBottom: 10, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div
                 ref={chipsRef}
                 style={{
-                  display: "flex", gap: 2, overflowX: "auto", scrollbarWidth: "none",
+                  display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none",
                   msOverflowStyle: "none", WebkitOverflowScrolling: "touch", padding: "4px 0",
                 }}
               >
@@ -1164,12 +1271,15 @@ export default function CartaImpact({
                       className="font-[family-name:var(--font-dm)]"
                       style={{
                         whiteSpace: "nowrap", flexShrink: 0,
-                        border: "none",
-                        borderBottom: isActive ? "2px solid var(--carta-accent)" : "2px solid transparent",
-                        background: "transparent",
-                        borderRadius: 0, padding: "9px 12px",
-                        color: isActive ? "var(--carta-accent)" : "var(--carta-text-muted, #777)",
-                        fontSize: 13, fontWeight: isActive ? 800 : 600, cursor: "pointer",
+                        border: isActive
+                          ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
+                          : "1px solid color-mix(in srgb, var(--carta-text) 13%, transparent)",
+                        background: isActive
+                          ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
+                          : "color-mix(in srgb, var(--carta-text) 5.5%, transparent)",
+                        borderRadius: 999, padding: "10px 16px",
+                        color: isActive ? "white" : "var(--carta-text3, #777)",
+                        fontSize: 15, fontWeight: 800, cursor: "pointer",
                         transition: "all 0.2s ease",
                       }}
                     >{cat.name}</button>
@@ -1216,7 +1326,7 @@ export default function CartaImpact({
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
                 fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20,
-                color: "var(--carta-text-muted, #666)", margin: "0 0 10px", letterSpacing: "0.4px",
+                color: "var(--carta-text, #ccc)", margin: "0 0 10px", letterSpacing: "0.4px", opacity: 0.4,
               }}>{category.name}</h3>
               {category.description && category.description.length <= 60 && (
                 <p style={{ fontSize: "0.8rem", color: "var(--carta-text3, #999)", marginTop: -6, marginBottom: 8 }}>
