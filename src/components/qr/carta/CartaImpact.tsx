@@ -325,9 +325,9 @@ function MoodSection({
         </div>
         {scrolled && (
           <div style={{
-            position: "absolute", top: 0, left: 0, bottom: 8, width: 30,
+            position: "absolute", top: 0, left: 0, bottom: 8, width: 20,
             background: "linear-gradient(to left, transparent, var(--carta-bg))",
-            pointerEvents: "none",
+            pointerEvents: "none", opacity: 0.6,
           }} />
         )}
         <div style={{
@@ -425,9 +425,9 @@ function FeaturedSection({
         </div>
         {scrolled && (
           <div style={{
-            position: "absolute", top: 0, left: 0, bottom: 8, width: 30,
+            position: "absolute", top: 0, left: 0, bottom: 8, width: 20,
             background: "linear-gradient(to left, transparent, var(--carta-bg))",
-            pointerEvents: "none",
+            pointerEvents: "none", opacity: 0.6,
           }} />
         )}
         <div style={{
@@ -870,13 +870,24 @@ export default function CartaImpact({
 
   /* ─── Hero dishes ─── */
   const heroDishes = useMemo(() => {
-    const recommendedWithPhotos = dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
-    if (recommendedWithPhotos.length > 0) return recommendedWithPhotos.slice(0, 3);
-    const popularWithPhotos = dishes.filter((d) => popularDishIds.has(d.id) && d.photos?.[0]).slice(0, 3);
-    if (popularWithPhotos.length > 0) return popularWithPhotos;
+    const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
+    const popular = dishes.filter((d) => popularDishIds.has(d.id) && d.photos?.[0] && !d.tags?.includes("RECOMMENDED"));
+
+    // Mix: up to 2 recommended + up to 2 popular, intercalated
+    const mixed: Dish[] = [];
+    const maxEach = 2;
+    const recs = recommended.slice(0, maxEach);
+    const pops = popular.slice(0, maxEach);
+    for (let i = 0; i < Math.max(recs.length, pops.length); i++) {
+      if (i < recs.length) mixed.push(recs[i]);
+      if (i < pops.length) mixed.push(pops[i]);
+    }
+    if (mixed.length > 0) return mixed.slice(0, 4);
+
+    // Fallback: any dishes with photos
     const withPhotos = dishes.filter((d) => d.photos?.[0]);
-    if (withPhotos.length <= 3) return withPhotos;
-    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
+    if (withPhotos.length <= 4) return withPhotos;
+    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 4);
   }, [dishes, popularDishIds]);
 
   /* ─── Sorted dishes ─── */
@@ -1365,6 +1376,14 @@ export default function CartaImpact({
                 })}
                 <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
               </div>
+              {/* Fade left — only when scrolled */}
+              {chipsRef.current && chipsRef.current.scrollLeft > 10 && (
+                <div style={{
+                  position: "absolute", top: 0, left: 0, bottom: 0, width: 20,
+                  background: "linear-gradient(to left, transparent, var(--carta-bg))",
+                  pointerEvents: "none", opacity: 0.6,
+                }} />
+              )}
               {/* Fade right */}
               <div style={{
                 position: "absolute", top: 0, right: 0, bottom: 0, width: 24,
