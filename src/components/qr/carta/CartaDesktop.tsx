@@ -342,9 +342,9 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
           const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
           const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
           const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-          // 'reordered-spicy' se muestra siempre que aplique
           const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          const msgType = dietMsg === "reordered-spicy" ? dietMsg : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+          // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
+          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
           if (msgType) return <div style={{ marginBottom: 32 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
           if (!mode) return null;
           return (
@@ -527,7 +527,12 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
 
       {/* Floating buttons — bottom right */}
       <div style={{ position: "fixed", bottom: 28, right: 28, zIndex: 60, display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} />}
+        {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
+          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
+          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
+          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
+          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} redundantDiet={dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian" ? dietMsg : null} restaurantName={restaurant.name} />;
+        })()}
 
         {/* Waiter button */}
         {showWaiter && (
@@ -535,7 +540,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
             restaurantId={restaurant.id}
             tableId={tableId || undefined}
             waiterPanelActive={showWaiter}
-            size={48}
+            size={56}
           />
         )}
 

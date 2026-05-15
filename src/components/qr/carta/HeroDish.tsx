@@ -251,7 +251,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                         width: i === current ? 18 : 6,
                         height: 6,
                         borderRadius: 3,
-                        background: i === current ? "var(--carta-accent, #F4A623)" : "rgba(244,166,35,0.35)",
+                        background: i === current ? "var(--carta-accent, #F4A623)" : "color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)",
                         border: "none",
                         padding: 0,
                         transition: "all 0.3s ease",

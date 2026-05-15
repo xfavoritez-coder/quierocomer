@@ -587,8 +587,8 @@ export default function CartaPremium({
           // hasMatchingDishes — para 'no picante' la mayoria de la carta
           // matchea, sino el banner nunca aparece para clientes recurrentes).
           const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          // reordered-spicy is now shown as GenioFab toast, not inline banner
-          const msgType = dietMsg === "reordered-spicy" ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+          // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
+          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
           if (msgType) return <div style={{ marginTop: 10, paddingTop: 10 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
           if (!mode) return null;
           return (
@@ -841,10 +841,10 @@ export default function CartaPremium({
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
           const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
           const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} />;
+          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} redundantDiet={dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian" ? dietMsg : null} restaurantName={restaurant.name} />;
         })()}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
+        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />}
       </div>
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }

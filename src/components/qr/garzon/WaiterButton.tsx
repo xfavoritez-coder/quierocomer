@@ -18,7 +18,7 @@ type ButtonState = "idle" | "calling" | "success";
 
 const TABLE_KEY_PREFIX = "qr_table_";
 
-export default function WaiterButton({ restaurantId, tableId, tableName, size = 52, waiterPanelActive = false }: WaiterButtonProps) {
+export default function WaiterButton({ restaurantId, tableId, tableName, size = 58, waiterPanelActive = false }: WaiterButtonProps) {
   const [state, setState] = useState<ButtonState>("idle");
   const [toast, setToast] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);

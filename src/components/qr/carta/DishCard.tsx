@@ -88,7 +88,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 
   if (isRec) {
     return (
-      <div style={{ borderRadius: 14, background: "rgba(244,166,35,0.04)", border: "2px solid rgba(244,166,35,0.3)", marginBottom: 8 }}>
+      <div style={{ borderRadius: 14, background: "color-mix(in srgb, var(--carta-accent, #F4A623) 4%, transparent)", border: "2px solid color-mix(in srgb, var(--carta-accent, #F4A623) 30%, transparent)", marginBottom: 8 }}>
         <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "14px 12px", background: "transparent" }}>{inner}</button>
       </div>
     );
@@ -96,7 +96,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 
   if (autoRecommended) {
     return (
-      <div style={{ borderRadius: 14, background: isExploration ? "rgba(99,102,241,0.04)" : "rgba(244,166,35,0.06)", border: `1.5px solid ${isExploration ? "rgba(99,102,241,0.2)" : "rgba(244,166,35,0.2)"}`, marginBottom: 8 }}>
+      <div style={{ borderRadius: 14, background: isExploration ? "rgba(99,102,241,0.04)" : "color-mix(in srgb, var(--carta-accent, #F4A623) 6%, transparent)", border: `1.5px solid ${isExploration ? "rgba(99,102,241,0.2)" : "color-mix(in srgb, var(--carta-accent, #F4A623) 20%, transparent)"}`, marginBottom: 8 }}>
         <button onClick={onClick} className="flex gap-3 w-full text-left" style={{ padding: "14px 12px", background: "transparent" }}>{inner}</button>
       </div>
     );
@@ -107,45 +107,64 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
   );
 }
 
-/* ── PREMIUM CARD (unified — all cards use featured layout) ── */
+/* ── PREMIUM CARD — foto arriba, info abajo ── */
 function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
   const [loaded, setLoaded] = useState(false);
 
-  const badges: string[] = [];
-  if (isRec) badges.push("⭐ Recomendado");
-  if (isPopular) badges.push("🔥 Popular hoy");
-
   return (
     <button
       onClick={onClick}
-      className="relative text-left overflow-hidden w-full"
-      style={{ height: 290, borderRadius: 10, background: "#1a1a1a" }}
+      className="text-left overflow-hidden w-full"
+      style={{
+        borderRadius: 14,
+        background: isRec ? "var(--carta-surface-rec, var(--carta-surface))" : "var(--carta-surface)",
+        border: isRec ? "2px solid color-mix(in srgb, var(--carta-accent, #F4A623) 30%, transparent)" : "1px solid var(--carta-card-border)",
+        boxShadow: isRec ? "0 2px 12px color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent)" : "var(--carta-card-shadow)",
+      }}
     >
-      {photo ? (
-        <>
-          {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden", zIndex: 0 }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
-          <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ transform: "scale(1.08)", opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} quality={95} onLoad={() => setLoaded(true)} />
-        </>
-      ) : (
-        <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-2xl">🍽</div>
-      )}
-      <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 30%, transparent 55%)" }} />
-      {/* Top-right para no chocar con los badges Recomendado/Popular en top-left */}
-      <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={28} top={9} right={9} />
-      <div className="absolute" style={{ top: 7, left: 7, display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, zIndex: 2 }}>
-        {badges.map((b, i) => (
-          <span key={i} className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.78rem", fontWeight: 600, padding: "3px 9px", borderRadius: 8 }}>{b}</span>
-        ))}
+      {/* Foto */}
+      <div className="relative overflow-hidden" style={{ width: "100%", aspectRatio: "1/1", background: "#1a1a1a" }}>
+        {photo ? (
+          <>
+            {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
+            <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} quality={95} onLoad={() => setLoaded(true)} />
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: "var(--carta-img-placeholder)", color: "var(--carta-text3)" }}>🍽</div>
+        )}
+        <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={26} top={8} right={8} />
+        {/* Badges sobre la foto */}
+        {(isRec || isPopular) && (
+          <div style={{ position: "absolute", top: 8, left: 8, display: "flex", gap: 4, zIndex: 2 }}>
+            {isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#F4A623", color: "white", fontSize: "0.73rem", fontWeight: 700, padding: "3px 9px", borderRadius: 50 }}>⭐ Recomendado</span>}
+            {isPopular && !isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>🔥 Popular</span>}
+          </div>
+        )}
       </div>
-      <h3 className="absolute font-[family-name:var(--font-dm)] line-clamp-2" style={{ bottom: 28, left: 10, right: 10, fontSize: "1.125rem", fontWeight: 700, color: "white", lineHeight: 1.3, textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}>
-        {dish.name}{" "}<DishBadges dish={dish} />
-        {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
-      </h3>
-      <span className="absolute font-[family-name:var(--font-dm)]" style={{ bottom: 9, left: 10, fontSize: "1rem", fontWeight: 800, color: "var(--carta-accent, #F4A623)", textShadow: "0 1px 5px rgba(0,0,0,0.6), 0 0 8px rgba(0,0,0,0.3)" }}>
-        {dish.discountPrice ? `$${dish.discountPrice.toLocaleString("es-CL")}` : `$${dish.price.toLocaleString("es-CL")}`}
-      </span>
+      {/* Info */}
+      <div style={{ padding: "10px 12px 12px" }}>
+        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
+          {dish.name}{" "}<DishBadges dish={dish} />
+          {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "8px", fontWeight: 700, padding: "1px 6px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
+        </h3>
+        {dish.description && (
+          <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "var(--carta-text3)", lineHeight: 1.4, margin: "3px 0 0" }}>
+            {dish.description}
+          </p>
+        )}
+        <div style={{ marginTop: 6 }}>
+          {dish.discountPrice ? (
+            <>
+              <span className="line-through font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-text3)", fontSize: "0.78rem", marginRight: 6 }}>${dish.price.toLocaleString("es-CL")}</span>
+              <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 700, fontSize: "0.95rem" }}>${dish.discountPrice.toLocaleString("es-CL")}</span>
+            </>
+          ) : (
+            <span className="font-[family-name:var(--font-dm)]" style={{ color: "var(--carta-accent, #F4A623)", fontWeight: 700, fontSize: "0.95rem" }}>${dish.price.toLocaleString("es-CL")}</span>
+          )}
+        </div>
+      </div>
     </button>
   );
 }

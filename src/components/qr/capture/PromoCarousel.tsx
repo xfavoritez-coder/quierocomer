@@ -353,7 +353,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                         fontSize: "9.5px",
                         fontWeight: 800,
                         color: "white",
-                        background: "#F4A623",
+                        background: "var(--carta-accent, #F4A623)",
                         letterSpacing: "0.12em",
                         textTransform: "uppercase",
                         padding: "3px 8px",
@@ -372,7 +372,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   )}
                   {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 5 }}>
-                      <span style={{ fontSize: "15px", fontWeight: 700, color: "#F4A623" }}>
+                      <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--carta-accent, #F4A623)" }}>
                         ${(p.promoPrice || dish?.price)?.toLocaleString("es-CL")}
                       </span>
                       {p.originalPrice && (
@@ -400,7 +400,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
               <div key={i} style={{
                 width: i === activeIdx ? 16 : 5, height: 5,
                 borderRadius: i === activeIdx ? 3 : "50%",
-                background: i === activeIdx ? "#F4A623" : "#e8d4b8",
+                background: i === activeIdx ? "var(--carta-accent, #F4A623)" : "color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)",
                 transition: "all 0.3s ease",
               }} />
             ))}
@@ -480,7 +480,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       label = `OFERTA ${DAY_NAMES[todayDow]}`;
                     }
                     return (
-                      <span style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 999, marginBottom: 10 }}>
+                      <span style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, color: "white", background: "var(--carta-accent, #F4A623)", letterSpacing: "0.12em", textTransform: "uppercase", padding: "3px 9px", borderRadius: 999, marginBottom: 10 }}>
                         {label}
                       </span>
                     );
@@ -495,7 +495,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   )}
                   {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                      {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "#F4A623", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
+                      {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "var(--carta-accent, #F4A623)", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
                       {selectedPromo.originalPrice && selectedPromo.promoPrice && <span style={{ fontSize: "14px", color: "var(--carta-text3)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                     </div>
                   )}
@@ -508,7 +508,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                             <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>{group.name}</p>
                             {group.minSelect > 0 && (
-                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--carta-accent, #F4A623)", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 12%, transparent)", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
                             )}
                           </div>
                           <div style={{ background: "var(--carta-bg)", borderRadius: 12, padding: 4 }}>
@@ -522,15 +522,15 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                                     padding: "9px 11px", borderRadius: 8, border: "none",
-                                    background: selected ? "rgba(244,166,35,0.08)" : "var(--carta-surface)",
+                                    background: selected ? "color-mix(in srgb, var(--carta-accent, #F4A623) 8%, transparent)" : "var(--carta-surface)",
                                     cursor: "pointer", marginBottom: 2, textAlign: "left",
-                                    outline: selected ? "2px solid #F4A623" : "1px solid transparent",
+                                    outline: selected ? "2px solid var(--carta-accent, #F4A623)" : "1px solid transparent",
                                     transition: "all 0.15s ease",
                                   }}
                                 >
                                   <div style={{
                                     width: 18, height: 18, borderRadius: isRadio ? "50%" : 4, flexShrink: 0,
-                                    border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
+                                    border: selected ? "2px solid var(--carta-accent, #F4A623)" : "2px solid #d0d0d0",
                                     display: "flex", alignItems: "center", justifyContent: "center",
                                     background: selected ? "#F4A623" : "var(--carta-surface)",
                                     transition: "all 0.15s ease",
@@ -543,7 +543,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   </div>
                                   <span style={{ flex: 1, fontSize: "13px", fontWeight: 500, color: "var(--carta-text)" }}>{opt.name}</span>
                                   {opt.priceAdjustment > 0 && (
-                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
+                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--carta-accent, #F4A623)" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
                                   )}
                                 </button>
                               );
@@ -599,8 +599,8 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     const badgeLabel = selectedPromo.daysOfWeek?.length ? `OFERTA ${DAY_NAMES[todayDow]}` : "OFERTA";
                     return (
                       <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-                        <div style={{ width: 14, height: 1, background: "#F4A623", opacity: 0.6 }} />
-                        <span style={{ fontSize: "10.5px", fontWeight: 600, color: "#F4A623", letterSpacing: "0.15em", textTransform: "uppercase" }}>{badgeLabel}</span>
+                        <div style={{ width: 14, height: 1, background: "var(--carta-accent, #F4A623)", opacity: 0.6 }} />
+                        <span style={{ fontSize: "10.5px", fontWeight: 600, color: "var(--carta-accent, #F4A623)", letterSpacing: "0.15em", textTransform: "uppercase" }}>{badgeLabel}</span>
                       </div>
                     );
                   })()}
@@ -617,7 +617,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     <div style={{ padding: "18px 0", borderTop: "1px solid var(--carta-card-border)", borderBottom: "1px solid var(--carta-card-border)", marginBottom: 24 }}>
                       <p style={{ fontSize: "11px", fontWeight: 500, color: "var(--carta-text3)", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 6px" }}>PRECIO OFERTA</p>
                       <div style={{ display: "flex", alignItems: "baseline", gap: 14 }}>
-                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "#F4A623", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
+                        <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "34px", fontWeight: 600, color: "var(--carta-accent, #F4A623)", letterSpacing: "-0.02em", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>
                         {selectedPromo.originalPrice && <span style={{ fontSize: "16px", color: "var(--carta-text3)", textDecoration: "line-through" }}>${selectedPromo.originalPrice.toLocaleString("es-CL")}</span>}
                       </div>
                     </div>
@@ -650,7 +650,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                             <p style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>{group.name}</p>
                             {group.minSelect > 0 && (
-                              <span style={{ fontSize: "10px", fontWeight: 700, color: "#F4A623", background: "#fef3e0", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
+                              <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--carta-accent, #F4A623)", background: "color-mix(in srgb, var(--carta-accent, #F4A623) 12%, transparent)", padding: "2px 7px", borderRadius: 6, letterSpacing: "0.04em" }}>Requerido</span>
                             )}
                           </div>
                           <div style={{ background: "var(--carta-bg)", borderRadius: 14, padding: 4 }}>
@@ -664,16 +664,16 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   style={{
                                     display: "flex", alignItems: "center", gap: 10, width: "100%",
                                     padding: "10px 12px", borderRadius: 10, border: "none",
-                                    background: selected ? "rgba(244,166,35,0.08)" : "var(--carta-surface)",
+                                    background: selected ? "color-mix(in srgb, var(--carta-accent, #F4A623) 8%, transparent)" : "var(--carta-surface)",
                                     cursor: "pointer", marginBottom: 2, textAlign: "left",
-                                    outline: selected ? "2px solid #F4A623" : "1px solid transparent",
+                                    outline: selected ? "2px solid var(--carta-accent, #F4A623)" : "1px solid transparent",
                                     transition: "all 0.15s ease",
                                   }}
                                 >
                                   {/* Radio / Checkbox indicator */}
                                   <div style={{
                                     width: 20, height: 20, borderRadius: isRadio ? "50%" : 5, flexShrink: 0,
-                                    border: selected ? "2px solid #F4A623" : "2px solid #d0d0d0",
+                                    border: selected ? "2px solid var(--carta-accent, #F4A623)" : "2px solid #d0d0d0",
                                     display: "flex", alignItems: "center", justifyContent: "center",
                                     background: selected ? "#F4A623" : "var(--carta-surface)",
                                     transition: "all 0.15s ease",
@@ -686,7 +686,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                                   </div>
                                   <span style={{ flex: 1, fontSize: "13.5px", fontWeight: 500, color: "var(--carta-text)" }}>{opt.name}</span>
                                   {opt.priceAdjustment > 0 && (
-                                    <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#F4A623" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
+                                    <span style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--carta-accent, #F4A623)" }}>+${opt.priceAdjustment.toLocaleString("es-CL")}</span>
                                   )}
                                 </button>
                               );
@@ -699,7 +699,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
 
                   {selectedPromo.validUntil && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", background: "#fef9f0", borderRadius: 14, border: "1px solid #fce8c5" }}>
-                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "#F4A623", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
+                      <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--carta-accent, #F4A623)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: "16px" }}>⏰</div>
                       <div>
                         <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--carta-text)", margin: 0 }}>Válido hasta el {new Date(selectedPromo.validUntil).toLocaleDateString("es-CL")}</p>
                         <p style={{ fontSize: "11.5px", color: "#8a5a2c", margin: "2px 0 0" }}>Sujeto a disponibilidad del local</p>

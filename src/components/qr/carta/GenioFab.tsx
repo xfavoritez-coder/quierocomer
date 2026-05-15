@@ -6,6 +6,8 @@ interface Props {
   hasCompletedGenio: boolean;
   onOpen: () => void;
   spicyReordered?: boolean;
+  redundantDiet?: "redundant-vegan" | "redundant-vegetarian" | null;
+  restaurantName?: string;
 }
 
 /**
@@ -13,9 +15,10 @@ interface Props {
  * Shows "Ordeno la carta especialmente para ti" on first visit until dismissed.
  * Also shows spicy-reordered toast when applicable.
  */
-export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: Props) {
+export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, redundantDiet, restaurantName }: Props) {
   const [showNudge, setShowNudge] = useState(false);
   const [showSpicy, setShowSpicy] = useState(false);
+  const [showRedundant, setShowRedundant] = useState(false);
 
   useEffect(() => {
     if (hasCompletedGenio) return;
@@ -30,6 +33,13 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
     const timer = setTimeout(() => setShowSpicy(true), 1_500);
     return () => clearTimeout(timer);
   }, [spicyReordered, hasCompletedGenio]);
+
+  useEffect(() => {
+    if (!redundantDiet || !hasCompletedGenio) return;
+    if (sessionStorage.getItem("qc_redundant_toast_dismissed") === "1") return;
+    const timer = setTimeout(() => setShowRedundant(true), 1_500);
+    return () => clearTimeout(timer);
+  }, [redundantDiet, hasCompletedGenio]);
 
   // Re-show toast when Genio closes with new restrictions
   useEffect(() => {
@@ -52,14 +62,21 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
   const dismiss = () => {
     setShowNudge(false);
     setShowSpicy(false);
+    setShowRedundant(false);
     localStorage.setItem("qc_genio_nudge_shown", "1");
     if (spicyReordered) sessionStorage.setItem("qc_spicy_toast_dismissed", "1");
+    if (redundantDiet) sessionStorage.setItem("qc_redundant_toast_dismissed", "1");
   };
 
-  const toastVisible = showNudge || showSpicy;
-  const toastText = showSpicy
-    ? "Reordené la carta para ti: los picantes quedan al final 🌶️"
-    : "Ordeno la carta especialmente para ti";
+  const toastVisible = showNudge || showSpicy || showRedundant;
+  const name = restaurantName || "este local";
+  const toastText = showRedundant
+    ? redundantDiet === "redundant-vegan"
+      ? `¡Aquí en ${name} todo el menú es vegano, disfruta! 🌿`
+      : `¡Aquí en ${name} todo el menú es vegetariano, disfruta! 🥗`
+    : showSpicy
+      ? "Reordené la carta para ti: los picantes quedan al final 🌶️"
+      : "Ordeno la carta especialmente para ti";
 
   return (
     <div style={{ position: "relative" }}>
@@ -78,10 +95,10 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered }: 
       <button
         onClick={() => { dismiss(); onOpen(); }}
         className="flex items-center justify-center rounded-full active:scale-95 genio-fab-btn"
-        style={{ height: 52, width: 52, borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
+        style={{ height: 58, width: 58, borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
       >
-        <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 32, height: 32, objectFit: "contain" }} />
-        {hasCompletedGenio && <span style={{ position: "absolute", top: 2, right: 2, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
+        <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        {hasCompletedGenio && <span style={{ position: "absolute", top: 1, right: 1, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
       </button>
     </div>
   );

@@ -389,7 +389,7 @@ function DishSlide({
         {showRecTooltip && isRec && (
           <div
             onClick={() => setShowRecTooltip(false)}
-            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
+            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--carta-accent, #F4A623) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 25%, transparent)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
             <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--carta-text)", lineHeight: 1.4 }}>
               ⭐ {restaurantName || "El local"} recomienda este plato.
@@ -401,7 +401,7 @@ function DishSlide({
         {showPopularTooltip && popularDishIds?.has(dish.id) && (
           <div
             onClick={() => setShowPopularTooltip(false)}
-            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(244,166,35,0.15)", border: "1px solid rgba(244,166,35,0.25)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
+            style={{ marginBottom: 10, padding: "10px 14px", borderRadius: 12, background: "color-mix(in srgb, var(--carta-accent, #F4A623) 15%, transparent)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 25%, transparent)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", animation: "fadeToast 0.2s ease-out", cursor: "pointer" }}
           >
             <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--carta-text)", lineHeight: 1.4 }}>
               🔥 Muy pedido hoy por los clientes.
@@ -433,14 +433,14 @@ function DishSlide({
               {isRec ? (
                 <button
                   onClick={() => { if (showRecTooltip) { setShowRecTooltip(false); } else { setShowRecTooltip(true); setTimeout(() => setShowRecTooltip(false), 2000); } }}
-                  style={{ background: "var(--carta-badge-bg)", border: "1px solid rgba(244,166,35,0.35)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   ⭐ Recomendado
                 </button>
               ) : (
                 <button
                   onClick={() => { if (showPopularTooltip) { setShowPopularTooltip(false); } else { setShowPopularTooltip(true); setTimeout(() => setShowPopularTooltip(false), 2000); } }}
-                  style={{ background: "var(--carta-badge-bg)", border: "1px solid rgba(244,166,35,0.35)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
+                  style={{ background: "var(--carta-badge-bg)", border: "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 35%, transparent)", color: "var(--carta-badge-text)", fontSize: "0.85rem", fontWeight: 600, padding: "4px 12px", borderRadius: 50, cursor: "pointer", whiteSpace: "nowrap" }}
                 >
                   🔥 Popular hoy
                 </button>
@@ -508,7 +508,7 @@ function DishSlide({
           // UNIVERSAL: picante
           if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.12)", color: "#f87171" });
           // UNIVERSAL: sin gluten
-          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#F4A623" });
+          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "var(--carta-accent, #F4A623)" });
           // UNIVERSAL: contiene frutos secos (informativo, mismo estilo que el resto)
           if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.12)", color: "#fb923c" });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)
@@ -531,16 +531,16 @@ function DishSlide({
                     fontSize: "13px", fontWeight: 600, whiteSpace: "nowrap",
                     border: s.warning
                       ? "1px solid rgba(234,88,12,0.45)"
-                      : s.forYou ? "1px solid rgba(244,166,35,0.55)" : "none",
+                      : s.forYou ? "1px solid color-mix(in srgb, var(--carta-accent, #F4A623) 55%, transparent)" : "none",
                     boxShadow: s.warning
                       ? "0 0 0 2px rgba(234,88,12,0.10)"
-                      : s.forYou ? "0 0 0 2px rgba(244,166,35,0.08)" : "none",
+                      : s.forYou ? "0 0 0 2px color-mix(in srgb, var(--carta-accent, #F4A623) 8%, transparent)" : "none",
                   }}
                   title={s.warning ? "Este plato contiene frutos secos — confirmar con el local en caso de alergia" : (s.forYou ? "Coincide con tus preferencias de Genio" : undefined)}
                 >
                   <span aria-hidden>{s.emoji}</span>
                   <span>{s.label}</span>
-                  {s.forYou && <span style={{ fontSize: "10px", color: "#F4A623", fontWeight: 700, marginLeft: 2 }}>· para ti</span>}
+                  {s.forYou && <span style={{ fontSize: "10px", color: "var(--carta-accent, #F4A623)", fontWeight: 700, marginLeft: 2 }}>· para ti</span>}
                 </span>
               ))}
             </div>

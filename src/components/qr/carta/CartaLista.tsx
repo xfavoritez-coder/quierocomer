@@ -513,8 +513,8 @@ export default function CartaLista({
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
         const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
         const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-        // reordered-spicy is now shown as GenioFab toast, not inline banner
-        const msgType = dietMsg === "reordered-spicy" ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+        // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
+        const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
         if (msgType) return <div style={{ marginTop: 16, paddingTop: 6 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
         if (!mode) return null;
         return (
@@ -626,10 +626,10 @@ export default function CartaLista({
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
           const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
           const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} />;
+          return <GenioFab hasCompletedGenio={hasCompletedGenio} onOpen={() => setGenioOpen(true)} spicyReordered={dietMsg === "reordered-spicy"} redundantDiet={dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian" ? dietMsg : null} restaurantName={restaurant.name} />;
         })()}
         {showWaiter && <WaiterButton restaurantId={restaurant.id} tableId={tableId || undefined} waiterPanelActive={showWaiter} />}
-        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} />}
+        {(restaurant as any).plan !== "FREE" && <ViewSelector restaurantId={restaurant.id} enabledLangs={(restaurant as any).enabledLangs} plan={(restaurant as any).plan} defaultView={(restaurant as any).defaultView} />}
       </div>
       <style>{`
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
