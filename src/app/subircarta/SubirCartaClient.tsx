@@ -176,7 +176,7 @@ export default function SubirCartaClient() {
             {/* Photo panel */}
             {mode === "photo" && (
               <div className="input-panel">
-                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: "none" }} onChange={handleFileSelect} />
+                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" style={{ display: "none" }} onChange={handleFileSelect} />
                 <div className="upload-card compact-upload" role="button" tabIndex={0} onClick={() => photoRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter") photoRef.current?.click(); }}>
                   <div>
                     <div className="upload-icon">
