@@ -1,8 +1,8 @@
 export default function SubirCartaLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: `body { background: #090806 !important; }` }} />
+    <div style={{ background: "#090806", minHeight: "100vh" }}>
+      <style dangerouslySetInnerHTML={{ __html: `html, body { background: #090806 !important; color: #F2E5CF !important; }` }} />
       {children}
-    </>
+    </div>
   );
 }

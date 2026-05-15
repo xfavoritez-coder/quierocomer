@@ -25,6 +25,7 @@ export default function ConfirmacionClient() {
   const searchParams = useSearchParams();
   const leadId = searchParams.get("id");
   const [preview, setPreview] = useState<Preview | null>(null);
+  const [imagesLoaded, setImagesLoaded] = useState(false);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -43,7 +44,22 @@ export default function ConfirmacionClient() {
           if (data.localName) setLocalName(data.localName);
           if (data.email) setLeadEmail(data.email);
           if (data.preview?.sampleDishes?.length > 0) {
-            setPreview(data.preview);
+            // Pre-load all images before showing preview
+            const imgs = data.preview.sampleDishes.map((d: any) => d.imageUrl).filter(Boolean);
+            if (imgs.length > 0) {
+              Promise.all(imgs.map((src: string) => new Promise<void>((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve();
+                img.onerror = () => resolve();
+                img.src = src;
+              }))).then(() => {
+                setPreview(data.preview);
+                setImagesLoaded(true);
+              });
+            } else {
+              setPreview(data.preview);
+              setImagesLoaded(true);
+            }
             if (polling) { clearInterval(polling); polling = null; }
           }
         })
@@ -92,7 +108,7 @@ export default function ConfirmacionClient() {
         <section className="shell centered-shell">
           <div className="center-copy">
             <h1><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu carta ya está en <span>preparación</span></h1>
-            <p className="subcopy">En unos minutos recibirás un correo con tu carta lista para probar.</p>
+            <p className="subcopy">En unos minutos recibirás un correo con tu carta lista.</p>
           </div>
 
           {/* iPhone mockup with preview — or fallback message */}
@@ -101,9 +117,10 @@ export default function ConfirmacionClient() {
             <div className="phone phone-generating" style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
-                <div style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", padding: "14px 20px", borderRadius: 16, textAlign: "center", maxWidth: "80%" }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "white", margin: "0 0 4px" }}>⏳ Casi lista</p>
-                  <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0 }}>Te la enviaremos a tu correo</p>
+                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "18px 24px", borderRadius: 20, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)" }}>
+                  <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px" }} />
+                  <p style={{ fontSize: 16, fontWeight: 700, color: "#F4A623", margin: "0 0 5px", letterSpacing: "0.01em" }}>Casi lista</p>
+                  <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.4 }}>En minutos recibirás tu nueva carta</p>
                 </div>
               </div>
               {/* Phone notch */}
@@ -293,9 +310,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 /* iPhone mockup — replicates dark mode carta lista */
 .phone-wrap { display: flex; justify-content: center; margin: 8px 0 24px; }
 .phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-.phone-generating .phone-screen { filter: blur(1px); }
-.phone-generating .phone-notch { filter: blur(1px); }
-.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(14,14,14,0.25); pointer-events: none; }
+.phone-generating .phone-screen { filter: blur(0.3px); }
+.phone-generating .phone-notch { filter: blur(0.3px); }
+.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.35); pointer-events: none; }
 .phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }
 .ph-hero { height: 130px; position: relative; overflow: hidden; }
