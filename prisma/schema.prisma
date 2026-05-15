@@ -1680,6 +1680,7 @@ enum CartaStatus {
   PROCESSING
   READY
   DELIVERED
+  FAILED
 }
 
 model MenuProvider {

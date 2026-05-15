@@ -122,10 +122,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   // Mark as processing
   await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PROCESSING" } });
 
-  // Safety timeout: if pipeline hangs, reset to PENDING so the cron can retry
+  // Safety timeout: if pipeline hangs, mark as FAILED
   const pipelineTimeout = setTimeout(async () => {
-    console.error(`[Pipeline] Timeout for lead ${leadId} — resetting to PENDING`);
-    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PENDING" } }).catch(() => {});
+    console.error(`[Pipeline] Timeout for lead ${leadId} — marking FAILED`);
+    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "FAILED" } }).catch(() => {});
   }, 240000); // 4 minutes
 
   try {
@@ -340,8 +340,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     return { slug: restaurant.slug, url: cartaUrl };
   } catch (error) {
     clearTimeout(pipelineTimeout);
-    // Mark as failed (back to PENDING so it can be retried)
-    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PENDING" } });
+    // Mark as FAILED
+    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "FAILED" } });
     // Notify admin
     try {
       const { sendAdminPush } = await import("@/lib/adminPush");
