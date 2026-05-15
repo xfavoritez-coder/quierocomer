@@ -120,7 +120,7 @@ export default function ConfirmacionClient() {
             <div className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`} style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
-                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", transition: "border-color 0.5s" }}>
+                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", boxShadow: "0 0 40px 10px rgba(0,0,0,0.5)", transition: "border-color 0.5s" }}>
                   {cartaReady ? (
                     <>
                       <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(232,163,61,0.15)", display: "grid", placeItems: "center", margin: "0 auto 4px" }}>

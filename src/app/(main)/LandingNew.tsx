@@ -275,15 +275,14 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">4</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Tu ticket aumenta</h3>
+                  <h3>Tu experiencia está lista</h3>
                   <ul>
-                    <li>Más consumo por mesa</li>
-                    <li>Diseñada para despertar antojo</li>
+                    <li>Creamos algo único para ti y tu restaurante</li>
                   </ul>
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/ultima.png" alt="Ticket aumenta" />
+                <img src="/landing/feliz.png" alt="Tu experiencia está lista" />
               </div>
             </div>
           </div>
