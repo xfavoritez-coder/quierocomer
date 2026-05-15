@@ -520,16 +520,16 @@ function ImpactDishCard({
       </div>
       {/* Info */}
       <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
-        {(isRec || autoRecommended || isPopular) && (
+        {(isRec || isPopular) && (
           <div style={{ marginBottom: 3, display: "flex", gap: 4, flexWrap: "wrap" }}>
-            {(isRec || autoRecommended) && (
+            {isRec && (
               <span style={{
                 fontSize: "0.72rem", fontWeight: 700,
                 color: "#F4A623",
                 background: "rgba(244,166,35,0.12)",
                 padding: "2px 8px", borderRadius: 50,
               }}>
-                {autoRecommended ? "✨ Para ti" : "⭐ " + t(lang, "recommended")}
+                {"⭐ " + t(lang, "recommended")}
               </span>
             )}
             {isPopular && (

@@ -92,10 +92,12 @@ function AmbientHaze({ bottom: _bottom }: { bottom?: boolean }) {
   return null;
 }
 
-function AmbientSparks({ count = 5 }: { count?: number }) {
+function AmbientSparks({ count: _count = 5 }: { count?: number }) {
+  return null;
+  /* Disabled — removed sparkles
   return (
     <>
-      {SPARK_POSITIONS.slice(0, count).map((s, i) => (
+      {SPARK_POSITIONS.slice(0, _count).map((s, i) => (
         <div key={i} style={{
           position: "absolute", top: s.top, left: s.left, width: s.size, height: s.size,
           borderRadius: "50%", background: s.color, boxShadow: `0 0 6px ${s.color}`,
@@ -105,6 +107,7 @@ function AmbientSparks({ count = 5 }: { count?: number }) {
       ))}
     </>
   );
+  */
 }
 
 const DIET_KEYS = {
@@ -559,7 +562,6 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               <div style={{ position: "relative", zIndex: 2, display: "flex", flexDirection: "column", alignItems: "center", gap: 16 }}>
                 {/* Genio with glow */}
                 <div style={{ position: "relative" }}>
-                  <div style={{ position: "absolute", inset: -42, borderRadius: "50%", background: "radial-gradient(circle, rgba(245,158,11,0.45) 0%, rgba(217,119,6,0.15) 40%, transparent 70%)", animation: "genioPulse 2.8s ease-in-out infinite" }} />
                   <span style={{ fontSize: "3rem", position: "relative", filter: "drop-shadow(0 0 14px rgba(245,158,11,0.7))" }}>🧞</span>
                 </div>
                 <p className="text-center" style={{ color: G.orange, fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase" as const, margin: 0 }}>
