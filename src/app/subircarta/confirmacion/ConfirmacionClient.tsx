@@ -97,7 +97,7 @@ export default function ConfirmacionClient() {
   // Auto-dismiss modal 3s after carta is ready
   useEffect(() => {
     if (!cartaReady) return;
-    const t = setTimeout(() => setModalDismissed(true), 3000);
+    const t = setTimeout(() => setModalDismissed(true), 1500);
     return () => clearTimeout(t);
   }, [cartaReady]);
 
@@ -157,7 +157,7 @@ export default function ConfirmacionClient() {
             >
               {/* Overlay message */}
               {!modalDismissed && (
-              <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none", opacity: cartaReady ? 0 : 1, transition: "opacity 1s ease 2.5s" }} onTransitionEnd={() => { if (cartaReady) setModalDismissed(true); }}>
+              <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none", opacity: cartaReady ? 0 : 1, transition: "opacity 0.6s ease 1s" }} onTransitionEnd={() => { if (cartaReady) setModalDismissed(true); }}>
                 <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", boxShadow: "0 0 40px 10px rgba(0,0,0,0.5)", transition: "border-color 0.5s" }}>
                   {cartaReady ? (
                     <>
