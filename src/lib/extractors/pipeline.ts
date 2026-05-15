@@ -154,21 +154,27 @@ Reglas:
     parsed = JSON.parse(jsonStr);
   }
 
-  // Search Unsplash photos for dishes (batch, max 10 to respect rate limits)
+  // Search Unsplash photos for dishes (batch, max 15 to respect rate limits)
   const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
   const photoMap = new Map<string, string>();
   if (UNSPLASH_KEY) {
-    const allDishNames = (parsed.categories || []).flatMap((c: any) => (c.dishes || []).map((d: any) => d.name)).filter(Boolean).slice(0, 10);
-    await Promise.allSettled(allDishNames.map(async (name: string) => {
+    const allDishes = (parsed.categories || []).flatMap((c: any) =>
+      (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name }))
+    ).filter((d: any) => d.name).slice(0, 15);
+
+    await Promise.allSettled(allDishes.map(async (d: any) => {
       try {
-        const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(name + " food dish")}&per_page=1&orientation=landscape`, {
-          headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-          signal: AbortSignal.timeout(5000),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          const url = data.results?.[0]?.urls?.regular;
-          if (url) photoMap.set(name, url);
+        // Try dish name first, then category as fallback
+        for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
+          const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
+            headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
+            signal: AbortSignal.timeout(5000),
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const url = data.results?.[0]?.urls?.regular;
+            if (url) { photoMap.set(d.name, url); return; }
+          }
         }
       } catch {}
     }));
@@ -276,8 +282,14 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Generate unique slug
-    const baseName = lead.localName || extraction.restaurantName;
-    let slug = slugify(baseName);
+    const rawBaseName = lead.localName?.trim() || extraction.restaurantName;
+    // Smart casing
+    const baseName = rawBaseName === rawBaseName.toUpperCase() || rawBaseName === rawBaseName.toLowerCase()
+      ? rawBaseName.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      : rawBaseName;
+    const cleanedName = baseName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+
+    let slug = slugify(cleanedName);
     if (!slug) slug = `local-${Date.now().toString(36)}`;
     const existing = await prisma.restaurant.findUnique({ where: { slug } });
     if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
@@ -286,7 +298,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
     const restaurant = await prisma.restaurant.create({
       data: {
-        name: baseName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),
+        name: cleanedName,
         slug,
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",

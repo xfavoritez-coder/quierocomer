@@ -53,6 +53,26 @@ Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.` },
   let parsed: any;
   try { parsed = JSON.parse(match[0]); } catch { parsed = { dishes: [] }; }
 
+  // Search Unsplash for dish photos
+  const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+  const photoMap = new Map<string, string>();
+  if (UNSPLASH_KEY) {
+    const names = (parsed.dishes || []).map((d: any) => d.name).filter(Boolean).slice(0, 5);
+    await Promise.allSettled(names.map(async (name: string) => {
+      try {
+        const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(name + " food dish")}&per_page=1&orientation=landscape`, {
+          headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const url = data.results?.[0]?.urls?.regular;
+          if (url) photoMap.set(name, url);
+        }
+      } catch {}
+    }));
+  }
+
   const dishes: ExtractedDish[] = [];
   for (const d of (parsed.dishes || [])) {
     if (!d.name) continue;
@@ -60,7 +80,7 @@ Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.` },
       name: d.name.trim(),
       description: d.description || "",
       price: typeof d.price === "number" ? d.price : parseInt(String(d.price).replace(/\D/g, ""), 10) || 0,
-      imageUrl: null,
+      imageUrl: photoMap.get(d.name) || null,
       category: d.category || "General",
     });
   }
@@ -177,8 +197,16 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
     };
   });
 
+  // Prefer lead's localName (from user input) over extracted name
+  const extractedName = extraction.restaurantName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+  const rawName = lead.localName?.trim() || extractedName || "Restaurante";
+  // Smart casing: if ALL CAPS or all lowercase, convert to Title Case
+  const restaurantName = rawName === rawName.toUpperCase() || rawName === rawName.toLowerCase()
+    ? rawName.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    : rawName;
+
   const preview: LeadPreview = {
-    restaurantName: extraction.restaurantName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),
+    restaurantName,
     logoUrl: extraction.logoUrl,
     totalDishes: extraction.dishes.length,
     totalCategories: categories.size,
