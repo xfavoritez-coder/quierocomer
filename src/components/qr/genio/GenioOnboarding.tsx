@@ -88,21 +88,8 @@ const SPARK_POSITIONS = [
   { top: "88%", left: "45%", delay: 1.8, size: 3, color: "#f59e0b" },
 ];
 
-function AmbientHaze({ bottom }: { bottom?: boolean }) {
-  return (
-    <div style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 0 }}>
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, height: "50%",
-        background: "radial-gradient(ellipse at 50% 30%, rgba(245,158,11,0.14) 0%, rgba(217,119,6,0.06) 30%, transparent 60%)",
-      }} />
-      {bottom && (
-        <div style={{
-          position: "absolute", bottom: 0, left: 0, right: 0, height: "50%",
-          background: "radial-gradient(ellipse at 50% 70%, rgba(245,158,11,0.10) 0%, rgba(180,83,9,0.04) 40%, transparent 70%)",
-        }} />
-      )}
-    </div>
-  );
+function AmbientHaze({ bottom: _bottom }: { bottom?: boolean }) {
+  return null;
 }
 
 function AmbientSparks({ count = 5 }: { count?: number }) {

@@ -45,7 +45,8 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
   useEffect(() => {
     const onGenioClose = () => {
       sessionStorage.removeItem("qc_spicy_toast_dismissed");
-      // Re-check spicy after a tick (localStorage updated by Genio)
+      sessionStorage.removeItem("qc_redundant_toast_dismissed");
+      // Re-check after a tick (localStorage updated by Genio)
       setTimeout(() => {
         try {
           const restrictions = JSON.parse(localStorage.getItem("qr_restrictions") || "[]");
@@ -53,6 +54,10 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
             setShowSpicy(true);
           }
         } catch {}
+        // Re-check redundant diet
+        if (redundantDiet) {
+          setShowRedundant(true);
+        }
       }, 500);
     };
     window.addEventListener("genio-closed", onGenioClose);
