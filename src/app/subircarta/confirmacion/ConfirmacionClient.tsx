@@ -91,7 +91,7 @@ export default function ConfirmacionClient() {
     const maxTimeout = setTimeout(() => {
       if (polling) clearInterval(polling);
       if (!cartaReady) setTimedOut(true);
-    }, 60000);
+    }, 30000);
 
     return () => {
       if (polling) clearInterval(polling);
