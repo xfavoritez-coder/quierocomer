@@ -65,8 +65,9 @@ export default function FabSpeedDial({ children }: Props) {
           className="genio-lamp-icon"
           style={{
             width: 32, height: 32, objectFit: "contain",
-            transition: "transform 0.3s cubic-bezier(0.16,1,0.3,1)",
-            transform: open ? "rotate(90deg) scale(0.85)" : "rotate(0deg) scale(1)",
+            transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
+            transform: open ? "scale(1.15)" : "scale(1)",
+            filter: open ? "brightness(1.3) drop-shadow(0 0 8px rgba(244,166,35,0.5))" : "none",
           }}
         />
       </button>
