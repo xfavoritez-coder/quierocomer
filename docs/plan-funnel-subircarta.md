@@ -100,7 +100,12 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 ### Prioridad media
 
-4. **Modos DOCUMENT y PHOTO completos** — Upload funciona, pero la extracción de texto/OCR no está implementada. Estrategia: buscar nombre del local en Google → encontrar link online → tratar como LINK.
+4. **Modos DOCUMENT y PHOTO completos** — Upload a Supabase Storage funciona, falta la extracción. Flujo:
+   - Extraer nombre del local del archivo (OCR para fotos, texto para PDF/Word)
+   - Buscar en Google "{nombre local} carta menú" para encontrar link online
+   - Si encuentra link → tratar como LINK (mejor calidad, fotos reales)
+   - Si no encuentra → extraer texto del archivo con IA + fotos de Unsplash como fallback
+   - Prioridad siempre al link: la carta online tiene fotos reales y datos estructurados
 
 5. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
 
