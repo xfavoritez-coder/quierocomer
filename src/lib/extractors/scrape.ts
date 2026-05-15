@@ -196,7 +196,7 @@ export async function extractWithScraper(cartaUrl: string, providerName?: string
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
   const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
   console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");
-  const content = cleaned.length > 20000 ? cleaned.slice(0, 20000) : cleaned;
+  const content = cleaned.length > 40000 ? cleaned.slice(0, 40000) : cleaned;
   console.log("[Scraper] Trimmed to:", content.length, "| Calling Claude...");
 
   const result = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
