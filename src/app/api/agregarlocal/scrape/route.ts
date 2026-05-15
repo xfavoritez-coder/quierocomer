@@ -282,8 +282,52 @@ REGLAS IMPORTANTES:
             const res = await fetch(productUrl, { signal: controller.signal, headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" } });
             const html = await res.text();
             clearTimeout(timer);
-            const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
-            const found = imgMatch?.[1];
+            // Priority: og:image > srcset largest > data-src > first img src
+            let found: string | null = null;
+
+            // 1. og:image — usually the best quality
+            const ogMatch = html.match(/property="og:image"[^>]*content="([^"]+)"/i)
+              || html.match(/content="([^"]+)"[^>]*property="og:image"/i);
+            if (ogMatch?.[1]) found = ogMatch[1];
+
+            // 2. srcset — pick the largest resolution
+            if (!found) {
+              const srcsetMatch = html.match(/srcset="([^"]+)"/i);
+              if (srcsetMatch?.[1]) {
+                const entries = srcsetMatch[1].split(",").map(s => s.trim());
+                let best = "", bestW = 0;
+                for (const entry of entries) {
+                  const parts = entry.split(/\s+/);
+                  const w = parseInt(parts[1]?.replace("w", "") || "0");
+                  if (w > bestW) { bestW = w; best = parts[0]; }
+                }
+                if (best && bestW >= 400) found = best;
+              }
+            }
+
+            // 3. data-src or data-zoom-image (lazy load HD)
+            if (!found) {
+              const dataSrcMatch = html.match(/data-(?:src|zoom-image|full-image)="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png)[^"]*)"/i);
+              if (dataSrcMatch?.[1]) found = dataSrcMatch[1];
+            }
+
+            // 4. Fallback: first img src
+            if (!found) {
+              const imgMatch = html.match(/src="(https?:\/\/[^"]+\.(?:webp|jpg|jpeg|png))"/i);
+              if (imgMatch?.[1]) found = imgMatch[1];
+            }
+
+            // Try to upgrade URL to higher resolution (common CDN patterns)
+            if (found) {
+              found = found
+                .replace(/\/w_\d+/g, "/w_1200")
+                .replace(/\/h_\d+/g, "/h_1200")
+                .replace(/\?width=\d+/g, "?width=1200")
+                .replace(/&width=\d+/g, "&width=1200")
+                .replace(/\/\d+x\d+\//g, "/1200x1200/")
+                .replace(/_\d+x\d+\./g, "_1200x1200.");
+            }
+
             if (found && !found.includes("favicon") && !found.includes("logo") && !found.includes("default")) {
               photoMap.set(productUrl, found);
             }

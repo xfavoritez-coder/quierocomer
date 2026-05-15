@@ -25,12 +25,41 @@ function detectDishType(categoryName: string): string {
   return "food";
 }
 
+/** Try to upgrade a thumbnail URL to a higher resolution version */
+function upgradePhotoUrl(url: string): string {
+  let upgraded = url;
+  // Common CDN resize patterns → request larger
+  upgraded = upgraded
+    .replace(/\/w_\d+/g, "/w_1200").replace(/\/h_\d+/g, "/h_1200")
+    .replace(/\?width=\d+/g, "?width=1200").replace(/&width=\d+/g, "&width=1200")
+    .replace(/\?w=\d+/g, "?w=1200").replace(/&w=\d+/g, "&w=1200")
+    .replace(/\?height=\d+/g, "?height=1200").replace(/&height=\d+/g, "&height=1200")
+    .replace(/\/\d+x\d+\//g, "/1200x1200/")
+    .replace(/_\d+x\d+\./g, ".")
+    .replace(/-\d+x\d+\./g, ".")
+    // Shopify/CDN thumb → large
+    .replace(/_(?:small|compact|medium|grande|thumb|thumbnail|large)(\.\w+)$/, "$1")
+    .replace(/\/(?:small|compact|medium|thumb|thumbnail)\//, "/large/")
+    // Cloudinary transforms
+    .replace(/\/c_\w+,w_\d+,h_\d+/, "/c_fill,w_1200,h_1200")
+    .replace(/\/t_\w+\//, "/t_original/");
+  return upgraded;
+}
+
 async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug: string): Promise<string | null> {
   try {
-    const res = await fetch(externalUrl, {
+    // Try upgraded URL first, fallback to original
+    const hdUrl = upgradePhotoUrl(externalUrl);
+    let res = await fetch(hdUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
       signal: AbortSignal.timeout(8000),
-    });
+    }).catch(() => null);
+    if (!res || !res.ok) {
+      res = await fetch(externalUrl, {
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
+        signal: AbortSignal.timeout(8000),
+      });
+    }
     if (!res.ok) return null;
 
     const buffer = Buffer.from(await res.arrayBuffer());
@@ -39,10 +68,10 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
     let pipeline = sharp(buffer);
     const meta = await pipeline.metadata();
     if (!meta.format) return null;
-    if ((meta.width && meta.width > 800) || (meta.height && meta.height > 800)) {
-      pipeline = pipeline.resize(800, 800, { fit: "inside", withoutEnlargement: true });
+    if ((meta.width && meta.width > 1200) || (meta.height && meta.height > 1200)) {
+      pipeline = pipeline.resize(1200, 1200, { fit: "inside", withoutEnlargement: true });
     }
-    const optimized = await pipeline.webp({ quality: 82 }).toBuffer();
+    const optimized = await pipeline.webp({ quality: 88 }).toBuffer();
 
     const fileName = `dishes/${restaurantId}-${Date.now()}-${dishSlug.slice(0, 30)}.webp`;
     const { error } = await supabase.storage
