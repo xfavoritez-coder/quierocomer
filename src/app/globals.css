@@ -173,9 +173,8 @@
   --carta-genio-disclaimer: rgba(255,255,255,0.3);
 }
 
-/* Genio lamp: white in light, original color in dark */
-.carta-light .genio-lamp-icon { filter: brightness(0) invert(1); }
-.carta-dark .genio-lamp-icon { filter: none; }
+/* Genio lamp: always white — contrasts on any accent color background */
+.genio-lamp-icon { filter: brightness(0) invert(1); }
 
 /* ── Admin theme tokens ── */
 .theme-dark {
