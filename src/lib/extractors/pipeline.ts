@@ -154,6 +154,26 @@ Reglas:
     parsed = JSON.parse(jsonStr);
   }
 
+  // Search Unsplash photos for dishes (batch, max 10 to respect rate limits)
+  const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+  const photoMap = new Map<string, string>();
+  if (UNSPLASH_KEY) {
+    const allDishNames = (parsed.categories || []).flatMap((c: any) => (c.dishes || []).map((d: any) => d.name)).filter(Boolean).slice(0, 10);
+    await Promise.allSettled(allDishNames.map(async (name: string) => {
+      try {
+        const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(name + " food dish")}&per_page=1&orientation=landscape`, {
+          headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
+          signal: AbortSignal.timeout(5000),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const url = data.results?.[0]?.urls?.regular;
+          if (url) photoMap.set(name, url);
+        }
+      } catch {}
+    }));
+  }
+
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {
     for (const dish of (cat.dishes || [])) {
@@ -162,7 +182,7 @@ Reglas:
         name: dish.name.trim(),
         description: dish.description || "",
         price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
-        imageUrl: null, // Photos from image upload don't have URLs
+        imageUrl: photoMap.get(dish.name) || null,
         category: cat.name || "General",
       });
     }

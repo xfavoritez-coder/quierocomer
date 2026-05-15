@@ -432,9 +432,9 @@ function FeaturedSection({
           }} />
         )}
         <div style={{
-          position: "absolute", top: 0, right: 0, bottom: 8, width: 50,
+          position: "absolute", top: 0, right: 0, bottom: 8, width: 40,
           background: "linear-gradient(to right, transparent, var(--carta-bg))",
-          pointerEvents: "none",
+          pointerEvents: "none", opacity: 0.7,
         }} />
       </div>
       {featured.length > 1 && (

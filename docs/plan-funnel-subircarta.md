@@ -108,6 +108,7 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 - ✅ **Sin gluten badge** — Siempre dorado (#d4a047), no usa accent.
 - ✅ **BirthdayBanner removido** — Quitado de las 4 vistas (auto modal se mantiene).
 - ✅ **Gourmedia investigado** — Es WooCommerce con JS rendering. Sigue con Jina+Claude (crear extractor dedicado requiere más análisis).
+- ✅ **Modo PHOTO en /subircarta** — Claude Vision extrae menú de fotos. Preview con Haiku, proceso completo con Sonnet. Fotos de Unsplash como referencial para demo.
 
 ## Pendientes
 
@@ -117,13 +118,18 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 2. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
 
+3. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
+   - Las fotos de Unsplash deben marcarse como "referenciales" o invitar al dueño a subir las propias
+   - Definir si se mantienen las fotos Unsplash en la carta real o se quitan
+   - El dueño debería poder subir sus propias fotos desde /panel
+   - Considerar watermark o badge "foto referencial" en las fotos Unsplash
+
 ### Prioridad media
 
-3. **Modos DOCUMENT y PHOTO completos** — Upload a Supabase Storage funciona, falta la extracción. Flujo:
-   - Extraer nombre del local del archivo (OCR para fotos, texto para PDF/Word)
-   - Buscar en Google "{nombre local} carta menú" para encontrar link online
-   - Si encuentra link → tratar como LINK (mejor calidad, fotos reales)
-   - Si no encuentra → extraer texto del archivo con IA + fotos de Unsplash como fallback
+4. **Modo DOCUMENT (PDF/Word)** — Similar a PHOTO pero con extracción de texto del documento. Flujo:
+   - Extraer texto del PDF/Word
+   - Enviar a Claude para estructurar
+   - Fotos de Unsplash como referencial
 
 4. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
 
