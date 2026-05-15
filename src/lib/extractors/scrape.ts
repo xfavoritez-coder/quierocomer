@@ -111,6 +111,21 @@ function parseJSON(text: string): any {
   return JSON.parse(jsonStr);
 }
 
+/** Resolve the best URL for menu extraction based on provider */
+function resolveMenuUrl(cartaUrl: string, providerName?: string | null): string {
+  try {
+    const url = new URL(cartaUrl);
+    const path = url.pathname.replace(/\/$/, "");
+
+    // Justo: menu lives at /pedir
+    if (providerName === "Justo" && !path.includes("/pedir")) {
+      url.pathname = "/pedir";
+      return url.toString();
+    }
+  } catch {}
+  return cartaUrl;
+}
+
 function cleanName(name: string): string {
   return name.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
 }
@@ -120,9 +135,10 @@ function cleanName(name: string): string {
  * Used for non-Justo providers where full extraction is too slow for preview.
  */
 export async function extractQuickPreview(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
+  const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
-  console.log("[QuickPreview] Fetching page:", cartaUrl, needsJina ? "(Jina forced)" : "");
-  const pageContent = await fetchPage(cartaUrl, needsJina);
+  console.log("[QuickPreview] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
+  const pageContent = await fetchPage(menuUrl, needsJina);
   console.log("[QuickPreview] Raw content:", pageContent.length, "chars");
 
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
@@ -168,11 +184,12 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
  * Works with Fudo, Mercat, Gourmedia, and any unknown provider.
  */
 export async function extractWithScraper(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
-  const baseUrl = new URL(cartaUrl).origin;
+  const menuUrl = resolveMenuUrl(cartaUrl, providerName);
+  const baseUrl = new URL(menuUrl).origin;
   const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
 
-  console.log("[Scraper] Fetching page:", cartaUrl, needsJina ? "(Jina forced)" : "");
-  const pageContent = await fetchPage(cartaUrl, needsJina);
+  console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
+  const pageContent = await fetchPage(menuUrl, needsJina);
   console.log("[Scraper] Raw content length:", pageContent.length);
   // If content looks like markdown (from Jina), skip HTML cleaning
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
