@@ -104,7 +104,7 @@ export default function SubirCartaClient() {
           <div className="form-side centered-form">
             {/* Method selector */}
             <div className="methods">
-              {(["link", "photo", "pdf"] as const).map((m) => (
+              {(["photo", "link", "pdf"] as const).map((m) => (
                 <button
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
