@@ -121,11 +121,13 @@ function ImpactHeroSlider({
   return (
     <section
       style={{
-        minHeight: 580,
+        minHeight: 520,
         position: "relative",
         display: "flex",
         alignItems: "flex-end",
         padding: "92px 20px 34px",
+        margin: "0 14px",
+        borderRadius: 28,
         isolation: "isolate",
         overflow: "hidden",
       }}
@@ -170,60 +172,7 @@ function ImpactHeroSlider({
         background: "linear-gradient(to top, var(--carta-bg) 0%, var(--carta-bg) 10%, color-mix(in srgb, var(--carta-bg) 90%, transparent) 38%, color-mix(in srgb, var(--carta-bg) 50%, transparent) 72%, transparent 100%)",
       }} />
 
-      {/* Restaurant logo + name + actions overlay at top */}
-      <div style={{
-        position: "absolute", top: 0, left: 0, right: 0, zIndex: 5,
-        padding: "calc(14px + env(safe-area-inset-top)) 16px 12px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.75), rgba(0,0,0,0.3), transparent)",
-        backdropFilter: "blur(4px)",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {(restaurant as any).logoUrl && (
-            <Image
-              src={(restaurant as any).logoUrl} alt={restaurant.name}
-              width={36} height={36}
-              style={{ borderRadius: 10, objectFit: "contain" }}
-            />
-          )}
-          <span style={{ fontWeight: 800, fontSize: 18, color: "white", letterSpacing: "-0.3px" }}>
-            {restaurant.name}
-          </span>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <button
-            onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
-            style={{ width: 40, height: 40, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)" }}
-          >
-            <Search size={16} color="white" />
-          </button>
-        </div>
-      </div>
-
-      {/* Search overlay */}
-      {searchOpen && (
-        <div style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          padding: "calc(14px + env(safe-area-inset-top)) 16px 12px",
-          background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-card-border)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 44, background: "var(--carta-surface)", borderRadius: 999, padding: "0 14px", border: "1px solid color-mix(in srgb, var(--carta-text) 10%, transparent)" }}>
-            <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
-            <input
-              id="impact-search-input"
-              autoFocus type="search" value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={t(lang, "search")}
-              className="font-[family-name:var(--font-dm)]"
-              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent", fontFamily: "inherit" }}
-            />
-            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
-              style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
-              <X size={18} color="var(--carta-text-muted)" />
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Nav is now fixed outside hero */}
 
       {/* Content */}
       <div style={{ width: "100%", padding: "0 0 8px", position: "relative", zIndex: 2 }}>
@@ -309,7 +258,8 @@ function MoodSection({
       .filter((c) => c.isActive)
       .sort((a, b) => a.position - b.position)
       .map((cat) => {
-        const catDishes = dishes.filter((d) => d.categoryId === cat.id && d.isActive);
+        const catDishes = dishes.filter((d) => d.categoryId === cat.id && d.isActive)
+          .sort((a, b) => (b.tags?.includes("RECOMMENDED") ? 1 : 0) - (a.tags?.includes("RECOMMENDED") ? 1 : 0));
         const photo = catDishes.find((d) => d.photos?.[0])?.photos?.[0] || null;
         return { id: cat.id, label: cat.name, photo };
       })
@@ -356,16 +306,10 @@ function MoodSection({
                   : "inset 0 0 28px color-mix(in srgb, var(--carta-text) 2.5%, transparent)",
                 flexShrink: 0,
               }}>
-                <div style={{
-                  position: "absolute", inset: 0,
-                  background: `linear-gradient(to bottom, rgba(0,0,0,0.05), rgba(0,0,0,0.75))`,
-                }} />
                 {m.photo && (
-                  <Image
-                    src={m.photo} alt={m.label} fill className="object-cover" sizes="130px"
-                    style={{ zIndex: -1 }}
-                  />
+                  <Image src={m.photo!} alt={m.label} fill className="object-cover" sizes="116px" />
                 )}
+                <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 20%, rgba(0,0,0,0.7))" }} />
                 <b style={{
                   position: "relative", zIndex: 1, fontSize: 13, lineHeight: 1.15,
                   textShadow: "0 2px 14px #000", color: "white", textAlign: "left",
@@ -461,9 +405,8 @@ function FeaturedSection({
                 <div style={{ position: "absolute", left: 16, right: 16, bottom: 16 }}>
                   <span style={{
                     display: "inline-block", padding: "6px 9px", borderRadius: 999,
-                    background: "color-mix(in srgb, var(--carta-accent) 15%, transparent)",
-                    border: "1px solid color-mix(in srgb, var(--carta-accent) 36%, transparent)",
-                    color: "var(--carta-accent)", fontSize: 10, fontWeight: 900,
+                    background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+                    color: "white", fontSize: 10, fontWeight: 900,
                     textTransform: "uppercase", marginBottom: 8,
                   }}>Recomendado</span>
                   <h3 style={{ margin: "0 0 6px", fontSize: 25, letterSpacing: "-0.6px", color: "white" }}>{f.name}</h3>
@@ -603,7 +546,7 @@ function ImpactDishCard({
         </h4>
         {dish.description && (
           <p style={{
-            margin: 0, color: "var(--carta-text-muted, #888)", fontSize: 12, lineHeight: 1.42,
+            margin: 0, color: "var(--carta-text-muted, #888)", fontSize: 13, lineHeight: 1.42,
             overflow: "hidden", textOverflow: "ellipsis",
             display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical",
           }}>{dish.description}</p>
@@ -1009,15 +952,15 @@ export default function CartaImpact({
       className="min-h-screen font-[family-name:var(--font-dm)]"
       style={{ background: "var(--carta-bg)", position: "relative", overflow: "hidden" }}
     >
-      {/* Ambient background using CSS variables */}
+      {/* Ambient background */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-        background: "radial-gradient(circle at 70% 0%, color-mix(in srgb, var(--carta-accent) 33%, transparent), transparent 27%), radial-gradient(circle at 8% 28%, rgba(155,92,255,0.18), transparent 30%), radial-gradient(circle at 90% 72%, color-mix(in srgb, var(--carta-accent) 14%, transparent), transparent 24%), linear-gradient(var(--carta-bg), var(--carta-bg))",
+        background: "radial-gradient(circle at 70% 0%, rgba(244,166,35,0.33), transparent 27%), radial-gradient(circle at 8% 28%, rgba(155,92,255,0.18), transparent 30%), radial-gradient(circle at 90% 72%, rgba(244,166,35,0.14), transparent 24%), linear-gradient(var(--carta-bg), var(--carta-bg))",
       }} />
       {/* Grid texture */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.22,
-        backgroundImage: "linear-gradient(color-mix(in srgb, var(--carta-text) 4%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--carta-text) 3.5%, transparent) 1px, transparent 1px)",
+        backgroundImage: "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
         backgroundSize: "38px 38px",
         maskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)",
         WebkitMaskImage: "linear-gradient(to bottom, transparent, #000 18%, #000 72%, transparent)",
@@ -1025,9 +968,67 @@ export default function CartaImpact({
       {/* Smoke / warm glow */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.5,
-        background: "radial-gradient(ellipse at 50% 8%, color-mix(in srgb, var(--carta-accent) 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, var(--carta-accent) 10%, transparent), transparent 28%)",
+        background: "radial-gradient(ellipse at 50% 8%, rgba(244,166,35,0.16), transparent 32%), radial-gradient(ellipse at 70% 24%, rgba(244,166,35,0.10), transparent 28%)",
         filter: "blur(10px)",
       }} />
+
+      {/* Fixed top nav */}
+      <header style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
+        padding: "calc(10px + env(safe-area-inset-top)) 16px 10px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
+        backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {(restaurant as any).logoUrl && (
+            <Image
+              src={(restaurant as any).logoUrl} alt={restaurant.name}
+              width={34} height={34}
+              style={{ borderRadius: 10, objectFit: "contain" }}
+            />
+          )}
+          <span style={{ fontWeight: 800, fontSize: 17, color: "white", letterSpacing: "-0.3px" }}>
+            {restaurant.name}
+          </span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button
+            onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
+            style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)" }}
+          >
+            <Search size={15} color="white" />
+          </button>
+          <button style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer" }}>
+            {lang.toUpperCase()}
+          </button>
+        </div>
+      </header>
+
+      {/* Search overlay */}
+      {searchOpen && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+          padding: "calc(10px + env(safe-area-inset-top)) 16px 12px",
+          background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-card-border)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 44, background: "var(--carta-surface)", borderRadius: 999, padding: "0 14px", border: "1px solid var(--carta-card-border)" }}>
+            <Search size={16} color="var(--carta-text-muted)" style={{ flexShrink: 0 }} />
+            <input
+              id="impact-search-input"
+              autoFocus type="search" value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t(lang, "search")}
+              className="font-[family-name:var(--font-dm)]"
+              style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent", fontFamily: "inherit" }}
+            />
+            <button onClick={() => { setSearchOpen(false); setSearchQuery(""); }}
+              style={{ flexShrink: 0, background: "none", border: "none", padding: 4, cursor: "pointer" }}>
+              <X size={18} color="var(--carta-text-muted)" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <div style={{ position: "relative", zIndex: 1 }}>
@@ -1132,13 +1133,13 @@ export default function CartaImpact({
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
-        <div style={{ position: "sticky", top: 0, zIndex: 20, background: "var(--carta-bg)", paddingTop: 8, paddingBottom: 8, marginBottom: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ position: "sticky", top: 56, zIndex: 20, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)", background: "color-mix(in srgb, var(--carta-bg) 85%, transparent)", paddingTop: 8, paddingBottom: 8, marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div
                 ref={chipsRef}
                 style={{
-                  display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none",
+                  display: "flex", gap: 2, overflowX: "auto", scrollbarWidth: "none",
                   msOverflowStyle: "none", WebkitOverflowScrolling: "touch", padding: "4px 0",
                 }}
               >
@@ -1163,13 +1164,10 @@ export default function CartaImpact({
                       className="font-[family-name:var(--font-dm)]"
                       style={{
                         whiteSpace: "nowrap", flexShrink: 0,
-                        border: isActive
-                          ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                          : "1px solid color-mix(in srgb, var(--carta-text) 13%, transparent)",
-                        background: isActive
-                          ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                          : "transparent",
-                        borderRadius: 999, padding: "9px 13px",
+                        border: "none",
+                        borderBottom: isActive ? "2px solid var(--carta-accent)" : "2px solid transparent",
+                        background: "transparent",
+                        borderRadius: 0, padding: "9px 12px",
                         color: isActive ? "var(--carta-accent)" : "var(--carta-text-muted, #777)",
                         fontSize: 13, fontWeight: isActive ? 800 : 600, cursor: "pointer",
                         transition: "all 0.2s ease",
@@ -1177,6 +1175,7 @@ export default function CartaImpact({
                     >{cat.name}</button>
                   );
                 })}
+                <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
               </div>
               {/* Fade right */}
               <div style={{
@@ -1185,7 +1184,6 @@ export default function CartaImpact({
                 pointerEvents: "none",
               }} />
             </div>
-            <SortChip sortKey={sortKey} setSortKey={setSortKey} salesMode={rankings?.sales?.mode || null} />
           </div>
         </div>
 

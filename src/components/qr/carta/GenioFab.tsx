@@ -95,9 +95,9 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
       <button
         onClick={() => { dismiss(); onOpen(); }}
         className="flex items-center justify-center rounded-full active:scale-95 genio-fab-btn"
-        style={{ height: 58, width: 58, borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
+        style={{ height: 62, width: 62, borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
       >
-        <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 36, height: 36, objectFit: "contain" }} />
+        <img src="/genio-lamp.png" alt="Genio" className="genio-lamp-icon" style={{ width: 32, height: 32, objectFit: "contain" }} />
         {hasCompletedGenio && <span style={{ position: "absolute", top: 1, right: 1, width: 16, height: 16, borderRadius: "50%", background: "#16a34a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "9px", lineHeight: 1, color: "white", fontWeight: 700 }}>✓</span>}
       </button>
     </div>
