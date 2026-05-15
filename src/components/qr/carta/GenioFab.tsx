@@ -81,7 +81,7 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
   return (
     <div style={{ position: "relative" }}>
       {toastVisible && (
-        <div className="font-[family-name:var(--font-dm)]" style={{ position: "absolute", bottom: "100%", right: -6, marginBottom: 16, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 33px 10px 27px", borderRadius: 12, width: 250, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out" }}>
+        <div className="font-[family-name:var(--font-dm)]" style={{ position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 33px 10px 14px", borderRadius: 12, width: 250, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out", zIndex: 51 }}>
           {toastText}
           <button
             onClick={(e) => { e.stopPropagation(); dismiss(); }}
@@ -93,7 +93,7 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
         </div>
       )}
       <button
-        onClick={() => { dismiss(); onOpen(); }}
+        onClick={() => { dismiss(); onOpen(); window.dispatchEvent(new Event("fab-speed-dial-close")); }}
         className="flex items-center justify-center rounded-full active:scale-95 genio-fab-btn"
         style={{ height: 62, width: 62, borderRadius: 50, transition: "all 0.3s ease", position: "relative" }}
       >

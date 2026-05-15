@@ -30,6 +30,13 @@ export default function FabSpeedDial({ children }: Props) {
     };
   }, [open]);
 
+  // Close when a child action triggers (genio opens, etc.)
+  useEffect(() => {
+    const close = () => setOpen(false);
+    window.addEventListener("fab-speed-dial-close", close);
+    return () => window.removeEventListener("fab-speed-dial-close", close);
+  }, []);
+
   const items = children.filter(Boolean);
 
   return (
@@ -67,7 +74,6 @@ export default function FabSpeedDial({ children }: Props) {
             width: 32, height: 32, objectFit: "contain",
             transition: "all 0.3s cubic-bezier(0.16,1,0.3,1)",
             transform: open ? "scale(1.15)" : "scale(1)",
-            filter: open ? "brightness(1.3) drop-shadow(0 0 8px rgba(244,166,35,0.5))" : "none",
           }}
         />
       </button>
@@ -79,7 +85,7 @@ export default function FabSpeedDial({ children }: Props) {
           background: "rgba(0,0,0,0.15)",
           opacity: open ? 1 : 0,
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.25s ease",
+          transition: "opacity 0.15s ease",
         }}
         onClick={() => setOpen(false)}
       />
