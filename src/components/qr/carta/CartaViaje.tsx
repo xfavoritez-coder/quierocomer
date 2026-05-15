@@ -461,7 +461,7 @@ function VjNewBadge({ inline }: { inline?: boolean }) {
     return (
       <span style={{
         display: "inline-flex", marginLeft: 8, verticalAlign: "middle",
-        background: "#e85530", color: "white",
+        background: "var(--carta-accent, #e85530)", color: "white",
         fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em",
         padding: "3px 8px", borderRadius: 50, textTransform: "uppercase",
       }}>

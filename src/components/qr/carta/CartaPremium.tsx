@@ -569,7 +569,7 @@ export default function CartaPremium({
         {/* Ofertas section — inside main as first "category" */}
         {hasPromos && (
           <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} onViewDish={(dishId) => {
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
               const dish = dishes.find(d => d.id === dishId);
               if (dish) setSelectedDish(dish);
             }} />
@@ -703,8 +703,8 @@ export default function CartaPremium({
                       key={dish.id}
                       data-dish-id={dish.id}
                       style={{
-                        width: 185,
-                        minWidth: 185,
+                        width: 200,
+                        minWidth: 200,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
                         marginLeft: i === 0 ? 20 : 14,
@@ -750,7 +750,7 @@ export default function CartaPremium({
                   style={{
                     position: "absolute", right: 0, top: 0, bottom: 8, width: 56,
                     pointerEvents: "none",
-                    background: "linear-gradient(to right, var(--carta-bg-fade-0) 0%, var(--carta-bg-fade-40) 70%, var(--carta-bg-fade-60) 100%)",
+                    background: "linear-gradient(to right, transparent 0%, var(--carta-bg) 100%)",
                     opacity: 0, transition: "opacity 0.18s ease",
                   }}
                 />

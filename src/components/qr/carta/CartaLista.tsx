@@ -739,7 +739,7 @@ function DishListCard({
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
         )}
-        {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "#e85530", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
+        {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />
       </div>
       <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>

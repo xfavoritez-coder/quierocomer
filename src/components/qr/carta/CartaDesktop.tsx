@@ -449,7 +449,7 @@ export default function CartaDesktop({ restaurant, categories, dishes, popularDi
               </button>
               {/* Badges on photo */}
               <div style={{ position: "absolute", top: 12, left: 12, display: "flex", gap: 6, zIndex: 1 }}>
-                {selectedDish.tags?.includes("NEW") && <span style={{ fontSize: "11px", fontWeight: 700, color: "white", background: "#e85530", padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
+                {selectedDish.tags?.includes("NEW") && <span style={{ fontSize: "11px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "4px 10px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
                 {popularDishIds?.has(selectedDish.id) && <span style={{ fontSize: "11px", fontWeight: 600, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "4px 10px", borderRadius: 50 }}>🔥 Popular</span>}
                 {selectedDish.tags?.includes("RECOMMENDED") && <span style={{ fontSize: "11px", fontWeight: 600, color: "white", background: "rgba(244,166,35,0.85)", padding: "4px 10px", borderRadius: 50 }}>⭐ Recomendado</span>}
               </div>
@@ -679,7 +679,7 @@ function DesktopDishCard({ dish, isPopular, onClick }: { dish: Dish; isPopular?:
         </>}
         {/* Badges on photo */}
         <div style={{ position: "absolute", top: 8, left: 8, display: "flex", gap: 4 }}>
-          {isNew && <span style={{ fontSize: "10px", fontWeight: 700, color: "white", background: "#e85530", padding: "3px 8px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
+          {isNew && <span style={{ fontSize: "10px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "3px 8px", borderRadius: 50, letterSpacing: "0.05em" }}>NUEVO</span>}
           {isPopular && <span style={{ fontSize: "10px", fontWeight: 600, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", padding: "3px 8px", borderRadius: 50 }}>🔥 Popular</span>}
           {isRec && <span style={{ fontSize: "10px", fontWeight: 600, color: "white", background: "rgba(244,166,35,0.85)", padding: "3px 8px", borderRadius: 50 }}>⭐ Recomendado</span>}
         </div>

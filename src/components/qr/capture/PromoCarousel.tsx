@@ -67,7 +67,7 @@ function trackPromo(restaurantId: string, eventType: string, dishId?: string, pr
   }).catch(() => {});
 }
 
-export default function PromoCarousel({ restaurantId, onViewDish, initialPromos, compact }: Props & { compact?: boolean }) {
+export default function PromoCarousel({ restaurantId, onViewDish, initialPromos, compact, large }: Props & { compact?: boolean; large?: boolean }) {
   const [promos, setPromos] = useState<Promo[]>(initialPromos || []);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -316,7 +316,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                 {(() => {
                   if (p.promoType === "graphic" && p.imageUrl) {
                     return (
-                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0 }}>
+                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0 }}>
                         <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="135px" />
                       </div>
                     );
@@ -324,7 +324,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   const photos = p.dishes.map(d => d.photos?.[0]).filter(Boolean) as string[];
                   if (photos.length >= 2) {
                     return (
-                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column" }}>
                         {photos.slice(0, 2).map((src, i) => (
                           <div key={i} style={{ position: "relative", flex: 1, borderBottom: i === 0 ? "1.5px solid var(--carta-surface)" : "none" }}>
                             <Image src={src} alt={p.dishes[i]?.name || ""} fill className="object-cover" sizes="135px" />
@@ -335,13 +335,13 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   }
                   if (photos.length === 1) {
                     return (
-                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0 }}>
+                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0 }}>
                         <Image src={photos[0]} alt={p.name} fill className="object-cover" sizes="135px" />
                       </div>
                     );
                   }
                   return (
-                    <div style={{ width: 135, minHeight: 130, flexShrink: 0, background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
+                    <div style={{ width: large ? 160 : 135, minHeight: large ? 150 : 130, flexShrink: 0, background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
                   );
                 })()}
 

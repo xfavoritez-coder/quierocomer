@@ -127,7 +127,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       }}
     >
       {/* Foto */}
-      <div className="relative overflow-hidden" style={{ width: "100%", aspectRatio: "185/200", background: "#1a1a1a" }}>
+      <div className="relative overflow-hidden" style={{ width: "100%", aspectRatio: "200/210", background: "#1a1a1a" }}>
         {photo ? (
           <>
             {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
@@ -148,13 +148,13 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       {/* Info */}
       <div style={{ padding: "10px 12px 12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
-          <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0, flex: 1, minWidth: 0 }}>
+          <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0, flex: 1, minWidth: 0 }}>
             {dish.name}{" "}<DishBadges dish={dish} />
           </h3>
           {dish.tags?.includes("NEW") && <span style={{ background: "var(--carta-accent, #e85530)", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", flexShrink: 0 }}>NUEVO</span>}
         </div>
         {dish.description && (
-          <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "var(--carta-text3)", lineHeight: 1.4, margin: "3px 0 0" }}>
+          <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.88rem", color: "var(--carta-text3)", lineHeight: 1.4, margin: "3px 0 0" }}>
             {dish.description}
           </p>
         )}
