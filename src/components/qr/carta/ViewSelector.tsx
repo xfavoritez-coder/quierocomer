@@ -112,7 +112,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           style={{
             position: "fixed",
             right: 82,
-            bottom: "calc(16px + env(safe-area-inset-bottom))",
+            bottom: "calc(90px + env(safe-area-inset-bottom))",
             display: "flex",
             flexDirection: "column",
             gap: 0,

@@ -58,7 +58,11 @@ export default function FabSpeedDial({ children }: Props) {
 
       {/* Main trigger button — lamp icon */}
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          window.dispatchEvent(new CustomEvent("fab-speed-dial-toggle", { detail: { open: next } }));
+        }}
         className="flex items-center justify-center rounded-full genio-fab-btn"
         style={{
           width: 62, height: 62, borderRadius: 50,

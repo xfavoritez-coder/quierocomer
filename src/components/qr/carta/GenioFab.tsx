@@ -61,7 +61,21 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
       }, 500);
     };
     window.addEventListener("genio-closed", onGenioClose);
-    return () => window.removeEventListener("genio-closed", onGenioClose);
+
+    // Hide toast when speed dial opens
+    const onDialToggle = (e: Event) => {
+      if ((e as CustomEvent).detail?.open) {
+        setShowNudge(false);
+        setShowSpicy(false);
+        setShowRedundant(false);
+      }
+    };
+    window.addEventListener("fab-speed-dial-toggle", onDialToggle);
+
+    return () => {
+      window.removeEventListener("genio-closed", onGenioClose);
+      window.removeEventListener("fab-speed-dial-toggle", onDialToggle);
+    };
   }, []);
 
   const dismiss = () => {

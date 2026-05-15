@@ -121,7 +121,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
+            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
             background: "#16a34a", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 600,
             boxShadow: "0 4px 12px rgba(22,163,74,0.3)", zIndex: 60,
@@ -138,7 +138,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
+            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
             background: "#333", color: "white",
             padding: "6px 14px", borderRadius: 50, fontSize: "0.78rem", fontWeight: 500,
             zIndex: 60, whiteSpace: "nowrap", animation: "waiterBubbleIn 0.2s ease-out",
@@ -154,7 +154,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
-            position: "absolute", top: "50%", right: size + 10, transform: "translateY(-50%)",
+            position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14,
             background: "var(--carta-accent, #F4A623)", color: "#0e0e0e",
             padding: "8px 14px", borderRadius: 12, fontSize: "0.78rem", fontWeight: 600,
             boxShadow: "0 4px 16px rgba(0,0,0,0.2)", zIndex: 60,
