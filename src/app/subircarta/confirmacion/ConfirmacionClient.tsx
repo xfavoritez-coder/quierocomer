@@ -132,7 +132,8 @@ export default function ConfirmacionClient() {
                   ) : (
                     <>
                       <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px", animation: "lampFloat 2.5s ease-in-out infinite" }} />
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: 0, letterSpacing: "0.01em" }}>Casi lista</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Casi lista</p>
+                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: 0 }}>Te la enviaremos en unos minutos</p>
                     </>
                   )}
                 </div>
