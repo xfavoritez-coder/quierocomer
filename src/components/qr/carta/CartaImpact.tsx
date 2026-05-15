@@ -160,7 +160,7 @@ function ImpactHeroSlider({
             <Image
               src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
               style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)" }}
-              quality={90} priority={i === 0}
+              quality={95} priority={i === 0}
             />
           </div>
         ) : null;
