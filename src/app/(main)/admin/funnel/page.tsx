@@ -32,12 +32,25 @@ export default function FunnelPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushStatus, setPushStatus] = useState<"idle" | "active" | "denied">("idle");
+
+  // Check if already subscribed on mount
+  useEffect(() => {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
+      navigator.serviceWorker?.getRegistration("/sw-admin.js").then((reg) => {
+        reg?.pushManager?.getSubscription().then((sub) => {
+          if (sub) setPushStatus("active");
+        });
+      });
+    } else if (typeof Notification !== "undefined" && Notification.permission === "denied") {
+      setPushStatus("denied");
+    }
+  }, []);
 
   const enablePush = async () => {
     try {
       const perm = await Notification.requestPermission();
-      if (perm !== "granted") return;
+      if (perm !== "granted") { setPushStatus("denied"); return; }
       const reg = await navigator.serviceWorker.register("/sw-admin.js");
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -49,7 +62,7 @@ export default function FunnelPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth }),
       });
-      setPushEnabled(true);
+      setPushStatus("active");
     } catch (e) {
       console.error("Push subscription failed:", e);
     }
@@ -76,15 +89,16 @@ export default function FunnelPage() {
           Funnel /subircarta
         </h1>
         <button
-          onClick={enablePush}
-          disabled={pushEnabled}
+          onClick={pushStatus === "idle" ? enablePush : undefined}
           style={{
-            padding: "8px 16px", borderRadius: 8, border: "none", cursor: pushEnabled ? "default" : "pointer",
-            background: pushEnabled ? "#1a3a1a" : "#F4A623", color: pushEnabled ? "#43d17b" : "#0a0a0a",
-            fontSize: 13, fontWeight: 600, opacity: pushEnabled ? 0.8 : 1,
+            padding: "8px 16px", borderRadius: 8, border: "none",
+            cursor: pushStatus === "idle" ? "pointer" : "default",
+            background: pushStatus === "active" ? "#1a3a1a" : pushStatus === "denied" ? "#3a1a1a" : "#F4A623",
+            color: pushStatus === "active" ? "#43d17b" : pushStatus === "denied" ? "#e85d5d" : "#0a0a0a",
+            fontSize: 13, fontWeight: 600,
           }}
         >
-          {pushEnabled ? "🔔 Notificaciones activas" : "🔔 Activar notificaciones"}
+          {pushStatus === "active" ? "🔔 Notificaciones activas" : pushStatus === "denied" ? "🔕 Bloqueadas" : "🔔 Activar notificaciones"}
         </button>
       </div>
 
