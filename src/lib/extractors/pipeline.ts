@@ -257,7 +257,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           purpose: "funnel_carta_ready",
           html: `
             <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
-              <img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />
+              ${restaurant.logoUrl ? `<img src="${restaurant.logoUrl}" alt="${restaurant.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
               <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
                 ${ownerName}, tu carta está lista
               </h1>

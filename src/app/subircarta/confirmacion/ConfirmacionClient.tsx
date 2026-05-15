@@ -171,7 +171,6 @@ export default function ConfirmacionClient() {
                     <>
                       <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px", animation: "lampFloat 2.5s ease-in-out infinite" }} />
                       <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Casi lista</p>
-                      <p style={{ fontSize: 11, color: "rgba(255,255,255,0.6)", margin: 0 }}>Te la enviaremos en unos minutos</p>
                     </>
                   )}
                 </div>
@@ -376,11 +375,11 @@ h1 span { color: var(--amber-2); font-style: italic; }
 @keyframes phoneFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-.phone-generating .phone-screen { filter: blur(0.3px); transition: filter 1.5s ease; }
+.phone-generating .phone-screen { filter: blur(0.8px); transition: filter 1.5s ease; }
 .phone-generating .phone-notch { filter: blur(0.3px); transition: filter 1.5s ease; }
 .phone-ready .phone-screen { filter: blur(0); }
 .phone-ready .phone-notch { filter: blur(0); }
-.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.35); pointer-events: none; transition: background 1.5s ease; }
+.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.45); pointer-events: none; transition: background 1.5s ease; }
 .phone-ready::before { background: rgba(0,0,0,0.1); }
 .phone-notch { width: 80px; height: 12px; background: #000; border-radius: 0 0 10px 10px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }
