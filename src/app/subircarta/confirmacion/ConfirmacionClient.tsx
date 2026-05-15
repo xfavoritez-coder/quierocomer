@@ -323,7 +323,7 @@ export default function ConfirmacionClient() {
           {/* Email line + Corregir — always visible */}
           {leadEmail && !editingEmail && (
             <div style={{ textAlign: "center", fontSize: 13, color: "var(--cream-2)", marginTop: 12 }}>
-              {modalDismissed ? "Te lo enviamos a" : "Te lo enviaremos a"} <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
+              {modalDismissed ? "Te la enviamos a" : "Te la enviaremos a"} <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
               {" · "}
               <button
                 onClick={() => { setEmailDraft(leadEmail); setEditingEmail(true); }}
