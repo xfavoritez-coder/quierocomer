@@ -28,6 +28,7 @@ export default function ConfirmacionClient() {
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [cartaReady, setCartaReady] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
+  const [cartaSlug, setCartaSlug] = useState<string | null>(null);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -74,6 +75,7 @@ export default function ConfirmacionClient() {
           }
           if (data.cartaStatus === "READY" || data.cartaStatus === "DELIVERED") {
             setCartaReady(true);
+            if (data.generatedSlug) setCartaSlug(data.generatedSlug);
             if (polling) { clearInterval(polling); polling = null; }
           }
         })
@@ -131,7 +133,7 @@ export default function ConfirmacionClient() {
             {modalDismissed ? (
               <>
                 <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
-                <p className="subcopy">Te enviamos la carta lista{leadEmail ? ` a ${leadEmail}` : ""}.</p>
+                <p className="subcopy">Te enviamos las indicaciones{leadEmail ? ` a ${leadEmail}` : ""}.</p>
               </>
             ) : (
               <>
@@ -148,7 +150,11 @@ export default function ConfirmacionClient() {
           {hasPreviewDishes ? (
           <>
           <div className="phone-wrap phone-fadein">
-            <div className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`} style={{ position: "relative" }}>
+            <div
+              className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`}
+              style={{ position: "relative", cursor: cartaSlug ? "pointer" : "default" }}
+              onClick={() => { if (cartaSlug) window.open(`/qr/${cartaSlug}`, "_blank"); }}
+            >
               {/* Overlay message */}
               {!modalDismissed && (
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none", opacity: cartaReady ? 0 : 1, transition: "opacity 1s ease 2.5s" }} onTransitionEnd={() => { if (cartaReady) setModalDismissed(true); }}>
