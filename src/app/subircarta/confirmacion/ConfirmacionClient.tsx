@@ -29,6 +29,7 @@ export default function ConfirmacionClient() {
   const [cartaReady, setCartaReady] = useState(false);
   const [modalDismissed, setModalDismissed] = useState(false);
   const [cartaSlug, setCartaSlug] = useState<string | null>(null);
+  const [heroIdx, setHeroIdx] = useState(0);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -100,6 +101,15 @@ export default function ConfirmacionClient() {
     const t = setTimeout(() => setModalDismissed(true), 1500);
     return () => clearTimeout(t);
   }, [cartaReady]);
+
+  // Rotate hero image between preview dishes
+  useEffect(() => {
+    if (!preview?.sampleDishes?.length) return;
+    const imgs = preview.sampleDishes.filter(d => d.imageUrl);
+    if (imgs.length < 2) return;
+    const interval = setInterval(() => setHeroIdx(i => (i + 1) % imgs.length), 4000);
+    return () => clearInterval(interval);
+  }, [preview]);
 
   const rawName = preview?.restaurantName || localName || "Tu restaurante";
   const displayName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
@@ -196,17 +206,21 @@ export default function ConfirmacionClient() {
 
                 {/* Hero — full photo, dish name centered, Ver button, dots */}
                 <div className="ph-hero">
-                  {(preview?.sampleDishes[1]?.imageUrl || preview?.sampleDishes[0]?.imageUrl) ? (
-                    <img src={preview.sampleDishes[1]?.imageUrl || preview.sampleDishes[0]?.imageUrl || ""} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.08)" }} />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1610, #2a2218)" }} />
-                  )}
+                  {(() => {
+                    const imgs = preview?.sampleDishes?.filter(d => d.imageUrl) || [];
+                    const heroImg = imgs[heroIdx % imgs.length]?.imageUrl;
+                    return heroImg ? (
+                      <img key={heroIdx} src={heroImg} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.08)", animation: "heroFade 0.8s ease" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #1a1610, #2a2218)" }} />
+                    );
+                  })()}
                   {/* Dark overlay */}
                   <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
                   <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
                   {/* Centered dish name + Ver button */}
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 2, padding: "0 10px" }}>
-                    <span style={{ fontSize: 16, fontWeight: 900, color: "white", textAlign: "center", lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)", fontFamily: "var(--font-display)" }}>{preview?.sampleDishes[1]?.name || preview?.sampleDishes[0]?.name || displayName}</span>
+                    <span style={{ fontSize: 16, fontWeight: 900, color: "white", textAlign: "center", lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)", fontFamily: "var(--font-display)" }}>{(() => { const imgs = preview?.sampleDishes?.filter(d => d.imageUrl) || []; return imgs[heroIdx % imgs.length]?.name || displayName; })()}</span>
                     <div style={{ marginTop: 5, padding: "3px 14px", borderRadius: 50, border: "1.5px solid rgba(255,255,255,0.5)", fontSize: 8, fontWeight: 500, color: "white" }}>Ver</div>
                     {/* Dots */}
                     <div style={{ display: "flex", gap: 3, marginTop: 6 }}>
@@ -374,7 +388,8 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .phone-fadein { animation: phoneFadeIn 0.8s ease-out; }
 @keyframes phoneFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
-.phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+@keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
+.phone { width: 200px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
 .phone-generating .phone-screen { filter: blur(0.8px); transition: filter 1.5s ease; }
 .phone-generating .phone-notch { filter: blur(0.3px); transition: filter 1.5s ease; }
 .phone-ready .phone-screen { filter: blur(0); }
