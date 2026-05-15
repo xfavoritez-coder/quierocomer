@@ -187,13 +187,13 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
-              Tu carta puede estar<br /><span className="accent" style={{ fontStyle: "italic" }}>frenando</span> tus ventas
+              Tu carta puede estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)" }}>frenando</span> tus ventas
             </h2>
           </div>
           <div className="pain-grid">
             <div className="pain-card pain-reverse">
               <div className="pain-text">
-                <h3>&ldquo;Mi ticket de mesa no aumenta&rdquo;</h3>
+                <h3>&ldquo;Mi ticket de mesa <span className="accent">no aumenta</span>&rdquo;</h3>
                 <p>Sin una carta que sugiera, siempre venderás menos.</p>
               </div>
               <img className="pain-img" src="/landing/yanose.png" alt="Cuenta del restaurante" />
@@ -201,13 +201,13 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="pain-card">
               <img className="pain-img" src="/landing/3.png" alt="Garzón corriendo" />
               <div className="pain-text">
-                <h3>&ldquo;Mis garzones no venden más&rdquo;</h3>
+                <h3>&ldquo;Mis garzones <span className="accent">no venden más</span>&rdquo;</h3>
                 <p>No siempre es el garzón, es la carta que no guía ni sugiere.</p>
               </div>
             </div>
             <div className="pain-card pain-reverse">
               <div className="pain-text">
-                <h3>&ldquo;Mis clientes no vuelven&rdquo;</h3>
+                <h3>&ldquo;Mis clientes <span className="accent">no vuelven</span>&rdquo;</h3>
                 <p>Sin datos ni contacto, cada cliente que se va es una oportunidad perdida.</p>
               </div>
               <img className="pain-img" src="/landing/333.png" alt="Cliente yéndose" />
@@ -220,7 +220,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="how-it-works">
         <div className="container">
           <p className="hiw-eyebrow">Así funciona QuieroComer</p>
-          <h2 className="hiw-title">En 4 pasos, tu carta empieza a <span className="accent" style={{ fontStyle: "italic", fontWeight: 700 }}>vender por ti</span></h2>
+          <h2 className="hiw-title">En 4 pasos, tu carta empieza a <span style={{ fontStyle: "italic", fontWeight: 700, color: "var(--cream)", textDecoration: "underline", textUnderlineOffset: "6px" }}>vender por ti</span></h2>
 
           <div className="hiw-steps">
             <div className="hiw-step">
@@ -259,7 +259,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">3</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Tus clientes escanean</h3>
+                  <h3>Tus clientes la escanean</h3>
                   <ul>
                     <li>Experiencia personalizada</li>
                     <li>Se antojan más</li>
