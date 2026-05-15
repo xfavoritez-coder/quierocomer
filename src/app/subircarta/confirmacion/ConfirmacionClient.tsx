@@ -226,9 +226,11 @@ export default function ConfirmacionClient() {
             </div>
           </div>
           {modalDismissed && (
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, margin: "12px auto 0", padding: "10px 20px", borderRadius: 50, background: "rgba(232,163,61,0.08)", border: "1px solid rgba(232,163,61,0.15)", maxWidth: 300, animation: "phoneFadeIn 0.6s ease-out" }}>
-              <span style={{ fontSize: 14 }}>✉️</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cream, #F2E5CF)" }}>Te la enviamos a tu correo</span>
+            <div style={{ position: "relative", maxWidth: 260, margin: "-14px auto 0", zIndex: 30, animation: "phoneFadeIn 0.6s ease-out" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 12, background: "#E8A33D", boxShadow: "0 4px 16px rgba(232,163,61,0.3)" }}>
+                <span style={{ fontSize: 13 }}>✉️</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0e0e0e" }}>Te la enviamos a tu correo</span>
+              </div>
             </div>
           )}
           </>
