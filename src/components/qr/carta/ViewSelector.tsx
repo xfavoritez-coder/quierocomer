@@ -195,10 +195,10 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
         aria-expanded={open}
         className="flex items-center justify-center active:scale-90"
         style={{
-          width: 56,
-          height: 56,
+          width: 52,
+          height: 52,
           borderRadius: "50%",
-          background: open ? "rgba(244,166,35,0.2)" : "rgba(0,0,0,0.4)",
+          background: open ? "rgba(244,166,35,0.2)" : "rgba(0,0,0,0.55)",
           backdropFilter: "blur(12px)",
           WebkitBackdropFilter: "blur(12px)",
           border: open ? "1px solid rgba(244,166,35,0.4)" : "1px solid rgba(255,255,255,0.12)",

@@ -3,6 +3,7 @@ import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
 import { extractUberEats } from "./ubereats";
+import { extractQueresto } from "./queresto";
 import { extractQuickPreview } from "./scrape";
 import type { ExtractionResult } from "./types";
 
@@ -68,6 +69,9 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
       break;
     case "UberEats":
       extraction = await extractUberEats(lead.cartaUrl);
+      break;
+    case "Queresto":
+      extraction = await extractQueresto(lead.cartaUrl);
       break;
     case "Fudo":
     case "Mercat":
