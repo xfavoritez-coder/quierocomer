@@ -68,7 +68,7 @@ export default function FunnelPage() {
     }
   };
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch("/api/admin/funnel")
       .then((r) => r.json())
       .then((data) => {
@@ -76,6 +76,14 @@ export default function FunnelPage() {
         setStats(data.stats || null);
       })
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
+    // Refresh when page becomes visible (coming back from notification or app switch)
+    const onVisible = () => { if (document.visibilityState === "visible") fetchData(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
   }, []);
 
   if (loading) {
@@ -83,10 +91,10 @@ export default function FunnelPage() {
   }
 
   return (
-    <div style={{ maxWidth: 1100 }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
-        <h1 style={{ fontFamily: "var(--font-display, Georgia)", fontSize: 28, color: "#F4A623", margin: 0 }}>
-          Funnel /subircarta
+    <div style={{ maxWidth: 1100, padding: "0 12px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
+        <h1 style={{ fontFamily: "var(--font-display, Georgia)", fontSize: 22, color: "#F4A623", margin: 0 }}>
+          Funnel
         </h1>
         <button
           onClick={pushStatus === "idle" ? enablePush : undefined}
@@ -104,7 +112,7 @@ export default function FunnelPage() {
 
       {/* Stats cards */}
       {stats && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 28 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 8, marginBottom: 20 }}>
           <StatCard label="Total leads" value={stats.total} />
           <StatCard label="Llegaron al paso 2" value={stats.reachedStep2} suffix={`${stats.step2Rate}%`} />
           <StatCard label="Completados" value={stats.completed} color="#43d17b" suffix={`${stats.conversionRate}%`} />
@@ -115,58 +123,36 @@ export default function FunnelPage() {
         </div>
       )}
 
-      {/* Leads table */}
-      <div style={{ overflowX: "auto", borderRadius: 12, border: "1px solid #2a2a2a" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-          <thead>
-            <tr style={{ background: "#1a1a1a", color: "#aaa", textAlign: "left" }}>
-              <th style={th}>Fecha</th>
-              <th style={th}>Local</th>
-              <th style={th}>Dueño</th>
-              <th style={th}>Email</th>
-              <th style={th}>WhatsApp</th>
-              <th style={th}>Tipo</th>
-              <th style={th}>Proveedor</th>
-              <th style={th}>URL carta</th>
-              <th style={th}>Estado</th>
-              <th style={th}>Carta</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.length === 0 && (
-              <tr><td colSpan={10} style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavía.</td></tr>
-            )}
-            {leads.map((lead) => {
-              const completed = !!lead.email;
-              const date = new Date(lead.createdAt);
-              const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
-              const domain = lead.cartaUrl ? (() => { try { return new URL(lead.cartaUrl).hostname; } catch { return lead.cartaUrl; } })() : "—";
+      {/* Leads — mobile cards */}
+      <div className="funnel-cards">
+        {leads.length === 0 && (
+          <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavía.</div>
+        )}
+        {leads.map((lead) => {
+          const date = new Date(lead.createdAt);
+          const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+          const domain = lead.cartaUrl ? (() => { try { return new URL(lead.cartaUrl).hostname; } catch { return lead.cartaUrl; } })() : null;
 
-              return (
-                <tr key={lead.id} style={{ borderTop: "1px solid #222", background: completed ? "transparent" : "rgba(232,93,93,.04)" }}>
-                  <td style={td}>{dateStr}</td>
-                  <td style={td}>{lead.localName || <span style={{ color: "#555" }}>—</span>}</td>
-                  <td style={td}>{lead.ownerName || <span style={{ color: "#555" }}>—</span>}</td>
-                  <td style={td}>{lead.email || <span style={{ color: "#555" }}>no completó</span>}</td>
-                  <td style={td}>{lead.whatsapp || <span style={{ color: "#555" }}>—</span>}</td>
-                  <td style={td}><TypeBadge type={lead.cartaType} /></td>
-                  <td style={td}>{lead.detectedProvider?.name || <span style={{ color: "#555" }}>—</span>}</td>
-                  <td style={{ ...td, maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {lead.cartaUrl ? <a href={lead.cartaUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623" }}>{domain}</a> : "—"}
-                  </td>
-                  <td style={td}><StatusBadge status={lead.cartaStatus} /></td>
-                  <td style={td}>
-                    {lead.generatedSlug ? (
-                      <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontWeight: 600, fontSize: 12 }}>
-                        Ver carta
-                      </a>
-                    ) : <span style={{ color: "#555" }}>—</span>}
-                  </td>
-                </tr>
-              );
+          return (
+            <div key={lead.id} style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a2a", marginBottom: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{lead.localName || "Sin nombre"}</span>
+                <StatusBadge status={lead.cartaStatus} />
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 12, color: "#aaa" }}>
+                <span>{dateStr}</span>
+                {lead.ownerName && <span>{lead.ownerName}</span>}
+                {lead.detectedProvider?.name && <span>{lead.detectedProvider.name}</span>}
+                <TypeBadge type={lead.cartaType} />
+              </div>
+              {lead.email && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{lead.email}</div>}
+              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+                {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}
+                {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
+              </div>
+            </div>
+          );
             })}
-          </tbody>
-        </table>
       </div>
     </div>
   );
