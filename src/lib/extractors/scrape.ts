@@ -8,7 +8,8 @@ import type { ExtractionResult, ExtractedDish } from "./types";
 
 // Read at call time, not import time, to ensure env is loaded
 function getApiKey() { return process.env.ANTHROPIC_API_KEY; }
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL_FAST = "claude-haiku-4-5-20251001"; // preview (~15s)
+const MODEL_FULL = "claude-sonnet-4-6";          // full extraction (better quality)
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
 const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com"];
@@ -85,13 +86,13 @@ function cleanContent(html: string): string {
   return cleaned;
 }
 
-async function callClaude(prompt: string, maxTokens = 16000): Promise<string> {
+async function callClaude(prompt: string, maxTokens = 16000, model = MODEL_FULL): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] }),
+    body: JSON.stringify({ model, max_tokens: maxTokens, messages: [{ role: "user", content: prompt }] }),
   });
   if (!res.ok) throw new Error(`Claude error: ${res.status}`);
   const data = await res.json();
@@ -154,7 +155,7 @@ ${content}
 Responde con JSON:
 {"restaurantName":"...","logo":"URL o null","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","category":"..."}]}
 
-REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
+REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000, MODEL_FAST);
 
   console.log("[QuickPreview] Response:", result.length, "chars");
   const parsed = parseJSON(result);
