@@ -33,6 +33,7 @@ const ACCENT_OPTIONS = [
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista" },
   { value: "premium", label: "Galería" },
+  { value: "impact", label: "Impact" },
 ];
 
 function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
@@ -110,6 +111,32 @@ export default function AjustesPage() {
       <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Ajustes</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura las opciones de tu carta y local</p>
 
+      {/* Vista por defecto — FIRST */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Vista por defecto</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>La vista que veran tus clientes al abrir la carta</p>
+        <div style={{ display: "flex", gap: 8 }}>
+          {VIEW_OPTIONS.map(opt => {
+            const active = (data.defaultView || "lista") === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => save({ defaultView: opt.value })}
+                style={{
+                  flex: 1, padding: "10px 8px", borderRadius: 10, border: "none", cursor: "pointer",
+                  background: active ? GOLD : "var(--adm-input)",
+                  color: active ? "white" : "var(--adm-text)",
+                  fontFamily: F, fontSize: "0.82rem", fontWeight: active ? 700 : 500,
+                  transition: "all 0.2s",
+                }}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Modo oscuro */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
@@ -168,33 +195,6 @@ export default function AjustesPage() {
             active={data.waiterPanelActive}
             onToggle={() => save({ waiterPanelActive: !data.waiterPanelActive })}
           />
-        </div>
-      </div>
-
-
-      {/* Vista por defecto */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Vista por defecto</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>La vista que veran tus clientes al abrir la carta</p>
-        <div style={{ display: "flex", gap: 8 }}>
-          {VIEW_OPTIONS.map(opt => {
-            const active = (data.defaultView || "lista") === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => save({ defaultView: opt.value })}
-                style={{
-                  flex: 1, padding: "10px 8px", borderRadius: 10, border: "none", cursor: "pointer",
-                  background: active ? GOLD : "var(--adm-input)",
-                  color: active ? "white" : "var(--adm-text)",
-                  fontFamily: F, fontSize: "0.82rem", fontWeight: active ? 700 : 500,
-                  transition: "all 0.2s",
-                }}
-              >
-                {opt.label}
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>
