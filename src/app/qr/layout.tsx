@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Playfair_Display, DM_Sans, Fraunces } from "next/font/google";
+import { Playfair_Display, DM_Sans, Fraunces, Bebas_Neue } from "next/font/google";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -20,6 +20,12 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
 });
 
+const bebas = Bebas_Neue({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-bebas",
+});
+
 export const metadata: Metadata = {
   title: "Carta QR Viva — QuieroComer",
   description: "La carta digital inteligente que se adapta a ti.",
@@ -34,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function QRLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${playfair.variable} ${dmSans.variable} ${fraunces.variable}`}>
+    <div className={`${playfair.variable} ${dmSans.variable} ${fraunces.variable} ${bebas.variable}`}>
       {children}
     </div>
   );

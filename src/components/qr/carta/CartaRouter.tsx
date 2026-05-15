@@ -9,7 +9,7 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import { canAccess } from "@/lib/plans";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
-import CartaViaje from "./CartaViaje"; // TODO: replace with CartaImpact
+import CartaImpact from "./CartaImpact";
 import CartaFeed from "./CartaFeed";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
@@ -191,7 +191,7 @@ export default function CartaRouter(props: Props) {
         {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
         {effectiveView === "lista" && <CartaLista {...sharedProps} />}
         {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
-        {effectiveView === "impact" && <CartaViaje {...sharedProps} />}
+        {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
 
         {overlay && (
           <div
