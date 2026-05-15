@@ -6,7 +6,7 @@ import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
 import { extractWithScraper } from "./scrape";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
-import type { ExtractionResult } from "./types";
+import type { ExtractionResult, ExtractedDish } from "./types";
 
 function slugify(name: string): string {
   return name
@@ -87,6 +87,95 @@ async function reuploadPhoto(externalUrl: string, restaurantId: string, dishSlug
   }
 }
 
+/** Extract menu data from an uploaded image via Claude Vision */
+async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+
+  // Download image from Supabase
+  const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
+  if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
+  const buffer = Buffer.from(await imgRes.arrayBuffer());
+
+  // Convert to JPEG via sharp
+  let base64: string;
+  let mediaType = "image/jpeg";
+  try {
+    const jpegBuffer = await sharp(buffer)
+      .jpeg({ quality: 85 })
+      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+      .toBuffer();
+    base64 = jpegBuffer.toString("base64");
+  } catch {
+    base64 = buffer.toString("base64");
+    if (imageUrl.endsWith(".png")) mediaType = "image/png";
+    else if (imageUrl.endsWith(".webp")) mediaType = "image/webp";
+  }
+
+  const prompt = `Analiza esta foto de carta/menú de restaurante.
+Extrae TODOS los platos que puedas ver y organízalos por categoría.
+Responde SOLO con JSON:
+{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
+Reglas:
+- Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
+- No inventes platos, solo extrae lo que ves.
+- SOLO JSON.`;
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 16000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+          { type: "text", text: prompt },
+        ],
+      }],
+    }),
+  });
+
+  if (!res.ok) throw new Error(`Claude Vision error: ${res.status}`);
+  const data = await res.json();
+  const text = data.content?.[0]?.text || "";
+
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("No JSON found in Vision response");
+
+  let parsed: any;
+  try { parsed = JSON.parse(match[0]); } catch {
+    let jsonStr = match[0].replace(/,\s*\{[^}]*$/, "").replace(/,\s*$/, "");
+    let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
+    for (let i = 0; i < o - c; i++) jsonStr += "]";
+    let oo = 0, cc = 0; for (const ch of jsonStr) { if (ch === "{") oo++; if (ch === "}") cc++; }
+    for (let i = 0; i < oo - cc; i++) jsonStr += "}";
+    parsed = JSON.parse(jsonStr);
+  }
+
+  const dishes: ExtractedDish[] = [];
+  for (const cat of (parsed.categories || [])) {
+    for (const dish of (cat.dishes || [])) {
+      if (!dish.name) continue;
+      dishes.push({
+        name: dish.name.trim(),
+        description: dish.description || "",
+        price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
+        imageUrl: null, // Photos from image upload don't have URLs
+        category: cat.name || "General",
+      });
+    }
+  }
+
+  return {
+    restaurantName: parsed.restaurantName || "Restaurante",
+    dishes,
+    logoUrl: null,
+    bannerUrl: null,
+  };
+}
+
 /** Extract menu data based on detected provider */
 async function extractMenu(cartaUrl: string, providerName: string | null): Promise<ExtractionResult> {
   // Route to the correct extractor
@@ -117,7 +206,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   });
 
   if (!lead) throw new Error(`Lead ${leadId} not found`);
-  if (!lead.cartaUrl) throw new Error(`Lead ${leadId} has no cartaUrl`);
+  if (!lead.cartaUrl && !lead.cartaFileUrl) throw new Error(`Lead ${leadId} has no cartaUrl or cartaFileUrl`);
 
   // Mark as processing
   await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PROCESSING" } });
@@ -130,7 +219,10 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
   try {
     const providerName = lead.detectedProvider?.name || null;
-    const extraction = await extractMenu(lead.cartaUrl, providerName);
+    const isFileUpload = !lead.cartaUrl && !!lead.cartaFileUrl;
+    const extraction = isFileUpload
+      ? await extractFromImage(lead.cartaFileUrl!)
+      : await extractMenu(lead.cartaUrl!, providerName);
 
     if (extraction.dishes.length === 0) {
       throw new Error("No dishes extracted from the menu");
