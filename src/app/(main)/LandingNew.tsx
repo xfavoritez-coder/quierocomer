@@ -138,7 +138,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(mucho más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
-            <p className="hero-sub-text" dangerouslySetInnerHTML={{ __html: abSubtitle.replace(/(aumenta tus ventas)/i, '<span class="accent">$1</span>') }} />
+            <p className="hero-sub-text">{abSubtitle}</p>
             <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Te mostramos gratis como queda</div>
           </div>
