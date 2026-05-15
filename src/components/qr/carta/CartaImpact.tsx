@@ -607,7 +607,12 @@ export default function CartaImpact({
   // Language select
   const enabledLangs: string[] = (restaurant as any).enabledLangs || ["es"];
   const [langOpen, setLangOpen] = useState(false);
-  const LANG_FLAG_EMOJI: Record<string, string> = { es: "🇪🇸", en: "🇬🇧", pt: "🇧🇷", it: "🇮🇹" };
+  const LANG_FLAG_IMG: Record<string, string> = {
+    es: "https://purecatamphetamine.github.io/country-flag-icons/3x2/ES.svg",
+    en: "https://purecatamphetamine.github.io/country-flag-icons/3x2/GB.svg",
+    pt: "https://purecatamphetamine.github.io/country-flag-icons/3x2/PT.svg",
+    it: "https://purecatamphetamine.github.io/country-flag-icons/3x2/IT.svg",
+  };
   const selectLang = useCallback((next: string) => {
     setLangOpen(false);
     if (next === lang) return;
@@ -653,6 +658,18 @@ export default function CartaImpact({
 
   /* ─── Active category tracking ─── */
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
+  const [showFixedCatNav, setShowFixedCatNav] = useState(false);
+  const menuAnchorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const check = () => {
+      const el = menuAnchorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setShowFixedCatNav(rect.top < 60);
+    };
+    window.addEventListener("scroll", check, { passive: true });
+    return () => window.removeEventListener("scroll", check);
+  }, []);
   const catStartRef = useRef<{ id: string; start: number }>({ id: categories[0]?.id || "", start: Date.now() });
 
   useEffect(() => {
@@ -997,12 +1014,13 @@ export default function CartaImpact({
       {/* Fixed top nav */}
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
-        padding: "calc(10px + env(safe-area-inset-top)) 16px 10px",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
-        backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+        padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
+        background: showFixedCatNav ? "rgba(3,3,3,0.92)" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
+        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         pointerEvents: "auto",
+        transition: "background 0.3s ease",
       }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           {(restaurant as any).logoUrl && (
             <Image
@@ -1024,33 +1042,65 @@ export default function CartaImpact({
           </button>
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
-              <button onClick={() => setLangOpen(!langOpen)} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 12, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
-                <span>{LANG_FLAG_EMOJI[lang] || "🌐"}</span>
-                <span>{lang.toUpperCase()}</span>
+              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center" }}>
+                {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "#fff", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
               </button>
-              {langOpen && (
-                <div style={{
-                  position: "absolute", top: 44, right: 0, background: "rgba(0,0,0,0.85)",
+              <div style={{
+                  position: "fixed", top: 52, right: 16, background: "rgba(0,0,0,0.9)",
+                  opacity: langOpen ? 1 : 0, pointerEvents: langOpen ? "auto" : "none",
+                  transform: langOpen ? "translateY(0)" : "translateY(-8px)",
+                  transition: "opacity 0.15s ease, transform 0.15s ease",
                   backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                   borderRadius: 14, padding: 4, border: "1px solid rgba(255,255,255,0.12)",
                   boxShadow: "0 8px 30px rgba(0,0,0,0.4)", zIndex: 60,
                 }}>
+                  {/* Arrow */}
+                  <div style={{ position: "absolute", top: -5, right: 14, width: 10, height: 10, background: "rgba(0,0,0,0.9)", transform: "rotate(45deg)", border: "1px solid rgba(255,255,255,0.12)", borderRight: "none", borderBottom: "none" }} />
                   {enabledLangs.map(l => (
                     <button key={l} onClick={() => selectLang(l)} style={{
-                      display: "flex", alignItems: "center", gap: 8, width: "100%",
-                      padding: "10px 16px", border: "none", borderRadius: 10, cursor: "pointer",
-                      background: l === lang ? "rgba(255,255,255,0.1)" : "transparent",
-                      color: "white", fontSize: 13, fontWeight: l === lang ? 700 : 500,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      width: 40, height: 40, border: "none", borderRadius: "50%", cursor: "pointer",
+                      background: l === lang ? "rgba(255,255,255,0.15)" : "transparent",
+                      margin: "2px 4px",
                     }}>
-                      <span style={{ fontSize: 18 }}>{LANG_FLAG_EMOJI[l] || "🌐"}</span>
-                      <span>{l.toUpperCase()}</span>
+                      {LANG_FLAG_IMG[l] ? <img src={LANG_FLAG_IMG[l]} alt={l} style={{ width: 24, height: 24, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "white", fontSize: 12, fontWeight: 700 }}>{l.toUpperCase()}</span>}
                     </button>
                   ))}
                 </div>
-              )}
             </div>
           )}
         </div>
+      </div>
+      {/* Fixed category nav — appears when menu section reaches header */}
+      {showFixedCatNav && (
+        <div style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+          {allChipCats.map((cat) => {
+            const isActive = cat.id === activeCategory;
+            return (
+              <button
+                key={cat.id}
+                onClick={() => {
+                  setActiveCategory(cat.id);
+                  scrollToCategory(cat.id);
+                }}
+                className="font-[family-name:var(--font-dm)]"
+                style={{
+                  whiteSpace: "nowrap", flexShrink: 0,
+                  border: isActive
+                    ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
+                    : "1px solid rgba(255,255,255,0.13)",
+                  background: isActive
+                    ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
+                    : "rgba(255,255,255,0.055)",
+                  borderRadius: 999, padding: "7px 12px",
+                  color: isActive ? "white" : "rgba(255,255,255,0.5)",
+                  fontSize: 13, fontWeight: 800, cursor: "pointer",
+                }}
+              >{cat.name}</button>
+            );
+          })}
+        </div>
+      )}
       </header>
 
       {/* Search overlay */}
@@ -1104,32 +1154,6 @@ export default function CartaImpact({
           scrollToCategory(catId);
         }}
       />
-
-      {/* Genio diet carousels */}
-      {hasCompletedGenio && (() => {
-        const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
-        const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
-        const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
-        const onDishClick = (dishId: string) => { const dish = dishes.find((d) => d.id === dishId); if (dish) setSelectedDish(dish); };
-        const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
-        const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-        const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
-        if (msgType) return <div style={{ marginTop: 10, paddingTop: 10, position: "relative", zIndex: 1 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-        if (!mode) return null;
-        return (
-          <div style={{ paddingTop: 20, display: "flex", flexDirection: "column", gap: 8, position: "relative", zIndex: 1 }}>
-            {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
-          </div>
-        );
-      })()}
 
       {/* Featured / Destacados */}
       <FeaturedSection
@@ -1265,7 +1289,7 @@ export default function CartaImpact({
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
-        <div style={{ paddingTop: 10, paddingBottom: 10, marginBottom: 8 }}>
+        <div ref={menuAnchorRef} style={{ paddingTop: 10, paddingBottom: 10, marginBottom: 8 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div
@@ -1321,6 +1345,32 @@ export default function CartaImpact({
             </div>
           </div>
         </div>
+
+        {/* Genio diet carousels — inside menu, after nav chips */}
+        {hasCompletedGenio && (() => {
+          const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
+          const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
+          const mode = getCarouselMode(diet, restrictions, (restaurant as any).dietType);
+          const onDishClick = (dishId: string) => { const dish = dishes.find((d) => d.id === dishId); if (dish) setSelectedDish(dish); };
+          const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
+          const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
+          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+          if (msgType) return <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
+          if (!mode) return null;
+          return (
+            <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14, display: "flex", flexDirection: "column", gap: 8 }}>
+              {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+              {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+              {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
+            </div>
+          );
+        })()}
 
         {/* Empty state */}
         {searchQuery && menuSections.length === 0 && (

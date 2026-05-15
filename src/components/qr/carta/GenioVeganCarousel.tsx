@@ -62,15 +62,15 @@ export default function GenioVeganCarousel({ dishes, categories, onDishClick, al
             return (
               <button key={d.id} onClick={() => onDishClick?.(d.id)} className="active:scale-[0.97] transition-transform"
                 style={{ flexShrink: 0, width: 130, background: "var(--carta-surface)", border: "1px solid var(--carta-genio-vegan-border2)", borderRadius: 12, padding: 6, cursor: "pointer", textAlign: "left", boxShadow: "0 1px 6px rgba(34,197,94,0.08)" }}>
-                <div style={{ position: "relative", width: "100%", height: 72, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
+                <div style={{ position: "relative", width: "100%", height: 118, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
                   {photo ? <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" /> : <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>}
                   <span style={{ position: "absolute", top: 6, left: 6, background: "var(--carta-genio-vegan-tag-bg)", color: "var(--carta-genio-vegan-tag)", fontSize: "10px", fontWeight: 600, padding: "2px 6px", borderRadius: 4, letterSpacing: "0.3px", display: "flex", alignItems: "center", gap: 3 }}>
                     <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--carta-genio-vegan-tag)", flexShrink: 0 }} />VEGAN
                   </span>
                 </div>
-                <p style={{ fontSize: "13px", fontWeight: 600, color: "var(--carta-genio-vegan-title)", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "var(--carta-genio-vegan-title)", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                 {d.description && <p style={{ fontSize: "12px", color: "var(--carta-genio-vegan-desc)", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
-                <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "11px", fontWeight: 700, color: "#4ade80", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
+                <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "13px", fontWeight: 700, color: "#4ade80", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
               </button>
             );
           })}

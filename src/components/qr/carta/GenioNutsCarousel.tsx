@@ -55,15 +55,15 @@ export default function GenioNutsCarousel({ dishes, categories, onDishClick }: P
             return (
               <button key={d.id} onClick={() => onDishClick?.(d.id)} className="active:scale-[0.97] transition-transform"
                 style={{ flexShrink: 0, width: 130, background: "#fff", border: "0.5px solid rgba(160,106,58,0.15)", borderRadius: 12, padding: 6, cursor: "pointer", textAlign: "left", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-                <div style={{ position: "relative", width: "100%", height: 72, borderRadius: 8, overflow: "hidden", background: "#f0f0f0", marginBottom: 5 }}>
+                <div style={{ position: "relative", width: "100%", height: 118, borderRadius: 8, overflow: "hidden", background: "#f0f0f0", marginBottom: 5 }}>
                   {photo ? <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" /> : <div style={{ width: "100%", height: "100%", background: "#e8e8e8", display: "flex", alignItems: "center", justifyContent: "center", color: "#bbb", fontSize: "1.2rem" }}>🍽</div>}
                   <span style={{ position: "absolute", top: 6, left: 6, maxWidth: "calc(100% - 12px)", background: "rgba(255,255,255,0.95)", color: "#A06A3A", fontSize: "8.5px", fontWeight: 600, padding: "2px 5px", borderRadius: 4, letterSpacing: "0.2px", display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                     <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#A06A3A", flexShrink: 0 }} />SIN FRUTOS SECOS
                   </span>
                 </div>
-                <p style={{ fontSize: "0.80rem", fontWeight: 600, color: "#5A3A1F", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                <p style={{ fontSize: "14px", fontWeight: 600, color: "#5A3A1F", margin: "0 0 1px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
                 {d.description && <p style={{ fontSize: "0.63rem", color: "#7A5635", margin: "0 0 2px", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.description}</p>}
-                <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "12px", fontWeight: 500, color: "#A06A3A", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
+                <p style={{ fontFamily: "var(--font-dm), system-ui, sans-serif", fontSize: "13px", fontWeight: 500, color: "#A06A3A", margin: 0 }}>${d.price.toLocaleString("es-CL")}</p>
               </button>
             );
           })}

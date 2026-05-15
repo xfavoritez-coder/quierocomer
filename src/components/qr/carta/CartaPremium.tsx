@@ -566,16 +566,6 @@ export default function CartaPremium({
       )}
 
       <main style={{ paddingBottom: 55 }}>
-        {/* Ofertas section — inside main as first "category" */}
-        {hasPromos && (
-          <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
-              const dish = dishes.find(d => d.id === dishId);
-              if (dish) setSelectedDish(dish);
-            }} />
-          </div>
-        )}
-
         {/* Genio diet carousels */}
         {hasCompletedGenio && (() => {
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
@@ -605,6 +595,16 @@ export default function CartaPremium({
             </div>
           );
         })()}
+
+        {/* Ofertas section */}
+        {hasPromos && (
+          <div id="cat-promos" style={{ paddingTop: 18 }}>
+            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
+        )}
 
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (norm(d.name || "").includes(norm(searchQuery.trim())) || norm(d.description || "").includes(norm(searchQuery.trim())) || norm(d.ingredients || "").includes(norm(searchQuery.trim()))))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>

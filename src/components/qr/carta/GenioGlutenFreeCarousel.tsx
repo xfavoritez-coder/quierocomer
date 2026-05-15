@@ -74,7 +74,7 @@ export default function GenioGlutenFreeCarousel({ dishes, categories, onDishClic
                   textAlign: "left", boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
                 }}
               >
-                <div style={{ position: "relative", width: "100%", height: 72, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
+                <div style={{ position: "relative", width: "100%", height: 118, borderRadius: 8, overflow: "hidden", background: "var(--carta-img-placeholder)", marginBottom: 5 }}>
                   {photo ? (
                     <Image src={photo} alt={d.name} fill className="object-cover" sizes="130px" />
                   ) : (

@@ -14,17 +14,26 @@ export default function VeganFloatingPill() {
     const checkVegan = () => setIsVegan(localStorage.getItem("qr_diet") === "vegan");
     checkVegan();
 
-    const onScroll = () => setScrolled(window.scrollY > 400);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("genio-updated", checkVegan);
+    // Show pill only when user has scrolled PAST the genio carousel (below it)
+    const checkCarousel = () => {
+      const el = document.getElementById("genio-vegan-carousel");
+      if (!el) { setScrolled(false); return; }
+      const rect = el.getBoundingClientRect();
+      // Only show when the bottom of the carousel is above the viewport
+      setScrolled(rect.bottom < 0);
+    };
+    // Small delay to let carousel render
+    setTimeout(checkCarousel, 500);
+    window.addEventListener("scroll", checkCarousel, { passive: true });
 
+    window.addEventListener("genio-updated", checkVegan);
     const onViewToggle = (e: Event) => {
       setViewSelectorOpen((e as CustomEvent).detail?.open ?? false);
     };
     window.addEventListener("view-selector-toggle", onViewToggle);
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", checkCarousel);
       window.removeEventListener("genio-updated", checkVegan);
       window.removeEventListener("view-selector-toggle", onViewToggle);
     };
