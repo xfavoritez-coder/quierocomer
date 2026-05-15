@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
@@ -37,6 +37,9 @@ export default function ConfirmacionClient() {
   const [emailDraft, setEmailDraft] = useState("");
   const [savingEmail, setSavingEmail] = useState(false);
   const [planesOpen, setPlanesOpen] = useState(false);
+  const [canLeaveHint, setCanLeaveHint] = useState(false);
+  const imagesLoadedRef = useRef(false);
+  const cartaReadyRef = useRef(false);
 
   // Trigger full processing when confirmation loads
   useEffect(() => {
@@ -69,14 +72,17 @@ export default function ConfirmacionClient() {
               }))).then(() => {
                 setPreview(data.preview);
                 setImagesLoaded(true);
+                imagesLoadedRef.current = true;
               });
             } else {
               setPreview(data.preview);
               setImagesLoaded(true);
+              imagesLoadedRef.current = true;
             }
           }
           if (data.cartaStatus === "READY" || data.cartaStatus === "DELIVERED") {
             setCartaReady(true);
+            cartaReadyRef.current = true;
             if (data.generatedSlug) setCartaSlug(data.generatedSlug);
             if (polling) { clearInterval(polling); polling = null; }
           }
@@ -89,7 +95,7 @@ export default function ConfirmacionClient() {
     polling = setInterval(fetchLead, 3000);
     // Show timeout message after 20s ONLY if no preview appeared
     const maxTimeout = setTimeout(() => {
-      if (!cartaReady && !imagesLoaded) setTimedOut(true);
+      if (!cartaReadyRef.current && !imagesLoadedRef.current) setTimedOut(true);
     }, 20000);
     // Stop polling after 5 minutes max
     const stopTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 300000);
@@ -106,6 +112,18 @@ export default function ConfirmacionClient() {
     if (!cartaReady) return;
     const t = setTimeout(() => setModalDismissed(true), 1500);
     return () => clearTimeout(t);
+  }, [cartaReady]);
+
+  // Show "you can leave" hint 15s after preview loaded but carta still not ready
+  useEffect(() => {
+    if (!imagesLoaded || cartaReady) return;
+    const t = setTimeout(() => setCanLeaveHint(true), 15000);
+    return () => clearTimeout(t);
+  }, [imagesLoaded, cartaReady]);
+
+  // Hide hint once carta is ready
+  useEffect(() => {
+    if (cartaReady) setCanLeaveHint(false);
   }, [cartaReady]);
 
   // Rotate hero image between preview dishes
@@ -184,6 +202,12 @@ export default function ConfirmacionClient() {
                       </div>
                       <p style={{ fontSize: 15, fontWeight: 700, color: "var(--amber-2, #E8A33D)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Lista</p>
                       <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Revisa tu correo</p>
+                    </>
+                  ) : (canLeaveHint || timedOut) ? (
+                    <>
+                      <svg viewBox="0 0 24 24" fill="none" width="32" height="32" style={{ display: "block", margin: "0 auto 4px" }}><rect x="2" y="4" width="20" height="16" rx="3" stroke="var(--amber-2, #E8A33D)" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="var(--amber-2, #E8A33D)" strokeWidth="1.5"/></svg>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Te avisaremos por correo</p>
+                      <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Puedes cerrar esta página</p>
                     </>
                   ) : (
                     <>
@@ -300,6 +324,8 @@ export default function ConfirmacionClient() {
             )}
           </div>
           )}
+
+
 
           {/* Badge — hide only when timed out AND not ready */}
           {(!timedOut || cartaReady) && (
@@ -450,6 +476,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .badge-icon svg { color: var(--amber-2) !important; }
 .badge-title { font-size: 15px; font-weight: 600; color: var(--cream); line-height: 1.2; }
 .badge-sub { font-size: 14px; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+.can-leave-hint { font-size: 13px; color: var(--muted); text-align: center; max-width: 340px; margin: 18px auto 0; line-height: 1.5; animation: hintFadeIn 0.6s ease-out; }
+@keyframes hintFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: .15; } }
 @keyframes geniePulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }

@@ -1553,7 +1553,7 @@ export default function AnalyticsDashboard() {
 
   const setRestaurantId = (v: string) => updateParams({ restaurantId: v || null });
   const setTab = (v: Tab) => updateParams({ tab: v === "resumen" ? null : v });
-  const setDatePreset = (v: DatePreset) => updateParams({ preset: v === "semana" ? null : v, from: null, to: null });
+  const setDatePreset = (v: DatePreset) => updateParams({ preset: v, from: null, to: null });
   const setCustomFrom = (v: string) => updateParams({ from: v || null, preset: "custom" });
   const setCustomTo = (v: string) => updateParams({ to: v || null, preset: "custom" });
 

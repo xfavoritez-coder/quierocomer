@@ -116,7 +116,7 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
 
   await prisma.lead.update({
     where: { id: leadId },
-    data: { preview: preview as any },
+    data: { preview: preview as any, previewAt: new Date() },
   });
 
   return preview;

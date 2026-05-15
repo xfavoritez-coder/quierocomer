@@ -16,6 +16,10 @@ interface Lead {
   activated: boolean;
   detectedProvider: { name: string } | null;
   createdAt: string;
+  step2At: string | null;
+  completedAt: string | null;
+  previewAt: string | null;
+  readyAt: string | null;
 }
 
 interface Stats {
@@ -133,6 +137,20 @@ export default function FunnelPage() {
           const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
           const domain = lead.cartaUrl ? (() => { try { return new URL(lead.cartaUrl).hostname; } catch { return lead.cartaUrl; } })() : null;
 
+          const fmtTime = (iso: string | null) => {
+            if (!iso) return null;
+            const d = new Date(iso);
+            return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+          };
+          const diffStr = (from: string | null, to: string | null) => {
+            if (!from || !to) return null;
+            const secs = Math.round((new Date(to).getTime() - new Date(from).getTime()) / 1000);
+            if (secs < 60) return `${secs}s`;
+            const mins = Math.floor(secs / 60);
+            const remainSecs = secs % 60;
+            return `${mins}m ${remainSecs}s`;
+          };
+
           return (
             <div key={lead.id} style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a2a", marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
@@ -146,6 +164,15 @@ export default function FunnelPage() {
                 <TypeBadge type={lead.cartaType} />
               </div>
               {lead.email && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{lead.email}</div>}
+
+              {/* Timeline de tiempos */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", fontSize: 11, marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "#111", border: "1px solid #222" }}>
+                <TimelineStep label="Inicio" time={fmtTime(lead.createdAt)} />
+                <TimelineStep label="Paso 2" time={fmtTime(lead.step2At)} delta={diffStr(lead.createdAt, lead.step2At)} />
+                <TimelineStep label="Preview" time={fmtTime(lead.previewAt)} delta={diffStr(lead.step2At || lead.createdAt, lead.previewAt)} />
+                <TimelineStep label="Lista" time={fmtTime(lead.readyAt)} delta={diffStr(lead.previewAt || lead.createdAt, lead.readyAt)} />
+              </div>
+
               <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                 {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}
                 {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
@@ -185,6 +212,19 @@ function StatusBadge({ status }: { status: string }) {
     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${colors[status] || "#666"}22`, color: colors[status] || "#666" }}>
       {status}
     </span>
+  );
+}
+
+function TimelineStep({ label, time, delta }: { label: string; time: string | null; delta?: string | null }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+      <span style={{ color: time ? "#F4A623" : "#444", fontWeight: 600 }}>{label}</span>
+      {time ? (
+        <span style={{ color: "#888" }}>{time}{delta && <span style={{ color: "#666", marginLeft: 3 }}>({delta})</span>}</span>
+      ) : (
+        <span style={{ color: "#333" }}>—</span>
+      )}
+    </div>
   );
 }
 

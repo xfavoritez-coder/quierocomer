@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { toast } from "sonner";
-import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
+import { Camera, Phone, Globe, MapPin, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 
@@ -10,15 +10,6 @@ const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
 
-const DAYS = [
-  { key: "lun", label: "Lunes" },
-  { key: "mar", label: "Martes" },
-  { key: "mie", label: "Miércoles" },
-  { key: "jue", label: "Jueves" },
-  { key: "vie", label: "Viernes" },
-  { key: "sab", label: "Sábado" },
-  { key: "dom", label: "Domingo" },
-];
 
 interface RestaurantData {
   id: string; slug: string; name: string; description: string | null;
@@ -74,7 +65,6 @@ export default function MiRestaurantePage() {
   const [address, setAddress] = useState("");
   const [instagram, setInstagram] = useState("");
   const [website, setWebsite] = useState("");
-  const [schedule, setSchedule] = useState<Record<string, string>>({});
 
   const rid = selectedRestaurantId;
 
@@ -95,7 +85,6 @@ export default function MiRestaurantePage() {
       setAddress(d.address || "");
       setInstagram(d.instagram || "");
       setWebsite(d.website || "");
-      setSchedule(d.scheduleJson || {});
     } catch {}
     setLoading(false);
   }, [rid]);
@@ -126,27 +115,6 @@ export default function MiRestaurantePage() {
   const saveInfo = () => save({ name, description, logoUrl: logoUrl || null, bannerUrl: bannerUrl || null });
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
-  const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
-
-  const updateDay = (key: string, value: string) => {
-    setSchedule(prev => ({ ...prev, [key]: value }));
-  };
-  const toggleDay = (key: string) => {
-    setSchedule(prev => {
-      const copy = { ...prev };
-      if (copy[key] === "closed") { delete copy[key]; }
-      else { copy[key] = "closed"; }
-      return copy;
-    });
-  };
-  const copyScheduleToAll = () => {
-    const first = DAYS.find(d => schedule[d.key] && schedule[d.key] !== "closed");
-    if (!first) return;
-    const val = schedule[first.key];
-    const newSched: Record<string, string> = {};
-    DAYS.forEach(d => { newSched[d.key] = val; });
-    setSchedule(newSched);
-  };
 
   const garzonLink = data ? `https://quierocomer.cl/qr/admin/garzon/${data.slug}` : "";
 
@@ -236,46 +204,6 @@ export default function MiRestaurantePage() {
         <button onClick={saveSocial} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
           {saving ? "Guardando..." : "Guardar redes"}
         </button>
-      </Card>
-
-      {/* ── Horarios ── */}
-      <Card title="Horarios" icon={Clock}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {DAYS.map(day => {
-            const val = schedule[day.key];
-            const isClosed = val === "closed";
-            const isOpen = val && val !== "closed";
-            return (
-              <div key={day.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
-                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", width: 80, flexShrink: 0 }}>{day.label}</span>
-                <button onClick={() => toggleDay(day.key)} style={{
-                  padding: "4px 10px", borderRadius: 12, border: "none", cursor: "pointer",
-                  background: isClosed ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)",
-                  color: isClosed ? "#ef4444" : "#22c55e",
-                  fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, flexShrink: 0,
-                }}>
-                  {isClosed ? "Cerrado" : "Abierto"}
-                </button>
-                {!isClosed && (
-                  <input
-                    value={val || ""}
-                    onChange={e => updateDay(day.key, e.target.value)}
-                    style={{ ...inputStyle, padding: "6px 10px", fontSize: "0.78rem", flex: 1, minWidth: 0 }}
-                    placeholder="12:00-23:00"
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <button onClick={copyScheduleToAll} style={{ flex: 1, padding: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-            Copiar a todos los días
-          </button>
-          <button onClick={saveSchedule} disabled={saving} style={{ flex: 1, padding: 8, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-            {saving ? "Guardando..." : "Guardar horarios"}
-          </button>
-        </div>
       </Card>
 
       {/* ── Generar QR ── */}
