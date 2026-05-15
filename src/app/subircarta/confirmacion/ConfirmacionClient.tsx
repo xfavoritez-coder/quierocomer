@@ -250,8 +250,8 @@ export default function ConfirmacionClient() {
                 <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5"/></svg>
               </div>
               <div>
-                <div className="badge-title">Revisa tu correo</div>
-                <div className="badge-sub">Si no lo encuentras en unos minutos, revisa spam o promociones.</div>
+                <div className="badge-title">{modalDismissed ? "Correo enviado" : "Revisa tu correo"}</div>
+                <div className="badge-sub">{modalDismissed ? "Si no lo ves, revisa spam o promociones." : "Si no lo encuentras en unos minutos, revisa spam o promociones."}</div>
               </div>
             </div>
             {leadEmail && !editingEmail && (
