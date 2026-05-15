@@ -117,9 +117,18 @@ export default function ConfirmacionClient() {
         </section>
 
         <section className="shell centered-shell">
-          <div className="center-copy">
-            <h1><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></h1>
-            <p className="subcopy">Creamos algo único para ti y tu restaurante.</p>
+          <div className="center-copy" key={modalDismissed ? "sent" : "prep"} style={{ animation: modalDismissed ? "phoneFadeIn 0.6s ease-out" : "none" }}>
+            {modalDismissed ? (
+              <>
+                <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
+                <p className="subcopy">Te enviamos tu carta lista{leadEmail ? ` a ${leadEmail}` : ""}.</p>
+              </>
+            ) : (
+              <>
+                <h1><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></h1>
+                <p className="subcopy">Creamos algo único para ti y tu restaurante.</p>
+              </>
+            )}
           </div>
 
           {/* iPhone mockup with preview — or fallback message */}
@@ -225,14 +234,6 @@ export default function ConfirmacionClient() {
               </div>
             </div>
           </div>
-          {modalDismissed && (
-            <div style={{ position: "relative", maxWidth: 260, margin: "-14px auto 0", zIndex: 30, animation: "phoneFadeIn 0.6s ease-out" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "10px 16px", borderRadius: 12, background: "#E8A33D", boxShadow: "0 4px 16px rgba(232,163,61,0.3)" }}>
-                <span style={{ fontSize: 13 }}>✉️</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#0e0e0e" }}>Te la enviamos a tu correo</span>
-              </div>
-            </div>
-          )}
           </>
           ) : (
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
@@ -358,7 +359,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .phone-ready .phone-notch { filter: blur(0); }
 .phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.35); pointer-events: none; transition: background 1.5s ease; }
 .phone-ready::before { background: rgba(0,0,0,0.1); }
-.phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
+.phone-notch { width: 80px; height: 12px; background: #000; border-radius: 0 0 10px 10px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }
 .ph-hero { height: 130px; position: relative; overflow: hidden; }
 .ph-dishes { padding: 0 10px; padding-top: 12px; display: flex; flex-direction: column; }
