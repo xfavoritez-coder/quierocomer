@@ -204,9 +204,30 @@ export default function Paso2Client() {
     : null;
 
   const pillLabelBase = cartaType === "LINK" ? displayUrl : displayFileName;
+
+  // Try to extract local name from URL path
+  const localNameFromUrl = (() => {
+    if (!cartaUrl) return null;
+    try {
+      const url = new URL(cartaUrl);
+      const parts = url.pathname.split("/").filter(Boolean);
+      // Skip generic paths like "pedir", "qr-menu", "store", "cl"
+      const skip = new Set(["pedir", "qr-menu", "menu", "store", "cl", "es", "en"]);
+      const candidate = parts.find(p => !skip.has(p) && p.length > 2 && !p.includes("?"));
+      if (candidate) {
+        return candidate.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      }
+      // Fallback: use subdomain or domain name
+      const host = url.hostname.replace(/^www\./, "").replace(/^menu\./, "").replace(/^coffee\./, "");
+      const domainName = host.split(".")[0];
+      if (domainName.length > 2) return domainName.charAt(0).toUpperCase() + domainName.slice(1);
+    } catch {}
+    return null;
+  })();
+
   const pillLabelTexts = [
     `Revisando ${pillLabelBase}`,
-    "Leyendo tu carta",
+    localNameFromUrl ? `Leyendo carta de ${localNameFromUrl}` : "Leyendo tu carta",
     "Extrayendo platos y precios",
   ];
   const pillLabel = animDone ? pillLabelBase : pillLabelTexts[pillMetaIndex % pillLabelTexts.length];
