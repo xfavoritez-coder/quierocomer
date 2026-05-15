@@ -21,7 +21,7 @@ const RESTAURANTS: [string, string][] = [
 
 const AB_DEFAULTS = {
   titleText: "Tu carta puede vender mucho m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una que aumenta tus ventas",
+  subtitleText: "Transformamos tu carta actual en una que aumenta tus ventas y mejora la experiencia de tus clientes",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
