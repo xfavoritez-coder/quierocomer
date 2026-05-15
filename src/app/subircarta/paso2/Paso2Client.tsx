@@ -50,15 +50,9 @@ export default function Paso2Client() {
   useEffect(() => {
     if (!leadId) return;
 
-    // Fire preview (~15s) and full processing (~60s) in parallel
-    // Preview arrives first → shows in confirmation iPhone mockup
+    // Fire only preview here (~15s with Haiku)
+    // Full process fires from confirmation page to avoid blocking PATCH
     fetch("/api/subircarta/preview", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId }),
-    }).catch(() => {});
-
-    fetch("/api/subircarta/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ leadId }),

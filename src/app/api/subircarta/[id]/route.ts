@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const maxDuration = 30;
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/normalizePhone";
 

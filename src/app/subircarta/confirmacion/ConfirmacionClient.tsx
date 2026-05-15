@@ -35,6 +35,16 @@ export default function ConfirmacionClient() {
   const [savingEmail, setSavingEmail] = useState(false);
   const [planesOpen, setPlanesOpen] = useState(false);
 
+  // Trigger full processing when confirmation loads
+  useEffect(() => {
+    if (!leadId) return;
+    fetch("/api/subircarta/process", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId }),
+    }).catch(() => {});
+  }, [leadId]);
+
   useEffect(() => {
     if (!leadId) return;
     let polling: ReturnType<typeof setInterval> | null = null;
