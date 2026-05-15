@@ -27,6 +27,7 @@ export default function ConfirmacionClient() {
   const [preview, setPreview] = useState<Preview | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
   const [cartaReady, setCartaReady] = useState(false);
+  const [modalDismissed, setModalDismissed] = useState(false);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -81,6 +82,13 @@ export default function ConfirmacionClient() {
     };
   }, [leadId]);
 
+  // Auto-dismiss modal 3s after carta is ready
+  useEffect(() => {
+    if (!cartaReady) return;
+    const t = setTimeout(() => setModalDismissed(true), 3000);
+    return () => clearTimeout(t);
+  }, [cartaReady]);
+
   const rawName = preview?.restaurantName || localName || "Tu restaurante";
   const displayName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
   const hasPreviewDishes = preview?.sampleDishes && preview.sampleDishes.length > 0;
@@ -116,10 +124,12 @@ export default function ConfirmacionClient() {
 
           {/* iPhone mockup with preview — or fallback message */}
           {hasPreviewDishes ? (
+          <>
           <div className="phone-wrap phone-fadein">
             <div className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`} style={{ position: "relative" }}>
               {/* Overlay message */}
-              <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
+              {!modalDismissed && (
+              <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none", opacity: cartaReady ? 0 : 1, transition: "opacity 1s ease 2.5s" }} onTransitionEnd={() => { if (cartaReady) setModalDismissed(true); }}>
                 <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", boxShadow: "0 0 40px 10px rgba(0,0,0,0.5)", transition: "border-color 0.5s" }}>
                   {cartaReady ? (
                     <>
@@ -138,6 +148,7 @@ export default function ConfirmacionClient() {
                   )}
                 </div>
               </div>
+              )}
               {/* Phone notch */}
               <div className="phone-notch" />
 
@@ -214,6 +225,13 @@ export default function ConfirmacionClient() {
               </div>
             </div>
           </div>
+          {modalDismissed && (
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, margin: "12px auto 0", padding: "10px 20px", borderRadius: 50, background: "rgba(232,163,61,0.08)", border: "1px solid rgba(232,163,61,0.15)", maxWidth: 300, animation: "phoneFadeIn 0.6s ease-out" }}>
+              <span style={{ fontSize: 14 }}>✉️</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--cream, #F2E5CF)" }}>Te la enviamos a tu correo</span>
+            </div>
+          )}
+          </>
           ) : (
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
             <div style={{ fontSize: 40, marginBottom: 12, animation: "geniePulse 2s ease-in-out infinite" }}>🧞‍♂️ ✨</div>
