@@ -98,9 +98,9 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check for duplicate: reuse incomplete lead with same URL
+    // Check for duplicate: reuse incomplete lead with same URL (not yet processed)
     const existing = await prisma.lead.findFirst({
-      where: { cartaUrl, email: "" },
+      where: { cartaUrl, email: "", cartaStatus: "PENDING" },
       orderBy: { createdAt: "desc" },
     });
 
