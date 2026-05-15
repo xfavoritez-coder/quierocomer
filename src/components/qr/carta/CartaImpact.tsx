@@ -610,10 +610,10 @@ export default function CartaImpact({
     const currentIdx = enabledLangs.indexOf(lang);
     const next = enabledLangs[(currentIdx + 1) % enabledLangs.length] as Lang;
     localStorage.setItem("qc_lang", next);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set("lang", next);
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [lang, enabledLangs, pathname, router, searchParams]);
+    const url = new URL(window.location.href);
+    url.searchParams.set("lang", next);
+    window.location.href = url.toString();
+  }, [lang, enabledLangs]);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
@@ -1021,7 +1021,7 @@ export default function CartaImpact({
             <Search size={15} color="white" />
           </button>
           {enabledLangs.length > 1 && (
-            <button onClick={() => { alert("Lang: " + lang + " | enabled: " + enabledLangs.join(",")); cycleLang(); }} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
+            <button onClick={() => cycleLang()} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
               {lang.toUpperCase()}
             </button>
           )}
