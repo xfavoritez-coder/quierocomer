@@ -104,7 +104,7 @@ export default function SubirCartaClient() {
           <div className="form-side centered-form">
             {/* Method selector */}
             <div className="methods">
-              {(["pdf", "link", "photo"] as const).map((m) => (
+              {(["link", "photo", "pdf"] as const).map((m) => (
                 <button
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
@@ -136,7 +136,7 @@ export default function SubirCartaClient() {
                     {fileName ? (
                       <>
                         <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
-                        <div className="upload-link">Haz clic para cambiar archivo</div>
+                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Haz clic para cambiar archivo</div>
                       </>
                     ) : (
                       <>
@@ -185,7 +185,7 @@ export default function SubirCartaClient() {
                     {fileName ? (
                       <>
                         <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
-                        <div className="upload-link">Haz clic para cambiar foto</div>
+                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Haz clic para cambiar foto</div>
                       </>
                     ) : (
                       <>
