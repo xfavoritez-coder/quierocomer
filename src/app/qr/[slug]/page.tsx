@@ -156,6 +156,16 @@ export default async function CartaPage({
 
   return (
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
+      <script dangerouslySetInnerHTML={{ __html: `
+        try {
+          var o = localStorage.getItem("qc_theme_override");
+          if (o) {
+            var el = document.currentScript.parentElement;
+            el.classList.remove("carta-dark", "carta-light");
+            el.classList.add(o === "dark" ? "carta-dark" : "carta-light");
+          }
+        } catch(e) {}
+      `}} />
       {accentColor && (
         <style dangerouslySetInnerHTML={{ __html: `
           .carta-dark, .carta-light {

@@ -119,7 +119,7 @@ function ImpactHeroSlider({
   const photo = getDishPhoto(d);
   const isRec = d.tags?.includes("RECOMMENDED");
   const isPop = popularDishIds.has(d.id);
-  const badge = isRec ? "Recomendado" : isPop ? "Popular" : null;
+  const badge = isRec ? t(lang, "recommended") : isPop ? t(lang, "feedPopular") : null;
 
   return (
     <section
@@ -283,7 +283,7 @@ function MoodSection({
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
         color: "var(--impact-section-title)",
       }}>
-        {"Que se te antoja?"}
+        {t(useLang(), "impactCraving" as any)}
       </h2>
       <div style={{ position: "relative" }}>
         <div
@@ -379,7 +379,7 @@ function FeaturedSection({
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
         color: "var(--impact-section-title)",
-      }}>Destacados</h2>
+      }}>{t(useLang(), "impactFeatured" as any)}</h2>
       <div style={{ position: "relative" }}>
         <div
           ref={scrollRef}
@@ -466,6 +466,7 @@ function ImpactDishCard({
   autoRecommended?: boolean;
   onClick: () => void;
 }) {
+  const lang = useLang();
   const photo = getDishPhoto(dish);
   const [imgLoaded, setImgLoaded] = useState(false);
   const isRec = dish.tags?.includes("RECOMMENDED");
@@ -527,7 +528,7 @@ function ImpactDishCard({
                 background: "rgba(244,166,35,0.12)",
                 padding: "2px 8px", borderRadius: 50,
               }}>
-                {autoRecommended ? "✨ Para ti" : "⭐ Recomendado"}
+                {autoRecommended ? "✨ Para ti" : "⭐ " + t(lang, "recommended")}
               </span>
             )}
             {isPopular && (
@@ -537,7 +538,7 @@ function ImpactDishCard({
                 background: "rgba(232,85,48,0.12)",
                 padding: "2px 8px", borderRadius: 50,
               }}>
-                🔥 Popular
+                🔥 {t(lang, "feedPopular")}
               </span>
             )}
           </div>
@@ -1030,7 +1031,7 @@ export default function CartaImpact({
       {/* Smoke / warm glow */}
       <div style={{
         position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none", opacity: 0.5,
-        background: "radial-gradient(ellipse at 50% 8%, rgba(244,166,35,0.16), transparent 32%), radial-gradient(ellipse at 70% 24%, rgba(244,166,35,0.10), transparent 28%)",
+        background: "radial-gradient(ellipse at 50% 8%, color-mix(in srgb, var(--carta-accent) 16%, transparent), transparent 32%), radial-gradient(ellipse at 70% 24%, color-mix(in srgb, var(--carta-accent) 10%, transparent), transparent 28%)",
         filter: "blur(10px)",
       }} />
 
@@ -1197,7 +1198,7 @@ export default function CartaImpact({
             fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
             letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
             color: "var(--impact-section-title)",
-          }}>Ofertas</h2>
+          }}>{t(lang, "impactOffers" as any)}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {(marketingPromos || []).map((p: any) => {
               const dish = p.dishes?.[0];
@@ -1312,7 +1313,7 @@ export default function CartaImpact({
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
           color: "var(--impact-section-title)",
         }}>
-          {"Menú"}
+          {t(lang, "impactMenu" as any)}
         </h2>
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
@@ -1422,8 +1423,6 @@ export default function CartaImpact({
           <div key={category.id}>
             {index === Math.max(2, Math.floor(menuSections.length * 0.4)) && (
               <ExperienceBanner restaurantId={restaurant.id} />
-            )}
-            {index === Math.max(4, Math.floor(menuSections.length * 0.8)) && (
             )}
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
@@ -1552,7 +1551,7 @@ export default function CartaImpact({
         <DishDetailErrorBoundary onClose={() => { setSelectedDish(null); setDishFromHero(false); }}>
           <DishDetail
             dish={selectedDish}
-            allDishes={dishFromHero ? [selectedDish] : sortedDishes}
+            allDishes={dishes}
             categories={categories}
             restaurantId={restaurant.id}
             reviews={reviews}

@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Dish } from "@prisma/client";
 import SpicyStamp from "./SpicyStamp";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 interface DishCardProps {
   dish: Dish;
@@ -30,6 +32,7 @@ function DishBadges({ dish }: { dish: Dish }) {
 
 /* ── BASIC ── */
 function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendationReason, isExploration, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
+  const lang = useLang();
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
 
@@ -54,12 +57,12 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
             {isRec && (
               <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
-                ⭐ Recomendado
+                ⭐ {t(lang, "recommended")}
               </span>
             )}
             {isPopular && (
               <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#e85530", background: "rgba(232,85,48,0.1)", padding: "2px 8px", borderRadius: 50 }}>
-                🔥 Popular hoy
+                🔥 {t(lang, "feedPopular")}
               </span>
             )}
           </div>
@@ -111,6 +114,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
 
 /* ── PREMIUM CARD — foto arriba, info abajo ── */
 function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular }: Omit<DishCardProps, "variant">) {
+  const lang = useLang();
   const photo = dish.photos?.[0];
   const isRec = dish.tags?.includes("RECOMMENDED");
   const [loaded, setLoaded] = useState(false);
@@ -140,8 +144,8 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         {/* Badges sobre la foto */}
         {(isRec || isPopular) && (
           <div style={{ position: "absolute", top: 8, left: 8, display: "flex", gap: 4, zIndex: 2 }}>
-            {isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 9px", borderRadius: 50 }}>⭐ Recomendado</span>}
-            {isPopular && !isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>🔥 Popular hoy</span>}
+            {isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 9px", borderRadius: 50 }}>⭐ {t(lang, "recommended")}</span>}
+            {isPopular && !isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>🔥 {t(lang, "feedPopular")}</span>}
           </div>
         )}
       </div>

@@ -51,6 +51,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
     container.classList.toggle("carta-dark", newDark);
     container.classList.toggle("carta-light", !newDark);
     setIsDark(newDark);
+    localStorage.setItem("qc_theme_override", newDark ? "dark" : "light");
   };
 
   // Notify other components when view selector opens/closes
