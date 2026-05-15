@@ -243,6 +243,42 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} processed: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
 
+    // Send email with carta link
+    if (lead.email) {
+      try {
+        const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
+        const ownerName = lead.ownerName || "Hola";
+        await sendAdminEmail({
+          to: lead.email,
+          subject: `${restaurant.name} · Tu carta viva está lista`,
+          purpose: "funnel_carta_ready",
+          html: `
+            <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
+              <img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />
+              <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
+                ${ownerName}, tu carta está lista
+              </h1>
+              <p style="font-size: 15px; color: #555; line-height: 1.5; margin: 0 0 24px;">
+                Transformamos la carta de <strong>${restaurant.name}</strong> en una experiencia digital.
+                Tiene ${createdDishes.length} platos organizados y listos para que tus clientes los vean.
+              </p>
+              <a href="${cartaUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
+                Ver mi carta →
+              </a>
+              <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
+                Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
+                Si tienes preguntas, escríbenos a <a href="mailto:hola@quierocomer.cl" style="color: #E8A33D;">hola@quierocomer.cl</a>
+              </p>
+            </div>
+          `,
+        });
+        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED" } });
+        console.log(`[Pipeline] Email sent to ${lead.email}`);
+      } catch (emailErr) {
+        console.error("[Pipeline] Email failed:", emailErr);
+      }
+    }
+
     return { slug: restaurant.slug, url: cartaUrl };
   } catch (error) {
     // Mark as failed (back to PENDING so it can be retried)
