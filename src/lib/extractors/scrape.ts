@@ -30,10 +30,10 @@ async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string>
   } finally { clearTimeout(timer); }
 }
 
-async function fetchPage(url: string): Promise<string> {
+async function fetchPage(url: string, forceJina = false): Promise<string> {
   const domain = getDomain(url);
-  const preferDirect = DIRECT_FETCH_DOMAINS.some(d => domain.includes(d));
-  const preferJina = JINA_FIRST_DOMAINS.some(d => domain.includes(d));
+  const preferDirect = !forceJina && DIRECT_FETCH_DOMAINS.some(d => domain.includes(d));
+  const preferJina = forceJina || JINA_FIRST_DOMAINS.some(d => domain.includes(d));
 
   if (preferDirect) {
     try { const d = await fetchWithTimeout(url, 10000); if (d.length > 500) return d; } catch {}
@@ -119,9 +119,10 @@ function cleanName(name: string): string {
  * Quick preview: fetch page, send only first 4KB to Haiku for 5 dishes (~15s total).
  * Used for non-Justo providers where full extraction is too slow for preview.
  */
-export async function extractQuickPreview(cartaUrl: string): Promise<ExtractionResult> {
-  console.log("[QuickPreview] Fetching page:", cartaUrl);
-  const pageContent = await fetchPage(cartaUrl);
+export async function extractQuickPreview(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
+  const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
+  console.log("[QuickPreview] Fetching page:", cartaUrl, needsJina ? "(Jina forced)" : "");
+  const pageContent = await fetchPage(cartaUrl, needsJina);
   console.log("[QuickPreview] Raw content:", pageContent.length, "chars");
 
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
@@ -166,11 +167,12 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
  * Generic scraper: fetches URL (with Jina for SPAs), sends to Claude for extraction.
  * Works with Fudo, Mercat, Gourmedia, and any unknown provider.
  */
-export async function extractWithScraper(cartaUrl: string): Promise<ExtractionResult> {
+export async function extractWithScraper(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
   const baseUrl = new URL(cartaUrl).origin;
+  const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
 
-  console.log("[Scraper] Fetching page:", cartaUrl);
-  const pageContent = await fetchPage(cartaUrl);
+  console.log("[Scraper] Fetching page:", cartaUrl, needsJina ? "(Jina forced)" : "");
+  const pageContent = await fetchPage(cartaUrl, needsJina);
   console.log("[Scraper] Raw content length:", pageContent.length);
   // If content looks like markdown (from Jina), skip HTML cleaning
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));

@@ -69,7 +69,7 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
     case "Mercat":
     case "Gourmedia":
     default:
-      extraction = await extractQuickPreview(lead.cartaUrl);
+      extraction = await extractQuickPreview(lead.cartaUrl, lead.detectedProvider?.name);
       break;
   }
 

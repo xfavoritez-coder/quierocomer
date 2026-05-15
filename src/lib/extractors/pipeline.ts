@@ -67,7 +67,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null): Promi
     case "Gourmedia":
     default:
       // Generic scraper: Jina AI + Claude. Works with any provider.
-      return extractWithScraper(cartaUrl);
+      return extractWithScraper(cartaUrl, providerName);
   }
 }
 
