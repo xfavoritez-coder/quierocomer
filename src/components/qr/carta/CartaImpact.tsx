@@ -1021,7 +1021,7 @@ export default function CartaImpact({
             <Search size={15} color="white" />
           </button>
           {enabledLangs.length > 1 && (
-            <button onClick={() => cycleLang()} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
+            <button onClick={() => { alert("Lang: " + lang + " | enabled: " + enabledLangs.join(",")); cycleLang(); }} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
               {lang.toUpperCase()}
             </button>
           )}
