@@ -291,21 +291,6 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                 {abVariant?.titleText
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
               </h3>
-              {(() => {
-                const perk = birthdayPerk?.trim();
-                let subtitle: string | null = null;
-                if (perk) {
-                  subtitle = t(lang, "bdayModalSubPerk").replace("{perk}", perk);
-                } else if (abVariant?.subtitleText) {
-                  subtitle = abVariant.subtitleText;
-                }
-                // Only show subtitle if there's a perk or A/B variant text
-                return subtitle ? (
-                  <p style={{ fontSize: "0.85rem", color: "var(--carta-text3, #888)", marginTop: 6, lineHeight: 1.5 }}>
-                    {subtitle}
-                  </p>
-                ) : null;
-              })()}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
@@ -316,7 +301,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     type="text"
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Nombre"
+                    placeholder={t(lang, "bdayPlaceholderName")}
                     style={{
                       width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
                       padding: "12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
@@ -328,7 +313,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
+                    placeholder={t(lang, "bdayPlaceholderEmail")}
                     style={{
                       width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
                       padding: "12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
@@ -344,10 +329,10 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                   type="text"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Nombre"
+                  placeholder={t(lang, "bdayPlaceholderName")}
                   style={{
-                    width: "100%", background: "#f9f9f7", border: "1px solid #eee", borderRadius: 10,
-                    padding: "12px 16px", color: "#0e0e0e", fontSize: "0.92rem",
+                    width: "100%", background: "var(--carta-search-bg, #f9f9f7)", border: "1px solid var(--carta-card-border, #eee)", borderRadius: 10,
+                    padding: "12px 16px", color: "var(--carta-text, #0e0e0e)", fontSize: "0.92rem",
                     outline: "none", fontFamily: "inherit", boxSizing: "border-box",
                   }}
                 />
@@ -358,7 +343,7 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                     className="bday-input"
                     type="text"
                     inputMode="numeric"
-                    placeholder="Fecha de nacimiento"
+                    placeholder={t(lang, "bdayPlaceholderDate")}
                     value={birthDateText}
                     onChange={(e) => handleDateTextChange(e.target.value)}
                     maxLength={10}

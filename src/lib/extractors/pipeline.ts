@@ -122,6 +122,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   // Mark as processing
   await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PROCESSING" } });
 
+  // Safety timeout: if pipeline hangs, reset to PENDING so the cron can retry
+  const pipelineTimeout = setTimeout(async () => {
+    console.error(`[Pipeline] Timeout for lead ${leadId} — resetting to PENDING`);
+    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PENDING" } }).catch(() => {});
+  }, 240000); // 4 minutes
+
   try {
     const providerName = lead.detectedProvider?.name || null;
     const extraction = await extractMenu(lead.cartaUrl, providerName);
@@ -275,6 +281,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`;
 
+    clearTimeout(pipelineTimeout);
+
     // Mark lead as READY and link to restaurant
     await prisma.lead.update({
       where: { id: leadId },
@@ -331,6 +339,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     return { slug: restaurant.slug, url: cartaUrl };
   } catch (error) {
+    clearTimeout(pipelineTimeout);
     // Mark as failed (back to PENDING so it can be retried)
     await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PENDING" } });
     // Notify admin

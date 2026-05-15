@@ -22,6 +22,29 @@ export default function SubirCartaClient() {
   const isLinkValid = mode === "link" && (() => {
     try { new URL(normalizedUrl); return true; } catch { return false; }
   })();
+  const extractedDomain = (() => {
+    try { return new URL(normalizedUrl).hostname; } catch { return ""; }
+  })();
+  const [urlChecking, setUrlChecking] = useState(false);
+  const [urlReachable, setUrlReachable] = useState<boolean | null>(null);
+
+  // Check if URL is reachable when valid
+  const checkUrl = async (url: string) => {
+    setUrlChecking(true);
+    setUrlReachable(null);
+    try {
+      const res = await fetch("/api/subircarta/check-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      setUrlReachable(data.reachable);
+    } catch {
+      setUrlReachable(null);
+    }
+    setUrlChecking(false);
+  };
 
   const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;
   const ctaEnabled = mode === "link" ? isLinkValid : hasFile;
@@ -165,9 +188,18 @@ export default function SubirCartaClient() {
                       placeholder="https://turestaurante.cl/carta"
                       style={{ maxWidth: 420, margin: "0 auto" }}
                       value={linkUrl}
-                      onChange={(e) => { setLinkUrl(e.target.value); setError(""); }}
+                      onChange={(e) => { setLinkUrl(e.target.value); setError(""); setUrlReachable(null); }}
+                      onBlur={() => { if (isLinkValid) checkUrl(normalizedUrl); }}
                       onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
                     />
+                    {isLinkValid && extractedDomain && (
+                      <div style={{ marginTop: 8, fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                        <span style={{ color: "var(--cream-2)", opacity: 0.7 }}>{extractedDomain}</span>
+                        {urlChecking && <span style={{ color: "var(--amber-2)" }}>verificando...</span>}
+                        {urlReachable === true && <span style={{ color: "#4ade80" }}>✓ accesible</span>}
+                        {urlReachable === false && <span style={{ color: "#f87171" }}>⚠ no responde, verifica la URL</span>}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
