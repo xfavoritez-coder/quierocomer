@@ -155,7 +155,7 @@ export default async function CartaPage({
   const accentColor = (restaurant as any).cartaAccentColor || null;
 
   return (
-    <div className={themeClass}>
+    <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       {accentColor && (
         <style dangerouslySetInnerHTML={{ __html: `
           .${themeClass} {

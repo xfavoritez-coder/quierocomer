@@ -120,13 +120,13 @@ export default function ConfirmacionClient() {
             <div className="phone phone-generating" style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
-                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: `1px solid ${cartaReady ? "rgba(67,209,123,0.2)" : "rgba(232,163,61,0.15)"}`, transition: "border-color 0.5s" }}>
+                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", transition: "border-color 0.5s" }}>
                   {cartaReady ? (
                     <>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(67,209,123,0.15)", display: "grid", placeItems: "center", margin: "0 auto 4px" }}>
-                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M20 6L9 17l-5-5" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(232,163,61,0.15)", display: "grid", placeItems: "center", margin: "0 auto 4px" }}>
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M20 6L9 17l-5-5" stroke="var(--amber-2, #E8A33D)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </div>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#43d17b", margin: "0 0 3px", letterSpacing: "0.01em" }}>Lista</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "var(--amber-2, #E8A33D)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Lista</p>
                       <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Revisa tu correo</p>
                     </>
                   ) : (

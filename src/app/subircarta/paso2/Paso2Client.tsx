@@ -203,11 +203,17 @@ export default function Paso2Client() {
     ? decodeURIComponent(cartaFileUrl.split("/").pop() || "archivo")
     : null;
 
-  const pillLabel = cartaType === "LINK" ? displayUrl : displayFileName;
+  const pillLabelBase = cartaType === "LINK" ? displayUrl : displayFileName;
+  const pillLabelTexts = [
+    `Revisando ${pillLabelBase}`,
+    "Leyendo tu carta",
+    "Extrayendo platos y precios",
+  ];
+  const pillLabel = animDone ? pillLabelBase : pillLabelTexts[pillMetaIndex % pillLabelTexts.length];
   const pillMetaTexts = [
     cartaType === "LINK" ? "Link recibido · listo para analizar" : cartaType === "PHOTO" ? "Foto recibida · lista para analizar" : "Archivo recibido · listo para analizar",
-    "Leyendo platos y categorías...",
-    "Detectando precios...",
+    "Accediendo a tu carta...",
+    "Detectando categorías...",
     "Preparando tu nueva carta...",
   ];
   const pillMeta = animDone ? pillMetaTexts[0] : pillMetaTexts[pillMetaIndex % pillMetaTexts.length];
@@ -256,7 +262,7 @@ export default function Paso2Client() {
                   )}
                 </div>
                 <div>
-                  <div className="file-name">{pillLabel}</div>
+                  <div className="file-name" key={`title-${pillMetaIndex}`} style={{ animation: animDone ? "none" : "pillMetaFade 0.4s ease" }}>{pillLabel}</div>
                   <div className="file-meta" key={pillMetaIndex} style={{ animation: "pillMetaFade 0.4s ease" }}>{pillMeta}</div>
                 </div>
               </div>
