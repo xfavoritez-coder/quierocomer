@@ -102,8 +102,8 @@ export default function ConfirmacionClient() {
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
                 <div style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", padding: "14px 20px", borderRadius: 16, textAlign: "center", maxWidth: "80%" }}>
-                  <p style={{ fontSize: 13, fontWeight: 700, color: "white", margin: "0 0 4px" }}>⏳ Casi lista</p>
-                  <p style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", margin: 0 }}>Te la enviaremos a tu correo</p>
+                  <p style={{ fontSize: 16, fontWeight: 700, color: "white", margin: "0 0 5px" }}>⏳ Casi lista</p>
+                  <p style={{ fontSize: 13, color: "rgba(255,255,255,0.7)", margin: 0 }}>Te la enviaremos a tu correo</p>
                 </div>
               </div>
               {/* Phone notch */}
