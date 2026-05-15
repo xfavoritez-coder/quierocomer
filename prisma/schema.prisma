@@ -1115,6 +1115,15 @@ enum HappyHourDiscountType {
   PERCENTAGE
 }
 
+model AdminPushSubscription {
+  id       String   @id @default(cuid())
+  endpoint String   @unique
+  p256dh   String
+  auth     String
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
 model WaiterPushSubscription {
   id           String     @id @default(cuid())
   restaurantId String

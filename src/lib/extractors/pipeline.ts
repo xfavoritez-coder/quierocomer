@@ -282,10 +282,28 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Notify admin of new lead processed
+    try {
+      const { sendAdminPush } = await import("@/lib/adminPush");
+      await sendAdminPush(
+        "🧞 Nueva carta creada",
+        `${restaurant.name} · ${createdDishes.length} platos`,
+        cartaUrl,
+      );
+    } catch {}
+
     return { slug: restaurant.slug, url: cartaUrl };
   } catch (error) {
     // Mark as failed (back to PENDING so it can be retried)
     await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PENDING" } });
+    // Notify admin
+    try {
+      const { sendAdminPush } = await import("@/lib/adminPush");
+      await sendAdminPush(
+        "⚠️ Lead sin procesar",
+        `${lead.localName || lead.cartaUrl?.slice(0, 30)} quedó PENDING`,
+      );
+    } catch {}
     throw error;
   }
 }

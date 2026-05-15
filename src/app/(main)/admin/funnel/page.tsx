@@ -32,6 +32,28 @@ export default function FunnelPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [pushEnabled, setPushEnabled] = useState(false);
+
+  const enablePush = async () => {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+      const reg = await navigator.serviceWorker.register("/sw-admin.js");
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+      });
+      const keys = sub.toJSON().keys!;
+      await fetch("/api/admin/push", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endpoint: sub.endpoint, p256dh: keys.p256dh, auth: keys.auth }),
+      });
+      setPushEnabled(true);
+    } catch (e) {
+      console.error("Push subscription failed:", e);
+    }
+  };
 
   useEffect(() => {
     fetch("/api/admin/funnel")
@@ -49,9 +71,22 @@ export default function FunnelPage() {
 
   return (
     <div style={{ maxWidth: 1100 }}>
-      <h1 style={{ fontFamily: "var(--font-display, Georgia)", fontSize: 28, color: "#F4A623", marginBottom: 24 }}>
-        Funnel /subircarta
-      </h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <h1 style={{ fontFamily: "var(--font-display, Georgia)", fontSize: 28, color: "#F4A623", margin: 0 }}>
+          Funnel /subircarta
+        </h1>
+        <button
+          onClick={enablePush}
+          disabled={pushEnabled}
+          style={{
+            padding: "8px 16px", borderRadius: 8, border: "none", cursor: pushEnabled ? "default" : "pointer",
+            background: pushEnabled ? "#1a3a1a" : "#F4A623", color: pushEnabled ? "#43d17b" : "#0a0a0a",
+            fontSize: 13, fontWeight: 600, opacity: pushEnabled ? 0.8 : 1,
+          }}
+        >
+          {pushEnabled ? "🔔 Notificaciones activas" : "🔔 Activar notificaciones"}
+        </button>
+      </div>
 
       {/* Stats cards */}
       {stats && (
