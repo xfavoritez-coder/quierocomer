@@ -207,7 +207,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan }: Props
           boxShadow: open ? "0 0 16px rgba(244,166,35,0.2)" : "0 4px 18px rgba(0,0,0,0.25)",
         }}
       >
-        <Layers size={18} strokeWidth={1.75} />
+        <Layers size={18} strokeWidth={1.75} color="#F4A623" />
       </button>
 
       {/* First-time tip del Genio */}

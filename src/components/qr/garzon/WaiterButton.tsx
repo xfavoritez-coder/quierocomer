@@ -189,8 +189,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         ) : (
           <Bell
             size={size * 0.32}
-            color={isInactive ? "rgba(255,255,255,0.5)" : "white"}
-            fill={isInactive ? "rgba(255,255,255,0.5)" : "white"}
+            color={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
+            fill={isInactive ? "rgba(255,255,255,0.5)" : "#F4A623"}
             style={{ animation: state === "calling" ? "waiterShake 0.3s ease-in-out infinite" : undefined }}
           />
         )}
