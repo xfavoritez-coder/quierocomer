@@ -119,7 +119,7 @@ export default function ConfirmacionClient() {
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
                 <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "18px 24px", borderRadius: 20, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)" }}>
                   <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px" }} />
-                  <p style={{ fontSize: 16, fontWeight: 700, color: "#F4A623", margin: "0 0 5px", letterSpacing: "0.01em" }}>Casi lista</p>
+                  <p style={{ fontSize: 15, fontWeight: 700, color: "#F4A623", margin: "0 0 5px", letterSpacing: "0.01em" }}>Casi lista</p>
                   <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.4 }}>En minutos recibirás tu nueva carta</p>
                 </div>
               </div>
