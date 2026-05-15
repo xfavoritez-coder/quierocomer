@@ -102,7 +102,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Save preview to lead (for confirmation page)
-    if (!lead.preview || !(lead.preview as any)?.sampleDishes?.length) {
+    const existingPreview = lead.preview as any;
+    const previewIsValid = existingPreview?.sampleDishes?.length > 0 && existingPreview.sampleDishes.some((d: any) => d.price > 0 || d.imageUrl);
+    if (!previewIsValid) {
       const categories = new Set(extraction.dishes.map((d) => d.category));
       const previewData = {
         restaurantName: extraction.restaurantName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim(),

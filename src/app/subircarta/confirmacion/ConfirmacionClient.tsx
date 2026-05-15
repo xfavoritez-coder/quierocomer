@@ -87,15 +87,17 @@ export default function ConfirmacionClient() {
     fetchLead();
     // Poll every 3s until preview appears
     polling = setInterval(fetchLead, 3000);
-    // Stop polling after 2 minutes max and show timeout message
+    // Show timeout message after 30s but keep polling
     const maxTimeout = setTimeout(() => {
-      if (polling) clearInterval(polling);
       if (!cartaReady) setTimedOut(true);
     }, 30000);
+    // Stop polling after 5 minutes max
+    const stopTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 300000);
 
     return () => {
       if (polling) clearInterval(polling);
       clearTimeout(maxTimeout);
+      clearTimeout(stopTimeout);
     };
   }, [leadId]);
 
@@ -154,10 +156,10 @@ export default function ConfirmacionClient() {
               <>
                 <h1>{cartaReady
                   ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></>
-                  : timedOut ? <>Nos tomará un poco <span>más</span></>
+                  : timedOut ? <>Tu carta necesita atención <span>especial</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
-                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Tu carta necesita atención especial. Te avisaremos por correo cuando esté lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
+                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más tenerla lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
               </>
             )}
           </div>
@@ -275,82 +277,98 @@ export default function ConfirmacionClient() {
           </>
           ) : (
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
-            <div style={{ fontSize: 40, marginBottom: 12, animation: "geniePulse 2s ease-in-out infinite" }}>🧞‍♂️ ✨</div>
-            <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Preparando tu preview...</p>
-            <div style={{ width: 40, height: 3, borderRadius: 2, background: "var(--amber)", margin: "12px auto 0", animation: "previewLoader 1.5s ease-in-out infinite" }} />
+            {timedOut ? (
+              <>
+                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(232,163,61,0.1)", display: "grid", placeItems: "center", margin: "0 auto 14px" }}>
+                  <span style={{ fontSize: 24 }}>✉️</span>
+                </div>
+                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--cream)", marginBottom: 4 }}>Te avisaremos por correo</p>
+                <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>Normalmente dentro de 1 hora</p>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 40, marginBottom: 12, animation: "geniePulse 2s ease-in-out infinite" }}>🧞‍♂️ ✨</div>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "var(--cream)", marginBottom: 8 }}>Preparando tu preview...</p>
+                <div style={{ width: 40, height: 3, borderRadius: 2, background: "var(--amber)", margin: "12px auto 0", animation: "previewLoader 1.5s ease-in-out infinite" }} />
+              </>
+            )}
           </div>
           )}
 
-          {/* Badge */}
-          <div className="badges">
-            <div className="badge">
-              <div className="badge-icon">
-                {modalDismissed ? (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5"/></svg>
-                )}
-              </div>
-              <div>
-                <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Revisa tu correo"}</div>
-                <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Si no lo encuentras en unos minutos, revisa spam o promociones."}</div>
+          {/* Badge — hide only when timed out AND not ready */}
+          {(!timedOut || cartaReady) && (
+            <div className="badges">
+              <div className="badge">
+                <div className="badge-icon">
+                  {modalDismissed ? (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5"/></svg>
+                  )}
+                </div>
+                <div>
+                  <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Revisa tu correo"}</div>
+                  <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Si no lo encuentras en unos minutos, revisa spam o promociones."}</div>
+                </div>
               </div>
             </div>
-            {leadEmail && !editingEmail && (
-              <div style={{ textAlign: "center", fontSize: 13, color: "var(--cream-2)", marginTop: 8 }}>
-                Te lo enviamos a <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
-                {" · "}
-                <button
-                  onClick={() => { setEmailDraft(leadEmail); setEditingEmail(true); }}
-                  style={{ background: "none", border: "none", color: "var(--amber-2)", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0, textDecoration: "underline" }}
-                >
-                  Corregir
-                </button>
-              </div>
-            )}
-            {editingEmail && (
-              <div style={{ marginTop: 10, display: "flex", gap: 8, maxWidth: 360, margin: "10px auto 0", alignItems: "center" }}>
-                <input
-                  type="email"
-                  autoFocus
-                  value={emailDraft}
-                  onChange={(e) => setEmailDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      setSavingEmail(true);
-                      fetch(`/api/subircarta/${leadId}`, {
-                        method: "PATCH",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ localName: localName || "Local", ownerName: "Dueño", email: emailDraft.trim() }),
-                      }).then(() => { setLeadEmail(emailDraft.trim()); setEditingEmail(false); }).catch(() => {}).finally(() => setSavingEmail(false));
-                    }
-                    if (e.key === "Escape") setEditingEmail(false);
-                  }}
-                  style={{ flex: 1, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "rgba(0,0,0,.32)", color: "var(--cream)", padding: "0 12px", fontSize: 14, outline: "none" }}
-                />
-                <button
-                  disabled={savingEmail}
-                  onClick={() => {
+          )}
+
+          {/* Email line + Corregir — always visible */}
+          {leadEmail && !editingEmail && (
+            <div style={{ textAlign: "center", fontSize: 13, color: "var(--cream-2)", marginTop: 12 }}>
+              Te lo enviamos a <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
+              {" · "}
+              <button
+                onClick={() => { setEmailDraft(leadEmail); setEditingEmail(true); }}
+                style={{ background: "none", border: "none", color: "var(--amber-2)", cursor: "pointer", fontSize: 13, fontWeight: 600, padding: 0, textDecoration: "underline" }}
+              >
+                Corregir
+              </button>
+            </div>
+          )}
+          {editingEmail && (
+            <div style={{ marginTop: 10, display: "flex", gap: 8, maxWidth: 360, margin: "10px auto 0", alignItems: "center" }}>
+              <input
+                type="email"
+                autoFocus
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
                     setSavingEmail(true);
                     fetch(`/api/subircarta/${leadId}`, {
                       method: "PATCH",
                       headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ localName: localName || "Local", ownerName: "Dueño", email: emailDraft.trim() }),
                     }).then(() => { setLeadEmail(emailDraft.trim()); setEditingEmail(false); }).catch(() => {}).finally(() => setSavingEmail(false));
-                  }}
-                  style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "var(--amber)", color: "#0e0e0e", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
-                >
-                  {savingEmail ? "..." : "Guardar"}
-                </button>
-                <button
-                  onClick={() => setEditingEmail(false)}
-                  style={{ height: 40, padding: "0 12px", borderRadius: 10, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}
-                >
-                  Cancelar
-                </button>
-              </div>
-            )}
-          </div>
+                  }
+                  if (e.key === "Escape") setEditingEmail(false);
+                }}
+                style={{ flex: 1, height: 40, borderRadius: 10, border: "1px solid var(--line)", background: "rgba(0,0,0,.32)", color: "var(--cream)", padding: "0 12px", fontSize: 14, outline: "none" }}
+              />
+              <button
+                disabled={savingEmail}
+                onClick={() => {
+                  setSavingEmail(true);
+                  fetch(`/api/subircarta/${leadId}`, {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ localName: localName || "Local", ownerName: "Dueño", email: emailDraft.trim() }),
+                  }).then(() => { setLeadEmail(emailDraft.trim()); setEditingEmail(false); }).catch(() => {}).finally(() => setSavingEmail(false));
+                }}
+                style={{ height: 40, padding: "0 16px", borderRadius: 10, border: "none", background: "var(--amber)", color: "#0e0e0e", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+              >
+                {savingEmail ? "..." : "Guardar"}
+              </button>
+              <button
+                onClick={() => setEditingEmail(false)}
+                style={{ height: 40, padding: "0 12px", borderRadius: 10, border: "1px solid var(--line)", background: "transparent", color: "var(--muted)", fontSize: 13, cursor: "pointer" }}
+              >
+                Cancelar
+              </button>
+            </div>
+          )}
         </section>
       </main>
 
