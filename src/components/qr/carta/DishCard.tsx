@@ -44,10 +44,12 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={20} top={4} left={4} />
       </div>
       <div className="flex-1 min-w-0 flex flex-col justify-center gap-1">
-        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {dish.name}{" "}<DishBadges dish={dish} />
-          {dish.tags?.includes("NEW") && <>{" "}<span style={{ fontSize: "8px", fontWeight: 700, color: "white", background: "#e85530", padding: "1px 6px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
-        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "1rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>
+            {dish.name}{" "}<DishBadges dish={dish} />
+          </h3>
+          {dish.tags?.includes("NEW") && <span style={{ fontSize: "9px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", flexShrink: 0 }}>NUEVO</span>}
+        </div>
         {(isRec || isPopular) && (
           <div className="flex items-center gap-1 flex-wrap font-[family-name:var(--font-dm)]">
             {isRec && (
@@ -125,7 +127,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
       }}
     >
       {/* Foto */}
-      <div className="relative overflow-hidden" style={{ width: "100%", aspectRatio: "1/1", background: "#1a1a1a" }}>
+      <div className="relative overflow-hidden" style={{ width: "100%", aspectRatio: "185/200", background: "#1a1a1a" }}>
         {photo ? (
           <>
             {!loaded && <div style={{ position: "absolute", inset: 0, background: "#1a1a1a", overflow: "hidden" }}><div style={{ position: "absolute", inset: 0, background: "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%)", animation: "shimmer 1.5s infinite" }} /></div>}
@@ -138,17 +140,19 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
         {/* Badges sobre la foto */}
         {(isRec || isPopular) && (
           <div style={{ position: "absolute", top: 8, left: 8, display: "flex", gap: 4, zIndex: 2 }}>
-            {isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "#F4A623", color: "white", fontSize: "0.73rem", fontWeight: 700, padding: "3px 9px", borderRadius: 50 }}>⭐ Recomendado</span>}
-            {isPopular && !isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>🔥 Popular</span>}
+            {isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 9px", borderRadius: 50 }}>⭐ Recomendado</span>}
+            {isPopular && !isRec && <span className="font-[family-name:var(--font-dm)]" style={{ background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", color: "white", fontSize: "0.73rem", fontWeight: 600, padding: "3px 8px", borderRadius: 6 }}>🔥 Popular hoy</span>}
           </div>
         )}
       </div>
       {/* Info */}
       <div style={{ padding: "10px 12px 12px" }}>
-        <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>
-          {dish.name}{" "}<DishBadges dish={dish} />
-          {dish.tags?.includes("NEW") && <>{" "}<span style={{ background: "#e85530", color: "white", fontSize: "8px", fontWeight: 700, padding: "1px 6px", borderRadius: 50, letterSpacing: "0.05em", verticalAlign: "middle" }}>NUEVO</span></>}
-        </h3>
+        <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+          <h3 className="font-[family-name:var(--font-dm)]" style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--carta-text)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0, flex: 1, minWidth: 0 }}>
+            {dish.name}{" "}<DishBadges dish={dish} />
+          </h3>
+          {dish.tags?.includes("NEW") && <span style={{ background: "var(--carta-accent, #e85530)", color: "white", fontSize: "9px", fontWeight: 700, padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", flexShrink: 0 }}>NUEVO</span>}
+        </div>
         {dish.description && (
           <p className="line-clamp-2 font-[family-name:var(--font-dm)]" style={{ fontSize: "0.78rem", color: "var(--carta-text3)", lineHeight: 1.4, margin: "3px 0 0" }}>
             {dish.description}

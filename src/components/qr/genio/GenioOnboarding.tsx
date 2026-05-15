@@ -547,10 +547,9 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
                         // si llamamos setDietType(null) antes, hasSaved cae a false y
                         // el step 0 cambia a su rama 'no-saved' (pantalla 'Hola, soy el Genio')
                         // que se ve por un frame antes que close() ejecute.
-                        close();
-                        // Limpieza local + DB en background — al reabrir, el componente se monta
-                        // fresh con hasSaved=false y arranca directo en step 1 (dieta).
                         localStorage.removeItem("qr_diet"); localStorage.removeItem("qr_restrictions"); localStorage.removeItem("qr_dislikes");
+                        window.dispatchEvent(new Event("genio-updated"));
+                        close();
                         if (document.cookie.includes("qr_user_id")) {
                           fetch("/api/qr/user/update", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ dietType: null, restrictions: [], dislikes: [] }) }).catch(() => {});
                         }

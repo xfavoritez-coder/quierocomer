@@ -557,11 +557,11 @@ export default function CartaPremium({
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 100,
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
-            background: "rgba(247,247,245,0.92)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            background: "color-mix(in srgb, var(--carta-bg, #f7f7f5) 92%, transparent)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
           }}
         >
           <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "#b8860b", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Personalizando la carta para ti...</span>
         </div>
       )}
 
@@ -703,8 +703,8 @@ export default function CartaPremium({
                       key={dish.id}
                       data-dish-id={dish.id}
                       style={{
-                        width: 205,
-                        minWidth: 205,
+                        width: 185,
+                        minWidth: 185,
                         flexShrink: 0,
                         scrollSnapAlign: "start",
                         marginLeft: i === 0 ? 20 : 14,

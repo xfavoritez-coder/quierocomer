@@ -304,7 +304,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   display: "flex", alignItems: "stretch", gap: 0,
                   padding: 0,
                   cursor: "pointer",
-                  boxShadow: "var(--carta-promo-shadow)",
+                  boxShadow: "0 0 24px color-mix(in srgb, var(--carta-accent, #F4A623) 22%, transparent), 0 0 48px color-mix(in srgb, var(--carta-accent, #F4A623) 12%, transparent)",
                   backdropFilter: "blur(8px)",
                   position: "relative",
                   overflow: "hidden",
@@ -312,34 +312,41 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   transition: "box-shadow 0.2s ease",
                 }}
               >
-                {/* Photo */}
-                <div style={{ position: "relative", width: 95, minHeight: 80, overflow: "hidden", flexShrink: 0 }}>
-                  {(p.promoType === "graphic" && p.imageUrl) ? (
-                    <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="95px" />
-                  ) : dish?.photos?.[0] ? (
-                    <Image src={dish.photos[0]} alt={dish.name} fill className="object-cover" sizes="95px" />
-                  ) : (
-                    <div style={{ width: "100%", height: "100%", background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
-                  )}
-                  {/* Discount badge */}
-                  {p.discountPct && (
-                    <div style={{
-                      position: "absolute", top: 4, left: 4,
-                      background: "#10b981", color: "white",
-                      fontSize: "10px", fontWeight: 700, padding: "2px 6px", borderRadius: 6,
-                      letterSpacing: "0.02em",
-                    }}>
-                      -{p.discountPct}%
-                    </div>
-                  )}
-                </div>
+                {/* Photo — collage si hay varias fotos */}
+                {(() => {
+                  if (p.promoType === "graphic" && p.imageUrl) {
+                    return (
+                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0 }}>
+                        <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="135px" />
+                      </div>
+                    );
+                  }
+                  const photos = p.dishes.map(d => d.photos?.[0]).filter(Boolean) as string[];
+                  if (photos.length >= 2) {
+                    return (
+                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                        {photos.slice(0, 2).map((src, i) => (
+                          <div key={i} style={{ position: "relative", flex: 1, borderBottom: i === 0 ? "1.5px solid var(--carta-surface)" : "none" }}>
+                            <Image src={src} alt={p.dishes[i]?.name || ""} fill className="object-cover" sizes="135px" />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  if (photos.length === 1) {
+                    return (
+                      <div style={{ position: "relative", width: 135, minHeight: 130, overflow: "hidden", flexShrink: 0 }}>
+                        <Image src={photos[0]} alt={p.name} fill className="object-cover" sizes="135px" />
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ width: 135, minHeight: 130, flexShrink: 0, background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
+                  );
+                })()}
 
                 {/* Content */}
-                <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 12px" }}>
-                  {/* Badge: pill solida naranja con dia.
-                       - sin daysOfWeek → 'OFERTA'
-                       - con dias → 'OFERTA MIÉRCOLES' (dia actual)
-                  */}
+                <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 16px" }}>
                   {(() => {
                     const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
                     const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
@@ -364,12 +371,16 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                       </span>
                     );
                   })()}
-                  <p style={{ fontSize: "14px", fontWeight: 700, color: "var(--carta-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ fontSize: "15.5px", fontWeight: 700, color: "var(--carta-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
-                  {p.description && (
-                    <p style={{ fontSize: "12.5px", color: "var(--carta-promo-desc)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: p.promoPrice ? 1 : 3, WebkitBoxOrient: "vertical" as any, lineHeight: 1.4 }}>{p.description}</p>
-                  )}
+                  {(() => {
+                    const desc = p.description
+                      || (p.dishes.length > 1 ? p.dishes.map(d => d.name).join(" + ") : null)
+                      || p.dishes[0]?.description;
+                    if (!desc) return null;
+                    return <p style={{ fontSize: "13.5px", color: "var(--carta-promo-desc)", margin: "2px 0 0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", lineHeight: 1.4 }}>{desc}</p>;
+                  })()}
                   {(p.promoPrice || (p.promoType !== "graphic" && dish?.price)) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 6, marginTop: 5 }}>
                       <span style={{ fontSize: "15px", fontWeight: 700, color: "var(--carta-accent, #F4A623)" }}>
@@ -465,10 +476,26 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                  con info legible. Antes era fullscreen con overlay y se mezclaba
                  con el texto que la imagen ya traia. */
               <div style={{ position: "relative", flex: 1, display: "flex", flexDirection: "column" }}>
-                {/* Imagen 70% */}
-                <div style={{ position: "relative", height: "70%", background: "#000", overflow: "hidden", flexShrink: 0 }}>
-                  {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
-                </div>
+                {/* Imagen 70% — collage si hay varias fotos */}
+                {(() => {
+                  const photos = selectedPromo.dishes.map(d => d.photos?.[0]).filter(Boolean) as string[];
+                  if (!isGraphic && photos.length >= 2) {
+                    return (
+                      <div style={{ position: "relative", height: "70%", overflow: "hidden", flexShrink: 0, display: "flex" }}>
+                        {photos.slice(0, 2).map((src, i) => (
+                          <div key={i} style={{ position: "relative", flex: 1, borderRight: i === 0 ? "2px solid var(--carta-detail-bg)" : "none" }}>
+                            <Image src={src} alt={selectedPromo.dishes[i]?.name || ""} fill className="object-cover" sizes="50vw" />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return (
+                    <div style={{ position: "relative", height: "70%", background: "#000", overflow: "hidden", flexShrink: 0 }}>
+                      {heroImg && <Image src={heroImg} alt={selectedPromo.name} fill className="object-cover" sizes="100vw" />}
+                    </div>
+                  );
+                })()}
                 {/* Panel blanco abajo con info */}
                 <div style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none", padding: "16px 22px 28px", background: "var(--carta-detail-bg)" }}>
                   {(() => {
@@ -488,11 +515,13 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   <h2 className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "22px", fontWeight: 700, lineHeight: 1.15, color: "var(--carta-text)", margin: "0 0 8px" }}>
                     {selectedPromo.name}
                   </h2>
-                  {selectedPromo.description && (
-                    <p style={{ fontSize: "13.5px", lineHeight: 1.55, color: "var(--carta-text2)", margin: "0 0 14px" }}>
-                      {selectedPromo.description}
-                    </p>
-                  )}
+                  {(() => {
+                    const desc = selectedPromo.description
+                      || (selectedPromo.dishes.length > 1 ? selectedPromo.dishes.map(d => d.name).join(" + ") : null)
+                      || selectedPromo.dishes[0]?.description;
+                    if (!desc) return null;
+                    return <p style={{ fontSize: "13.5px", lineHeight: 1.55, color: "var(--carta-text2)", margin: "0 0 14px" }}>{desc}</p>;
+                  })()}
                   {(selectedPromo.promoPrice || selectedPromo.originalPrice) && (
                     <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
                       {selectedPromo.promoPrice && <span className="font-[family-name:var(--font-playfair)]" style={{ fontSize: "26px", fontWeight: 700, color: "var(--carta-accent, #F4A623)", lineHeight: 1 }}>${selectedPromo.promoPrice.toLocaleString("es-CL")}</span>}
@@ -609,9 +638,13 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                     {selectedPromo.name}
                   </h2>
 
-                  {selectedPromo.description && (
-                    <p style={{ fontSize: "14px", lineHeight: 1.5, color: "var(--carta-text2)", margin: "0 0 20px" }}>{selectedPromo.description}</p>
-                  )}
+                  {(() => {
+                    const desc = selectedPromo.description
+                      || (selectedPromo.dishes.length > 1 ? selectedPromo.dishes.map(d => d.name).join(" + ") : null)
+                      || selectedPromo.dishes[0]?.description;
+                    if (!desc) return null;
+                    return <p style={{ fontSize: "14px", lineHeight: 1.5, color: "var(--carta-text2)", margin: "0 0 20px" }}>{desc}</p>;
+                  })()}
 
                   {selectedPromo.promoPrice && (
                     <div style={{ padding: "18px 0", borderTop: "1px solid var(--carta-card-border)", borderBottom: "1px solid var(--carta-card-border)", marginBottom: 24 }}>

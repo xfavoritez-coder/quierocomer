@@ -110,7 +110,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           role="menu"
           style={{
             position: "absolute",
-            right: 56,
+            right: 62,
             bottom: 0,
             display: "flex",
             flexDirection: "column",
@@ -177,15 +177,12 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           {/* Arrow pointing right to the trigger button */}
           <div style={{
             position: "absolute",
-            right: -5,
-            bottom: 18,
+            right: -4,
+            bottom: 23,
             transform: "rotate(45deg)",
             width: 10,
             height: 10,
             background: "rgba(0,0,0,0.78)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            borderLeft: "none",
-            borderBottom: "none",
           }} />
         </div>
       )}
@@ -195,21 +192,25 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
         onClick={() => { setOpen(!open); dismissTooltip(); }}
         aria-label="Cambiar vista"
         aria-expanded={open}
-        className="flex items-center justify-center active:scale-90"
+        className="flex items-center justify-center"
         style={{
           width: 58,
           height: 58,
           borderRadius: "50%",
-          background: open ? "rgba(244,166,35,0.2)" : "rgba(255,255,255,0.12)",
-          backdropFilter: "blur(16px)",
-          WebkitBackdropFilter: "blur(16px)",
-          border: open ? "1px solid rgba(244,166,35,0.4)" : "1px solid rgba(255,255,255,0.18)",
-          color: "white",
+          background: open
+            ? isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.65)"
+            : isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.35)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          border: open
+            ? isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)"
+            : isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.06)",
+          color: open ? "white" : isDark ? "white" : "#333",
           cursor: "pointer",
-          boxShadow: open ? "0 0 16px rgba(244,166,35,0.2)" : "0 4px 18px rgba(0,0,0,0.15)",
+          boxShadow: open ? "0 4px 20px rgba(0,0,0,0.2)" : isDark ? "0 4px 18px rgba(0,0,0,0.2)" : "0 2px 12px rgba(0,0,0,0.06)",
         }}
       >
-        <Layers size={21} strokeWidth={1.75} color="white" />
+        <Layers size={21} strokeWidth={1.75} color={open ? "white" : isDark ? "white" : "#333"} />
       </button>
 
       {/* First-time tip del Genio */}

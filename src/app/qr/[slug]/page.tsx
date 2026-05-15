@@ -161,8 +161,6 @@ export default async function CartaPage({
           .carta-dark, .carta-light {
             --carta-accent: ${accentColor};
             --carta-detail-price: ${accentColor};
-            --carta-badge-bg: ${accentColor}1F;
-            --carta-badge-text: ${accentColor};
             --carta-promo-border: ${accentColor}40;
             --carta-promo-shadow: 0 2px 12px ${accentColor}15;
             --carta-surface-rec: ${accentColor}14;
