@@ -221,7 +221,7 @@ REGLAS IMPORTANTES:
   const dishes: ExtractedDish[] = [];
   for (const cat of (parsed.categories || [])) {
     for (const dish of (cat.dishes || [])) {
-      if (!dish.name || !dish.price) continue;
+      if (!dish.name) continue;
       dishes.push({
         name: dish.name.trim(),
         description: dish.description || "",
