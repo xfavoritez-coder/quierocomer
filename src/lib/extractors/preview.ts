@@ -78,7 +78,10 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
   }
 
   const categories = new Set(extraction.dishes.map((d) => d.category));
-  const sample = extraction.dishes.slice(0, 5);
+  // Prioritize dishes with photos for the preview
+  const withPhoto = extraction.dishes.filter((d) => d.imageUrl);
+  const withoutPhoto = extraction.dishes.filter((d) => !d.imageUrl);
+  const sample = [...withPhoto, ...withoutPhoto].slice(0, 5);
 
   // Re-upload sample photos to Supabase in parallel (~2-3s)
   const photoResults = await Promise.allSettled(

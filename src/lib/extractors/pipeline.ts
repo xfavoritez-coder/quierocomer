@@ -106,7 +106,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         logoUrl: extraction.logoUrl,
         totalDishes: extraction.dishes.length,
         totalCategories: categories.size,
-        sampleDishes: extraction.dishes.slice(0, 5).map((d) => ({
+        sampleDishes: [...extraction.dishes.filter(d => d.imageUrl), ...extraction.dishes.filter(d => !d.imageUrl)].slice(0, 5).map((d) => ({
           name: d.name,
           description: d.description || "",
           price: d.price,
