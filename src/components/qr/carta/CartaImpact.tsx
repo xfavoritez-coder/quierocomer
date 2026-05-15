@@ -604,16 +604,18 @@ export default function CartaImpact({
   const searchParams = useSearchParams();
   const { hasNewLikes, clearNewLikes } = useFavorites();
 
-  // Language cycling
+  // Language select
   const enabledLangs: string[] = (restaurant as any).enabledLangs || ["es"];
-  const cycleLang = useCallback(() => {
-    const currentIdx = enabledLangs.indexOf(lang);
-    const next = enabledLangs[(currentIdx + 1) % enabledLangs.length] as Lang;
+  const [langOpen, setLangOpen] = useState(false);
+  const LANG_FLAG_EMOJI: Record<string, string> = { es: "🇪🇸", en: "🇬🇧", pt: "🇧🇷", it: "🇮🇹" };
+  const selectLang = useCallback((next: string) => {
+    setLangOpen(false);
+    if (next === lang) return;
     localStorage.setItem("qc_lang", next);
     const url = new URL(window.location.href);
     url.searchParams.set("lang", next);
     window.location.href = url.toString();
-  }, [lang, enabledLangs]);
+  }, [lang]);
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
   const hasPromos = marketingPromos && marketingPromos.length > 0;
 
@@ -1021,9 +1023,32 @@ export default function CartaImpact({
             <Search size={15} color="white" />
           </button>
           {enabledLangs.length > 1 && (
-            <button onClick={() => cycleLang()} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 11, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", position: "relative", zIndex: 50 }}>
-              {lang.toUpperCase()}
-            </button>
+            <div style={{ position: "relative" }}>
+              <button onClick={() => setLangOpen(!langOpen)} style={{ height: 38, borderRadius: 999, border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", color: "#fff", padding: "0 12px", fontSize: 12, fontWeight: 900, letterSpacing: "0.3px", backdropFilter: "blur(10px)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                <span>{LANG_FLAG_EMOJI[lang] || "🌐"}</span>
+                <span>{lang.toUpperCase()}</span>
+              </button>
+              {langOpen && (
+                <div style={{
+                  position: "absolute", top: 44, right: 0, background: "rgba(0,0,0,0.85)",
+                  backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
+                  borderRadius: 14, padding: 4, border: "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.4)", zIndex: 60,
+                }}>
+                  {enabledLangs.map(l => (
+                    <button key={l} onClick={() => selectLang(l)} style={{
+                      display: "flex", alignItems: "center", gap: 8, width: "100%",
+                      padding: "10px 16px", border: "none", borderRadius: 10, cursor: "pointer",
+                      background: l === lang ? "rgba(255,255,255,0.1)" : "transparent",
+                      color: "white", fontSize: 13, fontWeight: l === lang ? 700 : 500,
+                    }}>
+                      <span style={{ fontSize: 18 }}>{LANG_FLAG_EMOJI[l] || "🌐"}</span>
+                      <span>{l.toUpperCase()}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </header>
@@ -1065,7 +1090,7 @@ export default function CartaImpact({
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           lang={lang}
-          cycleLang={cycleLang}
+          cycleLang={() => setLangOpen(!langOpen)}
           enabledLangs={enabledLangs}
         />
       </div>
