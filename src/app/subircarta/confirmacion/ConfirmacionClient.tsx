@@ -117,7 +117,7 @@ export default function ConfirmacionClient() {
             <div className="phone phone-generating" style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
-                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "18px 24px", borderRadius: 20, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)" }}>
+                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)" }}>
                   <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px" }} />
                   <p style={{ fontSize: 15, fontWeight: 700, color: "#F4A623", margin: "0 0 5px", letterSpacing: "0.01em" }}>Casi lista</p>
                   <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.4 }}>En minutos recibirás tu nueva carta</p>
@@ -130,7 +130,11 @@ export default function ConfirmacionClient() {
               <div className="phone-screen">
                 {/* Nav bar with logo */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 10px", background: "#0a0a0a", textAlign: "left" }}>
-                  <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#F4A623", fontSize: 7, fontWeight: 700, color: "#0e0e0e", display: "grid", placeItems: "center", flexShrink: 0 }}>{displayName.charAt(0)}</div>
+                  {preview?.logoUrl ? (
+                    <img src={preview.logoUrl} alt="" style={{ width: 16, height: 16, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+                  ) : (
+                    <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#F4A623", fontSize: 7, fontWeight: 700, color: "#0e0e0e", display: "grid", placeItems: "center", flexShrink: 0 }}>{displayName.charAt(0)}</div>
+                  )}
                   <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)", textAlign: "left" }}>{displayName}</span>
                   <div style={{ marginLeft: "auto", width: 14, height: 14, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
                     <svg viewBox="0 0 100 100" width="14" height="14"><defs><clipPath id="phflag"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath="url(#phflag)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>
