@@ -11,7 +11,7 @@ function getApiKey() { return process.env.ANTHROPIC_API_KEY; }
 const MODEL = "claude-haiku-4-5-20251001";
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
-const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl"];
+const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com"];
 
 // Domains where direct HTML works better
 const DIRECT_FETCH_DOMAINS = ["queresto.com", "thefork.com", "lafourchette.com"];
@@ -136,7 +136,7 @@ function cleanName(name: string): string {
  */
 export async function extractQuickPreview(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
-  const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
+  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats"].includes(providerName || "");
   console.log("[QuickPreview] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
   const pageContent = await fetchPage(menuUrl, needsJina);
   console.log("[QuickPreview] Raw content:", pageContent.length, "chars");
@@ -186,7 +186,7 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
 export async function extractWithScraper(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
-  const needsJina = ["Fudo", "Mercat", "Gourmedia"].includes(providerName || "");
+  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats"].includes(providerName || "");
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
   const pageContent = await fetchPage(menuUrl, needsJina);
