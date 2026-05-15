@@ -136,8 +136,13 @@ export default function ConfirmacionClient() {
     return () => clearInterval(interval);
   }, [preview, modalDismissed]);
 
-  const rawName = preview?.restaurantName || localName || "Tu restaurante";
-  const displayName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+  // Prefer user-entered localName over extracted name (which may be generic for photo uploads)
+  const rawName = localName || preview?.restaurantName || "Tu restaurante";
+  const cleanedRawName = rawName.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+  // Smart casing: ALL CAPS or all lowercase → Title Case
+  const displayName = cleanedRawName === cleanedRawName.toUpperCase() || cleanedRawName === cleanedRawName.toLowerCase()
+    ? cleanedRawName.replace(/\w\S*/g, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    : cleanedRawName;
   const hasPreviewDishes = preview?.sampleDishes && preview.sampleDishes.length > 0;
 
   return (
@@ -168,7 +173,7 @@ export default function ConfirmacionClient() {
             {modalDismissed ? (
               <>
                 <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
-                <p className="subcopy">Te acabamos de enviar las indicaciones.</p>
+                <p className="subcopy">Te acabamos de enviar tu carta.</p>
               </>
             ) : (
               <>
@@ -249,7 +254,7 @@ export default function ConfirmacionClient() {
                   })()}
                   {/* Dark overlay */}
                   <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.2)" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 35%, rgba(0,0,0,0.6) 100%)" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 0%, transparent 20%, rgba(0,0,0,0.7) 100%)" }} />
                   {/* Centered dish name + Ver button */}
                   <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 2, padding: "0 10px" }}>
                     <span style={{ fontSize: 16, fontWeight: 900, color: "white", textAlign: "center", lineHeight: 1.1, textShadow: "0 1px 6px rgba(0,0,0,0.5)", fontFamily: "var(--font-display)" }}>{(() => { const imgs = preview?.sampleDishes?.filter(d => d.imageUrl) || []; return imgs[heroIdx % imgs.length]?.name || displayName; })()}</span>
