@@ -98,17 +98,24 @@ export default function ConfirmacionClient() {
           {/* iPhone mockup with preview — or fallback message */}
           {hasPreviewDishes ? (
           <div className="phone-wrap">
-            <div className="phone phone-generating">
+            <div className="phone phone-generating" style={{ position: "relative" }}>
+              {/* Overlay message */}
+              <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
+                <div style={{ background: "rgba(0,0,0,0.7)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", padding: "14px 20px", borderRadius: 16, textAlign: "center", maxWidth: "80%" }}>
+                  <p style={{ fontSize: 13, fontWeight: 700, color: "white", margin: "0 0 4px" }}>⏳ Casi lista</p>
+                  <p style={{ fontSize: 10, color: "rgba(255,255,255,0.7)", margin: 0 }}>Te la enviaremos a tu correo</p>
+                </div>
+              </div>
               {/* Phone notch */}
               <div className="phone-notch" />
 
               {/* Phone screen — replicates dark mode carta lista exactly */}
               <div className="phone-screen">
                 {/* Nav bar with logo */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 10px", background: "#0a0a0a" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "7px 10px", background: "#0a0a0a", textAlign: "left" }}>
                   <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#F4A623", fontSize: 7, fontWeight: 700, color: "#0e0e0e", display: "grid", placeItems: "center", flexShrink: 0 }}>{displayName.charAt(0)}</div>
-                  <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)", flex: 1 }}>{displayName}</span>
-                  <div style={{ width: 14, height: 14, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
+                  <span style={{ fontSize: 10, fontWeight: 500, color: "rgba(255,255,255,0.9)", textAlign: "left" }}>{displayName}</span>
+                  <div style={{ marginLeft: "auto", width: 14, height: 14, borderRadius: "50%", overflow: "hidden", flexShrink: 0 }}>
                     <svg viewBox="0 0 100 100" width="14" height="14"><defs><clipPath id="phflag"><circle cx="50" cy="50" r="50"/></clipPath></defs><g clipPath="url(#phflag)"><rect y="0" width="100" height="25" fill="#c60b1e"/><rect y="25" width="100" height="50" fill="#ffc400"/><rect y="75" width="100" height="25" fill="#c60b1e"/></g></svg>
                   </div>
                 </div>
@@ -286,8 +293,8 @@ h1 span { color: var(--amber-2); font-style: italic; }
 /* iPhone mockup — replicates dark mode carta lista */
 .phone-wrap { display: flex; justify-content: center; margin: 8px 0 24px; }
 .phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-.phone-generating { animation: phoneBreath 4s ease-in-out infinite; }
-@keyframes phoneBreath { 0%, 100% { filter: blur(1.2px); } 50% { filter: blur(0.3px); } }
+.phone-generating .phone-screen { filter: blur(1px); }
+.phone-generating .phone-notch { filter: blur(1px); }
 .phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(14,14,14,0.25); pointer-events: none; }
 .phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }

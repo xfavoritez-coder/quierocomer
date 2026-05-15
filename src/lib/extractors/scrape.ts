@@ -8,7 +8,7 @@ import type { ExtractionResult, ExtractedDish } from "./types";
 
 // Read at call time, not import time, to ensure env is loaded
 function getApiKey() { return process.env.ANTHROPIC_API_KEY; }
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-haiku-4-5-20251001";
 
 // Domains where Jina is needed (heavy JS rendering / SPAs)
 const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl"];
@@ -113,6 +113,53 @@ function parseJSON(text: string): any {
 
 function cleanName(name: string): string {
   return name.split("|")[0].split("-")[0].split("·")[0].split("—")[0].split("Pide")[0].split("Order")[0].trim();
+}
+
+/**
+ * Quick preview: fetch page, send only first 4KB to Haiku for 5 dishes (~15s total).
+ * Used for non-Justo providers where full extraction is too slow for preview.
+ */
+export async function extractQuickPreview(cartaUrl: string): Promise<ExtractionResult> {
+  console.log("[QuickPreview] Fetching page:", cartaUrl);
+  const pageContent = await fetchPage(cartaUrl);
+  console.log("[QuickPreview] Raw content:", pageContent.length, "chars");
+
+  const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
+  const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
+  const content = cleaned.slice(0, 4000);
+
+  console.log("[QuickPreview] Calling Haiku with", content.length, "chars...");
+  const result = await callClaude(`Extrae los primeros 5 platos de este menú de restaurante con su categoría.
+URL: ${cartaUrl}
+Contenido:
+${content}
+
+Responde con JSON:
+{"restaurantName":"...","logo":"URL o null","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","category":"..."}]}
+
+REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
+
+  console.log("[QuickPreview] Response:", result.length, "chars");
+  const parsed = parseJSON(result);
+
+  const dishes: ExtractedDish[] = [];
+  for (const d of (parsed.dishes || [])) {
+    if (!d.name || !d.price) continue;
+    dishes.push({
+      name: d.name.trim(),
+      description: d.description || "",
+      price: typeof d.price === "number" ? d.price : parseInt(String(d.price).replace(/\D/g, ""), 10) || 0,
+      imageUrl: d.photo || null,
+      category: d.category || "General",
+    });
+  }
+
+  return {
+    restaurantName: cleanName(parsed.restaurantName || "Restaurante"),
+    dishes: dishes.slice(0, 5),
+    logoUrl: parsed.logo || null,
+    bannerUrl: null,
+  };
 }
 
 /**

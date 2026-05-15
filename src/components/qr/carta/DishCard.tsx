@@ -56,7 +56,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
               </span>
             )}
             {isPopular && (
-              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-badge-text)", background: "var(--carta-badge-bg)", padding: "2px 8px", borderRadius: 50 }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#e85530", background: "rgba(232,85,48,0.1)", padding: "2px 8px", borderRadius: 50 }}>
                 🔥 Popular hoy
               </span>
             )}

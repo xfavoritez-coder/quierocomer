@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
-import { extractWithScraper } from "./scrape";
+import { extractQuickPreview } from "./scrape";
 import type { ExtractionResult } from "./types";
 
 export interface LeadPreview {
@@ -69,7 +69,7 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
     case "Mercat":
     case "Gourmedia":
     default:
-      extraction = await extractWithScraper(lead.cartaUrl);
+      extraction = await extractQuickPreview(lead.cartaUrl);
       break;
   }
 

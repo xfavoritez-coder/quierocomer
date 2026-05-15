@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { normalizePhone } from "@/lib/normalizePhone";
-import { generatePreview } from "@/lib/extractors/preview";
 
 export async function PATCH(
   req: Request,
@@ -38,22 +37,7 @@ export async function PATCH(
       },
     });
 
-    // Step 1 (sync): fast preview — only for Justo (direct HTML, ~3s)
-    // Other providers use Jina+Claude which is too slow for sync (~15-20s)
-    let preview = null;
-    const isJusto = existing.detectedProvider?.name === "Justo";
-    if (lead.cartaUrl && lead.cartaStatus === "PENDING") {
-      if (isJusto) {
-        try {
-          preview = await generatePreview(lead.id);
-        } catch (e) {
-          console.error("[SubirCarta Preview]", e);
-        }
-      }
-
-    }
-
-    return NextResponse.json({ id: lead.id, preview });
+    return NextResponse.json({ id: lead.id });
   } catch (error) {
     console.error("[SubirCarta PATCH]", error);
     return NextResponse.json(

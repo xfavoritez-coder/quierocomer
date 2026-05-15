@@ -49,7 +49,14 @@ export default function Paso2Client() {
   useEffect(() => {
     if (!leadId) return;
 
-    // Fire processing NOW — runs during the 19s animation + form fill time
+    // Fire preview (~15s) and full processing (~60s) in parallel
+    // Preview arrives first → shows in confirmation iPhone mockup
+    fetch("/api/subircarta/preview", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leadId }),
+    }).catch(() => {});
+
     fetch("/api/subircarta/process", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
