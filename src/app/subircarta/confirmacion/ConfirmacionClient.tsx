@@ -150,7 +150,7 @@ export default function ConfirmacionClient() {
             {modalDismissed ? (
               <>
                 <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
-                <p className="subcopy">Te enviamos las indicaciones{leadEmail ? ` a ${leadEmail}` : ""}.</p>
+                <p className="subcopy">Te acabamos de enviar las indicaciones.</p>
               </>
             ) : (
               <>
@@ -423,7 +423,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 @keyframes sparkle2 { 0%, 100% { opacity: 0; transform: scale(1); } 50% { opacity: 0.15; transform: scale(1.3); } }
 @keyframes sparkle3 { 0%, 100% { opacity: 0; transform: scale(0.9); } 50% { opacity: 0.12; transform: scale(1.1); } }
 
-.phone { width: 210px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
+.phone { width: 202px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
 .phone-generating .phone-screen { filter: blur(0.8px); transition: filter 1.5s ease; }
 .phone-generating .phone-notch { filter: blur(0.3px); transition: filter 1.5s ease; }
 .phone-ready .phone-screen { filter: blur(0); }
