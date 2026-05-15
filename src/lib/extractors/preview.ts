@@ -30,13 +30,14 @@ async function extractQuickPreviewFromImage(imageUrl: string): Promise<Extractio
     method: "POST",
     headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 2000,
+      model: "claude-sonnet-4-6",
+      max_tokens: 4000,
       messages: [{
         role: "user",
         content: [
           { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
           { type: "text", text: `Extrae los primeros 5 platos de esta foto de carta/menú.
+IMPORTANTE: Solo extrae platos que puedas leer claramente en la foto. NO inventes ni agregues platos que no estén visibles.
 Responde SOLO JSON: {"restaurantName":"...","dishes":[{"name":"...","description":"...","price":8990,"category":"..."}]}
 Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.` },
         ],
