@@ -316,7 +316,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                 {(() => {
                   if (p.promoType === "graphic" && p.imageUrl) {
                     return (
-                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0 }}>
+                      <div style={{ position: "relative", width: large ? 145 : 125, minHeight: large ? 140 : 115, overflow: "hidden", flexShrink: 0 }}>
                         <Image src={p.imageUrl} alt={p.name} fill className="object-cover" sizes="135px" />
                       </div>
                     );
@@ -324,7 +324,7 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   const photos = p.dishes.map(d => d.photos?.[0]).filter(Boolean) as string[];
                   if (photos.length >= 2) {
                     return (
-                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+                      <div style={{ position: "relative", width: large ? 145 : 125, minHeight: large ? 140 : 115, overflow: "hidden", flexShrink: 0, display: "flex", flexDirection: "column" }}>
                         {photos.slice(0, 2).map((src, i) => (
                           <div key={i} style={{ position: "relative", flex: 1, borderBottom: i === 0 ? "1.5px solid var(--carta-surface)" : "none" }}>
                             <Image src={src} alt={p.dishes[i]?.name || ""} fill className="object-cover" sizes="135px" />
@@ -335,43 +335,48 @@ export default function PromoCarousel({ restaurantId, onViewDish, initialPromos,
                   }
                   if (photos.length === 1) {
                     return (
-                      <div style={{ position: "relative", width: large ? 160 : 135, minHeight: large ? 150 : 130, overflow: "hidden", flexShrink: 0 }}>
+                      <div style={{ position: "relative", width: large ? 145 : 125, minHeight: large ? 140 : 115, overflow: "hidden", flexShrink: 0 }}>
                         <Image src={photos[0]} alt={p.name} fill className="object-cover" sizes="135px" />
                       </div>
                     );
                   }
                   return (
-                    <div style={{ width: large ? 160 : 135, minHeight: large ? 150 : 130, flexShrink: 0, background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
+                    <div style={{ width: large ? 145 : 125, minHeight: large ? 140 : 115, flexShrink: 0, background: "linear-gradient(135deg, #e8d4b0, #d4b896)" }} />
+                  );
+                })()}
+                {/* Badge sobre la foto */}
+                {(() => {
+                  const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
+                  const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
+                  let label = "OFERTA";
+                  if (p.daysOfWeek?.length) {
+                    label = `OFERTA ${DAY_NAMES[todayDow]}`;
+                  }
+                  return (
+                    <span style={{
+                      position: "absolute", top: 8, left: 8, zIndex: 2,
+                      fontSize: "9px",
+                      fontWeight: 800,
+                      color: "white",
+                      background: "var(--carta-accent, #F4A623)",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      padding: "3px 8px",
+                      borderRadius: 999,
+                    }}>
+                      {label}
+                    </span>
                   );
                 })()}
 
                 {/* Content */}
                 <div style={{ flex: 1, minWidth: 0, padding: "10px 12px 10px 16px" }}>
                   {(() => {
-                    const DAY_NAMES = ["DOMINGO", "LUNES", "MARTES", "MIÉRCOLES", "JUEVES", "VIERNES", "SÁBADO"];
-                    const todayDow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getDay();
-                    let label = "OFERTA";
-                    if (p.daysOfWeek?.length) {
-                      label = `OFERTA ${DAY_NAMES[todayDow]}`;
-                    }
-                    return (
-                      <span style={{
-                        display: "inline-block",
-                        fontSize: "9.5px",
-                        fontWeight: 800,
-                        color: "white",
-                        background: "var(--carta-accent, #F4A623)",
-                        letterSpacing: "0.12em",
-                        textTransform: "uppercase",
-                        padding: "3px 8px",
-                        borderRadius: 999,
-                        marginBottom: 5,
-                      }}>
-                        {label}
-                      </span>
-                    );
+                    const pct = p.discountPct || (p.originalPrice && p.promoPrice ? Math.round((1 - p.promoPrice / p.originalPrice) * 100) : null);
+                    if (!pct || pct <= 0) return null;
+                    return <span style={{ fontSize: "12px", fontWeight: 700, color: "#dc2626", marginBottom: 2, display: "inline-block" }}>-{pct}% dcto</span>;
                   })()}
-                  <p style={{ fontSize: "15.5px", fontWeight: 700, color: "var(--carta-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p style={{ fontSize: "16px", fontWeight: 700, color: "var(--carta-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {p.name}
                   </p>
                   {(() => {
