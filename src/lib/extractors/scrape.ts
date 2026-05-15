@@ -14,7 +14,7 @@ const MODEL = "claude-haiku-4-5-20251001";
 const JINA_FIRST_DOMAINS = ["fudo.com", "fudo.cl", "fu.do", "meitre.com", "toteat.app", "mer-cat.com", "kojo.cl", "mercat.cl", "ubereats.com"];
 
 // Domains where direct HTML works better
-const DIRECT_FETCH_DOMAINS = ["queresto.com", "thefork.com", "lafourchette.com"];
+const DIRECT_FETCH_DOMAINS = ["thefork.com", "lafourchette.com"];
 
 function getDomain(url: string): string {
   try { return new URL(url).hostname.replace(/^www\./, ""); } catch { return ""; }
@@ -136,7 +136,7 @@ function cleanName(name: string): string {
  */
 export async function extractQuickPreview(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
-  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats"].includes(providerName || "");
+  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
   console.log("[QuickPreview] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
   const pageContent = await fetchPage(menuUrl, needsJina);
   console.log("[QuickPreview] Raw content:", pageContent.length, "chars");
@@ -186,7 +186,7 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000);
 export async function extractWithScraper(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
-  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats"].includes(providerName || "");
+  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
 
   console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
   const pageContent = await fetchPage(menuUrl, needsJina);
