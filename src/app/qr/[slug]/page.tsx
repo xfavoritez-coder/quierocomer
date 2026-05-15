@@ -158,7 +158,7 @@ export default async function CartaPage({
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       {accentColor && (
         <style dangerouslySetInnerHTML={{ __html: `
-          .${themeClass} {
+          .carta-dark, .carta-light {
             --carta-accent: ${accentColor};
             --carta-detail-price: ${accentColor};
             --carta-promo-border: ${accentColor}40;
