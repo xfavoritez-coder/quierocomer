@@ -178,8 +178,8 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           background: state === "success" ? "#16a34a" : "rgba(0,0,0,0.5)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
-          border: state === "success" ? "none" : "1px solid rgba(0,0,0,0.08)",
-          boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.12)",
+          border: state === "success" ? "none" : "1px solid rgba(255,255,255,0.12)",
+          boxShadow: state === "success" ? "0 4px 18px rgba(22,163,74,0.3)" : "0 4px 18px rgba(0,0,0,0.25)",
           animation: state === "calling" ? "waiterPulse 1s ease-in-out infinite" : undefined,
           opacity: isInactive ? 0.6 : 1,
         }}

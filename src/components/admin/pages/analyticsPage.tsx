@@ -1251,7 +1251,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   const toggle = (id: string) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const fmtTime = (d: string) => { const t = new Date(d); return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`; };
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
-  const viewLabels: Record<string, string> = { premium: "Galería", lista: "Lista", feed: "Feed", viaje: "Espacial" };
+  const viewLabels: Record<string, string> = { premium: "Galería", lista: "Lista", feed: "Feed", impact: "Impact" };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>

@@ -4,7 +4,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 
 const F = "var(--font-display)";
-const VIEW_LABELS: Record<string, string> = { premium: "Galería", lista: "Lista", viaje: "Espacial" };
+const VIEW_LABELS: Record<string, string> = { premium: "Galería", lista: "Lista", impact: "Impact" };
 const DIET_LABELS: Record<string, string> = { omnivore: "Carnívoro", vegetarian: "Vegetariano", vegan: "Vegano", OMNIVORE: "Carnívoro", VEGETARIAN: "Vegetariano", VEGAN: "Vegano" };
 const SOURCE_LABELS: Record<string, string> = {
   post_genio_CONVERTED: "Genio",

@@ -9,7 +9,7 @@ import { setMesaToken, hasMesaToken } from "@/lib/mesaToken";
 import { canAccess } from "@/lib/plans";
 import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
-import CartaViaje from "./CartaViaje";
+import CartaViaje from "./CartaViaje"; // TODO: replace with CartaImpact
 import CartaFeed from "./CartaFeed";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
@@ -178,7 +178,7 @@ export default function CartaRouter(props: Props) {
   const effectiveView = (() => {
     if (view === "premium" && !canAccess(plan, "view_gallery")) return "lista";
     if (view === "feed" && !canAccess(plan, "view_feed")) return "lista";
-    if (view === "viaje" && !canAccess(plan, "view_space")) return "lista";
+    if (view === "impact" && !canAccess(plan, "view_space")) return "lista";
     return view;
   })();
 
@@ -191,7 +191,7 @@ export default function CartaRouter(props: Props) {
         {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
         {effectiveView === "lista" && <CartaLista {...sharedProps} />}
         {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
-        {effectiveView === "viaje" && <CartaViaje {...sharedProps} />}
+        {effectiveView === "impact" && <CartaViaje {...sharedProps} />}
 
         {overlay && (
           <div
@@ -209,7 +209,7 @@ export default function CartaRouter(props: Props) {
               {overlay.view === "lista" && <List size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
               {overlay.view === "premium" && <BookOpen size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
               {overlay.view === "feed" && <LayoutGrid size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
-              {overlay.view === "viaje" && <Rocket size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
+              {overlay.view === "impact" && <Rocket size={26} color="#F4A623" style={{ filter: "drop-shadow(0 0 10px rgba(244,166,35,0.4))" }} />}
             </div>
             <p style={{ color: "rgba(255,255,255,0.8)", fontSize: "0.9rem", fontWeight: 500, marginTop: 14 }}>Vista {overlay.label}</p>
           </div>

@@ -3,7 +3,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 
 const F = "var(--font-display)";
-const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", viaje: "Espacial" };
+const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", impact: "Impact" };
 const SORT_LABELS: Record<string, string> = { views: "Lo más visto", sales: "Lo más pedido", "price-asc": "Precio ↑", "price-desc": "Precio ↓" };
 const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
 

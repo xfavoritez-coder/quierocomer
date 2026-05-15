@@ -21,7 +21,7 @@ const FIELD_OPTIONS = [
   { value: "lastVisitDaysAgo", label: "Días desde última visita", operators: ["gte", "lte"], values: "number" },
   { value: "sessionDuration", label: "Duración promedio (seg)", operators: ["gte", "lte"], values: "number" },
   { value: "viewPreference", label: "Vista preferida", operators: ["eq"], values: [
-    { value: "premium", label: "Clásica" }, { value: "lista", label: "Lista" }, { value: "viaje", label: "Espacial" },
+    { value: "premium", label: "Clásica" }, { value: "lista", label: "Lista" }, { value: "impact", label: "Impact" },
   ]},
   { value: "hasBirthday", label: "Tiene cumpleaños", operators: ["eq"], values: [
     { value: "true", label: "Sí" }, { value: "false", label: "No" },

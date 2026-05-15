@@ -357,7 +357,7 @@ export default function AdminLocales() {
               {[
                 { value: "lista", label: "Lista" },
                 { value: "premium", label: "Galería" },
-                { value: "viaje", label: "Espacial" },
+                { value: "impact", label: "Impact" },
               ].map((v) => (
                 <button
                   key={v.value}
