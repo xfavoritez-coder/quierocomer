@@ -117,7 +117,7 @@ export default function ConfirmacionClient() {
           {/* iPhone mockup with preview — or fallback message */}
           {hasPreviewDishes ? (
           <div className="phone-wrap phone-fadein">
-            <div className="phone phone-generating" style={{ position: "relative" }}>
+            <div className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`} style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
                 <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)", transition: "border-color 0.5s" }}>
@@ -331,9 +331,12 @@ h1 span { color: var(--amber-2); font-style: italic; }
 @keyframes phoneFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
-.phone-generating .phone-screen { filter: blur(0.3px); }
-.phone-generating .phone-notch { filter: blur(0.3px); }
-.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.35); pointer-events: none; }
+.phone-generating .phone-screen { filter: blur(0.3px); transition: filter 1.5s ease; }
+.phone-generating .phone-notch { filter: blur(0.3px); transition: filter 1.5s ease; }
+.phone-ready .phone-screen { filter: blur(0); }
+.phone-ready .phone-notch { filter: blur(0); }
+.phone-generating::before { content: ''; position: absolute; inset: 0; z-index: 9; border-radius: 25px; background: rgba(0,0,0,0.35); pointer-events: none; transition: background 1.5s ease; }
+.phone-ready::before { background: rgba(0,0,0,0.1); }
 .phone-notch { width: 80px; height: 22px; background: #000; border-radius: 0 0 14px 14px; margin: 0 auto; position: relative; z-index: 2; }
 .phone-screen { background: #0e0e0e; }
 .ph-hero { height: 130px; position: relative; overflow: hidden; }
