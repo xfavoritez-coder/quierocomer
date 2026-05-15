@@ -253,7 +253,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const ownerName = lead.ownerName || "Hola";
         await sendAdminEmail({
           to: lead.email,
-          subject: `${restaurant.name} · Tu carta viva está lista`,
+          subject: `${restaurant.name} · Tu nueva carta está lista`,
           purpose: "funnel_carta_ready",
           html: `
             <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
