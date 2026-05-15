@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
+import { extractUberEats } from "./ubereats";
 import { extractWithScraper } from "./scrape";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult } from "./types";
@@ -62,6 +63,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null): Promi
   switch (providerName) {
     case "Justo":
       return extractJusto(cartaUrl);
+    case "UberEats":
+      return extractUberEats(cartaUrl);
     case "Fudo":
     case "Mercat":
     case "Gourmedia":

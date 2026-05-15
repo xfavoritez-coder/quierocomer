@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
 import { extractJusto } from "./justo";
+import { extractUberEats } from "./ubereats";
 import { extractQuickPreview } from "./scrape";
 import type { ExtractionResult } from "./types";
 
@@ -64,6 +65,9 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
   switch (lead.detectedProvider?.name) {
     case "Justo":
       extraction = await extractJusto(lead.cartaUrl);
+      break;
+    case "UberEats":
+      extraction = await extractUberEats(lead.cartaUrl);
       break;
     case "Fudo":
     case "Mercat":
