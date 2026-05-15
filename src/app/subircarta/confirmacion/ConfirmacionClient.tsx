@@ -156,7 +156,7 @@ export default function ConfirmacionClient() {
               <>
                 <h1>{cartaReady
                   ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></>
-                  : timedOut ? <>Tu carta de {displayName} está <span>en revisión</span></>
+                  : timedOut ? <>Tu carta está <span>en revisión</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
                 <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más de tiempo tenerla lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
