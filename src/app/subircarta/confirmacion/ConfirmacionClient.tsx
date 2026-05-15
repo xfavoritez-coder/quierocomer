@@ -26,6 +26,7 @@ export default function ConfirmacionClient() {
   const leadId = searchParams.get("id");
   const [preview, setPreview] = useState<Preview | null>(null);
   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [cartaReady, setCartaReady] = useState(false);
   const [localName, setLocalName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [editingEmail, setEditingEmail] = useState(false);
@@ -43,8 +44,7 @@ export default function ConfirmacionClient() {
         .then((data) => {
           if (data.localName) setLocalName(data.localName);
           if (data.email) setLeadEmail(data.email);
-          if (data.preview?.sampleDishes?.length > 0) {
-            // Pre-load all images before showing preview
+          if (data.preview?.sampleDishes?.length > 0 && !imagesLoaded) {
             const imgs = data.preview.sampleDishes.map((d: any) => d.imageUrl).filter(Boolean);
             if (imgs.length > 0) {
               Promise.all(imgs.map((src: string) => new Promise<void>((resolve) => {
@@ -60,6 +60,9 @@ export default function ConfirmacionClient() {
               setPreview(data.preview);
               setImagesLoaded(true);
             }
+          }
+          if (data.cartaStatus === "READY" || data.cartaStatus === "DELIVERED") {
+            setCartaReady(true);
             if (polling) { clearInterval(polling); polling = null; }
           }
         })
@@ -113,13 +116,25 @@ export default function ConfirmacionClient() {
 
           {/* iPhone mockup with preview — or fallback message */}
           {hasPreviewDishes ? (
-          <div className="phone-wrap">
+          <div className="phone-wrap phone-fadein">
             <div className="phone phone-generating" style={{ position: "relative" }}>
               {/* Overlay message */}
               <div style={{ position: "absolute", inset: 0, zIndex: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", borderRadius: 25, pointerEvents: "none" }}>
-                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: "1px solid rgba(232,163,61,0.15)" }}>
-                  <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px" }} />
-                  <p style={{ fontSize: 15, fontWeight: 700, color: "#F4A623", margin: 0, letterSpacing: "0.01em" }}>Casi lista</p>
+                <div style={{ background: "rgba(10,8,6,0.82)", backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", padding: "12px 18px", borderRadius: 16, textAlign: "center", maxWidth: "85%", border: `1px solid ${cartaReady ? "rgba(67,209,123,0.2)" : "rgba(232,163,61,0.15)"}`, transition: "border-color 0.5s" }}>
+                  {cartaReady ? (
+                    <>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(67,209,123,0.15)", display: "grid", placeItems: "center", margin: "0 auto 4px" }}>
+                        <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M20 6L9 17l-5-5" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      </div>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#43d17b", margin: "0 0 3px", letterSpacing: "0.01em" }}>Lista</p>
+                      <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Revisa tu correo</p>
+                    </>
+                  ) : (
+                    <>
+                      <img src="/genio-lamp.png" alt="" style={{ width: 36, height: 36, objectFit: "contain", display: "block", margin: "0 auto 4px", animation: "lampFloat 2.5s ease-in-out infinite" }} />
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: 0, letterSpacing: "0.01em" }}>Casi lista</p>
+                    </>
+                  )}
                 </div>
               </div>
               {/* Phone notch */}
@@ -176,7 +191,7 @@ export default function ConfirmacionClient() {
                           )}
                         </div>
                         <div className="ph-dish-info">
-                          <span className="ph-dish-name">{i === 1 && <span style={{ fontSize: 8, marginRight: 3 }}>⭐</span>}{d.name}</span>
+                          <span className="ph-dish-name">{i === 2 && <span style={{ fontSize: 8, marginRight: 3 }}>⭐</span>}{d.name}</span>
                           {d.description && <span className="ph-dish-desc">{d.description.length > 35 ? d.description.slice(0, 35) + "…" : d.description}</span>}
                           <span className="ph-dish-price">${d.price.toLocaleString("es-CL")}</span>
                         </div>
@@ -312,6 +327,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 
 /* iPhone mockup — replicates dark mode carta lista */
 .phone-wrap { display: flex; justify-content: center; margin: 8px 0 24px; }
+.phone-fadein { animation: phoneFadeIn 0.8s ease-out; }
+@keyframes phoneFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 .phone { width: 220px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
 .phone-generating .phone-screen { filter: blur(0.3px); }
 .phone-generating .phone-notch { filter: blur(0.3px); }

@@ -27,6 +27,7 @@ export default function Paso2Client() {
   const leadId = searchParams.get("id");
 
   const [cartaUrl, setCartaUrl] = useState<string | null>(null);
+  const [pillMetaIndex, setPillMetaIndex] = useState(0);
   const [cartaFileUrl, setCartaFileUrl] = useState<string | null>(null);
   const [cartaType, setCartaType] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
@@ -123,6 +124,13 @@ export default function Paso2Client() {
     return () => { cancelled = true; };
   }, []);
 
+  // Rotate pill meta text during animation
+  useEffect(() => {
+    if (animDone) return;
+    const interval = setInterval(() => setPillMetaIndex((i) => i + 1), 4000);
+    return () => clearInterval(interval);
+  }, [animDone]);
+
   // When animation done, scroll to form and focus
   useEffect(() => {
     if (!animDone) return;
@@ -196,9 +204,13 @@ export default function Paso2Client() {
     : null;
 
   const pillLabel = cartaType === "LINK" ? displayUrl : displayFileName;
-  const pillMeta = cartaType === "LINK" ? "Link recibido · listo para analizar"
-    : cartaType === "PHOTO" ? "Foto recibida · lista para analizar"
-    : "Archivo recibido · listo para analizar";
+  const pillMetaTexts = [
+    cartaType === "LINK" ? "Link recibido · listo para analizar" : cartaType === "PHOTO" ? "Foto recibida · lista para analizar" : "Archivo recibido · listo para analizar",
+    "Leyendo platos y categorías...",
+    "Detectando precios...",
+    "Preparando tu nueva carta...",
+  ];
+  const pillMeta = animDone ? pillMetaTexts[0] : pillMetaTexts[pillMetaIndex % pillMetaTexts.length];
 
   return (
     <>
@@ -245,7 +257,7 @@ export default function Paso2Client() {
                 </div>
                 <div>
                   <div className="file-name">{pillLabel}</div>
-                  <div className="file-meta">{pillMeta}</div>
+                  <div className="file-meta" key={pillMetaIndex} style={{ animation: "pillMetaFade 0.4s ease" }}>{pillMeta}</div>
                 </div>
               </div>
             )}
@@ -369,6 +381,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .form-section { margin-top: 8px; border-top: 1px solid var(--line); padding-top: 20px; }
 .form-reveal { animation: formSlideUp 0.6s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes formSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pillMetaFade { from { opacity: 0; } to { opacity: 1; } }
 .form-title { text-align: center; margin-bottom: 14px; }
 .form-title h2 { font-family: var(--font-display); font-size: clamp(26px, 7vw, 34px); line-height: 1; letter-spacing: -.03em; font-weight: 500; margin-bottom: 6px; color: var(--cream); }
 .form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
