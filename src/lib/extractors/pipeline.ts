@@ -101,6 +101,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       throw new Error("No dishes extracted from the menu");
     }
 
+    // Validate extraction quality — if too few dishes or no prices, flag for review
+    const dishesWithPrice = extraction.dishes.filter(d => d.price > 0);
+    if (extraction.dishes.length < 3 || dishesWithPrice.length === 0) {
+      throw new Error(`Low quality extraction: ${extraction.dishes.length} dishes, ${dishesWithPrice.length} with price`);
+    }
+
     // Save preview to lead (for confirmation page)
     const existingPreview = lead.preview as any;
     const previewIsValid = existingPreview?.sampleDishes?.length > 0 && existingPreview.sampleDishes.some((d: any) => d.price > 0 || d.imageUrl);
