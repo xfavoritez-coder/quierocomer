@@ -156,10 +156,10 @@ export default function ConfirmacionClient() {
               <>
                 <h1>{cartaReady
                   ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></>
-                  : timedOut ? <>Tu carta necesita atención <span>especial</span></>
+                  : timedOut ? <>Tu carta necesita<br /><span>atención especial</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
-                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más tenerla lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
+                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? `Nos tomará un poco más de tiempo tener la nueva carta de ${displayName} lista.` : "En unos minutos recibirás un correo con tu carta lista."}</p>
               </>
             )}
           </div>
@@ -279,11 +279,17 @@ export default function ConfirmacionClient() {
           <div style={{ margin: "24px auto", maxWidth: 380, textAlign: "center", padding: "32px 20px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid var(--line)" }}>
             {timedOut ? (
               <>
-                <div style={{ width: 52, height: 52, borderRadius: "50%", background: "rgba(232,163,61,0.1)", display: "grid", placeItems: "center", margin: "0 auto 14px" }}>
-                  <span style={{ fontSize: 24 }}>✉️</span>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(232,163,61,0.1)", border: "1px solid rgba(232,163,61,0.2)", display: "grid", placeItems: "center", margin: "0 auto 16px", position: "relative" }}>
+                  <div style={{ position: "relative", width: 26, height: 26 }}>
+                    <svg viewBox="0 0 24 24" width="26" height="26"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="#E8A33D"/></svg>
+                    <span style={{ position: "absolute", top: -4, right: -3, fontSize: 8, color: "#E8A33D", animation: "sparkle1 1.5s ease-in-out infinite" }}>✦</span>
+                    <span style={{ position: "absolute", bottom: -2, left: -4, fontSize: 6, color: "#E8A33D", animation: "sparkle2 2s ease-in-out infinite 0.5s" }}>✦</span>
+                    <span style={{ position: "absolute", top: 6, right: -6, fontSize: 7, color: "#E8A33D", animation: "sparkle3 1.8s ease-in-out infinite 1s" }}>✦</span>
+                    <span style={{ position: "absolute", bottom: 4, right: -5, fontSize: 5, color: "#F4BD69", animation: "sparkle1 2.2s ease-in-out infinite 0.3s" }}>✦</span>
+                  </div>
                 </div>
-                <p style={{ fontSize: 15, fontWeight: 600, color: "var(--cream)", marginBottom: 4 }}>Te avisaremos por correo</p>
-                <p style={{ fontSize: 12, color: "var(--muted)", lineHeight: 1.4 }}>Normalmente dentro de 1 hora</p>
+                <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream)", marginBottom: 6 }}>Te avisaremos por correo</p>
+                <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>Normalmente dentro de 1 hora</p>
               </>
             ) : (
               <>
@@ -317,7 +323,7 @@ export default function ConfirmacionClient() {
           {/* Email line + Corregir — always visible */}
           {leadEmail && !editingEmail && (
             <div style={{ textAlign: "center", fontSize: 13, color: "var(--cream-2)", marginTop: 12 }}>
-              Te lo enviamos a <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
+              {modalDismissed ? "Te lo enviamos a" : "Te lo enviaremos a"} <strong style={{ color: "var(--cream)" }}>{leadEmail}</strong>
               {" · "}
               <button
                 onClick={() => { setEmailDraft(leadEmail); setEditingEmail(true); }}
@@ -413,6 +419,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 @keyframes phoneFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes lampFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 @keyframes heroFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sparkle1 { 0%, 100% { opacity: 0; transform: scale(0.8); } 50% { opacity: 0.18; transform: scale(1.2); } }
+@keyframes sparkle2 { 0%, 100% { opacity: 0; transform: scale(1); } 50% { opacity: 0.15; transform: scale(1.3); } }
+@keyframes sparkle3 { 0%, 100% { opacity: 0; transform: scale(0.9); } 50% { opacity: 0.12; transform: scale(1.1); } }
 
 .phone { width: 210px; border-radius: 28px; border: 3px solid rgba(255,255,255,.12); background: #0e0e0e; overflow: hidden; position: relative; box-shadow: 0 20px 50px rgba(0,0,0,.4); }
 .phone-generating .phone-screen { filter: blur(0.8px); transition: filter 1.5s ease; }

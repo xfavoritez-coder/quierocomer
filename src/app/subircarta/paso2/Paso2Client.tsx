@@ -220,7 +220,7 @@ export default function Paso2Client() {
   })();
 
   const pillLabelTexts = [
-    `Revisando ${pillLabelBase}`,
+    pillLabelBase ? `Revisando ${pillLabelBase}` : "Revisando",
     localNameFromUrl ? `Leyendo carta de ${localNameFromUrl}` : "Leyendo tu carta",
     "Extrayendo platos y precios",
   ];
