@@ -508,7 +508,7 @@ function DishSlide({
           // UNIVERSAL: picante
           if (d.isSpicy) seals.push({ emoji: "🌶️", label: "Picante", bg: "rgba(239,68,68,0.12)", color: "#f87171" });
           // UNIVERSAL: sin gluten
-          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "var(--carta-accent, #F4A623)" });
+          if (glutenFree) seals.push({ emoji: "🌾", label: "Sin gluten", bg: "rgba(212,160,71,0.16)", color: "#d4a047" });
           // UNIVERSAL: contiene frutos secos (informativo, mismo estilo que el resto)
           if (containsNuts) seals.push({ emoji: "🥜", label: "Frutos secos", bg: "rgba(234,88,12,0.12)", color: "#fb923c" });
           // CONDICIONAL: sin lactosa (solo si usuario tiene la restriccion)

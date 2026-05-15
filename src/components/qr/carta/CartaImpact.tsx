@@ -133,6 +133,7 @@ function ImpactHeroSlider({
         borderRadius: 28,
         isolation: "isolate",
         overflow: "hidden",
+        boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
       }}
       onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
       onTouchEnd={(e) => {
@@ -164,14 +165,14 @@ function ImpactHeroSlider({
         ) : null;
       })}
 
-      {/* Dark overlays */}
+      {/* Dark overlays — always dark regardless of theme */}
       <div style={{
         position: "absolute", inset: 0, zIndex: -2,
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.12), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.78) 78%, var(--carta-bg) 100%), linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3) 58%, rgba(0,0,0,0.15))",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.35) 36%, rgba(0,0,0,0.82) 78%, #030303 100%), linear-gradient(to right, rgba(0,0,0,0.65), rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1))",
       }} />
       <div style={{
-        position: "absolute", left: 0, right: 0, bottom: -1, height: "55%", zIndex: -1,
-        background: "linear-gradient(to top, var(--carta-bg) 0%, var(--carta-bg) 10%, color-mix(in srgb, var(--carta-bg) 90%, transparent) 38%, color-mix(in srgb, var(--carta-bg) 50%, transparent) 72%, transparent 100%)",
+        position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: -1,
+        background: "linear-gradient(to top, #030303 0%, #030303 8%, rgba(3,3,3,0.85) 38%, rgba(3,3,3,0.4) 72%, transparent 100%)",
       }} />
 
       {/* Nav is now fixed outside hero */}
@@ -280,7 +281,7 @@ function MoodSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "var(--impact-section-title, #fff7ed)",
+        color: "var(--impact-section-title)",
       }}>
         {"Que se te antoja?"}
       </h2>
@@ -289,7 +290,7 @@ function MoodSection({
           ref={scrollRef}
           style={{
             display: "flex", gap: 10, overflowX: "auto",
-            padding: "2px 0 8px", scrollbarWidth: "none",
+            padding: "4px 0 16px", scrollbarWidth: "none",
             msOverflowStyle: "none", WebkitOverflowScrolling: "touch",
           }}
         >
@@ -297,15 +298,15 @@ function MoodSection({
             const isActive = active === m.id;
             return (
               <button key={m.id} onClick={() => handleTap(m.id)} style={{
-                width: 116, minWidth: 116, height: 140, borderRadius: 28, position: "relative", overflow: "hidden",
+                width: 128, minWidth: 128, height: 148, borderRadius: 28, position: "relative", overflow: "hidden",
                 padding: 13, display: "flex", flexDirection: "column", justifyContent: "flex-end",
                 border: isActive
                   ? "1px solid color-mix(in srgb, var(--carta-accent) 90%, transparent)"
                   : "1px solid color-mix(in srgb, var(--carta-text) 14%, transparent)",
                 background: "var(--carta-surface)", cursor: "pointer",
                 boxShadow: isActive
-                  ? "0 0 28px color-mix(in srgb, var(--carta-accent) 20%, transparent), inset 0 0 28px color-mix(in srgb, var(--carta-accent) 8%, transparent)"
-                  : "inset 0 0 28px color-mix(in srgb, var(--carta-text) 2.5%, transparent)",
+                  ? "0 0 28px color-mix(in srgb, var(--carta-accent) 20%, transparent), 0 4px 16px rgba(0,0,0,0.12)"
+                  : "0 4px 16px rgba(0,0,0,0.08)",
                 flexShrink: 0,
               }}>
                 {m.photo && (
@@ -377,7 +378,7 @@ function FeaturedSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "var(--impact-section-title, #fff7ed)",
+        color: "var(--impact-section-title)",
       }}>Destacados</h2>
       <div style={{ position: "relative" }}>
         <div
@@ -385,7 +386,7 @@ function FeaturedSection({
           style={{
             display: "flex", gap: 13, overflowX: "auto",
             scrollSnapType: "x mandatory", scrollbarWidth: "none",
-            padding: "0 0 8px", msOverflowStyle: "none",
+            padding: "4px 0 16px", msOverflowStyle: "none",
             WebkitOverflowScrolling: "touch",
           }}
         >
@@ -401,7 +402,7 @@ function FeaturedSection({
                   cursor: "pointer",
                   border: "1px solid color-mix(in srgb, var(--carta-accent) 25%, transparent)",
                   background: "var(--carta-surface)",
-                  boxShadow: "0 0 24px color-mix(in srgb, var(--carta-accent) 12%, transparent), 0 0 48px color-mix(in srgb, var(--carta-accent) 6%, transparent)",
+                  boxShadow: "0 6px 24px rgba(0,0,0,0.15), 0 0 24px color-mix(in srgb, var(--carta-accent) 8%, transparent)",
                 }}
               >
                 {photo && <Image src={photo} alt={f.name} fill className="object-cover" sizes="100vw" />}
@@ -490,7 +491,7 @@ function ImpactDishCard({
       {/* Ambient glow on card */}
       <div style={{
         position: "absolute", right: -35, top: -35, width: 90, height: 90, borderRadius: "50%",
-        background: "color-mix(in srgb, var(--carta-accent) 8%, transparent)", filter: "blur(10px)",
+        background: "rgba(244,166,35,0.06)", filter: "blur(10px)",
       }} />
       {/* Photo */}
       <div style={{
@@ -660,6 +661,28 @@ export default function CartaImpact({
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || "");
   const [showFixedCatNav, setShowFixedCatNav] = useState(false);
   const menuAnchorRef = useRef<HTMLDivElement>(null);
+  const fixedChipsRef = useRef<HTMLDivElement>(null);
+  const fixedActiveChipRef = useRef<HTMLButtonElement>(null);
+  const [fixedChipsScrolled, setFixedChipsScrolled] = useState(false);
+
+  // Auto-scroll fixed nav to active chip
+  useEffect(() => {
+    const chip = fixedActiveChipRef.current;
+    const container = fixedChipsRef.current;
+    if (chip && container) {
+      const left = chip.offsetLeft - container.offsetWidth / 2 + chip.offsetWidth / 2;
+      container.scrollTo({ left, behavior: "smooth" });
+    }
+  }, [activeCategory, showFixedCatNav]);
+
+  // Track fixed chips scroll for left fade
+  useEffect(() => {
+    const el = fixedChipsRef.current;
+    if (!el) return;
+    const onScroll = () => setFixedChipsScrolled(el.scrollLeft > 10);
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [showFixedCatNav]);
   useEffect(() => {
     const check = () => {
       const el = menuAnchorRef.current;
@@ -994,7 +1017,7 @@ export default function CartaImpact({
       {/* Ambient background */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-        background: "radial-gradient(circle at 70% 0%, rgba(244,166,35,0.33), transparent 27%), radial-gradient(circle at 8% 28%, rgba(155,92,255,0.18), transparent 30%), radial-gradient(circle at 90% 72%, rgba(244,166,35,0.14), transparent 24%), linear-gradient(var(--carta-bg), var(--carta-bg))",
+        background: "radial-gradient(circle at 70% 0%, var(--impact-ambient-1, rgba(244,166,35,0.33)), transparent 30%), radial-gradient(circle at 8% 28%, var(--impact-ambient-2, rgba(155,92,255,0.18)), transparent 32%), radial-gradient(circle at 90% 72%, var(--impact-ambient-3, rgba(244,166,35,0.14)), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))",
       }} />
       {/* Grid texture */}
       <div style={{
@@ -1029,20 +1052,20 @@ export default function CartaImpact({
               style={{ borderRadius: 10, objectFit: "contain" }}
             />
           )}
-          <span style={{ fontWeight: 800, fontSize: 17, color: "white", letterSpacing: "-0.3px" }}>
+          <span style={{ fontWeight: 800, fontSize: 17, color: showFixedCatNav ? "var(--carta-text)" : "white", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
             {restaurant.name}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
-            style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)" }}
+            style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid rgba(255,255,255,0.18)", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)", transition: "all 0.3s ease" }}
           >
-            <Search size={15} color="white" />
+            <Search size={15} color={showFixedCatNav ? "var(--carta-text)" : "white"} />
           </button>
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
-              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center" }}>
+              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid rgba(255,255,255,0.18)", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
                 {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "#fff", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
               </button>
               <div style={{
@@ -1074,12 +1097,13 @@ export default function CartaImpact({
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
         <div style={{ position: "relative" }}>
-          <div style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+          <div ref={fixedChipsRef} style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
             {allChipCats.map((cat) => {
               const isActive = cat.id === activeCategory;
               return (
                 <button
                   key={cat.id}
+                  ref={isActive ? fixedActiveChipRef : null}
                   onClick={() => {
                     setActiveCategory(cat.id);
                     scrollToCategory(cat.id);
@@ -1089,18 +1113,19 @@ export default function CartaImpact({
                     whiteSpace: "nowrap", flexShrink: 0,
                     border: isActive
                       ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                      : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.13))",
+                      : "1px solid var(--impact-chip-inactive-border)",
                     background: isActive
                       ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                      : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.055))",
+                      : "var(--impact-chip-inactive-bg)",
                     borderRadius: 999, padding: "7px 12px",
-                    color: isActive ? "white" : "var(--impact-chip-inactive-text, #777)",
+                    color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
                     fontSize: 13, fontWeight: 800, cursor: "pointer",
                   }}
                 >{cat.name}</button>
               );
             })}
           </div>
+          {fixedChipsScrolled && <div style={{ position: "absolute", top: 0, left: 0, bottom: 10, width: 24, background: "linear-gradient(to left, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />}
           <div style={{ position: "absolute", top: 0, right: 0, bottom: 10, width: 24, background: "linear-gradient(to right, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />
         </div>
       )}
@@ -1171,7 +1196,7 @@ export default function CartaImpact({
           <h2 style={{
             fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
             letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
-            color: "var(--impact-section-title, #fff7ed)",
+            color: "var(--impact-section-title)",
           }}>Ofertas</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {(marketingPromos || []).map((p: any) => {
@@ -1188,8 +1213,8 @@ export default function CartaImpact({
                   }}
                   style={{
                     width: "100%", height: 220, borderRadius: 26, overflow: "hidden", position: "relative",
-                    background: "#111", border: "1px solid color-mix(in srgb, var(--carta-accent) 32%, transparent)",
-                    boxShadow: "0 28px 80px rgba(0,0,0,0.65), inset 0 0 34px color-mix(in srgb, var(--carta-accent) 6%, transparent)",
+                    background: "#111", border: "none",
+                    boxShadow: "0 6px 24px rgba(0,0,0,0.2)",
                     cursor: "pointer", textAlign: "left",
                   }}
                 >
@@ -1285,7 +1310,7 @@ export default function CartaImpact({
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
-          color: "var(--impact-section-title, #fff7ed)",
+          color: "var(--impact-section-title)",
         }}>
           {"Menú"}
         </h2>
@@ -1325,12 +1350,12 @@ export default function CartaImpact({
                         whiteSpace: "nowrap", flexShrink: 0,
                         border: isActive
                           ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                          : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.13))",
+                          : "1px solid var(--impact-chip-inactive-border)",
                         background: isActive
                           ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                          : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.055))",
+                          : "var(--impact-chip-inactive-bg)",
                         borderRadius: 999, padding: "10px 16px",
-                        color: isActive ? "white" : "var(--impact-chip-inactive-text, #777)",
+                        color: isActive ? "var(--impact-chip-active-text, var(--carta-accent))" : "var(--impact-chip-inactive-text)",
                         fontSize: 15, fontWeight: 800, cursor: "pointer",
                         transition: "all 0.2s ease",
                       }}
@@ -1361,7 +1386,7 @@ export default function CartaImpact({
           if (msgType) return <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
           if (!mode) return null;
           return (
-            <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ marginBottom: 4, marginLeft: -14, marginRight: -14, display: "flex", flexDirection: "column", gap: 8 }}>
               {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
               {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
               {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
@@ -1399,12 +1424,11 @@ export default function CartaImpact({
               <ExperienceBanner restaurantId={restaurant.id} />
             )}
             {index === Math.max(4, Math.floor(menuSections.length * 0.8)) && (
-              <BirthdayBanner restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
             )}
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
-                fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20,
-                color: "var(--impact-cat-title, rgba(255,255,255,0.4))", margin: "0 0 10px", letterSpacing: "0.4px",
+                fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 26,
+                color: "var(--impact-section-title)", margin: "38px 0 14px", letterSpacing: "0.6px", lineHeight: 0.9, opacity: 0.8,
               }}>{category.name}</h3>
               {category.description && category.description.length <= 60 && (
                 <p style={{ fontSize: "0.8rem", color: "var(--carta-text3, #999)", marginTop: -6, marginBottom: 8 }}>
