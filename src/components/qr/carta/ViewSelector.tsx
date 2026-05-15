@@ -200,9 +200,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           borderRadius: "50%",
           background: open
             ? isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.65)"
-            : isDark ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.35)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
+            : isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.5)",
           border: open
             ? isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)"
             : isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.06)",

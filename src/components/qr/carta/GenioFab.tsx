@@ -112,7 +112,7 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
     }
     container.style.display = "block";
     container.style.cssText = "position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));right:14px;z-index:51;pointer-events:auto";
-    container.innerHTML = `<div style="background:#FFF7E8;color:#0e0e0e;font-size:13px;font-weight:600;padding:10px 33px 10px 14px;border-radius:12px;width:250px;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,0.18);position:relative;font-family:var(--font-dm),system-ui,sans-serif">
+    container.innerHTML = `<div style="background:#FFF7E8;color:#0e0e0e;font-size:13px;font-weight:600;padding:10px 33px 10px 14px;border-radius:12px;white-space:nowrap;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,0.18);position:relative;font-family:var(--font-dm),system-ui,sans-serif">
       ${toastText}
       <div style="position:absolute;bottom:-6px;right:20px;width:12px;height:12px;background:#FFF7E8;transform:rotate(45deg)"></div>
     </div>`;

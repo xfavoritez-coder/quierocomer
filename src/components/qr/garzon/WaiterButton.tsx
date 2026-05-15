@@ -203,7 +203,7 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
           panelActive={panelActive}
           onSave={handleSaveTable}
           onSaveAndCall={handleSaveAndCall}
-          onClose={() => { setModalOpen(false); window.dispatchEvent(new Event("fab-speed-dial-close")); }}
+          onClose={() => setModalOpen(false)}
         />,
         document.body
       )}

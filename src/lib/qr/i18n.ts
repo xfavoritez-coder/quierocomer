@@ -59,7 +59,7 @@ const dict = {
     gAlsoDislikes: "Además no te gusta mucho {dislikes}.", gDislikes: "No te gusta mucho {dislikes}.",
     gTellMeWhat: "Dime qué se te antoja.",
     gDietQuestion: "¿Qué tipo de alimentación tienes?",
-    gDietEyebrow: "🧞 Vamos a personalizar tu carta",
+    gDietEyebrow: "🧞 Ordeno la carta especialmente para ti",
     gDietIntro: "Primero cuéntame cómo te alimentas — el resto sale solo.",
     gCarnivore: "Como de todo", gVegan: "Vegano", gVegetarian: "Vegetariano",
     gResQuestion: "¿Tienes alguna restricción?", gNone: "Ninguna", gWithoutSpicy: "Sin picante",

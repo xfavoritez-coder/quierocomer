@@ -22,7 +22,7 @@ interface DashData {
   activeRestaurantsCount: number; topRestaurants: { name: string; visits: number }[];
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; activePromos: number; weekDetailViews: number;
-  weekWaiterCalls: number;
+  weekWaiterCalls: number; todayBirthdays?: number; weekBirthdays?: number;
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
@@ -169,6 +169,7 @@ export default function AdminDashboard() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
+        <Stat label="🎂 Cumpleaños hoy" value={data.todayBirthdays ?? 0} sub={`${data.weekBirthdays ?? 0} esta semana`} color="#f472b6" />
         <Stat label="🔔 Llamadas garzón" value={data.weekWaiterCalls ?? 0} sub="esta semana" />
         <Stat label="🔍 Detalles abiertos" value={data.weekDetailViews ?? 0} sub="esta semana" />
         <Stat label="📢 Promos activas" value={data.activePromos ?? 0} />

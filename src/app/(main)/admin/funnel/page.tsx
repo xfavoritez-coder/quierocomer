@@ -175,6 +175,7 @@ export default function FunnelPage() {
 
               <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                 {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}
+                {lead.cartaFileUrl && <a href={lead.cartaFileUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", fontSize: 12, fontWeight: 600 }}>📷 Ver foto</a>}
                 {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
               </div>
             </div>
