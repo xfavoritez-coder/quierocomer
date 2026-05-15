@@ -14,6 +14,7 @@ import BirthdayAutoModal from "../capture/BirthdayAutoModal";
 import { norm } from "@/lib/normalize";
 import ViewSelector from "./ViewSelector";
 import GenioFab from "./GenioFab";
+import FabSpeedDial from "./FabSpeedDial";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
@@ -944,7 +945,7 @@ export default function CartaImpact({
   const scrollToCategory = useCallback((catId: string) => {
     const el = document.getElementById(`impact-cat-${catId}`);
     if (el) {
-      const top = el.getBoundingClientRect().top + window.scrollY - 52;
+      const top = el.getBoundingClientRect().top + window.scrollY - 106;
       window.scrollTo({ top, behavior: "smooth" });
     }
   }, []);
@@ -1532,7 +1533,7 @@ export default function CartaImpact({
       })()}
 
       {/* FABs */}
-      <div className="fixed z-50 flex flex-col items-end" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 10 }}>
+      <FabSpeedDial>
         {canAccess(effectivePlan((restaurant as any).plan, (restaurant as any).subscriptionStatus), "genio") && (() => {
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
           const restrictions = typeof window !== "undefined" ? (() => { try { return JSON.parse(localStorage.getItem("qr_restrictions") || "[]"); } catch { return []; } })() : [];
@@ -1556,7 +1557,7 @@ export default function CartaImpact({
             defaultView={(restaurant as any).defaultView}
           />
         )}
-      </div>
+      </FabSpeedDial>
 
       {/* Keyframe animations */}
       <style>{`

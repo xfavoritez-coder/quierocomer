@@ -11,7 +11,7 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 ### Infraestructura
 
 - **Tablas Prisma**: Lead, MenuProvider, AdminPushSubscription
-- **Campos Lead**: localName, ownerName, email, whatsapp (E.164), cartaType, cartaUrl, cartaFileUrl, detectedProviderId, cartaStatus, preview (Json), generatedSlug, step2At, completedAt, activated
+- **Campos Lead**: localName, ownerName, email, whatsapp (E.164), cartaType, cartaUrl, cartaFileUrl, detectedProviderId, cartaStatus, preview (Json), generatedSlug, step2At, completedAt, previewAt, readyAt, activated
 - **cartaStatus flow**: PENDING → PROCESSING → READY → DELIVERED
 - **Rate limit**: 5 leads/IP/hora + detección de duplicados por URL
 
@@ -43,7 +43,7 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
    - Estados: "Tu carta ya está en preparación" → "Tu experiencia está lista" → "Revisa tu correo"
    - Timeout 20s: "Tu carta de X está en revisión" + "Te la enviaremos"
    - iPhone mockup con datos reales (hero rotante, platos con fotos)
-   - Modal "Casi lista" → "Lista" → fade-out → carta nítida
+   - Modal "Casi lista" → (15s) "Te avisaremos por correo / Puedes cerrar esta página" → "Lista" → fade-out → carta nítida
 
 ### Extracción en dos fases
 
@@ -72,6 +72,7 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 - Cards responsive (funciona en móvil)
 - Stats: total, paso 2, completados, abandonados, por tipo
 - Auto-refresh al volver a la página (visibilitychange)
+- Timeline de tiempos por lead: Inicio → Paso 2 → Preview → Lista (con deltas)
 - Link "Ver carta" para leads READY/DELIVERED
 
 ### Otros features implementados
@@ -88,34 +89,53 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 ---
 
+## Completado (15 Mayo 2026)
+
+- ✅ **Pipeline FAILED status** — CartaStatus ahora tiene FAILED. Pipeline marca FAILED en catch y timeout de 4 min. Admin recibe push notification de fallo.
+- ✅ **Pipeline timeout safety** — setTimeout de 4 min dentro de pipeline.ts resetea a FAILED si se cuelga.
+- ✅ **HD photo pipeline** — reuploadPhoto() intenta URL HD (og:image > srcset > data-src > fallback). Resize 1200px, quality 88. upgradePhotoUrl() para Shopify/Cloudinary/CDNs.
+- ✅ **Scraper HD photos** — agregarlocal/scrape busca og:image > srcset > data-src antes de img src.
+- ✅ **Birthday modal i18n** — Placeholders traducidos (nombre/email/fecha). Subtexto del perk eliminado.
+- ✅ **Vista Impact** — Nueva vista completa: hero rotativo, mood categories, destacados, ofertas cinema, menú con chips, genio, FABs. Dark y light mode.
+- ✅ **FabSpeedDial** — Botón lámpara expande genio/campana/vistas. Todas las vistas.
+- ✅ **Theme persistence** — Dark/light se guarda en localStorage, se restaura vía inline script.
+- ✅ **i18n badges** — Recomendado/Popular traducidos en todas las vistas.
+- ✅ **i18n Impact titles** — Secciones (Qué se te antoja, Destacados, Ofertas, Menú) en es/en/pt/it.
+- ✅ **Language selector Impact** — Dropdown con banderas SVG en nav superior.
+- ✅ **Accent-based ambient** — Destellos de fondo usan color del theme (amber/rojo).
+- ✅ **Genio carousels** — Fotos 118px, títulos 14px, precios 13px, disclaimer eliminado.
+- ✅ **Ajustes panel** — Vista Impact agregada, bloque "Vista por defecto" primero.
+- ✅ **Sin gluten badge** — Siempre dorado (#d4a047), no usa accent.
+- ✅ **BirthdayBanner removido** — Quitado de las 4 vistas (auto modal se mantiene).
+- ✅ **Gourmedia investigado** — Es WooCommerce con JS rendering. Sigue con Jina+Claude (crear extractor dedicado requiere más análisis).
+
 ## Pendientes
 
 ### Prioridad alta
 
-1. **Banner demo en carta generada** — Cuando el dueño abre su carta desde el email, mostrar un banner superior tipo "Esto es un demo · Ver mi panel / Activar carta / Ver QR". Al activar, muestra los 3 planes. Similar a cómo Monster Templates muestra previews con CTA. Esto convierte leads en clientes.
+1. **Banner demo en carta generada** — Cuando el dueño abre su carta desde el email, mostrar un banner superior tipo "Esto es un demo · Ver mi panel / Activar carta / Ver QR". Al activar, muestra los 3 planes. Esto convierte leads en clientes.
 
-2. **Gourmedia optimización** — Crear extractor dedicado si tiene API o JSON-LD (como Queresto/UberEats). Actualmente usa genérico (lento, puede fallar).
-
-3. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
+2. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
 
 ### Prioridad media
 
-4. **Modos DOCUMENT y PHOTO completos** — Upload a Supabase Storage funciona, falta la extracción. Flujo:
+3. **Modos DOCUMENT y PHOTO completos** — Upload a Supabase Storage funciona, falta la extracción. Flujo:
    - Extraer nombre del local del archivo (OCR para fotos, texto para PDF/Word)
    - Buscar en Google "{nombre local} carta menú" para encontrar link online
    - Si encuentra link → tratar como LINK (mejor calidad, fotos reales)
    - Si no encuentra → extraer texto del archivo con IA + fotos de Unsplash como fallback
-   - Prioridad siempre al link: la carta online tiene fotos reales y datos estructurados
 
-5. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
+4. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
 
-6. **Procesamiento manual** — Botón "Reprocesar" en admin funnel para leads PENDING. Botón "Procesar manual" que lleva a /agregarlocal con URL pre-llenada.
+5. **Procesamiento manual** — Botón "Reprocesar" en admin funnel para leads FAILED. Botón "Procesar manual" que lleva a /agregarlocal con URL pre-llenada.
+
+6. **Gourmedia extractor dedicado** — WooCommerce con JS rendering. Posiblemente parsear JSON del API de WooCommerce si el sitio lo expone.
 
 ### Prioridad baja
 
 7. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
 
-8. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación.
+8. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación, filtro FAILED.
 
 9. **Analytics del funnel** — Dashboard con conversion rate, tiempo promedio de procesamiento, proveedores más usados.
 
