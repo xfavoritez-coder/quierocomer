@@ -97,20 +97,40 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
       ? "Reordené la carta para ti: los picantes quedan al final 🌶️"
       : "Ordeno la carta especialmente para ti";
 
+  // Render toast via portal-like approach at document level
+  useEffect(() => {
+    if (!toastVisible) {
+      const existing = document.getElementById("genio-fab-toast");
+      if (existing) existing.style.display = "none";
+      return;
+    }
+    let container = document.getElementById("genio-fab-toast");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "genio-fab-toast";
+      document.body.appendChild(container);
+    }
+    container.style.display = "block";
+    container.style.cssText = "position:fixed;bottom:calc(96px + env(safe-area-inset-bottom));right:14px;z-index:51;pointer-events:auto";
+    container.innerHTML = `<div style="background:#FFF7E8;color:#0e0e0e;font-size:13px;font-weight:600;padding:10px 33px 10px 14px;border-radius:12px;width:250px;line-height:1.4;box-shadow:0 4px 16px rgba(0,0,0,0.18);position:relative;font-family:var(--font-dm),system-ui,sans-serif">
+      ${toastText}
+      <div style="position:absolute;bottom:-6px;right:20px;width:12px;height:12px;background:#FFF7E8;transform:rotate(45deg)"></div>
+    </div>`;
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "✕";
+    closeBtn.style.cssText = "position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;padding:4px;line-height:1;font-size:14px;color:#999";
+    closeBtn.onclick = () => dismiss();
+    container.firstElementChild?.appendChild(closeBtn);
+  }, [toastVisible, toastText]);
+
+  // Cleanup on unmount
+  useEffect(() => () => {
+    const el = document.getElementById("genio-fab-toast");
+    if (el) el.remove();
+  }, []);
+
   return (
     <div style={{ position: "relative" }}>
-      {toastVisible && (
-        <div className="font-[family-name:var(--font-dm)]" style={{ position: "fixed", bottom: "calc(96px + env(safe-area-inset-bottom))", right: 14, background: "#FFF7E8", color: "#0e0e0e", fontSize: "13px", fontWeight: 600, padding: "10px 33px 10px 14px", borderRadius: 12, width: 250, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.18)", animation: "fadeToast 0.3s ease-out", zIndex: 51 }}>
-          {toastText}
-          <button
-            onClick={(e) => { e.stopPropagation(); dismiss(); }}
-            style={{ position: "absolute", top: 6, right: 6, background: "none", border: "none", cursor: "pointer", padding: 4, lineHeight: 1, fontSize: "14px", color: "#999" }}
-          >
-            ✕
-          </button>
-          <div style={{ position: "absolute", bottom: -6, right: 20, width: 12, height: 12, background: "#FFF7E8", transform: "rotate(45deg)" }} />
-        </div>
-      )}
       <button
         onClick={() => { dismiss(); onOpen(); window.dispatchEvent(new Event("fab-speed-dial-close")); }}
         className="flex items-center justify-center rounded-full active:scale-95 genio-fab-btn"

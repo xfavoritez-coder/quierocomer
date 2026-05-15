@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Bell, Check } from "lucide-react";
 import ModalMesa from "./ModalMesa";
 import { getSessionId, getGuestId } from "@/lib/guestId";
@@ -196,14 +197,15 @@ export default function WaiterButton({ restaurantId, tableId, tableName, size = 
         )}
       </button>
 
-      {/* Mesa modal */}
-      {modalOpen && (
+      {/* Mesa modal — rendered via portal to escape transform context */}
+      {modalOpen && typeof document !== "undefined" && createPortal(
         <ModalMesa
           panelActive={panelActive}
           onSave={handleSaveTable}
           onSaveAndCall={handleSaveAndCall}
-          onClose={() => setModalOpen(false)}
-        />
+          onClose={() => { setModalOpen(false); window.dispatchEvent(new Event("fab-speed-dial-close")); }}
+        />,
+        document.body
       )}
 
       <style>{`
