@@ -7,9 +7,9 @@ import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
 
 const PROGRESS_STEPS = [
-  { label: "Detectando platos y categorías", duration: 5000 },
-  { label: "Ordenando la información de tu carta", duration: 6500 },
-  { label: "Diseñando la nueva propuesta", duration: 7500 },
+  { label: "Detectando platos y categorías", duration: 3500 },
+  { label: "Ordenando la información de tu carta", duration: 4500 },
+  { label: "Diseñando la nueva propuesta", duration: 6000 },
 ];
 
 /** Non-linear easing — slows down around 40% and 75% to feel like real processing */
