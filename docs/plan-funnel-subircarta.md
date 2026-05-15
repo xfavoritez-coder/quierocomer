@@ -2,132 +2,158 @@
 
 ## Resumen
 
-Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, PDF o foto), el sistema la analiza, y le entrega una propuesta de Carta Viva. El lead queda registrado para seguimiento comercial.
+Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, PDF o foto), el sistema la analiza con IA, y le entrega una carta viva por correo. El lead queda registrado para seguimiento comercial.
 
 ---
 
-## Ya construido
+## Ya construido (Mayo 2026)
 
-### Tablas en Prisma (db push sincronizado)
+### Infraestructura
 
-- **MenuProvider** — catálogo de proveedores de carta QR. Campos: `name`, `domainPatterns[]`, `htmlSignatures[]`, `status` (SUPPORTED/IN_RESEARCH/UNKNOWN), `extractionConfig` (Json), `notes`. Relación 1:N con Lead.
-- **Lead** — prospecto del funnel. Datos del dueño (`localName`, `ownerName`, `email`, `whatsapp` nullable), origen de la carta (`cartaType`: LINK/DOCUMENT/PHOTO, `cartaUrl`, `cartaFileUrl`), `detectedProviderId`, `cartaStatus` (default PENDING), `activated` (default false), `convertedToOwnerId`.
+- **Tablas Prisma**: Lead, MenuProvider, AdminPushSubscription
+- **Campos Lead**: localName, ownerName, email, whatsapp (E.164), cartaType, cartaUrl, cartaFileUrl, detectedProviderId, cartaStatus, preview (Json), generatedSlug, step2At, completedAt, activated
+- **cartaStatus flow**: PENDING → PROCESSING → READY → DELIVERED
+- **Rate limit**: 5 leads/IP/hora + detección de duplicados por URL
 
-### Flujo modo LINK — funciona de punta a punta
+### Proveedores configurados
 
-Paso 1 pega link → crea Lead → detección de proveedor (dominio + fetch HTML para firmas) → paso 2 (barra animada ~6.5s, formulario inline) → completa el mismo Lead → confirmación placeholder.
+| Proveedor | Tipo de extractor | Método | Velocidad |
+|-----------|------------------|--------|-----------|
+| **Justo** | Dedicado (HTML parsing) | Fetch directo /pedir, cheerio | ~3s |
+| **UberEats** | Dedicado (API) | POST /_p/api/getStoreV1 | ~2s |
+| **Queresto/Bistrify** | Dedicado (JSON-LD) | Fetch HTML, parse JSON-LD | ~2s |
+| **Fudo** | Genérico (Jina+Claude) | Jina renderiza SPA, Sonnet extrae | ~60s |
+| **Mercat** | Genérico (Jina+Claude) | Jina renderiza SPA, Sonnet extrae | ~60s |
+| **Gourmedia** | Genérico (Jina+Claude) | Pendiente optimización | ~60s |
+| **Desconocido** | Genérico (Jina+Claude) | Intenta ambos, elige mejor | ~60s |
 
-### Seed de MenuProvider — 4 proveedores cargados
-
-| Proveedor | domainPatterns | htmlSignatures | Detección |
-|-----------|---------------|----------------|-----------|
-| Justo | justo.cl, pedir.justo.cl, menu.justo.cl | getjusto.com, tofuu.getjusto.com, pide.getjusto.com | Dominio propio del restaurante → fetch HTML → detecta firmas de Justo |
-| Fudo | fu.do, menu.fu.do | fu.do | Por dominio directo |
-| Gourmedia | gour.media | gour.media | Por dominio directo |
-| Mercat | kojo.cl, mercat.cl | mer-cat.com, cdn.mer-cat.com | Dominio propio → fetch HTML → detecta CDN de Mercat |
-
-### Detección de proveedor — dos pasos
+### Detección de proveedor (dos pasos)
 
 1. Comparar hostname contra `domainPatterns` (instantáneo)
-2. Si no hay match → fetch primeros 100KB del HTML → buscar `htmlSignatures` de cada proveedor (timeout 6s)
+2. Si no hay match → fetch HTML → buscar `htmlSignatures` de cada proveedor
+
+### Flujo completo modo LINK
+
+1. **Paso 1** (`/subircarta`): pega link → crea Lead → detecta proveedor → redirige a paso 2
+2. **Paso 2** (`/subircarta/paso2`): animación de progreso (~14s) + dispara preview async + formulario
+3. **Submit**: PATCH guarda datos del dueño (localName, ownerName, email, whatsapp)
+4. **Confirmación** (`/subircarta/confirmacion`):
+   - Dispara process completo async
+   - Polling cada 3s para detectar preview y cartaStatus
+   - Estados: "Tu carta ya está en preparación" → "Tu experiencia está lista" → "Revisa tu correo"
+   - Timeout 20s: "Tu carta de X está en revisión" + "Te la enviaremos"
+   - iPhone mockup con datos reales (hero rotante, platos con fotos)
+   - Modal "Casi lista" → "Lista" → fade-out → carta nítida
+
+### Extracción en dos fases
+
+- **Preview rápida** (~15s): Haiku con 4KB para 5 platos (o extractor dedicado)
+- **Proceso completo** (~60s): Sonnet con 20KB para todos los platos + crear Restaurant + re-upload fotos
+- Validación de calidad: mínimo 3 platos con precios para marcar READY
+
+### Email automático
+
+- Se envía cuando cartaStatus pasa a READY
+- Desde: hola@quierocomer.cl (Resend)
+- Asunto: "{Local} · Tu nueva carta está lista"
+- Contenido: logo del local, saludo, cantidad de platos, botón "Ver mi carta"
+- Marca lead como DELIVERED
+
+### Push notifications admin
+
+- Service worker `sw-admin.js` + AdminPushSubscription
+- Botón "Activar notificaciones" en `/admin/funnel`
+- Push en éxito: "🧞 Nueva carta creada" con nombre y cantidad de platos
+- Push en fallo: "⚠️ Lead sin procesar" con nombre del local
+- Click en notificación → abre `/admin/funnel`
+
+### Admin Funnel (`/admin/funnel`)
+
+- Cards responsive (funciona en móvil)
+- Stats: total, paso 2, completados, abandonados, por tipo
+- Auto-refresh al volver a la página (visibilitychange)
+- Link "Ver carta" para leads READY/DELIVERED
+
+### Otros features implementados
+
+- WhatsApp normalización E.164 con libphonenumber-js
+- Upload de archivos (PDF/foto) a Supabase Storage
+- Accent color configurable por restaurante (amber/rojo)
+- Dark/light mode toggle en ViewSelector
+- GenioFab con lámpara personalizada
+- Birthday modal con dark mode
+- FABs unificados (mismo estilo dark glass)
+- Nav superior con logo + RRSS + idioma
+- No flash blanco entre pasos (layout con body oscuro)
 
 ---
 
-## Pendientes en orden
+## Pendientes
 
-### Paso 2 — Normalización de WhatsApp a E.164
+### Prioridad alta
 
-- Instalar `libphonenumber-js`
-- Normalizar el whatsapp a formato E.164 (ej: `+56912345678`), país default CL
-- Aplicar en frontend (antes de enviar) y backend (validación)
-- Si es inválido → guardar null. No bloquear el envío por WhatsApp mal escrito (campo opcional)
-- Aviso suave en UI: "No pudimos validar este número, se guardará sin WhatsApp"
+1. **Banner demo en carta generada** — Cuando el dueño abre su carta desde el email, mostrar un banner superior tipo "Esto es un demo · Ver mi panel / Activar carta / Ver QR". Al activar, muestra los 3 planes. Similar a cómo Monster Templates muestra previews con CTA. Esto convierte leads en clientes.
 
-### Paso 3 — Modos DOCUMENT y PHOTO (Supabase Storage)
+2. **Gourmedia optimización** — Crear extractor dedicado si tiene API o JSON-LD (como Queresto/UberEats). Actualmente usa genérico (lento, puede fallar).
 
-- Configurar bucket en Supabase Storage (permisos, tamaño máximo)
-- Upload directo desde browser con signed URL (evitar proxy por el servidor para archivos de 10MB)
-- El dueño sube PDF/Word/Excel o foto → archivo a Storage → URL en `cartaFileUrl`
-- Estos modos NO pasan por detección de proveedor (solo LINK la usa)
-- Se montan sobre el flujo ya funcionando: crear Lead → paso 2 → completar datos
-- `cartaType` se guarda como DOCUMENT o PHOTO según corresponda
+3. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
 
-### Paso 4 — Protección contra spam y duplicados
+### Prioridad media
 
-- Rate limit por IP en `POST /api/subircarta` (ej: max 5 leads por IP por hora)
-- Detección de leads duplicados por `cartaUrl`: si alguien pega el mismo link, reusar el lead existente si no fue completado, o crear uno nuevo si ya tiene datos
-- No es urgente mientras no esté público, pero debe estar antes del lanzamiento
+4. **Modos DOCUMENT y PHOTO completos** — Upload funciona, pero la extracción de texto/OCR no está implementada. Estrategia: buscar nombre del local en Google → encontrar link online → tratar como LINK.
 
-### Paso 5 — Analytics del funnel
+5. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
 
-- Trackear cada paso del funnel para medir fricción:
-  - `step1At`: timestamp cuando se crea el lead (ya existe como `createdAt`)
-  - `step2At`: timestamp cuando llega al paso 2 (nuevo campo o StatEvent)
-  - `completedAt`: timestamp cuando completa el formulario
-  - `abandonedStep`: si se fue, en qué paso
-- Alternativa liviana: usar `StatEvent` existente con tipos nuevos (FUNNEL_STEP1, FUNNEL_STEP2, FUNNEL_COMPLETE)
-- Dashboard mínimo en /panel para ver conversión del funnel
+6. **Procesamiento manual** — Botón "Reprocesar" en admin funnel para leads PENDING. Botón "Procesar manual" que lleva a /agregarlocal con URL pre-llenada.
 
-### Paso 6 — Procesamiento real de la carta
+### Prioridad baja
 
-Es asíncrono, corre en backend después de que el dueño se va. Se divide en dos sub-pasos:
+7. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
 
-#### 6a — Camino "proveedor conocido" (SUPPORTED)
+8. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación.
 
-- Escribir el primer adaptador real para un proveedor concreto (Justo es el mejor candidato: HTML público, muchos restaurantes en Chile)
-- Aplicar `extractionConfig` del MenuProvider → extraer platos, categorías, precios
-- Generar la carta viva y marcar `cartaStatus: READY`
-- Esto da un flujo completo de verdad: dueño pega link → lead → carta procesada → entregada
-
-#### 6b — Camino "proveedor desconocido" (IN_RESEARCH/UNKNOWN)
-
-- Disparar un agente IA que investiga cómo extraer los datos de ese proveedor
-- El agente propone un adaptador de extracción
-- El resultado queda en una bandeja de aprobación para revisión humana (~1 minuto: comparar precios/categorías contra la carta real)
-- Si se aprueba → se guarda como MenuProvider SUPPORTED con su `extractionConfig` → queda automático para siempre
-- El agente IA puede orquestarse con n8n/Make
-- Los adaptadores aprobados viven en el backend Next.js/Prisma
-
-#### Avance de cartaStatus
-
-`PENDING` → `PROCESSING` → `READY` → `DELIVERED`
-
-### Paso 7 — Página de confirmación / paso 3 + correos
-
-- Diseño final de la confirmación, con información contextual:
-  - Si proveedor SUPPORTED → "Tu carta estará lista en minutos"
-  - Si IN_RESEARCH/UNKNOWN → "Estamos analizando tu carta, te avisamos cuando esté lista"
-- Correo de entrega con el link a la carta viva
-- Correo distinto para proveedor desconocido ("es primera vez que vemos tu proveedor, la espera vale la pena")
-- Copy de tiempo siempre elástico, nunca prometer minutos exactos
-
-### Paso 8 — n8n/Make — seguimiento de ventas
-
-- Webhook fire-and-forget desde `POST /api/subircarta` para notificar a n8n en tiempo real (sin esperar respuesta)
-- Registrar lead en CRM/planilla
-- Secuencia de seguimiento automática
-- Notificaciones internas al equipo
-- Disparos de reactivación para leads que no completaron
-- El campo `activated` guía a quién perseguir
-- WhatsApp personalizado a quienes dejaron teléfono, email a quienes no
+9. **Analytics del funnel** — Dashboard con conversion rate, tiempo promedio de procesamiento, proveedores más usados.
 
 ---
 
 ## Arquitectura de archivos
 
 ```
-prisma/schema.prisma          → Lead, MenuProvider, enums
+prisma/schema.prisma          → Lead, MenuProvider, AdminPushSubscription
+src/lib/extractors/
+  types.ts                    → ExtractedDish, ExtractionResult
+  justo.ts                    → Extractor Justo (HTML parsing)
+  ubereats.ts                 → Extractor UberEats (API)
+  queresto.ts                 → Extractor Queresto (JSON-LD)
+  scrape.ts                   → Genérico (Jina+Claude) + quick preview
+  preview.ts                  → Preview rápida (router a extractores)
+  pipeline.ts                 → Pipeline completo (extracción → restaurant → email)
+src/lib/adminPush.ts          → Push notifications al admin
+src/lib/normalizePhone.ts     → WhatsApp E.164
 src/app/subircarta/
-  page.tsx                    → Paso 1 (server component)
-  SubirCartaClient.tsx        → Paso 1 (client, React real)
+  layout.tsx                  → Body oscuro (no flash)
+  page.tsx                    → Paso 1
+  SubirCartaClient.tsx        → Paso 1 (client)
   paso2/
-    page.tsx                  → Paso 2 (server component)
+    page.tsx                  → Paso 2
     Paso2Client.tsx           → Paso 2 (client, animación + form)
   confirmacion/
-    page.tsx                  → Confirmación placeholder
+    page.tsx                  → Confirmación
+    ConfirmacionClient.tsx    → Confirmación (client, polling + iPhone preview)
 src/app/api/subircarta/
   route.ts                    → POST: crear lead + detectar proveedor
+  upload/route.ts             → POST: upload archivo a Supabase
+  preview/route.ts            → POST: preview rápida
+  process/route.ts            → POST: pipeline completo
   [id]/route.ts               → GET: fetch lead, PATCH: completar lead
+src/app/api/admin/
+  funnel/route.ts             → GET: leads + stats
+  push/route.ts               → POST/DELETE: push subscriptions
+src/app/(main)/admin/funnel/
+  page.tsx                    → Dashboard funnel (responsive)
+public/
+  sw-admin.js                 → Service worker admin push
+  genio-lamp.png              → Icono lámpara GenioFab
 ```
 
 ---
@@ -135,8 +161,11 @@ src/app/api/subircarta/
 ## Decisiones tomadas
 
 - Un solo registro Lead por funnel (se crea en paso 1, se completa en paso 2)
-- Detección de proveedor en dos pasos: dominio primero, HTML fetch si no hay match
-- `htmlSignatures` agregado a MenuProvider para detectar proveedores cuando el restaurante usa dominio propio
-- Upload de archivos con signed URL directo a Supabase (no proxy por el server)
-- WhatsApp opcional, nunca bloquea el flujo
-- `cartaStatus` avanza asincrónicamente, independiente del flujo del usuario
+- Preview rápida en paso 2, proceso completo en confirmación
+- Sonnet para extracción full (calidad), Haiku para preview (velocidad)
+- Extractores dedicados cuando es posible (Justo, UberEats, Queresto) — sin IA, instantáneos
+- Genérico (Jina+Claude) como fallback para proveedores desconocidos
+- Validación de calidad: min 3 platos con precios antes de marcar READY
+- Push solo en fallo del pipeline (no del preview)
+- Email solo cuando READY con datos válidos
+- Timeout de 20s en confirmación para feedback rápido al usuario
