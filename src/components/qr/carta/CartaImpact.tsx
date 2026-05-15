@@ -280,7 +280,7 @@ function MoodSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "#fff7ed",
+        color: "var(--impact-section-title, #fff7ed)",
       }}>
         {"Que se te antoja?"}
       </h2>
@@ -377,7 +377,7 @@ function FeaturedSection({
       <h2 style={{
         fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 32,
         letterSpacing: "0.8px", margin: "0 0 12px", lineHeight: 0.9,
-        color: "#fff7ed",
+        color: "var(--impact-section-title, #fff7ed)",
       }}>Destacados</h2>
       <div style={{ position: "relative" }}>
         <div
@@ -1015,7 +1015,7 @@ export default function CartaImpact({
       <header style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
-        background: showFixedCatNav ? "rgba(3,3,3,0.92)" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
+        background: showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
         pointerEvents: "auto",
         transition: "background 0.3s ease",
@@ -1073,32 +1073,35 @@ export default function CartaImpact({
       </div>
       {/* Fixed category nav — appears when menu section reaches header */}
       {showFixedCatNav && (
-        <div style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
-          {allChipCats.map((cat) => {
-            const isActive = cat.id === activeCategory;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setActiveCategory(cat.id);
-                  scrollToCategory(cat.id);
-                }}
-                className="font-[family-name:var(--font-dm)]"
-                style={{
-                  whiteSpace: "nowrap", flexShrink: 0,
-                  border: isActive
-                    ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                    : "1px solid rgba(255,255,255,0.13)",
-                  background: isActive
-                    ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                    : "rgba(255,255,255,0.055)",
-                  borderRadius: 999, padding: "7px 12px",
-                  color: isActive ? "white" : "rgba(255,255,255,0.5)",
-                  fontSize: 13, fontWeight: 800, cursor: "pointer",
-                }}
-              >{cat.name}</button>
-            );
-          })}
+        <div style={{ position: "relative" }}>
+          <div style={{ padding: "0 0 10px", display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" }}>
+            {allChipCats.map((cat) => {
+              const isActive = cat.id === activeCategory;
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setActiveCategory(cat.id);
+                    scrollToCategory(cat.id);
+                  }}
+                  className="font-[family-name:var(--font-dm)]"
+                  style={{
+                    whiteSpace: "nowrap", flexShrink: 0,
+                    border: isActive
+                      ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
+                      : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.13))",
+                    background: isActive
+                      ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
+                      : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.055))",
+                    borderRadius: 999, padding: "7px 12px",
+                    color: isActive ? "white" : "var(--impact-chip-inactive-text, #777)",
+                    fontSize: 13, fontWeight: 800, cursor: "pointer",
+                  }}
+                >{cat.name}</button>
+              );
+            })}
+          </div>
+          <div style={{ position: "absolute", top: 0, right: 0, bottom: 10, width: 24, background: "linear-gradient(to right, transparent, var(--impact-header-solid, rgba(3,3,3,0.92)))", pointerEvents: "none", opacity: 0.8 }} />
         </div>
       )}
       </header>
@@ -1168,7 +1171,7 @@ export default function CartaImpact({
           <h2 style={{
             fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
             letterSpacing: "0.8px", margin: "0 0 14px", lineHeight: 0.9,
-            color: "#fff7ed",
+            color: "var(--impact-section-title, #fff7ed)",
           }}>Ofertas</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             {(marketingPromos || []).map((p: any) => {
@@ -1229,7 +1232,7 @@ export default function CartaImpact({
                       if (!desc) return null;
                       return (
                         <p style={{
-                          margin: "0 0 12px", color: "#b0a89e", fontSize: 14, lineHeight: 1.42,
+                          margin: "0 0 12px", color: "var(--impact-offer-desc, #b0a89e)", fontSize: 14, lineHeight: 1.42,
                           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
                         }}>{desc}</p>
                       );
@@ -1282,7 +1285,7 @@ export default function CartaImpact({
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
-          color: "#fff7ed",
+          color: "var(--impact-section-title, #fff7ed)",
         }}>
           {"Menú"}
         </h2>
@@ -1322,12 +1325,12 @@ export default function CartaImpact({
                         whiteSpace: "nowrap", flexShrink: 0,
                         border: isActive
                           ? "1px solid color-mix(in srgb, var(--carta-accent) 55%, transparent)"
-                          : "1px solid color-mix(in srgb, var(--carta-text) 13%, transparent)",
+                          : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.13))",
                         background: isActive
                           ? "color-mix(in srgb, var(--carta-accent) 10%, transparent)"
-                          : "color-mix(in srgb, var(--carta-text) 5.5%, transparent)",
+                          : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.055))",
                         borderRadius: 999, padding: "10px 16px",
-                        color: isActive ? "white" : "var(--carta-text3, #777)",
+                        color: isActive ? "white" : "var(--impact-chip-inactive-text, #777)",
                         fontSize: 15, fontWeight: 800, cursor: "pointer",
                         transition: "all 0.2s ease",
                       }}
@@ -1338,9 +1341,9 @@ export default function CartaImpact({
               </div>
               {/* Fade right */}
               <div style={{
-                position: "absolute", top: 0, right: 0, bottom: 0, width: 30,
+                position: "absolute", top: 0, right: 0, bottom: 0, width: 24,
                 background: "linear-gradient(to right, transparent, var(--carta-bg))",
-                pointerEvents: "none",
+                pointerEvents: "none", opacity: 0.8,
               }} />
             </div>
           </div>
@@ -1401,7 +1404,7 @@ export default function CartaImpact({
             <div id={`impact-cat-${category.id}`} style={{ marginBottom: 20 }}>
               <h3 style={{
                 fontFamily: "'Bebas Neue', Impact, sans-serif", fontSize: 20,
-                color: "var(--carta-text, #ccc)", margin: "0 0 10px", letterSpacing: "0.4px", opacity: 0.4,
+                color: "var(--impact-cat-title, rgba(255,255,255,0.4))", margin: "0 0 10px", letterSpacing: "0.4px",
               }}>{category.name}</h3>
               {category.description && category.description.length <= 60 && (
                 <p style={{ fontSize: "0.8rem", color: "var(--carta-text3, #999)", marginTop: -6, marginBottom: 8 }}>
