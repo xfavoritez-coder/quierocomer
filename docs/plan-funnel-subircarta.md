@@ -139,7 +139,9 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 ### Prioridad baja
 
-7. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
+7. **Pexels como fallback de fotos** — API gratuita 200/hora sin aprobación (vs Unsplash 50/hora demo). Usar cuando Unsplash falla por rate limit. API key: se obtiene en pexels.com/api. Endpoint similar: `https://api.pexels.com/v1/search?query=sushi+food&per_page=1`.
+
+8. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
 
 8. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación, filtro FAILED.
 
