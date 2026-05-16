@@ -13,6 +13,7 @@ export default function SubirCartaClient() {
   const [mode, setMode] = useState<Mode>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -56,9 +57,11 @@ export default function SubirCartaClient() {
         const files = inputRef.current?.files;
         if (!files || files.length === 0) { setError("Selecciona un archivo primero."); return; }
 
-        // Upload files one by one
+        // Upload files one by one with progress
+        const total = Math.min(files.length, 10);
         let leadId = "";
-        for (let i = 0; i < Math.min(files.length, 10); i++) {
+        for (let i = 0; i < total; i++) {
+          setUploadProgress(total > 1 ? `Subiendo foto ${i + 1} de ${total}...` : "Subiendo foto...");
           const formData = new FormData();
           formData.append("file", files[i]);
           if (leadId) formData.append("leadId", leadId);
@@ -68,9 +71,10 @@ export default function SubirCartaClient() {
             signal: AbortSignal.timeout(30000),
           });
           const data = await res.json();
-          if (!res.ok) { setError(data.error || `Error al subir ${files[i].name}`); return; }
+          if (!res.ok) { setError(data.error || `Error al subir ${files[i].name}`); setUploadProgress(""); return; }
           if (!leadId) leadId = data.id;
         }
+        setUploadProgress("");
         router.push(`/subircarta/paso2?id=${leadId}`);
       }
     } catch (err: any) {
@@ -227,7 +231,7 @@ export default function SubirCartaClient() {
                 cursor: ctaEnabled && !loading ? "pointer" : "default",
               }}
             >
-              {loading ? "Analizando..." : "Analizar mi carta"} <span>→</span>
+              {loading ? (uploadProgress || "Analizando...") : "Analizar mi carta"} <span>→</span>
             </button>
 
             <div className="trust below-cta">
