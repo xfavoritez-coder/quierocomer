@@ -175,7 +175,7 @@ export default function ConfirmacionClient() {
             {modalDismissed ? (
               <>
                 <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
-                <p className="subcopy">Te acabamos de enviar tu carta.</p>
+                <p className="subcopy">{`Te acabamos de enviar la carta de ${displayName} a tu correo.`}</p>
               </>
             ) : (
               <>

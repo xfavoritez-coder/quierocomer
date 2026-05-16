@@ -205,7 +205,7 @@ Contenido:
 ${content}
 
 Responde con JSON:
-{"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null"}]}]}
+{"restaurantName":"...","logo":"URL o null","categories":[{"name":"...","dishes":[{"name":"...","description":"...","price":8990,"photo":"URL o null","diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
 
 REGLAS IMPORTANTES:
 - Precios: busca números que parezcan precios (ej: $8.990, 8990, $12.500). Conviértelos a enteros sin puntos: $8.990→8990
@@ -213,6 +213,8 @@ REGLAS IMPORTANTES:
 - Fotos: busca URLs de imágenes en la sección [IMAGES FOUND ON PAGE] y asócialas al plato correspondiente por nombre o posición
 - Las URLs de fotos deben ser absolutas. Si son relativas, añade ${baseUrl} al inicio
 - NO dejes price en 0 si hay un precio visible en la página
+- diet: "VEGAN" si tiene marcas veganas (🌿/V/vegan), "VEGETARIAN" si vegetariano, "OMNIVORE" si no hay indicador
+- isSpicy: true si tiene marcas de picante (🌶️/spicy/picante)
 - SOLO JSON, sin texto adicional.`);
 
   console.log("[Scraper] Claude response length:", result.length);
@@ -229,6 +231,8 @@ REGLAS IMPORTANTES:
         price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
         imageUrl: dish.photo || null,
         category: cat.name || "General",
+        diet: ["VEGAN", "VEGETARIAN"].includes(dish.diet) ? dish.diet : "OMNIVORE",
+        isSpicy: dish.isSpicy || false,
       });
     }
   }
