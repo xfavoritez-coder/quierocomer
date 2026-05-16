@@ -441,11 +441,11 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
       >
         {/* Header: genio icon + title + minimize */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: isLast ? 26 : 22, flexShrink: 0 }}>{current.icon}</span>
+          <span style={{ fontSize: 26, flexShrink: 0 }}>{current.icon}</span>
           <h3 style={{
             flex: 1,
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: isLast ? "1.15rem" : "1rem",
+            fontSize: "1.15rem",
             fontWeight: 800,
             color: "#fff",
             margin: 0,
@@ -471,10 +471,10 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         {/* Body */}
         <p style={{
           fontFamily: "var(--font-dm, sans-serif)",
-          fontSize: isLast ? "1.05rem" : "0.88rem",
+          fontSize: "1.05rem",
           color: "rgba(255,255,255,0.5)",
           lineHeight: 1.45,
-          margin: isLast ? "0 0 18px" : "0 0 10px",
+          margin: "0 0 18px",
         }}>
           {current.body}
         </p>

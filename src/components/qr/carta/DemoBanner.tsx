@@ -112,17 +112,17 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               href={`/panel?slug=${restaurantSlug}`}
               style={{
                 border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
-                height: 38, padding: "0 13px", fontSize: 12, fontWeight: 900,
+                height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
                 background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
               }}
-            >Ver mi panel</a>
+            >Ver panel</a>
           ) : (
             <a
               href={`/qr/${restaurantSlug}`}
               style={{
                 border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
-                height: 38, padding: "0 13px", fontSize: 12, fontWeight: 900,
+                height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
                 background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
               }}
@@ -132,7 +132,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             href={`/activar/${restaurantSlug}`}
             style={{
               border: 0, borderRadius: 999, height: 38, padding: "0 13px",
-              fontSize: 12, fontWeight: 900,
+              fontSize: 13, fontWeight: 900,
               background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03",
               display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
               boxShadow: highlight
@@ -162,7 +162,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         background: "linear-gradient(135deg, #ffb833, #f5a623)",
         textAlign: "center",
       }}>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#1a0800" }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#1a0800" }}>
           Actívala y muéstrasela al mundo
         </span>
       </div>
