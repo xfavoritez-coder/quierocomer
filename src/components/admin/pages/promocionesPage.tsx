@@ -633,7 +633,7 @@ export default function AdminPromociones() {
       {/* Create new promo */}
       {creating && !createType && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
-          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>¿Qué tipo de promoción?</h3>
+          <h3 style={{ fontFamily: F, fontSize: "1rem", color: "var(--adm-text)", marginBottom: 16 }}>¿Qué tipo de oferta?</h3>
           <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <button onClick={() => setCreateType("graphic")} style={{ padding: "20px 16px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 14, cursor: "pointer", textAlign: "center" }}>
               <span style={{ fontSize: "2rem", display: "block", marginBottom: 8 }}>🖼️</span>
