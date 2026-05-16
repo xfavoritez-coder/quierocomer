@@ -605,6 +605,31 @@ export default function AdminPromociones() {
 
       {/* ===== OFERTAS ===== */}
       {<>
+      {/* Filters + create button */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
+        {[
+          { key: "all", label: "Todas" },
+          ...(!isPanel ? [{ key: "SUGGESTED", label: "Sugeridas" }] : []),
+          { key: "ACTIVE", label: "Activas" },
+          { key: "PAUSED", label: "Pausadas" },
+        ].map(f => (
+          <button key={f.key} onClick={() => setFilter(f.key)} style={{
+            padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+            background: filter === f.key ? "var(--adm-card-border)" : "transparent",
+            color: filter === f.key ? "var(--adm-text)" : "var(--adm-text3)",
+          }}>
+            {f.label}
+          </button>
+        ))}
+        <div style={{ flex: 1 }} />
+        {selectedLocal && (
+          <button onClick={() => creating ? resetCreate() : setCreating(true)} style={{ padding: "8px 16px", background: creating ? "none" : "#F4A623", color: creating ? "var(--adm-text2)" : "white", border: creating ? "1px solid var(--adm-card-border)" : "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+            {creating ? "Cancelar" : "+ Crear oferta"}
+          </button>
+        )}
+      </div>
+
       {/* Create new promo */}
       {creating && !createType && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
@@ -621,7 +646,6 @@ export default function AdminPromociones() {
               <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", display: "block", marginTop: 4 }}>Selecciona 1 o más platos</span>
             </button>
           </div>
-          <button onClick={resetCreate} style={{ marginTop: 14, background: "none", border: "none", color: "var(--adm-text2)", fontFamily: F, fontSize: "0.82rem", cursor: "pointer" }}>Cancelar</button>
         </div>
       )}
 
@@ -775,30 +799,6 @@ export default function AdminPromociones() {
         </div>
       )}
 
-      {/* Filters + create button */}
-      <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
-        {[
-          { key: "all", label: "Todas" },
-          ...(!isPanel ? [{ key: "SUGGESTED", label: "Sugeridas" }] : []),
-          { key: "ACTIVE", label: "Activas" },
-          { key: "PAUSED", label: "Pausadas" },
-        ].map(f => (
-          <button key={f.key} onClick={() => setFilter(f.key)} style={{
-            padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-            background: filter === f.key ? "var(--adm-card-border)" : "transparent",
-            color: filter === f.key ? "var(--adm-text)" : "var(--adm-text3)",
-          }}>
-            {f.label}
-          </button>
-        ))}
-        <div style={{ flex: 1 }} />
-        {selectedLocal && !creating && (
-          <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
-            + Crear oferta
-          </button>
-        )}
-      </div>
 
       {/* Edit modal */}
       {editing && (
