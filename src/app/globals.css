@@ -174,8 +174,8 @@
 }
 
 /* Genio FAB */
-.genio-fab-btn { background: rgba(244,166,35,0.15); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(244,166,35,0.3); box-shadow: 0 2px 12px rgba(244,166,35,0.1), 0 4px 18px rgba(0,0,0,0.08); }
-.carta-dark .genio-fab-btn { background: rgba(244,166,35,0.28); border-color: rgba(244,166,35,0.45); box-shadow: 0 0 16px rgba(244,166,35,0.15), 0 4px 18px rgba(0,0,0,0.25); }
+.genio-fab-btn { background: rgba(244,166,35,0.25); border: 1px solid rgba(244,166,35,0.35); box-shadow: 0 2px 12px rgba(244,166,35,0.1), 0 4px 18px rgba(0,0,0,0.08); }
+.carta-dark .genio-fab-btn { background: rgba(244,166,35,0.35); border-color: rgba(244,166,35,0.45); box-shadow: 0 0 16px rgba(244,166,35,0.15), 0 4px 18px rgba(0,0,0,0.25); }
 .genio-lamp-icon { filter: none; }
 
 /* ── Impact view tokens ── */

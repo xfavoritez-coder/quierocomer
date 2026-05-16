@@ -198,6 +198,8 @@ Reglas:
         price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
         imageUrl: photoMap.get(dish.name) || null,
         category: cat.name || "General",
+        diet: dish.diet || "OMNIVORE",
+        isSpicy: dish.isSpicy || false,
       });
     }
   }
@@ -311,7 +313,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",
         cartaColorMode: "DARK",
-        defaultView: "lista",
+        defaultView: "impact",
+        enabledLangs: ["es", "en", "pt"],
         isActive: true,
         qrToken,
         qrActivatedAt: new Date(),
@@ -360,8 +363,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             price: dish.price,
             photos: [],
             position: j,
-            dishDiet: isDrinkCat ? "OMNIVORE" : "OMNIVORE",
-            isSpicy: detected.isSpicy,
+            dishDiet: isDrinkCat ? "OMNIVORE" : ((dish as any).diet && ["VEGAN", "VEGETARIAN"].includes((dish as any).diet) ? (dish as any).diet : "OMNIVORE"),
+            isSpicy: (dish as any).isSpicy || detected.isSpicy,
+            tags: j === 0 && catPosition <= 2 ? ["RECOMMENDED"] : [],
             containsNuts: isDrinkCat ? false : detected.containsNuts,
             isGlutenFree: isDrinkCat ? false : detected.isGlutenFree,
             isLactoseFree: isDrinkCat ? false : detected.isLactoseFree,

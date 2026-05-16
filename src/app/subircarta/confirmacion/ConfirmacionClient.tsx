@@ -42,6 +42,8 @@ export default function ConfirmacionClient() {
   const cartaReadyRef = useRef(false);
 
   // Trigger full processing when confirmation loads
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
     if (!leadId) return;
     fetch("/api/subircarta/process", {
@@ -182,7 +184,7 @@ export default function ConfirmacionClient() {
                   : timedOut ? <>Tu carta está <span>en revisión</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
-                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más de tiempo tenerla lista." : {`En unos minutos recibirás un correo con la carta de ${displayName} lista.`}}</p>
+                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más de tiempo tenerla lista." : `En unos minutos recibirás un correo con la carta de ${displayName} lista.`}</p>
               </>
             )}
           </div>

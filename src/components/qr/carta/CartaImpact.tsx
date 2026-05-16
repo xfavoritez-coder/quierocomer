@@ -1058,12 +1058,16 @@ export default function CartaImpact({
       }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 0 10px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          {(restaurant as any).logoUrl && (
+          {(restaurant as any).logoUrl ? (
             <Image
               src={(restaurant as any).logoUrl} alt={restaurant.name}
               width={34} height={34}
               style={{ borderRadius: 10, objectFit: "contain" }}
             />
+          ) : (
+            <div style={{ width: 34, height: 34, borderRadius: 10, background: "var(--carta-accent, #F4A623)", display: "grid", placeItems: "center", fontSize: 16, fontWeight: 800, color: "#0e0e0e", flexShrink: 0 }}>
+              {restaurant.name?.charAt(0)?.toUpperCase() || "Q"}
+            </div>
           )}
           <span style={{ fontWeight: 800, fontSize: 17, color: showFixedCatNav ? "var(--carta-text)" : "white", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
             {restaurant.name}

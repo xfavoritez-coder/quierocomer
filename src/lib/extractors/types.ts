@@ -5,6 +5,8 @@ export interface ExtractedDish {
   price: number; // in CLP, integer
   imageUrl: string | null;
   category: string;
+  diet?: "OMNIVORE" | "VEGAN" | "VEGETARIAN";
+  isSpicy?: boolean;
 }
 
 /** Result of a menu extraction */

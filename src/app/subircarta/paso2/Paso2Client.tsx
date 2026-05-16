@@ -47,6 +47,8 @@ export default function Paso2Client() {
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch lead data + start async processing immediately (while animation plays)
+  useEffect(() => { window.scrollTo(0, 0); }, []);
+
   useEffect(() => {
     if (!leadId) return;
 
