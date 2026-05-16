@@ -388,3 +388,91 @@ textarea::placeholder {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Panel dark mode overrides for internal pages ── */
+.theme-dark input,
+.theme-dark textarea,
+.theme-dark select {
+  background: var(--adm-input) !important;
+  border-color: var(--adm-input-border) !important;
+  color: var(--adm-text) !important;
+}
+.theme-dark input::placeholder,
+.theme-dark textarea::placeholder {
+  color: #555 !important;
+}
+.theme-dark option {
+  background: var(--adm-card);
+  color: var(--adm-text);
+}
+
+/* Cards, badges, panels */
+.theme-dark [style*="background: #FFF"],
+.theme-dark [style*="background: white"],
+.theme-dark [style*="background:#FFF"],
+.theme-dark [style*="background: rgb(255"],
+.theme-dark [style*="background:#fff"] {
+  background: var(--adm-card) !important;
+}
+
+/* Force text colors in dark mode */
+.theme-dark h1, .theme-dark h2, .theme-dark h3, .theme-dark h4 {
+  color: var(--adm-text);
+}
+.theme-dark p, .theme-dark span, .theme-dark label, .theme-dark td, .theme-dark th {
+  color: inherit;
+}
+
+/* Borders */
+.theme-dark [style*="border: 1px solid #E"],
+.theme-dark [style*="border: 1px solid #e"],
+.theme-dark [style*="border: 1px solid #F"],
+.theme-dark [style*="border: 1px solid #f"],
+.theme-dark [style*="border-bottom: 1px solid #E"],
+.theme-dark [style*="border-bottom: 1px solid #f"],
+.theme-dark [style*="borderBottom: 1px solid"] {
+  border-color: var(--adm-card-border) !important;
+}
+
+/* Table rows */
+.theme-dark tr { border-color: var(--adm-card-border); }
+.theme-dark table { border-color: var(--adm-card-border); }
+
+/* Badges & tags */
+.theme-dark [style*="background: #f5f5f5"],
+.theme-dark [style*="background: #F5F5F5"],
+.theme-dark [style*="background: #fafafa"],
+.theme-dark [style*="background: #FAFAFA"],
+.theme-dark [style*="background: #FFF4E0"],
+.theme-dark [style*="background: #FFF8E7"],
+.theme-dark [style*="background: #FDEFC7"],
+.theme-dark [style*="background: #FFF9ED"],
+.theme-dark [style*="background: #FFFBF3"] {
+  background: rgba(244,166,35,0.08) !important;
+  border-color: rgba(244,166,35,0.2) !important;
+}
+
+/* Plan badges - keep their colors */
+.theme-dark [style*="background: #F3E8FF"] {
+  background: rgba(124,58,237,0.15) !important;
+}
+
+/* Filter pills / chips (inactive state) */
+.theme-dark [style*="background: #F5F4F1"],
+.theme-dark [style*="background: #f5f4f1"],
+.theme-dark [style*="background: #F0F0F0"],
+.theme-dark [style*="background: #f0f0f0"],
+.theme-dark [style*="background: #eee"],
+.theme-dark [style*="background: #EEE"] {
+  background: rgba(255,255,255,0.06) !important;
+  color: var(--adm-text2) !important;
+}
+
+/* Filter pills active with dark text */
+.theme-dark [style*="color: #1a1a1a"] {
+  color: var(--adm-text) !important;
+}
+
+/* Scrollbar dark */
+.theme-dark ::-webkit-scrollbar-track { background: #111; }
+.theme-dark ::-webkit-scrollbar-thumb { background: #333; }

@@ -1291,7 +1291,7 @@ export default function AdminMenus() {
             placeholder="Buscar plato..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
+            style={{ width: "100%", padding: "10px 14px 10px 36px", paddingRight: search ? 36 : 14, background: "var(--adm-input)", border: "none", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "13px", outline: "none", boxSizing: "border-box" }}
           />
           {search && (
             <button onClick={() => setSearch("")} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#999", fontSize: "0.85rem", padding: 2 }}>✕</button>
@@ -1299,59 +1299,56 @@ export default function AdminMenus() {
         </div>
         {!creatingDish && (
           <button
-            className="lnd-desktop-only"
             onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }}
             style={{ padding: "10px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "13px", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
           >
-            + Nuevo producto
+            + Agregar
           </button>
         )}
       </div>
-      {/* Filter dropdowns (fila 2) */}
-      <div className="adm-filter-chips" style={{ display: "flex", gap: 8, marginBottom: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 4 }}>
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <select
-            value={dietFilter}
-            onChange={e => setDietFilter(e.target.value)}
-            style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: dietFilter !== "all" ? "#1a1a1a" : "#F5F4F1", color: dietFilter !== "all" ? "#fff" : "#1a1a1a", outline: "none" }}
-          >
-            <option value="all">Todos los tipos</option>
-            {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
-          </select>
-          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: dietFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
-        </div>
-        <div style={{ position: "relative", flexShrink: 0 }}>
-          <select
-            value={catFilter}
-            onChange={e => setCatFilter(e.target.value)}
-            style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: catFilter !== "all" ? "#1a1a1a" : "#F5F4F1", color: catFilter !== "all" ? "#fff" : "#1a1a1a", outline: "none" }}
-          >
-            <option value="all">Todas las categorías</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
-        </div>
-      </div>
-      {/* Restricciones (fila 3) — scroll horizontal con fades */}
+      {/* Filters — all in one horizontal scroll */}
       <div style={{ position: "relative", marginBottom: creatingDish ? 10 : 16 }}>
         <div className="adm-filter-chips" style={{ display: "flex", gap: 8, overflowX: "auto", scrollbarWidth: "none" as any, paddingRight: 24 }}>
-          <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "#F5F4F1", color: spicyFilter ? "#e85530" : "#1a1a1a" }}>
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <select
+              value={dietFilter}
+              onChange={e => setDietFilter(e.target.value)}
+              style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: dietFilter !== "all" ? "var(--adm-accent)" : "var(--adm-input)", color: dietFilter !== "all" ? "#fff" : "var(--adm-text)", outline: "none" }}
+            >
+              <option value="all">Todos los tipos</option>
+              {DIET_OPTIONS.map(d => <option key={d.value} value={d.value}>{d.icon} {d.label}</option>)}
+            </select>
+            <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: dietFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
+          </div>
+          <div style={{ position: "relative", flexShrink: 0 }}>
+            <select
+              value={catFilter}
+              onChange={e => setCatFilter(e.target.value)}
+              style={{ appearance: "none", WebkitAppearance: "none", padding: "8px 28px 8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, background: catFilter !== "all" ? "var(--adm-accent)" : "var(--adm-input)", color: catFilter !== "all" ? "#fff" : "var(--adm-text)", outline: "none" }}
+            >
+              <option value="all">Todas las categorías</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: "8px", color: catFilter !== "all" ? "#fff" : "#888", pointerEvents: "none" }}>▼</span>
+          </div>
+          {/* Separator */}
+          <div style={{ width: 1, height: 24, background: "var(--adm-card-border)", flexShrink: 0, alignSelf: "center" }} />
+          <button onClick={() => setSpicyFilter(!spicyFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: spicyFilter ? "rgba(232,85,48,0.15)" : "var(--adm-input)", color: spicyFilter ? "#e85530" : "var(--adm-text2)" }}>
             🌶️ Picante
           </button>
-          <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "#F5F4F1", color: glutenFreeFilter ? "#8B6914" : "#1a1a1a" }}>
+          <button onClick={() => setGlutenFreeFilter(!glutenFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: glutenFreeFilter ? "rgba(139,105,20,0.15)" : "var(--adm-input)", color: glutenFreeFilter ? "#8B6914" : "var(--adm-text2)" }}>
             🌾 Sin gluten
           </button>
-          <button onClick={() => setLactoseFreeFilter(!lactoseFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: lactoseFreeFilter ? "rgba(59,130,246,0.15)" : "#F5F4F1", color: lactoseFreeFilter ? "#2563EB" : "#1a1a1a" }}>
+          <button onClick={() => setLactoseFreeFilter(!lactoseFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: lactoseFreeFilter ? "rgba(59,130,246,0.15)" : "var(--adm-input)", color: lactoseFreeFilter ? "#2563EB" : "var(--adm-text2)" }}>
             🥛 Sin lactosa
           </button>
-          <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "#F5F4F1", color: soyFreeFilter ? "#059669" : "#1a1a1a" }}>
+          <button onClick={() => setSoyFreeFilter(!soyFreeFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: soyFreeFilter ? "rgba(16,185,129,0.15)" : "var(--adm-input)", color: soyFreeFilter ? "#059669" : "var(--adm-text2)" }}>
             🫘 Sin soya
           </button>
-          <button onClick={() => setNutsFilter(!nutsFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: nutsFilter ? "rgba(160,106,58,0.15)" : "#F5F4F1", color: nutsFilter ? "#a06a3a" : "#1a1a1a" }}>
+          <button onClick={() => setNutsFilter(!nutsFilter)} style={{ padding: "8px 12px", borderRadius: 999, border: "none", cursor: "pointer", fontFamily: F, fontSize: "12px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, background: nutsFilter ? "rgba(160,106,58,0.15)" : "var(--adm-input)", color: nutsFilter ? "#a06a3a" : "var(--adm-text2)" }}>
             🥜 Frutos secos
           </button>
         </div>
-        <div style={{ position: "absolute", top: 0, left: 0, width: 24, height: "100%", background: "linear-gradient(to left, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
         <div style={{ position: "absolute", top: 0, right: 0, width: 24, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-bg, #0e0e0e))", pointerEvents: "none" }} />
       </div>
 
@@ -1537,8 +1534,8 @@ export default function AdminMenus() {
             const isHidden = !d.isActive;
             return (
             <div key={d.id} className="adm-dish-card" style={{
-              background: isHidden ? "#FAF9F7" : (isRec ? "linear-gradient(135deg, #FFFDF5 0%, #FFF6E0 100%)" : "var(--adm-card)"),
-              border: isRec ? "1px solid rgba(244,166,35,0.45)" : "0.5px solid rgba(0,0,0,0.08)",
+              background: isHidden ? "var(--adm-bg)" : (isRec ? "linear-gradient(135deg, rgba(244,166,35,0.06) 0%, rgba(244,166,35,0.12) 100%)" : "var(--adm-card)"),
+              border: isRec ? "1px solid rgba(244,166,35,0.35)" : "0.5px solid var(--adm-card-border)",
               boxShadow: isRec ? "0 1px 0 rgba(244,166,35,0.08), 0 0 0 3px rgba(244,166,35,0.06)" : undefined,
               borderRadius: 12, overflow: menuOpenId === d.id ? "visible" : "hidden", opacity: isHidden ? 0.7 : 1,
               position: menuOpenId === d.id ? "relative" as const : undefined, zIndex: menuOpenId === d.id ? 100 : undefined,
@@ -1570,7 +1567,7 @@ export default function AdminMenus() {
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }} onClick={() => { setSelectedDish(d); startEditDish(d); }} role="button" tabIndex={0}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "#888" : "#1a1a1a", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {d.name}
                       {(d as any).dishDiet === "VEGAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegano">🌿</span>}
                       {(d as any).dishDiet === "VEGETARIAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegetariano">🥗</span>}
@@ -1582,14 +1579,13 @@ export default function AdminMenus() {
                     )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 4 }}>
-                    <span style={{ display: "inline-block", fontFamily: F, fontSize: "11px", fontWeight: 500, color: "#5a5a5a", background: "#F5F4F1", padding: "2px 7px", borderRadius: 999 }}>{d.category.name}</span>
                     {isHidden && (
                       <span style={{ display: "inline-block", fontFamily: F, fontSize: "10.5px", fontWeight: 600, color: "#9a3d2c", background: "rgba(220,80,40,0.10)", border: "1px solid rgba(220,80,40,0.18)", padding: "2px 7px", borderRadius: 999 }}>
                         🚫 No se ve en la carta
                       </span>
                     )}
                   </div>
-                  <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
+                  <p style={{ fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", margin: "4px 0 0" }}>${d.price.toLocaleString("es-CL")}</p>
                 </div>
                 {/* Actions */}
                 <div onClick={e => e.stopPropagation()} style={{ display: "flex", gap: 2, flexShrink: 0, alignItems: "center" }}>
@@ -1621,7 +1617,7 @@ export default function AdminMenus() {
                     </button>
                     {menuOpenId === d.id && (
                       <div onClick={e => e.stopPropagation()} style={{ position: "absolute", top: "100%", right: 0, marginTop: 4, background: "#fff", border: "1px solid #eee", borderRadius: 10, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50, minWidth: 140, overflow: "hidden" }}>
-                        <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#1a1a1a", textAlign: "left" }}>Editar</button>
+                        <button onClick={() => { setMenuOpenId(null); setSelectedDish(d); startEditDish(d); }} style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "var(--adm-text)", textAlign: "left" }}>Editar</button>
                         <button style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", borderBottom: "1px solid #f5f5f5", cursor: "pointer", fontFamily: F, fontSize: "13px", color: "#999", textAlign: "left" }}>Duplicar</button>{/* TODO: implement duplicate */}
                         <button onClick={async () => {
                           setMenuOpenId(null);
@@ -1759,26 +1755,6 @@ export default function AdminMenus() {
         <ToteatMappingPanel restaurantId={selectedRestaurantId} />
       )}
       {/* FAB — mobile only */}
-      {menuTab === "productos" && !creatingDish && !editMode && (
-        <button className="mcarta-fab" onClick={() => { setCreatingDish(true); setNewDishCatId(categories[0]?.id || ""); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
-          <Plus size={24} />
-        </button>
-      )}
-      {menuTab === "categorias" && (
-        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("cat-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
-          <Plus size={24} />
-        </button>
-      )}
-      {menuTab === "modificadores" && (
-        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("mod-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
-          <Plus size={24} />
-        </button>
-      )}
-      {menuTab === "horarios" && (
-        <button className="mcarta-fab" onClick={() => { const ev = new CustomEvent("hh-fab-click"); window.dispatchEvent(ev); }} style={{ position: "fixed", right: 16, bottom: 80, width: 52, height: 52, borderRadius: "50%", background: "#EF9F27", color: "white", border: "none", cursor: "pointer", boxShadow: "0 4px 14px rgba(239,159,39,0.4)", display: "none", alignItems: "center", justifyContent: "center", zIndex: 40 }}>
-          <Plus size={24} />
-        </button>
-      )}
 
       {photoModal && (
         <div onClick={() => setPhotoModal(null)} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 20 }}>
@@ -1787,8 +1763,6 @@ export default function AdminMenus() {
       )}
 
       <style>{`
-        @media (max-width: 768px) { .mcarta-fab { display: flex !important; } .lnd-desktop-only { display: none !important; } }
-        @media (min-width: 769px) { .mcarta-fab { display: none !important; } }
         .adm-dish-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.06); transform: translateY(-1px); }
         /* En desktop, los chips de filtro se ven todos en una línea */
       `}</style>

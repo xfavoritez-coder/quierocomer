@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Grid3X3, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -48,7 +48,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Home, label: "Inicio", href: base },
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: Grid3X3, label: "Más", href: "__more__" },
+    { icon: Menu, label: "Más", href: "__more__" },
   ] as const;
   const MORE_ITEMS = SIDEBAR_NAV.filter(n => !BOTTOM_TABS.some(t => t.href === n.href));
   return { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS };
@@ -383,13 +383,16 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             padding: 0 16px; background: var(--adm-card); border-bottom: 1px solid var(--adm-card-border);
           }
           .owl-bottom-nav {
-            display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
-            height: 64px; padding-bottom: env(safe-area-inset-bottom, 0px);
-            background: var(--adm-card); border-top: 1px solid var(--adm-card-border);
-            align-items: center; justify-content: space-around;
+            display: flex; position: fixed; bottom: 12px; left: 12px; right: 12px; z-index: 100;
+            height: 60px; padding: 0 8px; padding-bottom: env(safe-area-inset-bottom, 0px);
+            background: var(--adm-card); border: 1px solid var(--adm-card-border);
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+            align-items: center; justify-content: space-evenly;
+            gap: 12px;
           }
           .owl-main {
-            margin-left: 0; padding: 20px 16px 96px; min-height: calc(100vh - 56px);
+            margin-left: 0; padding: 20px 16px 100px; min-height: calc(100vh - 56px);
             zoom: 1.03;
           }
         }

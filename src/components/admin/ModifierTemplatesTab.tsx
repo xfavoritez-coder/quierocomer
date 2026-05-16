@@ -287,9 +287,6 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
 
   return (
     <div>
-      <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-        Crea modificadores reutilizables y asígnalos a tus platos. Si cambias una opción aquí, se actualiza en todos los platos que la usen.
-      </p>
 
       {/* Saved toast */}
       {savedMsg && (
@@ -306,8 +303,9 @@ export default function ModifierTemplatesTab({ restaurantId }: Props) {
           <button onClick={() => { setCreating(false); setNewName(""); }} style={{ padding: "10px 14px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", cursor: "pointer" }}>X</button>
         </div>
       ) : (
-        <div className="lnd-desktop-only" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-          <button onClick={() => setCreating(true)} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer" }}>+ Nuevo modificador</button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <p style={{ fontFamily: F, fontSize: 13, color: "var(--adm-text2)", margin: 0 }}>Extras y opciones que aplicas a tus platos</p>
+          <button onClick={() => setCreating(true)} style={{ padding: "10px 18px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.85rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>+ Nuevo modificador</button>
         </div>
       )}
 

@@ -134,8 +134,8 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
       <div
         onClick={() => setExpanded(!expanded)}
         style={{
-          background: isHidden ? "#FAF9F7" : "white",
-          border: "0.5px solid rgba(0,0,0,0.08)",
+          background: isHidden ? "var(--adm-bg)" : "var(--adm-card)",
+          border: "0.5px solid var(--adm-card-border)",
           borderRadius: 12,
           padding: 12,
           display: "flex",
@@ -160,14 +160,14 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
         {/* Body */}
         {editing ? (
           <div style={{ flex: 1, display: "flex", gap: 8, alignItems: "center" }} onClick={e => e.stopPropagation()}>
-            <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onRename(category.id, editName); setEditing(false); } }} style={{ flex: 1, padding: "4px 8px", background: "#F5F4F1", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "#1a1a1a", outline: "none" }} autoFocus />
+            <input value={editName} onChange={e => setEditName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") { onRename(category.id, editName); setEditing(false); } }} style={{ flex: 1, padding: "4px 8px", background: "var(--adm-input)", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", outline: "none" }} autoFocus />
             <button onClick={() => { onRename(category.id, editName); setEditing(false); }} style={{ padding: "4px 12px", background: "#F4A623", color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", fontWeight: 600, cursor: "pointer" }}>OK</button>
             <button onClick={() => setEditing(false)} style={{ padding: "4px 8px", background: "none", border: "1px solid rgba(0,0,0,0.08)", borderRadius: 6, fontFamily: F, fontSize: "0.68rem", color: "#888", cursor: "pointer" }}>X</button>
           </div>
         ) : (
           <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 4 }}>
             {/* Name */}
-            <span style={{ fontFamily: F, fontSize: "14.5px", fontWeight: 500, color: isHidden ? "#888" : "#1a1a1a", letterSpacing: "-0.1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <span style={{ fontFamily: F, fontSize: "14.5px", fontWeight: 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", letterSpacing: "-0.1px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {category.name}
             </span>
             {/* Meta row */}
@@ -176,12 +176,12 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                 {dishes.length} producto{dishes.length !== 1 ? "s" : ""}
               </span>
               {hiddenCount > 0 && (
-                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "#F0EBE2", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "var(--adm-hover)", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
                   {hiddenCount} oculto{hiddenCount !== 1 ? "s" : ""}
                 </span>
               )}
               {isHidden && (
-                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "#F0EBE2", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
+                <span style={{ fontFamily: F, fontSize: 9, fontWeight: 500, color: "#6B5544", background: "var(--adm-hover)", padding: "2px 6px", borderRadius: 999, letterSpacing: "0.2px" }}>
                   Toda oculta
                 </span>
               )}
@@ -194,13 +194,13 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
           <div style={{ flexShrink: 0, display: "flex", gap: 2, alignItems: "center" }} onClick={e => e.stopPropagation()}>
             {/* Type badge */}
             <div ref={typeRef} style={{ position: "relative" }}>
-              <span onClick={() => setChangingType(!changingType)} style={{ fontFamily: F, fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "#F5F0E8", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
+              <span onClick={() => setChangingType(!changingType)} style={{ fontFamily: F, fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 999, background: changingType ? "#854F0B" : "var(--adm-input)", color: changingType ? "#fff" : "#854F0B", letterSpacing: "0.1px", whiteSpace: "nowrap", opacity: isHidden ? 0.6 : 1, cursor: "pointer", transition: "all 0.15s" }}>
                 {dt.label} ▾
               </span>
               {changingType && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 4px)", right: 0, zIndex: 100,
-                  background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
+                  background: "var(--adm-card)", border: "0.5px solid var(--adm-card-border)", borderRadius: 10,
                   boxShadow: "0 4px 20px rgba(0,0,0,0.12)", padding: 4, minWidth: 150,
                 }}>
                   {Object.entries(DISH_TYPE_LABELS).map(([key, v]) => (
@@ -210,7 +210,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                       style={{
                         display: "flex", alignItems: "center", gap: 6, width: "100%",
                         padding: "8px 10px", border: "none", borderRadius: 6, cursor: "pointer",
-                        background: (category.dishType || "food") === key ? "#F5F0E8" : "transparent",
+                        background: (category.dishType || "food") === key ? "var(--adm-input)" : "transparent",
                         fontFamily: F, fontSize: "0.72rem", fontWeight: 500, color: "#854F0B",
                         textAlign: "left",
                       }}
@@ -237,24 +237,24 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
               {menuOpen && (
                 <div style={{
                   position: "absolute", right: 0, top: "100%", marginTop: 4, width: 180,
-                  background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10,
+                  background: "var(--adm-card)", border: "0.5px solid var(--adm-card-border)", borderRadius: 10,
                   boxShadow: "0 4px 20px rgba(0,0,0,0.12)", zIndex: 100, overflow: "hidden",
                 }}>
                   <button
                     onClick={() => { setMenuOpen(false); setEditing(true); setEditName(category.name); }}
-                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#1a1a1a", cursor: "pointer" }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "var(--adm-text)", cursor: "pointer" }}
                   >
                     Editar nombre
                   </button>
                   <button
                     onClick={() => { setMenuOpen(false); setChangingType(true); }}
-                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#1a1a1a", cursor: "pointer", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "var(--adm-text)", cursor: "pointer", borderTop: "0.5px solid var(--adm-card-border)" }}
                   >
                     Cambiar tipo
                   </button>
                   <button
                     disabled
-                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#bbb", cursor: "default", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#bbb", cursor: "default", borderTop: "0.5px solid var(--adm-card-border)" }}
                   >
                     Duplicar
                   </button>
@@ -271,7 +271,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
                         }
                       }
                     }}
-                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#ef4444", cursor: "pointer", borderTop: "0.5px solid rgba(0,0,0,0.06)" }}
+                    style={{ width: "100%", padding: "10px 14px", background: "none", border: "none", textAlign: "left", fontFamily: F, fontSize: 13, color: "#ef4444", cursor: "pointer", borderTop: "0.5px solid var(--adm-card-border)" }}
                   >
                     Eliminar
                   </button>
@@ -284,7 +284,7 @@ function SortableCategory({ category, allCategories, dishes, onReorder, onMove, 
 
       {/* Expanded: dish list with drag */}
       {expanded && (
-        <div style={{ padding: "0 14px 14px", background: "white", border: "0.5px solid rgba(0,0,0,0.08)", borderTop: "none", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
+        <div style={{ padding: "0 14px 14px", background: "var(--adm-card)", border: "0.5px solid var(--adm-card-border)", borderTop: "none", borderBottomLeftRadius: 12, borderBottomRightRadius: 12 }}>
           {dishes.length > 0 ? (
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDishDragEnd}>
               <SortableContext items={dishes.map(d => d.id)} strategy={verticalListSortingStrategy}>
@@ -417,13 +417,14 @@ export default function CategoriesManager({ restaurantId, allDishes, onDishesCha
       {showCreateInput ? (
         <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
           <input value={newCatName} onChange={e => setNewCatName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") createCategory(); if (e.key === "Escape") { setShowCreateInput(false); setNewCatName(""); } }} placeholder="Nombre de la categoría..." autoFocus
-            style={{ flex: 1, padding: "10px 14px", background: "#F5F4F1", border: "none", borderRadius: 10, color: "#1a1a1a", fontFamily: F, fontSize: 13, outline: "none" }} />
+            style={{ flex: 1, padding: "10px 14px", background: "var(--adm-input)", border: "none", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: 13, outline: "none" }} />
           <button onClick={createCategory} disabled={!newCatName.trim()} style={{ padding: "10px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer", opacity: !newCatName.trim() ? 0.4 : 1 }}>Crear</button>
-          <button onClick={() => { setShowCreateInput(false); setNewCatName(""); }} style={{ padding: "10px 12px", background: "transparent", border: "0.5px solid rgba(0,0,0,0.08)", borderRadius: 10, fontFamily: F, fontSize: 13, color: "#888", cursor: "pointer" }}>Cancelar</button>
+          <button onClick={() => { setShowCreateInput(false); setNewCatName(""); }} style={{ padding: "10px 12px", background: "transparent", border: "0.5px solid var(--adm-card-border)", borderRadius: 10, fontFamily: F, fontSize: 13, color: "#888", cursor: "pointer" }}>Cancelar</button>
         </div>
       ) : (
-        <div className="lnd-desktop-only" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-          <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <p style={{ fontFamily: F, fontSize: 13, color: "var(--adm-text2)", margin: 0 }}>Arrastra para reordenar tus categorías</p>
+          <button onClick={() => setShowCreateInput(true)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: 13, fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
             + Nueva categoría
           </button>
         </div>
