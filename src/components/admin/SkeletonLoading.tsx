@@ -6,8 +6,8 @@
 type SkeletonType = "list" | "analytics" | "cards" | "form" | "table";
 
 const PULSE_STYLE = `
-  @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.12; } }
-  .sk { background: #F4A623; animation: skelPulse 1.4s ease-in-out infinite; }
+  @keyframes skelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+  .sk { background: var(--adm-card-border, #2a2a2a); animation: skelPulse 1.4s ease-in-out infinite; }
 `;
 
 function Box({ w, h, r = 8, mb = 0 }: { w?: string | number; h: number; r?: number; mb?: number }) {

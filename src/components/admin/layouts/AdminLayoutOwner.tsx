@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -40,7 +40,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Users, label: "Clientes", href: `${base}/clientes` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
-    { icon: Bell, label: "Garzón", href: `${base}/garzon` },
+    { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: Mail, label: "Email Marketing", href: `${base}/campanias` },
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
   ];
@@ -329,7 +329,15 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <Mail size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Ayuda / Soporte</span>
             </a>
           </div>
-          <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid #f0f0f0", cursor: "pointer", width: "100%" }}>
+          <button onClick={() => {
+            const next = theme === "dark" ? "light" : "dark";
+            setTheme(next);
+            localStorage.setItem("qc_panel_theme", next);
+          }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
+            {theme === "dark" ? <Sun size={18} color="var(--adm-text2)" /> : <Moon size={18} color="var(--adm-text2)" />}
+            <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
+          </button>
+          <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
             <LogOut size={18} color="#ef4444" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#ef4444" }}>Cerrar sesión</span>
           </button>
         </div>

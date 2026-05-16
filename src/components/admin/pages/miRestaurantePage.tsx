@@ -274,10 +274,10 @@ export default function MiRestaurantePage() {
 
 
       {/* ── Generar QR ── */}
-      <div id="qr" style={{ background: "linear-gradient(135deg, #FFF4E0, #FDEFC7)", border: "1px solid #E8D0A0", borderRadius: 16, padding: "24px 20px", marginBottom: 16, textAlign: "center" }}>
+      <div id="qr" style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "24px 20px", marginBottom: 16, textAlign: "center" }}>
         <QrCode size={40} color={GOLD} style={{ marginBottom: 10 }} />
-        <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "#1a1a1a", margin: "0 0 6px" }}>Código QR de tu local</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "#8a7550", margin: "0 0 16px", lineHeight: 1.5 }}>
+        <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Código QR de tu local</h3>
+        <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
           Imprime este código para pegarlo en las mesas. Tus clientes lo escanean y ven tu carta.
         </p>
         <button onClick={() => setQrModalOpen(true)} style={{

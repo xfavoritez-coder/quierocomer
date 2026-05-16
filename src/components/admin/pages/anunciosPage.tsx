@@ -25,6 +25,10 @@ export default function AnunciosPage() {
   const [annStart, setAnnStart] = useState("");
   const [annEnd, setAnnEnd] = useState("");
   const [annSaving, setAnnSaving] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+  const [editLink, setEditLink] = useState("");
 
   useEffect(() => {
     if (!rid) { setLoading(false); return; }
@@ -41,10 +45,71 @@ export default function AnunciosPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Cinta de anuncios</h1>
-      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>
-        Publica avisos que aparecen en tu carta: horarios especiales, eventos, links a reservas o lo que necesites. Máximo 3 anuncios.
-      </p>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+        <div>
+          <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Cinta de anuncios</h1>
+          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
+            Publica avisos que aparecen en tu carta: horarios, eventos, links a reservas.
+          </p>
+        </div>
+        <button onClick={() => setShowCreateForm(!showCreateForm)} style={{ padding: "8px 16px", background: GOLD, color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+          {showCreateForm ? "Cancelar" : "+ Nuevo anuncio"}
+        </button>
+      </div>
+
+      {/* Create form — above existing */}
+      {showCreateForm && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+          <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>Nuevo anuncio</h3>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Texto del anuncio</label>
+            <input value={annText} onChange={e => setAnnText(e.target.value)} style={inputStyle} placeholder="Ej: Este viernes abrimos hasta las 2 AM" />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Link (opcional)</label>
+            <input value={annLink} onChange={e => setAnnLink(e.target.value)} style={inputStyle} placeholder="https://..." />
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Días que se muestra <span style={{ textTransform: "none", fontWeight: 400, color: "var(--adm-text3)" }}>(vacío = todos los días)</span></label>
+            <div style={{ display: "flex", gap: 6 }}>
+              {["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((d, i) => (
+                <button key={i} onClick={() => setAnnDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 36, height: 36, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FB, fontSize: "0.75rem", fontWeight: 600, background: annDays.includes(i) ? GOLD : "var(--adm-input)", color: annDays.includes(i) ? "white" : "var(--adm-text3)", transition: "all 0.15s" }}>{d}</button>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Desde (opcional)</label>
+              <input type="date" value={annStart} onChange={e => setAnnStart(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Hasta (opcional)</label>
+              <input type="date" value={annEnd} onChange={e => setAnnEnd(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
+            </div>
+          </div>
+          <button
+            disabled={!annText.trim() || annSaving}
+            onClick={async () => {
+              setAnnSaving(true);
+              try {
+                const res = await fetch("/api/admin/announcements", {
+                  method: "POST", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ restaurantId: rid, text: annText.trim(), linkUrl: annLink.trim() || null, daysOfWeek: annDays.length > 0 ? annDays : [], startDate: annStart || null, endDate: annEnd || null }),
+                });
+                const d = await res.json();
+                if (!res.ok) { toast.error(d.error || "Error"); return; }
+                setAnnouncements(prev => [...prev, d.announcement]);
+                setAnnText(""); setAnnLink(""); setAnnDays([]); setAnnStart(""); setAnnEnd("");
+                setShowCreateForm(false);
+                toast.success("Anuncio creado");
+              } catch { toast.error("Error"); } finally { setAnnSaving(false); }
+            }}
+            style={{ width: "100%", padding: 12, background: annText.trim() ? GOLD : "var(--adm-input)", color: annText.trim() ? "white" : "var(--adm-text3)", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 600, cursor: annText.trim() ? "pointer" : "default" }}
+          >
+            {annSaving ? "Guardando..." : "Crear anuncio"}
+          </button>
+        </div>
+      )}
 
       {/* Existing announcements */}
       {announcements.map((ann) => (
@@ -58,13 +123,31 @@ export default function AnunciosPage() {
               {ann.isActive && <Check size={13} color="white" />}
             </button>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: FB, fontSize: "0.92rem", color: ann.isActive ? "var(--adm-text)" : "var(--adm-text3)", margin: "0 0 4px", lineHeight: 1.4 }}>{ann.text}</p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {ann.linkUrl && <span style={{ fontSize: "0.68rem", color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "2px 8px", borderRadius: 4 }}>🔗 {ann.linkUrl.replace(/^https?:\/\//, "").slice(0, 30)}</span>}
-                {ann.daysOfWeek?.length > 0 && ann.daysOfWeek.length < 7 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].filter((_: string, i: number) => ann.daysOfWeek.includes(i)).join(", ")}</span>}
-                {ann.startDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Desde {new Date(ann.startDate).toLocaleDateString("es-CL")}</span>}
-                {ann.endDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Hasta {new Date(ann.endDate).toLocaleDateString("es-CL")}</span>}
-              </div>
+              {editingId === ann.id ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  <input value={editText} onChange={e => setEditText(e.target.value)} style={{ ...inputStyle, fontSize: "0.88rem", padding: "8px 12px" }} placeholder="Texto del anuncio" />
+                  <input value={editLink} onChange={e => setEditLink(e.target.value)} style={{ ...inputStyle, fontSize: "0.78rem", padding: "6px 12px" }} placeholder="Link (opcional)" />
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={async () => {
+                      await fetch("/api/admin/announcements", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: ann.id, text: editText, linkUrl: editLink || null }) });
+                      setAnnouncements(prev => prev.map(a => a.id === ann.id ? { ...a, text: editText, linkUrl: editLink || null } : a));
+                      setEditingId(null);
+                      toast.success("Anuncio actualizado");
+                    }} style={{ padding: "6px 14px", background: GOLD, color: "white", border: "none", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, cursor: "pointer" }}>Guardar</button>
+                    <button onClick={() => setEditingId(null)} style={{ padding: "6px 12px", background: "none", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: F, fontSize: "0.75rem", color: "var(--adm-text2)", cursor: "pointer" }}>Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p onClick={() => { setEditingId(ann.id); setEditText(ann.text); setEditLink(ann.linkUrl || ""); }} style={{ fontFamily: FB, fontSize: "0.92rem", color: ann.isActive ? "var(--adm-text)" : "var(--adm-text3)", margin: "0 0 4px", lineHeight: 1.4, cursor: "pointer" }} title="Click para editar">{ann.text}</p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {ann.linkUrl && <span style={{ fontSize: "0.68rem", color: "#7fbfdc", background: "rgba(127,191,220,0.1)", padding: "2px 8px", borderRadius: 4 }}>🔗 {ann.linkUrl.replace(/^https?:\/\//, "").slice(0, 30)}</span>}
+                    {ann.daysOfWeek?.length > 0 && ann.daysOfWeek.length < 7 && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>{["Do","Lu","Ma","Mi","Ju","Vi","Sa"].filter((_: string, i: number) => ann.daysOfWeek.includes(i)).join(", ")}</span>}
+                    {ann.startDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Desde {new Date(ann.startDate).toLocaleDateString("es-CL")}</span>}
+                    {ann.endDate && <span style={{ fontSize: "0.68rem", color: "var(--adm-text3)", background: "var(--adm-hover)", padding: "2px 8px", borderRadius: 4 }}>Hasta {new Date(ann.endDate).toLocaleDateString("es-CL")}</span>}
+                  </div>
+                </>
+              )}
             </div>
             <button onClick={async () => {
               await fetch("/api/admin/announcements", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: ann.id }) });
@@ -82,63 +165,6 @@ export default function AnunciosPage() {
         </div>
       )}
 
-      {/* Add new announcement */}
-      {announcements.length < 3 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "20px", marginTop: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>Nuevo anuncio</h3>
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Texto del anuncio</label>
-            <input value={annText} onChange={e => setAnnText(e.target.value)} style={inputStyle} placeholder="Ej: Este viernes abrimos hasta las 2 AM" />
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Link (opcional)</label>
-            <input value={annLink} onChange={e => setAnnLink(e.target.value)} style={inputStyle} placeholder="https://..." />
-          </div>
-
-          <div style={{ marginBottom: 14 }}>
-            <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Días que se muestra <span style={{ textTransform: "none", fontWeight: 400, color: "var(--adm-text3)" }}>(vacío = todos los días)</span></label>
-            <div style={{ display: "flex", gap: 6 }}>
-              {["Do","Lu","Ma","Mi","Ju","Vi","Sa"].map((d, i) => (
-                <button key={i} onClick={() => setAnnDays(prev => prev.includes(i) ? prev.filter(x => x !== i) : [...prev, i])} style={{ width: 36, height: 36, borderRadius: 8, border: "none", cursor: "pointer", fontFamily: FB, fontSize: "0.75rem", fontWeight: 600, background: annDays.includes(i) ? GOLD : "var(--adm-input)", color: annDays.includes(i) ? "white" : "var(--adm-text3)", transition: "all 0.15s" }}>{d}</button>
-              ))}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Desde (opcional)</label>
-              <input type="date" value={annStart} onChange={e => setAnnStart(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 5, fontWeight: 500 }}>Hasta (opcional)</label>
-              <input type="date" value={annEnd} onChange={e => setAnnEnd(e.target.value)} style={{ ...inputStyle, colorScheme: "dark" }} />
-            </div>
-          </div>
-
-          <button
-            disabled={!annText.trim() || annSaving}
-            onClick={async () => {
-              setAnnSaving(true);
-              try {
-                const res = await fetch("/api/admin/announcements", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ restaurantId: rid, text: annText.trim(), linkUrl: annLink.trim() || null, daysOfWeek: annDays.length > 0 ? annDays : [], startDate: annStart || null, endDate: annEnd || null }),
-                });
-                const d = await res.json();
-                if (!res.ok) { toast.error(d.error || "Error"); return; }
-                setAnnouncements(prev => [...prev, d.announcement]);
-                setAnnText(""); setAnnLink(""); setAnnDays([]); setAnnStart(""); setAnnEnd("");
-                toast.success("Anuncio creado");
-              } catch { toast.error("Error"); } finally { setAnnSaving(false); }
-            }}
-            style={{ width: "100%", padding: 12, background: annText.trim() ? GOLD : "var(--adm-input)", color: annText.trim() ? "white" : "var(--adm-text3)", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.88rem", fontWeight: 600, cursor: annText.trim() ? "pointer" : "default" }}
-          >
-            {annSaving ? "Guardando..." : "Crear anuncio"}
-          </button>
-        </div>
-      )}
     </div>
   );
 }

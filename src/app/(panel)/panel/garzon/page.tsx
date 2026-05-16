@@ -41,7 +41,7 @@ export default function GarzonPage() {
       <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.78rem", marginBottom: 12 }}>
         <ArrowLeft size={16} /> Volver al inicio
       </Link>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 8px" }}>Panel del Garzón</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 8px" }}>Llamar garzón</h1>
       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 24px", lineHeight: 1.5 }}>
         Permite a tus clientes llamar al garzón desde su celular. Tu equipo recibe la notificación al instante.
       </p>

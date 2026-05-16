@@ -518,13 +518,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
               {[...Array(3)].map((_, i) => <div key={i} className="skel-pulse" style={{ height: 64, borderRadius: 12 }} />)}
             </div>
           </div>
-          <nav style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 64, background: "white", borderTop: "1px solid #E8D0A0", display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 16px" }}>
+          <nav style={{ position: "fixed", bottom: 12, left: 12, right: 12, height: 60, background: "var(--adm-card, #161616)", border: "1px solid var(--adm-card-border, #262626)", borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 16px" }}>
             {[...Array(4)].map((_, i) => <div key={i} className="skel-pulse" style={{ width: 40, height: 40, borderRadius: 8 }} />)}
           </nav>
         </div>
         <style>{`
-          @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.12; } }
-          .skel-pulse { background: #F4A623; animation: skelPulse 1.4s ease-in-out infinite; }
+          @keyframes skelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+          .skel-pulse { background: var(--adm-card-border, #2a2a2a); animation: skelPulse 1.4s ease-in-out infinite; }
           .panel-skel-mobile { display: none; }
           @media (max-width: 767px) {
             .panel-skel-desktop { display: none; }

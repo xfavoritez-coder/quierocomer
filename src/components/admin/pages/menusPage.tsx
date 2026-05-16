@@ -1275,9 +1275,9 @@ export default function AdminMenus() {
         ]).map(tab => (
           <button key={tab.key} onClick={() => handleTabChange(tab.key)} style={{
             padding: "8px 14px", borderRadius: 999, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "13px", fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0,
-            background: menuTab === tab.key ? "#1a1a1a" : "transparent",
-            color: menuTab === tab.key ? "#fff" : "#5a5a5a",
+            fontFamily: F, fontSize: "13px", fontWeight: menuTab === tab.key ? 600 : 500, whiteSpace: "nowrap", flexShrink: 0,
+            background: menuTab === tab.key ? "var(--adm-card-border)" : "transparent",
+            color: menuTab === tab.key ? "var(--adm-text)" : "var(--adm-text2)",
           }}>{tab.label}</button>
         ))}
       </div>
@@ -1566,17 +1566,14 @@ export default function AdminMenus() {
                 </div>
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: 0 }} onClick={() => { setSelectedDish(d); startEditDish(d); }} role="button" tabIndex={0}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 0, overflow: "hidden" }}>
+                    <p style={{ fontFamily: F, fontSize: "14px", fontWeight: isRec ? 600 : 500, color: isHidden ? "var(--adm-text3)" : "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>
                       {d.name}
                       {(d as any).dishDiet === "VEGAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegano">🌿</span>}
                       {(d as any).dishDiet === "VEGETARIAN" && <span style={{ marginLeft: 4, fontSize: "12px" }} title="Vegetariano">🥗</span>}
                       {(d as any).isSpicy && <span style={{ marginLeft: 2, fontSize: "12px" }} title="Picante">🌶️</span>}
                       {(d as any).isGlutenFree && <span style={{ marginLeft: 2, fontSize: "12px" }} title="Sin gluten">🌾</span>}
                     </p>
-                    {isRec && (
-                      <span style={{ fontFamily: F, fontSize: "9.5px", fontWeight: 800, color: "white", background: "#F4A623", padding: "2px 7px", borderRadius: 999, letterSpacing: "0.04em", textTransform: "uppercase", flexShrink: 0 }}>★ Destacado</span>
-                    )}
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", marginTop: 4 }}>
                     {isHidden && (

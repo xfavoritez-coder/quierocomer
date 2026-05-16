@@ -426,11 +426,6 @@ export default function AdminPromociones() {
               {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
             </select>
           )}
-          {selectedLocal && !creating && (
-            <button onClick={() => setCreating(true)} style={{ padding: "8px 18px", background: "#F4A623", color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-              + Crear oferta
-            </button>
-          )}
           {!isPanel && selectedLocal && <button onClick={handleGenerate} disabled={generating} style={{
             padding: "8px 16px", background: generating ? "rgba(244,166,35,0.3)" : "#F4A623",
             color: "#0a0a0a", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 700, cursor: generating ? "wait" : "pointer",
@@ -440,24 +435,8 @@ export default function AdminPromociones() {
         </div>
       </div>
 
-      {/* Tab toggle */}
-      {selectedLocal && (
-        <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "var(--adm-hover)", borderRadius: 8, padding: 3, width: "fit-content" }}>
-          {(["ofertas", "modificadores"] as const).map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)} style={{
-              padding: "7px 18px", borderRadius: 6, border: "none", cursor: "pointer",
-              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, transition: "all 0.15s",
-              background: activeTab === tab ? "#F4A623" : "transparent",
-              color: activeTab === tab ? "white" : "var(--adm-text2)",
-            }}>
-              {tab === "ofertas" ? "Ofertas" : "Modificadores"}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ===== MODIFICADORES TAB ===== */}
-      {activeTab === "modificadores" && selectedLocal && (
+      {/* ===== MODIFICADORES (hidden, accessible via Mi Carta) ===== */}
+      {false && selectedLocal && (
         <div>
           {/* Create new template */}
           <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
@@ -622,8 +601,8 @@ export default function AdminPromociones() {
         </div>
       )}
 
-      {/* ===== OFERTAS TAB ===== */}
-      {activeTab === "ofertas" && <>
+      {/* ===== OFERTAS ===== */}
+      {<>
       {/* Create new promo */}
       {creating && !createType && (
         <div style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 16, padding: 24, marginBottom: 20 }}>
@@ -794,8 +773,8 @@ export default function AdminPromociones() {
         </div>
       )}
 
-      {/* Filters */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
+      {/* Filters + create button */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 20, alignItems: "center" }}>
         {[
           { key: "all", label: "Todas" },
           ...(!isPanel ? [{ key: "SUGGESTED", label: "Sugeridas" }] : []),
@@ -803,14 +782,20 @@ export default function AdminPromociones() {
           { key: "PAUSED", label: "Pausadas" },
         ].map(f => (
           <button key={f.key} onClick={() => setFilter(f.key)} style={{
-            padding: "6px 14px", borderRadius: 6, border: "none", cursor: "pointer",
-            fontFamily: F, fontSize: "0.72rem", fontWeight: 600,
-            background: filter === f.key ? "#F4A623" : "var(--adm-hover)",
-            color: filter === f.key ? "white" : "var(--adm-text2)",
+            padding: "6px 14px", borderRadius: 999, border: "none", cursor: "pointer",
+            fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+            background: filter === f.key ? "var(--adm-card-border)" : "transparent",
+            color: filter === f.key ? "var(--adm-text)" : "var(--adm-text3)",
           }}>
             {f.label}
           </button>
         ))}
+        <div style={{ flex: 1 }} />
+        {selectedLocal && !creating && (
+          <button onClick={() => setCreating(true)} style={{ padding: "8px 16px", background: "#F4A623", color: "white", border: "none", borderRadius: 10, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", flexShrink: 0 }}>
+            + Crear oferta
+          </button>
+        )}
       </div>
 
       {/* Edit modal */}
@@ -1024,9 +1009,9 @@ export default function AdminPromociones() {
           })}
           {filtered.length === 0 && (
             <div style={{ textAlign: "center", padding: 60 }}>
-              <p style={{ fontSize: "2rem", marginBottom: 12 }}>🧞</p>
-              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>No hay promociones</p>
-              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Toca "Generar sugerencias" para que el Genio analice la carta</p>
+              <p style={{ fontSize: "2rem", marginBottom: 12 }}>🏷️</p>
+              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "var(--adm-text2)" }}>No hay ofertas aún</p>
+              <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)" }}>Crea una oferta para atraer más clientes a tu local</p>
             </div>
           )}
         </div>

@@ -38,7 +38,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
           margin: 0,
           fontSize: "0.82rem",
           fontWeight: 600,
-          color: "#713F12",
+          color: "var(--carta-announcement-text, #713F12)",
           textAlign: "center",
           lineHeight: 1.35,
         }}
@@ -50,7 +50,7 @@ export default function AnnouncementBanner({ announcements }: Props) {
   );
 
   return (
-    <div style={{ position: "relative", background: "#FEF9C3", overflow: "hidden" }}>
+    <div style={{ position: "relative", background: "var(--carta-announcement-bg, #FEF9C3)", overflow: "hidden" }}>
       {ann.linkUrl ? (
         <a href={ann.linkUrl} target="_blank" rel="noopener noreferrer" style={{ textDecoration: "none", display: "block" }}>
           {content}
