@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
+import { trackFunnelEvent } from "@/lib/funnelTracker";
 
 type Mode = "pdf" | "link" | "photo" | null;
 
@@ -90,7 +91,8 @@ export default function SubirCartaClient() {
           body: JSON.stringify({ cartaType: "LINK", cartaUrl: normalizedUrl }),
         });
         const data = await res.json();
-        if (!res.ok) { setError(data.error || "Error al procesar tu carta."); return; }
+        if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
+        trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
         router.push(`/subircarta/paso2?id=${data.id}`);
       } else {
         const inputRef = mode === "pdf" ? fileRef : photoRef;
@@ -112,9 +114,13 @@ export default function SubirCartaClient() {
             signal: AbortSignal.timeout(30000),
           });
           const data = await res.json();
-          if (!res.ok) { setError(data.error || `Error al subir ${files[i].name}`); setUploadProgress(""); return; }
+          if (!res.ok) {
+            trackFunnelEvent(leadId || data.id, "upload_error", { file: i + 1, of: total, error: data.error, fileName: files[i].name });
+            setError(data.error || `Error al subir ${files[i].name}`); setUploadProgress(""); return;
+          }
           if (!leadId) leadId = data.id;
         }
+        trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(Array.from(files).reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
         setUploadProgress("");
         router.push(`/subircarta/paso2?id=${leadId}`);
       }

@@ -9,7 +9,7 @@ import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/g
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
 import { getGuestId } from "@/lib/guestId";
-import PromoCarousel from "../capture/PromoCarousel";
+import PromoCompact from "./PromoCompact";
 import GenioVeganCarousel from "./GenioVeganCarousel";
 import GenioVegetarianCarousel from "./GenioVegetarianCarousel";
 import GenioGlutenFreeCarousel from "./GenioGlutenFreeCarousel";
@@ -402,18 +402,6 @@ export default function CartaLista({
                 WebkitMaskImage: "linear-gradient(to right, black 0%, black calc(100% - 28px), transparent 100%)",
               }}
             >
-              {dietNavItem && (() => {
-                const isActive = "diet-carousel" === activeCategory;
-                return (
-                  <button
-                    key="diet-carousel"
-                    ref={isActive ? activeCatRef : null}
-                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
-                    className="shrink-0 font-[family-name:var(--font-dm)]"
-                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer", whiteSpace: "nowrap" }}
-                  >{dietNavItem.name}</button>
-                );
-              })()}
               {hasPromos && (() => {
                 const isActive = "promos" === activeCategory;
                 return (
@@ -424,6 +412,18 @@ export default function CartaLista({
                     className="shrink-0 font-[family-name:var(--font-dm)]"
                     style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer" }}
                   >Ofertas</button>
+                );
+              })()}
+              {dietNavItem && (() => {
+                const isActive = "diet-carousel" === activeCategory;
+                return (
+                  <button
+                    key="diet-carousel"
+                    ref={isActive ? activeCatRef : null}
+                    onClick={() => { setActiveCategory("diet-carousel"); const el = document.getElementById(dietNavItem.scrollTo); if (el) el.scrollIntoView({ behavior: "smooth", block: "center" }); }}
+                    className="shrink-0 font-[family-name:var(--font-dm)]"
+                    style={{ height: "100%", display: "flex", alignItems: "center", padding: "0 2px", fontSize: "1rem", fontWeight: isActive ? 700 : 500, color: isActive ? "var(--carta-text)" : "var(--carta-text3)", background: "none", border: "none", borderBottomWidth: 2, borderBottomStyle: "solid", borderBottomColor: isActive ? "var(--carta-accent, #F4A623)" : "transparent", cursor: "pointer", whiteSpace: "nowrap" }}
+                  >{dietNavItem.name}</button>
                 );
               })()}
               {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
@@ -498,8 +498,8 @@ export default function CartaLista({
 
       {/* OFERTAS section */}
       {hasPromos && (
-        <section id="lista-cat-promos" style={{ padding: "18px 12px 0" }}>
-          <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} compact onViewDish={(dishId) => {
+        <section id="lista-cat-promos" style={{ padding: "18px 0 0" }}>
+          <PromoCompact promos={marketingPromos || []} onViewDish={(dishId) => {
             const dish = dishes.find(d => d.id === dishId);
             if (dish) setSelectedDish(dish);
           }} />

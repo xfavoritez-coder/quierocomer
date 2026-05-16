@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { trackFunnelEvent } from "@/lib/funnelTracker";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
 
@@ -47,7 +48,7 @@ export default function Paso2Client() {
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch lead data + start async processing immediately (while animation plays)
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { window.scrollTo(0, 0); trackFunnelEvent(leadId, "paso2_loaded"); }, []);
 
   useEffect(() => {
     if (!leadId) return;
@@ -168,12 +169,15 @@ export default function Paso2Client() {
 
       const data = await res.json();
       if (!res.ok) {
+        trackFunnelEvent(leadId, "paso2_error", { error: data.error });
         setError(data.error || "Error al guardar.");
         return;
       }
 
+      trackFunnelEvent(leadId, "paso2_completed");
       router.push(`/subircarta/confirmacion?id=${leadId}`);
-    } catch {
+    } catch (err: any) {
+      trackFunnelEvent(leadId, "paso2_error", { error: err?.message || "conexión" });
       setError("Error de conexión. Intenta de nuevo.");
     } finally {
       setLoading(false);

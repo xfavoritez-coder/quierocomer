@@ -1716,6 +1716,7 @@ model Lead {
   completedAt        DateTime?
   previewAt          DateTime?
   readyAt            DateTime?
+  events             Json[]        @default([])
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 

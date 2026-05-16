@@ -28,7 +28,7 @@ import { trackSearchPerformed } from "./utils/cartaAnalytics";
 import { getPersonalizedDishes, type PersonalizationMap } from "@/lib/qr/utils/getPersonalizedDishes";
 import { useFavorites } from "@/contexts/FavoritesContext";
 import type { ScoringDish } from "@/lib/qr/utils/dishScoring";
-import PromoCarousel from "../capture/PromoCarousel";
+import PromoCompact from "./PromoCompact";
 import EmailTypoHint from "../capture/EmailTypoHint";
 import ExperienceBanner from "../capture/ExperienceBanner";
 import { useLang } from "@/contexts/LangContext";
@@ -515,8 +515,8 @@ export default function CartaPremium({
       ) : (
         <CategoryNav
           categories={[
-            ...(dietNavItem ? [{ id: dietNavItem.id, name: dietNavItem.name, position: -2, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
-            ...(hasPromos ? [{ id: "promos", name: "Ofertas", position: -1, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
+            ...(hasPromos ? [{ id: "promos", name: "Ofertas", position: -2, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
+            ...(dietNavItem ? [{ id: dietNavItem.id, name: dietNavItem.name, position: -1, isActive: true, restaurantId: "", description: null, createdAt: new Date(), updatedAt: new Date() } as any] : []),
             ...categories,
           ]}
           activeCategory={activeCategory}
@@ -567,6 +567,16 @@ export default function CartaPremium({
       )}
 
       <main style={{ paddingBottom: 55 }}>
+        {/* Ofertas section */}
+        {hasPromos && (
+          <div id="cat-promos" style={{ paddingTop: 18 }}>
+            <PromoCompact promos={marketingPromos || []} onViewDish={(dishId) => {
+              const dish = dishes.find(d => d.id === dishId);
+              if (dish) setSelectedDish(dish);
+            }} />
+          </div>
+        )}
+
         {/* Genio diet carousels */}
         {hasCompletedGenio && (() => {
           const diet = typeof window !== "undefined" ? localStorage.getItem("qr_diet") : null;
@@ -596,16 +606,6 @@ export default function CartaPremium({
             </div>
           );
         })()}
-
-        {/* Ofertas section */}
-        {hasPromos && (
-          <div id="cat-promos" style={{ paddingTop: 18 }}>
-            <PromoCarousel restaurantId={restaurant.id} initialPromos={marketingPromos} large onViewDish={(dishId) => {
-              const dish = dishes.find(d => d.id === dishId);
-              if (dish) setSelectedDish(dish);
-            }} />
-          </div>
-        )}
 
         {searchQuery && !categories.some((cat) => dishes.some((d) => d.categoryId === cat.id && (norm(d.name || "").includes(norm(searchQuery.trim())) || norm(d.description || "").includes(norm(searchQuery.trim())) || norm(d.ingredients || "").includes(norm(searchQuery.trim()))))) && (
           <div className="font-[family-name:var(--font-dm)]" style={{ padding: "64px 32px", textAlign: "center" }}>

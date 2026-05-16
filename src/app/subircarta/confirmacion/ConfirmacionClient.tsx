@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
@@ -42,7 +43,7 @@ export default function ConfirmacionClient() {
   const cartaReadyRef = useRef(false);
 
   // Trigger full processing when confirmation loads
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => { window.scrollTo(0, 0); trackFunnelEvent(leadId, "confirmacion_loaded"); }, []);
 
   useEffect(() => {
     if (!leadId) return;
@@ -85,6 +86,7 @@ export default function ConfirmacionClient() {
           if (data.cartaStatus === "READY" || data.cartaStatus === "DELIVERED") {
             setCartaReady(true);
             cartaReadyRef.current = true;
+            trackFunnelEvent(leadId, "carta_ready");
             if (data.generatedSlug) setCartaSlug(data.generatedSlug);
             if (polling) { clearInterval(polling); polling = null; }
           }
@@ -97,7 +99,7 @@ export default function ConfirmacionClient() {
     polling = setInterval(fetchLead, 3000);
     // Show timeout message after 20s ONLY if no preview appeared
     const maxTimeout = setTimeout(() => {
-      if (!cartaReadyRef.current && !imagesLoadedRef.current) setTimedOut(true);
+      if (!cartaReadyRef.current && !imagesLoadedRef.current) { setTimedOut(true); trackFunnelEvent(leadId, "confirmacion_timeout"); }
     }, 20000);
     // Stop polling after 5 minutes max
     const stopTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 300000);
