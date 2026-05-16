@@ -42,7 +42,10 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
         {photo ? (
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="240px" quality={95} />
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400 text-xl">🍽</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #f5f5f0)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #f5f5f0)))", position: "relative", overflow: "hidden" }}>
+            <span style={{ fontSize: "1.4rem", opacity: 0.35 }}>🍽️</span>
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent), transparent 60%)" }} />
+          </div>
         )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={20} top={4} left={4} />
       </div>
@@ -138,7 +141,10 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
             <Image src={photo} alt={dish.name} fill className="object-cover" sizes="640px" style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s ease" }} quality={95} onLoad={() => setLoaded(true)} />
           </>
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-2xl" style={{ background: "var(--carta-img-placeholder)", color: "var(--carta-text3)" }}>🍽</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #1a1a1a)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #1a1a1a)))", position: "relative" }}>
+            <span style={{ fontSize: "2.2rem", opacity: 0.3 }}>🍽️</span>
+            <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 60% 40%, color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent), transparent 60%)" }} />
+          </div>
         )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={26} top={8} right={8} />
         {/* Badges sobre la foto */}

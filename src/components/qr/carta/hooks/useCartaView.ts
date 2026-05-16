@@ -57,5 +57,22 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
     [pathname, router, searchParams],
   );
 
-  return { view, setView, isReady };
+  // Listen for temporary view changes (demo onboarding) — no persistence, with fade
+  const [demoFading, setDemoFading] = useState(false);
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const next = (e as CustomEvent).detail?.view;
+      if (!isValidView(next)) return;
+      // Fade out → switch → fade in
+      setDemoFading(true);
+      setTimeout(() => {
+        setViewState(next);
+        setTimeout(() => setDemoFading(false), 50);
+      }, 300);
+    };
+    window.addEventListener("demo-onboarding-change-view", handle);
+    return () => window.removeEventListener("demo-onboarding-change-view", handle);
+  }, []);
+
+  return { view, setView, isReady, demoFading };
 }

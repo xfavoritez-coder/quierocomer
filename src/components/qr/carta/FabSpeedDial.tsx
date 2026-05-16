@@ -11,10 +11,38 @@ interface Props {
  * Speed dial FAB: shows a main lamp button. On tap, expands
  * secondary buttons upward with staggered animation.
  * Tap again or outside to close.
+ * Hidden during demo onboarding — appears with bounce when onboarding ends.
  */
 export default function FabSpeedDial({ children }: Props) {
   const [open, setOpen] = useState(false);
+  const [hidden, setHidden] = useState(false);
+  const [entering, setEntering] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Hide during demo onboarding, show with bounce when it ends
+  useEffect(() => {
+    // Check initial state
+    if (document.body.hasAttribute("data-demo-onboarding")) setHidden(true);
+
+    const obs = new MutationObserver(() => {
+      const active = document.body.hasAttribute("data-demo-onboarding");
+      if (active) { setHidden(true); setEntering(false); }
+    });
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-demo-onboarding"] });
+
+    // Listen for show event (onboarding exit animation completed)
+    const showFab = () => {
+      setHidden(false);
+      setEntering(true);
+      setTimeout(() => setEntering(false), 500);
+    };
+    window.addEventListener("demo-onboarding-show-fab", showFab);
+
+    return () => {
+      obs.disconnect();
+      window.removeEventListener("demo-onboarding-show-fab", showFab);
+    };
+  }, []);
 
   // Close on outside tap
   useEffect(() => {
@@ -37,10 +65,34 @@ export default function FabSpeedDial({ children }: Props) {
     return () => window.removeEventListener("fab-speed-dial-close", close);
   }, []);
 
+  // Open programmatically
+  useEffect(() => {
+    const openFab = () => {
+      setOpen(true);
+      window.dispatchEvent(new CustomEvent("fab-speed-dial-toggle", { detail: { open: true } }));
+    };
+    window.addEventListener("demo-onboarding-open-fab", openFab);
+    return () => window.removeEventListener("demo-onboarding-open-fab", openFab);
+  }, []);
+
   const items = children.filter(Boolean);
 
+  if (hidden) return null;
+
   return (
-    <div ref={ref} className="fixed z-50 flex flex-col items-center" style={{ right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", gap: 10 }}>
+    <div
+      ref={ref}
+      className="fixed flex flex-col items-center"
+      style={{
+        right: 14,
+        bottom: "calc(16px + env(safe-area-inset-bottom))",
+        gap: 10,
+        zIndex: 50,
+        // Bounce-in animation
+        transform: entering ? "scale(1)" : undefined,
+        animation: entering ? "fabBounceIn 0.5s cubic-bezier(0.34,1.56,0.64,1)" : undefined,
+      }}
+    >
       {/* Secondary buttons — expand upward */}
       {items.map((child, i) => (
         <div
@@ -82,7 +134,7 @@ export default function FabSpeedDial({ children }: Props) {
         />
       </button>
 
-      {/* Backdrop — invisible, just catches taps to close */}
+      {/* Backdrop — invisible, catches taps to close */}
       <div
         style={{
           position: "fixed", inset: 0, zIndex: -1,
@@ -91,6 +143,14 @@ export default function FabSpeedDial({ children }: Props) {
         }}
         onClick={() => setOpen(false)}
       />
+
+      <style>{`
+        @keyframes fabBounceIn {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.25); opacity: 1; }
+          100% { transform: scale(1); }
+        }
+      `}</style>
     </div>
   );
 }

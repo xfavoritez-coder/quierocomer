@@ -6,10 +6,45 @@ import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
 import { Eye, QrCode, Bell, ExternalLink } from "lucide-react";
+import DemoBanner from "@/components/qr/carta/DemoBanner";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
 const GOLD = "#F4A623";
+
+// ═══ Fake data for demo restaurants ═══
+const DEMO_DATA: DashData = {
+  visitsThisWeek: 147,
+  visitsDelta: 23,
+  avgSessionDuration: 94,
+  genioUsedThisWeek: 38,
+  topDishesViewed: [
+    { name: "Pizza Margherita", count: 42, photo: null },
+    { name: "Pasta Carbonara", count: 35, photo: null },
+    { name: "Tiramisú", count: 28, photo: null },
+    { name: "Bruschetta", count: 22, photo: null },
+    { name: "Risotto Funghi", count: 18, photo: null },
+  ],
+  topSearches: [
+    { name: "pizza", count: 15 },
+    { name: "pasta", count: 12 },
+    { name: "postre", count: 8 },
+  ],
+  starDish: { name: "Pizza Margherita", count: 42, photo: null },
+  todayScans: 24,
+  todayWaiterCalls: 3,
+  todayWaiterPending: 1,
+  lastScanAt: new Date(Date.now() - 4 * 60000).toISOString(),
+  todayUniqueVisitors: 18,
+  weekBirthdays: 3,
+  genioToday: 7,
+  todayAvgDuration: 82,
+};
+
+const DEMO_INSIGHTS = [
+  { id: "1", type: "engagement", title: "Tus clientes exploran el menú", body: "El promedio de permanencia es 1m 34s. Esto indica que las fotos y descripciones generan interés.", priority: 1 },
+  { id: "2", type: "menu_gap", title: "Agrega más postres", body: "El 12% de las búsquedas son por postres pero solo tienes 2 opciones. Agregar más podría aumentar el ticket promedio.", priority: 2 },
+];
 
 interface DashData {
   visitsThisWeek: number; visitsDelta: number | null;
@@ -48,6 +83,9 @@ export default function PanelDashboard() {
   const [insights, setInsights] = useState<Insight[]>([]);
   const welcomeShown = useRef(false);
 
+  const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
+  const isDemo = !!(selectedRestaurant as any)?.isDemo;
+
   useEffect(() => {
     if (welcomeShown.current) return;
     const name = sessionStorage.getItem("panel_welcome");
@@ -60,6 +98,15 @@ export default function PanelDashboard() {
 
   useEffect(() => {
     if (sessionLoading || !selectedRestaurantId) return;
+
+    // Demo restaurants get fake data
+    if (isDemo) {
+      setData(DEMO_DATA);
+      setInsights(DEMO_INSIGHTS);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     Promise.all([
       fetch(`/api/admin/dashboard?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
@@ -68,7 +115,7 @@ export default function PanelDashboard() {
       if (!d.error) setData(d);
       setInsights(i.insights || []);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [sessionLoading, selectedRestaurantId]);
+  }, [sessionLoading, selectedRestaurantId, isDemo]);
 
   if (loading || sessionLoading) return (
     <div style={{ maxWidth: 640 }}>
@@ -101,6 +148,32 @@ export default function PanelDashboard() {
 
   return (
     <div style={{ maxWidth: 640 }}>
+      {/* ═══ Demo Banner ═══ */}
+      {isDemo && selectedRestaurant && (
+        <div style={{ margin: "-8px -16px 16px", position: "relative" }}>
+          <DemoBanner
+            restaurantName={selectedRestaurant.name}
+            restaurantSlug={(selectedRestaurant as any).slug}
+            context="panel"
+          />
+          <div style={{ height: 70 }} /> {/* spacer for fixed banner */}
+        </div>
+      )}
+
+      {/* ═══ Demo indicator ═══ */}
+      {isDemo && (
+        <div style={{
+          display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
+          background: "linear-gradient(90deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.03) 100%)",
+          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, marginBottom: 14,
+        }}>
+          <span style={{ fontSize: 14 }}>📊</span>
+          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
+            Estos son datos de ejemplo. Al activar tu carta verás las estadísticas reales de tus clientes.
+          </p>
+        </div>
+      )}
+
       {/* ═══ Saludo ═══ */}
       <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 14px" }}>
         {greeting}, {ownerName?.split(" ")[0] || ""} 👋

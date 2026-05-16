@@ -141,13 +141,64 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 ### Prioridad alta
 
-1. **Onboarding demo (tour spotlight)** — Primera vez que el dueño entra a su carta demo, mostrar 3-4 toasts/spotlights explicando: "Este es tu menú", "Aquí cambian las vistas", "El Genio reordena según cada cliente", "Activa para publicarla".
+1. **Pago y activación** — Definir flujo completo de cobro y qué pasa después:
 
-2. **Panel Demo** — Vista /panel con isDemo flag mostrando stats fake (visitas, platos más vistos) para que el dueño vea el valor antes de activar.
+   #### Pasarela de pago
+   - Definir pasarela: Flow.cl / Webpay / MercadoPago (ver restricciones Chile)
+   - Página de checkout desde /activar/[slug] → pasarela → callback de éxito/fallo
+   - Planes a cobrar: Premium $4.900/mes (primer mes promo), Gold $X/mes
+   - Webhook de pago exitoso → activar restaurant (quitar isDemo, asignar plan, setear subscriptionStatus ACTIVE)
 
-3. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
+   #### Qué pasa después de pagar
+   - Carta pasa de demo a producción (quitar flag isDemo)
+   - El dueño recibe acceso al panel real con stats reales
+   - Email de bienvenida con: link al panel, QR descargable, guía rápida de primeros pasos
+   - Fotos Unsplash se mantienen pero con badge "referencial" + invitación a subir propias
+   - Primeros 7 días: onboarding progresivo (emails/tips para que saque provecho)
 
-4. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
+   #### Trial de 7 días
+   - Decisión: mantener trial pero solo como herramienta interna/comercial (no publicar en landing)
+   - Uso: el admin puede otorgar trial manual a leads especiales o como incentivo en seguimiento
+   - No mostrar "7 días gratis" en la página /activar (el gancho es la carta demo ya lista, no el trial)
+   - Si el trial vence sin pago → carta vuelve a modo demo (isDemo=true) o se desactiva
+
+   #### Secuencias de email post-funnel
+
+   **Lead que SÍ compró (nurturing de valor):**
+   - Día 0: Email bienvenida + link panel + QR + "Tu carta ya está activa"
+   - Día 2: "¿Sabías que puedes cambiar de vista?" (mostrar Impact/Lista/Premium)
+   - Día 5: "El Genio ya aprendió de tus clientes" (stats de reordenamientos)
+   - Día 7: "Sube tus propias fotos" (CTA para reemplazar Unsplash)
+   - Día 14: "Tus stats de las primeras 2 semanas" (resumen de visitas, platos más vistos)
+   - Día 30: "Tu primer mes con QuieroComer" (resumen mensual, invitar a compartir)
+
+   **Lead que NO compró (re-engagement):**
+   - Día 1: "Tu carta de {local} sigue esperándote" (preview iPhone + CTA activar)
+   - Día 3: "Mira cómo se ve tu menú en el celular de tus clientes" (screenshot/gif)
+   - Día 7: "Otros restaurantes ya están usando su carta" (social proof + stats generales)
+   - Día 14: "Última oportunidad: activa con 90% de descuento" (urgencia + oferta)
+   - Día 30: "¿Cambiaste de opinión? Tu carta aún está lista" (último intento, tono suave)
+   - Después: silencio (no spam). Reactivar solo si hay feature nuevo relevante.
+
+   **Lead que dejó email pero no completó paso 2 (abandono temprano):**
+   - Día 0 (1h después): "Tu carta quedó a medio camino" (CTA retomar)
+   - Día 2: "Solo falta un paso para ver tu carta lista" (recordatorio)
+   - Después: silencio.
+
+2. **Rediseño colores Impact light mode** — Ajustar la vista Impact en modo claro:
+   - Fondo más crema/warm (no blanco puro), con zonas blancas para contraste
+   - Nav header más "liquid"/glass (no cambiar a blanco sólido)
+   - Sección de categorías abajo fixed: chips más liquid/neutros
+   - Botones (campanita garzón, selector de vistas): estilo glass blanco liquid, no amber sólido
+   - Los botones que ahora son amber también llevarlos a un tono más neutro/liquid
+
+3. **Onboarding demo (tour spotlight)** — Primera vez que el dueño entra a su carta demo, mostrar 3-4 toasts/spotlights explicando: "Este es tu menú", "Aquí cambian las vistas", "El Genio reordena según cada cliente", "Activa para publicarla".
+
+3. **Panel Demo** — Vista /panel con isDemo flag mostrando stats fake (visitas, platos más vistos) para que el dueño vea el valor antes de activar.
+
+4. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
+
+5. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
    - Las fotos de Unsplash deben marcarse como "referenciales" o invitar al dueño a subir las propias
    - Definir si se mantienen las fotos Unsplash en la carta real o se quitan
    - El dueño debería poder subir sus propias fotos desde /panel
@@ -155,26 +206,85 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 ### Prioridad media
 
-4. **Modo DOCUMENT (PDF/Word)** — Similar a PHOTO pero con extracción de texto del documento. Flujo:
+6. **Modo DOCUMENT (PDF/Word)** — Similar a PHOTO pero con extracción de texto del documento. Flujo:
    - Extraer texto del PDF/Word
    - Enviar a Claude para estructurar
    - Fotos de Unsplash como referencial
 
-4. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
+7. **n8n/Make seguimiento** — Webhook en creación de lead para CRM. Secuencia de seguimiento para leads que no activan. WhatsApp para los que dejaron teléfono.
 
-5. **Procesamiento manual** — Botón "Reprocesar" en admin funnel para leads FAILED. Botón "Procesar manual" que lleva a /agregarlocal con URL pre-llenada.
+8. **Procesamiento manual** — Botón "Reprocesar" en admin funnel para leads FAILED. Botón "Procesar manual" que lleva a /agregarlocal con URL pre-llenada.
 
-6. **Gourmedia extractor dedicado** — WooCommerce con JS rendering. Posiblemente parsear JSON del API de WooCommerce si el sitio lo expone.
+9. **Gourmedia extractor dedicado** — WooCommerce con JS rendering. Posiblemente parsear JSON del API de WooCommerce si el sitio lo expone.
+
+10. **OneClick extractor dedicado** — Agregar como proveedor nuevo. Investigar estructura del sitio (HTML/API) para hacer extractor rápido sin IA.
+
+11. **UberEats mejorar extractor** — El extractor actual usa POST /_p/api/getStoreV1 pero puede fallar o dar datos incompletos. Mejorar: fotos HD, categorías completas, descripciones, modificadores si aplica.
+
+### Retención post-pago
+
+12. **WhatsApp bot de seguimiento** — Además de email, enviar mensajes de re-engagement y onboarding por WhatsApp (tasa apertura 90% vs 20% email). API de WhatsApp Business via Twilio/MessageBird.
+
+13. **Página de estado pública** — `/mi/[slug]` donde el dueño ve su carta sin loguearse (link mágico). Reduce fricción vs pedir login en panel.
+
+14. **Tienda de QR físicos y productos** — Nueva sección "Productos" separada de "Planes":
+
+   #### Envío de QR físicos a domicilio
+   - Mostrar este paso a los que compraron plan / activaron por $4.900
+   - Mensaje: "Precio normal $XXX → Para ti por tener plan Premium: $XXX"
+   - Es un **beneficio permanente** de todos los planes Premium: descuento en productos físicos
+
+   #### Catálogo de productos QR
+   - **Pack 10 posa-mesa** con QR personalizado del restaurante
+   - **QR dorado para mesa** (premium, estilo elegante)
+   - **QR estilo Horus** (diseño artístico/temático)
+   - **QR para mesa única** — personalización total para que cada mesa se vea distinta
+   - Más diseños a futuro: madera, acrílico, temáticos, etc.
+
+   #### UX de la tienda
+   - Sección aparte en la plataforma (no mezclada con planes)
+   - El dueño ve su QR personalizado en el mockup del producto antes de comprar
+   - Precios diferenciados: público general vs precio con descuento Premium
+   - Flujo: elegir producto → ver preview con su QR → pagar → envío a domicilio
+
+15. **Reporte semanal automático** — Email cada lunes: visitas de la semana, plato más visto, comparación con semana anterior. Mantiene engagement y justifica pago.
+
+16. **Alertas de inactividad** — Si la carta no recibe visitas en 7 días, email al dueño con tips: "¿Ya pusiste el QR?", "Comparte tu carta en Instagram".
+
+### Landing / Navegación
+
+27. **Menú hamburguesa en landing (index)** — Reemplazar el botón "Subir carta" del header (arriba a la derecha) por un icono de tres líneas (hamburguesa) que abre un menú con:
+   - Inicio
+   - Productos (tienda de QR físicos)
+   - Planes
+   - Contacto
+   - El CTA "Subir carta" se mantiene dentro del menú o como botón destacado en el body, pero NO en el header
+
+### Captación
+
+17. **Scraping proactivo** — Buscar restaurantes en Google Maps / Justo / UberEats de una zona, generar carta demo SIN que el dueño la pida, y enviar cold email: "Ya te hicimos tu carta digital, mírala aquí". Outbound agresivo.
+
+18. **Landing por ciudad/zona (SEO)** — Páginas tipo "/cartas-digitales-santiago-centro" con restaurantes demo de esa zona como ejemplo. Captura tráfico orgánico local.
+
+19. **Integración con Google Business** — Botón "Ver carta" en la ficha de Google del restaurante. Feature atractivo que el dueño quiere tener.
+
+### Técnico / Ops
+
+20. **Retry inteligente en pipeline** — Si falla por timeout de Jina o rate limit, reintentar automáticamente 1 vez después de 5 min sin intervención manual.
+
+21. **Cola de procesamiento** — Si llegan muchos leads simultáneos, encolar en vez de procesar todos en paralelo (evitar rate limits de APIs externas).
+
+22. **Monitoreo de salud por proveedor** — Dashboard con % de éxito por extractor en últimos 7 días. Alerta si un proveedor empieza a fallar.
 
 ### Prioridad baja
 
-7. **Pexels como fallback de fotos** — API gratuita 200/hora sin aprobación (vs Unsplash 50/hora demo). Usar cuando Unsplash falla por rate limit. API key: se obtiene en pexels.com/api. Endpoint similar: `https://api.pexels.com/v1/search?query=sushi+food&per_page=1`.
+23. **Pexels como fallback de fotos** — API gratuita 200/hora sin aprobación (vs Unsplash 50/hora demo). Usar cuando Unsplash falla por rate limit. API key: se obtiene en pexels.com/api. Endpoint similar: `https://api.pexels.com/v1/search?query=sushi+food&per_page=1`.
 
-8. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
+24. **Más proveedores** — Agregar según demanda: TheFork, Rappi, PedidosYa, iFood.
 
-8. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación, filtro FAILED.
+25. **Admin funnel mejoras** — Filtros por estado/proveedor, búsqueda, paginación, filtro FAILED.
 
-9. **Analytics del funnel** — Dashboard con conversion rate, tiempo promedio de procesamiento, proveedores más usados.
+26. **Analytics del funnel** — Dashboard con conversion rate, tiempo promedio de procesamiento, proveedores más usados.
 
 ---
 
@@ -231,3 +341,5 @@ public/
 - Push solo en fallo del pipeline (no del preview)
 - Email solo cuando READY con datos válidos
 - Timeout de 20s en confirmación para feedback rápido al usuario
+- **Siempre incluir platos veganos en importación**: Al crear carta demo, marcar mínimo 2-3 platos como VEGAN (aunque no lo sean en la original) para que el onboarding del Genio funcione visualmente. Priorizar platos que naturalmente podrían ser veganos (ensaladas, pastas sin queso, etc.)
+- **Fotos referenciales**: El onboarding explica al dueño que las fotos son referenciales (Unsplash) y que puede subir las propias después. Esto evita confusión de "esas no son mis fotos".

@@ -63,6 +63,8 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
 
     const evaluate = async () => {
       if (cancelled) return;
+      // Don't show during demo onboarding
+      if (document.body.hasAttribute("data-demo-onboarding")) return;
       if (!isDebug && sessionStorage.getItem("qr_birthday_dismissed")) return;
       if (!isDebug && localStorage.getItem(`qc_bday_modal_shown_${restaurantId}`) === "1") return;
 

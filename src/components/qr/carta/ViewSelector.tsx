@@ -66,10 +66,11 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
     return () => window.removeEventListener("open-view-selector", handle);
   }, []);
 
-  // Close on outside click/touch
+  // Close on outside click/touch (disabled during demo onboarding)
   useEffect(() => {
     if (!open) return;
     const handle = (e: MouseEvent | TouchEvent) => {
+      if (document.body.hasAttribute("data-demo-onboarding")) return;
       if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener("mousedown", handle);

@@ -49,7 +49,7 @@ interface Props {
 export default function CartaRouter(props: Props) {
   const lang = props.lang || "es";
   useEffect(() => { setCartaLang(lang); }, [lang]);
-  const { view, isReady } = useCartaView((props.restaurant as any).defaultView, props.initialView);
+  const { view, isReady, demoFading } = useCartaView((props.restaurant as any).defaultView, props.initialView);
   const trackedRef = useRef<string | null>(null);
   // Check cookie instantly to avoid flash of "not logged in"
   const [qrUser, setQrUser] = useState<any>(() => {
@@ -165,12 +165,52 @@ export default function CartaRouter(props: Props) {
     if (isReady) window.scrollTo({ top: 0 });
   }, [view, isReady]);
 
+  // ═══ Demo onboarding: temporary lang override ═══
+  const [demoLang, setDemoLang] = useState<string | null>(null);
+  useEffect(() => {
+    const handle = (e: Event) => {
+      const next = (e as CustomEvent).detail?.lang;
+      // If restoring to original lang, clear override
+      if (next === lang) { setDemoLang(null); return; }
+      if (next) setDemoLang(next);
+    };
+    window.addEventListener("demo-onboarding-change-lang", handle);
+    return () => window.removeEventListener("demo-onboarding-change-lang", handle);
+  }, [lang]);
+  // Use demoLang override when set (null = no override)
+  const effectiveLang = (demoLang || lang) as typeof lang;
+
+  // ═══ Demo onboarding: temporary genio reorder ═══
+  const [demoGenio, setDemoGenio] = useState<string | null>(null);
+  useEffect(() => {
+    const simulate = (e: Event) => {
+      const diet = (e as CustomEvent).detail?.diet;
+      if (diet) setDemoGenio(diet);
+    };
+    const restore = () => setDemoGenio(null);
+    window.addEventListener("demo-onboarding-simulate-genio", simulate);
+    window.addEventListener("demo-onboarding-restore-genio", restore);
+    return () => {
+      window.removeEventListener("demo-onboarding-simulate-genio", simulate);
+      window.removeEventListener("demo-onboarding-restore-genio", restore);
+    };
+  }, []);
+
   // Popular dishes come from server (QR page), convert once to Set
   const popularSet = useRef(new Set(props.popularDishIds || []));
 
   const readyKey = readyKeyRef.current;
   const activeHH = getActiveHappyHour(props.happyHours || []);
   const pricedDishes = activeHH ? applyHappyHourPrices(props.dishes, activeHH) : props.dishes;
+
+  // Apply demo genio reorder: push vegan dishes to top
+  const orderedDishes = (() => {
+    if (!demoGenio) return pricedDishes;
+    const vegan = pricedDishes.filter((d: any) => d.dishDiet === "VEGAN" || d.dishDiet === "VEGETARIAN");
+    const rest = pricedDishes.filter((d: any) => d.dishDiet !== "VEGAN" && d.dishDiet !== "VEGETARIAN");
+    return [...vegan, ...rest];
+  })();
+
   const plan = (props.restaurant as any).plan || "FREE";
   const showViewSelector = canAccess(plan, "view_selector");
 
@@ -182,16 +222,21 @@ export default function CartaRouter(props: Props) {
     return view;
   })();
 
-  const sharedProps = { ...props, dishes: pricedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current, showViewSelector };
+  const sharedProps = { ...props, dishes: orderedDishes, qrUser, onProfileOpen: () => setProfileOpen(true), onReady: onViewReady, readyKey, showWaiter, popularDishIds: popularSet.current, showViewSelector };
 
   return (
-    <LangProvider value={lang}>
+    <LangProvider value={effectiveLang}>
       <FavoritesProvider>
         <HappyHourBanner happyHours={props.happyHours || []} />
-        {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
-        {effectiveView === "lista" && <CartaLista {...sharedProps} />}
-        {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
-        {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
+        <div style={{ position: "relative" }}>
+          {demoFading && <div style={{ position: "absolute", inset: 0, zIndex: 100, background: "#0e0e0e", transition: "opacity 0.3s ease" }} />}
+          <div style={{ opacity: demoFading ? 0.3 : 1, transition: "opacity 0.3s ease" }}>
+          {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
+          {effectiveView === "lista" && <CartaLista {...sharedProps} />}
+          {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
+          {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
+          </div>
+        </div>
 
         {overlay && (
           <div

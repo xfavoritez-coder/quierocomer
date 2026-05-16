@@ -14,6 +14,8 @@ import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
+import DemoOnboarding from "@/components/qr/carta/DemoOnboarding";
+import DemoBirthdayBanner from "@/components/qr/carta/DemoBirthdayBanner";
 import { prisma } from "@/lib/prisma";
 import { getTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 
@@ -185,7 +187,11 @@ export default async function CartaPage({
         `}} />
       )}
       {(restaurant as any).isDemo && (
-        <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} context="carta" />
+        <>
+          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} context="carta" />
+          <DemoOnboarding restaurantSlug={slug} />
+          <DemoBirthdayBanner restaurantName={restaurant.name} />
+        </>
       )}
       <DesktopWrapper
         restaurantName={restaurant.name}

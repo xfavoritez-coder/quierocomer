@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface Props {
   restaurantName: string;
@@ -16,6 +16,19 @@ interface Props {
  */
 export default function DemoBanner({ restaurantName, restaurantSlug, context, onActivate }: Props) {
   const [showTip, setShowTip] = useState(false);
+  const [highlight, setHighlight] = useState(false);
+
+  // Listen for onboarding highlight
+  useEffect(() => {
+    const on = () => setHighlight(true);
+    const off = () => setHighlight(false);
+    window.addEventListener("demo-onboarding-highlight-activate", on);
+    window.addEventListener("demo-onboarding-stop-highlight", off);
+    return () => {
+      window.removeEventListener("demo-onboarding-highlight-activate", on);
+      window.removeEventListener("demo-onboarding-stop-highlight", off);
+    };
+  }, []);
 
   return (
     <div
@@ -67,7 +80,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, context, on
           </div>
           <div style={{ minWidth: 0, lineHeight: 1.1 }}>
             <span style={{ display: "block", color: "#fff", fontSize: 13, fontWeight: 850, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              Tu carta está lista
+              Tu nueva carta está lista
             </span>
             <span style={{ display: "block", marginTop: 4, color: "rgba(255,255,255,.56)", fontSize: 11, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               Actívala y comienza a usarla
@@ -105,9 +118,21 @@ export default function DemoBanner({ restaurantName, restaurantSlug, context, on
               fontSize: 12, fontWeight: 900,
               background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03",
               display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
-              boxShadow: "0 10px 24px rgba(255,178,45,.22)",
+              boxShadow: highlight
+                ? "0 0 0 3px rgba(255,178,45,0.4), 0 10px 24px rgba(255,178,45,.35)"
+                : "0 10px 24px rgba(255,178,45,.22)",
+              animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
+              transition: "box-shadow 0.3s ease",
             }}
           >Activar</a>
+          {highlight && (
+            <style>{`
+              @keyframes activatePulse {
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(255,178,45,0.4), 0 10px 24px rgba(255,178,45,.35); }
+                50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(255,178,45,0.2), 0 14px 30px rgba(255,178,45,.45); }
+              }
+            `}</style>
+          )}
         </div>
       </div>
     </div>

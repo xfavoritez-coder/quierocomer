@@ -88,7 +88,7 @@ const dict = {
     bdayButton: "Quiero mi regalo 🎁",
     bdaySaving: "Guardando...",
     bdayPrivacy: "Solo te avisaremos en tu cumpleaños",
-    bdayPlaceholderName: "Ej: María",
+    bdayPlaceholderName: "Tu nombre",
     bdayPlaceholderEmail: "tu@email.com",
     bdayPlaceholderDate: "dd/mm/aaaa",
     bdayDoneTitle: "¡Listo!",

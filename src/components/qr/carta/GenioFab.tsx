@@ -23,7 +23,11 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
   useEffect(() => {
     if (hasCompletedGenio) return;
     if (localStorage.getItem("qc_genio_nudge_shown")) return;
-    const timer = setTimeout(() => setShowNudge(true), 8_000);
+    const timer = setTimeout(() => {
+      // Don't show nudge if demo onboarding is active
+      if (document.body.hasAttribute("data-demo-onboarding")) return;
+      setShowNudge(true);
+    }, 8_000);
     return () => clearTimeout(timer);
   }, [hasCompletedGenio]);
 

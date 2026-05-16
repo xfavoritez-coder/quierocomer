@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
   try {
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
-      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true } } },
+      include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true } } },
     });
 
     if (!owner) {
@@ -23,9 +23,10 @@ export async function GET(req: NextRequest) {
     }
 
     // Don't leak the API token to the client; just expose a boolean
-    const restaurants = owner.restaurants.map(({ toteatApiToken, ...rest }) => ({
+    const restaurants = owner.restaurants.map(({ toteatApiToken, isDemo, ...rest }) => ({
       ...rest,
       hasToteat: !!toteatApiToken,
+      isDemo: !!isDemo,
     }));
 
     return NextResponse.json({

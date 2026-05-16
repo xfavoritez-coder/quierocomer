@@ -291,6 +291,11 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
                 {abVariant?.titleText
                   || (restaurantName ? t(lang, "bdayModalTitleRestaurant").replace("{name}", restaurantName) : t(lang, "bdayModalTitle"))}
               </h3>
+              {abVariant?.subtitleText && (
+                <p style={{ fontSize: "0.85rem", color: "var(--carta-text-muted, #666)", marginTop: 8, lineHeight: 1.4 }}>
+                  {abVariant.subtitleText}
+                </p>
+              )}
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>

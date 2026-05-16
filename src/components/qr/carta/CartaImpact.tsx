@@ -125,11 +125,11 @@ function ImpactHeroSlider({
   return (
     <section
       style={{
-        minHeight: 520,
+        minHeight: 420,
         position: "relative",
         display: "flex",
         alignItems: "flex-end",
-        padding: "92px 20px 34px",
+        padding: "72px 20px 16px",
         margin: "0 14px",
         borderRadius: 28,
         isolation: "isolate",
@@ -514,7 +514,18 @@ function ImpactDishCard({
             />
           </>
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
+          <div style={{
+            width: "100%", height: "100%",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
+            position: "relative", overflow: "hidden",
+          }}>
+            <span style={{ fontSize: "2rem", opacity: 0.4 }}>🍽️</span>
+            <div style={{
+              position: "absolute", inset: 0,
+              background: "radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--carta-accent) 12%, transparent), transparent 60%)",
+            }} />
+          </div>
         )}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />
       </div>
@@ -1047,13 +1058,22 @@ export default function CartaImpact({
         filter: "blur(10px)",
       }} />
 
-      {/* Fixed top nav */}
+      {/* Fixed top nav — relative (not fixed) in demo mode */}
       <header style={{
-        position: "fixed", top: (restaurant as any).isDemo ? 76 : 0, left: 0, right: 0, zIndex: 40,
-        transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
+        position: (restaurant as any).isDemo ? "relative" : "fixed",
+        top: (restaurant as any).isDemo ? undefined : 0,
+        left: (restaurant as any).isDemo ? undefined : 0,
+        right: (restaurant as any).isDemo ? undefined : 0,
+        zIndex: 40,
+        transform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
+        WebkitTransform: (restaurant as any).isDemo ? undefined : "translate3d(0,0,0)",
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
-        background: showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
-        backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
+        marginBottom: (restaurant as any).isDemo ? -56 : undefined,
+        background: (restaurant as any).isDemo
+          ? "var(--impact-header-solid, rgba(3,3,3,0.92))"
+          : showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
+        backdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
+        WebkitBackdropFilter: (restaurant as any).isDemo ? undefined : "blur(16px)",
         pointerEvents: "auto",
         transition: "background 0.3s ease",
       }}>

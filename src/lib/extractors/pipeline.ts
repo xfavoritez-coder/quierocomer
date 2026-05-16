@@ -401,6 +401,38 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Ensure first 5 dishes have photos (fill with Unsplash if missing)
+    const UNSPLASH_KEY_FILL = process.env.UNSPLASH_ACCESS_KEY;
+    if (UNSPLASH_KEY_FILL) {
+      const first5 = await prisma.dish.findMany({
+        where: { restaurantId: restaurant.id, isActive: true },
+        orderBy: { position: "asc" },
+        take: 5,
+        select: { id: true, name: true, photos: true },
+      });
+      const missing = first5.filter(d => !d.photos?.length);
+      if (missing.length > 0) {
+        await Promise.allSettled(missing.map(async (d) => {
+          try {
+            const query = `${d.name} food dish`;
+            const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
+              headers: { Authorization: `Client-ID ${UNSPLASH_KEY_FILL}` },
+              signal: AbortSignal.timeout(5000),
+            });
+            if (res.ok) {
+              const data = await res.json();
+              const url = data.results?.[0]?.urls?.regular;
+              if (url) {
+                const dishSlug = slugify(d.name);
+                const supabaseUrl = await reuploadPhoto(url, restaurant.id, dishSlug);
+                await prisma.dish.update({ where: { id: d.id }, data: { photos: [supabaseUrl || url], isPhotoReferential: true } });
+              }
+            }
+          } catch {}
+        }));
+      }
+    }
+
     // Translate dishes in background (fire and forget)
     const dishesWithDesc = createdDishes.filter((d) => d.description);
     if (dishesWithDesc.length > 0) {
