@@ -7,6 +7,43 @@ import PlanesModal from "@/components/PlanesModal";
 
 type Mode = "pdf" | "link" | "photo" | null;
 
+/** Compress image in browser via canvas — returns JPEG blob at max 1600px */
+async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promise<File> {
+  // Skip non-image files (PDF, etc)
+  if (!file.type.startsWith("image/")) return file;
+
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.onload = () => {
+      let { width, height } = img;
+      if (width > maxSize || height > maxSize) {
+        const ratio = Math.min(maxSize / width, maxSize / height);
+        width = Math.round(width * ratio);
+        height = Math.round(height * ratio);
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (blob && blob.size < file.size) {
+            resolve(new File([blob], file.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" }));
+          } else {
+            resolve(file); // Keep original if compression didn't help
+          }
+        },
+        "image/jpeg",
+        quality,
+      );
+    };
+    img.onerror = () => resolve(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
@@ -60,13 +97,14 @@ export default function SubirCartaClient() {
         const files = inputRef.current?.files;
         if (!files || files.length === 0) { setError("Selecciona un archivo primero."); return; }
 
-        // Upload files one by one with progress
+        // Compress and upload files one by one with progress
         const total = Math.min(files.length, 10);
         let leadId = "";
         for (let i = 0; i < total; i++) {
-          setUploadProgress(total > 1 ? `Subiendo foto ${i + 1} de ${total}...` : "Subiendo foto...");
+          setUploadProgress(total > 1 ? `Procesando foto ${i + 1} de ${total}...` : "Procesando foto...");
+          const compressed = await compressImage(files[i]);
           const formData = new FormData();
-          formData.append("file", files[i]);
+          formData.append("file", compressed);
           if (leadId) formData.append("leadId", leadId);
           const res = await fetch("/api/subircarta/upload", {
             method: "POST",
