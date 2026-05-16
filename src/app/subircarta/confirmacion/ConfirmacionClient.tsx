@@ -182,7 +182,7 @@ export default function ConfirmacionClient() {
                   : timedOut ? <>Tu carta está <span>en revisión</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
-                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más de tiempo tenerla lista." : "En unos minutos recibirás un correo con tu carta lista."}</p>
+                <p className="subcopy">{cartaReady ? "Creamos algo único para ti y tu restaurante." : timedOut ? "Nos tomará un poco más de tiempo tenerla lista." : {`En unos minutos recibirás un correo con la carta de ${displayName} lista.`}}</p>
               </>
             )}
           </div>
