@@ -57,7 +57,7 @@ export default function GarzonPage() {
             { icon: CheckCircle, num: "3", title: "Atiende y confirma", desc: "El garzón toca \"Atender mesa\" y va a atender al cliente. Así de simple." },
           ].map(step => (
             <div key={step.num} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg, #FFF4E0, #FDEFC7)", border: "1px solid #E8D0A0", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 <step.icon size={18} color={GOLD} />
               </div>
               <div>
@@ -74,9 +74,9 @@ export default function GarzonPage() {
         <h2 style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px" }}>Configura el panel del garzón</h2>
 
         {/* One-time note */}
-        <div style={{ background: "linear-gradient(135deg, #FFF4E0, #FDEFC7)", border: "1px solid #E8D0A0", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
-          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#8a7550", margin: 0, lineHeight: 1.5 }}>
-            Esta configuración se hace <strong style={{ color: "#1a1a1a" }}>solo una vez</strong> por cada garzón. Una vez listo, el panel queda guardado en su celular y funciona automáticamente.
+        <div style={{ background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "10px 14px", marginBottom: 20 }}>
+          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
+            Esta configuración se hace <strong style={{ color: "var(--adm-text)" }}>solo una vez</strong> por cada garzón. Una vez listo, el panel queda guardado en su celular y funciona automáticamente.
           </p>
         </div>
 
@@ -113,7 +113,7 @@ export default function GarzonPage() {
             <div>
               <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 3px" }}>Abre el link en el celular</p>
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-                El garzón abre el link en el navegador de su celular. Verá el panel de <strong style={{ color: "#1a1a1a" }}>{restaurant.name}</strong>.
+                El garzón abre el link en el navegador de su celular. Verá el panel de <strong style={{ color: "var(--adm-text)" }}>{restaurant.name}</strong>.
               </p>
             </div>
           </div>
@@ -145,9 +145,9 @@ export default function GarzonPage() {
               <span style={{ fontFamily: F, fontSize: "0.75rem", fontWeight: 700, color: "white" }}>3</span>
             </div>
             <div>
-              <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 3px" }}>Inicia sesión como <strong style={{ color: "#1a1a1a" }}>{restaurant.name}</strong></p>
+              <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 3px" }}>Inicia sesión como <strong style={{ color: "var(--adm-text)" }}>{restaurant.name}</strong></p>
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-                Al abrir la app por primera vez, el garzón debe tocar "Activar notificaciones" para conectarse al panel de <strong style={{ color: "#1a1a1a" }}>{restaurant.name}</strong>.
+                Al abrir la app por primera vez, el garzón debe tocar "Activar notificaciones" para conectarse al panel de <strong style={{ color: "var(--adm-text)" }}>{restaurant.name}</strong>.
               </p>
             </div>
           </div>
@@ -160,7 +160,7 @@ export default function GarzonPage() {
             <div>
               <p style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 3px" }}>Acepta los permisos de notificación</p>
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 8px", lineHeight: 1.5 }}>
-                Cuando el navegador pregunte "¿Permitir notificaciones?", el garzón <strong style={{ color: "#1a1a1a" }}>debe tocar "Permitir"</strong>. Sin esto, no recibirá los llamados.
+                Cuando el navegador pregunte "¿Permitir notificaciones?", el garzón <strong style={{ color: "var(--adm-text)" }}>debe tocar "Permitir"</strong>. Sin esto, no recibirá los llamados.
               </p>
               <div style={{ background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)", borderRadius: 8, padding: "8px 12px" }}>
                 <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "#16a34a", margin: 0, lineHeight: 1.5 }}>
@@ -172,16 +172,6 @@ export default function GarzonPage() {
         </div>
       </div>
 
-      {/* ── Security note ── */}
-      <div style={{ background: "rgba(234,179,8,0.08)", border: "1px solid rgba(234,179,8,0.2)", borderRadius: 12, padding: "14px 16px", display: "flex", alignItems: "flex-start", gap: 10 }}>
-        <Shield size={18} color="#b45309" style={{ flexShrink: 0, marginTop: 2 }} />
-        <div>
-          <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "#b45309", margin: "0 0 4px" }}>Link público</p>
-          <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "#92400e", margin: 0, lineHeight: 1.5 }}>
-            Este link no requiere contraseña. Solo compártelo con las personas de tu equipo que necesiten recibir los llamados.
-          </p>
-        </div>
-      </div>
     </div>
     </PlanPageGate>
   );
