@@ -31,7 +31,10 @@ export default function SubirCartaClient() {
     const files = e.target.files;
     if (files && files.length > 0) {
       if (files.length > 10) { setError("Máximo 10 fotos."); return; }
-      setFileName(files.length === 1 ? files[0].name : `${files.length} fotos seleccionadas`);
+      const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
+      if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB. Intenta con menos fotos o más livianas."); return; }
+      const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+      setFileName(files.length === 1 ? files[0].name : `${files.length} fotos (${totalMB}MB)`);
       setError("");
     }
   };
