@@ -389,7 +389,7 @@ function CampanasTab({ restaurantId }: { restaurantId: string }) {
       {campaigns.length === 0 && !creating && (
         <div style={{ textAlign: "center", padding: 40 }}>
           <span style={{ fontSize: "2rem", display: "block", marginBottom: 10 }}>📧</span>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)" }}>No hay emails aún</p>
+          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)" }}>No hay correos creados aún</p>
           <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>Elige una plantilla o crea una desde cero</p>
         </div>
       )}
