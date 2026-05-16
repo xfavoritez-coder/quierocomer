@@ -226,20 +226,20 @@
 
 /* ── Admin theme tokens ── */
 .theme-dark {
-  --adm-bg: #111111;
-  --adm-card: #1A1A1A;
-  --adm-card-border: #2A2A2A;
-  --adm-input: #111111;
-  --adm-input-border: #2A2A2A;
-  --adm-text: #FFFFFF;
-  --adm-text2: #888888;
+  --adm-bg: #0e0e0e;
+  --adm-card: #161616;
+  --adm-card-border: #262626;
+  --adm-input: #1a1a1a;
+  --adm-input-border: #333333;
+  --adm-text: #f0f0f0;
+  --adm-text2: #8a8a8a;
   --adm-text3: #555555;
   --adm-accent: #F4A623;
   --adm-stat: #F4A623;
   --adm-positive: #3db89e;
-  --adm-hover: rgba(255,214,0,0.1);
+  --adm-hover: rgba(244,166,35,0.08);
   --adm-card-shadow: none;
-  --adm-select-bg: #1A1A1A;
+  --adm-select-bg: #1a1a1a;
 }
 .theme-light {
   --adm-bg: #FFFFFF;
@@ -294,7 +294,7 @@ textarea::placeholder {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFFFFF;
+  background: var(--adm-bg, #FFFFFF);
 }
 
 ::-webkit-scrollbar-thumb {

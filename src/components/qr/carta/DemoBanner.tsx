@@ -92,7 +92,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         {/* Center — Crossfade: "Tu carta está lista" ↔ logo + name */}
         <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
           <span style={{
-            color: "rgba(255,255,255,0.35)", fontSize: 14, fontWeight: 600,
+            color: "rgba(255,255,255,0.35)", fontSize: 15, fontWeight: 600,
             whiteSpace: "nowrap",
             opacity: scrolled ? 0 : 1, transition: "opacity 0.15s ease",
           }}>
@@ -108,7 +108,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               <img src={restaurantLogo} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
             )}
             <span style={{
-              color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600,
+              color: "rgba(255,255,255,0.45)", fontSize: 15, fontWeight: 600,
               whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
               maxWidth: 100,
             }}>
