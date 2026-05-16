@@ -13,6 +13,7 @@ import type { Lang } from "@/lib/qr/i18n";
 import CartaBasic from "@/components/qr/carta/CartaBasic";
 import CartaRouter from "@/components/qr/carta/CartaRouter";
 import DesktopWrapper from "@/components/qr/carta/DesktopWrapper";
+import DemoBanner from "@/components/qr/carta/DemoBanner";
 import { prisma } from "@/lib/prisma";
 import { getTopDishIds } from "@/lib/qr/utils/getTopDishIds";
 
@@ -182,6 +183,9 @@ export default async function CartaPage({
             --carta-promo-bg: linear-gradient(135deg, ${accentColor}0F 0%, ${accentColor}08 100%);
           }
         `}} />
+      )}
+      {(restaurant as any).isDemo && (
+        <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} context="carta" />
       )}
       <DesktopWrapper
         restaurantName={restaurant.name}

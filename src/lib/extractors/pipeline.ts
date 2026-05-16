@@ -316,6 +316,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         defaultView: "impact",
         enabledLangs: ["es", "en", "pt"],
         isActive: true,
+        isDemo: true,
         qrToken,
         qrActivatedAt: new Date(),
         plan: "PREMIUM",
