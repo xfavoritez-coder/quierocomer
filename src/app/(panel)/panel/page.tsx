@@ -134,8 +134,8 @@ export default function PanelDashboard() {
       <div className="skel-pulse" style={{ height: 90, borderRadius: 14, marginBottom: 14 }} />
       <div className="skel-pulse" style={{ height: 120, borderRadius: 14 }} />
       <style>{`
-        @keyframes skelPulse { 0%, 100% { opacity: 0.06; } 50% { opacity: 0.12; } }
-        .skel-pulse { background: #F4A623; animation: skelPulse 1.4s ease-in-out infinite; }
+        @keyframes skelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
+        .skel-pulse { background: var(--adm-card-border, #2a2a2a); animation: skelPulse 1.4s ease-in-out infinite; }
       `}</style>
     </div>
   );
