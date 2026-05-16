@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const files = formData.getAll("file") as File[];
+    console.log(`[SubirCarta Upload] Received ${files.length} files, sizes: ${files.map(f => `${f.name}(${(f.size/1024/1024).toFixed(1)}MB)`).join(", ")}`);
 
     if (files.length === 0) {
       return NextResponse.json({ error: "No se recibió ningún archivo." }, { status: 400 });

@@ -64,13 +64,17 @@ export default function SubirCartaClient() {
         const res = await fetch("/api/subircarta/upload", {
           method: "POST",
           body: formData,
+          signal: AbortSignal.timeout(120000), // 2 min timeout
         });
         const data = await res.json();
         if (!res.ok) { setError(data.error || "Error al subir el archivo."); return; }
         router.push(`/subircarta/paso2?id=${data.id}`);
       }
-    } catch {
-      setError("Error de conexión. Intenta de nuevo.");
+    } catch (err: any) {
+      const msg = err?.name === "TimeoutError" ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
+        : err?.name === "AbortError" ? "Se canceló la subida."
+        : `Error: ${err?.message || "conexión fallida"}`;
+      setError(msg);
     } finally {
       setLoading(false);
     }
