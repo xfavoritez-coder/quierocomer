@@ -192,7 +192,7 @@ export default function SubirCartaClient() {
                       </>
                     ) : (
                       <>
-                        <div className="upload-title">Sube una foto de tu menú</div>
+                        <div className="upload-title">Sube fotos de tu menú</div>
                         <div className="upload-link">Puede ser una foto tomada con el celular</div>
                         <div className="formats">JPG o PNG · Máx. 10MB</div>
                       </>

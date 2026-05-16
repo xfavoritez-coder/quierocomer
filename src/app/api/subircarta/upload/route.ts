@@ -3,6 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
 
+export const maxDuration = 60;
+
 const ALLOWED_TYPES = [
   "image/jpeg", "image/png", "image/webp", "image/gif", "image/heic", "image/heif",
   "application/pdf",
@@ -40,9 +42,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Máximo 10 archivos." }, { status: 400 });
     }
 
-    const uploadedUrls: string[] = [];
-    let cartaType: "PHOTO" | "DOCUMENT" = "PHOTO";
-
+    // Validate all files first
     for (const file of files) {
       if (!ALLOWED_TYPES.includes(file.type)) {
         return NextResponse.json({ error: `Tipo no permitido: ${file.name}. Usa JPG, PNG, WebP, HEIC o PDF.` }, { status: 400 });
@@ -50,7 +50,11 @@ export async function POST(req: NextRequest) {
       if (file.size > MAX_SIZE) {
         return NextResponse.json({ error: `${file.name} es muy grande. Máximo 10MB.` }, { status: 400 });
       }
+    }
 
+    // Upload all files in parallel
+    let cartaType: "PHOTO" | "DOCUMENT" = "PHOTO";
+    const results = await Promise.allSettled(files.map(async (file) => {
       const ext = file.name.split(".").pop() || "bin";
       const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
       const buffer = Buffer.from(await file.arrayBuffer());
@@ -59,15 +63,19 @@ export async function POST(req: NextRequest) {
         .from("fotos")
         .upload(fileName, buffer, { contentType: file.type, upsert: true });
 
-      if (uploadError) {
-        console.error("[SubirCarta Upload] Supabase error:", uploadError);
-        return NextResponse.json({ error: "Error al subir el archivo." }, { status: 500 });
-      }
+      if (uploadError) throw uploadError;
 
       const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
-      uploadedUrls.push(urlData.publicUrl);
-
       if (!IMAGE_TYPES.includes(file.type)) cartaType = "DOCUMENT";
+      return urlData.publicUrl;
+    }));
+
+    const uploadedUrls = results
+      .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
+      .map(r => r.value);
+
+    if (uploadedUrls.length === 0) {
+      return NextResponse.json({ error: "Error al subir los archivos." }, { status: 500 });
     }
 
     const lead = await prisma.lead.create({
