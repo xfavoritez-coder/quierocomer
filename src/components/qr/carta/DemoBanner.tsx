@@ -52,9 +52,9 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         overflow: "visible",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {/* Left — DEMO badge + info tooltip */}
-        <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", gap: 10 }}>
           <div
             onClick={() => setShowTip(s => !s)}
             style={{
@@ -87,9 +87,21 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               </>
             )}
           </div>
+        </div>
+
+        {/* Center — Crossfade: "Tu carta está lista" ↔ logo + name */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
+          <span style={{
+            color: "rgba(255,255,255,0.35)", fontSize: 14, fontWeight: 600,
+            whiteSpace: "nowrap",
+            opacity: scrolled ? 0 : 1, transition: "opacity 0.15s ease",
+          }}>
+            Tu carta está lista
+          </span>
           <div style={{
-            display: "flex", alignItems: "center", gap: 6, overflow: "hidden",
-            opacity: scrolled ? 1 : 0, transition: "opacity 0.1s ease",
+            position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", height: "100%",
+            display: "flex", alignItems: "center", gap: 6,
+            opacity: scrolled ? 1 : 0, transition: "opacity 0.15s ease",
             pointerEvents: scrolled ? "auto" : "none",
           }}>
             {restaurantLogo && (
