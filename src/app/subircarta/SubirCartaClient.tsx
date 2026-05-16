@@ -27,9 +27,10 @@ export default function SubirCartaClient() {
   const ctaEnabled = mode === "link" ? isLinkValid : hasFile;
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      if (files.length > 10) { setError("Máximo 10 fotos."); return; }
+      setFileName(files.length === 1 ? files[0].name : `${files.length} fotos seleccionadas`);
       setError("");
     }
   };
@@ -52,11 +53,13 @@ export default function SubirCartaClient() {
         router.push(`/subircarta/paso2?id=${data.id}`);
       } else {
         const inputRef = mode === "pdf" ? fileRef : photoRef;
-        const file = inputRef.current?.files?.[0];
-        if (!file) { setError("Selecciona un archivo primero."); return; }
+        const files = inputRef.current?.files;
+        if (!files || files.length === 0) { setError("Selecciona un archivo primero."); return; }
 
         const formData = new FormData();
-        formData.append("file", file);
+        for (let i = 0; i < Math.min(files.length, 10); i++) {
+          formData.append("file", files[i]);
+        }
 
         const res = await fetch("/api/subircarta/upload", {
           method: "POST",
@@ -176,7 +179,7 @@ export default function SubirCartaClient() {
             {/* Photo panel */}
             {mode === "photo" && (
               <div className="input-panel">
-                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" style={{ display: "none" }} onChange={handleFileSelect} />
+                <input ref={photoRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" multiple style={{ display: "none" }} onChange={handleFileSelect} />
                 <div className="upload-card compact-upload" role="button" tabIndex={0} onClick={() => photoRef.current?.click()} onKeyDown={(e) => { if (e.key === "Enter") photoRef.current?.click(); }}>
                   <div>
                     <div className="upload-icon">

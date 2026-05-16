@@ -12,19 +12,27 @@ async function extractQuickPreviewFromImage(imageUrl: string): Promise<Extractio
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(10000) });
-  if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
-  const buffer = Buffer.from(await imgRes.arrayBuffer());
-
-  let base64: string;
-  let mediaType = "image/jpeg";
-  try {
-    const jpegBuffer = await sharp(buffer).jpeg({ quality: 80 }).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).toBuffer();
-    base64 = jpegBuffer.toString("base64");
-  } catch {
-    base64 = buffer.toString("base64");
-    if (imageUrl.endsWith(".png")) mediaType = "image/png";
+  // Download and convert images (supports multiple URLs separated by comma)
+  const urls = imageUrl.split(",").map(u => u.trim()).filter(Boolean).slice(0, 5);
+  const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
+  for (const url of urls) {
+    try {
+      const imgRes = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      if (!imgRes.ok) continue;
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
+      let base64: string;
+      let mediaType = "image/jpeg";
+      try {
+        const jpegBuffer = await sharp(buffer).jpeg({ quality: 80 }).resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).toBuffer();
+        base64 = jpegBuffer.toString("base64");
+      } catch {
+        base64 = buffer.toString("base64");
+        if (url.endsWith(".png")) mediaType = "image/png";
+      }
+      images.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
+    } catch {}
   }
+  if (images.length === 0) throw new Error("No images could be downloaded");
 
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -35,9 +43,9 @@ async function extractQuickPreviewFromImage(imageUrl: string): Promise<Extractio
       messages: [{
         role: "user",
         content: [
-          { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
-          { type: "text", text: `Extrae los primeros 5 platos de esta foto de carta/menú.
-IMPORTANTE: Solo extrae platos que puedas leer claramente en la foto. NO inventes ni agregues platos que no estén visibles.
+          ...images,
+          { type: "text", text: `Extrae los primeros 5 platos de ${images.length > 1 ? "estas fotos" : "esta foto"} de carta/menú.
+IMPORTANTE: Solo extrae platos que puedas leer claramente. NO inventes ni agregues platos que no estén visibles.
 Responde SOLO JSON: {"restaurantName":"...","dishes":[{"name":"...","description":"...","price":8990,"category":"..."}]}
 Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.` },
         ],

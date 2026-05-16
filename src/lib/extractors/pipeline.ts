@@ -92,28 +92,36 @@ async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  // Download image from Supabase
-  const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(15000) });
-  if (!imgRes.ok) throw new Error(`Failed to download image: ${imgRes.status}`);
-  const buffer = Buffer.from(await imgRes.arrayBuffer());
+  // Download and convert images (supports multiple URLs separated by comma)
+  const urls = imageUrl.split(",").map(u => u.trim()).filter(Boolean).slice(0, 10);
+  const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
 
-  // Convert to JPEG via sharp
-  let base64: string;
-  let mediaType = "image/jpeg";
-  try {
-    const jpegBuffer = await sharp(buffer)
-      .jpeg({ quality: 85 })
-      .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
-      .toBuffer();
-    base64 = jpegBuffer.toString("base64");
-  } catch {
-    base64 = buffer.toString("base64");
-    if (imageUrl.endsWith(".png")) mediaType = "image/png";
-    else if (imageUrl.endsWith(".webp")) mediaType = "image/webp";
+  for (const url of urls) {
+    try {
+      const imgRes = await fetch(url, { signal: AbortSignal.timeout(15000) });
+      if (!imgRes.ok) continue;
+      const buffer = Buffer.from(await imgRes.arrayBuffer());
+      let base64: string;
+      let mediaType = "image/jpeg";
+      try {
+        const jpegBuffer = await sharp(buffer)
+          .jpeg({ quality: 85 })
+          .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
+          .toBuffer();
+        base64 = jpegBuffer.toString("base64");
+      } catch {
+        base64 = buffer.toString("base64");
+        if (url.endsWith(".png")) mediaType = "image/png";
+        else if (url.endsWith(".webp")) mediaType = "image/webp";
+      }
+      images.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
+    } catch {}
   }
+  if (images.length === 0) throw new Error("No images could be downloaded");
 
-  const prompt = `Analiza esta foto de carta/menú de restaurante.
+  const prompt = `Analiza ${images.length > 1 ? "estas fotos" : "esta foto"} de carta/menú de restaurante.
 Extrae TODOS los platos que puedas ver y organízalos por categoría.
+IMPORTANTE: Solo extrae platos que puedas leer claramente. NO inventes ni agregues platos que no estén visibles.
 Responde SOLO con JSON:
 {"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
 Reglas:
@@ -130,7 +138,7 @@ Reglas:
       messages: [{
         role: "user",
         content: [
-          { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+          ...images,
           { type: "text", text: prompt },
         ],
       }],
