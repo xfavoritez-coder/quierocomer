@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useContext } from "react";
+import { CreditCard } from "lucide-react";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import { toast } from "sonner";
 import { planNetAmount, ivaOf, type PlanKey } from "@/lib/billing/plans-config";
@@ -32,7 +33,7 @@ function formatDate(d: string | null) {
 }
 
 const STATUS_LABEL: Record<string, { label: string; color: string; bg: string }> = {
-  NONE:      { label: "Plan gratis",          color: "#666",     bg: "#f4f4f4" },
+  NONE:      { label: "Plan gratis",          color: "var(--adm-text2)",     bg: "#f4f4f4" },
   TRIALING:  { label: "En prueba gratis",     color: "#16a34a", bg: "#dcfce7" },
   ACTIVE:    { label: "Activa",               color: "#16a34a", bg: "#dcfce7" },
   PAST_DUE:  { label: "Pago atrasado",        color: "#dc2626", bg: "#fee2e2" },
@@ -85,10 +86,10 @@ export default function SuscripcionPage() {
   };
 
   if (loading) {
-    return <div style={{ padding: 32, fontFamily: FB, color: "#888" }}>Cargando…</div>;
+    return <div style={{ padding: 32, fontFamily: FB, color: "var(--adm-text3)" }}>Cargando…</div>;
   }
   if (!status) {
-    return <div style={{ padding: 32, fontFamily: FB, color: "#888" }}>No se pudo cargar la información.</div>;
+    return <div style={{ padding: 32, fontFamily: FB, color: "var(--adm-text3)" }}>No se pudo cargar la información.</div>;
   }
 
   const statusInfo = STATUS_LABEL[status.subscriptionStatus] || STATUS_LABEL.NONE;
@@ -104,15 +105,15 @@ export default function SuscripcionPage() {
 
   return (
     <div style={{ padding: "24px 16px", maxWidth: 720, margin: "0 auto", fontFamily: FB }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 700, color: "#1a1a1a", margin: "0 0 6px" }}>Mi suscripción</h1>
-      <p style={{ fontSize: "0.92rem", color: "#666", margin: "0 0 24px" }}>Estado de tu plan, pagos y opciones</p>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color={GOLD} /> Mi suscripción</h1>
+      <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>Estado de tu plan, pagos y opciones</p>
 
       {/* Card estado */}
-      <div style={{ background: "white", border: "1px solid #E8D0A0", borderRadius: 16, padding: 24, marginBottom: 16 }}>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 24, marginBottom: 16 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
           <div>
-            <p style={{ fontSize: "0.78rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Plan actual</p>
-            <p style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "#1a1a1a", margin: "2px 0 0" }}>
+            <p style={{ fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Plan actual</p>
+            <p style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: "var(--adm-text)", margin: "2px 0 0" }}>
               {status.plan === "PREMIUM" ? "Premium" : status.plan === "GOLD" ? "Gold" : "Gratis"}
             </p>
           </div>
@@ -126,7 +127,7 @@ export default function SuscripcionPage() {
 
         {/* Mensaje según estado */}
         {isExempt && (
-          <div style={{ background: "#FFF8E7", border: "1px solid #fde68a", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+          <div style={{ background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
             <p style={{ fontSize: "0.85rem", color: "#92400e", margin: 0, lineHeight: 1.5 }}>
               🎁 Tu plan está <strong>bonificado por QuieroComer</strong>. No se te cobrará. Disfrutas de las funciones del plan {status.plan === "PREMIUM" ? "Premium" : status.plan === "GOLD" ? "Gold" : "Gratis"} sin costo.
             </p>
@@ -138,7 +139,7 @@ export default function SuscripcionPage() {
             <p style={{ fontSize: "0.9rem", color: "#92400e", margin: "0 0 8px", fontWeight: 600 }}>
               🚀 Desbloquea más con Gold o Premium
             </p>
-            <p style={{ fontSize: "0.82rem", color: "#666", margin: 0, lineHeight: 1.5 }}>
+            <p style={{ fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
               Estadísticas, ofertas, multilenguaje, llamar al garzón, automatizaciones y más. Prueba 7 días gratis. Sin compromiso.
             </p>
           </div>
@@ -209,29 +210,29 @@ export default function SuscripcionPage() {
         <div style={{ borderTop: "1px solid #f0eada", paddingTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {status.lastPaymentAt && (
             <div>
-              <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Último pago</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Último pago</p>
               <p style={{ fontSize: "0.92rem", color: "#333", margin: "2px 0 0", fontWeight: 600 }}>{formatDate(status.lastPaymentAt)}</p>
             </div>
           )}
           {status.currentPeriodEnd && (
             <div>
-              <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Periodo actual termina</p>
+              <p style={{ fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Periodo actual termina</p>
               <p style={{ fontSize: "0.92rem", color: "#333", margin: "2px 0 0", fontWeight: 600 }}>{formatDate(status.currentPeriodEnd)}</p>
             </div>
           )}
           <div>
-            <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Cobro mensual</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Cobro mensual</p>
             <p style={{ fontSize: "0.92rem", color: "#333", margin: "2px 0 0", fontWeight: 600 }}>
               {monthlyNet > 0 ? formatCLP(monthlyGross) : isExempt ? "Sin costo" : "—"}
             </p>
             {monthlyNet > 0 && (
-              <p style={{ fontSize: "0.7rem", color: "#888", margin: "2px 0 0" }}>
+              <p style={{ fontSize: "0.7rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
                 {formatCLP(monthlyNet)} neto + {formatCLP(monthlyIva)} IVA
               </p>
             )}
           </div>
           <div>
-            <p style={{ fontSize: "0.72rem", color: "#888", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pasarela</p>
+            <p style={{ fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0, textTransform: "uppercase", letterSpacing: "0.05em" }}>Pasarela</p>
             <p style={{ fontSize: "0.92rem", color: "#333", margin: "2px 0 0", fontWeight: 600 }}>{status.hasSubscription ? "Flow.cl (Webpay)" : "—"}</p>
           </div>
         </div>
@@ -249,7 +250,7 @@ export default function SuscripcionPage() {
           {!isExempt && hasActiveSub && (
             <>
               <button onClick={handleUpgrade} style={{
-                flex: 1, minWidth: 160, padding: "12px 18px", background: "white", color: "#1a1a1a",
+                flex: 1, minWidth: 160, padding: "12px 18px", background: "var(--adm-card)", color: "var(--adm-text)",
                 border: "1px solid #ddd", borderRadius: 999, fontFamily: F, fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
               }}>
                 Cambiar plan
@@ -275,7 +276,7 @@ export default function SuscripcionPage() {
       </div>
 
       {/* Información extra */}
-      <div style={{ background: "#f9f5e9", border: "1px solid #f0eada", borderRadius: 12, padding: 18, fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
+      <div style={{ background: "#f9f5e9", border: "1px solid #f0eada", borderRadius: 12, padding: 18, fontSize: "0.82rem", color: "var(--adm-text2)", lineHeight: 1.6 }}>
         <p style={{ margin: "0 0 8px", fontWeight: 600, color: "#444" }}>📋 Información sobre tu suscripción</p>
         <ul style={{ margin: "0", paddingLeft: 18 }}>
           <li>Los cobros se hacen automáticamente cada mes con la tarjeta inscrita en Webpay.</li>

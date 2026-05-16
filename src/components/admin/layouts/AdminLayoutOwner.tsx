@@ -322,9 +322,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 <Receipt size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Datos de facturación</span>
               </a>
             )}
-            <button onClick={() => setPwOpen(true)} style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", background: "none", border: "none", borderBottom: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left" }}>
-              <Lock size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Cambiar contraseña</span>
-            </button>
             <a href="mailto:soporte@quierocomer.cl?subject=Ayuda%20con%20mi%20panel%20QuieroComer" style={{ display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "14px 0", borderBottom: "1px solid var(--adm-card-border)", textDecoration: "none" }}>
               <Mail size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Ayuda / Soporte</span>
             </a>

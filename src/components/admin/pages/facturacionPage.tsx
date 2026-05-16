@@ -129,20 +129,20 @@ export default function FacturacionPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Datos de facturación</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Receipt size={20} color={GOLD} /> Datos de facturación</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>
         Estos datos los usamos para emitir tu factura electrónica cada mes
       </p>
 
       {/* Estado */}
       {info && !info.isComplete && (
-        <div style={{ background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <FileText size={20} color="#92400e" style={{ flexShrink: 0, marginTop: 2 }} />
+        <div style={{ background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
+          <FileText size={20} color={GOLD} style={{ flexShrink: 0, marginTop: 2 }} />
           <div>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "#92400e", margin: 0 }}>
+            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
               Faltan datos para emitir tu factura
             </p>
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#78350f", margin: "4px 0 0", lineHeight: 1.5 }}>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0", lineHeight: 1.5 }}>
               Necesitamos: {info.missingFields.map((f) => FIELD_LABELS[f] || f).join(", ")}. Sin estos datos no podremos emitir tu factura electrónica.
             </p>
           </div>

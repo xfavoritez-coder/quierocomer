@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Moon, Sun, Bell, Palette, Layout } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
@@ -42,15 +42,16 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
     <button
       onClick={onToggle}
       style={{
-        width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
-        background: active ? GOLD : "var(--adm-input-border)",
-        transition: "background 0.2s", flexShrink: 0,
+        width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative",
+        background: active ? GOLD : "var(--adm-card-border)",
+        boxShadow: active ? "0 0 8px rgba(244,166,35,0.3)" : "none",
+        transition: "all 0.2s", flexShrink: 0,
       }}
     >
       <div style={{
-        width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+        width: 18, height: 18, borderRadius: "50%", background: "white", position: "absolute", top: 3,
         left: active ? 23 : 3, transition: "left 0.2s",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.2)", pointerEvents: "none",
+        boxShadow: "0 1px 2px rgba(0,0,0,0.2)", pointerEvents: "none",
       }} />
     </button>
   );
@@ -114,7 +115,7 @@ export default function AjustesPage() {
 
       {/* Vista por defecto — FIRST */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Vista por defecto</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Layout size={16} color="var(--adm-text3)" /> Vista por defecto</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>La vista que veran tus clientes al abrir la carta</p>
         <div style={{ display: "flex", gap: 8 }}>
           {VIEW_OPTIONS.map(opt => {
@@ -138,25 +139,36 @@ export default function AjustesPage() {
         </div>
       </div>
 
-      {/* Modo oscuro */}
+      {/* Tema de la carta */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Modo oscuro</h3>
-            <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.cartaColorMode === "DARK" ? "Tu carta se muestra en modo oscuro" : "Tu carta se muestra en modo claro"}
-            </p>
-          </div>
-          <Toggle
-            active={data.cartaColorMode === "DARK"}
-            onToggle={() => save({ cartaColorMode: data.cartaColorMode === "DARK" ? "LIGHT" : "DARK" })}
-          />
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Moon size={16} color="var(--adm-text3)" /> Modo por defecto de la carta</h3>
+        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
+          <button onClick={() => save({ cartaColorMode: "LIGHT" })} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: data.cartaColorMode !== "DARK" ? "rgba(255,210,80,0.15)" : "transparent",
+            color: data.cartaColorMode !== "DARK" ? "#e6a817" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+            boxShadow: data.cartaColorMode !== "DARK" ? "0 0 12px rgba(255,210,80,0.2)" : "none",
+          }}>
+            <Sun size={16} strokeWidth={data.cartaColorMode !== "DARK" ? 2.5 : 1.5} /> Claro
+          </button>
+          <button onClick={() => save({ cartaColorMode: "DARK" })} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: data.cartaColorMode === "DARK" ? "rgba(100,120,180,0.15)" : "transparent",
+            color: data.cartaColorMode === "DARK" ? "#8b9fda" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+            boxShadow: data.cartaColorMode === "DARK" ? "0 0 12px rgba(100,120,180,0.2)" : "none",
+          }}>
+            <Moon size={16} strokeWidth={data.cartaColorMode === "DARK" ? 2.5 : 1.5} /> Oscuro
+          </button>
         </div>
       </div>
 
       {/* Color de diseño */}
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Diseño</h3>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Palette size={16} color="var(--adm-text3)" /> Diseño</h3>
         <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "0 0 14px" }}>Color de tu carta: precios, botones y detalles</p>
         <div style={{ display: "flex", gap: 12 }}>
           {ACCENT_OPTIONS.map((opt) => {
@@ -187,9 +199,9 @@ export default function AjustesPage() {
       <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div>
-            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px" }}>Campanita garzón</h3>
+            <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}><Bell size={16} color="var(--adm-text3)" /> Campanita garzón</h3>
             <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.waiterPanelActive ? "Los clientes pueden llamar al garzón" : "La campanita no se muestra en la carta"}
+              {data.waiterPanelActive ? "Activada. Los clientes pueden llamar al garzón" : "Desactivada. Los clientes no pueden llamar al garzón"}
             </p>
           </div>
           <Toggle

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { Mail } from "lucide-react";
+import { Mail, Tag, Megaphone, Sparkles, UtensilsCrossed } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { EMAIL_TEMPLATES } from "@/lib/campaigns/templates";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -294,13 +294,20 @@ function CampanasTab({ restaurantId }: { restaurantId: string }) {
         <>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>Plantillas rápidas</p>
-            <button onClick={() => { setCreating(true); setShowTemplates(false); }} style={{ padding: "6px 14px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>+ Desde cero</button>
+            <button onClick={() => { setCreating(true); setShowTemplates(false); }} style={{ padding: "6px 14px", background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>+ Nuevo correo</button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             {EMAIL_TEMPLATES.map(t => (
-              <button key={t.id} onClick={() => { applyTemplate(t); setCreating(true); setFName(t.name); }} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "16px 14px", textAlign: "left", cursor: "pointer" }}>
-                <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: "0 0 4px" }}>{t.name}</p>
-                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.4 }}>{t.description}</p>
+              <button key={t.id} onClick={() => { applyTemplate(t); setCreating(true); setFName(t.name); }} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "16px 14px", textAlign: "left", cursor: "pointer", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                {(() => {
+                  const icons: Record<string, typeof Tag> = { utensils: UtensilsCrossed, tag: Tag, megaphone: Megaphone, sparkles: Sparkles };
+                  const Icon = icons[t.icon] || Mail;
+                  return <Icon size={18} color="var(--adm-text3)" style={{ flexShrink: 0, marginTop: 2 }} />;
+                })()}
+                <div>
+                  <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: "0 0 4px" }}>{t.name}</p>
+                  <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.4 }}>{t.description}</p>
+                </div>
               </button>
             ))}
           </div>
@@ -412,7 +419,7 @@ export default function AdminCampanias() {
   return (
     <div style={{ maxWidth: 700 }}>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Mail size={20} color={GOLD} /> Enviar correos</h1>
+        <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Mail size={20} color={GOLD} /> Email Marketing</h1>
         <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>Comunícate con tus clientes y premia su fidelidad</p>
       </div>
 
@@ -420,7 +427,7 @@ export default function AdminCampanias() {
       <div style={{ display: "flex", gap: 4, marginBottom: 20 }}>
         {([
           { key: "cumpleanos" as Tab, label: "🎂 Cumpleaños", icon: "" },
-          { key: "campanas" as Tab, label: "📧 Email Marketing", icon: "" },
+          { key: "campanas" as Tab, label: "📧 Enviar correos", icon: "" },
         ]).map(t => (
           <button
             key={t.key}

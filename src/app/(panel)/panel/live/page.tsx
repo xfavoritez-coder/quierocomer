@@ -138,13 +138,6 @@ export default function LiveDashboard() {
             <span style={{ color: "var(--adm-text3)", marginLeft: 8 }}>· auto cada 10 min</span>
           </p>
         </div>
-        <button
-          onClick={() => triggerSync(true)}
-          disabled={syncing}
-          style={{ padding: "8px 14px", background: syncing ? "var(--adm-card-border)" : "var(--adm-accent)", color: "#fff", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 700, cursor: syncing ? "wait" : "pointer", opacity: syncing ? 0.6 : 1 }}
-        >
-          {syncing ? "Sincronizando..." : "Sincronizar ahora"}
-        </button>
       </div>
 
       {noData && (

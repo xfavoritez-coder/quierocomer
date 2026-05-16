@@ -13,6 +13,7 @@ export default function PanelPerfilPage() {
   const { loading: sessionLoading } = useAdminSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
   const [loading, setLoading] = useState(true);
   const [savingName, setSavingName] = useState(false);
 
@@ -30,6 +31,7 @@ export default function PanelPerfilPage() {
         if (!data.error) {
           setName(data.name || "");
           setEmail(data.email || "");
+          setWhatsapp(data.whatsapp || "");
         }
       })
       .catch(() => {})
@@ -43,7 +45,7 @@ export default function PanelPerfilPage() {
       const res = await fetch("/api/panel/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify({ name: name.trim(), whatsapp: whatsapp.trim() || null }),
       });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Error al guardar"); setSavingName(false); return; }
@@ -114,10 +116,15 @@ export default function PanelPerfilPage() {
           <input value={name} onChange={e => setName(e.target.value)} placeholder="Tu nombre" style={inputStyle} />
         </div>
 
-        <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 12 }}>
           <label style={labelStyle}>Email</label>
           <input value={email} disabled style={{ ...inputStyle, opacity: 0.6, cursor: "not-allowed" }} />
           <p style={{ fontFamily: FB, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>El email no se puede cambiar desde aquí.</p>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>WhatsApp</label>
+          <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="+56 9 1234 5678" style={inputStyle} />
         </div>
 
         <button onClick={handleSaveName} disabled={savingName} style={{
@@ -125,7 +132,7 @@ export default function PanelPerfilPage() {
           fontFamily: F, fontSize: "0.82rem", fontWeight: 700,
           border: "none", borderRadius: 8, cursor: savingName ? "wait" : "pointer",
         }}>
-          {savingName ? "Guardando..." : "Guardar nombre"}
+          {savingName ? "Guardando..." : "Guardar"}
         </button>
       </div>
 

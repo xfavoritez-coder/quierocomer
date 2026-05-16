@@ -554,7 +554,6 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   return (
     <SessionContext.Provider value={ctxValue}>
-      {mustChangePassword && <ForceChangePasswordModal onDone={clearMustChangePassword} />}
       <AdminLayoutOwner
         name={name}
         restaurants={restaurants}
