@@ -1025,7 +1025,7 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 70 : 0 }}
+      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 76 : 0 }}
     >
       {/* Ambient background */}
       <div style={{
@@ -1049,7 +1049,8 @@ export default function CartaImpact({
 
       {/* Fixed top nav */}
       <header style={{
-        position: "fixed", top: (restaurant as any).isDemo ? 70 : 0, left: 0, right: 0, zIndex: 40,
+        position: "fixed", top: (restaurant as any).isDemo ? 76 : 0, left: 0, right: 0, zIndex: 40,
+        transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
         background: showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
@@ -1152,6 +1153,7 @@ export default function CartaImpact({
       {searchOpen && (
         <div style={{
           position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
+          transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
           padding: "calc(10px + env(safe-area-inset-top)) 16px 12px",
           background: "var(--carta-bg)", borderBottom: "1px solid var(--carta-card-border)",
         }}>
@@ -1328,7 +1330,7 @@ export default function CartaImpact({
       )}
 
       {/* ═══════ MENÚ ═══════ */}
-      <div style={{ padding: "24px 14px 4px", position: "relative", zIndex: 1 }}>
+      <div style={{ padding: "24px 14px 14px", position: "relative", zIndex: 1 }}>
         <h2 style={{
           fontFamily: "var(--font-bebas), 'Bebas Neue', Impact, sans-serif", fontSize: 32,
           letterSpacing: "0.8px", margin: 0, lineHeight: 0.9,
@@ -1339,7 +1341,7 @@ export default function CartaImpact({
       </div>
       <div style={{ position: "relative", zIndex: 1, padding: "0 14px 16px" }}>
         {/* Category chips + search — sticky */}
-        <div ref={menuAnchorRef} style={{ paddingTop: 10, paddingBottom: 10, marginBottom: 8 }}>
+        <div ref={menuAnchorRef} style={{ paddingTop: 10, paddingBottom: 6, marginBottom: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <div

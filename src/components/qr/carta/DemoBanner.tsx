@@ -22,7 +22,8 @@ export default function DemoBanner({ restaurantName, restaurantSlug, context, on
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 60,
-        padding: "16px 12px",
+        transform: "translate3d(0,0,0)", WebkitTransform: "translate3d(0,0,0)",
+        padding: "18px 14px",
         background: "rgba(7,7,7,.88)",
         backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
         borderBottom: "1px solid rgba(255,178,45,.18)",
@@ -106,7 +107,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, context, on
               display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
               boxShadow: "0 10px 24px rgba(255,178,45,.22)",
             }}
-          >Activar →</a>
+          >Activar</a>
         </div>
       </div>
     </div>
