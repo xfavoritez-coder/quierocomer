@@ -6,6 +6,8 @@ import type { Restaurant, Dish } from "@prisma/client";
 import { User } from "lucide-react";
 import { trackHeroClick } from "./utils/cartaAnalytics";
 import LangSelector from "./LangSelector";
+import { useLang } from "@/contexts/LangContext";
+import { t } from "@/lib/qr/i18n";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&q=80";
@@ -33,6 +35,7 @@ function isReal(url: string | null | undefined): boolean {
 }
 
 export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen, onDishSelect, viewSelectorSlot, enabledLangs, variant = "full" }: HeroDishProps) {
+  const lang = useLang();
   const isCompact = variant === "compact";
   const [current, setCurrent] = useState(0);
 
@@ -237,7 +240,7 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
                   border: "2px solid rgba(255,255,255,0.5)",
                 }}
               >
-                Ver
+                {t(lang, "heroView" as any)}
               </button>
 
               {/* Carousel dots */}
