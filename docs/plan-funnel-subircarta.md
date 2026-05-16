@@ -108,7 +108,19 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 - ✅ **Sin gluten badge** — Siempre dorado (#d4a047), no usa accent.
 - ✅ **BirthdayBanner removido** — Quitado de las 4 vistas (auto modal se mantiene).
 - ✅ **Gourmedia investigado** — Es WooCommerce con JS rendering. Sigue con Jina+Claude (crear extractor dedicado requiere más análisis).
-- ✅ **Modo PHOTO en /subircarta** — Claude Vision extrae menú de fotos. Preview con Haiku, proceso completo con Sonnet. Fotos de Unsplash como referencial para demo.
+- ✅ **Modo PHOTO en /subircarta** — Claude Vision extrae menú de fotos. Preview con Sonnet, proceso completo con Sonnet. Fotos de Unsplash como referencial para demo.
+- ✅ **Multi-foto upload** — Hasta 10 fotos, upload secuencial con progreso ("Procesando foto 2 de 4..."), validación 50MB total.
+- ✅ **Compresión browser** — Canvas resize a 1600px JPEG antes de subir (4MB→300KB, upload 10x más rápido).
+- ✅ **Auto-detect diet/spicy** — Scraper y Vision extraen VEGAN/VEGETARIAN/isSpicy, pipeline los guarda en dish.
+- ✅ **Auto-RECOMMENDED** — Primer plato de primeras 2 categorías se marca RECOMMENDED automáticamente.
+- ✅ **Auto-translate** — enabledLangs ["es","en","pt"] por defecto, traducción se dispara automáticamente.
+- ✅ **Default Impact** — Nuevos restaurantes creados con defaultView "impact".
+- ✅ **Scroll to top** — Paso2 y Confirmación hacen scrollTo(0,0) al montar.
+- ✅ **HEIC/HEIF soporte** — Fotos de iPhone aceptadas en upload.
+- ✅ **Funnel links fotos** — Links individuales por foto en admin/funnel.
+- ✅ **Stat cumpleaños** — Dashboard admin muestra "🎂 Cumpleaños hoy" con conteo semanal.
+- ✅ **FabSpeedDial fixes** — Toast fixed, modal portal, backdrop fade, blur flash fix.
+- ✅ **Impact logo fallback** — Círculo con inicial cuando no hay logoUrl.
 
 ## Pendientes
 
