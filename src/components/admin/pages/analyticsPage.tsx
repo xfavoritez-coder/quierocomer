@@ -1581,13 +1581,13 @@ export default function AnalyticsDashboard() {
 
       {/* Date filters */}
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 16 }}>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, overflowX: "auto", scrollbarWidth: "none", alignItems: "center" }}>
           {(["hoy", "ayer", "semana", "mes"] as DatePreset[]).map(p => (
             <button key={p} onClick={() => setDatePreset(p)} style={{
-              padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
-              fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-              background: datePreset === p ? "var(--adm-accent)" : "var(--adm-hover)",
-              color: datePreset === p ? "#fff" : "var(--adm-text3)",
+              padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
+              background: datePreset === p ? "var(--adm-card-border)" : "transparent",
+              color: datePreset === p ? "var(--adm-text)" : "var(--adm-text3)",
             }}>
               {p === "hoy" ? "Hoy" : p === "ayer" ? "Ayer" : p === "semana" ? "Esta semana" : "Este mes"}
             </button>
@@ -1598,10 +1598,10 @@ export default function AnalyticsDashboard() {
               else updateParams({ preset: "custom" });
             }}
             style={{
-              padding: "6px 12px", borderRadius: 8, border: "none", cursor: "pointer",
-              fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
-              background: datePreset === "custom" ? "var(--adm-accent)" : "var(--adm-hover)",
-              color: datePreset === "custom" ? "#fff" : "var(--adm-text3)",
+              padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap", flexShrink: 0,
+              background: datePreset === "custom" ? "var(--adm-card-border)" : "transparent",
+              color: datePreset === "custom" ? "var(--adm-text)" : "var(--adm-text3)",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
             <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>📅</span>
@@ -1631,10 +1631,10 @@ export default function AnalyticsDashboard() {
                 const locked = isAdvancedTab && !hasAdvanced;
                 return (
                   <button key={t.key} onClick={() => { if (locked) { openUpgrade(); } else { setTab(t.key); } }} style={{
-                    padding: "8px 16px", borderRadius: 10, border: "none", cursor: "pointer",
+                    padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
                     fontFamily: F, fontSize: "0.78rem", fontWeight: 600, whiteSpace: "nowrap",
-                    background: tab === t.key ? "var(--adm-accent)" : "var(--adm-hover)",
-                    color: tab === t.key ? "#fff" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
+                    background: tab === t.key ? "var(--adm-card-border)" : "transparent",
+                    color: tab === t.key ? "var(--adm-text)" : locked ? "var(--adm-text3)" : "var(--adm-text2)",
                     opacity: locked ? 0.5 : 1,
                     transition: "all 0.15s",
                   }}>

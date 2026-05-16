@@ -239,7 +239,7 @@
   --adm-accent: #F4A623;
   --adm-stat: #F4A623;
   --adm-positive: #3db89e;
-  --adm-hover: rgba(244,166,35,0.08);
+  --adm-hover: rgba(255,255,255,0.04);
   --adm-card-shadow: none;
   --adm-select-bg: #1a1a1a;
 }
