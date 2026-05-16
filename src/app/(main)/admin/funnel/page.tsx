@@ -20,6 +20,7 @@ interface Lead {
   completedAt: string | null;
   previewAt: string | null;
   readyAt: string | null;
+  events?: any[];
 }
 
 interface Stats {
@@ -172,6 +173,25 @@ export default function FunnelPage() {
                 <TimelineStep label="Preview" time={fmtTime(lead.previewAt)} delta={diffStr(lead.step2At || lead.createdAt, lead.previewAt)} />
                 <TimelineStep label="Lista" time={fmtTime(lead.readyAt)} delta={diffStr(lead.previewAt || lead.createdAt, lead.readyAt)} />
               </div>
+
+              {/* Event log */}
+              {lead.events && lead.events.length > 0 && (
+                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {lead.events.map((e: any, i: number) => {
+                    const isError = e.action?.includes("error") || e.action?.includes("timeout");
+                    return (
+                      <span key={i} style={{
+                        fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: 500,
+                        background: isError ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.06)",
+                        color: isError ? "#f87171" : "#888",
+                        border: `1px solid ${isError ? "rgba(239,68,68,0.2)" : "rgba(255,255,255,0.08)"}`,
+                      }} title={e.error || e.fileName || ""}>
+                        {e.action}{e.files ? ` (${e.files} fotos)` : ""}{e.error ? `: ${e.error.slice(0, 30)}` : ""}
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
 
               <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                 {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}

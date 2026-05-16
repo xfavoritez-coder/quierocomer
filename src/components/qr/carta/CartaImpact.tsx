@@ -1160,7 +1160,12 @@ export default function CartaImpact({
             <input
               id="impact-search-input"
               autoFocus type="search" value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value && menuAnchorRef.current) {
+                  menuAnchorRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+              }}
               placeholder={t(lang, "search")}
               className="font-[family-name:var(--font-dm)]"
               style={{ flex: 1, border: "none", outline: "none", fontSize: "16px", color: "var(--carta-text)", background: "transparent", fontFamily: "inherit" }}
