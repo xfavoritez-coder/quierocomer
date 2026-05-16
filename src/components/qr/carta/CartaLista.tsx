@@ -363,7 +363,7 @@ export default function CartaLista({
   };
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 76 : 0 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
       {/* Hero — FREE gets slim, Gold/Premium get full hero */}
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
@@ -514,21 +514,30 @@ export default function CartaLista({
         const onDishClick = (dishId: string) => { const dish = dishes.find(d => d.id === dishId); if (dish) setSelectedDish(dish); };
         const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
         const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
+        // Fallback: if user is vegan and no vegan dishes exist, try vegetarian carousel
+        let effectiveMode = mode;
+        if (mode === "vegan" && !hasMatchingDishes(dishes, categories, "vegan", diet, activeRestrictions)) {
+          if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian";
+        }
+        if (mode === "vegan+gf" && !hasMatchingDishes(dishes, categories, "vegan+gf", diet, activeRestrictions)) {
+          if (hasMatchingDishes(dishes, categories, "vegetarian+gf", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian+gf";
+          else if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) effectiveMode = "vegetarian";
+        }
         // reordered-spicy and redundant-vegan/vegetarian are now shown as GenioFab toast, not inline banner
-        const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+        const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!effectiveMode || !hasMatchingDishes(dishes, categories, effectiveMode, diet, activeRestrictions)) ? dietMsg : null;
         if (msgType) return <div style={{ marginTop: 16, paddingTop: 6 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-        if (!mode) return null;
+        if (!effectiveMode) return null;
         return (
           <div style={{ paddingTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-            {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-            {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-            {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
+            {effectiveMode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+            {effectiveMode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+            {effectiveMode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+            {effectiveMode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
           </div>
         );
       })()}
@@ -636,7 +645,7 @@ export default function CartaLista({
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
 
-      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
+      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
 
       {/* Genio */}
       {genioOpen && (

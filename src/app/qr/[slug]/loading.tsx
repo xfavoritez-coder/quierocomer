@@ -8,7 +8,7 @@ export default function CartaLoading() {
           <Sparkles size={28} color="#F4A623" fill="#F4A623" style={{ filter: "drop-shadow(0 0 12px rgba(244,166,35,0.5))" }} />
         </div>
         <p className="text-white/60 font-[family-name:var(--font-dm)] text-sm">
-          Cargando carta...
+          Actualizando carta...
         </p>
         <style>{`@keyframes genioLoadFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.7; } 50% { transform: translateY(-8px) scale(1.15); opacity: 1; } }`}</style>
       </div>

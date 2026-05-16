@@ -159,7 +159,7 @@ function ImpactHeroSlider({
           }}>
             <Image
               src={p} alt={dish.name} fill className="object-cover" sizes="100vw"
-              style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)" }}
+              style={{ transform: "scale(1.03)", filter: "saturate(1.1) contrast(1.08)", objectPosition: "center 60%" }}
               quality={95} priority={i === 0}
             />
           </div>
@@ -493,7 +493,7 @@ function ImpactDishCard({
       {/* Ambient glow on card */}
       <div style={{
         position: "absolute", right: -35, top: -35, width: 90, height: 90, borderRadius: "50%",
-        background: "rgba(244,166,35,0.06)", filter: "blur(10px)",
+        background: "rgba(244,166,35,0.03)", filter: "blur(10px)",
       }} />
       {/* Photo */}
       <div style={{
@@ -829,8 +829,9 @@ export default function CartaImpact({
   const recShownRef = useRef(new Set<string>());
   const clientAvoidsSpicyForSort = useClientAvoidsSpicy();
 
-  // Background fetch for personalization
+  // Background fetch for personalization (skip for demo)
   useEffect(() => {
+    if ((restaurant as any).isDemo) return;
     const guestId = getGuestId();
     if (!guestId && !qrUser?.id) return;
     setPersonalizing(true);
@@ -1036,12 +1037,12 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 76 : 0 }}
+      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}
     >
       {/* Ambient background */}
       <div style={{
         position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0,
-        background: "radial-gradient(circle at 70% 0%, var(--impact-ambient-1, rgba(244,166,35,0.33)), transparent 30%), radial-gradient(circle at 8% 28%, var(--impact-ambient-2, rgba(155,92,255,0.18)), transparent 32%), radial-gradient(circle at 90% 72%, var(--impact-ambient-3, rgba(244,166,35,0.14)), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))",
+        background: "radial-gradient(circle at 70% 0%, var(--impact-ambient-1, rgba(244,166,35,0.33)), transparent 30%), radial-gradient(circle at 8% 28%, var(--impact-ambient-2, rgba(244,166,35,0.28)), transparent 36%), radial-gradient(circle at 90% 72%, var(--impact-ambient-3, rgba(244,166,35,0.04)), transparent 26%), linear-gradient(var(--carta-bg), var(--carta-bg))",
       }} />
       {/* Grid texture */}
       <div style={{
@@ -1113,7 +1114,7 @@ export default function CartaImpact({
                   transition: "opacity 0.15s ease, transform 0.15s ease",
                   backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
                   borderRadius: 14, padding: 4, border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 8px 30px rgba(0,0,0,0.4)", zIndex: 60,
+                  boxShadow: "0 8px 30px rgba(0,0,0,0.4)", zIndex: 65,
                 }}>
                   {/* Arrow */}
                   <div style={{ position: "absolute", top: -5, right: 14, width: 10, height: 10, background: "rgba(0,0,0,0.9)", transform: "rotate(45deg)", border: "1px solid rgba(255,255,255,0.12)", borderRight: "none", borderBottom: "none" }} />
@@ -1333,8 +1334,8 @@ export default function CartaImpact({
         </div>
       )}
 
-      {/* Personalizing overlay */}
-      {personalizing && Date.now() - mountedAt.current > 500 && (
+      {/* Personalizing overlay — hidden during demo onboarding, fades out */}
+      {!(restaurant as any).isDemo && (
         <div
           className="font-[family-name:var(--font-dm)]"
           style={{
@@ -1342,10 +1343,13 @@ export default function CartaImpact({
             display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 10,
             background: "color-mix(in srgb, var(--carta-bg, #030303) 92%, transparent)",
             backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+            opacity: personalizing && Date.now() - mountedAt.current > 500 ? 1 : 0,
+            pointerEvents: personalizing ? "auto" : "none",
+            transition: "opacity 0.25s ease",
           }}
         >
           <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Actualizando carta...</span>
         </div>
       )}
 
@@ -1434,20 +1438,34 @@ export default function CartaImpact({
           const onDishClick = (dishId: string) => { const dish = dishes.find((d) => d.id === dishId); if (dish) setSelectedDish(dish); };
           const activeRestrictions = restrictions.filter((r: string) => r !== "ninguna");
           const dietMsg = getDietMessage(diet, restrictions, (restaurant as any).dietType, dishes, categories);
-          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!mode || !hasMatchingDishes(dishes, categories, mode, diet, activeRestrictions)) ? dietMsg : null;
+          // Fallback: if user is vegan and no vegan dishes exist, try vegetarian carousel
+          let effectiveMode = mode;
+          if (mode === "vegan" && !hasMatchingDishes(dishes, categories, "vegan", diet, activeRestrictions)) {
+            if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) {
+              effectiveMode = "vegetarian";
+            }
+          }
+          if (mode === "vegan+gf" && !hasMatchingDishes(dishes, categories, "vegan+gf", diet, activeRestrictions)) {
+            if (hasMatchingDishes(dishes, categories, "vegetarian+gf", "vegetarian", activeRestrictions)) {
+              effectiveMode = "vegetarian+gf";
+            } else if (hasMatchingDishes(dishes, categories, "vegetarian", "vegetarian", activeRestrictions)) {
+              effectiveMode = "vegetarian";
+            }
+          }
+          const msgType = (dietMsg === "reordered-spicy" || dietMsg === "redundant-vegan" || dietMsg === "redundant-vegetarian") ? null : (!effectiveMode || !hasMatchingDishes(dishes, categories, effectiveMode, diet, activeRestrictions)) ? dietMsg : null;
           if (msgType) return <div style={{ marginBottom: 12, marginLeft: -14, marginRight: -14 }}><GenioDietMessage type={msgType} diet={diet} restrictions={activeRestrictions} restaurantName={restaurant.name} /></div>;
-          if (!mode) return null;
+          if (!effectiveMode) return null;
           return (
             <div style={{ marginBottom: 4, marginLeft: -14, marginRight: -14, display: "flex", flexDirection: "column", gap: 8 }}>
-              {mode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {mode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
-              {mode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
-              {mode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
+              {effectiveMode === "vegan" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "vegan+gf" && <GenioVeganCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+              {effectiveMode === "vegetarian" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "vegetarian+gf" && <GenioVegetarianCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} alsoGlutenFree />}
+              {effectiveMode === "glutenfree" && <GenioGlutenFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "lactosefree" && <GenioLactoseFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "soyfree" && <GenioSoyFreeCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "nuts" && <GenioNutsCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} />}
+              {effectiveMode === "smart" && <GenioSmartCarousel dishes={dishes} categories={categories} onDishClick={onDishClick} diet={diet || "omnivore"} restrictions={activeRestrictions} />}
             </div>
           );
         })()}
@@ -1622,7 +1640,7 @@ export default function CartaImpact({
       )}
 
       {/* Birthday auto-modal */}
-      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
+      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
 
       {/* Genio onboarding */}
       {genioOpen && (

@@ -747,6 +747,7 @@ model DishTranslation {
   id          String   @id @default(cuid())
   dishId      String
   lang        String   // "en" | "pt"
+  name        String?
   description String?
   isManual    Boolean  @default(false)
   createdAt   DateTime @default(now())

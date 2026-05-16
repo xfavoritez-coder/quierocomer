@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface Props {
   restaurantSlug: string;
@@ -9,8 +9,12 @@ interface Props {
 interface Step {
   icon: string;
   title: string;
-  body: string;
+  body: string | React.ReactNode;
   showOverlay: boolean;
+  /** Overlay opacity override (default 0.55) */
+  overlayOpacity?: number;
+  /** Custom button label for this step */
+  buttonLabel?: string;
 }
 
 const STEPS: Step[] = [
@@ -19,12 +23,15 @@ const STEPS: Step[] = [
     title: "¡Hola! Soy el Genio",
     body: "Te voy a mostrar en 4 pasos tu nueva carta.",
     showOverlay: true,
+    overlayOpacity: 0.72,
   },
   {
     icon: "📸",
     title: "Una preview",
     body: "Algunas fotos son referenciales, las pusimos para que puedas ver cómo se verá tu carta. Luego las editas desde tu panel.",
     showOverlay: true,
+    overlayOpacity: 0.35,
+    buttonLabel: "Navegar",
   },
   {
     icon: "🎨",
@@ -33,22 +40,24 @@ const STEPS: Step[] = [
     showOverlay: false,
   },
   {
-    icon: "🧠",
-    title: "Aprendo de cada cliente",
-    body: "Le agrupo los platos de su tipo de dieta para que decida mejor y más rápido.",
+    icon: "✨",
+    title: "Personalizo la carta",
+    body: <>Le muestro a tus clientes <span style={{ color: "#16a34a", fontWeight: 600 }}>veganos</span> o <span style={{ color: "#16a34a", fontWeight: 600 }}>vegetarianos</span> sus platos agrupados para que puedan escoger mejor.</>,
     showOverlay: false,
   },
   {
     icon: "🌍",
-    title: "Traduzco tu carta a varios idiomas",
-    body: "La carta se traduce automáticamente al idioma de la persona. Así la ven extranjeros y turistas.",
+    title: "Traduzco la carta",
+    body: "Automáticamente al idioma de tus clientes. Así la ven mejor extranjeros y turistas.",
     showOverlay: false,
+    buttonLabel: "Finalizar",
   },
   {
-    icon: "👋",
-    title: "¡Nos vemos!",
-    body: "Cuando me necesites, solo frota la lámpara. Si estás listo, presiona 'Activar' arriba.",
+    icon: "🧞",
+    title: "Tu carta está lista",
+    body: "Te dejo para que navegues en ella. Si me necesitas, solo frota la lámpara.",
     showOverlay: true,
+    buttonLabel: "Listo",
   },
 ];
 
@@ -125,15 +134,20 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         // Intro — nothing
         break;
       case 1:
-        // Scroll down to show the dish cards
+        // Scroll down to show the first category and its dishes
         delay(300, () => {
-          const firstCategory = document.querySelector("[data-category-section]") || document.querySelector("[data-section='menu']");
-          if (firstCategory) firstCategory.scrollIntoView({ behavior: "smooth", block: "start" });
-          else window.scrollTo({ top: window.innerHeight * 0.6, behavior: "smooth" });
+          // Find the first category section (not the genio carousel)
+          const firstCatSection = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[data-category-section]");
+          if (firstCatSection) {
+            const top = firstCatSection.getBoundingClientRect().top + window.scrollY - 120;
+            window.scrollTo({ top, behavior: "smooth" });
+          } else {
+            window.scrollTo({ top: window.innerHeight * 0.8, behavior: "smooth" });
+          }
         });
         break;
       case 2:
-        // Change to Impact view with a smooth feel
+        // Change to Impact view
         window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "impact" } }));
         delay(600, () => {
           const menu = document.querySelector("[data-section='menu']") || document.querySelector("[data-section='mood']");
@@ -146,19 +160,18 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         localStorage.setItem("qr_restrictions", JSON.stringify(["ninguna"]));
         window.dispatchEvent(new CustomEvent("demo-onboarding-simulate-genio", { detail: { diet: "VEGETARIAN" } }));
         window.dispatchEvent(new Event("genio-updated"));
-        delay(600, () => {
+        delay(150, () => {
           const carousel = document.getElementById("genio-vegetarian-carousel") || document.getElementById("genio-vegan-carousel") || document.getElementById("genio-diet-message");
           if (carousel) carousel.scrollIntoView({ behavior: "smooth", block: "center" });
           else window.scrollTo({ top: 0, behavior: "smooth" });
         });
         break;
       case 4:
-        // Restore genio, change language for real via URL navigation
+        // Restore genio, navigate to English
         window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
         localStorage.removeItem("qr_diet");
         localStorage.removeItem("qr_restrictions");
         window.dispatchEvent(new Event("genio-updated"));
-        // Only navigate if not already in English
         if (!window.location.search.includes("lang=en")) {
           delay(300, () => {
             sessionStorage.setItem("qc_onboarding_step", "4");
@@ -169,14 +182,13 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         }
         break;
       case 5:
-        // Last step — restore Spanish via replaceState (no reload), highlight activate
+        // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
           window.history.replaceState({}, "", url.toString());
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
-        // Expand for the farewell
         setMinimized(false);
         break;
     }
@@ -189,6 +201,9 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         triggerExit();
         return s;
       }
+      // Pre-set minimized state to avoid flash between expanded dark → minimized light
+      if (!STEPS[next].showOverlay) setMinimized(true);
+      else setMinimized(false);
       return next;
     });
   }, []);
@@ -202,7 +217,7 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         window.dispatchEvent(new Event("genio-updated"));
         window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
       }
-      // If going back from lang step (in English), navigate to Spanish
+      // If going back from translated step, restore Spanish
       if ((s === 4 || s === 5) && window.location.search.includes("lang=en")) {
         sessionStorage.setItem("qc_onboarding_step", String(s - 1));
         const url = new URL(window.location.href);
@@ -210,7 +225,10 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         window.location.href = url.toString();
         return s;
       }
-      return s - 1;
+      const prev = s - 1;
+      if (!STEPS[prev].showOverlay) setMinimized(true);
+      else setMinimized(false);
+      return prev;
     });
   }, []);
 
@@ -222,12 +240,13 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
     setTimeout(() => {
       setGone(true);
       window.dispatchEvent(new Event("demo-onboarding-show-fab"));
-    }, 450);
+    }, 250);
   };
 
   const cleanup = () => {
     localStorage.removeItem("qr_diet");
     localStorage.removeItem("qr_restrictions");
+    localStorage.removeItem("qc_theme_override");
     window.dispatchEvent(new Event("genio-updated"));
     window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
     window.dispatchEvent(new Event("demo-onboarding-stop-highlight"));
@@ -275,33 +294,38 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
     ? { x: window.innerWidth - 50, y: window.innerHeight - 60 }
     : { x: 300, y: 600 };
 
+  // Toast always uses light style for contrast against dark carta
+  const isLightStep = true;
+
   // ═══ Minimized state — FAB genio + toast above it ═══
   if (minimized && !exiting) {
     return (
       <div style={{ position: "fixed", right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
         {/* Toast above FAB */}
         <div style={{
-          background: "rgba(14,14,14,0.96)",
-          border: "1px solid rgba(255,178,45,0.15)",
-          borderRadius: 14,
-          padding: "10px 12px",
-          boxShadow: "0 8px 28px rgba(0,0,0,0.5)",
-          maxWidth: 260,
-          width: 260,
+          background: isLightStep ? "rgba(255,255,255,0.97)" : "rgba(14,14,14,0.96)",
+          border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,178,45,0.15)",
+          borderRadius: 16,
+          padding: "14px 16px",
+          boxShadow: isLightStep ? "0 8px 28px rgba(0,0,0,0.12)" : "0 8px 28px rgba(0,0,0,0.5)",
+          maxWidth: 300,
+          width: 300,
+          transition: "background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease",
         }}>
           {/* Top row: title + expand */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
             <p style={{
               fontFamily: "var(--font-dm, sans-serif)",
-              fontSize: "0.82rem", fontWeight: 700, color: "#fff",
+              fontSize: "1rem", fontWeight: 700, color: isLightStep ? "#1a1a1a" : "#fff",
               margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               {current.icon} {current.title}
             </p>
             <button onClick={() => setMinimized(false)} style={{
-              width: 22, height: 22, borderRadius: 6,
-              background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)",
-              color: "rgba(255,255,255,0.45)", fontSize: 10,
+              width: 26, height: 26, borderRadius: 7,
+              background: isLightStep ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.05)",
+              border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.1)",
+              color: isLightStep ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.45)", fontSize: 12,
               display: "flex", alignItems: "center", justifyContent: "center",
               cursor: "pointer", flexShrink: 0, marginLeft: 6,
             }}>⤢</button>
@@ -310,7 +334,7 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
           {/* Description */}
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.78rem", color: "rgba(255,255,255,0.45)",
+            fontSize: "0.88rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
             lineHeight: 1.45, margin: "0 0 8px",
           }}>
             {current.body}
@@ -322,26 +346,31 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
               {STEPS.map((_, i) => (
                 <div key={i} style={{
                   width: i === step ? 10 : 4, height: 4, borderRadius: 2,
-                  background: i === step ? "#ffb22d" : i < step ? "rgba(255,178,45,0.3)" : "rgba(255,255,255,0.08)",
+                  background: i === step ? (isLightStep ? "#c67b00" : "#ffb22d") : i < step ? (isLightStep ? "rgba(198,123,0,0.3)" : "rgba(255,178,45,0.3)") : (isLightStep ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)"),
                   transition: "all 0.2s ease",
                 }} />
               ))}
             </div>
-            <div style={{ display: "flex", gap: 4 }}>
+            <div style={{ display: "flex", gap: 5 }}>
               {step > 0 && (
                 <button onClick={goBack} style={{
-                  width: 26, height: 26, borderRadius: "50%",
-                  background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
-                  color: "rgba(255,255,255,0.4)", fontSize: 11,
-                  display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-                }}>←</button>
+                  borderRadius: 999, padding: "6px 12px",
+                  background: isLightStep ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.05)",
+                  border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.10)",
+                  color: isLightStep ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)",
+                  fontSize: "0.78rem", fontWeight: 600,
+                  display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
+                  fontFamily: "var(--font-dm, sans-serif)",
+                }}>← Atrás</button>
               )}
               <button onClick={advance} style={{
-                width: 26, height: 26, borderRadius: "50%",
-                background: "rgba(255,178,45,0.12)", border: "1px solid rgba(255,178,45,0.2)",
-                color: "#ffb22d", fontSize: 11,
-                display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-              }}>→</button>
+                borderRadius: 999, padding: "6px 12px",
+                background: isLightStep ? "rgba(243,163,51,0.12)" : "rgba(255,178,45,0.12)",
+                border: isLightStep ? "1px solid rgba(243,163,51,0.3)" : "1px solid rgba(255,178,45,0.2)",
+                color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.78rem", fontWeight: 700,
+                display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
+                fontFamily: "var(--font-dm, sans-serif)",
+              }}>{current.buttonLabel || "Siguiente →"}</button>
             </div>
           </div>
         </div>
@@ -375,11 +404,11 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
   // ═══ Expanded state ═══
   return (
     <>
-      {/* Overlay — only on intro and last step */}
+      {/* Overlay — only on steps with showOverlay */}
       {current.showOverlay && !exiting && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9990,
-          background: "rgba(0,0,0,0.55)",
+          background: `rgba(0,0,0,${current.overlayOpacity ?? 0.55})`,
           transition: "opacity 0.3s ease",
         }} />
       )}
@@ -407,16 +436,16 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
           // Exit animation — swoosh into lamp
           transform: exiting ? "scale(0.08) rotate(15deg)" : "scale(1)",
           opacity: exiting ? 0 : 1,
-          transition: exiting ? "all 0.4s cubic-bezier(0.6,0,1,0.7)" : (dragging ? "none" : "box-shadow 0.2s ease"),
+          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : (dragging ? "none" : "box-shadow 0.2s ease"),
         }}
       >
         {/* Header: genio icon + title + minimize */}
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-          <span style={{ fontSize: 22, flexShrink: 0 }}>{current.icon}</span>
+          <span style={{ fontSize: isLast ? 26 : 22, flexShrink: 0 }}>{current.icon}</span>
           <h3 style={{
             flex: 1,
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.85rem",
+            fontSize: isLast ? "1.15rem" : "1rem",
             fontWeight: 800,
             color: "#fff",
             margin: 0,
@@ -442,23 +471,23 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
         {/* Body */}
         <p style={{
           fontFamily: "var(--font-dm, sans-serif)",
-          fontSize: "0.78rem",
+          fontSize: isLast ? "1.05rem" : "0.88rem",
           color: "rgba(255,255,255,0.5)",
           lineHeight: 1.45,
-          margin: "0 0 10px",
+          margin: isLast ? "0 0 18px" : "0 0 10px",
         }}>
           {current.body}
         </p>
 
-        {/* Vegetarian badge */}
+        {/* Personalization badge */}
         {step === 3 && (
           <div style={{
             display: "inline-flex", alignItems: "center", gap: 5,
-            background: "rgba(74,222,128,0.08)", border: "1px solid rgba(74,222,128,0.2)",
-            borderRadius: 999, padding: "3px 9px", marginBottom: 8,
+            background: "rgba(255,178,45,0.08)", border: "1px solid rgba(255,178,45,0.2)",
+            borderRadius: 999, padding: "4px 10px", marginBottom: 8,
           }}>
-            <span style={{ fontSize: 11 }}>🥬</span>
-            <span style={{ fontSize: "0.68rem", color: "#4ade80", fontWeight: 600 }}>Platos vegetarianos primero</span>
+            <span style={{ fontSize: 12 }}>✨</span>
+            <span style={{ fontSize: "0.82rem", color: "#ffb22d", fontWeight: 600 }}>Carta personalizada por dieta</span>
           </div>
         )}
 
@@ -487,11 +516,11 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
                 onClick={(e) => { e.stopPropagation(); goBack(); }}
                 style={{
                   background: "none",
-                  border: "1px solid rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(255,255,255,0.10)",
                   borderRadius: 999,
-                  padding: "6px 12px",
-                  color: "rgba(255,255,255,0.35)",
-                  fontSize: "0.72rem",
+                  padding: "8px 14px",
+                  color: "rgba(255,255,255,0.45)",
+                  fontSize: "0.88rem",
                   fontWeight: 600,
                   cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
@@ -503,18 +532,18 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
             <button
               onClick={(e) => { e.stopPropagation(); advance(); }}
               style={{
-                background: isLast ? "linear-gradient(135deg, #ffc44f, #f3a333)" : "rgba(255,178,45,0.08)",
-                border: isLast ? "none" : "1px solid rgba(255,178,45,0.18)",
+                background: isLast ? "linear-gradient(135deg, #ffc44f, #f3a333)" : "rgba(255,178,45,0.10)",
+                border: isLast ? "none" : "1px solid rgba(255,178,45,0.22)",
                 borderRadius: 999,
-                padding: "6px 14px",
-                color: isLast ? "#100b03" : "#ffb22d",
-                fontSize: "0.72rem",
+                padding: isLast ? "7px 14px" : "8px 16px",
+                color: isLast ? "#1a0800" : "#ffb22d",
+                fontSize: "0.88rem",
                 fontWeight: 700,
                 cursor: "pointer",
                 fontFamily: "var(--font-dm, sans-serif)",
               }}
             >
-              {isLast ? "¡Nos vemos! 👋" : "Siguiente →"}
+              {current.buttonLabel || (isLast ? "Ok, gracias" : "Siguiente →")}
             </button>
           </div>
         </div>

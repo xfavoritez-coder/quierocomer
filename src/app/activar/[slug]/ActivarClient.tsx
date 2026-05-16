@@ -38,17 +38,17 @@ h1 em { color: var(--amber); font-style: italic; }
 .phone-wrap { position: relative; margin: 0 auto 22px; width: 260px; }
 .phone { width: 260px; height: 470px; border-radius: 44px; padding: 12px; background: linear-gradient(145deg, #313131, #060606); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 28px 60px rgba(0,0,0,.6), 0 0 48px rgba(255,174,42,.14); }
 .screen { height: 100%; border-radius: 31px; overflow: hidden; background: #0a0908; display: flex; flex-direction: column; }
-.screen-header { height: 195px; position: relative; overflow: hidden; }
+.screen-topbar { display: flex; align-items: center; padding: 6px 12px; background: #0e0e0e; gap: 5px; }
+.screen-header-logo { width: 20px; height: 20px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,.12); background: #222; flex-shrink: 0; }
+.screen-header-logo img { width: 100%; height: 100%; object-fit: cover; }
+.screen-header-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.85); flex: 1; text-align: left; }
+.screen-lang { width: 16px; height: 16px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
+.screen-header { height: 185px; position: relative; overflow: hidden; }
 .screen-header img.hero-bg { width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0; }
 .screen-header-fallback { width: 100%; height: 100%; background: linear-gradient(135deg, rgba(232,163,61,.15), #0a0908); }
-.screen-header-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.3), rgba(0,0,0,.65)); display: flex; flex-direction: column; padding: 8px 10px; }
-.screen-header-top { display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,.5); border-radius: 99px; padding: 3px 10px 3px 3px; align-self: flex-start; }
-.screen-header-logo { width: 19px; height: 19px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,.15); background: #222; flex-shrink: 0; }
-.screen-header-logo img { width: 100%; height: 100%; object-fit: cover; }
-.screen-header-name { font-size: 9px; font-weight: 700; color: rgba(255,255,255,.9); }
-.screen-lang { margin-left: auto; width: 16px; height: 16px; border-radius: 50%; overflow: hidden; flex-shrink: 0; position: absolute; top: 8px; right: 16px; }
-.screen-header-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-.screen-header-dish { font-size: 16px; font-weight: 800; color: #fff; line-height: 1.1; }
+.screen-header-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 50%, rgba(0,0,0,.7) 100%); display: flex; flex-direction: column; justify-content: center; padding: 10px 12px; }
+.screen-header-center { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.screen-header-dish { font-size: 14px; font-weight: 800; color: #fff; line-height: 1.1; }
 .screen-header-desc { font-size: 9px; color: rgba(255,255,255,.6); margin-top: 3px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; }
 .screen-header-btn { margin-top: 6px; background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.7); border-radius: 99px; padding: 4px 14px; font-size: 9px; font-weight: 800; }
 .screen-dots { display: flex; gap: 4px; justify-content: center; padding: 8px 0 0; }
@@ -201,9 +201,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             )}
           </div>
           <div className="eyebrow">Carta de {restaurant.name}</div>
-          <h1>Tu nueva carta ya está <em>lista</em></h1>
+          <h1>Ya estás listo para <em>activar tu carta</em></h1>
           <p className="subtitle">
-            No es solo una carta bonita. Es una herramienta para vender mejor, entender a tus clientes y hacer que vuelvan.
+            No es solo una carta bonita. Es una herramienta para mejorar la experiencia de tu restaurant, vender más y entender mejor a tus clientes.
           </p>
 
           {/* Phone + arrow + offer flow */}
@@ -211,7 +211,18 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div className="phone-wrap">
             <div className="phone">
               <div className="screen">
-                {/* Hero header with slider */}
+                {/* Top bar — separate from hero */}
+                <div className="screen-topbar">
+                  <div className="screen-header-logo">
+                    {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" />}
+                  </div>
+                  <div className="screen-header-name">{restaurant.name}</div>
+                  <div className="screen-lang">
+                    <svg viewBox="0 0 16 16" width="16" height="16"><rect width="16" height="4" fill="#c60b1e"/><rect y="4" width="16" height="8" fill="#ffc400"/><rect y="12" width="16" height="4" fill="#c60b1e"/></svg>
+                  </div>
+                </div>
+
+                {/* Hero photo with slider */}
                 <div className="screen-header">
                   {dishes[heroIdx]?.photo ? (
                     <img className="hero-bg" src={dishes[heroIdx].photo} alt="" />
@@ -219,18 +230,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                     <div className="screen-header-fallback" />
                   )}
                   <div className="screen-header-overlay">
-                    {/* Top bar: logo+name left, flag right */}
-                    <div className="screen-header-top">
-                      <div className="screen-header-logo">
-                        {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" />}
-                      </div>
-                      <div className="screen-header-name">{restaurant.name}</div>
-                    </div>
-                    {/* Flag top right */}
-                    <div className="screen-lang">
-                      <svg viewBox="0 0 16 16" width="16" height="16"><rect width="16" height="4" fill="#c60b1e"/><rect y="4" width="16" height="8" fill="#ffc400"/><rect y="12" width="16" height="4" fill="#c60b1e"/></svg>
-                    </div>
-                    {/* Center: dish name + desc + button */}
                     <div className="screen-header-center">
                       <div className="screen-header-dish">{dishes[heroIdx]?.name || restaurant.name}</div>
                       {dishes[heroIdx]?.description && (
@@ -238,7 +237,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                       )}
                       <button className="screen-header-btn">Ver</button>
                     </div>
-                    {/* Dots */}
                     <div className="screen-dots" style={{ position: "relative", zIndex: 1 }}>
                       {dishes.slice(0, 3).map((_, i) => (
                         <div key={i} className={`screen-dot${i === heroIdx ? " active" : ""}`} />
@@ -338,7 +336,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         <section>
           <div style={{ textAlign: "center", marginBottom: 22 }}>
             <div className="benefits-eyebrow">Después de activar</div>
-            <h2 className="section-title" style={{ marginTop: 12 }}>Tu carta empieza a trabajar <em style={{ color: "var(--amber)", fontStyle: "italic" }}>por ti.</em></h2>
+            <h2 className="section-title" style={{ marginTop: 12 }}>La experiencia en tu restaurant cambia <em style={{ color: "var(--amber)", fontStyle: "italic" }}>para siempre.</em></h2>
             <p className="section-sub">Funciones que ayudan a vender más y entender mejor a tus clientes.</p>
           </div>
           <div className="benefits">
@@ -466,7 +464,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", display: "grid", placeItems: "center", margin: "0 auto 10px", fontSize: 20, color: "var(--amber)" }}>✨</div>
           <h2 className="section-title" style={{ marginBottom: 8 }}>Lleva tu restaurante al siguiente nivel</h2>
           <p style={{ color: "var(--cream-soft)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.5 }}>
-            Activa tu carta hoy y empieza a usarla al instante.
+            Activa tu carta hoy y comienza a usarla cuando quieras.
           </p>
           {!done ? (
             <button
@@ -484,11 +482,13 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
           )}
-          <div style={{ marginTop: 10, color: "var(--gray-warm)", fontSize: 12 }}>Sin permanencia, puedes cancelar cuando quieras.</div>
         </div>
       </main>
 
       <Footer />
+      <div style={{ textAlign: "center", color: "rgba(135,125,115,.5)", fontSize: 12, padding: "0 0 24px" }}>
+        Creado en Santiago, Chile
+      </div>
     </>
   );
 }

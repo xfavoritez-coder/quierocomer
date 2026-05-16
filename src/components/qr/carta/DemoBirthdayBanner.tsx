@@ -14,19 +14,30 @@ export default function DemoBirthdayBanner({ restaurantName }: Props) {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    // Don't show if onboarding is still active
-    if (document.body.hasAttribute("data-demo-onboarding")) return;
+    // During onboarding: show immediately when birthday step triggers
+    const onOnboardingBday = () => {
+      setShow(true);
+      sessionStorage.setItem("qc_demo_bday_banner_shown", "1");
+    };
+    window.addEventListener("demo-onboarding-show-birthday", onOnboardingBday);
 
-    // Show after 2 minutes
+    // Don't show timer if onboarding is still active
+    if (document.body.hasAttribute("data-demo-onboarding")) {
+      return () => window.removeEventListener("demo-onboarding-show-birthday", onOnboardingBday);
+    }
+
+    // Show after 2 minutes (outside onboarding)
     const timer = setTimeout(() => {
-      // Double-check onboarding isn't active
       if (document.body.hasAttribute("data-demo-onboarding")) return;
       if (sessionStorage.getItem("qc_demo_bday_banner_shown")) return;
       setShow(true);
       sessionStorage.setItem("qc_demo_bday_banner_shown", "1");
     }, 120_000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("demo-onboarding-show-birthday", onOnboardingBday);
+    };
   }, []);
 
   if (!show) return null;
@@ -54,7 +65,7 @@ export default function DemoBirthdayBanner({ restaurantName }: Props) {
         <div style={{ flex: 1, minWidth: 0 }}>
           <h4 style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.85rem",
+            fontSize: "1rem",
             fontWeight: 800,
             color: "#fff",
             margin: "0 0 4px",
@@ -63,12 +74,12 @@ export default function DemoBirthdayBanner({ restaurantName }: Props) {
           </h4>
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.76rem",
+            fontSize: "0.82rem",
             color: "rgba(255,255,255,0.5)",
             lineHeight: 1.45,
             margin: 0,
           }}>
-            Le pedimos su fecha a cada cliente y tú les envías un regalo para que vuelvan. Más visitas, más ventas.
+            Le pedimos su fecha a cada cliente y tú les envías un regalo para que vuelvan.
           </p>
         </div>
       </div>
@@ -83,7 +94,7 @@ export default function DemoBirthdayBanner({ restaurantName }: Props) {
           background: "rgba(255,178,45,0.08)",
           border: "1px solid rgba(255,178,45,0.18)",
           color: "#ffb22d",
-          fontSize: "0.76rem",
+          fontSize: "0.88rem",
           fontWeight: 700,
           cursor: "pointer",
           fontFamily: "var(--font-dm, sans-serif)",

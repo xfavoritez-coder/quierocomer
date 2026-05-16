@@ -433,14 +433,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Translate dishes in background (fire and forget)
-    const dishesWithDesc = createdDishes.filter((d) => d.description);
-    if (dishesWithDesc.length > 0) {
+    // Translate dishes (names + descriptions) in background (fire and forget)
+    if (createdDishes.length > 0) {
       import("@/lib/ai/translateContent")
         .then(({ translateDish }) => {
           (async () => {
-            for (let i = 0; i < dishesWithDesc.length; i += 3) {
-              const batch = dishesWithDesc.slice(i, i + 3);
+            for (let i = 0; i < createdDishes.length; i += 3) {
+              const batch = createdDishes.slice(i, i + 3);
               await Promise.all(batch.map((d) => translateDish(d.id).catch(() => {})));
             }
           })();

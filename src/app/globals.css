@@ -214,9 +214,9 @@
   --impact-chip-inactive-border: rgba(255,255,255,0.13);
   --impact-chip-inactive-text: #777;
   --impact-chip-active-text: #fff;
-  --impact-ambient-1: color-mix(in srgb, var(--carta-accent) 33%, transparent);
+  --impact-ambient-1: color-mix(in srgb, var(--carta-accent) 28%, transparent);
   --impact-ambient-2: color-mix(in srgb, var(--carta-accent) 15%, transparent);
-  --impact-ambient-3: color-mix(in srgb, var(--carta-accent) 14%, transparent);
+  --impact-ambient-3: color-mix(in srgb, var(--carta-accent) 5%, transparent);
   --impact-grid-opacity: 0.22;
   --impact-smoke-opacity: 0.5;
   --impact-header-bg: linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent);

@@ -29,6 +29,15 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
   // para mostrar un toast personalizado al cierre.
   const [savedName, setSavedName] = useState<string | null>(null);
 
+  // During demo onboarding: show only the toast (no modal) when birthday step fires
+  useEffect(() => {
+    const onDemoBday = () => {
+      setShowSuccessToast(true);
+    };
+    window.addEventListener("demo-onboarding-show-birthday", onDemoBday);
+    return () => window.removeEventListener("demo-onboarding-show-birthday", onDemoBday);
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -185,10 +194,10 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
         >
           <span style={{ fontSize: "2.6rem", lineHeight: 1, animation: "bdayToastBounce 0.9s ease-in-out infinite alternate", display: "block" }}>🎂</span>
           <div style={{ width: "100%" }}>
-            <p style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.3 }}>
+            <p style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#7B3F00", lineHeight: 1.3 }}>
               {savedName ? `¡Listo, ${savedName}!` : t(lang, "bdaySuccessTitle")}
             </p>
-            <p style={{ margin: "6px 0 0", fontSize: "0.86rem", color: "#9A5510", lineHeight: 1.45 }}>
+            <p style={{ margin: "6px 0 0", fontSize: "0.95rem", color: "#9A5510", lineHeight: 1.45 }}>
               {savedName ? "Te avisaremos cuando se acerque tu cumpleaños 🎉" : t(lang, "bdaySuccessSub")}
             </p>
           </div>

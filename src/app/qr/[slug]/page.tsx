@@ -188,9 +188,8 @@ export default async function CartaPage({
       )}
       {(restaurant as any).isDemo && (
         <>
-          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} context="carta" />
+          <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} context="carta" />
           <DemoOnboarding restaurantSlug={slug} />
-          <DemoBirthdayBanner restaurantName={restaurant.name} />
         </>
       )}
       <DesktopWrapper

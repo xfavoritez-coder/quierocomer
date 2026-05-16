@@ -55,7 +55,7 @@ export async function translateDish(dishId: string): Promise<void> {
     select: { name: true, description: true, translations: true },
   });
 
-  if (!dish?.description) return;
+  if (!dish) return;
 
   // Figure out which langs need (re)translation
   const langsToTranslate: Lang[] = [];
@@ -69,24 +69,31 @@ export async function translateDish(dishId: string): Promise<void> {
   if (langsToTranslate.length === 0) return;
 
   const langList = langsToTranslate.map((l) => `"${l}": "${LANG_NAMES[l]}"`).join(", ");
-  const prompt = `Translate this restaurant menu dish description from Spanish to the requested languages. Be concise, appetizing, and natural. Do NOT translate the dish name.
+  const hasDesc = !!dish.description;
 
-Dish name (context only): ${dish.name}
-Description in Spanish: ${dish.description}
+  const prompt = `Translate this restaurant menu dish from Spanish to the requested languages. Be concise, appetizing, and natural.
 
-Return ONLY a JSON object with these keys: ${langsToTranslate.join(", ")}
-Example format: { ${langList.replace(/: "[^"]+"/g, ': "translated text"')} }`;
+IMPORTANT for dish names:
+- Keep proper nouns, Italian/French/Japanese culinary names unchanged (e.g. "Margherita", "Bruschetta", "Carpaccio", "Ramen", "Croissant")
+- Only translate names that are descriptive in Spanish (e.g. "Ensalada de la casa" → "House salad")
+- If the name is already a universal culinary term, return it as-is
+
+Dish name: ${dish.name}${hasDesc ? `\nDescription: ${dish.description}` : ""}
+
+Return ONLY a JSON object with these keys: ${langsToTranslate.map(l => `"${l}_name", ${hasDesc ? `"${l}_desc", ` : ""}`).join("")}
+Example: { ${langsToTranslate.map(l => `"${l}_name": "translated or original name"${hasDesc ? `, "${l}_desc": "translated description"` : ""}`).join(", ")} }`;
 
   const translations = await callTranslation(prompt);
 
   // Upsert each translation
   for (const lang of langsToTranslate) {
-    const value = translations[lang];
-    if (!value) continue;
+    const name = translations[`${lang}_name`];
+    const description = translations[`${lang}_desc`] || null;
+    if (!name && !description) continue;
     await prisma.dishTranslation.upsert({
       where: { dishId_lang: { dishId, lang } },
-      create: { dishId, lang, description: value, isManual: false },
-      update: { description: value, isManual: false },
+      create: { dishId, lang, name: name || null, description, isManual: false },
+      update: { ...(name ? { name } : {}), ...(description ? { description } : {}), isManual: false },
     });
   }
 }
@@ -209,7 +216,7 @@ export async function translateAllForRestaurant(restaurantId: string): Promise<{
 }> {
   const [dishes, categories] = await Promise.all([
     prisma.dish.findMany({
-      where: { restaurantId, isActive: true, deletedAt: null, description: { not: null } },
+      where: { restaurantId, isActive: true, deletedAt: null },
       select: { id: true },
     }),
     prisma.category.findMany({

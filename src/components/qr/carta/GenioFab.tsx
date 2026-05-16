@@ -16,20 +16,9 @@ interface Props {
  * Also shows spicy-reordered toast when applicable.
  */
 export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, redundantDiet, restaurantName }: Props) {
-  const [showNudge, setShowNudge] = useState(false);
+  const showNudge = false;
   const [showSpicy, setShowSpicy] = useState(false);
   const [showRedundant, setShowRedundant] = useState(false);
-
-  useEffect(() => {
-    if (hasCompletedGenio) return;
-    if (localStorage.getItem("qc_genio_nudge_shown")) return;
-    const timer = setTimeout(() => {
-      // Don't show nudge if demo onboarding is active
-      if (document.body.hasAttribute("data-demo-onboarding")) return;
-      setShowNudge(true);
-    }, 8_000);
-    return () => clearTimeout(timer);
-  }, [hasCompletedGenio]);
 
   useEffect(() => {
     if (!spicyReordered || !hasCompletedGenio) return;
@@ -69,7 +58,6 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
     // Hide toast when speed dial opens
     const onDialToggle = (e: Event) => {
       if ((e as CustomEvent).detail?.open) {
-        setShowNudge(false);
         setShowSpicy(false);
         setShowRedundant(false);
       }
@@ -83,7 +71,6 @@ export default function GenioFab({ hasCompletedGenio, onOpen, spicyReordered, re
   }, []);
 
   const dismiss = () => {
-    setShowNudge(false);
     setShowSpicy(false);
     setShowRedundant(false);
     localStorage.setItem("qc_genio_nudge_shown", "1");

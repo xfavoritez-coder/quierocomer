@@ -14,7 +14,13 @@ export default function VegetarianFloatingPill() {
     const check = () => setIsVegetarian(localStorage.getItem("qr_diet") === "vegetarian");
     check();
 
-    const onScroll = () => setScrolled(window.scrollY > 400);
+    const onScroll = () => {
+      const carousel = document.getElementById("genio-vegetarian-carousel");
+      if (!carousel) { setScrolled(false); return; }
+      const rect = carousel.getBoundingClientRect();
+      // Show pill only when carousel is above the viewport (scrolled past it)
+      setScrolled(rect.bottom < 0);
+    };
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("genio-updated", check);
 

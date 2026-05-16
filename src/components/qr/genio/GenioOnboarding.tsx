@@ -72,8 +72,8 @@ const G = {
 const CTA_STYLE: React.CSSProperties = {
   width: "100%", maxWidth: 320,
   background: G.ctaBg, color: G.ctaText,
-  fontSize: "0.88rem", fontWeight: 700,
-  padding: "14px 24px", borderRadius: 999, border: "none", cursor: "pointer",
+  fontSize: "1rem", fontWeight: 700,
+  padding: "16px 24px", borderRadius: 999, border: "none", cursor: "pointer",
   boxShadow: G.ctaShadow,
 };
 

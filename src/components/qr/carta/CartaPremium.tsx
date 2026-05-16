@@ -478,7 +478,7 @@ export default function CartaPremium({
   }, [categories, hasPromos, dietNavItem]);
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 76 : 0 }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 115 : 0 }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* Search overlay on CategoryNav */}
@@ -562,7 +562,7 @@ export default function CartaPremium({
           }}
         >
           <span style={{ fontSize: "1.5rem", animation: "genioFloat 1.5s ease-in-out infinite" }}>✨</span>
-          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Personalizando la carta para ti...</span>
+          <span style={{ fontSize: "0.95rem", color: "var(--carta-text)", fontWeight: 500 }}>Actualizando carta...</span>
         </div>
       )}
 
@@ -872,7 +872,7 @@ export default function CartaPremium({
         </DishDetailErrorBoundary>
       )}
 
-      <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />
+      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
 
       {genioOpen && (
         <GenioOnboarding

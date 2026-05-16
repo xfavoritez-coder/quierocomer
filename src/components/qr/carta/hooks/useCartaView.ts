@@ -67,8 +67,8 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
       setDemoFading(true);
       setTimeout(() => {
         setViewState(next);
-        setTimeout(() => setDemoFading(false), 50);
-      }, 300);
+        setTimeout(() => setDemoFading(false), 30);
+      }, 150);
     };
     window.addEventListener("demo-onboarding-change-view", handle);
     return () => window.removeEventListener("demo-onboarding-change-view", handle);
