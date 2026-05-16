@@ -426,10 +426,10 @@ export default function AdminCampanias() {
             key={t.key}
             onClick={() => setActiveTab(t.key)}
             style={{
-              padding: "8px 18px", borderRadius: 10, border: "none", cursor: "pointer",
+              padding: "8px 16px", borderRadius: 999, border: "none", cursor: "pointer",
               fontFamily: F, fontSize: "0.78rem", fontWeight: 600,
-              background: activeTab === t.key ? GOLD : "var(--adm-hover)",
-              color: activeTab === t.key ? "white" : "var(--adm-text2)",
+              background: activeTab === t.key ? "var(--adm-card-border)" : "transparent",
+              color: activeTab === t.key ? "var(--adm-text)" : "var(--adm-text2)",
               transition: "all 0.15s",
             }}
           >
