@@ -33,50 +33,42 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const files = formData.getAll("file") as File[];
-    console.log(`[SubirCarta Upload] Received ${files.length} files, sizes: ${files.map(f => `${f.name}(${(f.size/1024/1024).toFixed(1)}MB)`).join(", ")}`);
+    const file = formData.get("file") as File | null;
 
-    if (files.length === 0) {
+    if (!file) {
       return NextResponse.json({ error: "No se recibió ningún archivo." }, { status: 400 });
     }
-    if (files.length > 10) {
-      return NextResponse.json({ error: "Máximo 10 archivos." }, { status: 400 });
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: `Tipo no permitido. Usa JPG, PNG, WebP, HEIC o PDF.` }, { status: 400 });
+    }
+    if (file.size > MAX_SIZE) {
+      return NextResponse.json({ error: "El archivo es muy grande. Máximo 10MB." }, { status: 400 });
     }
 
-    // Validate all files first
-    for (const file of files) {
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        return NextResponse.json({ error: `Tipo no permitido: ${file.name}. Usa JPG, PNG, WebP, HEIC o PDF.` }, { status: 400 });
-      }
-      if (file.size > MAX_SIZE) {
-        return NextResponse.json({ error: `${file.name} es muy grande. Máximo 10MB.` }, { status: 400 });
-      }
+    const ext = file.name.split(".").pop() || "bin";
+    const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { error: uploadError } = await supabase.storage
+      .from("fotos")
+      .upload(fileName, buffer, { contentType: file.type, upsert: true });
+
+    if (uploadError) {
+      console.error("[SubirCarta Upload] Supabase error:", uploadError);
+      return NextResponse.json({ error: "Error al subir el archivo." }, { status: 500 });
     }
 
-    // Upload all files in parallel
-    let cartaType: "PHOTO" | "DOCUMENT" = "PHOTO";
-    const results = await Promise.allSettled(files.map(async (file) => {
-      const ext = file.name.split(".").pop() || "bin";
-      const fileName = `cartas/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-      const buffer = Buffer.from(await file.arrayBuffer());
+    const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
+    const cartaType = IMAGE_TYPES.includes(file.type) ? "PHOTO" : "DOCUMENT";
 
-      const { error: uploadError } = await supabase.storage
-        .from("fotos")
-        .upload(fileName, buffer, { contentType: file.type, upsert: true });
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(fileName);
-      if (!IMAGE_TYPES.includes(file.type)) cartaType = "DOCUMENT";
-      return urlData.publicUrl;
-    }));
-
-    const uploadedUrls = results
-      .filter((r): r is PromiseFulfilledResult<string> => r.status === "fulfilled")
-      .map(r => r.value);
-
-    if (uploadedUrls.length === 0) {
-      return NextResponse.json({ error: "Error al subir los archivos." }, { status: 500 });
+    // Check if there's already a lead (for multi-file uploads, first file creates the lead)
+    const existingLeadId = formData.get("leadId") as string | null;
+    if (existingLeadId) {
+      // Append URL to existing lead
+      const existing = await prisma.lead.findUnique({ where: { id: existingLeadId }, select: { cartaFileUrl: true } });
+      const urls = [existing?.cartaFileUrl, urlData.publicUrl].filter(Boolean).join(",");
+      await prisma.lead.update({ where: { id: existingLeadId }, data: { cartaFileUrl: urls } });
+      return NextResponse.json({ id: existingLeadId, cartaFileUrl: urlData.publicUrl, cartaType });
     }
 
     const lead = await prisma.lead.create({
@@ -85,16 +77,12 @@ export async function POST(req: NextRequest) {
         ownerName: "",
         email: "",
         cartaType,
-        cartaFileUrl: uploadedUrls.join(","),
+        cartaFileUrl: urlData.publicUrl,
         cartaStatus: "PENDING",
       },
     });
 
-    return NextResponse.json({
-      id: lead.id,
-      cartaFileUrl: uploadedUrls[0],
-      cartaType,
-    });
+    return NextResponse.json({ id: lead.id, cartaFileUrl: urlData.publicUrl, cartaType });
   } catch (error) {
     console.error("[SubirCarta Upload] Error:", error);
     return NextResponse.json({ error: "Error interno al procesar el archivo." }, { status: 500 });

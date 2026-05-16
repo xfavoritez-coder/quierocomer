@@ -56,19 +56,22 @@ export default function SubirCartaClient() {
         const files = inputRef.current?.files;
         if (!files || files.length === 0) { setError("Selecciona un archivo primero."); return; }
 
-        const formData = new FormData();
+        // Upload files one by one
+        let leadId = "";
         for (let i = 0; i < Math.min(files.length, 10); i++) {
+          const formData = new FormData();
           formData.append("file", files[i]);
+          if (leadId) formData.append("leadId", leadId);
+          const res = await fetch("/api/subircarta/upload", {
+            method: "POST",
+            body: formData,
+            signal: AbortSignal.timeout(30000),
+          });
+          const data = await res.json();
+          if (!res.ok) { setError(data.error || `Error al subir ${files[i].name}`); return; }
+          if (!leadId) leadId = data.id;
         }
-
-        const res = await fetch("/api/subircarta/upload", {
-          method: "POST",
-          body: formData,
-          signal: AbortSignal.timeout(120000), // 2 min timeout
-        });
-        const data = await res.json();
-        if (!res.ok) { setError(data.error || "Error al subir el archivo."); return; }
-        router.push(`/subircarta/paso2?id=${data.id}`);
+        router.push(`/subircarta/paso2?id=${leadId}`);
       }
     } catch (err: any) {
       const msg = err?.name === "TimeoutError" ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
