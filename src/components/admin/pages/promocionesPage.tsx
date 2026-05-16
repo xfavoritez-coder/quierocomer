@@ -1,10 +1,12 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { Tag } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 
 const F = "var(--font-display)";
+const GOLD = "#F4A623";
 const STATUS_STYLES: Record<string, { label: string; color: string; bg: string }> = {
   SUGGESTED: { label: "Sugerida", color: "#F4A623", bg: "rgba(244,166,35,0.1)" },
   ACTIVE: { label: "Activa", color: "#4ade80", bg: "rgba(74,222,128,0.1)" },
@@ -412,7 +414,7 @@ export default function AdminPromociones() {
     <div style={{ maxWidth: 800 }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "#F4A623", margin: 0 }}>{isPanel ? "Ofertas" : "Promociones"}</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><Tag size={20} color={GOLD} /> {isPanel ? "Ofertas" : "Promociones"}</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Crea ofertas y descuentos para atraer más clientes</p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>

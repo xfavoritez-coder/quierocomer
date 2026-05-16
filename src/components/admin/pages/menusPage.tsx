@@ -9,7 +9,7 @@ import ToteatMappingPanel from "@/components/admin/ToteatMappingPanel";
 import HappyHoursTab from "@/components/admin/HappyHoursTab";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
 import { norm } from "@/lib/normalize";
-import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw } from "lucide-react";
+import { Star, Eye, EyeOff, MoreVertical, Plus, Search, Globe, RefreshCw, UtensilsCrossed } from "lucide-react";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
 
@@ -23,6 +23,7 @@ interface Dish {
 interface Restaurant { id: string; name: string; slug: string; }
 
 const F = "var(--font-display)";
+const GOLD = "#F4A623";
 const TAG_COLORS: Record<string, string> = { RECOMMENDED: "#F4A623", NEW: "#e85530", MOST_ORDERED: "#7fbfdc", PROMOTION: "#e85530" };
 
 /* ── Dish translations editor ── */
@@ -1258,7 +1259,7 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: "var(--adm-text)", margin: 0 }}>Mi Carta</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color={GOLD} /> Mi Carta</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{filtered.length} productos · {categories.length} categorías</p>
         </div>
         <RestaurantPicker />

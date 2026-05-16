@@ -38,10 +38,7 @@ export default function GarzonPage() {
   return (
     <PlanPageGate feature="waiter">
     <div style={{ maxWidth: 640 }}>
-      <Link href="/panel" style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none", color: "var(--adm-text2)", fontFamily: FB, fontSize: "0.78rem", marginBottom: 12 }}>
-        <ArrowLeft size={16} /> Volver al inicio
-      </Link>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 8px" }}>Llamar garzón</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}><Bell size={20} color={GOLD} /> Llamar garzón</h1>
       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 24px", lineHeight: 1.5 }}>
         Permite a tus clientes llamar al garzón desde su celular. Tu equipo recibe la notificación al instante.
       </p>
@@ -52,9 +49,9 @@ export default function GarzonPage() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
           {[
-            { icon: Smartphone, num: "1", title: "El cliente escanea el QR", desc: "Desde la carta digital, presiona el botón \"Llamar garzón\" en su celular." },
-            { icon: Bell, num: "2", title: "Tu garzón recibe la alerta", desc: "Le llega una notificación con sonido al instante. Ve el número de mesa y las preferencias del cliente." },
-            { icon: CheckCircle, num: "3", title: "Atiende y confirma", desc: "El garzón toca \"Atender mesa\" y va a atender al cliente. Así de simple." },
+            { icon: Smartphone, num: "1", title: "El cliente escanea tu carta por QR", desc: "Abre la carta digital desde su celular." },
+            { icon: Bell, num: "2", title: "Toca la campanita", desc: "Presiona el botón de llamar garzón desde la carta." },
+            { icon: CheckCircle, num: "3", title: "Tu garzón recibe la alerta", desc: "Le llega una notificación con sonido al instante con el número de mesa." },
           ].map(step => (
             <div key={step.num} style={{ display: "flex", gap: 14, alignItems: "flex-start" }}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
