@@ -1,10 +1,54 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { resetPanelSession } from "@/lib/admin/usePanelSession";
 
-function OasisBackground() {
+function isNightInChile(): boolean {
+  const now = new Date();
+  const chile = new Date(now.toLocaleString("en-US", { timeZone: "America/Santiago" }));
+  const hour = chile.getHours();
+  return hour >= 19 || hour < 7;
+}
+
+function OasisBackground({ night }: { night: boolean }) {
+  if (night) {
+    return (
+      <svg aria-hidden="true" viewBox="0 0 360 720" preserveAspectRatio="xMidYMid slice" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}>
+        <defs><linearGradient id="sky-n" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0a0e1a" /><stop offset="55%" stopColor="#141e30" /><stop offset="100%" stopColor="#1a1510" /></linearGradient></defs>
+        <rect width="360" height="720" fill="url(#sky-n)" />
+        {/* Moon with glow */}
+        <circle cx="180" cy="280" r="50" fill="rgba(255,240,180,0.06)" />
+        <circle cx="180" cy="280" r="32" fill="#f5ecd0" />
+        <circle cx="173" cy="273" r="25" fill="rgba(10,14,26,0.12)" />
+        <circle cx="180" cy="280" r="33" fill="none" stroke="rgba(255,240,180,0.2)" strokeWidth="2" />
+        {/* Stars */}
+        <circle cx="50" cy="60" r="1.2" fill="white" opacity="0.7" /><circle cx="120" cy="35" r="0.8" fill="white" opacity="0.5" />
+        <circle cx="200" cy="50" r="1" fill="white" opacity="0.6" /><circle cx="320" cy="40" r="1.2" fill="white" opacity="0.8" />
+        <circle cx="80" cy="110" r="0.6" fill="white" opacity="0.4" /><circle cx="160" cy="80" r="0.9" fill="white" opacity="0.5" />
+        <circle cx="250" cy="130" r="0.7" fill="white" opacity="0.3" /><circle cx="340" cy="100" r="1" fill="white" opacity="0.6" />
+        <circle cx="30" cy="160" r="0.8" fill="white" opacity="0.4" /><circle cx="300" cy="160" r="0.6" fill="white" opacity="0.35" />
+        {/* Dunes */}
+        <path d="M0 340 Q90 280 180 310 Q270 280 360 330 L360 420 L0 420Z" fill="#2a1e0a" />
+        <path d="M0 390 Q120 320 200 370 Q280 340 360 380 L360 500 L0 500Z" fill="#1f1608" />
+        <path d="M0 450 Q100 400 180 430 Q260 400 360 440 L360 580 L0 580Z" fill="#181008" />
+        {/* Palms (darker) */}
+        <rect x="23" y="415" width="4" height="60" rx="2" fill="#2a1a0a" />
+        <g transform="translate(25, 415)"><path d="M0 0 Q-20 -15 -30 -5" stroke="#1a3008" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q15 -20 28 -8" stroke="#1a3008" strokeWidth="3" fill="none" strokeLinecap="round" /><path d="M0 0 Q-5 -28 -2 -30" stroke="#223a0c" strokeWidth="2" fill="none" strokeLinecap="round" /></g>
+        <rect x="48" y="425" width="5" height="70" rx="2" fill="#3a2510" />
+        <g transform="translate(50, 425)"><path d="M0 0 Q-25 -18 -38 -6" stroke="#1a3008" strokeWidth="4" fill="none" strokeLinecap="round" /><path d="M0 0 Q20 -25 35 -10" stroke="#223a0c" strokeWidth="4" fill="none" strokeLinecap="round" /><path d="M0 0 Q-6 -34 -3 -38" stroke="#1a3008" strokeWidth="3" fill="none" strokeLinecap="round" /></g>
+        <rect x="308" y="450" width="5" height="65" rx="2" fill="#3a2510" />
+        <g transform="translate(310, 450)"><path d="M0 0 Q-22 -20 -32 -8" stroke="#223a0c" strokeWidth="3.5" fill="none" strokeLinecap="round" /><path d="M0 0 Q18 -22 30 -8" stroke="#1a3008" strokeWidth="3.5" fill="none" strokeLinecap="round" /></g>
+        {/* Oasis (darker) */}
+        <ellipse cx="180" cy="545" rx="155" ry="30" fill="#152535" />
+        <ellipse cx="180" cy="543" rx="150" ry="28" fill="#1a3545" />
+        <path d="M110 538 Q130 535 150 538" stroke="rgba(255,255,255,0.15)" strokeWidth="1" fill="none" />
+        <path d="M160 545 Q185 542 210 545" stroke="rgba(255,255,255,0.1)" strokeWidth="1" fill="none" />
+        <rect x="0" y="570" width="360" height="150" fill="#0f0a05" />
+        <path d="M0 570 Q90 560 180 568 Q270 560 360 572 L360 580 L0 580Z" fill="#1a1005" />
+      </svg>
+    );
+  }
   return (
     <svg aria-hidden="true" viewBox="0 0 360 720" preserveAspectRatio="xMidYMid slice" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}>
       <defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#A8DEEF" /><stop offset="55%" stopColor="#C8E8D8" /><stop offset="100%" stopColor="#F2C571" /></linearGradient></defs>
@@ -46,6 +90,12 @@ export default function PanelLogin() {
   const [showPass, setShowPass] = useState(false);
   const passRef = useRef<HTMLInputElement>(null);
 
+  // Night mode: after 19:00 or before 7:00 in Chile. ?night=1 forces it for testing.
+  const night = useMemo(() => {
+    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("night") === "1") return true;
+    return isNightInChile();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -79,21 +129,21 @@ export default function PanelLogin() {
   const F = "var(--font-display)";
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "10px 14px", height: 40, boxSizing: "border-box",
-    background: "#FFF9ED", border: "1px solid #E8C78A", borderRadius: 6,
-    color: "#1a1a1a", fontFamily: F, fontSize: "0.88rem", outline: "none",
+    background: night ? "#1a1a1a" : "#FFF9ED", border: `1px solid ${night ? "#333" : "#E8C78A"}`, borderRadius: 6,
+    color: night ? "#f0f0f0" : "#1a1a1a", fontFamily: F, fontSize: "0.88rem", outline: "none",
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden" }}>
-      <OasisBackground />
+    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden", background: night ? "#0a0e1a" : "#A8DEEF" }}>
+      <OasisBackground night={night} />
       <div className="genie-float" style={{ position: "relative", zIndex: 2, fontSize: 58, lineHeight: 1, textAlign: "center", marginBottom: 12 }}>🧞</div>
 
-      <div style={{ position: "relative", zIndex: 2, width: 320, maxWidth: "90%", padding: "32px 24px", background: "rgba(255,255,255,0.95)", borderRadius: 12, border: "0.5px solid rgba(244,166,35,0.5)", boxShadow: "0 12px 40px rgba(100,60,10,0.12)" }}>
+      <div style={{ position: "relative", zIndex: 2, width: 320, maxWidth: "90%", padding: "32px 24px", background: night ? "rgba(14,14,14,0.92)" : "rgba(255,255,255,0.95)", borderRadius: 12, border: `0.5px solid ${night ? "rgba(255,178,45,0.2)" : "rgba(244,166,35,0.5)"}`, boxShadow: night ? "0 12px 40px rgba(0,0,0,0.4)" : "0 12px 40px rgba(100,60,10,0.12)", backdropFilter: "blur(12px)" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
-          <h1 style={{ fontFamily: F, fontSize: 24, fontWeight: 500, margin: "0 0 4px", color: "#1a1a1a" }}>
+          <h1 style={{ fontFamily: F, fontSize: 24, fontWeight: 500, margin: "0 0 4px", color: night ? "#f0f0f0" : "#1a1a1a" }}>
             Quiero<span style={{ color: "#F4A623" }}>Comer</span>
           </h1>
-          <p style={{ fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
+          <p style={{ fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
             Panel de tu local
           </p>
         </div>
@@ -108,7 +158,7 @@ export default function PanelLogin() {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Email</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Email</label>
             <input
               type="email"
               placeholder="tu@email.com"
@@ -119,7 +169,7 @@ export default function PanelLogin() {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
             <div style={{ position: "relative" }}>
               <input
                 ref={passRef}
@@ -148,13 +198,13 @@ export default function PanelLogin() {
           <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: -2 }}>
             <div onClick={() => setRemember(!remember)} style={{
               width: 18, height: 18, borderRadius: 3, flexShrink: 0,
-              background: remember ? "#F4A623" : "#FFF9ED",
-              border: `1.5px solid ${remember ? "#F4A623" : "#E8C78A"}`,
+              background: remember ? "#F4A623" : (night ? "#1a1a1a" : "#FFF9ED"),
+              border: `1.5px solid ${remember ? "#F4A623" : (night ? "#333" : "#E8C78A")}`,
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
             }}>
               {remember && <span style={{ color: "white", fontSize: 11, lineHeight: 1 }}>✓</span>}
             </div>
-            <span style={{ fontFamily: F, fontSize: 12, color: "#6B5435" }}>Recordar sesión</span>
+            <span style={{ fontFamily: F, fontSize: 12, color: night ? "#aaa" : "#6B5435" }}>Recordar sesión</span>
           </label>
 
           <button type="submit" disabled={loading} style={{
@@ -168,7 +218,7 @@ export default function PanelLogin() {
           </button>
 
           <div style={{ textAlign: "center", marginTop: 10 }}>
-            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.75rem", color: "#8a7550", textDecoration: "none" }}>
+            <a href="/panel/forgot-password" style={{ fontFamily: F, fontSize: "0.75rem", color: night ? "#888" : "#8a7550", textDecoration: "none" }}>
               ¿Olvidaste tu contraseña?
             </a>
           </div>
@@ -178,7 +228,7 @@ export default function PanelLogin() {
       <style>{`
         @keyframes floatGenie { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
         .genie-float { animation: floatGenie 3s ease-in-out infinite; }
-        input::placeholder { color: #b8a888 !important; }
+        input::placeholder { color: ${night ? "#555" : "#b8a888"} !important; }
       `}</style>
     </div>
   );
