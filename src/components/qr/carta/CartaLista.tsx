@@ -363,7 +363,7 @@ export default function CartaLista({
   };
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)" }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 70 : 0 }}>
       {/* Hero — FREE gets slim, Gold/Premium get full hero */}
       {(restaurant as any).plan === "FREE" ? (
         <HeroSlim restaurant={restaurant} heroDishes={heroDishes} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />

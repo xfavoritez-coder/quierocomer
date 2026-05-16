@@ -169,7 +169,7 @@ function ImpactHeroSlider({
       {/* Dark overlays — always dark regardless of theme */}
       <div style={{
         position: "absolute", inset: 0, zIndex: -2,
-        background: "linear-gradient(to bottom, rgba(0,0,0,0.15), rgba(0,0,0,0.35) 36%, rgba(0,0,0,0.82) 78%, #030303 100%), linear-gradient(to right, rgba(0,0,0,0.65), rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.1))",
+        background: "linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.25) 36%, rgba(0,0,0,0.72) 78%, #030303 100%), linear-gradient(to right, rgba(0,0,0,0.5), rgba(0,0,0,0.18) 55%, rgba(0,0,0,0.05))",
       }} />
       <div style={{
         position: "absolute", left: 0, right: 0, bottom: -1, height: "50%", zIndex: -1,
@@ -1025,7 +1025,7 @@ export default function CartaImpact({
   return (
     <div
       className="min-h-screen font-[family-name:var(--font-dm)]"
-      style={{ background: "var(--carta-bg)", position: "relative" }}
+      style={{ background: "var(--carta-bg)", position: "relative", paddingTop: (restaurant as any).isDemo ? 70 : 0 }}
     >
       {/* Ambient background */}
       <div style={{
@@ -1049,7 +1049,7 @@ export default function CartaImpact({
 
       {/* Fixed top nav */}
       <header style={{
-        position: "fixed", top: 0, left: 0, right: 0, zIndex: 40,
+        position: "fixed", top: (restaurant as any).isDemo ? 70 : 0, left: 0, right: 0, zIndex: 40,
         padding: "calc(10px + env(safe-area-inset-top)) 16px 0",
         background: showFixedCatNav ? "var(--impact-header-solid, rgba(3,3,3,0.92))" : "linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(0,0,0,0.4), transparent)",
         backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",

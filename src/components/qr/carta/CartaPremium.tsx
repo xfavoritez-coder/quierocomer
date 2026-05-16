@@ -478,7 +478,7 @@ export default function CartaPremium({
   }, [categories, hasPromos, dietNavItem]);
 
   return (
-    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)" }}>
+    <div className="min-h-screen font-[family-name:var(--font-dm)]" style={{ background: "var(--carta-bg)", paddingTop: (restaurant as any).isDemo ? 70 : 0 }}>
       <HeroDish restaurant={restaurant} heroDishes={heroDishes} qrUser={qrUser} onProfileOpen={handleProfileOpen} enabledLangs={(restaurant as any).enabledLangs} onDishSelect={(d) => { setDishFromHero(true); setSelectedDish(d); }} />
 
       {/* Search overlay on CategoryNav */}

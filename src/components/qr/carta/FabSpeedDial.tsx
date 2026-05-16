@@ -82,14 +82,12 @@ export default function FabSpeedDial({ children }: Props) {
         />
       </button>
 
-      {/* Backdrop */}
+      {/* Backdrop — invisible, just catches taps to close */}
       <div
         style={{
           position: "fixed", inset: 0, zIndex: -1,
-          background: "rgba(0,0,0,0.15)",
-          opacity: open ? 1 : 0,
+          background: "transparent",
           pointerEvents: open ? "auto" : "none",
-          transition: "opacity 0.15s ease",
         }}
         onClick={() => setOpen(false)}
       />

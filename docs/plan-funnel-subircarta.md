@@ -122,15 +122,32 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 - ✅ **FabSpeedDial fixes** — Toast fixed, modal portal, backdrop fade, blur flash fix.
 - ✅ **Impact logo fallback** — Círculo con inicial cuando no hay logoUrl.
 
+## Completado (15-16 Mayo 2026)
+
+- ✅ **DemoBanner** — Banner glassmorphism fijo en todas las vistas (Impact, Premium, Lista). Pill "DEMO" con tooltip i, texto "Tu carta está lista", botones "Ver panel" + "Activar →" (gradient amber). paddingTop 70px en vistas.
+- ✅ **Página /activar/[slug]** — Landing de activación para restaurantes demo. Diseño dark con radial glows amber. Secciones: hero + iPhone preview animado + offer card con flecha + venues reales + benefits "Después de activar" + comparación 3 planes con tooltips + CTA final. Responsive desktop.
+- ✅ **iPhone preview animado** — Mini carta estilo Lista dentro de mockup iPhone. Hero rotativo (3 platos cada 3s con dots), nav categorías, 3 dish cards con fotos reales, estrella destacada, destellos amber de fondo.
+- ✅ **API /api/activar/trial** — Endpoint que activa trial: FREE quita isDemo, GOLD da 7 días trial, PREMIUM da 30 días trial ($4.900 primer mes). Cambia plan + subscriptionStatus + trialEndsAt.
+- ✅ **Offer card con descuento** — $4.900 primer mes Premium (90% dcto), precio tachado $49.900, badge -90%.
+- ✅ **Venues social proof** — Hand Roll, Horus Vegan, Alleria Pizza, Nascosto Pizzeria con logos reales y badge de plan.
+- ✅ **Benefits section** — 4 cards con iconos: multiidioma, vistas, estadísticas, cumpleaños. Diseño highlight con glow amber.
+- ✅ **Planes con tooltips** — Gratis/Gold/Premium diferenciados visualmente. Tooltips "i" en cada feature. Gold con borde amber sutil.
+- ✅ **ViewSelector light mode** — Trigger button con fondo negro semi-transparente + blur en light mode (como campanita garzón). Icono cambiado de Menu a LayoutGrid.
+- ✅ **FabSpeedDial sin backdrop oscuro** — Quitado el overlay negro al abrir la lámpara.
+- ✅ **DemoBanner en page.tsx** — Renderizado una sola vez desde page.tsx para todas las vistas, no dentro de cada vista.
+- ✅ **DemoPlanModal** — Componente wrapper para escuchar show-plan-modal (ya no se usa, reemplazado por /activar).
+
 ## Pendientes
 
 ### Prioridad alta
 
-1. **Banner demo en carta generada** — Cuando el dueño abre su carta desde el email, mostrar un banner superior tipo "Esto es un demo · Ver mi panel / Activar carta / Ver QR". Al activar, muestra los 3 planes. Esto convierte leads en clientes.
+1. **Onboarding demo (tour spotlight)** — Primera vez que el dueño entra a su carta demo, mostrar 3-4 toasts/spotlights explicando: "Este es tu menú", "Aquí cambian las vistas", "El Genio reordena según cada cliente", "Activa para publicarla".
 
-2. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
+2. **Panel Demo** — Vista /panel con isDemo flag mostrando stats fake (visitas, platos más vistos) para que el dueño vea el valor antes de activar.
 
-3. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
+3. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
+
+4. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
    - Las fotos de Unsplash deben marcarse como "referenciales" o invitar al dueño a subir las propias
    - Definir si se mantienen las fotos Unsplash en la carta real o se quitan
    - El dueño debería poder subir sus propias fotos desde /panel

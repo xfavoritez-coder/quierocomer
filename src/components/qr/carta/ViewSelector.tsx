@@ -59,6 +59,13 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
     window.dispatchEvent(new CustomEvent("view-selector-toggle", { detail: { open } }));
   }, [open]);
 
+  // Listen for external open requests (e.g. from DemoBanner)
+  useEffect(() => {
+    const handle = () => setOpen(true);
+    window.addEventListener("open-view-selector", handle);
+    return () => window.removeEventListener("open-view-selector", handle);
+  }, []);
+
   // Close on outside click/touch
   useEffect(() => {
     if (!open) return;
@@ -200,16 +207,18 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           borderRadius: "50%",
           background: open
             ? isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.65)"
-            : isDark ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.5)",
+            : isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.32)",
+          backdropFilter: isDark || open ? undefined : "blur(12px)",
+          WebkitBackdropFilter: isDark || open ? undefined : "blur(12px)",
           border: open
             ? isDark ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)"
-            : isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.06)",
-          color: open ? "white" : isDark ? "white" : "#333",
+            : isDark ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(255,255,255,0.1)",
+          color: "white",
           cursor: "pointer",
-          boxShadow: open ? "0 4px 20px rgba(0,0,0,0.2)" : isDark ? "0 4px 18px rgba(0,0,0,0.2)" : "0 2px 12px rgba(0,0,0,0.06)",
+          boxShadow: open ? "0 4px 20px rgba(0,0,0,0.2)" : "0 4px 18px rgba(0,0,0,0.2)",
         }}
       >
-        <Menu size={18} strokeWidth={1.75} color={open ? "white" : isDark ? "white" : "#333"} />
+        <LayoutGrid size={18} strokeWidth={1.75} color="white" />
       </button>
 
       {/* First-time tip del Genio */}
