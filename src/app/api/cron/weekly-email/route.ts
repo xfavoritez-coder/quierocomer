@@ -163,9 +163,7 @@ export async function GET(req: NextRequest) {
       for (const to of recipients) {
         await sendAdminEmail({
           to,
-          subject: r.isDemo
-            ? `Vista previa: Tu semana en ${r.name}`
-            : `Tu semana en ${r.name}`,
+          subject: `Tu semana en ${r.name}`,
           html: emailHtml,
           purpose: "weekly_summary",
         });

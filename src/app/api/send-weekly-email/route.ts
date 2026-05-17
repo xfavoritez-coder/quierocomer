@@ -223,7 +223,7 @@ export async function GET(req: NextRequest) {
 
   await sendAdminEmail({
     to: toParam,
-    subject: restaurant.isDemo ? `Vista previa: Tu semana en ${restaurant.name}` : `Tu semana en ${restaurant.name}`,
+    subject: `Tu semana en ${restaurant.name}`,
     html: emailHtml,
     purpose: "weekly_summary",
   });

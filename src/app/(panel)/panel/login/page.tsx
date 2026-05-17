@@ -207,12 +207,9 @@ export default function PanelLogin() {
             <span style={{ fontFamily: F, fontSize: 14, color: night ? "#aaa" : "#6B5435" }}>Recordar sesión</span>
           </label>
 
-          <button type="submit" disabled={loading} style={{
+          <button type="submit" disabled={loading} className="login-cta-btn" style={{
             width: "100%", height: 48, marginTop: 14,
-            background: loading ? "#E8A942" : "#F4A623",
-            color: "#fff", fontFamily: F, fontSize: 15, fontWeight: 700,
-            border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer",
-            boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
+            cursor: loading ? "wait" : "pointer",
           }}>
             {loading ? "Entrando..." : "Frotar lámpara"}
           </button>
@@ -237,6 +234,16 @@ export default function PanelLogin() {
         .login-page .login-checkbox {
           background: ${remember ? "#F4A623" : (night ? "#1a1a1a" : "#fff")} !important;
           border: 1.5px solid ${remember ? "#F4A623" : (night ? "#333" : "#e0d5c3")} !important;
+        }
+        .login-cta-btn {
+          background: #F4A623 !important;
+          color: #fff !important;
+          border: none !important;
+          border-radius: 8px !important;
+          font-family: var(--font-display) !important;
+          font-size: 15px !important;
+          font-weight: 700 !important;
+          box-shadow: 0 4px 14px rgba(244,166,35,0.25) !important;
         }
       `}</style>
     </div>
