@@ -123,7 +123,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
           </td>
           <td style="vertical-align:top;">
             <span style="font-size:14px;font-weight:700;color:#1a1a1a;display:block;margin-bottom:4px;">Ejemplo de tu informe semanal</span>
-            <span style="font-size:12px;color:#8a7550;line-height:1.5;">Cada lunes recibirás uno como este con tus datos reales. Activa tu carta para empezar.</span>
+            <span style="font-size:12px;color:#8a7550;line-height:1.5;">Cada lunes recibirás un resumen de tus estadísticas con consejos para vender más.</span>
           </td>
         </tr></table>
       </td></tr>

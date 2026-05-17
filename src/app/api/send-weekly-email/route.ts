@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
     const demoInsight = {
       title: topViewed[0] ? `Destaca ${topViewed[0].name}` : "Tu carta está lista",
       body: topViewed[0]
-        ? `Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero y veas cómo sube la conversión.`
+        ? `Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero y veas cómo aumenta tu venta.`
         : "Al activar empezarás a ver datos reales de cómo interactúan tus clientes con tu carta.",
     };
 
