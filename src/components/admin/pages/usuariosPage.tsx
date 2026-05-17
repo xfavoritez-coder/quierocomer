@@ -249,7 +249,7 @@ export default function UsuariosPage() {
           onClick={() => setShowForm(!showForm)}
           style={{
             display: "flex", alignItems: "center", gap: 6,
-            padding: "10px 16px", borderRadius: 12, border: "none", cursor: "pointer",
+            padding: "10px 16px", borderRadius: 12, cursor: "pointer",
             background: showForm ? "var(--adm-hover)" : "rgba(244,166,35,0.15)",
             color: showForm ? "var(--adm-text3)" : GOLD,
             border: showForm ? "1px solid var(--adm-card-border)" : "1px solid rgba(244,166,35,0.25)",
@@ -519,7 +519,7 @@ export default function UsuariosPage() {
             <div style={{ padding: "16px 20px", borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 10 }}>
               {!isOwner && (
               <button onClick={saveEdit} style={{
-                width: "100%", padding: 12, borderRadius: 10, border: "none", cursor: "pointer",
+                width: "100%", padding: 12, borderRadius: 10, cursor: "pointer",
                 background: "rgba(244,166,35,0.15)", color: GOLD, fontFamily: F, fontSize: "0.88rem", fontWeight: 700,
                 border: "1px solid rgba(244,166,35,0.25)",
               }}>
@@ -528,7 +528,7 @@ export default function UsuariosPage() {
               )}
               {!isOwner && (
                 <button onClick={() => { if (confirm(`¿Eliminar a ${editingUser.name}?`)) { deleteMember(editingUser.id); closeEdit(); } }} style={{
-                  width: "100%", padding: 12, borderRadius: 10, border: "none", cursor: "pointer",
+                  width: "100%", padding: 12, borderRadius: 10, cursor: "pointer",
                   background: "rgba(239,68,68,0.08)", color: "#ef4444", fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
                   border: "1px solid rgba(239,68,68,0.15)",
                 }}>
