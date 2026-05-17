@@ -491,6 +491,7 @@ model Restaurant {
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
   isDemo             Boolean    @default(false)
+  demoOnboardingDone Boolean    @default(false)
   needsTranslation   Boolean    @default(false)
   weeklyEmailEnabled    Boolean    @default(true)
   weeklyInsightsEnabled Boolean    @default(true)

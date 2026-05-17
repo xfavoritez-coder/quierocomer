@@ -53,7 +53,8 @@ export default function GlutenFreeFloatingPill() {
       }}
     >
       <span style={{ fontSize: "14px" }}>🌾</span>
-      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-gf-title)" }}>{t(lang, "gMyGlutenFreeOptions" as any) || "Mis platos sin gluten ↑"}</span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-gf-title)", whiteSpace: "nowrap" }}>{t(lang, "gMyGlutenFreeOptions" as any) || "Mis platos sin gluten"}</span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-gf-title)" }}>↑</span>
     </button>
   );
 }

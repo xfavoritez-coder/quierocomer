@@ -175,13 +175,13 @@ export default function SubirCartaClient() {
                   onClick={() => { setMode(m); setError(""); setFileName(""); }}
                 >
                   {m === "pdf" && (
-                    <><div className="method-row"><strong>Tengo PDF</strong><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></div><span>o archivo</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
                   )}
                   {m === "link" && (
-                    <><div className="method-row"><strong>Tengo link</strong><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg></div><span>de mi carta QR</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo link</strong><span>de mi carta QR</span></>
                   )}
                   {m === "photo" && (
-                    <><div className="method-row"><strong>Tengo foto</strong><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg></div><span>del menú físico</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>del menú físico</span></>
                   )}
                 </button>
               ))}
@@ -326,10 +326,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
 .centered-form { max-width: 620px; margin: 0 auto; }
 .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 18px; padding: 14px 10px; text-align: center; display: grid; align-content: center; gap: 4px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 18px; padding: 16px 10px; text-align: center; min-height: 128px; display: grid; align-content: center; gap: 9px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
 .method:hover, .method.active { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(232,163,61,.075); }
-.method-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.method svg { width: 22px; height: 22px; flex-shrink: 0; color: var(--amber-2); }
+.method svg { width: 32px; height: 32px; margin: 0 auto; color: var(--amber-2); }
 .method span { font-size: 13px; color: var(--cream-2); }
 .input-panel { margin-top: 18px; }
 .upload-card { margin-top: 20px; border: 1px dashed rgba(244,189,105,.75); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.12), transparent 42%), rgba(255,255,255,.035); border-radius: 24px; min-height: 230px; display: grid; place-items: center; text-align: center; padding: 32px 20px; box-shadow: inset 0 0 50px rgba(232,163,61,.055), 0 0 34px rgba(232,163,61,.08); transition: transform .22s ease, border-color .22s ease, background .22s ease; }
@@ -349,7 +348,7 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
 .cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
 @media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 70px; } .methods { gap: 14px; } }
-@media (max-width: 390px) { h1 { font-size: 44px; } .methods { grid-template-columns: 1fr; } }
+@media (max-width: 390px) { h1 { font-size: 44px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
 `;

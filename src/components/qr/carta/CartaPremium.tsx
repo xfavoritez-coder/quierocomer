@@ -790,7 +790,7 @@ export default function CartaPremium({
       <footer
         className="font-[family-name:var(--font-dm)]"
         style={{
-          paddingBottom: 100, marginTop: 40,
+          paddingBottom: 30, marginTop: 40,
           paddingTop: 8,
           display: "flex",
           flexDirection: "column",

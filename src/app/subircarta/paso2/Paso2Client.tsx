@@ -48,7 +48,12 @@ export default function Paso2Client() {
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch lead data + start async processing immediately (while animation plays)
-  useEffect(() => { window.scrollTo(0, 0); trackFunnelEvent(leadId, "paso2_loaded"); }, []);
+  useEffect(() => {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    window.scrollTo(0, 0);
+    setTimeout(() => window.scrollTo(0, 0), 50);
+    trackFunnelEvent(leadId, "paso2_loaded");
+  }, []);
 
   useEffect(() => {
     if (!leadId) return;

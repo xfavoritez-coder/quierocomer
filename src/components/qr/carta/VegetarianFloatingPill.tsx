@@ -54,7 +54,8 @@ export default function VegetarianFloatingPill() {
       }}
     >
       <span style={{ fontSize: "14px" }}>🥗</span>
-      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-veg-title)" }}>{t(lang, "gMyVegetarianOptions" as any) || "Mis platos vegetarianos ↑"}</span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-veg-title)", whiteSpace: "nowrap" }}>{t(lang, "gMyVegetarianOptions" as any) || "Mis platos vegetarianos"}</span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--carta-genio-veg-title)" }}>↑</span>
     </button>
   );
 }
