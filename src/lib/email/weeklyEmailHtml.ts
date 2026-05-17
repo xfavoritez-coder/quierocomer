@@ -112,10 +112,20 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
 
   ${data.isDemo ? `
   <!-- Demo banner -->
-  <tr><td style="padding:0 0 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:rgba(244,166,35,0.06);border:1px dashed rgba(244,166,35,0.25);border-radius:12px;">
-      <tr><td style="padding:14px 18px;text-align:center;">
-        <span style="font-size:13px;color:#8a7550;line-height:1.6;">🧞 Este es un ejemplo de tu informe semanal.<br/>Al activar tu carta, recibirás uno como este cada lunes con <strong style="color:${GOLD};">tus datos reales</strong>.</span>
+  <tr><td style="padding:0 0 20px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #fff9eb 0%, #fff4d6 100%);border:1px solid rgba(244,166,35,0.2);border-radius:14px;">
+      <tr><td style="padding:18px 22px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="vertical-align:top;padding-right:14px;">
+            <div style="width:36px;height:36px;border-radius:10px;background:${GOLD};display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:16px;line-height:36px;display:block;text-align:center;width:36px;">📊</span>
+            </div>
+          </td>
+          <td style="vertical-align:top;">
+            <span style="font-size:14px;font-weight:700;color:#1a1a1a;display:block;margin-bottom:4px;">Ejemplo de tu informe semanal</span>
+            <span style="font-size:12px;color:#8a7550;line-height:1.5;">Cada lunes recibirás uno como este con tus datos reales. Activa tu carta para empezar.</span>
+          </td>
+        </tr></table>
       </td></tr>
     </table>
   </td></tr>` : ""}
@@ -198,7 +208,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
         <table width="100%" cellpadding="0" cellspacing="0" border="0">
           ${leastRows}
         </table>
-        <div style="font-size:12px;color:#ccc;margin-top:14px;padding-top:12px;border-top:1px solid #e8dcc4;line-height:1.5;">Estos platos podrían necesitar mejores fotos o una mejor ubicación en tu carta.</div>
+        <div style="font-size:12px;color:#8a7550;margin-top:14px;padding-top:12px;border-top:1px solid #e8dcc4;line-height:1.5;">Estos platos podrían necesitar mejores fotos o una mejor ubicación en tu carta.</div>
       </td></tr>
     </table>
   </td></tr>` : ""}

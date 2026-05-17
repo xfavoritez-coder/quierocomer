@@ -1396,7 +1396,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   const toggle = (id: string) => setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const fmtTime = (d: string) => { const t = new Date(d); return `${t.getHours().toString().padStart(2, "0")}:${t.getMinutes().toString().padStart(2, "0")}`; };
   const fmtDate = (d: string) => new Date(d).toLocaleDateString("es-CL", { day: "numeric", month: "short" });
-  const viewLabels: Record<string, string> = { premium: "Galería", lista: "Lista", feed: "Feed", impact: "Impact" };
+  const viewLabels: Record<string, string> = { premium: "◧ Galería", lista: "☰ Lista", feed: "▤ Feed", impact: "◆ Impact" };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -1443,9 +1443,6 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
-                  {s.genioData?.birthdaySaved && (
-                    <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600 }}>🎂 Guardó cumple</span>
-                  )}
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
                   {isReturningGuest && (
                     <span title={`Este cliente ha venido al local en ${visitDays} días distintos en total`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600, cursor: "help" }}>
@@ -1457,39 +1454,26 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                       👁 {visitNumToday} de {visitsToday} hoy
                     </span>
                   )}
-                  {!guestFilter && ((s.guestSessionCount || 1) >= 2 || s.qrUser?.id) && (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || anonName }); }}
-                      style={{ fontFamily: F, fontSize: "0.65rem", padding: "2px 8px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 6, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}
-                      title="Ver todas las sesiones de este visitante"
-                    >
-                      ver historial →
-                    </button>
-                  )}
                 </div>
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)" }}>{fmtDate(s.startedAt)} {fmtTime(s.startedAt)}</span>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{duration}</span>
                   <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{dishes.length} plato{dishes.length !== 1 ? "s" : ""}</span>
-                  {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
-                  {s.deviceType && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>{s.deviceType === "mobile" ? "📱" : s.deviceType === "desktop" ? "💻" : "📟"} {s.deviceType}</span>}
-                  {browser && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }}>{browser}</span>}
-                  {langShort && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title={`Idioma del navegador: ${s.language}`}>🌐 {langShort}</span>}
-                  {s.ipAddress && <span style={{ fontFamily: FB, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "var(--adm-hover)", color: "var(--adm-text3)" }} title="IP del visitante">{s.ipAddress}</span>}
-                  {/* Destacados vistos / total */}
-                  {(s.recommendedTotal || 0) > 0 && (
-                    <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: (s.recommendedHits || 0) > 0 ? "rgba(244,166,35,0.15)" : "var(--adm-hover)", color: (s.recommendedHits || 0) > 0 ? "#F4A623" : "var(--adm-text3)", fontWeight: 600 }} title={`Vio ${s.recommendedHits} de los ${s.recommendedTotal} platos destacados de la carta`}>
-                      ⭐ {s.recommendedHits || 0}/{s.recommendedTotal} destacados
-                    </span>
-                  )}
+                  {s.viewUsed && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(244,166,35,0.1)", color: "var(--adm-text2)" }}>{viewLabels[s.viewUsed] || s.viewUsed}</span>}
+                  {s.deviceType && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }}>{s.deviceType === "mobile" ? "📱" : s.deviceType === "desktop" ? "💻" : "📟"} {s.deviceType}</span>}
+                  {browser && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }}>{browser}</span>}
+                  {langShort && <span style={{ fontFamily: F, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }} title={`Idioma del navegador: ${s.language}`}>🌐 {langShort}</span>}
+                  {s.ipAddress && <span style={{ fontFamily: FB, fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(140,140,140,0.12)", color: "var(--adm-text2)" }} title="IP del visitante">{s.ipAddress}</span>}
+                  {/* Cumpleaños */}
+                  {s.genioData?.birthdaySaved && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600 }}>🎂 Guardó cumple</span>}
+                  {!s.genioData?.birthdaySaved && s.genioData?.birthdayDismissed && <span title="Vio el modal de cumple pero lo cerró sin guardar" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(155,155,155,0.15)", color: "var(--adm-text2)" }}>🎂✕ Cerró cumple</span>}
+                  {!s.genioData?.birthdaySaved && !s.genioData?.birthdayDismissed && s.genioData?.birthdayModalAutoShown && <span title="Se le mostró el modal automático de cumple" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.10)", color: "#a78bfa" }}>🎂 Modal mostrado</span>}
                   {/* Genio */}
                   {s.genioData?.timesUsed > 0 && (
                     <span title={s.genioData.completed ? "Completó el Genio" : `Abrió el Genio (llegó hasta: ${s.genioData.lastStep || "inicio"})`} style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: s.genioData.completed ? "rgba(74,222,128,0.15)" : "rgba(244,166,35,0.15)", color: s.genioData.completed ? "#16a34a" : "#F4A623" }}>
                       🧞 {s.genioData.completed ? "Genio completado" : "Abrió Genio"}
                     </span>
                   )}
-                  {!s.genioData?.birthdaySaved && s.genioData?.birthdayDismissed && <span title="Vio el modal de cumple pero lo cerró sin guardar" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(155,155,155,0.15)", color: "var(--adm-text3)" }}>🎂✕ Cerró cumple</span>}
-                  {!s.genioData?.birthdaySaved && !s.genioData?.birthdayDismissed && s.genioData?.birthdayModalAutoShown && <span title="Se le mostró el modal automático de cumple" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.10)", color: "#a78bfa" }}>🎂 Modal mostrado</span>}
                   {/* Garzón */}
                   {s.waiterCalls?.length > 0 && <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#7fbfdc" }}>🔔 Garzón</span>}
                   {/* Sesion sospechosa */}
@@ -1501,6 +1485,18 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
 
             {isOpen && (
               <div style={{ padding: "0 16px 14px", borderTop: "1px solid var(--adm-card-border)" }}>
+                {/* Ver historial del visitante */}
+                {!guestFilter && ((s.guestSessionCount || 1) >= 2 || s.qrUser?.id) && (
+                  <div style={{ marginTop: 10, marginBottom: 6 }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setGuestFilter({ id: s.guestId, name: s.qrUser?.name || anonName }); }}
+                      style={{ fontFamily: F, fontSize: "0.72rem", padding: "5px 12px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.3)", borderRadius: 8, color: "#F4A623", cursor: "pointer", fontWeight: 600 }}
+                      title="Ver todas las sesiones de este visitante"
+                    >
+                      Ver historial de {userName} →
+                    </button>
+                  </div>
+                )}
                 {/* Categories browsed */}
                 {s.categoriesViewed?.length > 0 && (
                   <div style={{ marginTop: 10 }}>
@@ -1691,14 +1687,27 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
     </div>
   );
 
+  const noClicks = data.totalClicks === 0;
+
   return (
     <div style={{ display: "grid", gap: 14 }}>
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-        <Card label="Sugerencias vistas" value={data.totalShown} sub={`${data.sessionsWithSuggestions} sesiones`} />
-        <Card label="Clicks en sugeridos" value={data.totalClicks} sub={`${data.sessionsWithClicks} sesiones`} />
-        <Card label="Tasa de click" value={`${data.clickRate}%`} sub="vistas → click" color={data.clickRate >= 10 ? "#4ade80" : "var(--adm-accent)"} />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <Card label="Clicks en sugeridos" value={data.totalClicks} sub={data.totalClicks > 0 ? `${data.sessionsWithClicks} sesiones` : "aún sin clicks"} />
+        <Card label="Tasa de click" value={`${data.clickRate}%`} sub={`de ${data.totalShown} veces mostrado`} color={data.clickRate >= 10 ? "#4ade80" : "var(--adm-accent)"} />
       </div>
+
+      {noClicks && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "18px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.2rem" }}>💡</span>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: 0 }}>Se mostraron sugeridos {data.totalShown} veces</p>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "4px 0 0", lineHeight: 1.5 }}>Tus clientes ven sugerencias de platos pero aún no hacen click en ellas. Cuando lo hagan, verás qué platos despiertan más curiosidad.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {data.hasToteat && data.salesFromSuggestions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -1715,7 +1724,7 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
       {/* Top clicked suggestions */}
       {data.topClicked?.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>💡 Sugerencias más clickeadas</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>💡 Sugeridos más clickeados</p>
           {data.topClicked.slice(0, 5).map((d: any, i: number) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginTop: i > 0 ? 12 : 0 }}>
               {d.photo ? (
@@ -1725,7 +1734,7 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
-                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.clicks} clicks de {d.shown} veces sugerido · {d.rate}%</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.clicks} clicks · {d.rate}% de conversión</p>
               </div>
               <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 900, color: "#F4A623", flexShrink: 0 }}>{d.rate}%</div>
             </div>
@@ -1733,11 +1742,11 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
         </div>
       )}
 
-      {/* Top pairs */}
+      {/* Top pairs — de dónde vienen */}
       {data.topPairs?.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🔗 Pares que más funcionan</p>
-          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Cuando ven un plato → hacen click en el sugerido</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🔗 De dónde vienen los clicks</p>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Estaban viendo un plato → clickearon el sugerido</p>
           {data.topPairs.slice(0, 5).map((p: any, i: number) => (
             <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: i > 0 ? 10 : 0 }}>
               <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.fromName}</span>

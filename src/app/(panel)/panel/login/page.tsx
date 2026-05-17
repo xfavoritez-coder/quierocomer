@@ -210,7 +210,7 @@ export default function PanelLogin() {
           <button type="submit" disabled={loading} style={{
             width: "100%", height: 48, marginTop: 14,
             background: loading ? "#E8A942" : "#F4A623",
-            color: "white", fontFamily: F, fontSize: 15, fontWeight: 700,
+            color: "#fff", fontFamily: F, fontSize: 15, fontWeight: 700,
             border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer",
             boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
           }}>

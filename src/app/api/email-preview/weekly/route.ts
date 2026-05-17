@@ -39,9 +39,9 @@ export async function GET(req: NextRequest) {
   ];
 
   const demoInsight = {
-    title: topViewed[0] ? `${topViewed[0].name} es tu plato estrella` : "Tu carta está lista",
+    title: topViewed[0] ? `Destaca ${topViewed[0].name}` : "Tu carta está lista",
     body: topViewed[0]
-      ? `Recibió más atención que cualquier otro plato. Considera destacarlo con una foto llamativa o marcarlo como recomendado.`
+      ? `Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero y veas cómo sube la conversión.`
       : "Al activar empezarás a ver datos reales de cómo interactúan tus clientes con tu carta.",
   };
 

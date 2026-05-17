@@ -26,8 +26,8 @@ const DEMO_DATA: DashData = {
     { name: "Risotto Funghi", count: 18, photo: null },
   ],
   topSearches: [
-    { name: "pizza", count: 15 },
-    { name: "pasta", count: 12 },
+    { name: "especial", count: 15 },
+    { name: "combo", count: 12 },
     { name: "postre", count: 8 },
   ],
   starDish: { name: "Pizza Margherita", count: 42, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
@@ -101,12 +101,27 @@ export default function PanelDashboard() {
   useEffect(() => {
     if (sessionLoading || !selectedRestaurantId) return;
 
-    // Demo restaurants get fake data
+    // Demo restaurants: fetch real dishes, use fake numbers
     if (isDemo) {
-      setData(DEMO_DATA);
-      setInsights(DEMO_INSIGHTS);
+      fetch(`/api/admin/locales/${selectedRestaurantId}/dishes-demo`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.dishes?.length) {
+            const fakeCounts = [42, 35, 28, 22, 18];
+            const dishes = d.dishes.slice(0, 5).map((name: string, i: number) => ({ name, count: fakeCounts[i], photo: null }));
+            setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: null } });
+            setInsights([
+              { id: "2", type: "menu_gap", title: "Considera agregar más postres", body: "Las búsquedas de postres representan el 12% del total pero tu carta tiene pocas opciones. Agregar más podría subir el ticket promedio.", priority: 1 },
+              { id: "3", type: "opportunity", title: `Destaca ${dishes[0].name}`, body: "Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 2 },
+            ]);
+          } else {
+            setData(DEMO_DATA);
+            setInsights(DEMO_INSIGHTS);
+          }
+        })
+        .catch(() => { setData(DEMO_DATA); setInsights(DEMO_INSIGHTS); })
+        .finally(() => setLoading(false));
       setInsightsEnabled(true);
-      setLoading(false);
       return;
     }
 
