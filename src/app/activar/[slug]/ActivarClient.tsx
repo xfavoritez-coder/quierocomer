@@ -203,7 +203,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         </a>
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <a className="nav-link" href={`/qr/${restaurant.slug}`}>Ver mi carta</a>
-          <a className="nav-cta" href="#planes" onClick={(e) => { e.preventDefault(); document.getElementById("planes")?.scrollIntoView({ behavior: "smooth" }); }}>Planes</a>
         </div>
       </nav>
 
