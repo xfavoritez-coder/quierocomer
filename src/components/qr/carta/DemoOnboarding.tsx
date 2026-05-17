@@ -4,6 +4,8 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 
 interface Props {
   restaurantSlug: string;
+  /** Whether the onboarding has been completed (from DB) */
+  onboardingDone?: boolean;
 }
 
 interface Step {
@@ -61,9 +63,8 @@ const STEPS: Step[] = [
   },
 ];
 
-const STORAGE_KEY = "qc_onboarding_seen";
 
-export default function DemoOnboarding({ restaurantSlug }: Props) {
+export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [exiting, setExiting] = useState(false);
@@ -95,8 +96,7 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
 
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
-    const seen = localStorage.getItem(STORAGE_KEY);
-    if (seen?.includes(restaurantSlug)) return;
+    if (onboardingDone) return;
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
     if (savedStep) {
       sessionStorage.removeItem("qc_onboarding_step");
@@ -104,7 +104,7 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
     } else {
       setStep(0);
     }
-  }, [restaurantSlug]);
+  }, [restaurantSlug, onboardingDone]);
 
   // Cleanup timers
   useEffect(() => {
@@ -259,8 +259,11 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
   };
 
   const markSeen = () => {
-    const seen = localStorage.getItem(STORAGE_KEY) || "";
-    localStorage.setItem(STORAGE_KEY, seen ? `${seen},${restaurantSlug}` : restaurantSlug);
+    fetch("/api/demo-onboarding", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slug: restaurantSlug }),
+    }).catch(() => {});
   };
 
   // ═══ Drag handlers ═══
