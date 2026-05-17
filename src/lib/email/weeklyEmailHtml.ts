@@ -116,7 +116,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:rgba(244,166,35,0.08);border:1px solid rgba(244,166,35,0.2);border-radius:12px;">
       <tr><td style="padding:12px 16px;text-align:center;">
         <span style="font-size:12px;font-weight:700;color:${GOLD};">Vista previa</span><br/>
-        <span style="font-size:11px;color:#8a7550;">Así se vería tu informe semanal. Los datos mostrados son de ejemplo.</span>
+        <span style="font-size:11px;color:#8a7550;">Este es un ejemplo del correo que recibirás cada semana con datos reales de tu carta. Los datos mostrados aquí son de ejemplo.</span>
       </td></tr>
     </table>
   </td></tr>` : ""}
@@ -232,7 +232,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
     <table width="100%" cellpadding="0" cellspacing="0" border="0">
       <tr><td align="center" style="padding:20px 0 0;">
         ${data.isDemo
-          ? `<span style="font-size:11px;color:#ccc;line-height:1.8;">Este correo se envió solo esta vez como vista previa. Al activar tu restaurante, recibirás el informe semanal real.</span>`
+          ? `<span style="font-size:11px;color:#ccc;line-height:1.8;">Este correo se envía solo una vez como vista previa. Al activar tu carta, recibirás este informe cada semana con tus datos reales.</span>`
           : `<span style="font-size:11px;color:#ccc;line-height:1.8;">Este correo se envía cada semana.</span><br/>
         <a href="https://quierocomer.cl/api/email/unsubscribe?slug=${data.slug}" style="font-size:11px;color:#ccc;text-decoration:underline;">No deseo seguir recibiéndolo</a>`
         }

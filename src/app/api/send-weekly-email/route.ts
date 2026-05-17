@@ -95,7 +95,7 @@ export async function GET(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { slug: slugParam },
-    select: { id: true, name: true, logoUrl: true, slug: true, owner: { select: { name: true, email: true } } },
+    select: { id: true, name: true, logoUrl: true, slug: true, isDemo: true, owner: { select: { name: true, email: true } } },
   });
 
   if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
@@ -169,12 +169,13 @@ export async function GET(req: NextRequest) {
     visitsByHour,
     panelUrl: "https://quierocomer.cl/panel",
     slug: restaurant.slug,
+    isDemo: restaurant.isDemo,
     insight: insight || undefined,
   });
 
   await sendAdminEmail({
     to: toParam,
-    subject: `Tu semana en ${restaurant.name}`,
+    subject: restaurant.isDemo ? `Vista previa: Tu semana en ${restaurant.name}` : `Tu semana en ${restaurant.name}`,
     html: emailHtml,
     purpose: "weekly_summary",
   });
