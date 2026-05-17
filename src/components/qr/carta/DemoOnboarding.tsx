@@ -32,7 +32,7 @@ const STEPS: Step[] = [
     title: "Una preview",
     body: "Así quedaría tu nueva carta. Algunas fotos podrían ser referenciales.",
     showOverlay: false,
-    buttonLabel: "Navegar",
+    buttonLabel: "Siguiente",
   },
   {
     icon: "🎨",
@@ -271,7 +271,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
     : { x: 300, y: 600 };
 
   // Toast always uses light style for contrast against dark carta
-  const isLightStep = true;
+  const isLightStep = step >= 2;
 
   // ═══ Minimized state — FAB genio + toast above it ═══
   if (minimized && !exiting) {
