@@ -129,74 +129,31 @@ export default function FacturacionPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Receipt size={20} color="var(--adm-text3)" /> Datos de facturación</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "24px 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Receipt size={20} color="var(--adm-text3)" /> Datos facturación</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>
         Estos datos los usamos para emitir tu factura electrónica cada mes
       </p>
 
-      {/* Estado */}
-      {info && !info.isComplete && (
-        <div style={{ background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "flex-start", gap: 10 }}>
-          <FileText size={20} color={GOLD} style={{ flexShrink: 0, marginTop: 2 }} />
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "var(--adm-text)", margin: 0 }}>
-              Faltan datos para emitir tu factura
-            </p>
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0", lineHeight: 1.5 }}>
-              Necesitamos: {info.missingFields.map((f) => FIELD_LABELS[f] || f).join(", ")}. Sin estos datos no podremos emitir tu factura electrónica.
-            </p>
-          </div>
-        </div>
-      )}
-      {info && info.isComplete && (
-        <div style={{ background: "#dcfce7", border: "1px solid #86efac", borderRadius: 12, padding: "14px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10 }}>
-          <Receipt size={20} color="#15803d" style={{ flexShrink: 0 }} />
-          <div>
-            <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: "#15803d", margin: 0 }}>
-              Datos completos
-            </p>
-            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "#166534", margin: "2px 0 0" }}>
-              Listo para emitir factura electrónica con IVA incluido.
-            </p>
-          </div>
-        </div>
-      )}
 
-      {/* Empresa */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
-          Empresa
-        </h3>
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20 }}>
         <Field label="Razón social" required>
           <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} style={inputStyle} placeholder="Restaurantes SpA" />
         </Field>
-        <Field label="RUT" required hint="Formato: 76.123.456-7">
+        <Field label="RUT" required>
           <input value={rut} onChange={(e) => setRut(e.target.value)} style={inputStyle} placeholder="76.123.456-7" />
         </Field>
-        <Field label="Giro" required hint="Actividad económica registrada en el SII">
+        <Field label="Giro">
           <input value={giro} onChange={(e) => setGiro(e.target.value)} style={inputStyle} placeholder="Restaurante / Servicio de comida" />
         </Field>
-      </div>
 
-      {/* Dirección */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
-          Dirección comercial
-        </h3>
         <Field label="Dirección" required>
           <input value={address} onChange={(e) => setAddress(e.target.value)} style={inputStyle} placeholder="Av. Providencia 1234, oficina 502" />
         </Field>
         <Field label="Comuna / Ciudad" required>
           <input value={city} onChange={(e) => setCity(e.target.value)} style={inputStyle} placeholder="Providencia, Santiago" />
         </Field>
-      </div>
 
-      {/* Contacto */}
-      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16 }}>
-        <h3 style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 16px" }}>
-          Contacto de facturación
-        </h3>
-        <Field label="Email facturación" required hint="Ahí enviamos la factura cada mes">
+        <Field label="Email facturación" required>
           <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} placeholder="contabilidad@tu-empresa.cl" type="email" />
         </Field>
         <Field label="Nombre responsable">
@@ -205,18 +162,14 @@ export default function FacturacionPage() {
         <Field label="Teléfono">
           <input value={phone} onChange={(e) => setPhone(e.target.value)} style={inputStyle} placeholder="+56 2 1234 5678" type="tel" />
         </Field>
+
+        <button onClick={handleSave} disabled={saving} style={{
+          width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8,
+          fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: saving ? "wait" : "pointer", marginTop: 12,
+        }}>
+          {saving ? "Guardando..." : "Guardar datos de facturación"}
+        </button>
       </div>
-
-      <button onClick={handleSave} disabled={saving} style={{
-        width: "100%", padding: 12, background: GOLD, color: "white", border: "none", borderRadius: 8,
-        fontFamily: F, fontSize: "0.9rem", fontWeight: 700, cursor: saving ? "wait" : "pointer",
-      }}>
-        {saving ? "Guardando..." : "Guardar datos de facturación"}
-      </button>
-
-      <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", textAlign: "center", marginTop: 14, lineHeight: 1.5 }}>
-        Tus datos solo se usan para emitir factura. No se comparten con terceros.
-      </p>
     </div>
   );
 }

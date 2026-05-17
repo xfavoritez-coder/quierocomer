@@ -262,6 +262,7 @@ function CampanasTab({ restaurantId }: { restaurantId: string }) {
   };
 
   const handleSend = async (id: string) => {
+    if (document.cookie.includes("panel_demo=1")) { alert("Activa tu carta para enviar correos"); return; }
     if (!confirm("¿Enviar esta campaña ahora?")) return;
     setSending(true);
     const res = await fetch("/api/admin/campaigns", {

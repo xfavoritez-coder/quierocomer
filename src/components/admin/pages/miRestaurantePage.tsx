@@ -4,7 +4,8 @@ import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
-import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check } from "lucide-react";
+import { Camera, Phone, Globe, MapPin, Clock, QrCode, Bell, Copy, ExternalLink, Check, Store, Receipt } from "lucide-react";
+import FacturacionPage from "./facturacionPage";
 import SubirFoto from "@/components/SubirFoto";
 import QRGeneratorModal from "@/components/admin/QRGeneratorModal";
 import SkeletonLoading from "@/components/admin/SkeletonLoading";
@@ -166,7 +167,7 @@ export default function MiRestaurantePage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.3rem", color: "var(--adm-text)", margin: "0 0 4px" }}>Mi Restaurante</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Store size={20} color="var(--adm-text3)" /> Mi Restaurante</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura la información y apariencia de tu local</p>
 
       {/* ── Info básica ── */}
@@ -189,35 +190,6 @@ export default function MiRestaurantePage() {
           <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
         </Field>
 
-        <Field label={`Descripción (${description.length}/200)`}>
-          <textarea value={description} onChange={e => setDescription(e.target.value.slice(0, 200))} maxLength={200} rows={3}
-            style={{ ...inputStyle, resize: "vertical", minHeight: 70 }} placeholder="Breve descripción de tu local" />
-        </Field>
-
-        <button onClick={saveInfo} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-          {saving ? "Guardando..." : "Guardar información"}
-        </button>
-      </Card>
-
-      {/* ── Contacto ── */}
-      <Card title="Contacto" icon={Phone}>
-        <Field label="Teléfono">
-          <input value={phone} onChange={e => setPhone(e.target.value)} style={inputStyle} placeholder="+56 2 1234 5678" type="tel" />
-        </Field>
-        <Field label="WhatsApp">
-          <input value={whatsapp} onChange={e => setWhatsapp(e.target.value)} style={inputStyle} placeholder="+56 9 1234 5678" type="tel" />
-          <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 3 }}>Incluye código país: +56 9 ...</p>
-        </Field>
-        <Field label="Dirección">
-          <input value={address} onChange={e => setAddress(e.target.value)} style={inputStyle} placeholder="Av. Providencia 1234, Santiago" />
-        </Field>
-        <button onClick={saveContact} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-          {saving ? "Guardando..." : "Guardar contacto"}
-        </button>
-      </Card>
-
-      {/* ── Redes ── */}
-      <Card title="Redes sociales y web" icon={Globe}>
         <Field label="Instagram">
           <div style={{ display: "flex", alignItems: "center" }}>
             <span style={{ padding: "10px 10px 10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "8px 0 0 8px", fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)" }}>@</span>
@@ -227,107 +199,20 @@ export default function MiRestaurantePage() {
         <Field label="Sitio web">
           <input value={website} onChange={e => setWebsite(e.target.value)} style={inputStyle} placeholder="https://tu-sitio.cl" type="url" />
         </Field>
-        <button onClick={saveSocial} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
-          {saving ? "Guardando..." : "Guardar redes"}
+
+        <button onClick={() => { saveInfo(); saveSocial(); }} disabled={saving} style={{ width: "100%", padding: 10, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", fontWeight: 600, cursor: "pointer" }}>
+          {saving ? "Guardando..." : "Guardar información"}
         </button>
       </Card>
 
-      {/* ── Horarios ── */}
-      <Card title="Horarios" icon={Clock}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {DAYS.map(day => {
-            const val = schedule[day.key];
-            const isClosed = val === "closed";
-            const isOpen = val && val !== "closed";
-            return (
-              <div key={day.key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 0", borderBottom: "1px solid var(--adm-card-border)" }}>
-                <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", width: 80, flexShrink: 0 }}>{day.label}</span>
-                <button onClick={() => toggleDay(day.key)} style={{
-                  padding: "4px 10px", borderRadius: 12, border: "none", cursor: "pointer",
-                  background: isClosed ? "rgba(239,68,68,0.1)" : "rgba(34,197,94,0.1)",
-                  color: isClosed ? "#ef4444" : "#22c55e",
-                  fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, flexShrink: 0,
-                }}>
-                  {isClosed ? "Cerrado" : "Abierto"}
-                </button>
-                {!isClosed && (
-                  <input
-                    value={val || ""}
-                    onChange={e => updateDay(day.key, e.target.value)}
-                    style={{ ...inputStyle, padding: "6px 10px", fontSize: "0.78rem", flex: 1, minWidth: 0 }}
-                    placeholder="12:00-23:00"
-                  />
-                )}
-              </div>
-            );
-          })}
-        </div>
-        <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-          <button onClick={copyScheduleToAll} style={{ flex: 1, padding: 8, background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text2)", cursor: "pointer" }}>
-            Copiar a todos los días
-          </button>
-          <button onClick={saveSchedule} disabled={saving} style={{ flex: 1, padding: 8, background: GOLD, color: "white", border: "none", borderRadius: 8, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
-            {saving ? "Guardando..." : "Guardar horarios"}
-          </button>
-        </div>
-      </Card>
 
 
-      {/* ── Generar QR ── */}
-      <div id="qr" style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "24px 20px", marginBottom: 16, textAlign: "center" }}>
-        <QrCode size={40} color={GOLD} style={{ marginBottom: 10 }} />
-        <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Código QR de tu local</h3>
-        <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: "0 0 16px", lineHeight: 1.5 }}>
-          Imprime este código para pegarlo en las mesas. Tus clientes lo escanean y ven tu carta.
-        </p>
-        <button onClick={() => setQrModalOpen(true)} style={{
-          padding: "12px 32px", background: GOLD, color: "white", border: "none", borderRadius: 50,
-          fontFamily: F, fontSize: "0.88rem", fontWeight: 700, cursor: "pointer",
-          boxShadow: "0 4px 14px rgba(244,166,35,0.25)",
-        }}>
-          Generar QR
-        </button>
+      {/* ── Facturación ── */}
+      <div style={{ marginBottom: 16 }}>
+        <FacturacionPage />
       </div>
 
-      {/* ── Link del garzón ── */}
-      <PlanGate plan={activePlan} feature="waiter">
-      <div id="garzon" style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "24px 20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
-        <div style={{ textAlign: "center", marginBottom: 14 }}>
-          <Bell size={36} color={GOLD} style={{ marginBottom: 8 }} />
-          <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px" }}>Panel de llamadas del garzón</h3>
-          <p style={{ fontFamily: FB, fontSize: "0.8rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
-            Comparte este link con tu garzón para que reciba notificaciones cuando los clientes llamen.
-          </p>
-        </div>
 
-        {/* Link display */}
-        <div style={{ display: "flex", gap: 8, alignItems: "center", background: "var(--adm-input)", borderRadius: 10, padding: "10px 12px", border: "1px solid var(--adm-input-border)", marginBottom: 12 }}>
-          <span style={{ fontFamily: FB, fontSize: "0.72rem", color: GOLD, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{garzonLink}</span>
-          <button onClick={() => copyLink(garzonLink)} style={{
-            padding: "6px 12px", background: copied ? "rgba(34,197,94,0.15)" : `rgba(244,166,35,0.15)`,
-            border: "none", borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", gap: 4,
-            fontFamily: FB, fontSize: "0.7rem", fontWeight: 600, color: copied ? "#22c55e" : GOLD, flexShrink: 0,
-          }}>
-            {copied ? <><Check size={12} /> Copiado</> : <><Copy size={12} /> Copiar</>}
-          </button>
-        </div>
-
-        {/* Actions */}
-        <div style={{ display: "flex", gap: 8 }}>
-          <a href={garzonLink} target="_blank" rel="noopener noreferrer" style={{
-            flex: 1, padding: "10px", background: GOLD, color: "white", border: "none", borderRadius: 8,
-            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, textDecoration: "none", textAlign: "center",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-          }}>
-            <ExternalLink size={14} /> Abrir panel
-          </a>
-        </div>
-
-        <p style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)", marginTop: 12, textAlign: "center" }}>
-          Este link es público. No lo compartas en redes sociales.
-        </p>
-      </div>
-      </PlanGate>
 
 
       {/* QR Modal */}

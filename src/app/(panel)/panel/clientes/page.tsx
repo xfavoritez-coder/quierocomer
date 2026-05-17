@@ -219,22 +219,24 @@ export default function ClientesPage() {
                     {SOURCE_LABELS[c.source] || c.source}
                   </p>
                 </div>
-                <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                  <button
-                    onClick={() => setEditing(c)}
-                    title="Editar"
-                    style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--adm-text3)" }}
-                  >
-                    <Pencil size={13} />
-                  </button>
-                  <button
-                    onClick={() => setDeleting(c)}
-                    title="Borrar"
-                    style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444" }}
-                  >
-                    <Trash2 size={13} />
-                  </button>
-                </div>
+                {!isDemo && (
+                  <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
+                    <button
+                      onClick={() => setEditing(c)}
+                      title="Editar"
+                      style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "var(--adm-text3)" }}
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => setDeleting(c)}
+                      title="Borrar"
+                      style={{ width: 28, height: 28, padding: 0, borderRadius: 7, border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", color: "#ef4444" }}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
