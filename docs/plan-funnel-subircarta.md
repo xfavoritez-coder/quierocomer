@@ -194,7 +194,14 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
    - Botones (campanita garzón, selector de vistas): estilo glass blanco liquid, no amber sólido
    - Los botones que ahora son amber también llevarlos a un tono más neutro/liquid
 
-3. ~~**Onboarding demo (tour spotlight)**~~ — ✅ COMPLETADO. Toasts/spotlights guiados primera vez que el dueño entra a su carta demo.
+3. **Limpiar referencias del Genio recomendando platos** — El Genio ya NO recomienda platos, solo personaliza/reordena la carta. Limpiar:
+   - Quitar RECOMMENDATION_SHOWN y RECOMMENDATION_TAPPED del tracking en CartaPremium, CartaLista, CartaImpact
+   - Quitar lógica de "platos recomendados por Genio" en generateInsights.ts
+   - Quitar GENIO_DISH_ACCEPTED / GENIO_DISH_REJECTED si ya no aplican
+   - Revisar textos en panel que digan "recomendaciones del Genio"
+   - Dejar solo SUGGESTION_CLICK y SUGGESTION_SHOWN para el cross-sell de DishDetail
+
+4. ~~**Onboarding demo (tour spotlight)**~~ — ✅ COMPLETADO. Toasts/spotlights guiados primera vez que el dueño entra a su carta demo.
 
 3. ~~**Panel Demo**~~ — ✅ COMPLETADO. Panel con isDemo flag, stats fake, acceso sin login para dueños demo.
 

@@ -599,6 +599,17 @@ function DishSlide({
           if (restaurantPlan && restaurantPlan !== "PREMIUM") return null;
           const { title, items: suggestions } = crossSell;
           if (suggestions.length === 0) return null;
+          // Track that suggestions were shown for this dish
+          if (typeof window !== "undefined" && !(window as any).__suggShown?.[dish.id]) {
+            ((window as any).__suggShown = (window as any).__suggShown || {})[dish.id] = true;
+            suggestions.forEach(s => {
+              fetch("/api/qr/stats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ eventType: "SUGGESTION_SHOWN", dishId: s.dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), metadata: { fromDishId: dish.id } }),
+              }).catch(() => {});
+            });
+          }
           return (
             <div style={{ marginTop: 32 }}>
               <p style={{ fontSize: "0.82rem", color: "var(--carta-text3)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>{title}</p>
@@ -606,7 +617,14 @@ function DishSlide({
                 {suggestions.map((s) => (
                   <div
                     key={s.dish.id}
-                    onClick={() => onChangeDish(s.dish)}
+                    onClick={() => {
+                      fetch("/api/qr/stats", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ eventType: "SUGGESTION_CLICK", dishId: s.dish.id, restaurantId, guestId: getGuestId(), sessionId: getSessionId(), dbSessionId: getDbSessionId(), metadata: { fromDishId: dish.id, reason: s.reason } }),
+                      }).catch(() => {});
+                      onChangeDish(s.dish);
+                    }}
                     style={{ display: "flex", gap: 14, padding: "16px 18px", background: "var(--carta-card-border)", borderRadius: 16, cursor: "pointer" }}
                   >
                     {s.dish.photos?.[0] && !failedImages.has(s.dish.id) ? (

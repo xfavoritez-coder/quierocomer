@@ -110,7 +110,7 @@ function formatDuration(ms: number) {
   return s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
 }
 
-type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones";
+type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones" | "sugeridos";
 
 /* ═══ TAB: Resumen ═══ */
 function HeroKpi({ icon, value, label, sub, color, gradient, lucideIcon }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string; lucideIcon?: React.ReactNode }) {
@@ -1640,6 +1640,91 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   );
 }
 
+/* ═══ TAB: Sugeridos ═══ */
+function TabSugeridos({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/admin/analytics/suggestions?restaurantId=${rid}&from=${from}&to=${to}`)
+      .then(r => r.json())
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [rid, from, to]);
+
+  if (loading) return <SkeletonLoading type="cards" />;
+  if (!data || data.totalShown === 0) return (
+    <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "32px 20px", textAlign: "center", boxShadow: "var(--adm-card-shadow, none)" }}>
+      <p style={{ fontSize: "1.5rem", marginBottom: 8 }}>💡</p>
+      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: "0 0 6px", fontWeight: 600 }}>Aún no hay datos de sugeridos</p>
+      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+        Cuando tus clientes vean y hagan click en las sugerencias de platos, aquí aparecerán las estadísticas.
+      </p>
+    </div>
+  );
+
+  return (
+    <div style={{ display: "grid", gap: 14 }}>
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+        <Card label="Sugerencias vistas" value={data.totalShown} sub={`${data.sessionsWithSuggestions} sesiones`} />
+        <Card label="Clicks en sugeridos" value={data.totalClicks} sub={`${data.sessionsWithClicks} sesiones`} />
+        <Card label="Tasa de click" value={`${data.clickRate}%`} sub="vistas → click" color={data.clickRate >= 10 ? "#4ade80" : "var(--adm-accent)"} />
+      </div>
+
+      {data.hasToteat && data.salesFromSuggestions > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ fontSize: "1.2rem" }}>💰</span>
+            <div>
+              <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: 0 }}>{data.salesFromSuggestions} ventas desde sugeridos</p>
+              <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Platos que se vendieron después de ser clickeados como sugerencia</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top clicked suggestions */}
+      {data.topClicked?.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>💡 Sugerencias más clickeadas</p>
+          {data.topClicked.slice(0, 5).map((d: any, i: number) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, marginTop: i > 0 ? 12 : 0 }}>
+              {d.photo ? (
+                <img src={d.photo} alt="" style={{ width: 36, height: 36, borderRadius: 10, objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", flexShrink: 0 }}>🍽️</div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</p>
+                <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{d.clicks} clicks de {d.shown} veces sugerido · {d.rate}%</p>
+              </div>
+              <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 900, color: "#F4A623", flexShrink: 0 }}>{d.rate}%</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Top pairs */}
+      {data.topPairs?.length > 0 && (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🔗 Pares que más funcionan</p>
+          <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>Cuando ven un plato → hacen click en el sugerido</p>
+          {data.topPairs.slice(0, 5).map((p: any, i: number) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, marginTop: i > 0 ? 10 : 0 }}>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.fromName}</span>
+              <span style={{ color: "var(--adm-text3)", fontSize: "0.72rem", flexShrink: 0 }}>→</span>
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "#F4A623", fontWeight: 700, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right" }}>{p.toName}</span>
+              <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 600, flexShrink: 0, minWidth: 30, textAlign: "right" }}>{p.count}x</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ═══ MAIN ═══ */
 const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
   { key: "resumen", label: "Resumen", icon: "📊" },
@@ -1647,6 +1732,7 @@ const TABS_BASIC: { key: Tab; label: string; icon: string }[] = [
 ];
 
 const TABS_ADVANCED: { key: Tab; label: string; icon: string }[] = [
+  { key: "sugeridos", label: "Sugeridos", icon: "💡" },
   { key: "sesiones", label: "Sesiones", icon: "👁️" },
   { key: "clientes", label: "Clientes", icon: "👥" },
   { key: "garzon", label: "Garzón", icon: "🔔" },
@@ -1796,6 +1882,7 @@ export default function AnalyticsDashboard() {
       {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
       {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "sugeridos" && <TabSugeridos rid={effectiveRid} from={dateFrom} to={dateTo} />}
 
       {/* Upgrade teaser for Gold users */}
       {!hasAdvanced && (

@@ -28,7 +28,6 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
   const totalSessions = sessions.length;
   const abandoned = sessions.filter(s => s.isAbandoned).length;
   const avgDuration = Math.round(sessions.reduce((a, s) => a + (s.durationMs || 0), 0) / sessions.length / 1000);
-  const conversion = totalGuests > 0 ? Math.round((registeredGuests / totalGuests) * 100) : 0;
   const prevTitles = previousInsights.map(i => i.title).join(", ");
 
   const prompt = `Eres el Genio de QuieroComer. Genera exactamente 1 insight accionable para "${restaurantName}".
