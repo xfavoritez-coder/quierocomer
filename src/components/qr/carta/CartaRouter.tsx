@@ -238,7 +238,7 @@ export default function CartaRouter(props: Props) {
               position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none",
               background: "white",
               opacity: demoFading === "flash" ? 1 : 0,
-              transition: demoFading === "reveal" ? "opacity 0.35s ease-out" : "opacity 0.12s ease-in",
+              transition: demoFading === "reveal" ? "opacity 0.8s ease-out" : "opacity 0.12s ease-in",
             }} />
           )}
         </div>

@@ -108,8 +108,8 @@ export default function PanelDashboard() {
         .then(d => {
           if (d.dishes?.length) {
             const fakeCounts = [42, 35, 28, 22, 18];
-            const dishes = d.dishes.slice(0, 5).map((name: string, i: number) => ({ name, count: fakeCounts[i], photo: null }));
-            setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: null } });
+            const dishes = d.dishes.slice(0, 5).map((dd: any, i: number) => ({ name: dd.name, count: fakeCounts[i], photo: dd.photo }));
+            setData({ ...DEMO_DATA, topDishesViewed: dishes, starDish: { name: dishes[0].name, count: dishes[0].count, photo: dishes[0].photo } });
             setInsights([
               { id: "2", type: "menu_gap", title: "Considera agregar más postres", body: "Las búsquedas de postres representan el 12% del total pero tu carta tiene pocas opciones. Agregar más podría subir el ticket promedio.", priority: 1 },
               { id: "3", type: "opportunity", title: `Destaca ${dishes[0].name}`, body: "Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 2 },

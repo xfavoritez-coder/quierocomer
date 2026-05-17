@@ -169,7 +169,7 @@ export default function ConfirmacionClient() {
           <div className="step-line" />
           <div className="step done"><div className="step-number">&#10003;</div><span>Transformación</span></div>
           <div className="step-line" />
-          <div className="step active"><div className="step-number">3</div><span>Carta viva</span></div>
+          <div className="step done"><div className="step-number">&#10003;</div><span>Carta lista</span></div>
         </section>
 
         <section className="shell centered-shell">
@@ -177,7 +177,7 @@ export default function ConfirmacionClient() {
             {modalDismissed ? (
               <>
                 <h1><span style={{ fontSize: "0.6em" }}>✉️</span> Revisa tu <span>correo</span></h1>
-                <p className="subcopy">{`Te acabamos de enviar la carta de ${displayName} a tu correo.`}</p>
+                <p className="subcopy">{`Acabamos de enviar la nueva carta ${displayName} a tu correo.`}</p>
               </>
             ) : (
               <>
@@ -348,8 +348,8 @@ export default function ConfirmacionClient() {
                   )}
                 </div>
                 <div>
-                  <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Revisa tu correo"}</div>
-                  <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Si no lo encuentras en unos minutos, revisa spam o promociones."}</div>
+                  <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Te avisaremos por correo"}</div>
+                  <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Cuando esté lista, te llegará un correo con el link de tu nueva carta."}</div>
                 </div>
               </div>
             </div>

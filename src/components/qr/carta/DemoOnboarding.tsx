@@ -23,28 +23,21 @@ const STEPS: Step[] = [
   {
     icon: "🧞",
     title: "¡Hola! Soy el Genio",
-    body: "Te voy a mostrar en 4 pasos tu nueva carta.",
+    body: "Te voy a mostrar en 3 pasos tu nueva carta.",
     showOverlay: true,
     overlayOpacity: 0.72,
   },
   {
     icon: "📸",
     title: "Una preview",
-    body: "Algunas fotos son referenciales, las pusimos para que puedas ver cómo se verá tu carta. Luego las editas desde tu panel.",
-    showOverlay: true,
-    overlayOpacity: 0.35,
+    body: "Así quedaría tu nueva carta. Algunas fotos podrían ser referenciales.",
+    showOverlay: false,
     buttonLabel: "Navegar",
   },
   {
     icon: "🎨",
     title: "Vista Impact",
     body: "Puedes cambiar de vistas para que tus clientes disfruten de una mejor experiencia.",
-    showOverlay: false,
-  },
-  {
-    icon: "✨",
-    title: "Personalizo la carta",
-    body: <>Le muestro a tus clientes <span style={{ color: "#16a34a", fontWeight: 600 }}>veganos</span> o <span style={{ color: "#16a34a", fontWeight: 600 }}>vegetarianos</span> sus platos agrupados para que puedan escoger mejor.</>,
     showOverlay: false,
   },
   {
@@ -155,38 +148,24 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
         });
         break;
       case 3:
-        // Simulate vegetarian genio
-        localStorage.setItem("qr_diet", "vegetarian");
-        localStorage.setItem("qr_restrictions", JSON.stringify(["ninguna"]));
-        window.dispatchEvent(new CustomEvent("demo-onboarding-simulate-genio", { detail: { diet: "VEGETARIAN" } }));
-        window.dispatchEvent(new Event("genio-updated"));
-        delay(150, () => {
-          const carousel = document.getElementById("genio-vegetarian-carousel") || document.getElementById("genio-vegan-carousel") || document.getElementById("genio-diet-message");
-          if (carousel) carousel.scrollIntoView({ behavior: "smooth", block: "center" });
-          else window.scrollTo({ top: 0, behavior: "smooth" });
-        });
-        break;
-      case 4:
-        // Restore genio, navigate to English
-        window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
-        localStorage.removeItem("qr_diet");
-        localStorage.removeItem("qr_restrictions");
-        window.dispatchEvent(new Event("genio-updated"));
+        // Navigate to English
         if (!window.location.search.includes("lang=en")) {
           delay(300, () => {
-            sessionStorage.setItem("qc_onboarding_step", "4");
+            sessionStorage.setItem("qc_onboarding_step", "3");
             const url = new URL(window.location.href);
             url.searchParams.set("lang", "en");
             window.location.href = url.toString();
           });
         }
         break;
-      case 5:
+      case 4:
         // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
           window.history.replaceState({}, "", url.toString());
+          // Force reload to apply Spanish
+          delay(100, () => window.location.reload());
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
         setMinimized(false);
@@ -211,14 +190,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
   const goBack = useCallback(() => {
     setStep(s => {
       if (s <= 0) return s;
-      if (s === 3) {
-        localStorage.removeItem("qr_diet");
-        localStorage.removeItem("qr_restrictions");
-        window.dispatchEvent(new Event("genio-updated"));
-        window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
-      }
       // If going back from translated step, restore Spanish
-      if ((s === 4 || s === 5) && window.location.search.includes("lang=en")) {
+      if ((s === 3 || s === 4) && window.location.search.includes("lang=en")) {
         sessionStorage.setItem("qc_onboarding_step", String(s - 1));
         const url = new URL(window.location.href);
         url.searchParams.delete("lang");
@@ -294,7 +267,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
 
   // Exit animation target: bottom-right (where lamp will be)
   const exitTarget = typeof window !== "undefined"
-    ? { x: window.innerWidth - 50, y: window.innerHeight - 60 }
+    ? { x: window.innerWidth - 50, y: window.innerHeight - 90 }
     : { x: 300, y: 600 };
 
   // Toast always uses light style for contrast against dark carta

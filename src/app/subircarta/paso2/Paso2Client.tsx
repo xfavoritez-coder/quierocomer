@@ -51,7 +51,11 @@ export default function Paso2Client() {
   useEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
-    setTimeout(() => window.scrollTo(0, 0), 50);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    setTimeout(() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; }, 50);
+    setTimeout(() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; }, 150);
+    setTimeout(() => { window.scrollTo(0, 0); }, 300);
     trackFunnelEvent(leadId, "paso2_loaded");
   }, []);
 

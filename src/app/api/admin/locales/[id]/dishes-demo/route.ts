@@ -5,9 +5,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { id } = await params;
   const dishes = await prisma.dish.findMany({
     where: { restaurantId: id, isActive: true },
-    select: { name: true },
+    select: { name: true, photos: true },
     orderBy: { position: "asc" },
     take: 5,
   });
-  return NextResponse.json({ dishes: dishes.map(d => d.name) });
+  return NextResponse.json({ dishes: dishes.map(d => ({ name: d.name, photo: d.photos?.[0] || null })) });
 }

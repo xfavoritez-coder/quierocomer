@@ -153,7 +153,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             </div>
           </Link>
           </div>
-          {restaurants.length > 1 && (
+          {false && restaurants.length > 1 && (
             <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
               style={{ marginTop: 10, width: "100%", padding: "5px 8px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", cursor: "pointer" }}>
               {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -207,7 +207,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <p style={{ fontFamily: F, fontSize: "10.5px", color: "var(--adm-text3)", fontWeight: 500, margin: "1px 0 0" }}>QuieroComer</p>
           </div>
         </Link>
-        {restaurants.length > 1 && (
+        {false && restaurants.length > 1 && (
           <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
             style={{ padding: "6px 10px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", outline: "none", maxWidth: 140, cursor: "pointer", flexShrink: 0 }}>
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
@@ -293,7 +293,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               </div>
             </div>
           </div>
-          {restaurants.length > 1 && (
+          {false && restaurants.length > 1 && (
             <div style={{ padding: "12px 20px", borderBottom: "1px solid var(--adm-card-border)" }}>
               <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#999", textTransform: "uppercase", letterSpacing: "0.5px", margin: "0 0 8px" }}>Mis locales</p>
               {restaurants.map(r => (
