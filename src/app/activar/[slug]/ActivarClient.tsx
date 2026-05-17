@@ -307,7 +307,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div className="offer" style={{ position: "relative", zIndex: 3, margin: "-4px 6px 0", textAlign: "left" }}>
           <span className="discount">-90% dcto</span>
           <div className="offer-label">Oferta plan Premium</div>
-          <span className="old-price">$49.900</span>
+          <span className="old-price">$49.900 <span style={{ fontSize: 12, color: "rgba(232,221,200,.35)", textDecoration: "none", fontWeight: 500, letterSpacing: ".02em" }}>neto</span></span>
           <div className="new-price">$4.900 <small>CLP primer mes</small></div>
           <div className="offer-text">
             Activa multidioma, estadísticas, automatizaciones, cumpleaños y más.
