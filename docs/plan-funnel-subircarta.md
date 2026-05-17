@@ -200,7 +200,11 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 4. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
 
-5. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
+5. **Diseño panel y carta demo para desktop** — Pendiente:
+   - Panel: DemoBanner adaptar para layout desktop (centrado, ancho máximo)
+   - Carta demo en desktop: usar wrapper iPhone + QR al lado (no carta responsive directa). El dueño ve su carta como la verán sus clientes en el celular, con QR para escanear. La carta real (no demo) sí mantiene diseño responsive normal en desktop.
+
+6. **Flujo de activación desde demo** — Cuando el dueño viene de /subircarta y activa su carta:
    - Las fotos de Unsplash deben marcarse como "referenciales" o invitar al dueño a subir las propias
    - Definir si se mantienen las fotos Unsplash en la carta real o se quitan
    - El dueño debería poder subir sus propias fotos desde /panel

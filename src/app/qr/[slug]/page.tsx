@@ -161,6 +161,12 @@ export default async function CartaPage({
     <div className={`${themeClass}${accentColor ? " carta-custom-accent" : ""}`}>
       <script dangerouslySetInnerHTML={{ __html: `
         try {
+          if (location.search.includes("embed=mobile")) {
+            document.documentElement.style.scrollbarWidth = "none";
+            var s = document.createElement("style");
+            s.textContent = "::-webkit-scrollbar{display:none!important}html{scrollbar-width:none!important}";
+            document.head.appendChild(s);
+          }
           var o = localStorage.getItem("qc_theme_override");
           if (o) {
             var el = document.currentScript.parentElement;

@@ -57,13 +57,10 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
 
         {/* Left: Info + QR */}
         <div style={styles.left}>
-          <div style={styles.badge}>
-            <svg width="16" height="16" viewBox="0 0 32 32" fill="none">
-              <ellipse cx="13" cy="20" rx="9" ry="2.5" fill="#E8A33D"/>
-              <path d="M19 20.5C23 20.5 27 18 27 13.5C27 11 25.5 9 23.5 8.5" stroke="#E8A33D" strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
+          <a href="https://quierocomer.cl" target="_blank" rel="noopener" style={{ ...styles.badge, textDecoration: "none", cursor: "pointer" }}>
+            <img src="/landing/logo.png" alt="" style={{ height: 18, width: "auto" }} />
             <span style={styles.badgeText}>QuieroComer</span>
-          </div>
+          </a>
 
           <h1 style={styles.title}>{restaurantName}</h1>
 
@@ -89,20 +86,13 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
         {/* Right: Phone */}
         <div style={styles.phoneOuter}>
           <div style={styles.phoneFrame}>
-            <div style={styles.notch} />
-            <div style={styles.statusBar}>
-              <span style={styles.statusTime}>9:41</span>
-              <div style={styles.statusIcons}>
-                <div style={{ width: 16, height: 10, border: "1.5px solid rgba(255,255,255,0.5)", borderRadius: 3, position: "relative" as const }}>
-                  <div style={{ position: "absolute" as const, inset: 2, background: "rgba(255,255,255,0.5)", borderRadius: 1 }} />
-                </div>
-              </div>
+            <div style={{ width: "100%", height: "100%", borderRadius: 36, overflow: "hidden" }}>
+              <iframe
+                src={`/qr/${slug}?embed=mobile`}
+                style={{ width: "100%", height: "100%", border: "none", background: "#0a0a0a" }}
+                title={`Carta de ${restaurantName}`}
+              />
             </div>
-            <iframe
-              src={`/qr/${slug}?embed=mobile`}
-              style={styles.screen}
-              title={`Carta de ${restaurantName}`}
-            />
           </div>
           {/* Phone reflection */}
           <div style={styles.phoneReflection} />
@@ -235,6 +225,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 48,
     display: "flex",
     alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingTop: 20,
     borderTop: "1px solid rgba(255,255,255,0.06)",
@@ -256,11 +247,11 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 1,
   },
   phoneFrame: {
-    width: 340,
+    width: 380,
     height: 700,
     background: "#1a1a1a",
     borderRadius: 48,
-    padding: "12px 10px",
+    padding: "14px 14px 12px",
     boxShadow: "0 50px 120px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.06)",
     position: "relative" as const,
     overflow: "hidden",
@@ -295,13 +286,6 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     gap: 4,
     alignItems: "center",
-  },
-  screen: {
-    width: "100%",
-    height: "100%",
-    border: "none",
-    borderRadius: 36,
-    background: "#f7f7f5",
   },
   phoneReflection: {
     position: "absolute" as const,
