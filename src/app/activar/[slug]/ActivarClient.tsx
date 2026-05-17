@@ -71,7 +71,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .new-price { margin: -2px 0 6px; color: #c084fc; font-size: 38px; font-weight: 950; letter-spacing: -1.5px; }
 .new-price small { font-size: 13px; color: var(--cream-soft); letter-spacing: 0; }
 .offer-text { color: var(--cream-soft); font-size: 12px; line-height: 1.4; margin-bottom: 12px; }
-.cta { width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; background: linear-gradient(135deg, #c084fc, #a855f7); color: #fff; font-size: 15px; font-weight: 950; box-shadow: 0 18px 34px rgba(168,85,247,.22); cursor: pointer; transition: opacity .2s; }
+.cta { width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; font-size: 15px; font-weight: 950; box-shadow: 0 18px 34px rgba(245,164,51,.22); cursor: pointer; transition: opacity .2s; }
 .cta:disabled { opacity: .6; cursor: wait; }
 .secure { margin-top: 13px; text-align: center; color: var(--gray-warm); font-size: 12px; }
 .divider { height: 1px; background: rgba(255,255,255,.08); margin: 32px 0 24px; }
