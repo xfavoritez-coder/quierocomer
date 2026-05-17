@@ -536,11 +536,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             <div style={{ flex: "0 0 auto" }}>
               <span style={{ padding: "7px 10px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
                 <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
-                DEMO
+                PANEL DEMO
               </span>
             </div>
             <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
-              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 15, fontWeight: 400, fontFamily: "var(--font-body)", opacity: demoScrolled ? 0 : 1, transition: "opacity 0.15s ease" }}>Panel de ejemplo</span>
               <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", height: "100%", display: "flex", alignItems: "center", gap: 6, opacity: demoScrolled ? 1 : 0, transition: "opacity 0.15s ease", pointerEvents: demoScrolled ? "auto" : "none" }}>
                 {(selectedRest as any).logoUrl && <img src={(selectedRest as any).logoUrl} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
                 <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 90, fontFamily: "var(--font-body)" }}>{selectedRest.name}</span>

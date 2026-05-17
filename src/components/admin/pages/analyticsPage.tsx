@@ -149,7 +149,21 @@ const DEMO_ANALYTICS = {
       { name: "Bruschetta", count: 236, photo: "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=200&q=80" },
       { name: "Risotto Funghi", count: 217, photo: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=200&q=80" },
     ],
-    topCategories: [{ name: "Pizzas", count: 580 }, { name: "Pastas", count: 340 }, { name: "Postres", count: 220 }],
+    mostDetailed: [
+      { name: "Tiramisú", count: "48s", photo: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&q=80" },
+      { name: "Risotto Funghi", count: "42s", photo: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=200&q=80" },
+      { name: "Pizza Margherita", count: "38s", photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
+      { name: "Pasta Carbonara", count: "35s", photo: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&q=80" },
+      { name: "Bruschetta", count: "31s", photo: "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=200&q=80" },
+    ],
+    leastViewed: [
+      { name: "Agua Mineral", count: "2%", photo: null },
+      { name: "Café Espresso", count: "3%", photo: null },
+      { name: "Pan de Ajo", count: "5%", photo: null },
+      { name: "Té Verde", count: "6%", photo: null },
+      { name: "Jugo Natural", count: "7%", photo: null },
+    ],
+    topCategories: [{ name: "Pizzas", count: "35% · 4m 12s", pct: 35, totalMs: 252000 }, { name: "Pastas", count: "28% · 3m 05s", pct: 28, totalMs: 185000 }, { name: "Postres", count: "18% · 2m 30s", pct: 18, totalMs: 150000 }, { name: "Bebidas", count: "12% · 1m 20s", pct: 12, totalMs: 80000 }, { name: "Entradas", count: "7% · 0m 55s", pct: 7, totalMs: 55000 }],
   },
   searches: [
     { query: "pizza", name: "pizza", count: 15, timesSearched: 15, uniqueVisitors: 12 },
@@ -283,7 +297,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         if (filteredTod.length === 0) return null;
         return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>📊 Cuándo abren la carta</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>📊 Cuándo abren la carta</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10 }}>
             {filteredTod.map((t: any) => {
               const filteredPeak = [...filteredTod].sort((a: any, b: any) => b.count - a.count)[0];
@@ -314,29 +328,32 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         if (filteredHours.length === 0) return null;
         return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600 }}>🌟 Estrella por horario</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>🌟 Estrella por horario</p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato más abierto en cada momento del día.</p>
-          <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${filteredHours.length}, minmax(0, 1fr))` }}>
-            {filteredHours.map((p: any) => (
-              <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700 }}>{p.label}</span>
-                  <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{p.hint}</span>
-                </div>
-                {p.photo ? (
-                  <img src={p.photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} />
-                ) : (
-                  <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
-                )}
-                <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
-                  {(p.sales || 0) > 0 && (
-                    <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+          <div style={{ position: "relative" }}>
+            <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${filteredHours.length}, minmax(0, 1fr))` }}>
+              {filteredHours.map((p: any) => (
+                <div key={p.key} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "10px 8px", background: "var(--adm-hover)", borderRadius: 10, alignItems: "center", textAlign: "center" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", fontWeight: 700 }}>{p.label}</span>
+                    <span style={{ fontFamily: F, fontSize: "0.6rem", color: "var(--adm-text3)" }}>{p.hint}</span>
+                  </div>
+                  {p.photo ? (
+                    <img src={p.photo} alt="" style={{ width: 56, height: 56, borderRadius: 10, objectFit: "cover", boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }} />
+                  ) : (
+                    <div style={{ width: 56, height: 56, borderRadius: 10, background: "var(--adm-card)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽️</div>
                   )}
+                  <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)", margin: 0, fontWeight: 600, lineHeight: 1.2, overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.name}</p>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-accent)", fontWeight: 700 }}>{p.count} vistas</span>
+                    {(p.sales || 0) > 0 && (
+                      <span style={{ fontFamily: F, fontSize: "0.62rem", color: "#16a34a", fontWeight: 700 }}>{p.sales} ventas</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            <div style={{ position: "absolute", top: 0, right: 0, width: 28, height: "100%", background: "linear-gradient(to right, transparent, var(--adm-card))", pointerEvents: "none", borderRadius: "0 14px 14px 0" }} />
           </div>
         </div>
         );
@@ -347,7 +364,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         {/* Top 3 platos vistos */}
         {dishes?.mostViewed && dishes.mostViewed.length > 0 && (
           <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
-            <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>🏆 Top 3 más vistos</p>
+            <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>🏆 Top 3 más vistos</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {dishes.mostViewed.slice(0, 3).map((d: any, i: number) => {
                 const medal = ["🥇", "🥈", "🥉"][i];
@@ -376,7 +393,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
         {/* Quiénes son */}
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>👤 Quiénes son tus clientes</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>👤 Quiénes son tus clientes</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {topDiet && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -402,7 +419,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}
       {topSearch && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "0 0 4px", fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>🔍 Lo más buscado</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>🔍 Lo más buscado</p>
           <p style={{ fontFamily: FB, fontSize: "1.1rem", color: "var(--adm-text)", margin: "0 0 4px", fontWeight: 600 }}>&ldquo;{topSearch.query}&rdquo;</p>
           <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}>Buscado <strong style={{ color: "var(--adm-accent)" }}>{topSearch.count} {topSearch.count === 1 ? "vez" : "veces"}</strong> por {topSearch.uniqueVisitors} {topSearch.uniqueVisitors === 1 ? "persona" : "personas"}</p>
         </div>
@@ -483,7 +500,8 @@ function SortIcon({ active, dir }: { active: boolean; dir: CrossSortDir }) {
 }
 
 function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string }) {
-  const { activePlan } = usePanelSession();
+  const { activePlan, restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const hasToteatAccess = canAccess(activePlan, "toteat_integration");
   const [data, setData] = useState<any>(null);
   const [cross, setCross] = useState<any>(null);
@@ -520,13 +538,23 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   const [popularByHour, setPopularByHour] = useState<any[]>([]);
   const [menuHealth, setMenuHealth] = useState<any>(null);
   useEffect(() => {
+    if (isDemo) {
+      setData({
+        mostViewed: DEMO_ANALYTICS.dishes.mostViewed,
+        mostDetailed: DEMO_ANALYTICS.dishes.mostDetailed,
+        leastViewed: DEMO_ANALYTICS.dishes.leastViewed,
+        topCategories: DEMO_ANALYTICS.dishes.topCategories,
+      });
+      setPopularByHour(DEMO_ANALYTICS.popularByHour);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const p1 = new URLSearchParams({ type: "dishes", from, to });
     const p2 = new URLSearchParams({ from, to });
     const p3 = new URLSearchParams({ type: "popular-by-hour", from, to });
     const p4 = new URLSearchParams({ type: "menu-health" });
     if (rid) { p1.set("restaurantId", rid); p2.set("restaurantId", rid); p3.set("restaurantId", rid); p4.set("restaurantId", rid); }
-    // Solo PREMIUM ve la integración Toteat (carta vs caja, badges)
     const toteatRequests = hasToteatAccess
       ? [
           fetch(`/api/admin/analytics/carta-vs-caja?${p2}`).then(r => r.json()).catch(() => null),
@@ -545,18 +573,17 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       if (c && !c.error) setCross(c);
       if (b && !b.error) setBadges(b);
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatAccess]);
+  }, [rid, from, to, hasToteatAccess, isDemo]);
 
   if (loading) return <SkeletonLoading type="list" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
 
   const renderSection = (s: { title: string; items: any[]; icon: string; unit: string; tooltip?: string }) => (
     <div key={s.title} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-        <span>{s.icon} {s.title}</span>
-        {s.tooltip && <InfoTip text={s.tooltip} />}
-        {s.unit && <span style={{ fontWeight: 400, fontSize: "0.68rem", color: "var(--adm-text3)" }}>({s.unit})</span>}
-      </p>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 12 }}>
+        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: 0, fontWeight: 700 }}>{s.icon} {s.title}</p>
+        {s.unit && <span style={{ fontFamily: F, fontSize: "0.62rem", color: "var(--adm-text3)", fontWeight: 600 }}>{s.unit}</span>}
+      </div>
       {s.items.length === 0 ? (
         <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>Sin datos suficientes</p>
       ) : (
@@ -577,23 +604,23 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
   const mostViewed = {
     title: "Más vistos en la carta",
     items: data.mostViewed || [],
-    icon: "👀",
-    unit: "veces",
-    tooltip: "Cuántas veces se abrió el plato. Si dice '25', el plato fue abierto 25 veces en el período seleccionado.",
+    icon: "🏆",
+    unit: "veces abierto",
+    tooltip: undefined,
   };
   const mostDetailed = {
     title: "Más tiempo viéndolos",
     items: data.mostDetailed || [],
     icon: "🔍",
     unit: "promedio",
-    tooltip: "Cuántos segundos en promedio pasaron mirando la foto y descripción del plato (al hacer click sobre él). Más tiempo = más interés.",
+    tooltip: undefined,
   };
   const leastViewed = {
-    title: "Platos abandonados",
+    title: "Menos vistos",
     items: data.leastViewed || [],
-    icon: "🌱",
+    icon: "📉",
     unit: "% de veces abierto",
-    tooltip: "Platos que casi nadie está mirando. Si dice '3%', solo se abrió en el 3% de las veces que alguien entró a la carta.",
+    tooltip: undefined,
   };
   const topCategories = {
     title: "Categorías más exploradas",
@@ -603,7 +630,7 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
     })),
     icon: "🗂️",
     unit: "% del tiempo en carta",
-    tooltip: "Qué sección de la carta engancha más a los clientes. Si dice 'Sushi 35%', los clientes pasan el 35% del tiempo navegando esa sección.",
+    tooltip: undefined,
   };
 
   // Premium-only insights — gated tanto por plan como por "Toteat connected".
@@ -620,9 +647,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       {/* 🌟 Estrella por horario — qué plato gana en cada momento del día */}
       {popularByHour.length > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
-            <span>🌟 Estrella por horario</span>
-            <InfoTip text="El plato más abierto en cada bucket horario del periodo. Útil para saber qué destacar en cada turno." />
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 4px", fontWeight: 700 }}>
+            🌟 Estrella por horario
           </p>
           <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "0 0 12px" }}>El plato que más se abrió en cada momento del día.</p>
           <div className="adm-hour-grid" style={{ gridTemplateColumns: `repeat(${popularByHour.length}, minmax(0, 1fr))` }}>
@@ -653,8 +679,8 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
       {/* Grid 2x2 con los 4 bloques principales */}
       <div className="adm-cols-2">
         {renderSection(mostViewed)}
-        {renderSection(leastViewed)}
         {renderSection(mostDetailed)}
+        {renderSection(leastViewed)}
         {renderSection(topCategories)}
       </div>
 
@@ -1215,7 +1241,21 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 }
 
 /* ═══ TAB: Sesiones ═══ */
+const DEMO_SESSIONS = {
+  total: 6, page: 1, totalPages: 1,
+  sessions: [
+    { id: "s1", startedAt: new Date(Date.now() - 5 * 60000).toISOString(), durationMs: 94000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 1, view: "impact", qrUser: { name: "María González", email: "maria@email.com" }, guestId: "g1", visitDays: 5, diet: "vegetarian", language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
+    { id: "s2", startedAt: new Date(Date.now() - 18 * 60000).toISOString(), durationMs: 62000, dishesViewed: [{ dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }], searchCount: 0, view: "lista", qrUser: null, anonId: "a1b2c3", guestId: "g2", visitDays: 1, language: "en", userAgent: "Mozilla/5.0 Chrome" },
+    { id: "s3", startedAt: new Date(Date.now() - 35 * 60000).toISOString(), durationMs: 148000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }], searchCount: 2, view: "impact", qrUser: { name: "Carlos Ruiz", email: "carlos@email.com" }, guestId: "g3", visitDays: 8, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
+    { id: "s5", startedAt: new Date(Date.now() - 78 * 60000).toISOString(), durationMs: 120000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }], searchCount: 1, view: "impact", qrUser: { name: "Ana López", email: "ana@email.com" }, guestId: "g5", visitDays: 3, language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
+    { id: "s7", startedAt: new Date(Date.now() - 120 * 60000).toISOString(), durationMs: 185000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }, { dish: { name: "Pan de Ajo", photos: [] }, detailMs: 5000 }], searchCount: 3, view: "impact", qrUser: { name: "Pedro Morales", email: "pedro@email.com" }, guestId: "g7", visitDays: 12, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
+    { id: "s8", startedAt: new Date(Date.now() - 150 * 60000).toISOString(), durationMs: 72000, dishesViewed: [{ dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 0, view: "feed", qrUser: { name: "Laura Silva", email: "laura@email.com" }, guestId: "g8", visitDays: 2, diet: "vegetarian", language: "es", userAgent: "Mozilla/5.0 iPhone Safari", birthdaySaved: true },
+  ],
+};
+
 function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -1232,11 +1272,15 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
   }, [rid]);
 
   useEffect(() => {
+    if (isDemo) {
+      setData(DEMO_SESSIONS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setPage(1);
     const p = new URLSearchParams({ page: "1" });
     if (guestIdFromUrl) {
-      // Cuando filtramos por guest, ignoramos el rango de fechas para ver TODO el historial
       p.set("guestId", guestIdFromUrl);
     } else {
       p.set("from", from);
@@ -1245,9 +1289,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
     if (rid) p.set("restaurantId", rid);
     if (hideEmpty) p.set("hideEmpty", "true");
     fetch(`/api/admin/sessions?${p}`).then(r => r.json()).then(setData).catch(() => {}).finally(() => setLoading(false));
-    // guestIdFromUrl es un string estable derivado del URL — usar guestFilter (objeto)
-    // disparaba el effect en cada render porque la identidad del objeto cambia, causando loop.
-  }, [rid, from, to, guestIdFromUrl, hideEmpty]);
+  }, [rid, from, to, guestIdFromUrl, hideEmpty, isDemo]);
 
   const loadPage = (pg: number) => {
     setLoading(true);
@@ -1304,7 +1346,7 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
         <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", margin: 0 }}>
           {data.total} sesión{data.total !== 1 ? "es" : ""} · Página {data.page} de {data.totalPages}
         </p>
-        {!guestFilter && (
+        {!guestFilter && !isDemo && (
           <label style={{ display: "flex", alignItems: "center", gap: 6, fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", cursor: "pointer" }}>
             <input type="checkbox" checked={hideEmpty} onChange={(e) => setHideEmpty(e.target.checked)} style={{ cursor: "pointer" }} />
             Ocultar escaneos vacíos

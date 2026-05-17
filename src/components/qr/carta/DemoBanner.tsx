@@ -52,7 +52,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         overflow: "visible",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         {/* Left — DEMO badge + info tooltip */}
         <div style={{ flex: "0 0 auto", display: "flex", alignItems: "center", gap: 10 }}>
           <div
@@ -65,7 +65,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             }}
           >
             <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
-            DEMO
+            CARTA DEMO
             {showTip && (
               <>
                 <div onClick={(e) => { e.stopPropagation(); setShowTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />
@@ -89,32 +89,14 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           </div>
         </div>
 
-        {/* Center — Crossfade: "Tu carta está lista" ↔ logo + name */}
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
-          <span style={{
-            color: "rgba(255,255,255,0.3)", fontSize: 16, fontWeight: 400,
-            whiteSpace: "nowrap",
-            opacity: scrolled ? 0 : 1, transition: "opacity 0.15s ease",
-          }}>
-            Tu carta está lista
+        {/* Center — logo + name on scroll */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, opacity: scrolled ? 1 : 0, transition: "opacity 0.15s ease", pointerEvents: scrolled ? "auto" : "none", overflow: "hidden" }}>
+          {restaurantLogo && (
+            <img src={restaurantLogo} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+          )}
+          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 80 }}>
+            {restaurantName}
           </span>
-          <div style={{
-            position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", height: "100%",
-            display: "flex", alignItems: "center", gap: 6,
-            opacity: scrolled ? 1 : 0, transition: "opacity 0.15s ease",
-            pointerEvents: scrolled ? "auto" : "none",
-          }}>
-            {restaurantLogo && (
-              <img src={restaurantLogo} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-            )}
-            <span style={{
-              color: "rgba(255,255,255,0.45)", fontSize: 15, fontWeight: 600,
-              whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-              maxWidth: 100,
-            }}>
-              {restaurantName}
-            </span>
-          </div>
         </div>
 
         {/* Right — Actions */}
