@@ -15,19 +15,36 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
   const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true } });
   const hasToteat = !!restaurantData?.toteatRestaurantId;
 
-  const [sessions, dishes, topViewed, previousInsights] = await Promise.all([
+  const [sessions, dishes, topViewed, previousInsights, suggestionClicks, suggestionShows] = await Promise.all([
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: oneWeekAgo } }, select: { durationMs: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true, categoryId: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: oneWeekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
     prisma.genioInsight.findMany({ where: { restaurantId, status: "expired" }, orderBy: { generatedAt: "desc" }, take: 5, select: { title: true } }),
+    prisma.statEvent.findMany({ where: { restaurantId, eventType: "SUGGESTION_CLICK", createdAt: { gte: oneWeekAgo } }, select: { dishId: true, metadata: true } }),
+    prisma.statEvent.count({ where: { restaurantId, eventType: "SUGGESTION_SHOWN", createdAt: { gte: oneWeekAgo } } }),
   ]);
 
   if (sessions.length < 5) return null;
 
   const dishMap = Object.fromEntries(dishes.map(d => [d.id, d.name]));
   const totalSessions = sessions.length;
-  const abandoned = sessions.filter(s => s.isAbandoned).length;
   const avgDuration = Math.round(sessions.reduce((a, s) => a + (s.durationMs || 0), 0) / sessions.length / 1000);
+
+  // Suggestion stats
+  const suggClicksByDish: Record<string, number> = {};
+  const suggPairs: Record<string, number> = {};
+  for (const e of suggestionClicks) {
+    if (e.dishId) suggClicksByDish[e.dishId] = (suggClicksByDish[e.dishId] || 0) + 1;
+    const meta = e.metadata as any;
+    if (meta?.fromDishId && e.dishId) {
+      const key = `${dishMap[meta.fromDishId] || "?"} → ${dishMap[e.dishId] || "?"}`;
+      suggPairs[key] = (suggPairs[key] || 0) + 1;
+    }
+  }
+  const topSuggClicked = Object.entries(suggClicksByDish).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, c]) => `${dishMap[id] || "?"}: ${c} clicks`).join(", ");
+  const topSuggPairs = Object.entries(suggPairs).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([pair, c]) => `${pair} (${c}x)`).join(", ");
+  const suggRate = suggestionShows > 0 ? Math.round((suggestionClicks.length / suggestionShows) * 100) : 0;
+
   const prevTitles = previousInsights.map(i => i.title).join(", ");
 
   const prompt = `Eres el Genio de QuieroComer. Genera exactamente 1 insight accionable para "${restaurantName}".
@@ -36,7 +53,8 @@ DATOS (esta semana):
 - ${totalSessions} sesiones
 - Duración promedio: ${avgDuration}s
 - Top platos vistos esta semana: ${topViewed.slice(0, 5).map((t: any) => `${dishMap[t.dishId] || "?"}: ${t._count.id} vistas`).join(", ")}
-${hasToteat ? `- DATOS DE VENTAS DISPONIBLES: este local tiene POS conectado, puedes hablar de ventas y conversión` : `- NO hay datos de ventas. Solo puedes hablar de vistas y comportamiento en la carta.`}
+${suggestionShows > 0 ? `- SUGERIDOS: ${suggestionShows} veces mostrados, ${suggestionClicks.length} clicks (${suggRate}% tasa)${topSuggClicked ? `. Más clickeados: ${topSuggClicked}` : ""}${topSuggPairs ? `. Pares: ${topSuggPairs}` : ""}` : "- SUGERIDOS: sin datos aún esta semana"}
+${hasToteat ? `- DATOS DE VENTAS DISPONIBLES: este local tiene POS conectado, puedes hablar de ventas y conversión de sugeridos` : `- NO hay datos de ventas. Solo puedes hablar de vistas, clicks y comportamiento en la carta.`}
 IMPORTANTE: Los números que menciones DEBEN coincidir exactamente con los datos de arriba. No inventes cifras.
 
 ${prevTitles ? `NO REPITAS estos consejos anteriores: ${prevTitles}` : ""}

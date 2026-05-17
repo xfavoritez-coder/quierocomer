@@ -105,23 +105,25 @@ export async function GET(req: NextRequest) {
     });
     const hasToteat = !!restaurant?.toteatRestaurantId;
 
-    // If Toteat, check if clicked suggestions ended up in sales
+    // If Toteat, check if clicked suggestions ended up in sales via ToteatSaleProduct
     let salesFromSuggestions = 0;
     if (hasToteat && clickEvents.length > 0) {
-      // Get sessions where suggestions were clicked
-      const clickSessionIds = [...new Set(clickEvents.map(e => e.dbSessionId).filter(Boolean))];
       const clickedDishIds = [...new Set(clickEvents.map(e => e.dishId).filter(Boolean))];
-
-      if (clickSessionIds.length > 0 && clickedDishIds.length > 0) {
-        // Find Toteat sales for those dishes in those sessions' time range
-        const earliestClick = clickEvents.reduce((min, e) => e.createdAt < min ? e.createdAt : min, clickEvents[0].createdAt);
-        salesFromSuggestions = await prisma.toteatSale.count({
-          where: {
-            restaurantId: validated,
-            dishId: { in: clickedDishIds as string[] },
-            soldAt: { gte: earliestClick, lte: dateTo },
-          },
+      if (clickedDishIds.length > 0) {
+        // Find dishes that have toteat mapping, then check sales
+        const mappedDishes = await prisma.dish.findMany({
+          where: { id: { in: clickedDishIds as string[] }, toteatProductId: { not: null } },
+          select: { toteatProductId: true },
         });
+        const toteatIds = mappedDishes.map(d => d.toteatProductId!);
+        if (toteatIds.length > 0) {
+          salesFromSuggestions = await prisma.toteatSaleProduct.count({
+            where: {
+              toteatProductId: { in: toteatIds },
+              sale: { restaurantId: validated, dateClosed: { gte: dateFrom, lte: dateTo } },
+            },
+          });
+        }
       }
     }
 
