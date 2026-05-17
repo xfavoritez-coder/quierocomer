@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink, Smartphone, Cake, Users } from "lucide-react";
+import { Eye, QrCode, Bell, ExternalLink, Smartphone, Cake, Users, RefreshCw } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 
 const F = "var(--font-display)";
@@ -159,7 +159,7 @@ export default function PanelDashboard() {
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
           <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><Eye size={18} color={GOLD} /></div>
-          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Ver carta<br/>QR</div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Ver mi<br/>carta QR</div>
         </a>
         <Link href="/panel/qr" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
           <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><QrCode size={18} color={GOLD} /></div>
@@ -177,16 +177,17 @@ export default function PanelDashboard() {
         <div style={{ position: "absolute", width: 190, height: 190, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,173,24,0.15), transparent 62%)", right: -80, top: -70, filter: "blur(2px)" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#36e982", boxShadow: "0 0 18px rgba(54,233,130,0.8)", animation: "livePulse 2s ease-in-out infinite" }} />
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em" }}>En vivo hoy</span>
+          <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em" }}>En vivo hoy</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 8, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", fontWeight: 500 }}><RefreshCw size={9} /> hace 13 min</span>
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
           <div>
-            <div style={{ fontFamily: F, fontSize: "4rem", fontWeight: 900, letterSpacing: "-0.08em", lineHeight: 0.85, color: "var(--adm-text)" }}>{data.todayUniqueVisitors}</div>
+            <div style={{ fontFamily: F, fontSize: "3.2rem", fontWeight: 900, letterSpacing: "-0.06em", lineHeight: 0.9, color: "var(--adm-text)" }}>{data.todayUniqueVisitors}</div>
             <div style={{ marginTop: 10, fontFamily: FB, fontSize: "0.92rem", color: "var(--adm-text2)", fontWeight: 700, lineHeight: 1.35 }}>personas han abierto tu carta</div>
           </div>
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 5, opacity: 0.9, height: 54 }}>
-            {[26, 42, 34, 51, 39].map((h, i) => (
-              <div key={i} style={{ width: 9, height: h, borderRadius: 10, background: "linear-gradient(to top, #F4A623, #ffe0a2)" }} />
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 4, opacity: 0.9, height: 42 }}>
+            {[20, 33, 27, 40, 31].map((h, i) => (
+              <div key={i} style={{ width: 7, height: h, borderRadius: 8, background: "linear-gradient(to top, #F4A623, #ffe0a2)" }} />
             ))}
           </div>
         </div>
@@ -203,14 +204,14 @@ export default function PanelDashboard() {
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.todayScans}</strong>
             <Smartphone size={16} color="var(--adm-text3)" />
           </div>
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Sesiones abiertas</span>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Sesiones abiertas</span>
         </div>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{(data as any).todayBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
           </div>
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Cumple registrado</span>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Cumples registrados</span>
         </div>
       </div>
 
@@ -222,7 +223,7 @@ export default function PanelDashboard() {
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.visitsThisWeek}</strong>
             <Users size={16} color="var(--adm-text3)" />
           </div>
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Visitas totales</span>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Visitas totales</span>
           {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% vs anterior</small>}
         </div>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
@@ -230,7 +231,7 @@ export default function PanelDashboard() {
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
           </div>
-          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Cumples registrados</span>
+          <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Cumples registrados</span>
           <small style={{ display: "block", color: "#36e982", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>+12 vs anterior</small>
         </div>
       </div>

@@ -159,8 +159,16 @@ export async function generatePreview(leadId: string): Promise<LeadPreview> {
   let extraction: ExtractionResult;
 
   if (!lead.cartaUrl && lead.cartaFileUrl) {
-    // Photo/document upload — use Vision API for preview
-    extraction = await extractQuickPreviewFromImage(lead.cartaFileUrl);
+    // Document upload — extract text and send to Claude
+    if (lead.cartaType === "DOCUMENT") {
+      const { extractFromDocument } = await import("./document");
+      extraction = await extractFromDocument(lead.cartaFileUrl);
+      // Trim to 5 dishes for preview
+      extraction.dishes = extraction.dishes.slice(0, 5);
+    } else {
+      // Photo upload — use Vision API for preview
+      extraction = await extractQuickPreviewFromImage(lead.cartaFileUrl);
+    }
   } else {
     switch (lead.detectedProvider?.name) {
       case "Justo":

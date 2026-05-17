@@ -136,6 +136,8 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 - ✅ **FabSpeedDial sin backdrop oscuro** — Quitado el overlay negro al abrir la lámpara.
 - ✅ **DemoBanner en page.tsx** — Renderizado una sola vez desde page.tsx para todas las vistas, no dentro de cada vista.
 - ✅ **DemoPlanModal** — Componente wrapper para escuchar show-plan-modal (ya no se usa, reemplazado por /activar).
+- ✅ **Mi Suscripción rediseño** — Dark mode completo (var --adm-*), demo mode con "Premium demo" + oferta $4.900 primer mes (color morado Premium), historial de pagos, método de pago, cancelar separado, sección "Al activar" con items descriptivos.
+- ✅ **Ayuda y soporte rediseño** — Mismo lenguaje visual del panel: cards borderRadius 22, títulos uppercase, subtextos aclaratorios, textarea dark, botón pill amber.
 
 ## Pendientes
 
@@ -192,9 +194,9 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
    - Botones (campanita garzón, selector de vistas): estilo glass blanco liquid, no amber sólido
    - Los botones que ahora son amber también llevarlos a un tono más neutro/liquid
 
-3. **Onboarding demo (tour spotlight)** — Primera vez que el dueño entra a su carta demo, mostrar 3-4 toasts/spotlights explicando: "Este es tu menú", "Aquí cambian las vistas", "El Genio reordena según cada cliente", "Activa para publicarla".
+3. ~~**Onboarding demo (tour spotlight)**~~ — ✅ COMPLETADO. Toasts/spotlights guiados primera vez que el dueño entra a su carta demo.
 
-3. **Panel Demo** — Vista /panel con isDemo flag mostrando stats fake (visitas, platos más vistos) para que el dueño vea el valor antes de activar.
+3. ~~**Panel Demo**~~ — ✅ COMPLETADO. Panel con isDemo flag, stats fake, acceso sin login para dueños demo.
 
 4. **Mejorar diseño de email** — El email actual es funcional pero básico. Mejorar template con preview de la carta, QR, y CTA más atractivo.
 

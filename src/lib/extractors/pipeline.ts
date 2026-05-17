@@ -5,6 +5,7 @@ import { extractJusto } from "./justo";
 import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
 import { extractWithScraper } from "./scrape";
+import { extractFromDocument } from "./document";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult, ExtractedDish } from "./types";
 
@@ -256,8 +257,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   try {
     const providerName = lead.detectedProvider?.name || null;
     const isFileUpload = !lead.cartaUrl && !!lead.cartaFileUrl;
+    const isDocument = lead.cartaType === "DOCUMENT";
     const extraction = isFileUpload
-      ? await extractFromImage(lead.cartaFileUrl!)
+      ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!) : await extractFromImage(lead.cartaFileUrl!))
       : await extractMenu(lead.cartaUrl!, providerName);
 
     if (extraction.dishes.length === 0) {

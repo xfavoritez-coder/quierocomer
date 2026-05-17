@@ -138,7 +138,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
               <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 1 }}>
-                <p style={{ fontFamily: F, fontSize: "11.5px", color: "var(--adm-text3)", fontWeight: 500, margin: 0 }}>QuieroComer</p>
+                <p style={{ fontFamily: F, fontSize: "12.5px", color: "var(--adm-text3)", fontWeight: 500, margin: 0 }}>QuieroComer</p>
                 {activePlan && basePath === "/panel" && (
                   <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px",
                     background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",

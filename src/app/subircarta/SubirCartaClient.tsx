@@ -103,7 +103,8 @@ export default function SubirCartaClient() {
         const total = Math.min(files.length, 10);
         let leadId = "";
         for (let i = 0; i < total; i++) {
-          setUploadProgress(total > 1 ? `Procesando foto ${i + 1} de ${total}...` : "Procesando foto...");
+          const label = mode === "pdf" ? "archivo" : "foto";
+          setUploadProgress(total > 1 ? `Procesando ${label} ${i + 1} de ${total}...` : `Procesando ${label}...`);
           const compressed = await compressImage(files[i]);
           const formData = new FormData();
           formData.append("file", compressed);
