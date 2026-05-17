@@ -148,7 +148,7 @@ export async function GET(req: NextRequest) {
         topViewed,
         leastViewed,
         visitsByHour,
-        panelUrl: "https://quierocomer.cl/panel",
+        panelUrl: r.isDemo ? `https://quierocomer.cl/api/panel/demo-auth?slug=${r.slug}` : "https://quierocomer.cl/panel",
         slug: r.slug,
         isDemo: r.isDemo,
       });

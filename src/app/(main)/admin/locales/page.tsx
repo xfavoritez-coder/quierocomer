@@ -200,6 +200,7 @@ export default function AdminLocales() {
           <div>
             <h2 style={{ fontFamily: F, fontSize: "1.3rem", color: "white", margin: 0 }}>{selected.name}</h2>
             <p style={{ fontFamily: F, fontSize: "0.8rem", color: "#888", margin: 0 }}>/{selected.slug}</p>
+            {selected.owner && <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#aaa", margin: "2px 0 0" }}>{selected.owner.name} · {selected.owner.email}</p>}
           </div>
           <div style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
             <span style={{ fontSize: "0.7rem", padding: "3px 10px", borderRadius: 20,

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { supabase } from "@/lib/supabase";
 import sharp from "sharp";
+import bcrypt from "bcryptjs";
 import { extractJusto } from "./justo";
 import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
@@ -328,6 +329,18 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         website: lead.cartaUrl,
       },
     });
+
+    // Create or link owner from lead data
+    if (lead.email) {
+      let owner = await prisma.restaurantOwner.findFirst({ where: { email: lead.email } });
+      if (!owner) {
+        const passwordHash = await bcrypt.hash(`${slug}2026`, 10);
+        owner = await prisma.restaurantOwner.create({
+          data: { name: lead.ownerName || cleanedName, email: lead.email, passwordHash, role: "OWNER", whatsapp: lead.whatsapp || undefined },
+        });
+      }
+      await prisma.restaurant.update({ where: { id: restaurant.id }, data: { ownerId: owner.id } });
+    }
 
     // Group dishes by category
     const categoryMap = new Map<string, typeof extraction.dishes>();

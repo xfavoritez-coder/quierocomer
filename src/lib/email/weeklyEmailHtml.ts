@@ -221,7 +221,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
   <tr><td align="center" style="padding-bottom:32px;">
     <table cellpadding="0" cellspacing="0" border="0"><tr>
       <td style="border-radius:999px;background:${GOLD};padding:14px 36px;">
-        <a href="${data.panelUrl}" style="color:#fff;font-size:15px;font-weight:800;text-decoration:none;display:block;">Ver más estadísticas en tu panel</a>
+        <a href="${data.panelUrl}" style="color:#fff;font-size:15px;font-weight:800;text-decoration:none;display:block;">Ver más estadísticas en panel</a>
       </td>
     </tr></table>
   </td></tr>
