@@ -47,7 +47,7 @@ export default function AnunciosPage() {
     <div style={{ maxWidth: 640 }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Megaphone size={20} color={GOLD} /> Anuncios</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Megaphone size={20} color="var(--adm-text3)" /> Anuncios</h1>
           <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
             Publica avisos que aparecen en tu carta: horarios, eventos, links a reservas.
           </p>

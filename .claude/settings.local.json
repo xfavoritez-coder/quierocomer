@@ -154,7 +154,10 @@
       "Bash(taskkill //PID 14592 //F)",
       "Bash(grep -n \"viaje\" src/components/admin/pages/analyticsPage.tsx src/components/admin/pages/segmentosPage.tsx src/app/\\\\\\(main\\\\\\)/admin/usuario/[id]/page.tsx src/app/\\\\\\(main\\\\\\)/admin/segmentos/page.tsx src/app/\\\\\\(main\\\\\\)/admin/locales/page.tsx src/app/\\\\\\(main\\\\\\)/admin/genie/page.tsx src/app/\\\\\\(main\\\\\\)/admin/page.tsx)",
       "Bash(sed -i 's/viaje: \"\"Espacial\"\"/impact: \"\"Impact\"\"/g' src/components/admin/pages/analyticsPage.tsx src/app/\\\\\\(main\\\\\\)/admin/usuario/[id]/page.tsx src/app/\\\\\\(main\\\\\\)/admin/genie/page.tsx src/app/\\\\\\(main\\\\\\)/admin/page.tsx)",
-      "Bash(sed -i 's/{ value: \"\"viaje\"\", label: \"\"Espacial\"\" }/{ value: \"\"impact\"\", label: \"\"Impact\"\" }/g' src/components/admin/pages/segmentosPage.tsx src/app/\\\\\\(main\\\\\\)/admin/segmentos/page.tsx src/app/\\\\\\(main\\\\\\)/admin/locales/page.tsx)"
+      "Bash(sed -i 's/{ value: \"\"viaje\"\", label: \"\"Espacial\"\" }/{ value: \"\"impact\"\", label: \"\"Impact\"\" }/g' src/components/admin/pages/segmentosPage.tsx src/app/\\\\\\(main\\\\\\)/admin/segmentos/page.tsx src/app/\\\\\\(main\\\\\\)/admin/locales/page.tsx)",
+      "Bash(taskkill /F /PID 32468)",
+      "Bash(taskkill:*)",
+      "Bash(ls src/app/\\\\\\(panel\\\\\\)/panel/)"
     ]
   }
 }

@@ -446,6 +446,17 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
   const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [demoScrolled, setDemoScrolled] = useState(false);
+
+  // Demo banner scroll effect — must be before any early returns
+  const selectedRestEarly = restaurants.find((r: any) => r.id === selectedRestaurantId);
+  const isDemoEarly = !!selectedRestEarly?.isDemo;
+  useEffect(() => {
+    if (!isDemoEarly) { setDemoScrolled(false); return; }
+    const onScroll = () => setDemoScrolled(window.scrollY > 20);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [isDemoEarly]);
   const [planModalInitialTab, setPlanModalInitialTab] = useState<"GOLD" | "PREMIUM" | undefined>(undefined);
 
   useEffect(() => {
@@ -488,7 +499,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       <div style={{ minHeight: "100vh", background: "var(--adm-bg, #0e0e0e)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
           <div style={{ fontSize: "2.2rem", animation: "panelLoadFloat 1.5s ease-in-out infinite" }}>🧞</div>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text2, #888)", fontWeight: 500 }}>Cargando tu panel...</p>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text, #f0f0f0)", fontWeight: 500 }}>Cargando tu panel...</p>
         </div>
         <style>{`
           @keyframes panelLoadFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.7; } 50% { transform: translateY(-8px) scale(1.1); opacity: 1; } }
@@ -514,8 +525,8 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     logout,
   };
 
-  const selectedRest = restaurants.find((r: any) => r.id === selectedRestaurantId);
-  const isDemo = !!selectedRest?.isDemo;
+  const selectedRest = selectedRestEarly;
+  const isDemo = isDemoEarly;
 
   return (
     <SessionContext.Provider value={ctxValue}>
@@ -528,8 +539,12 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
                 DEMO
               </span>
             </div>
-            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
-              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 15, fontWeight: 400, fontFamily: "var(--font-body)" }}>Panel de ejemplo</span>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 15, fontWeight: 400, fontFamily: "var(--font-body)", opacity: demoScrolled ? 0 : 1, transition: "opacity 0.15s ease" }}>Panel de ejemplo</span>
+              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", height: "100%", display: "flex", alignItems: "center", gap: 6, opacity: demoScrolled ? 1 : 0, transition: "opacity 0.15s ease", pointerEvents: demoScrolled ? "auto" : "none" }}>
+                {(selectedRest as any).logoUrl && <img src={(selectedRest as any).logoUrl} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
+                <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 90, fontFamily: "var(--font-body)" }}>{selectedRest.name}</span>
+              </div>
             </div>
             <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
               <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" }}>Ver carta</a>

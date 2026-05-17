@@ -30,21 +30,21 @@ const DEMO_DATA: DashData = {
     { name: "pasta", count: 12 },
     { name: "postre", count: 8 },
   ],
-  starDish: { name: "Pizza Margherita", count: 42, photo: null },
+  starDish: { name: "Pizza Margherita", count: 42, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
   todayScans: 24,
   todayWaiterCalls: 3,
   todayWaiterPending: 1,
   lastScanAt: new Date(Date.now() - 4 * 60000).toISOString(),
   todayUniqueVisitors: 18,
-  weekBirthdays: 3,
+  todayBirthdays: 4,
+  weekBirthdays: 21,
   genioToday: 7,
   todayAvgDuration: 82,
 };
 
 const DEMO_INSIGHTS = [
-  { id: "1", type: "engagement", title: "Tus clientes exploran el menú", body: "El promedio de permanencia es 1m 34s. Las fotos y descripciones están generando interés. Sigue actualizándolas.", priority: 1 },
-  { id: "2", type: "menu_gap", title: "Considera agregar más postres", body: "Las búsquedas de postres representan el 12% del total pero tu carta tiene pocas opciones. Agregar más podría subir el ticket promedio.", priority: 2 },
-  { id: "3", type: "opportunity", title: "Destaca tu plato más visto", body: "Tu plato estrella recibe muchas vistas pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 3 },
+  { id: "2", type: "menu_gap", title: "Considera agregar más postres", body: "Las búsquedas de postres representan el 12% del total pero tu carta tiene pocas opciones. Agregar más podría subir el ticket promedio.", priority: 1 },
+  { id: "3", type: "opportunity", title: "Destaca Pizza Margherita", body: "Tu plato estrella recibe muchas vistas pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 2 },
 ];
 
 interface DashData {
@@ -55,7 +55,7 @@ interface DashData {
   starDish: { name: string; count: number; photo: string | null } | null;
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; todayUniqueVisitors: number;
-  weekBirthdays: number; genioToday: number; todayAvgDuration: number;
+  todayBirthdays?: number; weekBirthdays: number; genioToday: number; todayAvgDuration: number;
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
@@ -154,12 +154,6 @@ export default function PanelDashboard() {
   return (
     <div style={{ maxWidth: 640 }}>
 
-      {/* ═══ Saludo ═══ */}
-      <div style={{ marginBottom: 18 }}>
-        <h2 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1.08, letterSpacing: "-0.03em" }}>
-          {greeting}, {ownerName?.split(" ")[0] || ""}
-        </h2>
-      </div>
 
       {/* ═══ Quick actions ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
@@ -205,14 +199,14 @@ export default function PanelDashboard() {
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Hoy</h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.todayScans}</strong>
             <Smartphone size={16} color="var(--adm-text3)" />
           </div>
           <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Sesiones abiertas</span>
         </div>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{(data as any).todayBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
           </div>
@@ -224,7 +218,7 @@ export default function PanelDashboard() {
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Esta semana</h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.visitsThisWeek}</strong>
             <Users size={16} color="var(--adm-text3)" />
           </div>
@@ -232,11 +226,12 @@ export default function PanelDashboard() {
           {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% vs anterior</small>}
         </div>
         <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
           </div>
           <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Cumples registrados</span>
+          <small style={{ display: "block", color: "#36e982", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>+12 vs anterior</small>
         </div>
       </div>
 

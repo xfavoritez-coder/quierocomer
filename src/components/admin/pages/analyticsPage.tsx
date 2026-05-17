@@ -126,8 +126,45 @@ function HeroKpi({ icon, value, label, sub, color, gradient }: { icon: string; v
   );
 }
 
+const DEMO_ANALYTICS = {
+  metrics: { totalVisitors: 284, totalSessions: 903, avgVisitsPerGuest: 3.2, birthdaysSaved: 21, birthdayPct: 7 },
+  clientes: {
+    totalSessions: 903,
+    timeOfDay: [
+      { key: "MORNING", label: "Mañana", hint: "6-11h", count: 18 },
+      { key: "LUNCH", label: "Almuerzo", hint: "11-15h", count: 82 },
+      { key: "AFTERNOON", label: "Tarde", hint: "15-19h", count: 28 },
+      { key: "DINNER", label: "Cena", hint: "19-23h", count: 105 },
+      { key: "LATE", label: "Noche", hint: "23+", count: 15 },
+    ],
+    dietProfile: { diets: [{ name: "Omnívoro", count: 58 }, { name: "Vegetariano", count: 24 }, { name: "Vegano", count: 12 }], restrictions: [{ name: "Sin gluten", count: 8 }, { name: "Sin lactosa", count: 5 }] },
+    acquisition: { devices: [{ name: "iPhone", count: 42 }, { name: "Android", count: 38 }, { name: "Desktop", count: 12 }] },
+  },
+  dishes: {
+    mostViewed: [
+      { name: "Pizza Margherita", count: 297, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
+      { name: "Pasta Carbonara", count: 259, photo: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&q=80" },
+      { name: "Tiramisú", count: 249, photo: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&q=80" },
+      { name: "Bruschetta", count: 236, photo: "https://images.unsplash.com/photo-1572695157366-5e585ab2b69f?w=200&q=80" },
+      { name: "Risotto Funghi", count: 217, photo: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=200&q=80" },
+    ],
+    topCategories: [{ name: "Pizzas", count: 580 }, { name: "Pastas", count: 340 }, { name: "Postres", count: 220 }],
+  },
+  searches: [
+    { query: "pizza", name: "pizza", count: 15, timesSearched: 15, uniqueVisitors: 12 },
+    { query: "vegano", name: "vegano", count: 12, timesSearched: 12, uniqueVisitors: 9 },
+    { query: "postre", name: "postre", count: 8, timesSearched: 8, uniqueVisitors: 7 },
+    { query: "gluten", name: "gluten", count: 5, timesSearched: 5, uniqueVisitors: 4 },
+  ],
+  popularByHour: [
+    { key: "almuerzo", label: "12-15h", hint: "almuerzo", name: "Pizza Margherita", count: 78, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
+    { key: "cena", label: "19-22h", hint: "cena", name: "Pasta Carbonara", count: 65, photo: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&q=80" },
+  ],
+};
+
 function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }) {
-  const { activePlan } = usePanelSession();
+  const { activePlan, restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const hasToteatPlan = canAccess(activePlan, "toteat_integration");
   const [metrics, setMetrics] = useState<any>(null);
   const [clientes, setClientes] = useState<any>(null);
@@ -138,13 +175,21 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setMetrics(DEMO_ANALYTICS.metrics);
+      setClientes(DEMO_ANALYTICS.clientes);
+      setDishes(DEMO_ANALYTICS.dishes);
+      setSearches(DEMO_ANALYTICS.searches);
+      setPopularByHour(DEMO_ANALYTICS.popularByHour);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const make = (type: string) => {
       const p = new URLSearchParams({ type, from, to });
       if (rid) p.set("restaurantId", rid);
       return fetch(`/api/admin/analytics?${p}`).then(r => r.json()).catch(() => null);
     };
-    // carta-vs-caja gated por plan PREMIUM en el endpoint — pedimos solo si aplica
     const crossPromise = hasToteatPlan && rid
       ? (() => {
           const p = new URLSearchParams({ from, to, restaurantId: rid });
@@ -159,7 +204,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         setCross(cv && !cv.error ? cv : null);
       })
       .finally(() => setLoading(false));
-  }, [rid, from, to, hasToteatPlan]);
+  }, [rid, from, to, hasToteatPlan, isDemo]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!metrics) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos</p>;
@@ -1560,6 +1605,8 @@ export default function AnalyticsDashboard() {
   const setCustomTo = (v: string) => updateParams({ to: v || null, preset: "custom" });
 
   const effectiveRid = isSuper ? restaurantId : (selectedRestaurantId || "");
+  const selectedRest = restaurants.find(r => r.id === effectiveRid);
+  const isDemo = !!(selectedRest as any)?.isDemo;
   const { from: dateFrom, to: dateTo } = getDateRange(datePreset, customFrom, customTo);
 
   const allTabs = [...TABS_BASIC, ...TABS_ADVANCED];
@@ -1568,7 +1615,7 @@ export default function AnalyticsDashboard() {
     <div style={{ maxWidth: 760 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><BarChart3 size={20} color={GOLD} /> Analytics</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><BarChart3 size={20} color="var(--adm-text3)" /> Analytics</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>Métricas de tu restaurante</p>
         </div>
         {isSuper && (

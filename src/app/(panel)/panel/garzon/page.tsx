@@ -38,7 +38,7 @@ export default function GarzonPage() {
   return (
     <PlanPageGate feature="waiter">
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}><Bell size={20} color={GOLD} /> Llamar garzón</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 8px", display: "flex", alignItems: "center", gap: 8 }}><Bell size={20} color="var(--adm-text3)" /> Llamar garzón</h1>
       <p style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 24px", lineHeight: 1.5 }}>
         Permite a tus clientes llamar al garzón desde su celular. Tu equipo recibe la notificación al instante.
       </p>

@@ -110,7 +110,7 @@ export default function AjustesPage() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Settings size={20} color={GOLD} /> Ajustes</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}><Settings size={20} color="var(--adm-text3)" /> Ajustes</h1>
       <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 20px" }}>Configura las opciones de tu carta y local</p>
 
       {/* Vista por defecto — FIRST */}

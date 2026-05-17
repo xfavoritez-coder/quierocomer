@@ -1259,7 +1259,7 @@ export default function AdminMenus() {
     <div style={{ maxWidth: 800 }}>
       <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color={GOLD} /> Mi Carta</h1>
+          <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, display: "flex", alignItems: "center", gap: 8 }}><UtensilsCrossed size={20} color="var(--adm-text3)" /> Mi Carta</h1>
           <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "4px 0 0" }}>{filtered.length} productos · {categories.length} categorías</p>
         </div>
         <RestaurantPicker />
@@ -1558,7 +1558,7 @@ export default function AdminMenus() {
                   {d.photos?.[0] ? (
                     <img src={d.photos[0]} alt="" onClick={() => setPhotoModal(d.photos[0])} style={{ width: 56, height: 56, borderRadius: 8, objectFit: "cover", cursor: "zoom-in", display: "block" }} />
                   ) : (
-                    <div style={{ width: 56, height: 56, borderRadius: 8, background: "#eee" }} />
+                    <div style={{ width: 56, height: 56, borderRadius: 8, background: "var(--adm-card-border)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "var(--adm-text3)" }}>🍽️</div>
                   )}
                   {/* Badge destacado en la foto */}
                   {isRec && (

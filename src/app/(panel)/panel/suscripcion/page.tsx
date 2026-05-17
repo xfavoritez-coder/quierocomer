@@ -105,7 +105,7 @@ export default function SuscripcionPage() {
 
   return (
     <div style={{ padding: "24px 16px", maxWidth: 720, margin: "0 auto", fontFamily: FB }}>
-      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color={GOLD} /> Mi suscripción</h1>
+      <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 6px", display: "flex", alignItems: "center", gap: 8 }}><CreditCard size={20} color="var(--adm-text3)" /> Mi suscripción</h1>
       <p style={{ fontSize: "0.92rem", color: "var(--adm-text2)", margin: "0 0 24px" }}>Estado de tu plan, pagos y opciones</p>
 
       {/* Card estado */}
