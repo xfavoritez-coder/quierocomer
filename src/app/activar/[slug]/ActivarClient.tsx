@@ -310,7 +310,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <span className="old-price">$49.900</span>
           <div className="new-price">$4.900 <small>CLP primer mes</small></div>
           <div className="offer-text">
-            Activa multidioma, estadísticas, automatizaciones, cumpleaños y más.
+            Activa multidioma, estadísticas, automatizaciones, capta cumpleaños y más.
           </div>
           {!done ? (
             <button className="cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
