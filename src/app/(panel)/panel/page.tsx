@@ -82,7 +82,28 @@ export default function PanelDashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
+  const [insightsDismissed, setInsightsDismissed] = useState(false);
   const welcomeShown = useRef(false);
+
+  // Check weekly dismiss from localStorage
+  useEffect(() => {
+    const dismissedWeek = localStorage.getItem("qc_insights_dismissed_week");
+    if (dismissedWeek) {
+      // Get current ISO week number
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const currentWeek = `${now.getFullYear()}-${Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)}`;
+      if (dismissedWeek === currentWeek) setInsightsDismissed(true);
+    }
+  }, []);
+
+  const dismissInsights = () => {
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const currentWeek = `${now.getFullYear()}-${Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)}`;
+    localStorage.setItem("qc_insights_dismissed_week", currentWeek);
+    setInsightsDismissed(true);
+  };
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const isDemo = !!(selectedRestaurant as any)?.isDemo;
@@ -154,6 +175,50 @@ export default function PanelDashboard() {
   return (
     <div style={{ maxWidth: 640 }}>
 
+      {/* ═══ Saludo desktop ═══ */}
+      <p className="panel-greeting" style={{
+        fontFamily: F, fontSize: "1.3rem", fontWeight: 900, color: "var(--adm-text)",
+        margin: "0 0 20px", letterSpacing: "-0.03em",
+        display: "none", // hidden by default (mobile)
+      }}>
+        {greeting}, {ownerName?.split(" ")[0] || ""}
+      </p>
+      <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
+
+      {/* ═══ Consejo de la semana (moved up) ═══ */}
+      {insights.length > 0 && !insightsDismissed && (
+        <div style={{ marginBottom: 20, position: "relative" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
+            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>🧞 Consejo de la semana</h3>
+            <button
+              onClick={dismissInsights}
+              title="Ocultar hasta la próxima semana"
+              style={{
+                width: 24, height: 24, borderRadius: 8, border: "1px solid var(--adm-card-border)",
+                background: "var(--adm-card)", color: "var(--adm-text3)", fontSize: 13,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                cursor: "pointer", lineHeight: 1,
+              }}
+            >✕</button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {insights.map(ins => {
+              const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
+              return (
+                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
+                    <div>
+                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ═══ Quick actions ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
@@ -274,28 +339,6 @@ export default function PanelDashboard() {
         </div>
       )}
 
-      {/* ═══ Consejos semanales del Genio ═══ */}
-      {insights.length > 0 && (
-        <div style={{ marginBottom: 14 }}>
-          <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>🧞 Consejos semanales del Genio</h3>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {insights.map(ins => {
-              const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
-              return (
-                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
-                    <div>
-                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
-                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       </PlanGate>
     </div>
