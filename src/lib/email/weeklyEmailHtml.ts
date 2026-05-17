@@ -113,10 +113,9 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
   ${data.isDemo ? `
   <!-- Demo banner -->
   <tr><td style="padding:0 0 16px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:rgba(244,166,35,0.08);border:1px solid rgba(244,166,35,0.2);border-radius:12px;">
-      <tr><td style="padding:12px 16px;text-align:center;">
-        <span style="font-size:12px;font-weight:700;color:${GOLD};">Vista previa</span><br/>
-        <span style="font-size:11px;color:#8a7550;">Este es un ejemplo del correo que recibirás cada semana con datos reales de tu carta. Los datos mostrados aquí son de ejemplo.</span>
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:rgba(244,166,35,0.06);border:1px dashed rgba(244,166,35,0.25);border-radius:12px;">
+      <tr><td style="padding:14px 18px;text-align:center;">
+        <span style="font-size:13px;color:#8a7550;line-height:1.6;">🧞 Este es un ejemplo de tu informe semanal.<br/>Al activar tu carta, recibirás uno como este cada lunes con <strong style="color:${GOLD};">tus datos reales</strong>.</span>
       </td></tr>
     </table>
   </td></tr>` : ""}

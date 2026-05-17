@@ -113,13 +113,13 @@ export async function GET(req: NextRequest) {
     // For demo restaurants: use fake data based on their real dishes
     const dishes = await prisma.dish.findMany({
       where: { restaurantId: restaurant.id, isActive: true },
-      select: { name: true, photoUrl: true },
+      select: { name: true, photos: true },
       orderBy: { position: "asc" },
       take: 5,
     });
 
     const topViewed = dishes.slice(0, 3).map((d, i) => ({
-      name: d.name, count: [42, 35, 28][i] || 20, photo: d.photoUrl || null,
+      name: d.name, count: [42, 35, 28][i] || 20, photo: d.photos?.[0] || null,
     }));
     const leastViewed = dishes.slice(-3).map((d, i) => ({
       name: d.name, count: [3, 5, 7][i] || 4,
