@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Users, Cake } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { canAccess } from "@/lib/plans";
@@ -113,15 +113,15 @@ function formatDuration(ms: number) {
 type Tab = "resumen" | "platos" | "clientes" | "garzon" | "busquedas" | "sesiones";
 
 /* ═══ TAB: Resumen ═══ */
-function HeroKpi({ icon, value, label, sub, color, gradient }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string }) {
+function HeroKpi({ icon, value, label, sub, color, gradient, lucideIcon }: { icon: string; value: string | number; label: string; sub?: string; color: string; gradient: string; lucideIcon?: React.ReactNode }) {
   return (
-    <div style={{ background: gradient, border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)", position: "relative", overflow: "hidden" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
-        <span style={{ fontSize: "1.3rem", opacity: 0.9 }}>{icon}</span>
-        <span style={{ fontFamily: F, fontSize: "1.8rem", color, fontWeight: 700, lineHeight: 1 }}>{value}</span>
+    <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{value}</strong>
+        {lucideIcon || <span style={{ fontSize: "1rem", opacity: 0.5 }}>{icon}</span>}
       </div>
-      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0", fontWeight: 600 }}>{label}</p>
-      {sub && <p style={{ fontFamily: F, fontSize: "0.64rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{sub}</p>}
+      <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", fontWeight: 700 }}>{label}</span>
+      {sub && <small style={{ display: "block", fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 6, opacity: 0.7 }}>{sub}</small>}
     </div>
   );
 }
@@ -131,7 +131,7 @@ const DEMO_ANALYTICS = {
   clientes: {
     totalSessions: 903,
     timeOfDay: [
-      { key: "MORNING", label: "Mañana", hint: "6-11h", count: 18 },
+      { key: "MORNING", label: "Mañana", hint: "6-11h", count: 0 },
       { key: "LUNCH", label: "Almuerzo", hint: "11-15h", count: 82 },
       { key: "AFTERNOON", label: "Tarde", hint: "15-19h", count: 28 },
       { key: "DINNER", label: "Cena", hint: "19-23h", count: 105 },
@@ -139,6 +139,7 @@ const DEMO_ANALYTICS = {
     ],
     dietProfile: { diets: [{ name: "Omnívoro", count: 58 }, { name: "Vegetariano", count: 24 }, { name: "Vegano", count: 12 }], restrictions: [{ name: "Sin gluten", count: 8 }, { name: "Sin lactosa", count: 5 }] },
     acquisition: { devices: [{ name: "iPhone", count: 42 }, { name: "Android", count: 38 }, { name: "Desktop", count: 12 }] },
+    languages: [{ code: "es", count: 780 }, { code: "en", count: 98 }, { code: "pt", count: 25 }],
   },
   dishes: {
     mostViewed: [
@@ -157,8 +158,9 @@ const DEMO_ANALYTICS = {
     { query: "gluten", name: "gluten", count: 5, timesSearched: 5, uniqueVisitors: 4 },
   ],
   popularByHour: [
-    { key: "almuerzo", label: "12-15h", hint: "almuerzo", name: "Pizza Margherita", count: 78, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
-    { key: "cena", label: "19-22h", hint: "cena", name: "Pasta Carbonara", count: 65, photo: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&q=80" },
+    { key: "almuerzo", label: "12-15h", hint: "apertura", name: "Pizza Margherita", count: 78, photo: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=200&q=80" },
+    { key: "tarde", label: "15-19h", hint: "tarde", name: "Tiramisú", count: 45, photo: "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=200&q=80" },
+    { key: "cena", label: "19-23h", hint: "cierre", name: "Pasta Carbonara", count: 65, photo: "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=200&q=80" },
   ],
 };
 
@@ -246,8 +248,8 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
     <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
       {/* ═══ Hero KPIs (2×2) ═══ */}
       <div className="adm-kpi-grid">
-        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones · ${metrics.avgVisitsPerGuest} prom. por persona`} color="var(--adm-text)" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)" />
-        <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="#7fbfdc" gradient="linear-gradient(135deg, var(--adm-card) 0%, rgba(127,191,220,0.10) 100%)" />
+        <HeroKpi icon="👥" value={metrics.totalVisitors} label="Visitantes únicos" sub={`${metrics.totalSessions} sesiones`} color="var(--adm-text)" gradient="" lucideIcon={<Users size={16} color="var(--adm-text3)" />} />
+        <HeroKpi icon="🎂" value={metrics.birthdaysSaved || 0} label="Registraron cumpleaños" sub={metrics.totalVisitors > 0 ? `${metrics.birthdayPct || 0}% de tus visitantes` : ""} color="var(--adm-text)" gradient="" lucideIcon={<Cake size={16} color="var(--adm-text3)" />} />
       </div>
 
       {/* ═══ Plato estrella + hora dorada ═══ */}
@@ -374,19 +376,12 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
         {/* Quiénes son */}
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>👤 Quiénes son</p>
+          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>👤 Quiénes son tus clientes</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {topDevice && totalDevices > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.95rem" }}>{topDevice.name === "mobile" ? "📱" : topDevice.name === "desktop" ? "💻" : "📟"}</span>
-                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Mayoría usa <strong style={{ color: "var(--adm-text)" }}>{topDevice.name === "mobile" ? "celular" : topDevice.name === "desktop" ? "escritorio" : "tablet"}</strong></span>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{Math.round((topDevice.count / totalDevices) * 100)}%</span>
-              </div>
-            )}
             {topDiet && (
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ fontSize: "0.95rem" }}>🥗</span>
-                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Dieta más común <strong style={{ color: "var(--adm-text)" }}>{topDiet.label}</strong></span>
+                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Dieta más común: <strong style={{ color: "var(--adm-text)" }}>{topDiet.name || topDiet.label}</strong></span>
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topDiet.count}</span>
               </div>
             )}
@@ -397,13 +392,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topRestriction.count}</span>
               </div>
             )}
-            {clientes?.languages && clientes.languages.length > 0 && (
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: "0.95rem" }}>🌐</span>
-                <span style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)", flex: 1 }}>Idiomas <strong style={{ color: "var(--adm-text)" }}>{clientes.languages.slice(0, 3).map((l: any) => l.code.toUpperCase()).join(" · ")}</strong></span>
-              </div>
-            )}
-            {!topDevice && !topDiet && !topRestriction && (!clientes?.languages || clientes.languages.length === 0) && (
+            {!topDiet && !topRestriction && (!clientes?.languages || clientes.languages.length === 0) && (
               <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0 }}>Aún no hay suficientes datos demográficos</p>
             )}
           </div>
