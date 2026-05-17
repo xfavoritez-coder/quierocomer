@@ -68,7 +68,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .price-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .old-price { color: rgba(232,221,200,.5); font-size: 20px; font-weight: 900; text-decoration: line-through; text-decoration-thickness: 2px; }
 .discount { position: absolute; top: 16px; right: 16px; border-radius: 999px; padding: 8px 10px; background: rgba(168,85,247,.14); border: 1px solid rgba(168,85,247,.35); color: #c084fc; font-size: 11px; font-weight: 950; }
-.new-price { margin: -2px 0 6px; color: #c084fc; font-size: 38px; font-weight: 950; letter-spacing: -1.5px; }
+.new-price { margin: -2px 0 6px; color: var(--amber); font-size: 38px; font-weight: 950; letter-spacing: -1.5px; }
 .new-price small { font-size: 13px; color: var(--cream-soft); letter-spacing: 0; }
 .offer-text { color: var(--cream-soft); font-size: 12px; line-height: 1.4; margin-bottom: 12px; }
 .cta { width: 100%; border: 0; border-radius: 999px; padding: 14px 18px; background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; font-size: 15px; font-weight: 950; box-shadow: 0 18px 34px rgba(245,164,51,.22); cursor: pointer; transition: opacity .2s; }
@@ -307,7 +307,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div className="offer" style={{ position: "relative", zIndex: 3, margin: "-4px 6px 0", textAlign: "left" }}>
           <span className="discount">-90% dcto</span>
           <div className="offer-label">Oferta plan Premium</div>
-          <span className="old-price">$49.900 <span style={{ fontSize: 12, color: "rgba(232,221,200,.35)", textDecoration: "none", fontWeight: 500, letterSpacing: ".02em" }}>neto</span></span>
+          <span className="old-price">$49.900</span>
           <div className="new-price">$4.900 <small>CLP primer mes</small></div>
           <div className="offer-text">
             Activa multidioma, estadísticas, automatizaciones, cumpleaños y más.
