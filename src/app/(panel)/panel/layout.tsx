@@ -537,7 +537,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #ffb833, #f5a623)", textAlign: "center" }}>
-            <span style={{ fontSize: 15, fontWeight: 700, color: "#1a0800", fontFamily: "var(--font-display)" }}>Actívala y muéstrasela al mundo</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: "#1a0800", fontFamily: "var(--font-display)" }}>Datos de ejemplo · Al activar verás tus estadísticas reales</span>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
           </div>
         </div>

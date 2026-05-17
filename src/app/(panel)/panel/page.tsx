@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink } from "lucide-react";
+import { Eye, QrCode, Bell, ExternalLink, Smartphone, Cake, Users } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 
 const F = "var(--font-display)";
@@ -42,8 +42,9 @@ const DEMO_DATA: DashData = {
 };
 
 const DEMO_INSIGHTS = [
-  { id: "1", type: "engagement", title: "Tus clientes exploran el menú", body: "El promedio de permanencia es 1m 34s. Esto indica que las fotos y descripciones generan interés.", priority: 1 },
-  { id: "2", type: "menu_gap", title: "Agrega más postres", body: "El 12% de las búsquedas son por postres pero solo tienes 2 opciones. Agregar más podría aumentar el ticket promedio.", priority: 2 },
+  { id: "1", type: "engagement", title: "Tus clientes exploran el menú", body: "El promedio de permanencia es 1m 34s. Las fotos y descripciones están generando interés. Sigue actualizándolas.", priority: 1 },
+  { id: "2", type: "menu_gap", title: "Considera agregar más postres", body: "Las búsquedas de postres representan el 12% del total pero tu carta tiene pocas opciones. Agregar más podría subir el ticket promedio.", priority: 2 },
+  { id: "3", type: "opportunity", title: "Destaca tu plato más visto", body: "Tu plato estrella recibe muchas vistas pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero.", priority: 3 },
 ];
 
 interface DashData {
@@ -146,167 +147,149 @@ export default function PanelDashboard() {
   const topViewed = data.topDishesViewed || [];
   const maxCount = topViewed[0]?.count || 1;
 
+  const rest = restaurants.find(r => r.id === selectedRestaurantId);
+  const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}${(rest as any).qrToken ? `?t=${(rest as any).qrToken}` : ""}` : "#";
+  const delta = data.visitsDelta;
+
   return (
     <div style={{ maxWidth: 640 }}>
-      {/* ═══ Demo indicator ═══ */}
-      {isDemo && (
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, padding: "10px 14px",
-          background: "linear-gradient(90deg, rgba(244,166,35,0.08) 0%, rgba(244,166,35,0.03) 100%)",
-          border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, marginBottom: 14,
-        }}>
-          <span style={{ fontSize: 14 }}>📊</span>
-          <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", margin: 0 }}>
-            Estos son datos de ejemplo. Al activar tu carta verás las estadísticas reales de tus clientes.
-          </p>
-        </div>
-      )}
 
       {/* ═══ Saludo ═══ */}
-      <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 600, color: "var(--adm-text)", margin: "0 0 14px" }}>
-        {greeting}, {ownerName?.split(" ")[0] || ""} 👋
-      </p>
+      <div style={{ marginBottom: 18 }}>
+        <h2 style={{ fontFamily: F, fontSize: "1.5rem", fontWeight: 800, color: "var(--adm-text)", margin: 0, lineHeight: 1.08, letterSpacing: "-0.03em" }}>
+          {greeting}, {ownerName?.split(" ")[0] || ""}
+        </h2>
+      </div>
+
+      {/* ═══ Quick actions ═══ */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
+          <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><Eye size={18} color={GOLD} /></div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Ver carta<br/>QR</div>
+        </a>
+        <Link href="/panel/qr" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
+          <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><QrCode size={18} color={GOLD} /></div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Imprimir<br/>códigos QR</div>
+        </Link>
+      </div>
 
       {/* ═══ HERO — En vivo ═══ */}
-      <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.08) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px 22px", marginBottom: 14, position: "relative", overflow: "hidden" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 12 }}>
-          <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#4ade80", animation: "livePulse 2s ease-in-out infinite" }} />
-          <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600 }}>En vivo · {timeAgo(data.lastScanAt)}</span>
+      <div style={{
+        position: "relative", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28,
+        padding: 24, minHeight: 160, marginBottom: 24,
+        background: "linear-gradient(135deg, rgba(255,173,24,0.10), rgba(255,173,24,0.02) 46%, rgba(255,255,255,0.01)), var(--adm-card)",
+        boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+      }}>
+        <div style={{ position: "absolute", width: 190, height: 190, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,173,24,0.15), transparent 62%)", right: -80, top: -70, filter: "blur(2px)" }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#36e982", boxShadow: "0 0 18px rgba(54,233,130,0.8)", animation: "livePulse 2s ease-in-out infinite" }} />
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em" }}>En vivo hoy</span>
         </div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-          <span style={{ fontFamily: F, fontSize: "2.8rem", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1 }}>{data.todayUniqueVisitors}</span>
-          <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text2)", margin: 0, fontWeight: 600 }}>visitantes hoy</p>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
+          <div>
+            <div style={{ fontFamily: F, fontSize: "4rem", fontWeight: 900, letterSpacing: "-0.08em", lineHeight: 0.85, color: "var(--adm-text)" }}>{data.todayUniqueVisitors}</div>
+            <div style={{ marginTop: 10, fontFamily: FB, fontSize: "0.92rem", color: "var(--adm-text2)", fontWeight: 700, lineHeight: 1.35 }}>personas han abierto tu carta</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 5, opacity: 0.9, height: 54 }}>
+            {[26, 42, 34, 51, 39].map((h, i) => (
+              <div key={i} style={{ width: 9, height: h, borderRadius: 10, background: "linear-gradient(to top, #F4A623, #ffe0a2)" }} />
+            ))}
+          </div>
         </div>
         <style>{`@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
       </div>
 
-      {/* ═══ Quick actions ═══ */}
-      {(() => {
-        const rest = restaurants.find(r => r.id === selectedRestaurantId);
-        const cartaUrl = rest ? `https://quierocomer.cl/qr/${rest.slug}${(rest as any).qrToken ? `?t=${(rest as any).qrToken}` : ""}` : "#";
-        return (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
-            <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "12px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none", position: "relative" }}>
-              <ExternalLink size={10} color="var(--adm-text3)" style={{ position: "absolute", top: 6, right: 6 }} />
-              <Eye size={18} color={GOLD} />
-              <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text2)", textAlign: "center" }}>Ver carta</span>
-            </a>
-            {[
-              { icon: QrCode, label: "Imprimir QR", href: "/panel/qr" },
-            ].map(a => (
-              <Link key={a.href} href={a.href} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "12px 8px", background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, textDecoration: "none" }}>
-                <a.icon size={18} color={GOLD} />
-                <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text2)", textAlign: "center" }}>{a.label}</span>
-              </Link>
-            ))}
-          </div>
-        );
-      })()}
-
-      <PlanGate plan={(restaurants.find(r => r.id === selectedRestaurantId) as any)?.plan} feature="stats_basic">
+      <PlanGate plan={(rest as any)?.plan} feature="stats_basic">
 
       {/* ═══ HOY ═══ */}
-      <h2 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px", fontWeight: 600 }}>Hoy</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 18 }}>
-        {[
-          { icon: "📱", label: "Sesiones", value: data.todayScans },
-          { icon: "🎂", label: "Cumple registrados", value: (data as any).todayBirthdays || 0 },
-        ].map((s, i) => (
-          <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{s.value}</p>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{s.label}</p>
-            </div>
+      <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Hoy</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.todayScans}</strong>
+            <Smartphone size={16} color="var(--adm-text3)" />
           </div>
-        ))}
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Sesiones abiertas</span>
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{(data as any).todayBirthdays || 0}</strong>
+            <Cake size={16} color="var(--adm-text3)" />
+          </div>
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Cumple registrado</span>
+        </div>
       </div>
 
       {/* ═══ ESTA SEMANA ═══ */}
-      <h2 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 8px", fontWeight: 600 }}>Esta semana</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-        {[
-          { icon: "👥", label: "Visitas", value: data.visitsThisWeek, sub: data.visitsDelta !== null ? `${data.visitsDelta > 0 ? "+" : ""}${data.visitsDelta}% vs anterior` : undefined, subColor: data.visitsDelta !== null && data.visitsDelta > 0 ? "#4ade80" : data.visitsDelta !== null && data.visitsDelta < 0 ? "#ef4444" : undefined },
-          { icon: "🎂", label: "Cumple registrados", value: data.weekBirthdays || 0 },
-        ].map((s: any, i) => (
-          <div key={i} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "12px 14px", display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ fontSize: "1.2rem" }}>{s.icon}</span>
-            <div>
-              <p style={{ fontFamily: F, fontSize: "1.1rem", fontWeight: 700, color: "var(--adm-text)", margin: 0, lineHeight: 1 }}>{s.value}</p>
-              <p style={{ fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{s.label}</p>
-              {s.sub && <p style={{ fontFamily: F, fontSize: "0.6rem", color: s.subColor || "var(--adm-text3)", margin: "1px 0 0", fontWeight: 600 }}>{s.sub}</p>}
-            </div>
+      <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Esta semana</h3>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
+        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.visitsThisWeek}</strong>
+            <Users size={16} color="var(--adm-text3)" />
           </div>
-        ))}
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Visitas totales</span>
+          {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% vs anterior</small>}
+        </div>
+        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+            <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekBirthdays || 0}</strong>
+            <Cake size={16} color="var(--adm-text3)" />
+          </div>
+          <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 700 }}>Cumples registrados</span>
+        </div>
       </div>
 
       {/* ═══ Plato estrella ═══ */}
       {data.starDish && (
-        <div style={{ background: "linear-gradient(135deg, var(--adm-card) 0%, rgba(244,166,35,0.06) 100%)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px", marginBottom: 14, display: "flex", gap: 14, alignItems: "center" }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 14,
+          border: "1px solid rgba(255,255,255,0.08)", borderRadius: 25, padding: 14, marginBottom: 18,
+          background: "linear-gradient(135deg, rgba(255,173,24,0.13), rgba(255,255,255,0.035)), var(--adm-card)",
+        }}>
           {data.starDish.photo ? (
-            <img src={data.starDish.photo} alt={data.starDish.name} style={{ width: 56, height: 56, borderRadius: 12, objectFit: "cover", flexShrink: 0, boxShadow: "0 4px 12px rgba(0,0,0,0.12)" }} />
+            <img src={data.starDish.photo} alt={data.starDish.name} style={{ width: 72, height: 72, borderRadius: 23, objectFit: "cover", flexShrink: 0 }} />
           ) : (
-            <div style={{ width: 56, height: 56, borderRadius: 12, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", flexShrink: 0 }}>🍽️</div>
+            <div style={{ width: 72, height: 72, borderRadius: 23, background: "rgba(244,166,35,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", flexShrink: 0 }}>🍽️</div>
           )}
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontFamily: F, fontSize: "0.62rem", color: GOLD, margin: "0 0 3px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" }}>⭐ Plato estrella esta semana</p>
-            <p style={{ fontFamily: FB, fontSize: "0.95rem", color: "var(--adm-text)", margin: "0 0 2px", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{data.starDish.name}</p>
-            <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: 0 }}><strong style={{ color: GOLD }}>{data.starDish.count}</strong> vistas</p>
+            <b style={{ display: "block", fontFamily: F, fontSize: "0.68rem", color: GOLD, letterSpacing: "0.07em", textTransform: "uppercase", marginBottom: 8 }}>⭐ Producto ganador</b>
+            <h3 style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 900, color: "var(--adm-text)", margin: "0 0 6px", letterSpacing: "-0.04em" }}>{data.starDish.name}</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, fontWeight: 700 }}><span style={{ color: GOLD }}>{data.starDish.count}</span> vistas esta semana</p>
           </div>
         </div>
       )}
 
-      {/* ═══ Top 5 más vistos — barras ═══ */}
+      {/* ═══ Top 5 más vistos ═══ */}
       {topViewed.length > 0 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px", marginBottom: 14 }}>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 12px", fontWeight: 600 }}>🔥 Más vistos esta semana</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {topViewed.slice(0, 5).map((d, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", width: 16, textAlign: "right", flexShrink: 0 }}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                    <span style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text)", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
-                    <span style={{ fontFamily: F, fontSize: "0.72rem", color: GOLD, fontWeight: 700, flexShrink: 0, marginLeft: 8 }}>{d.count}</span>
-                  </div>
-                  <div style={{ height: 4, borderRadius: 2, background: "var(--adm-hover)", overflow: "hidden" }}>
-                    <div style={{ width: `${(d.count / maxCount) * 100}%`, height: "100%", background: GOLD, borderRadius: 2 }} />
-                  </div>
-                </div>
+        <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: 25, background: "rgba(255,255,255,0.045)", padding: "19px 18px", marginBottom: 18 }}>
+          <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>🔥 Más vistos esta semana</h3>
+          {topViewed.slice(0, 5).map((d, i) => (
+            <div key={i} style={{ display: "grid", gridTemplateColumns: "22px 1fr 42px", alignItems: "center", gap: 10, marginTop: i > 0 ? 14 : 0 }}>
+              <div style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text3)", textAlign: "right" }}>{i + 1}</div>
+              <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 850, letterSpacing: "-0.02em", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</div>
+              <div style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 900, textAlign: "right" }}>{d.count}</div>
+              <div style={{ gridColumn: "2 / 4", height: 5, background: "rgba(255,255,255,0.055)", borderRadius: 10, overflow: "hidden", marginTop: -4 }}>
+                <div style={{ height: "100%", width: `${(d.count / maxCount) * 100}%`, background: GOLD, borderRadius: 10 }} />
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 
-      {/* ═══ Más buscados — compacto ═══ */}
-      {data.topSearches?.length > 0 && (
-        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "14px 18px", marginBottom: 14 }}>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 10px", fontWeight: 600 }}>🔍 Más buscado esta semana</p>
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {data.topSearches.slice(0, 5).map((s, i) => (
-              <span key={i} style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", background: "var(--adm-hover)", padding: "5px 10px", borderRadius: 8, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                &ldquo;{s.name}&rdquo;
-                <span style={{ fontFamily: F, fontSize: "0.65rem", color: GOLD, fontWeight: 700 }}>{s.count}</span>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* ═══ Insights del Genio ═══ */}
+      {/* ═══ Consejos semanales del Genio ═══ */}
       {insights.length > 0 && (
         <div style={{ marginBottom: 14 }}>
-          <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8, fontWeight: 600 }}>🧞 Insights del Genio</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>🧞 Consejos semanales del Genio</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {insights.map(ins => {
               const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
               return (
-                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "12px 14px" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ fontSize: "1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
+                <div key={ins.id} style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 20, padding: "16px 18px" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
                     <div>
-                      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text)", fontWeight: 600, margin: "0 0 3px" }}>{ins.title}</p>
+                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
                       <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
                     </div>
                   </div>
