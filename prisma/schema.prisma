@@ -492,7 +492,8 @@ model Restaurant {
   isActive           Boolean    @default(true)
   isDemo             Boolean    @default(false)
   needsTranslation   Boolean    @default(false)
-  weeklyEmailEnabled Boolean    @default(true)
+  weeklyEmailEnabled    Boolean    @default(true)
+  weeklyInsightsEnabled Boolean    @default(true)
   ownerId     String?
 
   // Toteat POS integration (per-restaurant credentials)

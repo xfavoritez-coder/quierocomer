@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink, Cake, Users, RefreshCw } from "lucide-react";
+import { Eye, QrCode, Bell, ExternalLink, Cake, Users } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 
 const F = "var(--font-display)";
@@ -82,28 +82,8 @@ export default function PanelDashboard() {
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
-  const [insightsDismissed, setInsightsDismissed] = useState(false);
+  const [insightsEnabled, setInsightsEnabled] = useState(true);
   const welcomeShown = useRef(false);
-
-  // Check weekly dismiss from localStorage
-  useEffect(() => {
-    const dismissedWeek = localStorage.getItem("qc_insights_dismissed_week");
-    if (dismissedWeek) {
-      // Get current ISO week number
-      const now = new Date();
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const currentWeek = `${now.getFullYear()}-${Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)}`;
-      if (dismissedWeek === currentWeek) setInsightsDismissed(true);
-    }
-  }, []);
-
-  const dismissInsights = () => {
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const currentWeek = `${now.getFullYear()}-${Math.ceil(((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7)}`;
-    localStorage.setItem("qc_insights_dismissed_week", currentWeek);
-    setInsightsDismissed(true);
-  };
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
   const isDemo = !!(selectedRestaurant as any)?.isDemo;
@@ -125,6 +105,7 @@ export default function PanelDashboard() {
     if (isDemo) {
       setData(DEMO_DATA);
       setInsights(DEMO_INSIGHTS);
+      setInsightsEnabled(true);
       setLoading(false);
       return;
     }
@@ -133,9 +114,11 @@ export default function PanelDashboard() {
     Promise.all([
       fetch(`/api/admin/dashboard?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
       fetch(`/api/admin/insights?restaurantId=${selectedRestaurantId}`).then(r => r.json()),
-    ]).then(([d, i]) => {
+      fetch(`/api/admin/locales/${selectedRestaurantId}`).then(r => r.json()),
+    ]).then(([d, i, settings]) => {
       if (!d.error) setData(d);
       setInsights(i.insights || []);
+      setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
     }).catch(() => {}).finally(() => setLoading(false));
   }, [sessionLoading, selectedRestaurantId, isDemo]);
 
@@ -185,41 +168,6 @@ export default function PanelDashboard() {
       </p>
       <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
 
-      {/* ═══ Consejo de la semana (moved up) ═══ */}
-      {insights.length > 0 && !insightsDismissed && (
-        <div style={{ marginBottom: 20, position: "relative" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-            <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: 0 }}>🧞 Consejo de la semana</h3>
-            <button
-              onClick={dismissInsights}
-              title="Ocultar hasta la próxima semana"
-              style={{
-                width: 24, height: 24, borderRadius: 8, border: "1px solid var(--adm-card-border)",
-                background: "var(--adm-card)", color: "var(--adm-text3)", fontSize: 13,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", lineHeight: 1,
-              }}
-            >✕</button>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {insights.map(ins => {
-              const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
-              return (
-                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
-                    <div>
-                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
-                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {/* ═══ Quick actions ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
@@ -243,7 +191,6 @@ export default function PanelDashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
           <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#36e982", boxShadow: "0 0 18px rgba(54,233,130,0.8)", animation: "livePulse 2s ease-in-out infinite" }} />
           <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text3)", fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.08em" }}>En vivo hoy</span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 4, marginLeft: 8, fontFamily: F, fontSize: "0.65rem", color: "var(--adm-text3)", fontWeight: 500 }}><RefreshCw size={9} /> hace 13 min</span>
         </div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", position: "relative", zIndex: 1 }}>
           <div>
@@ -339,6 +286,29 @@ export default function PanelDashboard() {
         </div>
       )}
 
+
+      {/* ═══ Consejo de la semana ═══ */}
+      {insights.length > 0 && insightsEnabled && (
+        <div style={{ marginBottom: 14 }}>
+          <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>🧞 Consejo de la semana</h3>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {insights.map(ins => {
+              const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
+              return (
+                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
+                    <div>
+                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: "0 0 4px" }}>{ins.title}</p>
+                      <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{ins.body}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       </PlanGate>
     </div>

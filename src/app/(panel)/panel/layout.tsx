@@ -447,6 +447,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const { name, loading, error, logout, restaurants, selectedRestaurantId, setSelectedRestaurant, role, mustChangePassword, clearMustChangePassword, activePlan } = usePanelSession();
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [demoScrolled, setDemoScrolled] = useState(false);
+  const [demoTip, setDemoTip] = useState(false);
 
   // Auto-tag gold buttons for dark mode softening
   useEffect(() => {
@@ -553,20 +554,40 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       {isDemo && selectedRest && (
         <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "rgba(3,3,3,.95)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 12px 30px rgba(0,0,0,.5)", overflow: "visible", fontFamily: "var(--font-body)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <span style={{ height: 38, padding: "0 14px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+            <span onClick={() => setDemoTip(t => !t)} style={{ height: 38, padding: "0 14px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5, cursor: "pointer", position: "relative" }}>
               <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
               PANEL DEMO
+              {demoTip && (
+                <>
+                  <div onClick={(e) => { e.stopPropagation(); setDemoTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />
+                  <div style={{
+                    position: "absolute", top: "calc(100% + 8px)", left: 0,
+                    background: "#1a1a1a", border: "1px solid rgba(255,178,45,0.3)", borderRadius: 10,
+                    padding: "10px 14px", width: 240, zIndex: 70,
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                  }}>
+                    <div style={{
+                      position: "absolute", top: -5, left: 16,
+                      width: 10, height: 10, background: "#1a1a1a", borderTop: "1px solid rgba(255,178,45,0.3)", borderLeft: "1px solid rgba(255,178,45,0.3)",
+                      transform: "rotate(45deg)",
+                    }} />
+                    <p style={{ fontSize: 12, color: "rgba(255,255,255,0.7)", margin: 0, lineHeight: 1.5, fontWeight: 400, letterSpacing: 0 }}>
+                      Este es un panel de ejemplo con datos ficticios. Al activar tu carta verás tus estadísticas reales.
+                    </p>
+                  </div>
+                </>
+              )}
             </span>
             <div style={{ display: "flex", gap: 7 }}>
               <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.55)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Ver carta</a>
-              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>Activar →</a>
+              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #c084fc, #a855f7)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>Activar →</a>
             </div>
           </div>
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #ffb833, #f5a623)", textAlign: "center" }}>
-            <span className="demo-ribbon-full" style={{ fontSize: 14, fontWeight: 700, color: "#1a0800" }}>Datos de ejemplo · Al activar verás tus estadísticas reales</span>
-            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#1a0800", display: "none" }}>Al activar verás tus datos reales</span>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #c084fc, #a855f7)", textAlign: "center" }}>
+            <span className="demo-ribbon-full" style={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>Datos de ejemplo · Al activar verás tus estadísticas reales</span>
+            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Al activar verás tus datos reales</span>
             <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }`}</style>
-            <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
+            <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #a855f7" }} />
           </div>
         </div>
       )}

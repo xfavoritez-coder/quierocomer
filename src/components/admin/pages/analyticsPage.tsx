@@ -1641,17 +1641,44 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
 }
 
 /* ═══ TAB: Sugeridos ═══ */
-function TabSugeridos({ rid, from, to }: { rid: string; from: string; to: string }) {
+const DEMO_SUGERIDOS = {
+  totalShown: 312,
+  totalClicks: 47,
+  clickRate: 15.1,
+  sessionsWithSuggestions: 89,
+  sessionsWithClicks: 34,
+  hasToteat: false,
+  salesFromSuggestions: 0,
+  topClicked: [
+    { name: "Tiramisú", clicks: 14, shown: 52, rate: 26.9, photo: null },
+    { name: "Pasta Carbonara", clicks: 11, shown: 68, rate: 16.2, photo: null },
+    { name: "Bruschetta", clicks: 9, shown: 45, rate: 20.0, photo: null },
+    { name: "Risotto Funghi", clicks: 8, shown: 61, rate: 13.1, photo: null },
+    { name: "Ensalada César", clicks: 5, shown: 38, rate: 13.2, photo: null },
+  ],
+  topPairs: [
+    { fromName: "Pizza Margherita", toName: "Tiramisú", count: 8 },
+    { fromName: "Pasta Carbonara", toName: "Bruschetta", count: 6 },
+    { fromName: "Risotto Funghi", toName: "Pasta Carbonara", count: 4 },
+  ],
+};
+
+function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to: string; isDemo: boolean }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setData(DEMO_SUGERIDOS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     fetch(`/api/admin/analytics/suggestions?restaurantId=${rid}&from=${from}&to=${to}`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, isDemo]);
 
   if (loading) return <SkeletonLoading type="cards" />;
   if (!data || data.totalShown === 0) return (
@@ -1830,7 +1857,7 @@ export default function AnalyticsDashboard() {
               color: datePreset === "custom" ? "var(--adm-text)" : "var(--adm-text3)",
               display: "inline-flex", alignItems: "center", gap: 6,
             }}>
-            <span style={{ fontSize: "0.85rem", lineHeight: 1 }}>📅</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
             Personalizado
           </button>
         </div>
@@ -1882,7 +1909,7 @@ export default function AnalyticsDashboard() {
       {tab === "clientes" && <TabClientes rid={effectiveRid} from={dateFrom} to={dateTo} />}
       {tab === "garzon" && <TabGarzon rid={effectiveRid} isSuper={isSuper} />}
       {tab === "busquedas" && <TabBusquedas rid={effectiveRid} from={dateFrom} to={dateTo} />}
-      {tab === "sugeridos" && <TabSugeridos rid={effectiveRid} from={dateFrom} to={dateTo} />}
+      {tab === "sugeridos" && <TabSugeridos rid={effectiveRid} from={dateFrom} to={dateTo} isDemo={isDemo} />}
 
       {/* Upgrade teaser for Gold users */}
       {!hasAdvanced && (

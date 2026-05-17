@@ -14,6 +14,7 @@ const OWNER_EDITABLE_FIELDS = [
   "allPhotosReferential",
   "defaultView",
   "weeklyEmailEnabled",
+  "weeklyInsightsEnabled",
   // Datos de facturacion (los maneja el dueño desde /panel/facturacion)
   "billingCompanyName", "billingRut", "billingGiro",
   "billingAddress", "billingCity", "billingEmail",

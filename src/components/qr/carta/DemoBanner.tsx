@@ -118,11 +118,11 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             style={{
               border: 0, borderRadius: 999, height: 38, padding: "0 18px",
               fontSize: 13, fontWeight: 900,
-              background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03",
+              background: "linear-gradient(135deg, #c084fc, #a855f7)", color: "#fff",
               display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
               boxShadow: highlight
-                ? "0 0 0 3px rgba(255,178,45,0.4), 0 10px 24px rgba(255,178,45,.35)"
-                : "0 10px 24px rgba(255,178,45,.22)",
+                ? "0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35)"
+                : "0 10px 24px rgba(168,85,247,.22)",
               animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
               transition: "box-shadow 0.3s ease",
             }}
@@ -130,27 +130,27 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           {highlight && (
             <style>{`
               @keyframes activatePulse {
-                0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(255,178,45,0.4), 0 10px 24px rgba(255,178,45,.35); }
-                50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(255,178,45,0.2), 0 14px 30px rgba(255,178,45,.45); }
+                0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35); }
+                50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(168,85,247,0.2), 0 14px 30px rgba(168,85,247,.45); }
               }
             `}</style>
           )}
         </div>
       </div>
 
-      {/* Amber ribbon below */}
+      {/* Premium ribbon below */}
       <div style={{
         position: "absolute",
         bottom: 0, left: 0, right: 0,
         transform: "translateY(100%)",
         padding: "9px 14px",
-        background: "linear-gradient(135deg, #ffb833, #f5a623)",
+        background: "linear-gradient(135deg, #c084fc, #a855f7)",
         textAlign: "center",
       }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#1a0800" }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
           Actívala y muéstrasela al mundo
         </span>
-        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
+        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #a855f7" }} />
       </div>
     </div>
   );

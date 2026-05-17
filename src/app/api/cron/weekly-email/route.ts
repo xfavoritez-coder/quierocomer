@@ -21,6 +21,46 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // ═══ Phase 1: Generate Genio insights for non-demo restaurants that need them ═══
+  // Only restaurants that have weeklyInsightsEnabled=true OR weeklyEmailEnabled=true
+  // AND are not demo, so we don't waste API tokens.
+  let insightsGenerated = 0;
+  const insightCandidates = await prisma.restaurant.findMany({
+    where: {
+      isActive: true,
+      isDemo: false,
+      OR: [
+        { weeklyInsightsEnabled: true },
+        { weeklyEmailEnabled: true },
+      ],
+    },
+    select: { id: true, slug: true },
+  });
+
+  for (const r of insightCandidates) {
+    try {
+      await prisma.genioInsight.updateMany({
+        where: { restaurantId: r.id, status: "active" },
+        data: { status: "dismissed" },
+      });
+      const newInsights = await generateInsights(r.id);
+      for (const ins of newInsights) {
+        await prisma.genioInsight.create({
+          data: {
+            restaurantId: r.id,
+            type: ins.type, title: ins.title, body: ins.body,
+            priority: ins.priority, data: ins.data,
+            expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+          },
+        });
+      }
+      insightsGenerated += newInsights.length;
+    } catch (e) {
+      console.error(`[weekly-email] Insight generation failed for ${r.slug}:`, e);
+    }
+  }
+
+  // ═══ Phase 2: Send weekly emails ═══
   const restaurants = await prisma.restaurant.findMany({
     where: { weeklyEmailEnabled: true, isActive: true },
     select: {
@@ -36,7 +76,6 @@ export async function GET(req: NextRequest) {
   let sent = 0;
   let demosSent = 0;
   let errors = 0;
-  let insightsGenerated = 0;
 
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -94,30 +133,6 @@ export async function GET(req: NextRequest) {
       const topViewed = (topDishes?.dishes || []).slice(0, 3).map((d: any) => ({
         name: d.name, count: d.opens, photo: d.photo || null,
       }));
-
-      // Auto-generate weekly Genio insights (skip for demo)
-      if (!r.isDemo) {
-        try {
-          await prisma.genioInsight.updateMany({
-            where: { restaurantId: r.id, status: "active" },
-            data: { status: "dismissed" },
-          });
-          const newInsights = await generateInsights(r.id);
-          for (const ins of newInsights) {
-            await prisma.genioInsight.create({
-              data: {
-                restaurantId: r.id,
-                type: ins.type, title: ins.title, body: ins.body,
-                priority: ins.priority, data: ins.data,
-                expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-              },
-            });
-          }
-          insightsGenerated += newInsights.length;
-        } catch (e) {
-          console.error(`[weekly-email] Insight generation failed for ${r.slug}:`, e);
-        }
-      }
 
       const ownerName = r.owner.name?.split(" ")[0] || "Hola";
 
@@ -179,7 +194,7 @@ export async function GET(req: NextRequest) {
       jobName: "weekly-email",
       status: errors > 0 && sent === 0 ? "error" : "success",
       durationMs,
-      details: { sent, demosSent, errors, insightsGenerated, totalRestaurants: restaurants.length },
+      details: { sent, demosSent, errors, insightsGenerated, totalRestaurants: restaurants.length, insightCandidates: insightCandidates.length },
     },
   }).catch(() => {});
 
