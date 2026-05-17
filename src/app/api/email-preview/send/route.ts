@@ -44,8 +44,8 @@ export async function GET() {
   // Least viewed dishes (bottom 3 with at least 1 stat event)
   const leastViewedRaw = await prisma.statEvent.groupBy({
     by: ["dishId"],
-    where: { restaurantId: restaurant.id, createdAt: { gte: oneWeekAgo }, dishId: { not: null }, event: "dish_open" },
-    _count: true,
+    where: { restaurantId: restaurant.id, createdAt: { gte: oneWeekAgo }, dishId: { not: null }, eventType: "DISH_VIEW" },
+    _count: { dishId: true },
     orderBy: { _count: { dishId: "asc" } },
     take: 3,
   });
@@ -55,7 +55,7 @@ export async function GET() {
     : [];
   const leastViewed = leastViewedRaw.map(d => {
     const dish = leastDishes.find(dd => dd.id === d.dishId);
-    return { name: dish?.name || "Desconocido", count: d._count };
+    return { name: dish?.name || "Desconocido", count: d._count.dishId };
   });
 
   // Build data
