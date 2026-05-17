@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Moon, Sun, Bell, Palette, Layout } from "lucide-react";
+import { Settings, Moon, Sun, Bell, Palette, Layout, Mail, List, BookOpen, Rocket } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ interface SettingsData {
   allPhotosReferential: boolean;
   birthdayPerk: string | null;
   defaultView: string | null;
+  weeklyEmailEnabled: boolean;
 }
 
 const ACCENT_OPTIONS = [
@@ -32,9 +33,9 @@ const ACCENT_OPTIONS = [
 ];
 
 const VIEW_OPTIONS = [
-  { value: "lista", label: "Lista" },
-  { value: "premium", label: "Galería" },
-  { value: "impact", label: "Impact" },
+  { value: "lista", label: "Lista", icon: List },
+  { value: "premium", label: "Galería", icon: BookOpen },
+  { value: "impact", label: "Impact", icon: Rocket },
 ];
 
 function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void }) {
@@ -64,6 +65,9 @@ export default function AjustesPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [birthdayPerk, setBirthdayPerk] = useState("");
+  const [panelTheme, setPanelTheme] = useState("dark");
+
+  useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "dark"); }, []);
 
   const rid = selectedRestaurantId;
 
@@ -120,6 +124,7 @@ export default function AjustesPage() {
         <div style={{ display: "flex", gap: 8 }}>
           {VIEW_OPTIONS.map(opt => {
             const active = (data.defaultView || "lista") === opt.value;
+            const Icon = opt.icon;
             return (
               <button
                 key={opt.value}
@@ -129,9 +134,11 @@ export default function AjustesPage() {
                   background: active ? GOLD : "var(--adm-input)",
                   color: active ? "white" : "var(--adm-text)",
                   fontFamily: F, fontSize: "0.82rem", fontWeight: active ? 700 : 500,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
                   transition: "all 0.2s",
                 }}
               >
+                <Icon size={14} />
                 {opt.label}
               </button>
             );
@@ -149,19 +156,42 @@ export default function AjustesPage() {
             background: data.cartaColorMode !== "DARK" ? "rgba(255,210,80,0.15)" : "transparent",
             color: data.cartaColorMode !== "DARK" ? "#e6a817" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
-            boxShadow: data.cartaColorMode !== "DARK" ? "0 0 12px rgba(255,210,80,0.2)" : "none",
           }}>
             <Sun size={16} strokeWidth={data.cartaColorMode !== "DARK" ? 2.5 : 1.5} /> Claro
           </button>
           <button onClick={() => save({ cartaColorMode: "DARK" })} style={{
             flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
             padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
-            background: data.cartaColorMode === "DARK" ? "rgba(100,120,180,0.15)" : "transparent",
+            background: data.cartaColorMode === "DARK" ? "rgba(100,120,180,0.12)" : "transparent",
             color: data.cartaColorMode === "DARK" ? "#8b9fda" : "var(--adm-text3)",
             fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
-            boxShadow: data.cartaColorMode === "DARK" ? "0 0 12px rgba(100,120,180,0.2)" : "none",
           }}>
             <Moon size={16} strokeWidth={data.cartaColorMode === "DARK" ? 2.5 : 1.5} /> Oscuro
+          </button>
+        </div>
+      </div>
+
+      {/* Modo del panel */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: "20px", marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 12px", display: "flex", alignItems: "center", gap: 7 }}><Settings size={16} color="var(--adm-text3)" /> Modo del panel</h3>
+        <div style={{ display: "flex", gap: 6, background: "var(--adm-input)", borderRadius: 12, padding: 4 }}>
+          <button onClick={() => { localStorage.setItem("qc_panel_theme", "light"); window.location.reload(); }} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: panelTheme !== "dark" ? "rgba(255,210,80,0.15)" : "transparent",
+            color: panelTheme !== "dark" ? "#e6a817" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            <Sun size={16} strokeWidth={panelTheme !== "dark" ? 2.5 : 1.5} /> Claro
+          </button>
+          <button onClick={() => { localStorage.setItem("qc_panel_theme", "dark"); window.location.reload(); }} style={{
+            flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+            padding: "12px 14px", borderRadius: 10, border: "none", cursor: "pointer",
+            background: panelTheme === "dark" ? "rgba(100,120,180,0.12)" : "transparent",
+            color: panelTheme === "dark" ? "#8b9fda" : "var(--adm-text3)",
+            fontFamily: F, fontSize: "0.82rem", fontWeight: 600, transition: "all 0.2s",
+          }}>
+            <Moon size={16} strokeWidth={panelTheme === "dark" ? 2.5 : 1.5} /> Oscuro
           </button>
         </div>
       </div>
@@ -210,6 +240,7 @@ export default function AjustesPage() {
           />
         </div>
       </div>
+
     </div>
   );
 }

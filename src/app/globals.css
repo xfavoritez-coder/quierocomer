@@ -278,8 +278,12 @@ h1, h2, h3, .font-display {
 /* Input placeholders — lighter so they don't look like filled values */
 input::placeholder,
 textarea::placeholder {
-  color: #bbb !important;
+  color: #ccc !important;
   opacity: 1;
+}
+.theme-light input::placeholder,
+.theme-light textarea::placeholder {
+  color: #c8b89a !important;
 }
 .theme-dark input::placeholder,
 .theme-dark textarea::placeholder {
@@ -415,6 +419,14 @@ textarea::placeholder {
 .theme-dark [style*="background: rgb(255"],
 .theme-dark [style*="background:#fff"] {
   background: var(--adm-card) !important;
+}
+
+/* Soften amber/gold solid buttons in dark mode */
+.theme-dark .btn-gold,
+.theme-dark .qc-gold-btn {
+  background: rgba(244,166,35,0.15) !important;
+  color: #F4A623 !important;
+  border: 1px solid rgba(244,166,35,0.25) !important;
 }
 
 /* Force text colors in dark mode */

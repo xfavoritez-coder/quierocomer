@@ -5,7 +5,7 @@ import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
 import { toast } from "sonner";
 import Link from "next/link";
-import { Eye, QrCode, Bell, ExternalLink, Smartphone, Cake, Users, RefreshCw } from "lucide-react";
+import { Eye, QrCode, Bell, ExternalLink, Cake, Users, RefreshCw } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
 
 const F = "var(--font-display)";
@@ -157,22 +157,22 @@ export default function PanelDashboard() {
 
       {/* ═══ Quick actions ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
+        <a href={cartaUrl} target="_blank" rel="noopener noreferrer" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><Eye size={18} color={GOLD} /></div>
-          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Ver mi<br/>carta QR</div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Ver mi<br/>carta QR</div>
         </a>
-        <Link href="/panel/qr" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.045)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none" }}>
+        <Link href="/panel/qr" style={{ border: "1px solid var(--adm-card-border)", background: "var(--adm-card)", borderRadius: 20, padding: 16, display: "flex", alignItems: "center", gap: 13, textDecoration: "none", boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ width: 38, height: 38, borderRadius: 14, background: "rgba(244,166,35,0.12)", display: "grid", placeItems: "center" }}><QrCode size={18} color={GOLD} /></div>
-          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "#d7d9dd", lineHeight: 1.25 }}>Imprimir<br/>códigos QR</div>
+          <div style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 800, color: "var(--adm-text2)", lineHeight: 1.25 }}>Imprimir<br/>códigos QR</div>
         </Link>
       </div>
 
       {/* ═══ HERO — En vivo ═══ */}
       <div style={{
-        position: "relative", overflow: "hidden", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 28,
+        position: "relative", overflow: "hidden", border: "1px solid var(--adm-card-border)", borderRadius: 28,
         padding: 24, minHeight: 160, marginBottom: 24,
         background: "linear-gradient(135deg, rgba(255,173,24,0.10), rgba(255,173,24,0.02) 46%, rgba(255,255,255,0.01)), var(--adm-card)",
-        boxShadow: "0 24px 80px rgba(0,0,0,0.35)",
+        boxShadow: "var(--adm-card-shadow)",
       }}>
         <div style={{ position: "absolute", width: 190, height: 190, borderRadius: "50%", background: "radial-gradient(circle, rgba(255,173,24,0.15), transparent 62%)", right: -80, top: -70, filter: "blur(2px)" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 7, marginBottom: 20 }}>
@@ -199,14 +199,14 @@ export default function PanelDashboard() {
       {/* ═══ HOY ═══ */}
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Hoy</h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.todayScans}</strong>
-            <Smartphone size={16} color="var(--adm-text3)" />
+            <Eye size={16} color="var(--adm-text3)" />
           </div>
           <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Sesiones abiertas</span>
         </div>
-        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{(data as any).todayBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
@@ -218,7 +218,7 @@ export default function PanelDashboard() {
       {/* ═══ ESTA SEMANA ═══ */}
       <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>Esta semana</h3>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 22 }}>
-        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.visitsThisWeek}</strong>
             <Users size={16} color="var(--adm-text3)" />
@@ -226,7 +226,7 @@ export default function PanelDashboard() {
           <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 700 }}>Visitas totales</span>
           {delta !== null && <small style={{ display: "block", color: delta > 0 ? "#36e982" : "#ef4444", fontFamily: F, fontSize: "0.72rem", fontWeight: 900, marginTop: 8 }}>{delta > 0 ? "+" : ""}{delta}% vs anterior</small>}
         </div>
-        <div style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: 17 }}>
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: 17, boxShadow: "var(--adm-card-shadow)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
             <strong style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, letterSpacing: "-0.05em", lineHeight: 1, color: "var(--adm-text)" }}>{data.weekBirthdays || 0}</strong>
             <Cake size={16} color="var(--adm-text3)" />
@@ -240,8 +240,9 @@ export default function PanelDashboard() {
       {data.starDish && (
         <div style={{
           display: "flex", alignItems: "center", gap: 14,
-          border: "1px solid rgba(255,255,255,0.08)", borderRadius: 25, padding: 14, marginBottom: 18,
-          background: "linear-gradient(135deg, rgba(255,173,24,0.13), rgba(255,255,255,0.035)), var(--adm-card)",
+          border: "1px solid var(--adm-card-border)", borderRadius: 25, padding: 14, marginBottom: 18,
+          background: "linear-gradient(135deg, rgba(255,173,24,0.10), rgba(255,255,255,0.01)), var(--adm-card)",
+          boxShadow: "var(--adm-card-shadow)",
         }}>
           {data.starDish.photo ? (
             <img src={data.starDish.photo} alt={data.starDish.name} style={{ width: 72, height: 72, borderRadius: 23, objectFit: "cover", flexShrink: 0 }} />
@@ -258,14 +259,14 @@ export default function PanelDashboard() {
 
       {/* ═══ Top 5 más vistos ═══ */}
       {topViewed.length > 0 && (
-        <div style={{ border: "1px solid rgba(255,255,255,0.08)", borderRadius: 25, background: "rgba(255,255,255,0.045)", padding: "19px 18px", marginBottom: 18 }}>
+        <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
           <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 14px" }}>🔥 Más vistos esta semana</h3>
           {topViewed.slice(0, 5).map((d, i) => (
             <div key={i} style={{ display: "grid", gridTemplateColumns: "22px 1fr 42px", alignItems: "center", gap: 10, marginTop: i > 0 ? 14 : 0 }}>
               <div style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text3)", textAlign: "right" }}>{i + 1}</div>
               <div style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 850, letterSpacing: "-0.02em", color: "var(--adm-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</div>
               <div style={{ fontFamily: F, fontSize: "0.82rem", color: GOLD, fontWeight: 900, textAlign: "right" }}>{d.count}</div>
-              <div style={{ gridColumn: "2 / 4", height: 5, background: "rgba(255,255,255,0.055)", borderRadius: 10, overflow: "hidden", marginTop: -4 }}>
+              <div style={{ gridColumn: "2 / 4", height: 5, background: "var(--adm-hover)", borderRadius: 10, overflow: "hidden", marginTop: -4 }}>
                 <div style={{ height: "100%", width: `${(d.count / maxCount) * 100}%`, background: GOLD, borderRadius: 10 }} />
               </div>
             </div>
@@ -281,7 +282,7 @@ export default function PanelDashboard() {
             {insights.map(ins => {
               const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
               return (
-                <div key={ins.id} style={{ background: "rgba(255,255,255,0.045)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 20, padding: "16px 18px" }}>
+                <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                     <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 1 }}>{icons[ins.type] || "💡"}</span>
                     <div>

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -43,6 +43,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
     { icon: Mail, label: "Email Marketing", href: `${base}/campanias` },
+    { icon: UsersRound, label: "Usuarios", href: `${base}/usuarios` },
     { icon: Settings, label: "Ajustes", href: `${base}/ajustes` },
   ];
   const BOTTOM_TABS = [
@@ -133,7 +134,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
       <aside className="owl-sidebar">
         {/* Header */}
         <div style={{ padding: "16px 16px 14px", borderBottom: "1px solid var(--adm-card-border)" }}>
-          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <Link href={basePath} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 10, flex: 1, minWidth: 0 }}>
             <RestLogo size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <p style={{ fontFamily: F, fontSize: "16px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
@@ -150,6 +152,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               </div>
             </div>
           </Link>
+          </div>
           {restaurants.length > 1 && (
             <select value={selectedRestaurantId || ""} onChange={(e) => setSelectedRestaurant(e.target.value)}
               style={{ marginTop: 10, width: "100%", padding: "5px 8px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 6, fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text)", outline: "none", cursor: "pointer" }}>
@@ -179,7 +182,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           display: "flex", alignItems: "center", gap: 10, padding: "14px 16px", width: "100%",
           background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", textAlign: "left",
         }}>
-          <div style={{ width: 30, height: 30, borderRadius: "50%", background: GOLD, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "0.75rem", fontWeight: 700 }}>{initial}</div>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.75rem", fontWeight: 700 }}>{initial}</div>
           <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", flex: 1 }}>{name}</span>
         </button>
       </aside>
@@ -210,15 +213,19 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <button onClick={openAccount} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--adm-text)", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, flexShrink: 0 }}>
+        <button onClick={() => { const next = theme === "dark" ? "light" : "dark"; setTheme(next); localStorage.setItem("qc_panel_theme", next); }} style={{ width: 30, height: 30, borderRadius: "50%", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginRight: 10 }}>
+          {theme === "dark" ? <Sun size={13} color="#777" /> : <Moon size={13} color="#bbb" />}
+        </button>
+        <button onClick={openAccount} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(244,166,35,0.15)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, flexShrink: 0 }}>
           {initial}
         </button>
       </header>
 
       {/* ── Content ── */}
-      <main className="owl-main">
+      <main className="owl-main" style={{ animation: "panelFadeIn 0.4s ease-out", position: "relative" }}>
         {children}
       </main>
+      <style>{`@keyframes panelFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
 
       {/* ── Mobile Bottom Nav (<768px) ── */}
       <nav className="owl-bottom-nav">
@@ -278,8 +285,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
         <div style={{ position: "fixed", top: 0, right: 0, bottom: 0, width: "min(320px, 85vw)", zIndex: 301, background: "var(--adm-card)", boxShadow: "-4px 0 20px rgba(0,0,0,0.2)", transform: accountVisible ? "translateX(0)" : "translateX(100%)", transition: "transform 0.25s ease-out", display: "flex", flexDirection: "column" }}>
           <div style={{ padding: "20px 20px 16px", borderBottom: "1px solid var(--adm-card-border)" }}>
             <button onClick={closeAccount} style={{ position: "absolute", top: 16, right: 16, background: "none", border: "none", cursor: "pointer" }}><X size={20} color="var(--adm-text3)" /></button>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
-              <div style={{ width: 44, height: 44, borderRadius: "50%", background: GOLD, display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>{initial}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <div style={{ width: 44, height: 44, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: GOLD, fontFamily: F, fontSize: "1.1rem", fontWeight: 700 }}>{initial}</div>
               <div>
                 <p style={{ fontFamily: F, fontSize: "0.92rem", fontWeight: 600, color: "var(--adm-text)", margin: 0 }}>{name}</p>
                 <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Owner</p>
@@ -322,14 +329,6 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <Mail size={18} color="var(--adm-text2)" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Ayuda / Soporte</span>
             </a>
           </div>
-          <button onClick={() => {
-            const next = theme === "dark" ? "light" : "dark";
-            setTheme(next);
-            localStorage.setItem("qc_panel_theme", next);
-          }} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
-            {theme === "dark" ? <Sun size={18} color="var(--adm-text2)" /> : <Moon size={18} color="var(--adm-text2)" />}
-            <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>{theme === "dark" ? "Modo claro" : "Modo oscuro"}</span>
-          </button>
           <button onClick={logout} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", background: "none", border: "none", borderTop: "1px solid var(--adm-card-border)", cursor: "pointer", width: "100%" }}>
             <LogOut size={18} color="#ef4444" /><span style={{ fontFamily: FB, fontSize: "0.85rem", color: "#ef4444" }}>Cerrar sesión</span>
           </button>

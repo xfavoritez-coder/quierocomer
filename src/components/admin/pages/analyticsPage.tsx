@@ -288,7 +288,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
       </div>
 
       {/* ═══ Distribución horaria ═══ */}
-      {clientes?.timeOfDay && clientes.totalSessions > 0 && (() => {
+      {clientes?.timeOfDay && clientes.totalSessions >= 3 && (() => {
         const isSingleDay = from === to;
         const nowH = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
         const slotStartH: Record<string, number> = { MORNING: 6, LUNCH: 11, AFTERNOON: 15, DINNER: 19, LATE: 23 };
@@ -305,10 +305,10 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
               const barH = Math.max(4, (t.count / filteredMax) * 80);
               return (
                 <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-                  <div style={{ width: "100%", height: barH, background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #a78bfa 0%, #8b6fd9 100%)" : "var(--adm-accent)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 4, minHeight: 22 }}>
-                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: isPeak ? "#fff" : "rgba(255,255,255,0.9)", fontWeight: 700 }}>{t.count}</span>
+                  <div style={{ width: "100%", height: barH, background: t.count > 0 ? (isPeak ? "linear-gradient(180deg, #F4A623 0%, #e8930a 100%)" : "var(--adm-card-border)") : "var(--adm-card-border)", borderRadius: 4, transition: "height 0.4s ease", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 4, minHeight: 22 }}>
+                    <span style={{ fontFamily: F, fontSize: "0.68rem", color: isPeak ? "#fff" : "var(--adm-text3)", fontWeight: 700 }}>{t.count}</span>
                   </div>
-                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: isPeak ? "#c4b5fd" : "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
+                  <span style={{ fontFamily: F, fontSize: "0.66rem", color: isPeak ? "#F4A623" : "var(--adm-text2)", fontWeight: 600 }}>{t.label}</span>
                   <span style={{ fontFamily: F, fontSize: "0.58rem", color: "var(--adm-text3)" }}>{t.hint}</span>
                 </div>
               );
@@ -392,6 +392,7 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
         )}
 
         {/* Quiénes son */}
+        {(topDiet || topRestriction || (clientes?.languages && clientes.languages.length > 0)) ? (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px" }}>
           <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>👤 Quiénes son tus clientes</p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -409,11 +410,15 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
                 <span style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-accent)", fontWeight: 600 }}>{topRestriction.count}</span>
               </div>
             )}
-            {!topDiet && !topRestriction && (!clientes?.languages || clientes.languages.length === 0) && (
-              <p style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text3)", margin: 0 }}>Aún no hay suficientes datos demográficos</p>
-            )}
           </div>
         </div>
+        ) : (clientes?.totalSessions ?? 0) < 3 ? null : (
+        <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", textAlign: "center" }}>
+          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", margin: 0, lineHeight: 1.5 }}>
+            Aún no tenemos suficiente información sobre tus clientes. A medida que usen tu carta, aquí aparecerán sus preferencias y perfiles.
+          </p>
+        </div>
+        )}
       </div>
 
       {/* ═══ Búsqueda top — Categoría favorita movida al HeroKpi 4 (mini) ═══ */}
@@ -846,12 +851,12 @@ function TabPlatos({ rid, from, to }: { rid: string; from: string; to: string })
                     const flag = isFantasma ? "👻" : isStar ? "🎯" : "";
                     return (
                       <tr key={r.dishId} className="adm-table-row" style={{ borderBottom: "1px dashed var(--adm-card-border)" }}>
-                        <td style={{ padding: "6px" }}>
+                        <td style={{ padding: "6px", color: "var(--adm-text)" }}>
                           {flag && <span style={{ marginRight: 4 }}>{flag}</span>}
                           {r.name}
                           {!r.mapped && <span style={{ color: "var(--adm-text3)", fontSize: "0.65rem", marginLeft: 6 }}>(sin mapear)</span>}
                         </td>
-                        <td style={{ padding: "6px", textAlign: "right" }}>{r.opens}</td>
+                        <td style={{ padding: "6px", textAlign: "right", color: "var(--adm-text)" }}>{r.opens}</td>
                         <td style={{ padding: "6px", textAlign: "right", color: r.avgDetailMs > 0 ? "var(--adm-text2)" : "var(--adm-text3)" }}>
                           {r.avgDetailMs > 0 ? `${Math.round(r.avgDetailMs / 1000)}s` : "—"}
                         </td>

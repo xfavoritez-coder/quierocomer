@@ -448,6 +448,22 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [demoScrolled, setDemoScrolled] = useState(false);
 
+  // Auto-tag gold buttons for dark mode softening
+  useEffect(() => {
+    const tag = () => {
+      document.querySelectorAll("button").forEach(btn => {
+        const bg = getComputedStyle(btn).backgroundColor;
+        if (bg === "rgb(244, 166, 35)" && !btn.classList.contains("qc-gold-btn")) {
+          btn.classList.add("qc-gold-btn");
+        }
+      });
+    };
+    tag();
+    const observer = new MutationObserver(tag);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
   // Demo banner scroll effect — must be before any early returns
   const selectedRestEarly = restaurants.find((r: any) => r.id === selectedRestaurantId);
   const isDemoEarly = !!selectedRestEarly?.isDemo;
@@ -498,11 +514,15 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     return (
       <div style={{ minHeight: "100vh", background: "var(--adm-bg, #0e0e0e)", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
-          <div style={{ fontSize: "2.2rem", animation: "panelLoadFloat 1.5s ease-in-out infinite" }}>🧞</div>
-          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text, #f0f0f0)", fontWeight: 500 }}>Cargando tu panel...</p>
+          <div style={{ position: "relative", fontSize: "2.2rem", animation: "panelLoadFloat 1.5s ease-in-out infinite" }}>
+            🧞
+            <span style={{ position: "absolute", top: -6, right: -14, fontSize: "0.9rem", opacity: 0.5, animation: "panelStarPulse 2s ease-in-out infinite" }}>✨</span>
+          </div>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text3, #555)", fontWeight: 500 }}>Cargando tu panel...</p>
         </div>
         <style>{`
           @keyframes panelLoadFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.7; } 50% { transform: translateY(-8px) scale(1.1); opacity: 1; } }
+          @keyframes panelStarPulse { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 0.7; transform: scale(1.1); } }
         `}</style>
       </div>
     );

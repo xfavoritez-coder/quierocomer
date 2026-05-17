@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -22,6 +22,9 @@ export default function PanelPerfilPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
+  const [weeklyEmail, setWeeklyEmail] = useState(true);
+  const [savingWeekly, setSavingWeekly] = useState(false);
+  const { selectedRestaurantId } = useAdminSession();
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -36,7 +39,29 @@ export default function PanelPerfilPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [sessionLoading]);
+    // Fetch weekly email preference
+    if (selectedRestaurantId) {
+      fetch(`/api/admin/locales/${selectedRestaurantId}`)
+        .then(r => r.json())
+        .then(data => { if (data.weeklyEmailEnabled !== undefined) setWeeklyEmail(data.weeklyEmailEnabled); })
+        .catch(() => {});
+    }
+  }, [sessionLoading, selectedRestaurantId]);
+
+  const toggleWeeklyEmail = async () => {
+    if (!selectedRestaurantId) return;
+    setSavingWeekly(true);
+    const next = !weeklyEmail;
+    try {
+      const res = await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ weeklyEmailEnabled: next }),
+      });
+      if (res.ok) { setWeeklyEmail(next); toast.success(next ? "Activado" : "Desactivado"); }
+    } catch {}
+    setSavingWeekly(false);
+  };
 
   const handleSaveName = async () => {
     if (!name.trim()) { toast.error("El nombre es requerido"); return; }
@@ -134,6 +159,35 @@ export default function PanelPerfilPage() {
         }}>
           {savingName ? "Guardando..." : "Guardar"}
         </button>
+      </div>
+
+      {/* Weekly email */}
+      <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 16, padding: 20, marginBottom: 16, boxShadow: "var(--adm-card-shadow, none)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Mail size={18} color="var(--adm-text3)" />
+            <div>
+              <h2 style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", margin: 0 }}>Resumen semanal estadísticas</h2>
+              <p style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>
+                {weeklyEmail ? "Recibes un informe cada lunes" : "No recibes el informe semanal"}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={toggleWeeklyEmail}
+            disabled={savingWeekly}
+            style={{
+              width: 44, height: 24, borderRadius: 12, border: "none", cursor: savingWeekly ? "wait" : "pointer",
+              position: "relative", background: weeklyEmail ? GOLD : "var(--adm-card-border)",
+              transition: "all 0.2s", flexShrink: 0, opacity: savingWeekly ? 0.5 : 1,
+            }}
+          >
+            <div style={{
+              width: 18, height: 18, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: weeklyEmail ? 23 : 3, transition: "left 0.2s", boxShadow: "0 1px 2px rgba(0,0,0,0.2)",
+            }} />
+          </button>
+        </div>
       </div>
 
       {/* Password section */}

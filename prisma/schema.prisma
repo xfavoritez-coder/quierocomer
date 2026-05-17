@@ -405,6 +405,39 @@ enum OwnerStatus {
   PENDING
 }
 
+model TeamMember {
+  id                 String           @id @default(cuid())
+  restaurantId       String
+  email              String
+  name               String
+  role               TeamRole         @default(VIEWER)
+  status             TeamMemberStatus @default(PENDING)
+  weeklyEmailEnabled Boolean          @default(true)
+  passwordHash       String?
+  inviteToken        String?          @unique
+  inviteExpiresAt    DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  restaurant Restaurant @relation(fields: [restaurantId], references: [id], onDelete: Cascade)
+
+  @@unique([restaurantId, email])
+  @@index([email])
+  @@index([inviteToken])
+}
+
+enum TeamRole {
+  ADMIN
+  VIEWER
+}
+
+enum TeamMemberStatus {
+  ACTIVE
+  PENDING
+  SUSPENDED
+}
+
 model Restaurant {
   id          String     @id @default(cuid())
   slug        String     @unique
@@ -459,6 +492,7 @@ model Restaurant {
   isActive           Boolean    @default(true)
   isDemo             Boolean    @default(false)
   needsTranslation   Boolean    @default(false)
+  weeklyEmailEnabled Boolean    @default(true)
   ownerId     String?
 
   // Toteat POS integration (per-restaurant credentials)
@@ -480,6 +514,7 @@ model Restaurant {
   dishes      Dish[]
   tables      RestaurantTable[]
   waiterCalls WaiterCall[]
+  teamMembers TeamMember[]
   customers   Customer[]
   reviews     Review[]
   statEvents  StatEvent[]

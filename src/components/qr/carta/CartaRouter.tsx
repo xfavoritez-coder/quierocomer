@@ -229,12 +229,18 @@ export default function CartaRouter(props: Props) {
       <FavoritesProvider>
         <HappyHourBanner happyHours={props.happyHours || []} />
         <div style={{ position: "relative" }}>
-          <div style={{ opacity: demoFading ? 0 : 1, transition: "opacity 0.15s ease" }}>
           {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
           {effectiveView === "lista" && <CartaLista {...sharedProps} />}
           {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
           {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
-          </div>
+          {demoFading && (
+            <div style={{
+              position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none",
+              background: "white",
+              opacity: demoFading === "flash" ? 1 : 0,
+              transition: demoFading === "reveal" ? "opacity 0.35s ease-out" : "opacity 0.12s ease-in",
+            }} />
+          )}
         </div>
 
         {overlay && (

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     // Activate as free — just remove demo flag
     await prisma.restaurant.update({
       where: { id: restaurantId },
-      data: { isDemo: false, plan: "FREE" },
+      data: { isDemo: false, plan: "FREE", weeklyEmailEnabled: true },
     });
     return NextResponse.json({ ok: true, plan: "FREE" });
   }
@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
       subscriptionStatus: "TRIALING",
       trialEndsAt,
       isDemo: false,
+      weeklyEmailEnabled: true,
     },
   });
 

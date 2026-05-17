@@ -90,7 +90,11 @@ export default function PanelLogin() {
 
   // Night mode: after 19:00 or before 7:00 in Chile. ?night=1 forces it for testing.
   const night = useMemo(() => {
-    if (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("night") === "1") return true;
+    if (typeof window !== "undefined") {
+      const param = new URLSearchParams(window.location.search).get("night");
+      if (param === "1") return true;
+      if (param === "0") return false;
+    }
     return isNightInChile();
   }, []);
 
@@ -127,12 +131,12 @@ export default function PanelLogin() {
   const F = "var(--font-display)";
   const inputStyle: React.CSSProperties = {
     width: "100%", padding: "12px 16px", height: 46, boxSizing: "border-box",
-    background: night ? "#1a1a1a" : "#FFF9ED", border: `1px solid ${night ? "#333" : "#E8C78A"}`, borderRadius: 8,
+    background: night ? "#1a1a1a" : "#fff", border: `1px solid ${night ? "#333" : "#e0d5c3"}`, borderRadius: 8,
     color: night ? "#f0f0f0" : "#1a1a1a", fontFamily: F, fontSize: "0.95rem", outline: "none",
   };
 
   return (
-    <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden", background: night ? "#0a0e1a" : "#A8DEEF" }}>
+    <div className="login-page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden", background: night ? "#0a0e1a" : "#A8DEEF" }}>
       <OasisBackground night={night} />
       <div className="genie-float" style={{ position: "relative", zIndex: 2, fontSize: 48, lineHeight: 1, textAlign: "center", marginBottom: 10 }}>🧞</div>
 
@@ -154,7 +158,7 @@ export default function PanelLogin() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        <form onSubmit={handleSubmit} className="login-form" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
             <label style={{ display: "block", fontFamily: F, fontSize: 12, color: night ? "#888" : "#8a7550", letterSpacing: "1px", fontWeight: 500, textTransform: "uppercase", marginBottom: 6 }}>Email</label>
             <input
@@ -185,19 +189,17 @@ export default function PanelLogin() {
                 tabIndex={-1}
               >
                 {showPass ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7550" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={night ? "#666" : "#c0ad90"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8a7550" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={night ? "#666" : "#c0ad90"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 )}
               </button>
             </div>
           </div>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: -2 }}>
-            <div onClick={() => setRemember(!remember)} style={{
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", marginTop: 6 }}>
+            <div onClick={() => setRemember(!remember)} className="login-checkbox" style={{
               width: 18, height: 18, borderRadius: 3, flexShrink: 0,
-              background: remember ? "#F4A623" : (night ? "#1a1a1a" : "#FFF9ED"),
-              border: `1.5px solid ${remember ? "#F4A623" : (night ? "#333" : "#E8C78A")}`,
               display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
             }}>
               {remember && <span style={{ color: "white", fontSize: 11, lineHeight: 1 }}>✓</span>}
@@ -226,7 +228,16 @@ export default function PanelLogin() {
       <style>{`
         @keyframes floatGenie { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-12px); } }
         .genie-float { animation: floatGenie 3s ease-in-out infinite; }
-        input::placeholder { color: ${night ? "#555" : "#b8a888"} !important; }
+        .login-page .login-form input {
+          background: ${night ? "#1a1a1a" : "#fff"} !important;
+          border-color: ${night ? "#333" : "#e0d5c3"} !important;
+          color: ${night ? "#f0f0f0" : "#1a1a1a"} !important;
+        }
+        .login-page .login-form input::placeholder { color: ${night ? "#555" : "#b8a888"} !important; }
+        .login-page .login-checkbox {
+          background: ${remember ? "#F4A623" : (night ? "#1a1a1a" : "#fff")} !important;
+          border: 1.5px solid ${remember ? "#F4A623" : (night ? "#333" : "#e0d5c3")} !important;
+        }
       `}</style>
     </div>
   );
