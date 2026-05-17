@@ -1,25 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { buildWeeklyEmailHtml } from "@/lib/email/weeklyEmailHtml";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
 
 export const maxDuration = 30;
 
-async function generateSingleInsight(restaurantId: string, restaurantName: string): Promise<{ title: string; body: string } | null> {
+async function generateSingleInsight(restaurantId: string, restaurantName: string, topViewedFromEmail?: { name: string; count: number }[]): Promise<{ title: string; body: string; subject: string } | null> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return null;
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true } });
-  const hasToteat = !!restaurantData?.toteatRestaurantId;
+  const restaurant = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true } });
+  const hasToteat = !!restaurant?.toteatRestaurantId;
 
-  const [sessions, dishes, topViewed, previousInsights] = await Promise.all([
+  const [sessions, dishes, topViewed] = await Promise.all([
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: oneWeekAgo } }, select: { durationMs: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
-    prisma.dish.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true, categoryId: true } }),
+    prisma.dish.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: oneWeekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
-    prisma.genioInsight.findMany({ where: { restaurantId, status: "expired" }, orderBy: { createdAt: "desc" }, take: 5, select: { title: true } }),
   ]);
 
   if (sessions.length < 5) return null;
@@ -28,19 +26,15 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
   const totalSessions = sessions.length;
   const abandoned = sessions.filter(s => s.isAbandoned).length;
   const avgDuration = Math.round(sessions.reduce((a, s) => a + (s.durationMs || 0), 0) / sessions.length / 1000);
-  const conversion = totalGuests > 0 ? Math.round((registeredGuests / totalGuests) * 100) : 0;
-  const prevTitles = previousInsights.map(i => i.title).join(", ");
 
   const prompt = `Eres el Genio de QuieroComer. Genera exactamente 1 insight accionable para "${restaurantName}".
 
 DATOS (esta semana):
 - ${totalSessions} sesiones
 - Duración promedio: ${avgDuration}s
-- Top platos vistos esta semana: ${topViewed.slice(0, 5).map((t: any) => `${dishMap[t.dishId] || "?"}: ${t._count.id} vistas`).join(", ")}
+- Top platos vistos esta semana: ${(topViewedFromEmail || topViewed.slice(0, 5).map((t: any) => ({ name: dishMap[t.dishId] || "?", count: t._count.id }))).map((d: any) => `${d.name}: ${d.count} vistas`).join(", ")}
 ${hasToteat ? `- DATOS DE VENTAS DISPONIBLES: este local tiene POS conectado, puedes hablar de ventas y conversión` : `- NO hay datos de ventas. Solo puedes hablar de vistas y comportamiento en la carta.`}
 IMPORTANTE: Los números que menciones DEBEN coincidir exactamente con los datos de arriba. No inventes cifras.
-
-${prevTitles ? `NO REPITAS estos consejos anteriores: ${prevTitles}` : ""}
 
 REGLAS:
 - Solo comenta datos observables: qué platos miran más, en qué horarios entran, qué vista usan, tendencias de visitas
@@ -50,7 +44,7 @@ REGLAS:
 - Máximo 2 frases cortas
 - Tono informativo y positivo, como un dato curioso útil
 - Usa lenguaje simple y coloquial, como si le hablaras al dueño en persona. NUNCA uses palabras técnicas como bestseller, upselling, engagement, conversión, KPI, etc.
-- El subject es para el asunto del email: corto, con gancho basado en el dato, que dé ganas de abrir
+- El subject es para el asunto del email: corto, con gancho basado en el dato, que dé ganas de abrir. No pongas el nombre del restaurante en el subject.
 
 Responde SOLO JSON, sin markdown:
 {"title": "Título corto", "body": "Explicación con acción concreta", "subject": "Asunto corto con gancho"}`;
@@ -72,16 +66,16 @@ Responde SOLO JSON, sin markdown:
   }
 }
 
+// GET /api/email-preview/insight?slug=alleria-pizza — returns HTML to view in browser
 export async function GET(req: NextRequest) {
-  const slugParam = req.nextUrl.searchParams.get("slug") || "horusvegan";
-  const toParam = req.nextUrl.searchParams.get("to") || "favoritez@gmail.com";
+  const slug = req.nextUrl.searchParams.get("slug") || "alleria-pizza";
 
   const restaurant = await prisma.restaurant.findUnique({
-    where: { slug: slugParam },
-    select: { id: true, name: true, logoUrl: true, slug: true, owner: { select: { name: true, email: true } } },
+    where: { slug },
+    select: { id: true, name: true, logoUrl: true, slug: true, owner: { select: { name: true } } },
   });
 
-  if (!restaurant) return NextResponse.json({ error: "Restaurant not found" }, { status: 404 });
+  if (!restaurant) return new NextResponse("Restaurant not found", { status: 404 });
 
   const now = new Date();
   const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -135,8 +129,7 @@ export async function GET(req: NextRequest) {
   const weekEnd = now.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
   const ownerName = restaurant.owner?.name?.split(" ")[0] || "Hola";
 
-  // Generate real insight
-  const insight = await generateSingleInsight(restaurant.id, restaurant.name);
+  const insight = await generateSingleInsight(restaurant.id, restaurant.name, topViewed);
 
   const emailHtml = buildWeeklyEmailHtml({
     ownerName,
@@ -155,12 +148,18 @@ export async function GET(req: NextRequest) {
     insight: insight || undefined,
   });
 
-  await sendAdminEmail({
-    to: toParam,
-    subject: `Tu semana en ${restaurant.name}`,
-    html: emailHtml,
-    purpose: "weekly_summary",
-  });
+  const subjectLine = insight?.subject
+    ? `${restaurant.name}: ${insight.subject}`
+    : `Tu semana en ${restaurant.name}`;
 
-  return NextResponse.json({ ok: true, to: toParam, restaurant: restaurant.name, insight });
+  // Wrap with subject preview bar
+  const fullHtml = `
+    <div style="background:#333;padding:12px 20px;font-family:system-ui;position:sticky;top:0;z-index:100;">
+      <div style="font-size:11px;color:#999;margin-bottom:4px;">ASUNTO DEL EMAIL:</div>
+      <div style="font-size:15px;color:#fff;font-weight:600;">${subjectLine}</div>
+    </div>
+    ${emailHtml}
+  `;
+
+  return new NextResponse(fullHtml, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }

@@ -19,6 +19,7 @@ interface WeeklyEmailData {
   panelUrl: string;
   slug: string;
   isDemo?: boolean;
+  insight?: { title: string; body: string };
 }
 
 export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
@@ -158,6 +159,23 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
     </tr></table>
   </td></tr>
 
+
+  ${data.insight ? `
+  <!-- Genio Insight -->
+  <tr><td style="padding-bottom:16px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9f6f0;border:1px solid ${GOLD}33;border-radius:16px;">
+      <tr><td style="padding:18px;">
+        <table cellpadding="0" cellspacing="0" border="0"><tr>
+          <td style="font-size:22px;vertical-align:top;padding-right:12px;">🧞</td>
+          <td>
+            <div style="font-size:11px;color:${GOLD};font-weight:900;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 6px;">Consejo del Genio</div>
+            <div style="font-size:14px;font-weight:800;color:#1a1a1a;margin:0 0 6px;">${data.insight.title}</div>
+            <div style="font-size:13px;color:#8a7550;line-height:1.5;">${data.insight.body}</div>
+          </td>
+        </tr></table>
+      </td></tr>
+    </table>
+  </td></tr>` : ""}
 
   <!-- Top 3 -->
   ${data.topViewed.length > 0 ? `
