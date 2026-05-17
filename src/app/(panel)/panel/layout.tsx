@@ -552,7 +552,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   return (
     <SessionContext.Provider value={ctxValue}>
       {isDemo && selectedRest && (
-        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "rgba(3,3,3,.95)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 12px 30px rgba(0,0,0,.5)", overflow: "visible", fontFamily: "var(--font-body)" }}>
+        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "var(--adm-bg, rgba(3,3,3,.95))", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 4px 12px rgba(0,0,0,.08)", overflow: "visible", fontFamily: "var(--font-body)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
             <span onClick={() => setDemoTip(t => !t)} style={{ height: 38, padding: "0 14px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5, cursor: "pointer", position: "relative" }}>
               <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
