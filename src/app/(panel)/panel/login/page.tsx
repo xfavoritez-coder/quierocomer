@@ -17,11 +17,9 @@ function OasisBackground({ night }: { night: boolean }) {
       <svg aria-hidden="true" viewBox="0 0 360 720" preserveAspectRatio="xMidYMid slice" style={{ position: "fixed", inset: 0, width: "100%", height: "100%", zIndex: 0 }}>
         <defs><linearGradient id="sky-n" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#0a0e1a" /><stop offset="55%" stopColor="#141e30" /><stop offset="100%" stopColor="#1a1510" /></linearGradient></defs>
         <rect width="360" height="720" fill="url(#sky-n)" />
-        {/* Moon with glow */}
-        <circle cx="180" cy="280" r="50" fill="rgba(255,240,180,0.06)" />
-        <circle cx="180" cy="280" r="32" fill="#f5ecd0" />
-        <circle cx="173" cy="273" r="25" fill="rgba(10,14,26,0.12)" />
-        <circle cx="180" cy="280" r="33" fill="none" stroke="rgba(255,240,180,0.2)" strokeWidth="2" />
+        {/* Crescent moon — top right */}
+        <circle cx="300" cy="120" r="22" fill="#e8dfc0" opacity="0.85" />
+        <circle cx="310" cy="114" r="18" fill="#0a0e1a" />
         {/* Stars */}
         <circle cx="50" cy="60" r="1.2" fill="white" opacity="0.7" /><circle cx="120" cy="35" r="0.8" fill="white" opacity="0.5" />
         <circle cx="200" cy="50" r="1" fill="white" opacity="0.6" /><circle cx="320" cy="40" r="1.2" fill="white" opacity="0.8" />
@@ -128,15 +126,15 @@ export default function PanelLogin() {
 
   const F = "var(--font-display)";
   const inputStyle: React.CSSProperties = {
-    width: "100%", padding: "10px 14px", height: 40, boxSizing: "border-box",
-    background: night ? "#1a1a1a" : "#FFF9ED", border: `1px solid ${night ? "#333" : "#E8C78A"}`, borderRadius: 6,
-    color: night ? "#f0f0f0" : "#1a1a1a", fontFamily: F, fontSize: "0.88rem", outline: "none",
+    width: "100%", padding: "12px 16px", height: 46, boxSizing: "border-box",
+    background: night ? "#1a1a1a" : "#FFF9ED", border: `1px solid ${night ? "#333" : "#E8C78A"}`, borderRadius: 8,
+    color: night ? "#f0f0f0" : "#1a1a1a", fontFamily: F, fontSize: "0.95rem", outline: "none",
   };
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 20, position: "relative", overflow: "hidden", background: night ? "#0a0e1a" : "#A8DEEF" }}>
       <OasisBackground night={night} />
-      <div className="genie-float" style={{ position: "relative", zIndex: 2, fontSize: 58, lineHeight: 1, textAlign: "center", marginBottom: 12 }}>🧞</div>
+      <div className="genie-float" style={{ position: "relative", zIndex: 2, fontSize: 48, lineHeight: 1, textAlign: "center", marginBottom: 10 }}>🧞</div>
 
       <div style={{ position: "relative", zIndex: 2, width: 320, maxWidth: "90%", padding: "32px 24px", background: night ? "rgba(14,14,14,0.92)" : "rgba(255,255,255,0.95)", borderRadius: 12, border: `0.5px solid ${night ? "rgba(255,178,45,0.2)" : "rgba(244,166,35,0.5)"}`, boxShadow: night ? "0 12px 40px rgba(0,0,0,0.4)" : "0 12px 40px rgba(100,60,10,0.12)", backdropFilter: "blur(12px)" }}>
         <div style={{ textAlign: "center", marginBottom: 20 }}>
@@ -144,7 +142,7 @@ export default function PanelLogin() {
             Quiero<span style={{ color: "#F4A623" }}>Comer</span>
           </h1>
           <p style={{ fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: 2, textTransform: "uppercase", margin: 0 }}>
-            Panel de tu local
+            Panel local
           </p>
         </div>
 
@@ -158,7 +156,7 @@ export default function PanelLogin() {
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Email</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: 12, color: night ? "#888" : "#8a7550", letterSpacing: "1px", fontWeight: 500, textTransform: "uppercase", marginBottom: 6 }}>Email</label>
             <input
               type="email"
               placeholder="tu@email.com"
@@ -169,7 +167,7 @@ export default function PanelLogin() {
             />
           </div>
           <div>
-            <label style={{ display: "block", fontFamily: F, fontSize: 10, color: night ? "#888" : "#8a7550", letterSpacing: "1.5px", fontWeight: 500, textTransform: "uppercase", marginBottom: 5 }}>Contraseña</label>
+            <label style={{ display: "block", fontFamily: F, fontSize: 12, color: night ? "#888" : "#8a7550", letterSpacing: "1px", fontWeight: 500, textTransform: "uppercase", marginBottom: 6 }}>Contraseña</label>
             <div style={{ position: "relative" }}>
               <input
                 ref={passRef}
@@ -204,11 +202,11 @@ export default function PanelLogin() {
             }}>
               {remember && <span style={{ color: "white", fontSize: 11, lineHeight: 1 }}>✓</span>}
             </div>
-            <span style={{ fontFamily: F, fontSize: 12, color: night ? "#aaa" : "#6B5435" }}>Recordar sesión</span>
+            <span style={{ fontFamily: F, fontSize: 14, color: night ? "#aaa" : "#6B5435" }}>Recordar sesión</span>
           </label>
 
           <button type="submit" disabled={loading} style={{
-            width: "100%", height: 46, marginTop: 4,
+            width: "100%", height: 48, marginTop: 14,
             background: loading ? "#E8A942" : "#F4A623",
             color: "white", fontFamily: F, fontSize: 15, fontWeight: 700,
             border: "none", borderRadius: 8, cursor: loading ? "wait" : "pointer",

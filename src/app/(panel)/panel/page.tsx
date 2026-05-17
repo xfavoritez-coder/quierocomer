@@ -148,18 +148,6 @@ export default function PanelDashboard() {
 
   return (
     <div style={{ maxWidth: 640 }}>
-      {/* ═══ Demo Banner ═══ */}
-      {isDemo && selectedRestaurant && (
-        <div style={{ margin: "-8px -16px 16px", position: "relative" }}>
-          <DemoBanner
-            restaurantName={selectedRestaurant.name}
-            restaurantSlug={(selectedRestaurant as any).slug}
-            context="panel"
-          />
-          <div style={{ height: 70 }} /> {/* spacer for fixed banner */}
-        </div>
-      )}
-
       {/* ═══ Demo indicator ═══ */}
       {isDemo && (
         <div style={{

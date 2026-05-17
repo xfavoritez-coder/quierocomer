@@ -18,6 +18,7 @@ interface Props {
   logout: () => void;
   basePath?: string; // "/admin" or "/panel"
   activePlan?: string;
+  isDemo?: boolean;
   children: React.ReactNode;
 }
 
@@ -54,7 +55,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
   return { SIDEBAR_NAV, BOTTOM_TABS, MORE_ITEMS };
 }
 
-export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, children }: Props) {
+export default function AdminLayoutOwner({ name, restaurants, selectedRestaurantId, setSelectedRestaurant, logout, basePath = "/admin", activePlan, isDemo, children }: Props) {
   const pathname = usePathname();
   const selected = restaurants.find((r: any) => r.id === selectedRestaurantId);
   const hasToteat = !!(selected as any)?.hasToteat;
@@ -140,8 +141,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 <p style={{ fontFamily: F, fontSize: "11.5px", color: "var(--adm-text3)", fontWeight: 500, margin: 0 }}>QuieroComer</p>
                 {activePlan && basePath === "/panel" && (
                   <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, padding: "1px 6px", borderRadius: 4, letterSpacing: "0.3px",
-                    background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
-                    color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
+                    background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
+                    color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : "var(--adm-text3)",
                   }}>
                     {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : "Free"}
                   </span>
@@ -192,8 +193,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
               <p style={{ fontFamily: F, fontSize: "14px", fontWeight: 700, color: "var(--adm-text)", lineHeight: 1.2, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{activeRest?.name || "Local"}</p>
               {activePlan && basePath === "/panel" && (
                 <span style={{ fontFamily: F, fontSize: "8px", fontWeight: 700, padding: "1px 5px", borderRadius: 3, letterSpacing: "0.3px",
-                  background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
-                  color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
+                  background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
+                  color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : "var(--adm-text3)",
                   flexShrink: 0,
                 }}>
                   {activePlan === "PREMIUM" ? "PRO" : activePlan === "GOLD" ? "GOLD" : "GRATIS"}
@@ -209,7 +210,7 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             {restaurants.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
           </select>
         )}
-        <button onClick={openAccount} style={{ width: 34, height: 34, borderRadius: "50%", background: GOLD, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontFamily: F, fontSize: "0.82rem", fontWeight: 700, flexShrink: 0 }}>
+        <button onClick={openAccount} style={{ width: 38, height: 38, borderRadius: "50%", background: "rgba(255,255,255,0.12)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--adm-text)", fontFamily: F, fontSize: "0.88rem", fontWeight: 700, flexShrink: 0 }}>
           {initial}
         </button>
       </header>
@@ -305,8 +306,8 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
                 <CreditCard size={18} color={activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888"} />
                 <span style={{ fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text)" }}>Mi suscripción</span>
                 <span style={{ marginLeft: "auto", fontFamily: F, fontSize: "0.68rem", fontWeight: 700, padding: "2px 8px", borderRadius: 4,
-                  background: activePlan === "PREMIUM" ? "#F3E8FF" : activePlan === "GOLD" ? "#FFF8E7" : "#f5f5f5",
-                  color: activePlan === "PREMIUM" ? "#7c3aed" : activePlan === "GOLD" ? "#92400e" : "#888",
+                  background: activePlan === "PREMIUM" ? "rgba(124,58,237,0.12)" : activePlan === "GOLD" ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
+                  color: activePlan === "PREMIUM" ? "#a78bfa" : activePlan === "GOLD" ? "#F4A623" : "var(--adm-text3)",
                 }}>
                   {activePlan === "PREMIUM" ? "Premium" : activePlan === "GOLD" ? "Gold" : "Free"}
                 </span>

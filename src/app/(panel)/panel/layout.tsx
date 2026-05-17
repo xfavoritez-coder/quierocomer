@@ -485,51 +485,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   if (loading) {
     return (
-      <div style={{ minHeight: "100vh", background: "#FFFFFF" }}>
-        {/* Desktop skeleton */}
-        <div className="panel-skel-desktop">
-          <aside style={{ position: "fixed", top: 0, left: 0, bottom: 0, width: 220, background: "#FFF9ED", borderRight: "1px solid #E8D0A0", padding: "18px 16px" }}>
-            <div className="skel-pulse" style={{ width: 120, height: 18, borderRadius: 4, marginBottom: 24 }} />
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {[...Array(6)].map((_, i) => <div key={i} className="skel-pulse" style={{ height: 36, borderRadius: 8 }} />)}
-            </div>
-          </aside>
-          <main style={{ marginLeft: 220, padding: "24px 32px" }}>
-            <div className="skel-pulse" style={{ width: 200, height: 24, borderRadius: 6, marginBottom: 12 }} />
-            <div className="skel-pulse" style={{ width: 300, height: 14, borderRadius: 4, marginBottom: 24 }} />
-            <div className="skel-pulse" style={{ height: 90, borderRadius: 16, marginBottom: 20 }} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              {[...Array(3)].map((_, i) => <div key={i} className="skel-pulse" style={{ height: 72, borderRadius: 12 }} />)}
-            </div>
-          </main>
-        </div>
-        {/* Mobile skeleton */}
-        <div className="panel-skel-mobile">
-          <header style={{ height: 56, background: "#FFF9ED", borderBottom: "1px solid #E8D0A0", display: "flex", alignItems: "center", padding: "0 16px", gap: 10 }}>
-            <div className="skel-pulse" style={{ width: 100, height: 18, borderRadius: 4 }} />
-            <div style={{ flex: 1 }} />
-            <div className="skel-pulse" style={{ width: 36, height: 36, borderRadius: "50%" }} />
-          </header>
-          <div style={{ padding: "20px 16px" }}>
-            <div className="skel-pulse" style={{ width: 160, height: 20, borderRadius: 6, marginBottom: 10 }} />
-            <div className="skel-pulse" style={{ width: 240, height: 12, borderRadius: 4, marginBottom: 20 }} />
-            <div className="skel-pulse" style={{ height: 80, borderRadius: 16, marginBottom: 16 }} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
-              {[...Array(3)].map((_, i) => <div key={i} className="skel-pulse" style={{ height: 64, borderRadius: 12 }} />)}
-            </div>
-          </div>
-          <nav style={{ position: "fixed", bottom: 12, left: 12, right: 12, height: 60, background: "var(--adm-card, #161616)", border: "1px solid var(--adm-card-border, #262626)", borderRadius: 20, display: "flex", alignItems: "center", justifyContent: "space-around", padding: "0 16px" }}>
-            {[...Array(4)].map((_, i) => <div key={i} className="skel-pulse" style={{ width: 40, height: 40, borderRadius: 8 }} />)}
-          </nav>
+      <div style={{ minHeight: "100vh", background: "var(--adm-bg, #0e0e0e)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14 }}>
+          <div style={{ fontSize: "2.2rem", animation: "panelLoadFloat 1.5s ease-in-out infinite" }}>🧞</div>
+          <p style={{ fontFamily: "var(--font-display)", fontSize: "0.88rem", color: "var(--adm-text2, #888)", fontWeight: 500 }}>Cargando tu panel...</p>
         </div>
         <style>{`
-          @keyframes skelPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 0.7; } }
-          .skel-pulse { background: var(--adm-card-border, #2a2a2a); animation: skelPulse 1.4s ease-in-out infinite; }
-          .panel-skel-mobile { display: none; }
-          @media (max-width: 767px) {
-            .panel-skel-desktop { display: none; }
-            .panel-skel-mobile { display: block; }
-          }
+          @keyframes panelLoadFloat { 0%,100% { transform: translateY(0) scale(1); opacity: 0.7; } 50% { transform: translateY(-8px) scale(1.1); opacity: 1; } }
         `}</style>
       </div>
     );
@@ -552,8 +514,35 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     logout,
   };
 
+  const selectedRest = restaurants.find((r: any) => r.id === selectedRestaurantId);
+  const isDemo = !!selectedRest?.isDemo;
+
   return (
     <SessionContext.Provider value={ctxValue}>
+      {isDemo && selectedRest && (
+        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "rgba(3,3,3,.95)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 12px 30px rgba(0,0,0,.5)", overflow: "visible" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: "0 0 auto" }}>
+              <span style={{ padding: "7px 10px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
+                DEMO
+              </span>
+            </div>
+            <div style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+              <span style={{ color: "rgba(255,255,255,0.3)", fontSize: 15, fontWeight: 400, fontFamily: "var(--font-body)" }}>Panel de ejemplo</span>
+            </div>
+            <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
+              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" }}>Ver carta</a>
+              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" }}>Activar →</a>
+            </div>
+          </div>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #ffb833, #f5a623)", textAlign: "center" }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: "#1a0800", fontFamily: "var(--font-display)" }}>Actívala y muéstrasela al mundo</span>
+            <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
+          </div>
+        </div>
+      )}
+      <div style={{ paddingTop: isDemo ? 44 : 0, background: isDemo ? "var(--adm-card)" : undefined }}>
       <AdminLayoutOwner
         name={name}
         restaurants={restaurants}
@@ -562,11 +551,17 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
         logout={logout}
         basePath="/panel"
         activePlan={activePlan}
+        isDemo={isDemo}
       >
-        <TrialBanner restaurantId={selectedRestaurantId} />
-        <UpgradeBanner restaurantId={selectedRestaurantId} />
+        {!isDemo && (
+          <>
+            <TrialBanner restaurantId={selectedRestaurantId} />
+            <UpgradeBanner restaurantId={selectedRestaurantId} />
+          </>
+        )}
         {children}
       </AdminLayoutOwner>
+      </div>
 
       {/* Plan modal — triggered from "Mi Plan" menu */}
       {planModalOpen && (

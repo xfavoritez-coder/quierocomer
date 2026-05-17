@@ -121,7 +121,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
           {context === "carta" ? (
             <a
-              href={`/panel?slug=${restaurantSlug}`}
+              href={`/api/panel/demo-auth?slug=${restaurantSlug}`}
               style={{
                 border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
                 height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,

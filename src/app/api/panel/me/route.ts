@@ -18,7 +18,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Owner not found" }, { status: 401 });
     }
 
-    if (owner.status !== "ACTIVE") {
+    // Demo tokens don't require ACTIVE status check
+    if (!token.startsWith("demo_") && owner.status !== "ACTIVE") {
       return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
     }
 

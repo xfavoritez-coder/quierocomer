@@ -6,9 +6,10 @@ import { resend } from "@/lib/resend";
 export async function POST(req: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get("panel_token")?.value;
-  if (!token) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  const panelId = cookieStore.get("panel_id")?.value;
+  if (!token || !panelId) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const owner = await prisma.owner.findFirst({ where: { sessionToken: token }, select: { id: true, name: true, email: true } });
+  const owner = await prisma.restaurantOwner.findUnique({ where: { id: panelId }, select: { id: true, name: true, email: true } });
   if (!owner) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { message } = await req.json();
