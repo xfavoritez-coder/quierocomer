@@ -19,7 +19,7 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: oneWeekAgo } }, select: { durationMs: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true, categoryId: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: oneWeekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
-    prisma.genioInsight.findMany({ where: { restaurantId, status: "expired" }, orderBy: { createdAt: "desc" }, take: 5, select: { title: true } }),
+    prisma.genioInsight.findMany({ where: { restaurantId, status: "expired" }, orderBy: { generatedAt: "desc" }, take: 5, select: { title: true } }),
   ]);
 
   if (sessions.length < 5) return null;
