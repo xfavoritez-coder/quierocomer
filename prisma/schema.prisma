@@ -458,6 +458,7 @@ model Restaurant {
   qrToken            String?    @unique  // token único embebido en el QR impreso, para futuras features sin reimprimir
   isActive           Boolean    @default(true)
   isDemo             Boolean    @default(false)
+  needsTranslation   Boolean    @default(false)
   ownerId     String?
 
   // Toteat POS integration (per-restaurant credentials)

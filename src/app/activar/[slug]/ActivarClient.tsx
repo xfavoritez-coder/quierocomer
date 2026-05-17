@@ -64,10 +64,10 @@ h1 em { color: var(--amber); font-style: italic; }
 .flow-arrow { width: 1px; height: 42px; margin: 14px auto 0; background: linear-gradient(to bottom, rgba(255,178,45,.0), rgba(255,178,45,.7)); position: relative; z-index: 2; }
 .flow-arrow::after { content: ""; position: absolute; bottom: -5px; left: 50%; width: 9px; height: 9px; border-right: 1px solid rgba(255,178,45,.85); border-bottom: 1px solid rgba(255,178,45,.85); transform: translateX(-50%) rotate(45deg); }
 .offer { position: relative; margin: 24px 0 30px; padding: 22px; border-radius: 22px; background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.025)), #101010; border: 1px solid rgba(255,178,45,.45); box-shadow: 0 0 36px rgba(255,178,45,.10); }
-.offer-label { color: var(--amber); font-size: 11px; font-weight: 950; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 6px; }
+.offer-label { color: var(--amber); font-size: 14px; font-weight: 950; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 6px; }
 .price-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .old-price { color: rgba(232,221,200,.5); font-size: 20px; font-weight: 900; text-decoration: line-through; text-decoration-thickness: 2px; }
-.discount { position: absolute; top: 16px; right: 16px; border-radius: 999px; padding: 8px 10px; background: rgba(229,29,55,.16); border: 1px solid rgba(229,29,55,.35); color: #ff6c81; font-size: 11px; font-weight: 950; }
+.discount { position: absolute; top: 16px; right: 16px; border-radius: 999px; padding: 8px 10px; background: rgba(34,197,94,.14); border: 1px solid rgba(34,197,94,.35); color: #4ade80; font-size: 11px; font-weight: 950; }
 .new-price { margin: -2px 0 6px; color: var(--amber); font-size: 38px; font-weight: 950; letter-spacing: -1.5px; }
 .new-price small { font-size: 13px; color: var(--cream-soft); letter-spacing: 0; }
 .offer-text { color: var(--cream-soft); font-size: 12px; line-height: 1.4; margin-bottom: 12px; }
@@ -94,7 +94,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .benefit-icon { position: relative; z-index: 1; width: 58px; height: 58px; border-radius: 20px; display: grid; place-items: center; font-size: 27px; background: linear-gradient(135deg, rgba(255,178,45,.22), rgba(255,178,45,.08)); border: 1px solid rgba(255,178,45,.18); box-shadow: 0 10px 24px rgba(255,178,45,.09); }
 .benefit-content { position: relative; z-index: 1; }
 .benefit strong { display: block; margin-bottom: 6px; font-size: 16px; line-height: 1.15; letter-spacing: -.2px; }
-.benefit p { margin: 0; color: var(--cream-soft); font-size: 13px; line-height: 1.45; }
+.benefit p { margin: 0; color: var(--cream-soft); font-size: 14px; line-height: 1.45; }
 .benefit.highlight { border-color: rgba(255,178,45,.34); background: linear-gradient(135deg, rgba(255,178,45,.13), rgba(255,255,255,.03)), #111; }
 .plans { display: grid; gap: 14px; }
 .plan { border-radius: 25px; padding: 20px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.10); position: relative; }
@@ -110,10 +110,10 @@ h1 em { color: var(--amber); font-style: italic; }
 .strike { display: block; color: rgba(232,221,200,.45); font-size: 15px; font-weight: 700; text-decoration: line-through; text-decoration-thickness: 2px; margin-top: 2px; margin-bottom: 6px; }
 .plan p { margin: 0 0 14px; color: var(--cream-soft); font-size: 13px; line-height: 1.4; }
 .checks { display: grid; gap: 8px; margin-bottom: 16px; }
-.checks div { color: var(--cream); font-size: 13px; display: flex; align-items: center; gap: 4px; }
-.tip { display: inline-flex; align-items: center; justify-content: center; width: 15px; height: 15px; border-radius: 50%; background: rgba(232,163,61,.12); color: var(--amber); font-size: 9px; font-weight: 800; font-style: italic; cursor: help; flex-shrink: 0; position: relative; }
-.tip:hover .tip-text { display: block; }
-.tip-text { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid rgba(232,163,61,.25); border-radius: 8px; padding: 8px 10px; font-size: 11px; font-weight: 400; font-style: normal; color: var(--cream-soft); width: 180px; text-align: left; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.5); line-height: 1.4; }
+.checks div { color: var(--cream); font-size: 14px; display: flex; align-items: center; gap: 4px; }
+.tip { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(232,163,61,.12); color: var(--amber); font-size: 10px; font-weight: 800; font-style: italic; cursor: pointer; flex-shrink: 0; position: relative; -webkit-tap-highlight-color: transparent; }
+.tip.open .tip-text { display: block; }
+.tip-text { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid rgba(232,163,61,.25); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 400; font-style: normal; color: var(--cream-soft); width: 200px; text-align: left; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.5); line-height: 1.4; }
 .plan-btn { width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: var(--cream); padding: 14px 15px; font-weight: 950; cursor: pointer; font-size: 14px; }
 .plan.featured .plan-btn { background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; border: 0; }
 .plan-btn:disabled { opacity: .5; cursor: wait; }
@@ -151,6 +151,23 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     const interval = setInterval(() => setHeroIdx(i => (i + 1) % max), 3000);
     return () => clearInterval(interval);
   }, [dishes.length]);
+
+  // Tooltip toggle for plan features
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const tip = (e.target as HTMLElement).closest(".tip");
+      if (tip) {
+        e.preventDefault();
+        const wasOpen = tip.classList.contains("open");
+        document.querySelectorAll(".tip.open").forEach(t => t.classList.remove("open"));
+        if (!wasOpen) tip.classList.add("open");
+      } else {
+        document.querySelectorAll(".tip.open").forEach(t => t.classList.remove("open"));
+      }
+    };
+    document.addEventListener("click", handler);
+    return () => document.removeEventListener("click", handler);
+  }, []);
 
   const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
     setLoading(true);
@@ -311,8 +328,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
         {/* Venues */}
         <section>
-          <h2 className="section-title">Restaurantes que ya activaron su carta</h2>
-          <p className="section-sub">Cartas reales funcionando con QuieroComer.</p>
+          <h2 className="section-title">Restaurantes que ya tienen su carta activa</h2>
+          <p className="section-sub" style={{ fontSize: 15 }}>Cartas reales funcionando con QuieroComer.</p>
           <div className="venues">
             {activeVenues.map((v, i) => {
               const plan = ((v as any).plan || "PREMIUM").toLowerCase();
@@ -337,7 +354,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div style={{ textAlign: "center", marginBottom: 22 }}>
             <div className="benefits-eyebrow">Después de activar</div>
             <h2 className="section-title" style={{ marginTop: 12 }}>La experiencia en tu restaurant cambia <em style={{ color: "var(--amber)", fontStyle: "italic" }}>para siempre.</em></h2>
-            <p className="section-sub">Funciones que ayudan a vender más y entender mejor a tus clientes.</p>
           </div>
           <div className="benefits">
             <article className="benefit highlight">
@@ -350,7 +366,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <article className="benefit">
               <div className="benefit-icon">🎨</div>
               <div className="benefit-content">
-                <strong>Distintas vistas de carta</strong>
+                <strong>Distintas vistas</strong>
                 <p>Impact, Galería y Lista para mostrar tu restaurante como quieras.</p>
               </div>
             </article>
@@ -375,8 +391,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
         {/* Plans */}
         <section>
-          <h2 className="section-title" id="planes">Elige tu plan</h2>
-          <p className="section-sub">Cambia de plan cuando quieras. Sin permanencia.</p>
+          <p className="section-sub" id="planes" style={{ fontSize: 15 }}>Cambia cuando quieras. Sin permanencia.</p>
 
           <div className="plans">
             <article className="plan">
@@ -461,7 +476,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           background: "radial-gradient(circle at top, rgba(232,163,61,.14), transparent 60%), rgba(255,255,255,.03)",
           border: "1px solid rgba(232,163,61,.2)",
         }}>
-          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(232,163,61,.12)", border: "1px solid rgba(232,163,61,.25)", display: "grid", placeItems: "center", margin: "0 auto 10px", fontSize: 20, color: "var(--amber)" }}>✨</div>
           <h2 className="section-title" style={{ marginBottom: 8 }}>Lleva tu restaurante al siguiente nivel</h2>
           <p style={{ color: "var(--cream-soft)", fontSize: 14, margin: "0 0 18px", lineHeight: 1.5 }}>
             Activa tu carta hoy y comienza a usarla cuando quieras.

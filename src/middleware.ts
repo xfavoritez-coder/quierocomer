@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const PUBLIC_ADMIN_ROUTES = ["/admin/login", "/admin/forgot-password", "/admin/reset-password"];
 const PUBLIC_PANEL_ROUTES = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
-const PUBLIC_PANEL_API_ROUTES = ["/api/panel/login"];
+const PUBLIC_PANEL_API_ROUTES = ["/api/panel/login", "/api/panel/demo-auth"];
 const PUBLIC_API_ROUTES = ["/api/admin/login", "/api/admin/forgot-password", "/api/admin/reset-password"];
 
 export function middleware(request: NextRequest) {

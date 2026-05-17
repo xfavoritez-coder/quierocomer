@@ -315,7 +315,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         logoUrl: extraction.logoUrl,
         cartaTheme: "PREMIUM",
         cartaColorMode: "DARK",
-        defaultView: "impact",
+        defaultView: "lista",
         enabledLangs: ["es", "en", "pt"],
         isActive: true,
         isDemo: true,
@@ -435,18 +435,55 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Translate dishes (names + descriptions) in background (fire and forget)
+    // Translate dishes + categories with timeout (awaited, not fire-and-forget)
+    let translationOk = true;
     if (createdDishes.length > 0) {
-      import("@/lib/ai/translateContent")
-        .then(({ translateDish }) => {
-          (async () => {
-            for (let i = 0; i < createdDishes.length; i += 3) {
-              const batch = createdDishes.slice(i, i + 3);
-              await Promise.all(batch.map((d) => translateDish(d.id).catch(() => {})));
-            }
-          })();
-        })
-        .catch(() => {});
+      try {
+        const { translateDish, translateCategory } = await import("@/lib/ai/translateContent");
+
+        const translateAll = async () => {
+          // Translate dishes in batches of 3
+          let translated = 0;
+          for (let i = 0; i < createdDishes.length; i += 3) {
+            const batch = createdDishes.slice(i, i + 3);
+            const results = await Promise.allSettled(batch.map((d) => translateDish(d.id)));
+            translated += results.filter(r => r.status === "fulfilled").length;
+          }
+
+          // Translate categories
+          const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true } });
+          for (let i = 0; i < cats.length; i += 3) {
+            const batch = cats.slice(i, i + 3);
+            await Promise.allSettled(batch.map((c) => translateCategory(c.id)));
+          }
+
+          return translated;
+        };
+
+        // Race against 90s timeout
+        const result = await Promise.race([
+          translateAll(),
+          new Promise<"timeout">((r) => setTimeout(() => r("timeout"), 90000)),
+        ]);
+
+        if (result === "timeout") {
+          console.warn(`[Pipeline] Translation timed out for ${restaurant.slug} — marking for backfill`);
+          translationOk = false;
+        } else if (result < createdDishes.length) {
+          console.warn(`[Pipeline] Partial translation for ${restaurant.slug}: ${result}/${createdDishes.length} dishes`);
+          translationOk = false;
+        } else {
+          console.log(`[Pipeline] Translated ${result} dishes for ${restaurant.slug}`);
+        }
+      } catch (err) {
+        console.error(`[Pipeline] Translation failed for ${restaurant.slug}:`, err);
+        translationOk = false;
+      }
+    }
+
+    // If translation failed, flag restaurant for backfill and defer email
+    if (!translationOk) {
+      await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
     }
 
     const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`;
@@ -461,8 +498,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} processed: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
 
-    // Send email with carta link
-    if (lead.email) {
+    // Send email with carta link (only if translation succeeded)
+    if (lead.email && translationOk) {
       try {
         const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
         const ownerName = lead.ownerName || "Hola";

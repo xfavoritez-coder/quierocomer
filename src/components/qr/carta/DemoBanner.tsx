@@ -64,8 +64,8 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               cursor: "pointer", display: "flex", alignItems: "center", gap: 5, position: "relative",
             }}
           >
-            <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
             CARTA DEMO
+            <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
             {showTip && (
               <>
                 <div onClick={(e) => { e.stopPropagation(); setShowTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />
@@ -116,7 +116,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           <a
             href={`/activar/${restaurantSlug}`}
             style={{
-              border: 0, borderRadius: 999, height: 38, padding: "0 13px",
+              border: 0, borderRadius: 999, height: 38, padding: "0 18px",
               fontSize: 13, fontWeight: 900,
               background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03",
               display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",

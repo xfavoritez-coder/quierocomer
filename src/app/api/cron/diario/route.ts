@@ -187,7 +187,75 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 5. Compute daily stats snapshot for monitoring
+    // 5. Backfill translations for restaurants that failed during pipeline
+    let translationsBackfilled = 0;
+    try {
+      const pending = await prisma.restaurant.findMany({
+        where: { needsTranslation: true },
+        select: { id: true, slug: true, name: true, logoUrl: true, qrToken: true,
+          dishes: { where: { isActive: true, deletedAt: null }, select: { id: true }, take: 1 },
+        },
+        take: 5, // limit to 5 per cron to avoid timeouts
+      });
+      if (pending.length > 0) {
+        const { translateAllForRestaurant } = await import("@/lib/ai/translateContent");
+        for (const r of pending) {
+          try {
+            await translateAllForRestaurant(r.id);
+            await prisma.restaurant.update({ where: { id: r.id }, data: { needsTranslation: false } });
+            translationsBackfilled++;
+            console.log(`[diario] Backfilled translations for ${r.slug}`);
+
+            // Send pending "carta ready" email if lead exists and email wasn't sent
+            const lead = await prisma.lead.findFirst({
+              where: { generatedSlug: r.slug, cartaStatus: "READY" },
+              select: { id: true, email: true, ownerName: true },
+            });
+            if (lead?.email) {
+              try {
+                const dishCount = await prisma.dish.count({ where: { restaurantId: r.id, isActive: true, deletedAt: null } });
+                const cartaUrl = `https://quierocomer.cl/qr/${r.slug}${r.qrToken ? `?t=${r.qrToken}` : ""}`;
+                const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
+                const ownerName = lead.ownerName || "Hola";
+                await sendAdminEmail({
+                  to: lead.email,
+                  subject: `${r.name} · Tu nueva carta está lista`,
+                  purpose: "funnel_carta_ready",
+                  html: `
+                    <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
+                      ${r.logoUrl ? `<img src="${r.logoUrl}" alt="${r.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
+                      <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
+                        ${ownerName}, tu carta está lista
+                      </h1>
+                      <p style="font-size: 15px; color: #555; line-height: 1.5; margin: 0 0 24px;">
+                        Transformamos la carta de <strong>${r.name}</strong> en una experiencia digital.
+                        Tiene ${dishCount} platos organizados y listos para que tus clientes los vean.
+                      </p>
+                      <a href="${cartaUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
+                        Ver mi carta →
+                      </a>
+                      <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
+                        Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
+                      </p>
+                    </div>
+                  `,
+                });
+                await prisma.lead.update({ where: { id: lead.id }, data: { cartaStatus: "DELIVERED" } });
+                console.log(`[diario] Sent pending carta-ready email to ${lead.email} for ${r.slug}`);
+              } catch (emailErr) {
+                console.error(`[diario] Failed to send backfill email for ${r.slug}:`, emailErr);
+              }
+            }
+          } catch (e) {
+            console.error(`[diario] Translation backfill failed for ${r.slug}:`, e);
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[diario] Translation backfill error:", e);
+    }
+
+    // 6. Compute daily stats snapshot for monitoring
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const [totalSessions, totalGuests, totalRegistered] = await Promise.all([
@@ -210,6 +278,7 @@ export async function GET(req: NextRequest) {
           expiredTokensCleaned: expiredTokens.count,
           trialRemindersSent,
           trialsExpired,
+          translationsBackfilled,
           automations: automationResults,
           dailySnapshot: {
             sessions24h: totalSessions,
@@ -229,6 +298,7 @@ export async function GET(req: NextRequest) {
       expiredTokensCleaned: expiredTokens.count,
       trialRemindersSent,
       trialsExpired,
+      translationsBackfilled,
     });
   } catch (error) {
     const durationMs = Date.now() - start;

@@ -265,7 +265,7 @@ export default function Paso2Client() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Estamos <span>transformando</span> tu carta</h1>
+            <h1>Estamos <span>revisando</span> tu carta</h1>
             <p className="subcopy">Estamos leyendo tu carta y preparando una nueva versión.</p>
           </div>
 

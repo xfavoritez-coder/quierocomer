@@ -10,39 +10,58 @@ const LANG_NAMES: Record<Lang, string> = { en: "English", pt: "Brazilian Portugu
 
 // ─── Low-level AI call ───────────────────────────────────────────────
 
-async function callTranslation(prompt: string): Promise<Record<string, string>> {
-  if (!ANTHROPIC_API_KEY) return {};
+const MAX_RETRIES = 3;
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      max_tokens: 512,
-      messages: [{ role: "user", content: prompt }],
-    }),
-  });
-
-  if (!res.ok) {
-    console.error("[translate] API error", res.status, await res.text());
+async function callTranslation(prompt: string, attempt = 1): Promise<Record<string, string>> {
+  if (!ANTHROPIC_API_KEY) {
+    console.error("[translate] Missing ANTHROPIC_API_KEY");
     return {};
   }
 
-  const data = await res.json();
-  const text: string = data.content?.[0]?.text || "";
-
-  // Extract JSON from response
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return {} as Record<Lang, string>;
-
   try {
-    return JSON.parse(match[0]);
-  } catch {
-    console.error("[translate] JSON parse error", text);
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 512,
+        messages: [{ role: "user", content: prompt }],
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error(`[translate] API error ${res.status} (attempt ${attempt}/${MAX_RETRIES})`, body);
+      if (attempt < MAX_RETRIES && (res.status >= 429 || res.status >= 500)) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        return callTranslation(prompt, attempt + 1);
+      }
+      return {};
+    }
+
+    const data = await res.json();
+    const text: string = data.content?.[0]?.text || "";
+
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) return {};
+
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      console.error("[translate] JSON parse error", text);
+      return {};
+    }
+  } catch (err: any) {
+    console.error(`[translate] Fetch error (attempt ${attempt}/${MAX_RETRIES}):`, err?.message);
+    if (attempt < MAX_RETRIES) {
+      await new Promise(r => setTimeout(r, 1000 * attempt));
+      return callTranslation(prompt, attempt + 1);
+    }
     return {};
   }
 }

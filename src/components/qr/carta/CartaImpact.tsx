@@ -1108,7 +1108,7 @@ export default function CartaImpact({
                 {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "#fff", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
               </button>
               <div style={{
-                  position: "fixed", top: 52, right: 16, background: "rgba(0,0,0,0.9)",
+                  position: "absolute", top: "calc(100% + 8px)", right: 0, background: "rgba(0,0,0,0.9)",
                   opacity: langOpen ? 1 : 0, pointerEvents: langOpen ? "auto" : "none",
                   transform: langOpen ? "translateY(0)" : "translateY(-8px)",
                   transition: "opacity 0.15s ease, transform 0.15s ease",
