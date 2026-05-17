@@ -300,7 +300,7 @@ export default function UsuariosPage() {
                     key={r}
                     onClick={() => setFormRole(r)}
                     style={{
-                      flex: 1, padding: "10px 8px", borderRadius: 10, border: "none", cursor: "pointer",
+                      flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
                       background: active ? cfg.bg : "var(--adm-input)",
                       color: active ? cfg.color : "var(--adm-text3)",
                       fontFamily: F, fontSize: "0.8rem", fontWeight: active ? 700 : 500,
