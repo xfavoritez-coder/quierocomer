@@ -47,9 +47,24 @@ function formatBirthday(d: string) {
   return `${date.getDate()} de ${date.toLocaleDateString("es-CL", { month: "long" })}`;
 }
 
+const DEMO_CLIENTS: Client[] = [
+  { id: "c1", name: "María González", email: "maria@email.com", birthDate: "1994-03-15", dietType: "vegetarian", registeredAt: new Date(Date.now() - 2 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c2", name: "Carlos Ruiz", email: "carlos@email.com", birthDate: "1988-07-22", dietType: "omnivore", registeredAt: new Date(Date.now() - 5 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c3", name: "Ana López", email: "ana@email.com", birthDate: "1996-11-08", dietType: "omnivore", registeredAt: new Date(Date.now() - 3 * 86400000).toISOString(), source: "post_genio" },
+  { id: "c4", name: "Pedro Morales", email: "pedro@email.com", birthDate: "1991-01-30", dietType: "omnivore", registeredAt: new Date(Date.now() - 7 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c5", name: "Laura Silva", email: "laura@email.com", birthDate: "1999-09-12", dietType: "vegetarian", registeredAt: new Date(Date.now() - 1 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c6", name: "Tomás Vargas", email: "tomas@email.com", birthDate: "1990-06-10", dietType: "vegan", registeredAt: new Date(Date.now() - 4 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c7", name: "Camila Herrera", email: "camila@email.com", birthDate: "1993-05-20", dietType: null, registeredAt: new Date(Date.now() - 6 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c8", name: "Rodrigo Soto", email: "rodrigo@email.com", birthDate: "2000-12-01", dietType: "omnivore", registeredAt: new Date(Date.now() - 8 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c9", name: "Sebastián Muñoz", email: "seba@email.com", birthDate: "1995-04-18", dietType: "omnivore", registeredAt: new Date(Date.now() - 9 * 86400000).toISOString(), source: "birthday_banner" },
+  { id: "c10", name: "Valentina Rojas", email: "vale@email.com", birthDate: "1997-08-25", dietType: null, registeredAt: new Date(Date.now() - 10 * 86400000).toISOString(), source: "post_genio" },
+  { id: "c11", name: "Diego Fernández", email: "diego@email.com", birthDate: "1992-02-14", dietType: "omnivore", registeredAt: new Date(Date.now() - 11 * 86400000).toISOString(), source: "birthday_banner" },
+];
+
 export default function ClientesPage() {
-  const { selectedRestaurantId } = useAdminSession();
+  const { selectedRestaurantId, restaurants } = useAdminSession();
   const { activePlan } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === selectedRestaurantId) as any)?.isDemo;
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [total, setTotal] = useState(0);
@@ -58,6 +73,12 @@ export default function ClientesPage() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const reload = () => {
+    if (isDemo) {
+      setClients(DEMO_CLIENTS);
+      setTotal(DEMO_CLIENTS.length);
+      setLoading(false);
+      return;
+    }
     if (!selectedRestaurantId) return;
     setLoading(true);
     fetch(`/api/panel/clients?restaurantId=${selectedRestaurantId}`)
@@ -151,25 +172,12 @@ export default function ClientesPage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <div>
           <h1 style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 8 }}>
-            <Users size={20} color={GOLD} /> Mis Clientes
+            <Users size={20} color="var(--adm-text3)" /> Mis Clientes
           </h1>
           <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: 0 }}>
             {total} cliente{total !== 1 ? "s" : ""} registrado{total !== 1 ? "s" : ""}
-            {withBirthday.length > 0 && ` · ${withBirthday.length} con cumpleaños`}
           </p>
         </div>
-        {canExport && clients.length > 0 && (
-          <button onClick={exportCSV} style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "var(--adm-text2)", cursor: "pointer" }}>
-            <Download size={14} /> Exportar CSV
-          </button>
-        )}
-        {!canExport && clients.length > 0 && (
-          <PlanGate plan={activePlan} feature="clients_export" blur={false}>
-            <button style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "var(--adm-hover)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.75rem", fontWeight: 600, color: "var(--adm-text3)", cursor: "not-allowed" }}>
-              <Download size={14} /> Exportar CSV
-            </button>
-          </PlanGate>
-        )}
       </div>
 
       {clients.length === 0 ? (

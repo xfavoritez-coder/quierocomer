@@ -137,7 +137,7 @@ const DEMO_ANALYTICS = {
       { key: "DINNER", label: "Cena", hint: "19-23h", count: 105 },
       { key: "LATE", label: "Noche", hint: "23+", count: 15 },
     ],
-    dietProfile: { diets: [{ name: "Omnívoro", count: 58 }, { name: "Vegetariano", count: 24 }, { name: "Vegano", count: 12 }], restrictions: [{ name: "Sin gluten", count: 8 }, { name: "Sin lactosa", count: 5 }] },
+    dietProfile: { totalDietGuests: 94, diets: [{ key: "OMNIVORE", label: "Omnívoro", name: "Omnívoro", count: 58 }, { key: "VEGETARIAN", label: "Vegetariano", name: "Vegetariano", count: 24 }, { key: "VEGAN", label: "Vegano", name: "Vegano", count: 12 }], restrictions: [{ label: "Sin gluten", name: "Sin gluten", count: 8 }, { label: "Sin lactosa", name: "Sin lactosa", count: 5 }, { label: "Sin frutos secos", name: "Sin frutos secos", count: 3 }] },
     acquisition: { devices: [{ name: "iPhone", count: 42 }, { name: "Android", count: 38 }, { name: "Desktop", count: 12 }] },
     languages: [{ code: "es", count: 780 }, { code: "en", count: 98 }, { code: "pt", count: 25 }],
   },
@@ -984,12 +984,31 @@ function BadgeAccuracySection({ badges }: { badges: any }) {
 }
 
 /* ═══ TAB: Clientes ═══ */
+const DEMO_CLIENTES = {
+  funnel: { totalVisitors: 284, returningVisitors: 91, returningPct: 32, convertedCount: 42, conversionPct: 15 },
+  clientes: {
+    totalSessions: 903,
+    timeOfDay: DEMO_ANALYTICS.clientes.timeOfDay,
+    dietProfile: DEMO_ANALYTICS.clientes.dietProfile,
+    acquisition: DEMO_ANALYTICS.clientes.acquisition,
+    languages: DEMO_ANALYTICS.clientes.languages,
+  },
+};
+
 function TabClientes({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [funnel, setFunnel] = useState<any>(null);
   const [clientes, setClientes] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setFunnel(DEMO_CLIENTES.funnel);
+      setClientes(DEMO_CLIENTES.clientes);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const p1 = new URLSearchParams({ type: "funnel", from, to });
     const p2 = new URLSearchParams({ type: "clientes", from, to });
@@ -998,7 +1017,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       fetch(`/api/admin/analytics?${p1}`).then(r => r.json()),
       fetch(`/api/admin/analytics?${p2}`).then(r => r.json()),
     ]).then(([f, c]) => { setFunnel(f); setClientes(c); }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, isDemo]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
 
@@ -1010,7 +1029,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Funnel */}
       {funnel && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>Embudo de conversión</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>📊 Embudo de conversión</p>
           {[
             { label: "Visitantes únicos", value: funnel.totalVisitors, pct: 100, color: "var(--adm-accent)" },
             { label: "Recurrentes", value: funnel.returningVisitors, pct: funnel.returningPct, color: "#3db89e" },
@@ -1032,7 +1051,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Cuándo vienen */}
       {clientes?.timeOfDay && clientes.totalSessions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🕐 Cuándo vienen tus clientes</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🕐 Cuándo vienen tus clientes</p>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 10, height: 110 }}>
             {clientes.timeOfDay.map((t: any) => (
               <div key={t.key} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
@@ -1049,7 +1068,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
       {/* Perfil dietético */}
       {clientes?.dietProfile && (clientes.dietProfile.totalDietGuests > 0 || clientes.dietProfile.restrictions.length > 0) && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 600 }}>🥗 Perfil dietético de tus clientes</p>
+          <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 14px", fontWeight: 700 }}>🥗 Perfil dietético de tus clientes</p>
           <div className="adm-cols-2" style={{ gap: 14 }}>
             <div>
               <p style={{ fontFamily: F, fontSize: "0.7rem", color: "var(--adm-text3)", margin: "0 0 8px", fontWeight: 600 }}>Tipo de dieta declarado</p>
@@ -1061,7 +1080,7 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
                   return (
                     <div key={d.key} style={{ marginBottom: 8 }}>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
-                        <span style={{ fontFamily: FB, fontSize: "0.74rem", color: "var(--adm-text)" }}>{d.label}</span>
+                        <span style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)", fontWeight: 600 }}>{d.label || d.name}</span>
                         <span style={{ fontFamily: F, fontSize: "0.72rem", color: dietColors[d.key] || "var(--adm-text2)", fontWeight: 600 }}>{d.count} ({pct}%)</span>
                       </div>
                       <div style={{ height: 5, borderRadius: 3, background: "var(--adm-card-border)" }}>
@@ -1096,16 +1115,41 @@ function TabClientes({ rid, from, to }: { rid: string; from: string; to: string 
 }
 
 /* ═══ TAB: Garzón ═══ */
+const DEMO_GARZON = {
+  today: 3, week: 18, answeredPct: 89, avgResponseSec: 95,
+  perDay: (() => {
+    const d: Record<string, number> = {};
+    const counts = [1, 4, 2, 3, 5, 2, 1];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(Date.now() - i * 86400000);
+      d[date.toISOString().split("T")[0]] = counts[6 - i];
+    }
+    return d;
+  })(),
+  peakHours: [
+    { hour: 20, count: 6 }, { hour: 13, count: 5 }, { hour: 19, count: 4 },
+    { hour: 12, count: 3 }, { hour: 21, count: 3 },
+  ],
+  topMesas: [{ name: "Mesa 3", count: 6 }, { name: "Mesa 7", count: 5 }, { name: "Mesa 1", count: 4 }, { name: "Mesa 5", count: 3 }],
+};
+
 function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
+  const { restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setData(DEMO_GARZON);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const params = rid ? `restaurantId=${rid}` : (isSuper ? "all=true" : "");
     if (!params) { setLoading(false); return; }
     fetch(`/api/admin/analytics-garzon?${params}`).then(r => r.json()).then(d => { if (!d.error) setData(d); }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, isSuper]);
+  }, [rid, isSuper, isDemo]);
 
   if (loading) return <SkeletonLoading type="analytics" />;
   if (!data) return <p style={{ color: "var(--adm-text2)", fontFamily: F, textAlign: "center", padding: 40 }}>Sin datos de garzón</p>;
@@ -1122,8 +1166,8 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
       {/* Summary */}
       <div className="adm-kpi-grid">
         {[
-          { label: "Hoy", value: data.today, color: GOLD },
-          { label: "Semana", value: data.week },
+          { label: "Llamados hoy", value: data.today, color: GOLD },
+          { label: "Llamados semana", value: data.week },
           { label: "% Atendidos", value: `${data.answeredPct}%`, color: data.answeredPct >= 80 ? "#16a34a" : data.answeredPct >= 50 ? GOLD : "#ef4444" },
           { label: "Tiempo resp.", value: formatTime(data.avgResponseSec), color: data.avgResponseSec <= 120 ? "#16a34a" : GOLD },
         ].map((c, i) => (
@@ -1204,11 +1248,29 @@ function TabGarzon({ rid, isSuper }: { rid: string; isSuper: boolean }) {
 }
 
 /* ═══ TAB: Búsquedas ═══ */
+const DEMO_BUSQUEDAS = [
+  { query: "pizza", count: 15, timesSearched: 15, uniqueVisitors: 12, hasResults: true },
+  { query: "vegano", count: 12, timesSearched: 12, uniqueVisitors: 9, hasResults: true },
+  { query: "postre", count: 8, timesSearched: 8, uniqueVisitors: 7, hasResults: true },
+  { query: "gluten free", count: 5, timesSearched: 5, uniqueVisitors: 4, hasResults: true },
+  { query: "cerveza", count: 4, timesSearched: 4, uniqueVisitors: 3, hasResults: false },
+  { query: "ensalada", count: 3, timesSearched: 3, uniqueVisitors: 3, hasResults: true },
+  { query: "delivery", count: 2, timesSearched: 2, uniqueVisitors: 2, hasResults: false },
+  { query: "vino", count: 2, timesSearched: 2, uniqueVisitors: 2, hasResults: true },
+];
+
 function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string }) {
+  const { restaurants } = usePanelSession();
+  const isDemo = !!(restaurants?.find((r: any) => r.id === rid) as any)?.isDemo;
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (isDemo) {
+      setData(DEMO_BUSQUEDAS);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     const p = new URLSearchParams({ type: "searches", from, to });
     if (rid) p.set("restaurantId", rid);
@@ -1216,13 +1278,13 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
       const arr = Array.isArray(d) ? d : [];
       setData(arr.map((s: any) => ({ ...s, count: s.timesSearched || s.count || 0 })));
     }).catch(() => {}).finally(() => setLoading(false));
-  }, [rid, from, to]);
+  }, [rid, from, to, isDemo]);
 
   if (loading) return <SkeletonLoading type="list" />;
 
   return (
     <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
-      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 600 }}>🔍 Qué buscan tus clientes</p>
+      <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text2)", margin: "0 0 12px", fontWeight: 700 }}>🔍 Qué buscan tus clientes</p>
       {data.length === 0 ? (
         <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: 20 }}>Sin búsquedas registradas</p>
       ) : (
@@ -1244,12 +1306,12 @@ function TabBusquedas({ rid, from, to }: { rid: string; from: string; to: string
 const DEMO_SESSIONS = {
   total: 6, page: 1, totalPages: 1,
   sessions: [
-    { id: "s1", startedAt: new Date(Date.now() - 5 * 60000).toISOString(), durationMs: 94000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 1, view: "impact", qrUser: { name: "María González", email: "maria@email.com" }, guestId: "g1", visitDays: 5, diet: "vegetarian", language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
+    { id: "s1", startedAt: new Date(Date.now() - 5 * 60000).toISOString(), durationMs: 94000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 1, view: "impact", qrUser: { name: "María González", email: "maria@email.com" }, guestId: "g1", visitDays: 3, language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
     { id: "s2", startedAt: new Date(Date.now() - 18 * 60000).toISOString(), durationMs: 62000, dishesViewed: [{ dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }], searchCount: 0, view: "lista", qrUser: null, anonId: "a1b2c3", guestId: "g2", visitDays: 1, language: "en", userAgent: "Mozilla/5.0 Chrome" },
-    { id: "s3", startedAt: new Date(Date.now() - 35 * 60000).toISOString(), durationMs: 148000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }], searchCount: 2, view: "impact", qrUser: { name: "Carlos Ruiz", email: "carlos@email.com" }, guestId: "g3", visitDays: 8, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
-    { id: "s5", startedAt: new Date(Date.now() - 78 * 60000).toISOString(), durationMs: 120000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }], searchCount: 1, view: "impact", qrUser: { name: "Ana López", email: "ana@email.com" }, guestId: "g5", visitDays: 3, language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
-    { id: "s7", startedAt: new Date(Date.now() - 120 * 60000).toISOString(), durationMs: 185000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }, { dish: { name: "Pan de Ajo", photos: [] }, detailMs: 5000 }], searchCount: 3, view: "impact", qrUser: { name: "Pedro Morales", email: "pedro@email.com" }, guestId: "g7", visitDays: 12, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
-    { id: "s8", startedAt: new Date(Date.now() - 150 * 60000).toISOString(), durationMs: 72000, dishesViewed: [{ dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 0, view: "feed", qrUser: { name: "Laura Silva", email: "laura@email.com" }, guestId: "g8", visitDays: 2, diet: "vegetarian", language: "es", userAgent: "Mozilla/5.0 iPhone Safari", birthdaySaved: true },
+    { id: "s3", startedAt: new Date(Date.now() - 35 * 60000).toISOString(), durationMs: 148000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }, { dish: { name: "Risotto Funghi", photos: [] }, detailMs: 10000 }], searchCount: 2, view: "impact", qrUser: { name: "Carlos Ruiz", email: "carlos@email.com" }, guestId: "g3", visitDays: 1, language: "es", userAgent: "Mozilla/5.0 Android Chrome", genioData: { birthdaySaved: true } },
+    { id: "s4", startedAt: new Date(Date.now() - 60 * 60000).toISOString(), durationMs: 88000, dishesViewed: [{ dish: { name: "Tiramisú", photos: [] }, detailMs: 22000 }, { dish: { name: "Pizza Margherita", photos: [] }, detailMs: 14000 }], searchCount: 0, view: "impact", qrUser: { name: "Laura Silva", email: "laura@email.com" }, guestId: "g4", visitDays: 1, language: "es", userAgent: "Mozilla/5.0 iPhone Safari" },
+    { id: "s5", startedAt: new Date(Date.now() - 78 * 60000).toISOString(), durationMs: 120000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }], searchCount: 1, view: "impact", qrUser: null, anonId: "d4e5f6", guestId: "g5", visitDays: 1, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
+    { id: "s6", startedAt: new Date(Date.now() - 120 * 60000).toISOString(), durationMs: 185000, dishesViewed: [{ dish: { name: "Pizza Margherita", photos: [] }, detailMs: 12000 }, { dish: { name: "Pasta Carbonara", photos: [] }, detailMs: 15000 }, { dish: { name: "Tiramisú", photos: [] }, detailMs: 18000 }, { dish: { name: "Bruschetta", photos: [] }, detailMs: 8000 }], searchCount: 3, view: "impact", qrUser: { name: "Pedro Morales", email: "pedro@email.com" }, guestId: "g6", visitDays: 3, language: "es", userAgent: "Mozilla/5.0 Android Chrome" },
   ],
 };
 
@@ -1376,6 +1438,9 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                   <span style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: "var(--adm-text)" }}>{userName}</span>
+                  {s.genioData?.birthdaySaved && (
+                    <span style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600 }}>🎂 Guardó cumple</span>
+                  )}
                   {s.qrUser?.email && <span style={{ fontFamily: FB, fontSize: "0.68rem", color: "var(--adm-text3)" }}>{s.qrUser.email}</span>}
                   {isReturningGuest && (
                     <span title={`Este cliente ha venido al local en ${visitDays} días distintos en total`} style={{ fontFamily: F, fontSize: "0.62rem", padding: "1px 7px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600, cursor: "help" }}>
@@ -1417,14 +1482,6 @@ function TabSesiones({ rid, from, to }: { rid: string; from: string; to: string 
                     <span title={s.genioData.completed ? "Completó el Genio" : `Abrió el Genio (llegó hasta: ${s.genioData.lastStep || "inicio"})`} style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: s.genioData.completed ? "rgba(74,222,128,0.15)" : "rgba(244,166,35,0.15)", color: s.genioData.completed ? "#16a34a" : "#F4A623" }}>
                       🧞 {s.genioData.completed ? "Genio completado" : "Abrió Genio"}
                     </span>
-                  )}
-                  {/* Cumpleaños */}
-                  {s.genioData?.birthdaySaved && (
-                    s.genioData.birthdayWasReturning ? (
-                      <span title="Esta persona ya tenía cuenta en QuieroComer (volvió, no es cliente nuevo)" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(127,191,220,0.15)", color: "#5fa3c4" }}>🎂↻ Cliente que vuelve</span>
-                    ) : (
-                      <span title="El comensal guardó su cumpleaños en esta sesión (cuenta nueva)" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "#a78bfa" }}>🎂 Guardó cumple</span>
-                    )
                   )}
                   {!s.genioData?.birthdaySaved && s.genioData?.birthdayDismissed && <span title="Vio el modal de cumple pero lo cerró sin guardar" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(155,155,155,0.15)", color: "var(--adm-text3)" }}>🎂✕ Cerró cumple</span>}
                   {!s.genioData?.birthdaySaved && !s.genioData?.birthdayDismissed && s.genioData?.birthdayModalAutoShown && <span title="Se le mostró el modal automático de cumple" style={{ fontSize: "0.65rem", padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.10)", color: "#a78bfa" }}>🎂 Modal mostrado</span>}

@@ -531,27 +531,21 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   return (
     <SessionContext.Provider value={ctxValue}>
       {isDemo && selectedRest && (
-        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "rgba(3,3,3,.95)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 12px 30px rgba(0,0,0,.5)", overflow: "visible" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ flex: "0 0 auto" }}>
-              <span style={{ padding: "7px 10px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
-                <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
-                PANEL DEMO
-              </span>
-            </div>
-            <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", position: "relative", minHeight: 20 }}>
-              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", height: "100%", display: "flex", alignItems: "center", gap: 6, opacity: demoScrolled ? 1 : 0, transition: "opacity 0.15s ease", pointerEvents: demoScrolled ? "auto" : "none" }}>
-                {(selectedRest as any).logoUrl && <img src={(selectedRest as any).logoUrl} alt="" style={{ width: 18, height: 18, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />}
-                <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 90, fontFamily: "var(--font-body)" }}>{selectedRest.name}</span>
-              </div>
-            </div>
-            <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
-              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" }}>Ver carta</a>
-              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", fontFamily: "var(--font-display)" }}>Activar →</a>
+        <div style={{ position: "sticky", top: 0, zIndex: 150, padding: "18px 14px 18px", background: "rgba(3,3,3,.95)", backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)", boxShadow: "0 12px 30px rgba(0,0,0,.5)", overflow: "visible", fontFamily: "var(--font-body)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ height: 38, padding: "0 14px", borderRadius: 999, background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)", color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px", fontFamily: "var(--font-body)", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
+              PANEL DEMO
+            </span>
+            <div style={{ display: "flex", gap: 7 }}>
+              <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.55)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Ver carta</a>
+              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #ffc44f, #f3a333)", color: "#100b03", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>Activar →</a>
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #ffb833, #f5a623)", textAlign: "center" }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: "#1a0800", fontFamily: "var(--font-display)" }}>Datos de ejemplo · Al activar verás tus estadísticas reales</span>
+            <span className="demo-ribbon-full" style={{ fontSize: 14, fontWeight: 700, color: "#1a0800" }}>Datos de ejemplo · Al activar verás tus estadísticas reales</span>
+            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#1a0800", display: "none" }}>Al activar verás tus datos reales</span>
+            <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
           </div>
         </div>

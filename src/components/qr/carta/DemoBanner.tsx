@@ -58,7 +58,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           <div
             onClick={() => setShowTip(s => !s)}
             style={{
-              flex: "0 0 auto", padding: "7px 10px", borderRadius: 999,
+              flex: "0 0 auto", height: 38, padding: "0 14px", borderRadius: 999,
               background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)",
               color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 5, position: "relative",
@@ -89,15 +89,6 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           </div>
         </div>
 
-        {/* Center — logo + name on scroll */}
-        <div style={{ display: "flex", alignItems: "center", gap: 6, opacity: scrolled ? 1 : 0, transition: "opacity 0.15s ease", pointerEvents: scrolled ? "auto" : "none", overflow: "hidden" }}>
-          {restaurantLogo && (
-            <img src={restaurantLogo} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-          )}
-          <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 80 }}>
-            {restaurantName}
-          </span>
-        </div>
 
         {/* Right — Actions */}
         <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
@@ -107,10 +98,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               style={{
                 border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
                 height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
-                background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)",
-                display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
+                background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.55)",
+                display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap",
               }}
-            >Ver panel</a>
+            ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver panel</a>
           ) : (
             <a
               href={`/qr/${restaurantSlug}`}
@@ -159,6 +150,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         <span style={{ fontSize: 15, fontWeight: 700, color: "#1a0800" }}>
           Actívala y muéstrasela al mundo
         </span>
+        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #f5a623" }} />
       </div>
     </div>
   );
