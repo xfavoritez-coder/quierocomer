@@ -63,7 +63,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .activation-flow::before { content: ""; position: absolute; left: 50%; top: 330px; transform: translateX(-50%); width: 360px; height: 360px; background: radial-gradient(circle, rgba(255,178,45,.22), transparent 66%); pointer-events: none; z-index: 0; }
 .flow-arrow { width: 1px; height: 42px; margin: 14px auto 0; background: linear-gradient(to bottom, rgba(255,178,45,.0), rgba(255,178,45,.7)); position: relative; z-index: 2; }
 .flow-arrow::after { content: ""; position: absolute; bottom: -5px; left: 50%; width: 9px; height: 9px; border-right: 1px solid rgba(255,178,45,.85); border-bottom: 1px solid rgba(255,178,45,.85); transform: translateX(-50%) rotate(45deg); }
-.offer { position: relative; margin: 24px 0 30px; padding: 22px; border-radius: 22px; background: linear-gradient(135deg, rgba(168,85,247,.08), rgba(255,255,255,.025)), #101010; border: 1px solid rgba(168,85,247,.45); box-shadow: 0 0 36px rgba(168,85,247,.10); }
+.offer { position: relative; margin: 24px 0 30px; padding: 22px; border-radius: 22px; background: linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.025)), #101010; border: 1px solid rgba(255,178,45,.45); box-shadow: 0 0 36px rgba(255,178,45,.10); }
 .offer-label { color: #c084fc; font-size: 14px; font-weight: 950; letter-spacing: .7px; text-transform: uppercase; margin-bottom: 6px; }
 .price-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .old-price { color: rgba(232,221,200,.5); font-size: 20px; font-weight: 900; text-decoration: line-through; text-decoration-thickness: 2px; }
