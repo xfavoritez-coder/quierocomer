@@ -164,6 +164,16 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
    - No mostrar "7 días gratis" en la página /activar (el gancho es la carta demo ya lista, no el trial)
    - Si el trial vence sin pago → carta vuelve a modo demo (isDemo=true) o se desactiva
 
+   #### Urgencia y sensación de oportunidad (PENDIENTE)
+   Necesitamos que el dueño sienta que si no activa ahora, pierde algo. Ideas a explorar:
+   - **Precio de lanzamiento temporal**: "$4.900 solo por ser de los primeros, después sube a $49.900". Mostrar cuenta regresiva o fecha límite real.
+   - **Oferta expira con la demo**: "Tu carta demo se elimina en X días si no la activas". Crear sentido de pérdida — ya está hecha, ya la vio, perderla duele.
+   - **Beneficio exclusivo early adopter**: "Los primeros 50 restaurantes tienen X gratis para siempre" (ej: multiidioma, analytics avanzados).
+   - **Comparación con/sin**: Mostrar lo que pierde si baja a plan gratis — estadísticas, multiidioma, genio, cumpleaños automáticos. Que vea todo lo que ya tiene y que perderá.
+   - **Prueba social dinámica**: "12 restaurantes activaron su carta esta semana" con logos reales.
+   - **Email de última oportunidad**: 48h antes de que expire la demo, email con "tu carta se eliminará mañana" + recap de lo que tiene.
+   - La clave: que la oferta de $4.900 se sienta como algo que no volverá, no como el precio normal.
+
    #### Secuencias de email post-funnel
 
    **Lead que SÍ compró (nurturing de valor):**
