@@ -9,6 +9,27 @@ export async function GET(req: NextRequest) {
   }
 
   try {
+    // Virtual demo session (no real owner)
+    if (token.startsWith("demo_") && panelId === "demo") {
+      const demoSlug = req.cookies.get("panel_demo_slug")?.value;
+      if (!demoSlug) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+
+      const restaurant = await prisma.restaurant.findFirst({
+        where: { slug: demoSlug, isDemo: true },
+        select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true },
+      });
+      if (!restaurant) return NextResponse.json({ error: "Demo no encontrado" }, { status: 401 });
+
+      const { toteatApiToken, isDemo, ...rest } = restaurant;
+      return NextResponse.json({
+        role: "OWNER",
+        name: restaurant.name,
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: true }],
+        selectedRestaurantId: restaurant.id,
+        mustChangePassword: false,
+      });
+    }
+
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
       include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true } } },

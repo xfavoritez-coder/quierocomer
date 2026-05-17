@@ -40,6 +40,7 @@ interface Restaurant {
   toteatUserId: number | null;
   toteatApiToken: string | null;
   toteatLastSyncAt: string | null;
+  isDemo: boolean;
   _count: { dishes: number; categories: number; statEvents: number; sessions: number };
 }
 
@@ -61,6 +62,42 @@ export default function AdminLocales() {
   const [handoffSubmitting, setHandoffSubmitting] = useState(false);
   const [handoffError, setHandoffError] = useState<string | null>(null);
   const [handoffResult, setHandoffResult] = useState<null | { ok: boolean; trialEndsAt: string | null; isPaidPlan: boolean; plan: string; emailSent: boolean; emailError: string | null; passwordGenerated: string | null }>(null);
+
+  // Bulk selection
+  const [bulkMode, setBulkMode] = useState(false);
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+
+  const toggleBulkItem = (id: string) => {
+    setBulkSelected(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleBulkAll = () => {
+    if (bulkSelected.size === filtered.length) setBulkSelected(new Set());
+    else setBulkSelected(new Set(filtered.map(r => r.id)));
+  };
+
+  const bulkDelete = async () => {
+    if (bulkSelected.size === 0) return;
+    if (!confirm(`¿Eliminar ${bulkSelected.size} local(es)? Se borrarán TODOS sus datos. Esta acción no se puede deshacer.`)) return;
+    setBulkDeleting(true);
+    try {
+      const res = await fetch("/api/admin/locales/bulk-delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids: [...bulkSelected] }) });
+      const data = await res.json();
+      if (res.ok) {
+        setRestaurants(prev => prev.filter(r => !bulkSelected.has(r.id)));
+        setBulkSelected(new Set());
+        setBulkMode(false);
+      } else {
+        alert(data.error || "Error al eliminar");
+      }
+    } catch { alert("Error de conexión"); }
+    setBulkDeleting(false);
+  };
 
   useEffect(() => {
     fetch("/api/admin/locales").then(r => r.json()).then(d => { if (Array.isArray(d)) setRestaurants(d); }).catch(() => {}).finally(() => setLoading(false));
@@ -562,6 +599,39 @@ export default function AdminLocales() {
           </button>
         </div>
 
+        {/* Toggle demo */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: selected.isDemo ? "rgba(127,191,220,0.05)" : "rgba(255,255,255,0.02)", border: `1px solid ${selected.isDemo ? "rgba(127,191,220,0.3)" : "#2A2A2A"}`, borderRadius: 12, marginTop: 8 }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontFamily: F, fontSize: "0.82rem", fontWeight: 600, color: selected.isDemo ? "#7fbfdc" : "white", margin: 0 }}>🧪 Local demo</p>
+            <p style={{ fontFamily: F, fontSize: "0.68rem", color: "#888", margin: "2px 0 0", lineHeight: 1.4 }}>
+              {selected.isDemo
+                ? "Este local se muestra como demo · Onboarding activado"
+                : "Local normal — sin modo demo"}
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const val = !selected.isDemo;
+              const res = await fetch(`/api/admin/locales/${selected.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isDemo: val }) });
+              if (!res.ok) { alert("Error al actualizar"); return; }
+              const u = { ...selected, isDemo: val };
+              setSelected(u);
+              setRestaurants(prev => prev.map(x => x.id === selected.id ? u : x));
+            }}
+            style={{
+              width: 48, height: 28, borderRadius: 14, border: "none", cursor: "pointer", position: "relative",
+              background: selected.isDemo ? "#7fbfdc" : "rgba(255,255,255,0.15)",
+              transition: "background 0.2s", flexShrink: 0,
+            }}
+          >
+            <div style={{
+              width: 22, height: 22, borderRadius: "50%", background: "white", position: "absolute", top: 3,
+              left: selected.isDemo ? 23 : 3, transition: "left 0.2s",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+            }} />
+          </button>
+        </div>
+
       </div>
       {qrModalOpen && <QRGeneratorModal restaurant={selected} onClose={() => setQrModalOpen(false)} />}
 
@@ -733,35 +803,89 @@ export default function AdminLocales() {
         </div>
       </div>
 
+      {/* Bulk mode toolbar */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+        <button onClick={() => { setBulkMode(!bulkMode); setBulkSelected(new Set()); }} style={{
+          padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+          fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+          background: bulkMode ? "rgba(239,68,68,0.12)" : "rgba(255,255,255,0.05)",
+          color: bulkMode ? "#ef4444" : "#888",
+        }}>
+          {bulkMode ? "Cancelar selección" : "Seleccionar"}
+        </button>
+        {bulkMode && (
+          <>
+            <button onClick={toggleBulkAll} style={{
+              padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+              fontFamily: F, fontSize: "0.75rem", fontWeight: 600,
+              background: "rgba(255,255,255,0.05)", color: "#aaa",
+            }}>
+              {bulkSelected.size === filtered.length ? "Deseleccionar todos" : "Seleccionar todos"}
+            </button>
+            {bulkSelected.size > 0 && (
+              <button onClick={bulkDelete} disabled={bulkDeleting} style={{
+                padding: "7px 14px", borderRadius: 8, border: "none", cursor: bulkDeleting ? "wait" : "pointer",
+                fontFamily: F, fontSize: "0.75rem", fontWeight: 700,
+                background: "rgba(239,68,68,0.15)", color: "#ef4444",
+              }}>
+                {bulkDeleting ? "Eliminando..." : `Eliminar ${bulkSelected.size} local(es)`}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {filtered.map(r => (
-          <button key={r.id} onClick={() => setSelected(r)} style={{
-            display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
-            background: "#1A1A1A", border: "1px solid #2A2A2A", borderRadius: 12,
-            cursor: "pointer", width: "100%", textAlign: "left", transition: "border-color 0.2s",
-          }}
-            onMouseOver={e => (e.currentTarget.style.borderColor = "rgba(244,166,35,0.3)")}
-            onMouseOut={e => (e.currentTarget.style.borderColor = "#2A2A2A")}
-          >
-            {r.logoUrl ? (
-              <img src={r.logoUrl} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
-            ) : (
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>{r.name.charAt(0)}</div>
+          <div key={r.id} style={{ display: "flex", alignItems: "center", gap: 0 }}>
+            {bulkMode && (
+              <button
+                onClick={() => toggleBulkItem(r.id)}
+                style={{
+                  width: 36, height: 36, borderRadius: 8, border: "none", cursor: "pointer",
+                  background: bulkSelected.has(r.id) ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.04)",
+                  color: bulkSelected.has(r.id) ? "#ef4444" : "#555",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "1rem", flexShrink: 0, marginRight: 6,
+                  transition: "all 0.15s",
+                }}
+              >
+                {bulkSelected.has(r.id) ? "✓" : "○"}
+              </button>
             )}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
-              <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-              <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4,
-                background: r.plan === "PREMIUM" ? "rgba(124,58,237,0.15)" : r.plan === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.06)",
-                color: r.plan === "PREMIUM" ? "#c084fc" : r.plan === "GOLD" ? "#F4A623" : "#666",
-              }}>
-                {r.plan === "PREMIUM" ? "Premium" : r.plan === "GOLD" ? "Gold" : "Free"}
-              </span>
-              <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.isActive ? "#4ade80" : "#ff6b6b" }} />
-            </div>
-          </button>
+            <button onClick={() => !bulkMode && setSelected(r)} style={{
+              display: "flex", alignItems: "center", gap: 12, padding: "14px 16px",
+              background: bulkMode && bulkSelected.has(r.id) ? "rgba(239,68,68,0.04)" : "#1A1A1A",
+              border: `1px solid ${bulkMode && bulkSelected.has(r.id) ? "rgba(239,68,68,0.2)" : "#2A2A2A"}`,
+              borderRadius: 12, cursor: bulkMode ? "default" : "pointer",
+              width: "100%", textAlign: "left", transition: "border-color 0.2s",
+            }}
+              onMouseOver={e => !bulkMode && (e.currentTarget.style.borderColor = "rgba(244,166,35,0.3)")}
+              onMouseOut={e => (e.currentTarget.style.borderColor = bulkMode && bulkSelected.has(r.id) ? "rgba(239,68,68,0.2)" : "#2A2A2A")}
+            >
+              {r.logoUrl ? (
+                <img src={r.logoUrl} alt="" style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(244,166,35,0.15)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14, fontWeight: 700, color: "#F4A623", flexShrink: 0 }}>{r.name.charAt(0)}</div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <p style={{ fontFamily: F, fontSize: "0.92rem", color: "white", fontWeight: 600, margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.name}</p>
+                  {r.isDemo && <span style={{ fontSize: "0.58rem", padding: "1px 5px", borderRadius: 4, background: "rgba(127,191,220,0.12)", color: "#7fbfdc", fontFamily: F, fontWeight: 600 }}>DEMO</span>}
+                </div>
+                <p style={{ fontFamily: F, fontSize: "0.72rem", color: "#666", margin: 0 }}>/{r.slug} · {r._count.dishes} platos · {r._count.sessions} sesiones</p>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <span style={{ fontFamily: F, fontSize: "0.6rem", fontWeight: 600, padding: "2px 6px", borderRadius: 4,
+                  background: r.plan === "PREMIUM" ? "rgba(124,58,237,0.15)" : r.plan === "GOLD" ? "rgba(244,166,35,0.15)" : "rgba(255,255,255,0.06)",
+                  color: r.plan === "PREMIUM" ? "#c084fc" : r.plan === "GOLD" ? "#F4A623" : "#666",
+                }}>
+                  {r.plan === "PREMIUM" ? "Premium" : r.plan === "GOLD" ? "Gold" : "Free"}
+                </span>
+                <span style={{ width: 8, height: 8, borderRadius: "50%", background: r.isActive ? "#4ade80" : "#ff6b6b" }} />
+              </div>
+            </button>
+          </div>
         ))}
         {filtered.length === 0 && (
           <p style={{ fontFamily: F, fontSize: "0.85rem", color: "#666", textAlign: "center", padding: 40 }}>No hay locales que coincidan</p>

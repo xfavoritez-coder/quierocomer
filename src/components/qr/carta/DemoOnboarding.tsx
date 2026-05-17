@@ -321,14 +321,6 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
             }}>
               {current.icon} {current.title}
             </p>
-            <button onClick={() => setMinimized(false)} style={{
-              width: 26, height: 26, borderRadius: 7,
-              background: isLightStep ? "rgba(0,0,0,0.04)" : "rgba(255,255,255,0.05)",
-              border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.1)",
-              color: isLightStep ? "rgba(0,0,0,0.4)" : "rgba(255,255,255,0.45)", fontSize: 12,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", flexShrink: 0, marginLeft: 6,
-            }}>⤢</button>
           </div>
 
           {/* Description */}
@@ -452,20 +444,6 @@ export default function DemoOnboarding({ restaurantSlug }: Props) {
           }}>
             {current.title}
           </h3>
-          {!isLast && (
-            <button
-              onClick={(e) => { e.stopPropagation(); setMinimized(true); }}
-              style={{
-                width: 24, height: 24, borderRadius: 6,
-                background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
-                color: "rgba(255,255,255,0.4)", fontSize: 14, fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                cursor: "pointer", flexShrink: 0,
-              }}
-            >
-              —
-            </button>
-          )}
         </div>
 
         {/* Body */}

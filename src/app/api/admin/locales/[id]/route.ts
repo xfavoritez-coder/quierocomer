@@ -95,6 +95,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         ...(body.toteatLocalId !== undefined && { toteatLocalId: body.toteatLocalId === null || body.toteatLocalId === "" ? null : Number(body.toteatLocalId) }),
         ...(body.toteatUserId !== undefined && { toteatUserId: body.toteatUserId === null || body.toteatUserId === "" ? null : Number(body.toteatUserId) }),
         ...(body.toteatApiToken !== undefined && { toteatApiToken: body.toteatApiToken || null }),
+        ...(body.isDemo !== undefined && { isDemo: body.isDemo }),
       };
     } else {
       // Owner: silently filter to allowed fields only
