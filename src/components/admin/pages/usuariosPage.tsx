@@ -321,7 +321,7 @@ export default function UsuariosPage() {
               onClick={handleInvite}
               disabled={submitting || !formName.trim() || !formEmail.trim()}
               style={{
-                width: "100%", padding: "12px", borderRadius: 10, border: "none", cursor: submitting ? "wait" : "pointer",
+                width: "100%", padding: "12px", borderRadius: 10, cursor: submitting ? "wait" : "pointer",
                 background: "rgba(244,166,35,0.15)", color: GOLD, fontFamily: F, fontSize: "0.88rem", fontWeight: 700, border: "1px solid rgba(244,166,35,0.25)",
                 opacity: submitting || !formName.trim() || !formEmail.trim() ? 0.5 : 1,
                 transition: "opacity 0.2s",
