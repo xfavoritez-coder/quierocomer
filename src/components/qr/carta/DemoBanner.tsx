@@ -83,6 +83,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
 
   return (
     <div
+      data-demo-banner
       className="font-[family-name:var(--font-dm)]"
       style={{
         position: "fixed", top: 0, left: 0, right: 0, zIndex: 60,
@@ -192,12 +193,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               style={{
                 border: 0, borderRadius: 999, height: 38, padding: "0 18px",
                 fontSize: 13, fontWeight: 900,
-                background: onboardingActive
-                  ? "linear-gradient(135deg, rgba(192,132,252,0.35), rgba(168,85,247,0.35))"
-                  : "linear-gradient(135deg, #c084fc, #a855f7)",
-                color: onboardingActive ? "rgba(255,255,255,0.4)" : "#fff",
+                background: "linear-gradient(135deg, #c084fc, #a855f7)",
+                color: "#fff",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
-                boxShadow: onboardingActive ? "none" : highlight
+                boxShadow: highlight
                   ? "0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35)"
                   : "0 10px 24px rgba(168,85,247,.22)",
                 animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
@@ -253,16 +252,13 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         bottom: 0, left: 0, right: 0,
         transform: "translateY(100%)",
         padding: "9px 14px",
-        background: onboardingActive
-          ? "linear-gradient(135deg, rgba(192,132,252,0.3), rgba(168,85,247,0.3))"
-          : "linear-gradient(135deg, #c084fc, #a855f7)",
+        background: "linear-gradient(135deg, #c084fc, #a855f7)",
         textAlign: "center",
-        transition: "background 0.3s ease",
       }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: onboardingActive ? "rgba(255,255,255,0.3)" : "#fff", transition: "color 0.3s ease" }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
           {context === "panel" ? "Así se verá tu panel" : "Actívala y muéstrasela al mundo"}
         </span>
-        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: onboardingActive ? "6px solid rgba(168,85,247,0.3)" : "6px solid #a855f7", transition: "border-bottom-color 0.3s ease" }} />
+        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #a855f7" }} />
       </div>
     </div>
   );

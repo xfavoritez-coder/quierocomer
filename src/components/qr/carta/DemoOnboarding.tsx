@@ -32,26 +32,27 @@ const STEPS: Step[] = [
     body: "Te mostraré en 3 pasos tu nueva carta. ¿Listo?",
     showOverlay: true,
     overlayOpacity: 0.72,
+    buttonLabel: "Sí, vamos",
   },
   {
     icon: "📸",
     title: "Así quedaría",
     body: "", // set dynamically based on allPhotosReferential
     showOverlay: false,
-    overlayOpacity: 0.01,
+    overlayOpacity: 0.5,
     overlayStyle: "vignette",
     buttonLabel: "Siguiente",
   },
   {
     icon: "🎨",
     title: "Cambia de vista",
-    body: "Puedes cambiar de vistas para que tus clientes disfruten de una mejor experiencia.",
+    body: "Tienes 3 distintas para que tus clientes disfruten de una mejor experiencia (la que estás viendo se llama Impact).",
     showOverlay: false,
   },
   {
     icon: "🌍",
     title: "Traduzco tu carta",
-    body: "Escoge cualquier idioma: español, inglés, portugués o los que quieras.",
+    body: "Escoge cualquier idioma: inglés, español, portugués. Se traduce automáticamente al de tu cliente.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -87,14 +88,15 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   }, []);
 
   // Signal onboarding active
+  const onboardingVisible = step >= 0 && !gone;
   useEffect(() => {
-    if (step >= 0 && !gone) {
+    if (onboardingVisible) {
       document.body.setAttribute("data-demo-onboarding", "true");
     } else {
       document.body.removeAttribute("data-demo-onboarding");
     }
     return () => { document.body.removeAttribute("data-demo-onboarding"); };
-  }, [step, gone]);
+  }, [onboardingVisible]);
 
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
@@ -143,15 +145,23 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         // Intro — nothing
         break;
       case 1:
-        // Scroll down to show the first category and its dishes
+        // Scroll so the category nav sits at the top of the viewport
         delay(300, () => {
-          // Find the first category section (not the genio carousel)
-          const firstCatSection = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[data-category-section]");
-          if (firstCatSection) {
-            const top = firstCatSection.getBoundingClientRect().top + window.scrollY - 120;
+          const firstCat = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[id^='cat-']");
+          if (firstCat) {
+            const top = firstCat.getBoundingClientRect().top + window.scrollY - 48;
             window.scrollTo({ top, behavior: "smooth" });
           } else {
-            window.scrollTo({ top: window.innerHeight * 0.8, behavior: "smooth" });
+            const catNav = document.querySelector("[data-category-nav]");
+            if (catNav) {
+              // Find the nav's offset in the document flow (not sticky position)
+              let el: HTMLElement | null = catNav as HTMLElement;
+              let offset = 0;
+              while (el) { offset += el.offsetTop; el = el.offsetParent as HTMLElement | null; }
+              window.scrollTo({ top: offset, behavior: "smooth" });
+            } else {
+              window.scrollTo({ top: window.innerHeight * 0.8, behavior: "smooth" });
+            }
           }
         });
         break;
@@ -286,6 +296,12 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // ═══ Render ═══
   if (step < 0 || gone) return null;
 
+  // Reduce top padding when ribbon is hidden during onboarding
+  const globalOnboardingStyle = <style>{`
+    body[data-demo-onboarding] .min-h-screen { padding-top: 0px !important; }
+    body[data-demo-onboarding] [data-demo-banner] { display: none !important; }
+  `}</style>;
+
   const current = STEPS[Math.min(step, STEPS.length - 1)];
   const stepBody = step === 1
     ? (allPhotosReferential
@@ -307,6 +323,16 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // ═══ Minimized state — FAB genio + toast above it ═══
   if (minimized && !exiting) {
     return (
+      <>
+      {globalOnboardingStyle}
+      {/* Vignette overlay in minimized state */}
+      {current.overlayStyle === "vignette" && current.overlayOpacity && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9990,
+          background: "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.65) 100%)",
+          pointerEvents: "none",
+        }} />
+      )}
       <div style={{ position: "fixed", right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
         {/* Toast above FAB */}
         <div style={{
@@ -335,9 +361,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
             fontFamily: "var(--font-dm, sans-serif)",
             fontSize: "0.95rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
             lineHeight: 1.45, margin: "6px 0 14px",
-          }}>
-            {stepBody}
-          </p>
+          }} dangerouslySetInnerHTML={{ __html: stepBody as string }} />
 
           {/* Bottom: dots + nav */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
@@ -374,9 +398,14 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           </div>
         </div>
 
-        {/* FAB genio — tap to expand full card */}
+        {/* FAB genio — tap to bounce during onboarding */}
         <div
-          onClick={() => setMinimized(false)}
+          onClick={(e) => {
+            const el = e.currentTarget;
+            el.style.animation = "none";
+            void el.offsetWidth;
+            el.style.animation = "genioBounce 0.4s ease, genioPulse 2s ease-in-out infinite 0.4s";
+          }}
           style={{
             width: 52, height: 52, borderRadius: "50%",
             background: "rgba(14,14,14,0.95)",
@@ -395,20 +424,27 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
             0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.4); }
             50% { box-shadow: 0 4px 20px rgba(255,178,45,0.3); }
           }
+          @keyframes genioBounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.35); }
+            100% { transform: scale(1); }
+          }
         `}</style>
       </div>
+      </>
     );
   }
 
   // ═══ Expanded state ═══
   return (
     <>
+      {globalOnboardingStyle}
       {/* Overlay — only on steps with showOverlay */}
       {(current.showOverlay || current.overlayOpacity) && !exiting && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9990,
           background: current.overlayStyle === "vignette"
-            ? "radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.55) 100%)"
+            ? "radial-gradient(ellipse at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.65) 100%)"
             : `rgba(0,0,0,${current.overlayOpacity ?? 0.55})`,
           transition: "opacity 0.4s ease",
           pointerEvents: current.showOverlay ? "auto" : "none",
@@ -463,9 +499,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           color: "rgba(255,255,255,0.5)",
           lineHeight: 1.45,
           margin: "0 0 18px",
-        }}>
-          {stepBody}
-        </p>
+        }} dangerouslySetInnerHTML={{ __html: stepBody as string }} />
 
         {/* Personalization badge */}
         {step === 3 && (

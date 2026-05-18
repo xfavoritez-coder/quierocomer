@@ -42,6 +42,7 @@ export default function CategoryNav({
 
   return (
     <nav
+      data-category-nav
       className="sticky top-0 z-40"
       style={{ position: "sticky", top: 0, background: "var(--carta-bg-solid)", borderBottom: "1px solid var(--carta-border)", height: 44, display: "flex", alignItems: "center", transform: "translateZ(0)", WebkitTransform: "translateZ(0)" }}
     >
