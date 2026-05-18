@@ -398,10 +398,10 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <div className="plan-price">$0</div>
               <p>Para comenzar.</p>
               <div className="checks">
-                <div>✓ Carta digital básica <span className="tip">i<span className="tip-text">Tu carta lista para escanear con QR</span></span></div>
-                <div>✓ 1 vista de carta <span className="tip">i<span className="tip-text">Vista Lista incluida</span></span></div>
-                <div>✓ Panel autoadministrable <span className="tip">i<span className="tip-text">Edita platos, precios y fotos desde tu panel sin depender de nadie</span></span></div>
-                <div>✓ Capta clientes limitados <span className="tip">i<span className="tip-text">Registra hasta 10 clientes en tu base de datos</span></span></div>
+                <div>✓ Carta digital con QR <span className="tip">i<span className="tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
+                <div>✓ Vista Lista <span className="tip">i<span className="tip-text">Tus platos organizados por categoría en formato lista clásico</span></span></div>
+                <div>✓ Panel para editar tu carta <span className="tip">i<span className="tip-text">Cambia platos, precios, fotos y categorías cuando quieras, sin depender de nadie</span></span></div>
+                <div>✓ Hasta 10 clientes registrados <span className="tip">i<span className="tip-text">Captura datos de hasta 10 clientes que escanean tu carta</span></span></div>
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("FREE")}>
@@ -420,11 +420,11 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <p>Para crecer tu restaurante.</p>
               <div className="checks">
                 <div>✓ Todo lo del plan Gratis</div>
-                <div>✓ El Genio IA <span className="tip">i<span className="tip-text">Asistente que reordena tu carta según preferencias de cada cliente</span></span></div>
-                <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales visibles directo en la carta</span></span></div>
-                <div>✓ 2 vistas de carta <span className="tip">i<span className="tip-text">Vista Lista y vista Galería</span></span></div>
-                <div>✓ Estadísticas básicas <span className="tip">i<span className="tip-text">Ve cuántas visitas tiene tu carta y qué platos miran más</span></span></div>
-                <div>✓ Anuncios en carta <span className="tip">i<span className="tip-text">Muestra banners con anuncios o destacados dentro de tu carta</span></span></div>
+                <div>✓ El Genio IA <span className="tip">i<span className="tip-text">Un asistente inteligente que reordena tu carta según los gustos de cada cliente</span></span></div>
+                <div>✓ Ofertas y promociones <span className="tip">i<span className="tip-text">Crea ofertas temporales que aparecen directo en la carta de tus clientes</span></span></div>
+                <div>✓ Vistas Lista + Galería <span className="tip">i<span className="tip-text">Dos formas de mostrar tu carta: lista clásica y galería con fotos grandes</span></span></div>
+                <div>✓ Estadísticas de tu carta <span className="tip">i<span className="tip-text">Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios</span></span></div>
+                <div>✓ Anuncios dentro de la carta <span className="tip">i<span className="tip-text">Destaca platos o muestra banners promocionales que tus clientes ven al navegar</span></span></div>
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("GOLD")}>
@@ -445,14 +445,14 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               <p>Para restaurantes que quieren vender más.</p>
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
-                <div>✓ 3 vistas de carta <span className="tip">i<span className="tip-text">Lista, Galería e Impact para tu restaurante</span></span></div>
-                <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Métricas detalladas: platos más vistos, horarios pico y tendencias</span></span></div>
-                <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">El cliente llama al garzón directo desde la carta digital</span></span></div>
-                <div>✓ Multiidioma <span className="tip">i<span className="tip-text">Inglés, portugués y el idioma que nos pidas</span></span></div>
-                <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">Invitaciones especiales a clientes que cumplen años</span></span></div>
-                <div>✓ Capta clientes ilimitados <span className="tip">i<span className="tip-text">Sin límite de clientes registrados en tu base de datos</span></span></div>
-                <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas de email a tu base de clientes registrados</span></span></div>
-                <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Sincroniza tu carta con el POS Toteat y cruza datos reales</span></span></div>
+                <div>✓ Vistas Lista + Galería + Impact <span className="tip">i<span className="tip-text">Tres diseños distintos para tu carta: lista clásica, galería con fotos y la vista Impact con hero de platos destacados</span></span></div>
+                <div>✓ Estadísticas avanzadas <span className="tip">i<span className="tip-text">Platos más vistos, horarios pico, tendencias semanales y comparativas</span></span></div>
+                <div>✓ Botón llamar garzón <span className="tip">i<span className="tip-text">Tus clientes llaman al garzón desde la carta con un toque, sin levantar la mano</span></span></div>
+                <div>✓ Carta en varios idiomas <span className="tip">i<span className="tip-text">Tu carta se traduce automáticamente a inglés, portugués y más. Ideal para turistas</span></span></div>
+                <div>✓ Cumpleaños automáticos <span className="tip">i<span className="tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
+                <div>✓ Clientes ilimitados <span className="tip">i<span className="tip-text">Registra todos los clientes que escanean tu carta, sin límite</span></span></div>
+                <div>✓ Email marketing <span className="tip">i<span className="tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
+                <div>✓ Integración con Toteat <span className="tip">i<span className="tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("PREMIUM")}>

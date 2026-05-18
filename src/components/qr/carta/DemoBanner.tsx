@@ -103,7 +103,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             style={{
               flex: "0 0 auto", height: 38, padding: "0 14px", borderRadius: 999,
               background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)",
-              color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px",
+              color: "#ffb22d", fontSize: 12, fontWeight: 950, letterSpacing: ".8px",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 5, position: "relative",
             }}
           >
@@ -143,10 +143,10 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                 className={onboardingActive ? undefined : "demo-nav-btn"}
                 style={{
                   borderRadius: 999,
-                  height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
-                  background: onboardingActive ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.07)",
-                  border: onboardingActive ? "1px solid rgba(255,255,255,.06)" : "1px solid rgba(255,255,255,.11)",
-                  color: onboardingActive ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.55)",
+                  height: 38, padding: "0 14px", fontSize: 14, fontWeight: 900,
+                  background: onboardingActive ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.1)",
+                  border: onboardingActive ? "1px solid rgba(255,255,255,.06)" : "1px solid rgba(255,255,255,.2)",
+                  color: onboardingActive ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.75)",
                   display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap",
                   cursor: onboardingActive ? "default" : "pointer",
                   opacity: onboardingActive ? 0.5 : 1,
@@ -177,9 +177,9 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               href={`/qr/${restaurantSlug}`}
               className="demo-nav-btn"
               style={{
-                border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
-                height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
-                background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)",
+                border: "1px solid rgba(255,255,255,.2)", borderRadius: 999,
+                height: 38, padding: "0 14px", fontSize: 14, fontWeight: 900,
+                background: "rgba(255,255,255,.1)", color: "rgba(255,255,255,.75)",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
                 transition: "all 0.15s ease",
               }}
@@ -192,7 +192,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               className="demo-activar-btn"
               style={{
                 border: 0, borderRadius: 999, height: 38, padding: "0 18px",
-                fontSize: 13, fontWeight: 900,
+                fontSize: 14, fontWeight: 900,
                 background: "linear-gradient(135deg, #c084fc, #a855f7)",
                 color: "#fff",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
