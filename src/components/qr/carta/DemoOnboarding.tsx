@@ -37,7 +37,7 @@ const STEPS: Step[] = [
   {
     icon: "🎨",
     title: "Vista Impact",
-    body: "Puedes cambiar de vistas para que tus clientes disfruten de una mejor experiencia. Navega para que veas.",
+    body: "Puedes cambiar de vistas para que tus clientes disfruten de una mejor experiencia.",
     showOverlay: false,
   },
   {
@@ -94,7 +94,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
     if (savedStep) {
       sessionStorage.removeItem("qc_onboarding_step");
-      setStep(parseInt(savedStep, 10));
+      const restored = parseInt(savedStep, 10);
+      if (!STEPS[restored]?.showOverlay) setMinimized(true);
+      setStep(restored);
     } else {
       setStep(0);
     }
@@ -112,9 +114,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
     timersRef.current = [];
     // Auto-minimize on steps without overlay (so user sees the carta)
     if (!STEPS[step].showOverlay) {
-      if (!minimized) {
+      if (!minimized && !minimizing) {
         setMinimizing(true);
-        setTimeout(() => { setMinimizing(false); setMinimized(true); }, 350);
+        setTimeout(() => { setMinimizing(false); setMinimized(true); }, 220);
       }
     }
     runStepEnter(step);
@@ -284,7 +286,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           background: isLightStep ? "rgba(255,255,255,0.97)" : "rgba(14,14,14,0.96)",
           border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,178,45,0.15)",
           borderRadius: 16,
-          padding: "16px 16px 14px",
+          padding: "18px 16px 16px",
           boxShadow: isLightStep ? "0 8px 28px rgba(0,0,0,0.12)" : "0 8px 28px rgba(0,0,0,0.5)",
           maxWidth: 300,
           width: 300,
@@ -304,8 +306,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           {/* Description */}
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.88rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
-            lineHeight: 1.45, margin: "4px 0 12px",
+            fontSize: "0.95rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
+            lineHeight: 1.45, margin: "6px 0 14px",
           }}>
             {current.body}
           </p>
@@ -404,9 +406,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           userSelect: "none",
           touchAction: "none",
           // Exit/minimize animations
-          transform: exiting ? "scale(0.08) rotate(15deg)" : minimizing ? "scale(0.6) translateY(40px)" : "scale(1)",
+          transform: exiting ? "scale(0.08) rotate(15deg)" : minimizing ? "scale(0.5) translate(60px, 80px)" : "scale(1)",
           opacity: exiting ? 0 : minimizing ? 0 : 1,
-          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : minimizing ? "all 0.35s cubic-bezier(0.4,0,1,1)" : (dragging ? "none" : "box-shadow 0.2s ease"),
+          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : minimizing ? "all 0.2s cubic-bezier(0.4,0,1,1)" : (dragging ? "none" : "box-shadow 0.2s ease"),
         }}
       >
         {/* Header: genio icon + title + minimize */}

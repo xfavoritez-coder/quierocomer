@@ -215,7 +215,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="how-it-works">
         <div className="container">
           <p className="hiw-eyebrow">Así funciona QuieroComer</p>
-          <h2 className="hiw-title">En 4 pasos, tu carta empieza a <span style={{ fontStyle: "italic", fontWeight: 700, color: "var(--cream)", textDecoration: "underline", textUnderlineOffset: "6px" }}>vender por ti</span></h2>
+          <h2 className="hiw-title">En 4 pasos, tu carta empieza a vender <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>por ti</span></h2>
 
           <div className="hiw-steps">
             <div className="hiw-step">
@@ -588,7 +588,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 .plan-btn-primary{background:var(--amber);color:var(--black);font-weight:700;border:none}
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
-  .hero{padding:70px 0 70px}.hero-bg{background-position:60% center!important}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
+  .hero{padding:70px 0 70px}.hero-bg{background-position:40% center!important}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
   .problem,.how-it-works{padding:82px 0}.mientras-section{min-height:300px}.mientras-content{padding:40px 28px;text-align:left;align-items:flex-start}.mientras-bg img{object-position:60% 30%;transform:scale(1.4)}.try-overlay{background:linear-gradient(180deg,rgba(9,8,6,.88),rgba(9,8,6,.95))}.pains{padding:54px 0 50px}.section-head{margin-bottom:42px}.hiw-title{margin-bottom:40px}.hiw-step{grid-template-columns:1fr 120px;gap:10px;padding-bottom:38px}.hiw-img-wrap{aspect-ratio:1/1}.hiw-img-wrap img{height:100%;object-fit:cover;object-position:center 20%}
   .pain-card{grid-template-columns:38% 1fr;gap:10px}.pain-reverse{grid-template-columns:1fr 38%}.pain-img{height:100%;min-height:200px;max-height:230px}.pain-text{padding:16px!important;display:flex;flex-direction:column;justify-content:center;text-align:left}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:26px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .planes-grid{grid-template-columns:1fr}
