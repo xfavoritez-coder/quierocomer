@@ -170,8 +170,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   }, []);
 
   const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
-    setLoading(true);
-    setSelectedPlan(plan);
+    alert("Estamos trabajando en esto. Pronto podrás activar tu carta.");
+    return;
     try {
       const res = await fetch("/api/activar/trial", {
         method: "POST",
