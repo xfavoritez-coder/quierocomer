@@ -165,28 +165,24 @@ Reglas:
   }
 
   // Search Unsplash photos for dishes (batch, max 15 to respect rate limits)
-  const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+  const { searchUnsplashPhoto, triggerUnsplashDownload } = await import("@/lib/unsplash");
   const photoMap = new Map<string, string>();
-  if (UNSPLASH_KEY) {
+  const creditMap = new Map<string, { photographer: string; profileUrl: string; unsplashId: string }>();
+  if (process.env.UNSPLASH_ACCESS_KEY) {
     const allDishes = (parsed.categories || []).flatMap((c: any) =>
       (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name }))
     ).filter((d: any) => d.name).slice(0, 15);
 
     await Promise.allSettled(allDishes.map(async (d: any) => {
-      try {
-        // Try dish name first, then category as fallback
-        for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
-          const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
-            headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-            signal: AbortSignal.timeout(5000),
-          });
-          if (res.ok) {
-            const data = await res.json();
-            const url = data.results?.[0]?.urls?.regular;
-            if (url) { photoMap.set(d.name, url); return; }
-          }
+      for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
+        const photo = await searchUnsplashPhoto(query);
+        if (photo) {
+          photoMap.set(d.name, photo.url);
+          creditMap.set(d.name, { photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId });
+          triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
+          return;
         }
-      } catch {}
+      }
     }));
   }
 
@@ -403,6 +399,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           name: created.name,
           description: created.description,
           externalPhoto: dish.imageUrl,
+          credit: creditMap.get(dish.name.trim()) || null,
         });
       }
     }
@@ -418,15 +415,16 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             const dishSlug = slugify(dish.name);
             const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
             const finalUrl = supabaseUrl || dish.externalPhoto!;
-            await prisma.dish.update({ where: { id: dish.id }, data: { photos: [finalUrl] } });
+            const updateData: any = { photos: [finalUrl] };
+            if ((dish as any).credit) updateData.photoCredits = [(dish as any).credit];
+            await prisma.dish.update({ where: { id: dish.id }, data: updateData });
           }),
         );
       }
     }
 
     // Ensure first 5 dishes have photos (fill with Unsplash if missing)
-    const UNSPLASH_KEY_FILL = process.env.UNSPLASH_ACCESS_KEY;
-    if (UNSPLASH_KEY_FILL) {
+    if (process.env.UNSPLASH_ACCESS_KEY) {
       const first5 = await prisma.dish.findMany({
         where: { restaurantId: restaurant.id, isActive: true },
         orderBy: { position: "asc" },
@@ -437,19 +435,19 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       if (missing.length > 0) {
         await Promise.allSettled(missing.map(async (d) => {
           try {
-            const query = `${d.name} food dish`;
-            const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`, {
-              headers: { Authorization: `Client-ID ${UNSPLASH_KEY_FILL}` },
-              signal: AbortSignal.timeout(5000),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              const url = data.results?.[0]?.urls?.regular;
-              if (url) {
-                const dishSlug = slugify(d.name);
-                const supabaseUrl = await reuploadPhoto(url, restaurant.id, dishSlug);
-                await prisma.dish.update({ where: { id: d.id }, data: { photos: [supabaseUrl || url], isPhotoReferential: true } });
-              }
+            const photo = await searchUnsplashPhoto(`${d.name} food dish`);
+            if (photo) {
+              const dishSlug = slugify(d.name);
+              const supabaseUrl = await reuploadPhoto(photo.url, restaurant.id, dishSlug);
+              await prisma.dish.update({
+                where: { id: d.id },
+                data: {
+                  photos: [supabaseUrl || photo.url],
+                  isPhotoReferential: true,
+                  photoCredits: [{ photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId }],
+                },
+              });
+              triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
             }
           } catch {}
         }));

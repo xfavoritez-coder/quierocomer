@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { searchUnsplashPhoto, triggerUnsplashDownload, type UnsplashPhoto, type PhotoCredit } from "@/lib/unsplash";
 
 export const maxDuration = 120;
 
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
 const MODEL = "claude-sonnet-4-6";
 
 export async function POST(request: Request) {
@@ -66,32 +66,21 @@ Reglas:
     const queries: { id: string; query: string }[] = JSON.parse(match[0]);
 
     // Search Unsplash for each query
-    const results: { dishId: string; dishName: string; query: string; photoUrl: string | null }[] = [];
+    const results: { dishId: string; dishName: string; query: string; photoUrl: string | null; credit?: PhotoCredit; downloadLocation?: string }[] = [];
 
     for (const q of queries) {
       const dish = needsPhotos.find(d => d.id === q.id);
       if (!dish) continue;
 
-      let photoUrl: string | null = null;
-      try {
-        if (UNSPLASH_KEY) {
-          // Use Unsplash API if key available
-          const searchRes = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(q.query + " food")}&per_page=1&orientation=landscape`, {
-            headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-          });
-          if (searchRes.ok) {
-            const searchData = await searchRes.json();
-            if (searchData.results?.[0]) {
-              photoUrl = searchData.results[0].urls.regular;
-            }
-          }
-        } else {
-          // Fallback: use source.unsplash.com (no API key needed)
-          photoUrl = `https://source.unsplash.com/800x600/?${encodeURIComponent(q.query + ",food,dish")}`;
-        }
-      } catch {}
-
-      results.push({ dishId: dish.id, dishName: dish.name, query: q.query, photoUrl });
+      const photo = await searchUnsplashPhoto(q.query + " food");
+      results.push({
+        dishId: dish.id,
+        dishName: dish.name,
+        query: q.query,
+        photoUrl: photo?.url || null,
+        credit: photo ? { photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId } : undefined,
+        downloadLocation: photo?.downloadLocation,
+      });
     }
 
     return NextResponse.json({ results, total: needsPhotos.length });
@@ -126,10 +115,11 @@ export async function PUT(request: Request) {
     let applied = 0;
     for (const p of photos) {
       if (!p.dishId || !p.photoUrl) continue;
-      await prisma.dish.update({
-        where: { id: p.dishId },
-        data: { photos: [p.photoUrl] },
-      });
+      const data: any = { photos: [p.photoUrl] };
+      if (p.credit) data.photoCredits = [p.credit];
+      await prisma.dish.update({ where: { id: p.dishId }, data });
+      // Trigger Unsplash download (required by API guidelines)
+      if (p.downloadLocation) triggerUnsplashDownload(p.downloadLocation).catch(() => {});
       applied++;
     }
 

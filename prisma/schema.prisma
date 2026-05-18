@@ -733,6 +733,7 @@ model Dish {
   containsNuts   Boolean      @default(false)  // contiene frutos secos (mani, almendras, nueces, etc)
   isHighMargin   Boolean      @default(false)
   isPhotoReferential Boolean  @default(false)
+  photoCredits       Json?    // [{ photographer: string, profileUrl: string, unsplashId: string }]
   isFeaturedAuto Boolean      @default(false)
   flavorTags     String[]     // "dulce","agridulce","umami","ácido","ahumado","picante"
   position       Int

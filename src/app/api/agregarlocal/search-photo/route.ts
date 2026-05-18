@@ -1,34 +1,29 @@
 import { NextResponse } from "next/server";
+import { fetchRandomUnsplashPhotos, type UnsplashPhoto } from "@/lib/unsplash";
 
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
-const UNSPLASH_MAX = 30; // Unsplash API max per request
-
-async function fetchRandomPhotos(count: number): Promise<string[]> {
-  const res = await fetch(
-    `https://api.unsplash.com/photos/random?query=food+dish+restaurant&count=${count}&orientation=landscape`,
-    { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
-  );
-  if (!res.ok) return [];
-  const data = await res.json();
-  return (Array.isArray(data) ? data : [data]).map((p: any) => p?.urls?.regular).filter(Boolean);
-}
+const UNSPLASH_MAX = 30;
 
 // Batch endpoint: fetch N random food photos (splits into multiple calls if >30)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const count = Math.min(Number(searchParams.get("count")) || 1, 50);
-  if (!UNSPLASH_KEY) return NextResponse.json({ urls: [], error: "No API key" });
+  if (!process.env.UNSPLASH_ACCESS_KEY) return NextResponse.json({ urls: [], error: "No API key" });
 
   try {
+    let photos: UnsplashPhoto[];
     if (count <= UNSPLASH_MAX) {
-      return NextResponse.json({ urls: await fetchRandomPhotos(count) });
+      photos = await fetchRandomUnsplashPhotos("food dish restaurant", count);
+    } else {
+      const [batch1, batch2] = await Promise.all([
+        fetchRandomUnsplashPhotos("food dish restaurant", UNSPLASH_MAX),
+        fetchRandomUnsplashPhotos("food dish restaurant", count - UNSPLASH_MAX),
+      ]);
+      photos = [...batch1, ...batch2];
     }
-    // Split into parallel requests
-    const [batch1, batch2] = await Promise.all([
-      fetchRandomPhotos(UNSPLASH_MAX),
-      fetchRandomPhotos(count - UNSPLASH_MAX),
-    ]);
-    return NextResponse.json({ urls: [...batch1, ...batch2] });
+    return NextResponse.json({
+      urls: photos.map(p => p.url),
+      photos, // full metadata for clients that need credits
+    });
   } catch (e: any) {
     return NextResponse.json({ urls: [], error: e.message });
   }

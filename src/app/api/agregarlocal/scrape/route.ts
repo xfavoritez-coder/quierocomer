@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server";
 export const maxDuration = 300;
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
-const MODEL = "claude-sonnet-4-6";
+import { searchUnsplashPhoto } from "@/lib/unsplash";
 
-async function searchUnsplash(query: string): Promise<string | null> {
-  if (!UNSPLASH_KEY) return null;
-  try {
-    const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(query + " food")}&per_page=1&orientation=landscape`, {
-      headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.results?.[0]?.urls?.regular || null;
-  } catch { return null; }
-}
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const MODEL = "claude-sonnet-4-6";
 
 async function fetchWithTimeout(url: string, timeoutMs = 10000): Promise<string> {
   const controller = new AbortController();
@@ -369,7 +358,7 @@ REGLAS IMPORTANTES:
     }
 
     // Fill missing photos with Unsplash (max 10)
-    if (withoutPhoto > 0 && UNSPLASH_KEY) {
+    if (withoutPhoto > 0 && process.env.UNSPLASH_ACCESS_KEY) {
       const needPhotos = [];
       for (const cat of (parsed.categories || [])) {
         for (const dish of (cat.dishes || [])) {
@@ -379,8 +368,8 @@ REGLAS IMPORTANTES:
       for (const dish of needPhotos.slice(0, 10)) {
         const query = (dish.name || "").replace(/[^a-zA-ZáéíóúñÁÉÍÓÚÑ\s]/g, "").trim();
         if (!query) continue;
-        const photo = await searchUnsplash(query);
-        if (photo) { dish.photo = photo; dish._unsplash = true; }
+        const result = await searchUnsplashPhoto(query + " food");
+        if (result) { dish.photo = result.url; dish._unsplash = true; }
       }
     }
 
