@@ -19,6 +19,8 @@ interface Step {
   overlayOpacity?: number;
   /** Custom button label for this step */
   buttonLabel?: string;
+  /** Overlay style: default is solid, "vignette" uses radial gradient */
+  overlayStyle?: "vignette";
 }
 
 const STEPS: Step[] = [
@@ -34,12 +36,13 @@ const STEPS: Step[] = [
     title: "Así quedaría",
     body: "", // set dynamically based on allPhotosReferential
     showOverlay: false,
-    overlayOpacity: 0.4,
+    overlayOpacity: 0.01,
+    overlayStyle: "vignette",
     buttonLabel: "Siguiente",
   },
   {
     icon: "🎨",
-    title: "Vista Impact",
+    title: "Cambia de vista",
     body: "Puedes cambiar de vistas para que tus clientes disfruten de una mejor experiencia.",
     showOverlay: false,
   },
@@ -164,8 +167,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           // Show translating overlay
           const overlay = document.createElement("div");
           overlay.id = "onboarding-translating";
-          overlay.style.cssText = "position:fixed;inset:0;z-index:9980;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;";
-          overlay.innerHTML = "";
+          overlay.style.cssText = "position:fixed;inset:0;z-index:9980;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;";
+          overlay.innerHTML = '<span style="font-family:var(--font-dm,sans-serif);font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.02em">Traduciendo carta…</span>';
           document.body.appendChild(overlay);
           delay(400, () => {
             sessionStorage.setItem("qc_onboarding_step", "3");
@@ -400,7 +403,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
       {(current.showOverlay || current.overlayOpacity) && !exiting && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9990,
-          background: `rgba(0,0,0,${current.overlayOpacity ?? 0.55})`,
+          background: current.overlayStyle === "vignette"
+            ? "radial-gradient(ellipse at center, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.35) 70%, rgba(0,0,0,0.55) 100%)"
+            : `rgba(0,0,0,${current.overlayOpacity ?? 0.55})`,
           transition: "opacity 0.4s ease",
           pointerEvents: current.showOverlay ? "auto" : "none",
         }} />

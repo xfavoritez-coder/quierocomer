@@ -61,10 +61,12 @@ export async function GET(req: NextRequest) {
   }
 
   // ═══ Phase 2: Send weekly emails ═══
+  // Fetch all active restaurants — filtering recipients per-user below
   const restaurants = await prisma.restaurant.findMany({
-    where: { weeklyEmailEnabled: true, isActive: true },
+    where: { isActive: true },
     select: {
       id: true, name: true, slug: true, logoUrl: true, isDemo: true,
+      weeklyEmailEnabled: true,
       owner: { select: { name: true, email: true } },
       teamMembers: {
         where: { weeklyEmailEnabled: true, status: "ACTIVE" },
@@ -206,11 +208,14 @@ export async function GET(req: NextRequest) {
         });
       }
 
-      // Collect all recipients: owner + active team members with email enabled
-      const recipients = [r.owner.email];
+      // Collect recipients: owner gets it if restaurant.weeklyEmailEnabled,
+      // team members get it if their own weeklyEmailEnabled is true
+      const recipients: string[] = [];
+      if (r.weeklyEmailEnabled && r.owner.email) recipients.push(r.owner.email);
       for (const tm of r.teamMembers) {
         if (!recipients.includes(tm.email)) recipients.push(tm.email);
       }
+      if (recipients.length === 0) continue;
 
       // Send to all
       for (const to of recipients) {

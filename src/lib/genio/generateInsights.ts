@@ -19,7 +19,7 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
 
   // Gather all data in parallel
   const [restaurant, dishes, categories, sessions, dietCounts, topViewed, totalGuests, registeredGuests] = await Promise.all([
-    prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true } }),
+    prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true, dietType: true } }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, include: { category: { select: { name: true } } } }),
     prisma.category.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true } }),
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: thirtyDaysAgo } }, select: { durationMs: true, viewUsed: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
@@ -45,7 +45,9 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
   const categoryDishCounts: Record<string, number> = {};
   categories.forEach(c => { categoryDishCounts[c.name] = dishes.filter(d => d.categoryId === c.id).length; });
 
-  const prompt = `Eres el Genio de QuieroComer. Analiza los datos de "${restaurant.name}" y genera exactamente 1 insight accionable.
+  const dietLabel = restaurant.dietType === "VEGAN" ? "100% vegano" : restaurant.dietType === "VEGETARIAN" ? "vegetariano" : null;
+
+  const prompt = `Eres el Genio de QuieroComer. Analiza los datos de "${restaurant.name}"${dietLabel ? ` (restaurante ${dietLabel})` : ""} y genera exactamente 1 insight accionable.
 
 DATOS DEL LOCAL (últimos 30 días):
 - Sesiones: ${totalSessions} (${abandonedSessions} abandonadas, ${Math.round((abandonedSessions / Math.max(totalSessions, 1)) * 100)}% abandono)
@@ -62,6 +64,7 @@ REGLAS:
 - Sé específico con números del local, no genérico
 - Puedes sugerir destacar platos de comida, pero NUNCA sugieras destacar bebestibles (café, té, jugos, bebidas), extras ni acompañamientos — eso se maneja con productos sugeridos automáticos
 - NUNCA opines sobre estructura de carta, orden de secciones, mover categorías, precios o cantidad de platos — eso es decisión del dueño
+- Infiere el tipo de restaurante por su nombre y categorías. Si es claramente vegano, vegetariano, de sushi, etc., NO sugieras cosas obvias sobre su identidad (ej: "destaca que tus platos son veganos" a un restaurante vegano) — el dueño ya lo sabe
 - NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere platos — el Genio solo reordena la carta según preferencias del comensal
 - NUNCA menciones cumpleaños captados, registros, conversión ni KPIs técnicos
 - NUNCA uses palabras como bestseller, upselling, engagement, conversión, ticket promedio, cross-selling

@@ -30,6 +30,7 @@ interface RestaurantData {
   phone: string | null; whatsapp: string | null; address: string | null;
   instagram: string | null; website: string | null;
   scheduleJson: Record<string, string> | null;
+  dietType: string | null;
 }
 
 function Card({ children, title, icon: Icon }: { children: React.ReactNode; title: string; icon?: any }) {
@@ -79,6 +80,7 @@ export default function MiRestaurantePage() {
   const [instagram, setInstagram] = useState("");
   const [website, setWebsite] = useState("");
   const [schedule, setSchedule] = useState<Record<string, string>>({});
+  const [dietType, setDietType] = useState("OMNIVORE");
 
   const rid = selectedRestaurantId;
 
@@ -100,6 +102,7 @@ export default function MiRestaurantePage() {
       setInstagram(d.instagram || "");
       setWebsite(d.website || "");
       setSchedule(d.scheduleJson || {});
+      setDietType(d.dietType || "OMNIVORE");
     } catch {}
     setLoading(false);
   }, [rid]);
@@ -128,7 +131,7 @@ export default function MiRestaurantePage() {
     setSaving(false);
   };
 
-  const saveInfo = () => save({ name, description, logoUrl: logoUrl || null });
+  const saveInfo = () => save({ name, description, logoUrl: logoUrl || null, dietType });
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
   const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
@@ -188,6 +191,31 @@ export default function MiRestaurantePage() {
 
         <Field label="Nombre del local">
           <input value={name} onChange={e => setName(e.target.value)} style={inputStyle} placeholder="Nombre del restaurant" />
+        </Field>
+
+        <Field label="Tipo de cocina">
+          <div style={{ display: "flex", gap: 8 }}>
+            {([
+              { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
+              { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
+              { value: "VEGAN", label: "Vegano", icon: "🌿" },
+            ] as const).map(opt => {
+              const active = dietType === opt.value;
+              return (
+                <button key={opt.value} onClick={() => setDietType(opt.value)} style={{
+                  flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
+                  background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
+                  border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
+                  color: active ? GOLD : "var(--adm-text3)",
+                  fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                  transition: "all 0.2s",
+                }}>
+                  <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
+                </button>
+              );
+            })}
+          </div>
         </Field>
 
         <Field label="Instagram">

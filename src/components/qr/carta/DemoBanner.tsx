@@ -60,13 +60,17 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
     };
   }, []);
 
-  // Close locked tooltip on outside tap
+  // Close locked tooltip on outside tap or after timeout
   useEffect(() => {
     if (!lockedTooltip) return;
     const close = () => setLockedTooltip(null);
+    const autoClose = setTimeout(close, 3000);
     const t = setTimeout(() => window.addEventListener("pointerdown", close, { once: true }), 10);
-    return () => { clearTimeout(t); window.removeEventListener("pointerdown", close); };
+    return () => { clearTimeout(t); clearTimeout(autoClose); window.removeEventListener("pointerdown", close); };
   }, [lockedTooltip]);
+
+  // Close tooltips when onboarding step changes
+  useEffect(() => { setLockedTooltip(null); }, [onboardingStep]);
 
   const stepsLeft = Math.max(0, TOTAL_ONBOARDING_STEPS - 1 - onboardingStep);
   const lockedMsg = `Completa el tour — ${stepsLeft === 1 ? "queda 1 paso" : `quedan ${stepsLeft} pasos`}`;
@@ -137,12 +141,14 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                 onClick={onboardingActive ? handleLockedClick("panel") : undefined}
                 className={onboardingActive ? undefined : "demo-nav-btn"}
                 style={{
-                  border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
+                  borderRadius: 999,
                   height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
-                  background: "rgba(255,255,255,.07)",
-                  color: onboardingActive ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.55)",
+                  background: onboardingActive ? "rgba(255,255,255,.03)" : "rgba(255,255,255,.07)",
+                  border: onboardingActive ? "1px solid rgba(255,255,255,.06)" : "1px solid rgba(255,255,255,.11)",
+                  color: onboardingActive ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.55)",
                   display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap",
                   cursor: onboardingActive ? "default" : "pointer",
+                  opacity: onboardingActive ? 0.5 : 1,
                   transition: "all 0.15s ease",
                 }}
               ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: onboardingActive ? 0.4 : 1 }}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver panel</a>
@@ -247,13 +253,16 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         bottom: 0, left: 0, right: 0,
         transform: "translateY(100%)",
         padding: "9px 14px",
-        background: "linear-gradient(135deg, #c084fc, #a855f7)",
+        background: onboardingActive
+          ? "linear-gradient(135deg, rgba(192,132,252,0.3), rgba(168,85,247,0.3))"
+          : "linear-gradient(135deg, #c084fc, #a855f7)",
         textAlign: "center",
+        transition: "background 0.3s ease",
       }}>
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
+        <span style={{ fontSize: 15, fontWeight: 700, color: onboardingActive ? "rgba(255,255,255,0.3)" : "#fff", transition: "color 0.3s ease" }}>
           {context === "panel" ? "Así se verá tu panel" : "Actívala y muéstrasela al mundo"}
         </span>
-        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #a855f7" }} />
+        <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: onboardingActive ? "6px solid rgba(168,85,247,0.3)" : "6px solid #a855f7", transition: "border-bottom-color 0.3s ease" }} />
       </div>
     </div>
   );

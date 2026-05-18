@@ -12,14 +12,15 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
 
   const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-  const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true } });
+  const restaurantData = await prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { toteatRestaurantId: true, dietType: true } });
   const hasToteat = !!restaurantData?.toteatRestaurantId;
 
-  const [sessions, dishes, topViewed, previousInsights] = await Promise.all([
+  const [sessions, dishes, topViewed, previousInsights, categories] = await Promise.all([
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: oneWeekAgo } }, select: { durationMs: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true, categoryId: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: oneWeekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
     prisma.genioInsight.findMany({ where: { restaurantId, status: "expired" }, orderBy: { generatedAt: "desc" }, take: 5, select: { title: true } }),
+    prisma.category.findMany({ where: { restaurantId, isActive: true }, select: { name: true }, orderBy: { position: "asc" } }),
   ]);
 
   if (sessions.length < 5) return null;
@@ -30,11 +31,15 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
 
   const prevTitles = previousInsights.map(i => i.title).join(", ");
 
-  const prompt = `Eres el Genio de QuieroComer. Genera exactamente 1 insight accionable para "${restaurantName}".
+  const categoryNames = categories.map(c => c.name).join(", ");
+  const dietLabel = restaurantData?.dietType === "VEGAN" ? "100% vegano" : restaurantData?.dietType === "VEGETARIAN" ? "vegetariano" : null;
+
+  const prompt = `Eres el Genio de QuieroComer. Genera exactamente 1 insight accionable para "${restaurantName}"${dietLabel ? ` (restaurante ${dietLabel})` : ""}.
 
 DATOS (esta semana):
 - ${totalSessions} sesiones
 - Duración promedio: ${avgDuration}s
+- Categorías de la carta: ${categoryNames || "sin datos"}
 - Top platos vistos esta semana: ${topViewed.slice(0, 5).map((t: any) => `${dishMap[t.dishId] || "?"}: ${t._count.id} vistas`).join(", ")}
 ${hasToteat ? `- DATOS DE VENTAS DISPONIBLES: este local tiene POS conectado, puedes hablar de ventas` : `- NO hay datos de ventas. Solo puedes hablar de vistas, clicks y comportamiento en la carta.`}
 IMPORTANTE: Los números que menciones DEBEN coincidir exactamente con los datos de arriba. No inventes cifras.
@@ -50,6 +55,7 @@ REGLAS:
 - Tono informativo y positivo, como un dato curioso útil
 - Usa lenguaje simple y coloquial, como si le hablaras al dueño en persona. NUNCA uses palabras técnicas como bestseller, upselling, engagement, conversión, KPI, etc.
 - NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere o recomienda platos — el Genio solo reordena la carta según las preferencias del comensal (dieta, alérgenos, picante), no recomienda platos específicos
+- Infiere el tipo de restaurante por su nombre y categorías. Si es claramente vegano, vegetariano, de sushi, etc., NO sugieras "destacar que tal plato es vegano" ni cosas obvias sobre su identidad — el dueño ya lo sabe
 - El subject es para el asunto del email: corto, con gancho basado en el dato, que dé ganas de abrir
 
 Responde SOLO JSON, sin markdown:

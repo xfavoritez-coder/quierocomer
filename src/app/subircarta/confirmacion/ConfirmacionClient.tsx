@@ -127,17 +127,17 @@ export default function ConfirmacionClient() {
     };
   }, [leadId]);
 
-  // Auto-dismiss modal 3s after carta is ready
+  // Auto-dismiss modal after carta is ready
   useEffect(() => {
     if (!cartaReady) return;
-    const t = setTimeout(() => setModalDismissed(true), 1500);
+    const t = setTimeout(() => setModalDismissed(true), 2000);
     return () => clearTimeout(t);
   }, [cartaReady]);
 
-  // Show "you can leave" hint 5s after preview loaded but carta still not ready
+  // Show "you can leave" hint 8s after preview loaded but carta still not ready
   useEffect(() => {
     if (!imagesLoaded || cartaReady) return;
-    const t = setTimeout(() => setCanLeaveHint(true), 5000);
+    const t = setTimeout(() => setCanLeaveHint(true), 8000);
     return () => clearTimeout(t);
   }, [imagesLoaded, cartaReady]);
 
@@ -185,7 +185,7 @@ export default function ConfirmacionClient() {
           <div className="step-line" />
           <div className="step done"><div className="step-number">&#10003;</div><span>Transformación</span></div>
           <div className="step-line" />
-          <div className="step done"><div className="step-number">&#10003;</div><span>Carta lista</span></div>
+          <div className="step done"><div className="step-number">&#10003;</div><span>Carta viva</span></div>
         </section>
 
         <section className="shell centered-shell">

@@ -82,6 +82,8 @@ export default function PanelDashboard() {
   const [loading, setLoading] = useState(true);
   const [insights, setInsights] = useState<Insight[]>([]);
   const [insightsEnabled, setInsightsEnabled] = useState(true);
+  const [restSettings, setRestSettings] = useState<any>(null);
+  const [cartaReviewed, setCartaReviewed] = useState(true);
   const welcomeShown = useRef(false);
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
@@ -132,6 +134,8 @@ export default function PanelDashboard() {
       if (!d.error) setData(d);
       setInsights(i.insights || []);
       setInsightsEnabled(settings.weeklyInsightsEnabled !== false);
+      setRestSettings(settings);
+      setCartaReviewed(localStorage.getItem(`qc_carta_reviewed_${selectedRestaurantId}`) === "1");
     }).catch(() => {}).finally(() => setLoading(false));
   }, [sessionLoading, selectedRestaurantId, isDemo]);
 
@@ -180,6 +184,82 @@ export default function PanelDashboard() {
         {greeting}, {ownerName?.split(" ")[0] || ""}
       </p>
       <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
+
+      {/* ═══ Setup checklist ═══ */}
+      {!isDemo && restSettings && (() => {
+        const checks = [
+          { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
+          { key: "diet", label: "Define el tipo de cocina", done: restSettings.dietType && restSettings.dietType !== "OMNIVORE", href: "/panel/mi-restaurante" },
+          { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, href: "/panel/mi-restaurante" },
+          { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
+        ];
+        const doneCount = checks.filter(c => c.done).length;
+        const pct = Math.round((doneCount / checks.length) * 100);
+        if (pct >= 100) return null;
+        return (
+          <div style={{
+            background: "var(--adm-card)", border: `1px solid ${GOLD}33`,
+            borderRadius: 20, padding: "18px 18px 14px", marginBottom: 16,
+            boxShadow: "0 2px 12px rgba(244,166,35,0.08)",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: "1.1rem" }}>⚙️</span>
+                <span style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 800, color: "var(--adm-text)" }}>Configura tu local</span>
+              </div>
+              <span style={{
+                fontFamily: F, fontSize: "0.72rem", fontWeight: 800, color: GOLD,
+                background: `${GOLD}18`, padding: "3px 10px", borderRadius: 999,
+              }}>{pct}%</span>
+            </div>
+            {/* Progress bar */}
+            <div style={{ height: 5, background: "var(--adm-card-border)", borderRadius: 10, marginBottom: 14, overflow: "hidden" }}>
+              <div style={{ height: "100%", width: `${pct}%`, background: GOLD, borderRadius: 10, transition: "width 0.4s ease" }} />
+            </div>
+            {/* Items */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {checks.map(c => (
+                <div key={c.key} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{
+                    width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+                    background: c.done ? `${GOLD}20` : "var(--adm-hover)",
+                    border: c.done ? `1.5px solid ${GOLD}` : "1.5px solid var(--adm-card-border)",
+                    display: "grid", placeItems: "center",
+                    fontSize: "0.65rem", color: c.done ? GOLD : "transparent",
+                  }}>✓</div>
+                  <span style={{
+                    flex: 1, fontFamily: FB, fontSize: "0.82rem",
+                    color: c.done ? "var(--adm-text3)" : "var(--adm-text)",
+                    textDecoration: c.done ? "line-through" : "none",
+                    opacity: c.done ? 0.5 : 1,
+                  }}>{c.label}</span>
+                  {!c.done && (c.action ? (
+                    <button onClick={() => {
+                      if (selectedRestaurantId) {
+                        localStorage.setItem(`qc_carta_reviewed_${selectedRestaurantId}`, "1");
+                        setCartaReviewed(true);
+                        toast.success("Marcado como revisado");
+                      }
+                    }} style={{
+                      padding: "5px 12px", borderRadius: 999, cursor: "pointer",
+                      background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
+                      color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}>Ya la revisé</button>
+                  ) : (
+                    <Link href={c.href!} style={{
+                      padding: "5px 12px", borderRadius: 999, textDecoration: "none",
+                      background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
+                      color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}>Configurar</Link>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ═══ Quick actions ═══ */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
