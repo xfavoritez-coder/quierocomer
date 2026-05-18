@@ -12,7 +12,7 @@ const LANG_NAMES: Record<Lang, string> = { en: "English", pt: "Brazilian Portugu
 
 const MAX_RETRIES = 3;
 
-async function callTranslation(prompt: string, attempt = 1): Promise<Record<string, string>> {
+async function callTranslation(prompt: string, attempt = 1, maxTokens = 512): Promise<Record<string, any>> {
   if (!ANTHROPIC_API_KEY) {
     console.error("[translate] Missing ANTHROPIC_API_KEY");
     return {};
@@ -28,10 +28,10 @@ async function callTranslation(prompt: string, attempt = 1): Promise<Record<stri
       },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 512,
+        max_tokens: maxTokens,
         messages: [{ role: "user", content: prompt }],
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(maxTokens > 512 ? 45000 : 20000),
     });
 
     if (!res.ok) {
@@ -39,7 +39,7 @@ async function callTranslation(prompt: string, attempt = 1): Promise<Record<stri
       console.error(`[translate] API error ${res.status} (attempt ${attempt}/${MAX_RETRIES})`, body);
       if (attempt < MAX_RETRIES && (res.status >= 429 || res.status >= 500)) {
         await new Promise(r => setTimeout(r, 1000 * attempt));
-        return callTranslation(prompt, attempt + 1);
+        return callTranslation(prompt, attempt + 1, maxTokens);
       }
       return {};
     }
@@ -60,7 +60,7 @@ async function callTranslation(prompt: string, attempt = 1): Promise<Record<stri
     console.error(`[translate] Fetch error (attempt ${attempt}/${MAX_RETRIES}):`, err?.message);
     if (attempt < MAX_RETRIES) {
       await new Promise(r => setTimeout(r, 1000 * attempt));
-      return callTranslation(prompt, attempt + 1);
+      return callTranslation(prompt, attempt + 1, maxTokens);
     }
     return {};
   }
@@ -114,6 +114,94 @@ Example: { ${langsToTranslate.map(l => `"${l}_name": "translated or original nam
       create: { dishId, lang, name: name || null, description, isManual: false },
       update: { ...(name ? { name } : {}), ...(description ? { description } : {}), isManual: false },
     });
+  }
+}
+
+// ─── Bulk dish translation (many dishes per API call) ────────────────
+
+interface DishInput { id: string; name: string; description: string | null }
+
+/**
+ * Translate up to ~15 dishes in a single API call per language.
+ * Returns how many dishes were successfully translated.
+ */
+export async function translateDishBulk(dishes: DishInput[]): Promise<number> {
+  if (dishes.length === 0) return 0;
+
+  // Build numbered list for the prompt
+  const dishList = dishes.map((d, i) => {
+    const line = `${i}: ${d.name}`;
+    return d.description ? `${line} | ${d.description}` : line;
+  }).join("\n");
+
+  const hasAnyDesc = dishes.some(d => !!d.description);
+
+  let translated = 0;
+
+  for (const lang of TARGET_LANGS) {
+    const prompt = `Translate these restaurant menu dishes from Spanish to ${LANG_NAMES[lang]}. Be concise, appetizing, and natural.
+
+IMPORTANT for dish names:
+- Keep proper nouns, Italian/French/Japanese culinary names unchanged (e.g. "Margherita", "Bruschetta", "Carpaccio", "Ramen", "Croissant")
+- Only translate names that are descriptive in Spanish (e.g. "Ensalada de la casa" → "House salad")
+- If the name is already a universal culinary term, return it as-is
+
+Dishes (index: name${hasAnyDesc ? " | description" : ""}):
+${dishList}
+
+Return ONLY a JSON object where keys are the index numbers. Each value is an object with "name"${hasAnyDesc ? ' and optionally "desc"' : ""}:
+{ "0": { "name": "translated" }, "1": { "name": "translated"${hasAnyDesc ? ', "desc": "translated"' : ""} }, ... }`;
+
+    const result = await callTranslation(prompt, 1, 2048);
+    if (!result || Object.keys(result).length === 0) continue;
+
+    for (let i = 0; i < dishes.length; i++) {
+      const entry = result[String(i)];
+      if (!entry || typeof entry !== "object") continue;
+      const name = (entry as any).name as string | undefined;
+      const desc = (entry as any).desc as string | undefined;
+      if (!name && !desc) continue;
+
+      await prisma.dishTranslation.upsert({
+        where: { dishId_lang: { dishId: dishes[i].id, lang } },
+        create: { dishId: dishes[i].id, lang, name: name || null, description: desc || null, isManual: false },
+        update: { ...(name ? { name } : {}), ...(desc ? { description: desc } : {}), isManual: false },
+      });
+      if (lang === TARGET_LANGS[0]) translated++;
+    }
+  }
+
+  return translated;
+}
+
+// ─── Bulk category translation (many categories per API call) ────────
+
+export async function translateCategoryBulk(categories: { id: string; name: string }[]): Promise<void> {
+  if (categories.length === 0) return;
+
+  const catList = categories.map((c, i) => `${i}: ${c.name}`).join("\n");
+
+  for (const lang of TARGET_LANGS) {
+    const prompt = `Translate these restaurant menu category names from Spanish to ${LANG_NAMES[lang]}. Be natural and concise.
+
+Categories (index: name):
+${catList}
+
+Return ONLY a JSON object where keys are index numbers and values are the translated names:
+{ "0": "translated", "1": "translated", ... }`;
+
+    const result = await callTranslation(prompt);
+    if (!result || Object.keys(result).length === 0) continue;
+
+    for (let i = 0; i < categories.length; i++) {
+      const value = result[String(i)];
+      if (!value || typeof value !== "string") continue;
+      await prisma.categoryTranslation.upsert({
+        where: { categoryId_lang: { categoryId: categories[i].id, lang } },
+        create: { categoryId: categories[i].id, lang, name: value, isManual: false },
+        update: { name: value, isManual: false },
+      });
+    }
   }
 }
 

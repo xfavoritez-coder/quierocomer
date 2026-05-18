@@ -6,6 +6,8 @@ interface Props {
   restaurantSlug: string;
   /** Whether the onboarding has been completed (from DB) */
   onboardingDone?: boolean;
+  /** Whether all photos are referential (uploaded via PDF/photo, not scraped from link) */
+  allPhotosReferential?: boolean;
 }
 
 interface Step {
@@ -30,7 +32,7 @@ const STEPS: Step[] = [
   {
     icon: "📸",
     title: "Así quedaría",
-    body: "Algunas fotos podrían ser referenciales, luego podrás editar todo desde tu panel.",
+    body: "", // set dynamically based on allPhotosReferential
     showOverlay: false,
     overlayOpacity: 0.4,
     buttonLabel: "Siguiente",
@@ -58,7 +60,7 @@ const STEPS: Step[] = [
 ];
 
 
-export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props) {
+export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
@@ -113,6 +115,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
     if (step < 0 || step >= STEPS.length) return;
     timersRef.current.forEach(clearTimeout);
     timersRef.current = [];
+    // Broadcast current step to DemoBanner
+    window.dispatchEvent(new CustomEvent("demo-onboarding-step", { detail: { step } }));
     // Auto-minimize on steps without overlay (so user sees the carta)
     if (!STEPS[step].showOverlay) {
       if (!minimized && !minimizing) {
@@ -278,6 +282,11 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
   if (step < 0 || gone) return null;
 
   const current = STEPS[Math.min(step, STEPS.length - 1)];
+  const stepBody = step === 1
+    ? (allPhotosReferential
+      ? "Pusimos fotos referenciales para que veas cómo se vería tu nueva carta."
+      : "Algunas fotos podrían no haberse cargado bien o en baja calidad. No te preocupes, esto es solo una muestra, podrás editar todo desde tu panel.")
+    : current.body;
   const isLast = step === STEPS.length - 1;
 
   // Exit animation target: bottom-right (where lamp will be)
@@ -320,7 +329,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
             fontSize: "0.95rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
             lineHeight: 1.45, margin: "6px 0 14px",
           }}>
-            {current.body}
+            {stepBody}
           </p>
 
           {/* Bottom: dots + nav */}
@@ -446,7 +455,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           lineHeight: 1.45,
           margin: "0 0 18px",
         }}>
-          {current.body}
+          {stepBody}
         </p>
 
         {/* Personalization badge */}

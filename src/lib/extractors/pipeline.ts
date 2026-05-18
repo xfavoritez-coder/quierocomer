@@ -246,6 +246,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   if (!lead) throw new Error(`Lead ${leadId} not found`);
   if (!lead.cartaUrl && !lead.cartaFileUrl) throw new Error(`Lead ${leadId} has no cartaUrl or cartaFileUrl`);
 
+  // Guard: skip if already processing, ready, or delivered
+  if (["PROCESSING", "READY", "DELIVERED"].includes(lead.cartaStatus || "")) {
+    const existing = lead.generatedSlug || "";
+    console.log(`[Pipeline] Lead ${leadId} already ${lead.cartaStatus} — skipping`);
+    return { slug: existing, url: existing ? `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${existing}` : "" };
+  }
+
   // Mark as processing
   await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PROCESSING" } });
 
@@ -453,35 +460,38 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     let translationOk = true;
     if (createdDishes.length > 0) {
       try {
-        const { translateDish, translateCategory } = await import("@/lib/ai/translateContent");
+        const { translateDishBulk, translateCategoryBulk } = await import("@/lib/ai/translateContent");
+
+        // Load full dish data for bulk translation
+        const dishData = await prisma.dish.findMany({
+          where: { id: { in: createdDishes.map(d => d.id) } },
+          select: { id: true, name: true, description: true },
+        });
 
         const translateAll = async () => {
-          // Translate dishes in batches of 3
+          // Translate dishes in bulk batches of 12
           let translated = 0;
-          for (let i = 0; i < createdDishes.length; i += 3) {
-            const batch = createdDishes.slice(i, i + 3);
-            const results = await Promise.allSettled(batch.map((d) => translateDish(d.id)));
-            translated += results.filter(r => r.status === "fulfilled").length;
+          for (let i = 0; i < dishData.length; i += 12) {
+            const batch = dishData.slice(i, i + 12);
+            translated += await translateDishBulk(batch);
           }
 
-          // Translate categories
-          const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true } });
-          for (let i = 0; i < cats.length; i += 3) {
-            const batch = cats.slice(i, i + 3);
-            await Promise.allSettled(batch.map((c) => translateCategory(c.id)));
-          }
+          // Translate categories in one bulk call
+          const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } });
+          await translateCategoryBulk(cats);
 
           return translated;
         };
 
-        // Race against 90s timeout
+        // Timeout scales with dish count: 90s base + 3s per dish beyond 30
+        const timeoutMs = Math.max(90000, 90000 + (createdDishes.length - 30) * 3000);
         const result = await Promise.race([
           translateAll(),
-          new Promise<"timeout">((r) => setTimeout(() => r("timeout"), 90000)),
+          new Promise<"timeout">((r) => setTimeout(() => r("timeout"), timeoutMs)),
         ]);
 
         if (result === "timeout") {
-          console.warn(`[Pipeline] Translation timed out for ${restaurant.slug} — marking for backfill`);
+          console.warn(`[Pipeline] Translation timed out for ${restaurant.slug} (${createdDishes.length} dishes, ${timeoutMs}ms) — marking for backfill`);
           translationOk = false;
         } else if (result < createdDishes.length) {
           console.warn(`[Pipeline] Partial translation for ${restaurant.slug}: ${result}/${createdDishes.length} dishes`);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/normalizePhone";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
@@ -47,15 +47,22 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch lead data + start async processing immediately (while animation plays)
-  useEffect(() => {
+  // Force scroll to top — useLayoutEffect runs before paint, before Next.js scroll restoration
+  useLayoutEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    document.documentElement.style.scrollBehavior = "auto";
     window.scrollTo(0, 0);
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
-    setTimeout(() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; }, 50);
-    setTimeout(() => { window.scrollTo(0, 0); document.documentElement.scrollTop = 0; }, 150);
-    setTimeout(() => { window.scrollTo(0, 0); }, 300);
+  }, []);
+  useEffect(() => {
+    // Belt-and-suspenders: also force after paint in case Next.js restores scroll post-layout
+    document.documentElement.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      setTimeout(() => { window.scrollTo(0, 0); document.documentElement.style.scrollBehavior = ""; }, 50);
+    });
     trackFunnelEvent(leadId, "paso2_loaded");
   }, []);
 

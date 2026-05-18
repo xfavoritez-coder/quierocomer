@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
@@ -43,7 +43,23 @@ export default function ConfirmacionClient() {
   const cartaReadyRef = useRef(false);
 
   // Trigger full processing when confirmation loads
-  useEffect(() => { window.scrollTo(0, 0); trackFunnelEvent(leadId, "confirmacion_loaded"); }, []);
+  // Force scroll to top — useLayoutEffect runs before paint, before Next.js scroll restoration
+  useLayoutEffect(() => {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    document.documentElement.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, []);
+  useEffect(() => {
+    document.documentElement.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+      setTimeout(() => { window.scrollTo(0, 0); document.documentElement.style.scrollBehavior = ""; }, 50);
+    });
+    trackFunnelEvent(leadId, "confirmacion_loaded");
+  }, []);
 
   useEffect(() => {
     if (!leadId) return;
@@ -118,10 +134,10 @@ export default function ConfirmacionClient() {
     return () => clearTimeout(t);
   }, [cartaReady]);
 
-  // Show "you can leave" hint 15s after preview loaded but carta still not ready
+  // Show "you can leave" hint 5s after preview loaded but carta still not ready
   useEffect(() => {
     if (!imagesLoaded || cartaReady) return;
-    const t = setTimeout(() => setCanLeaveHint(true), 15000);
+    const t = setTimeout(() => setCanLeaveHint(true), 5000);
     return () => clearTimeout(t);
   }, [imagesLoaded, cartaReady]);
 
@@ -182,7 +198,7 @@ export default function ConfirmacionClient() {
             ) : (
               <>
                 <h1>{cartaReady
-                  ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu experiencia está <span>lista</span></>
+                  ? <><svg viewBox="0 0 24 24" fill="none" width="36" height="36" style={{ display: "inline", verticalAlign: "middle", marginRight: 8 }}><circle cx="12" cy="12" r="11" stroke="var(--amber-2)" strokeWidth="1.5"/><path d="M7.5 12.5l3 3 6-6.5" stroke="var(--amber-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Tu carta está <span>lista</span></>
                   : timedOut ? <>Tu carta está <span>en revisión</span></>
                   : <>Tu carta ya está en <span>preparación</span></>
                 }</h1>
@@ -336,20 +352,20 @@ export default function ConfirmacionClient() {
 
 
 
-          {/* Badge — hide only when timed out AND not ready */}
-          {(!timedOut || cartaReady) && (
+          {/* Badge — show only after "casi lista" phase (canLeaveHint/timedOut) or when ready */}
+          {(canLeaveHint || cartaReady) && (
             <div className="badges">
               <div className="badge">
                 <div className="badge-icon">
                   {modalDismissed ? (
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   ) : (
-                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><rect x="2" y="4" width="20" height="16" rx="3" stroke="currentColor" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="1.5"/></svg>
+                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/><path d="M12 7v5l3 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   )}
                 </div>
                 <div>
-                  <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Te avisaremos por correo"}</div>
-                  <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Cuando esté lista, te llegará un correo con el link de tu nueva carta."}</div>
+                  <div className="badge-title">{modalDismissed ? "Tu carta está lista" : "Revisa tu correo en unos minutos"}</div>
+                  <div className="badge-sub">{modalDismissed ? "Si no la encuentras en tu correo, revisa la carpeta spam o promociones." : "Podría llegar a tu carpeta de spam o promociones."}</div>
                 </div>
               </div>
             </div>

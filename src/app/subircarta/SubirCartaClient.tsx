@@ -334,7 +334,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .upload-card { margin-top: 20px; border: 1px dashed rgba(244,189,105,.75); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.12), transparent 42%), rgba(255,255,255,.035); border-radius: 24px; min-height: 230px; display: grid; place-items: center; text-align: center; padding: 32px 20px; box-shadow: inset 0 0 50px rgba(232,163,61,.055), 0 0 34px rgba(232,163,61,.08); transition: transform .22s ease, border-color .22s ease, background .22s ease; }
 .compact-upload { margin-top: 18px; min-height: 160px; padding: 24px 20px; }
 .upload-card:hover { transform: translateY(-2px); border-color: var(--amber-2); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.18), transparent 44%), rgba(255,255,255,.052); }
-.upload-icon { width: 52px; height: 52px; margin: 0 auto 12px; display: grid; place-items: center; color: var(--amber-2); }
+.upload-icon { width: 50px; height: 50px; margin: 0 auto 2px; display: grid; place-items: center; color: var(--amber-2); }
 .upload-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
 .upload-link { color: var(--amber-2); font-weight: 600; }
 .formats { margin-top: 16px; color: var(--muted); font-size: 13px; }

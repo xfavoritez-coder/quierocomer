@@ -15,16 +15,37 @@ interface Props {
  * Slim banner for demo restaurants. Always visible at the top.
  * Shows in both carta and panel views when restaurant.isDemo is true.
  */
+const TOTAL_ONBOARDING_STEPS = 5;
+
 export default function DemoBanner({ restaurantName, restaurantSlug, restaurantLogo, context, onActivate }: Props) {
   const [showTip, setShowTip] = useState(false);
   const [highlight, setHighlight] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [onboardingActive, setOnboardingActive] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState(0);
+  const [lockedTooltip, setLockedTooltip] = useState<"panel" | "activar" | null>(null);
 
   // Show restaurant name when scrolled past hero
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Track onboarding active state via body attribute
+  useEffect(() => {
+    const check = () => setOnboardingActive(document.body.hasAttribute("data-demo-onboarding"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-demo-onboarding"] });
+    return () => obs.disconnect();
+  }, []);
+
+  // Listen for onboarding step changes
+  useEffect(() => {
+    const onStep = (e: Event) => setOnboardingStep((e as CustomEvent).detail?.step ?? 0);
+    window.addEventListener("demo-onboarding-step", onStep);
+    return () => window.removeEventListener("demo-onboarding-step", onStep);
   }, []);
 
   // Listen for onboarding highlight
@@ -38,6 +59,23 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
       window.removeEventListener("demo-onboarding-stop-highlight", off);
     };
   }, []);
+
+  // Close locked tooltip on outside tap
+  useEffect(() => {
+    if (!lockedTooltip) return;
+    const close = () => setLockedTooltip(null);
+    const t = setTimeout(() => window.addEventListener("pointerdown", close, { once: true }), 10);
+    return () => { clearTimeout(t); window.removeEventListener("pointerdown", close); };
+  }, [lockedTooltip]);
+
+  const stepsLeft = Math.max(0, TOTAL_ONBOARDING_STEPS - 1 - onboardingStep);
+  const lockedMsg = `Completa el tour — ${stepsLeft === 1 ? "queda 1 paso" : `quedan ${stepsLeft} pasos`}`;
+
+  const handleLockedClick = (btn: "panel" | "activar") => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setLockedTooltip(prev => prev === btn ? null : btn);
+  };
 
   return (
     <div
@@ -93,41 +131,93 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         {/* Right — Actions */}
         <div style={{ flex: "0 0 auto", display: "flex", gap: 7 }}>
           {context === "carta" ? (
-            <a
-              href={`/api/panel/demo-auth?slug=${restaurantSlug}`}
-              style={{
-                border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
-                height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
-                background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.55)",
-                display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap",
-              }}
-            ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver panel</a>
+            <div style={{ position: "relative" }}>
+              <a
+                href={onboardingActive ? undefined : `/api/panel/demo-auth?slug=${restaurantSlug}`}
+                onClick={onboardingActive ? handleLockedClick("panel") : undefined}
+                className={onboardingActive ? undefined : "demo-nav-btn"}
+                style={{
+                  border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
+                  height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
+                  background: "rgba(255,255,255,.07)",
+                  color: onboardingActive ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.55)",
+                  display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap",
+                  cursor: onboardingActive ? "default" : "pointer",
+                  transition: "all 0.15s ease",
+                }}
+              ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: onboardingActive ? 0.4 : 1 }}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver panel</a>
+              {lockedTooltip === "panel" && (
+                <div style={{
+                  position: "absolute", top: "calc(100% + 8px)", right: 0,
+                  background: "#1a1a1a", border: "1px solid rgba(255,178,45,0.25)", borderRadius: 10,
+                  padding: "10px 14px", width: 220, zIndex: 70,
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                  animation: "tooltipFadeIn 0.15s ease-out",
+                }}>
+                  <div style={{
+                    position: "absolute", top: -5, right: 20,
+                    width: 10, height: 10, background: "#1a1a1a", borderTop: "1px solid rgba(255,178,45,0.25)", borderLeft: "1px solid rgba(255,178,45,0.25)",
+                    transform: "rotate(45deg)",
+                  }} />
+                  <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5, fontWeight: 500, letterSpacing: 0 }}>
+                    🧞 {lockedMsg}
+                  </p>
+                </div>
+              )}
+            </div>
           ) : (
             <a
               href={`/qr/${restaurantSlug}`}
+              className="demo-nav-btn"
               style={{
                 border: "1px solid rgba(255,255,255,.11)", borderRadius: 999,
                 height: 38, padding: "0 14px", fontSize: 13, fontWeight: 900,
                 background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.88)",
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
+                transition: "all 0.15s ease",
               }}
             >Mi carta</a>
           )}
-          <a
-            href={`/activar/${restaurantSlug}`}
-            className="demo-activar-btn"
-            style={{
-              border: 0, borderRadius: 999, height: 38, padding: "0 18px",
-              fontSize: 13, fontWeight: 900,
-              background: "linear-gradient(135deg, #c084fc, #a855f7)", color: "#fff",
-              display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
-              boxShadow: highlight
-                ? "0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35)"
-                : "0 10px 24px rgba(168,85,247,.22)",
-              animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
-              transition: "box-shadow 0.3s ease, transform 0.1s ease",
-            }}
-          >Activar →</a>
+          <div style={{ position: "relative" }}>
+            <a
+              href={onboardingActive ? undefined : `/activar/${restaurantSlug}`}
+              onClick={onboardingActive ? handleLockedClick("activar") : undefined}
+              className="demo-activar-btn"
+              style={{
+                border: 0, borderRadius: 999, height: 38, padding: "0 18px",
+                fontSize: 13, fontWeight: 900,
+                background: onboardingActive
+                  ? "linear-gradient(135deg, rgba(192,132,252,0.35), rgba(168,85,247,0.35))"
+                  : "linear-gradient(135deg, #c084fc, #a855f7)",
+                color: onboardingActive ? "rgba(255,255,255,0.4)" : "#fff",
+                display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
+                boxShadow: onboardingActive ? "none" : highlight
+                  ? "0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35)"
+                  : "0 10px 24px rgba(168,85,247,.22)",
+                animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
+                transition: "box-shadow 0.3s ease, transform 0.1s ease, background 0.3s ease, color 0.3s ease",
+                cursor: onboardingActive ? "default" : "pointer",
+              }}
+            >Activar →</a>
+            {lockedTooltip === "activar" && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 8px)", right: 0,
+                background: "#1a1a1a", border: "1px solid rgba(255,178,45,0.25)", borderRadius: 10,
+                padding: "10px 14px", width: 220, zIndex: 70,
+                boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                animation: "tooltipFadeIn 0.15s ease-out",
+              }}>
+                <div style={{
+                  position: "absolute", top: -5, right: 20,
+                  width: 10, height: 10, background: "#1a1a1a", borderTop: "1px solid rgba(255,178,45,0.25)", borderLeft: "1px solid rgba(255,178,45,0.25)",
+                  transform: "rotate(45deg)",
+                }} />
+                <p style={{ fontSize: 12.5, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5, fontWeight: 500, letterSpacing: 0 }}>
+                  🧞 {lockedMsg}
+                </p>
+              </div>
+            )}
+          </div>
           {highlight && (
             <style>{`
               @keyframes activatePulse {
@@ -137,6 +227,17 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               .demo-activar-btn:active { transform: scale(0.93) !important; }
             `}</style>
           )}
+          <style>{`
+            @keyframes tooltipFadeIn {
+              from { opacity: 0; transform: translateY(-4px); }
+              to { opacity: 1; transform: translateY(0); }
+            }
+            .demo-nav-btn:active {
+              background: rgba(232,163,61,.15) !important;
+              border-color: rgba(232,163,61,.3) !important;
+              color: #E8A33D !important;
+            }
+          `}</style>
         </div>
       </div>
 
@@ -150,7 +251,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
         textAlign: "center",
       }}>
         <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
-          Actívala y muéstrasela al mundo
+          {context === "panel" ? "Así se verá tu panel" : "Actívala y muéstrasela al mundo"}
         </span>
         <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #a855f7" }} />
       </div>
