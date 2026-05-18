@@ -171,7 +171,7 @@ Reglas:
   if (process.env.UNSPLASH_ACCESS_KEY) {
     const allDishes = (parsed.categories || []).flatMap((c: any) =>
       (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name }))
-    ).filter((d: any) => d.name).slice(0, 15);
+    ).filter((d: any) => d.name).slice(0, 50);
 
     await Promise.allSettled(allDishes.map(async (d: any) => {
       for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
@@ -404,45 +404,55 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Re-upload photos to Supabase in batches
+    // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
     const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
     if (dishesWithPhotos.length > 0) {
+      const { optimizedUnsplashUrl } = await import("@/lib/unsplash");
       const BATCH = 10;
       for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
         const batch = dishesWithPhotos.slice(i, i + BATCH);
         await Promise.allSettled(
           batch.map(async (dish) => {
-            const dishSlug = slugify(dish.name);
-            const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
-            const finalUrl = supabaseUrl || dish.externalPhoto!;
-            const updateData: any = { photos: [finalUrl] };
-            if ((dish as any).credit) updateData.photoCredits = [(dish as any).credit];
+            const credit = (dish as any).credit;
+            const isUnsplash = !!credit; // has credit = came from Unsplash
+            let finalUrl: string;
+
+            if (isUnsplash) {
+              // Unsplash: hotlink directly, no Supabase re-upload
+              finalUrl = optimizedUnsplashUrl(dish.externalPhoto!, "card");
+            } else {
+              // Restaurant's own photo: re-upload to Supabase for optimization
+              const dishSlug = slugify(dish.name);
+              const supabaseUrl = await reuploadPhoto(dish.externalPhoto!, restaurant.id, dishSlug);
+              finalUrl = supabaseUrl || dish.externalPhoto!;
+            }
+
+            const updateData: any = { photos: [finalUrl], isPhotoReferential: isUnsplash };
+            if (credit) updateData.photoCredits = [credit];
             await prisma.dish.update({ where: { id: dish.id }, data: updateData });
           }),
         );
       }
     }
 
-    // Ensure first 5 dishes have photos (fill with Unsplash if missing)
+    // Fill ALL dishes without photos using Unsplash (hotlink, no Supabase)
     if (process.env.UNSPLASH_ACCESS_KEY) {
-      const first5 = await prisma.dish.findMany({
+      const { optimizedUnsplashUrl } = await import("@/lib/unsplash");
+      const allDishesDB = await prisma.dish.findMany({
         where: { restaurantId: restaurant.id, isActive: true },
         orderBy: { position: "asc" },
-        take: 5,
         select: { id: true, name: true, photos: true },
       });
-      const missing = first5.filter(d => !d.photos?.length);
+      const missing = allDishesDB.filter(d => !d.photos?.length);
       if (missing.length > 0) {
         await Promise.allSettled(missing.map(async (d) => {
           try {
             const photo = await searchUnsplashPhoto(`${d.name} food dish`);
             if (photo) {
-              const dishSlug = slugify(d.name);
-              const supabaseUrl = await reuploadPhoto(photo.url, restaurant.id, dishSlug);
               await prisma.dish.update({
                 where: { id: d.id },
                 data: {
-                  photos: [supabaseUrl || photo.url],
+                  photos: [optimizedUnsplashUrl(photo.rawUrl, "card")],
                   isPhotoReferential: true,
                   photoCredits: [{ photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId }],
                 },

@@ -8,6 +8,8 @@ interface Props {
   onboardingDone?: boolean;
   /** Whether all photos are referential (uploaded via PDF/photo, not scraped from link) */
   allPhotosReferential?: boolean;
+  /** Whether some (but not all) dishes have Unsplash referential photos */
+  hasReferentialPhotos?: boolean;
 }
 
 interface Step {
@@ -63,7 +65,7 @@ const STEPS: Step[] = [
 ];
 
 
-export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential }: Props) {
+export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential, hasReferentialPhotos }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
@@ -288,7 +290,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   const stepBody = step === 1
     ? (allPhotosReferential
       ? "Pusimos fotos referenciales para que veas cómo se vería tu nueva carta."
-      : "Algunas fotos podrían no haberse cargado bien o en baja calidad. No te preocupes, esto es solo una muestra, podrás editar todo desde tu panel.")
+      : hasReferentialPhotos
+        ? "Pusimos algunas fotos referenciales para que veas cómo se vería tu carta nueva."
+        : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
     : current.body;
   const isLast = step === STEPS.length - 1;
 

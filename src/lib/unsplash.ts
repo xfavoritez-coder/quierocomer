@@ -1,14 +1,35 @@
 /**
  * Unsplash API helpers — centralized to comply with Unsplash guidelines:
- * 1. Hotlink to original URLs
+ * 1. Hotlink to original URLs (images.unsplash.com)
  * 2. Trigger download endpoint when a photo is "used"
  * 3. Return photographer attribution data
+ *
+ * We use urls.raw + Imgix params for optimal performance:
+ *   ?w=800&q=80&fm=webp&fit=crop&crop=entropy
+ * This lets Unsplash's CDN serve optimized WebP at the exact size we need,
+ * no re-upload to our storage required.
  */
 
 const UNSPLASH_KEY = () => process.env.UNSPLASH_ACCESS_KEY;
 
+/** Imgix params appended to raw Unsplash URLs for optimal delivery */
+const PHOTO_PARAMS_CARD = "w=600&q=80&fm=webp&fit=crop&crop=entropy&auto=compress";
+const PHOTO_PARAMS_DETAIL = "w=1080&q=82&fm=webp&fit=crop&crop=entropy&auto=compress";
+const PHOTO_PARAMS_HERO = "w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress";
+
+/**
+ * Build an optimized Unsplash URL from the raw base URL.
+ * Usage: optimizedUrl(rawUrl, "card") → 600px WebP
+ */
+export function optimizedUnsplashUrl(rawUrl: string, size: "card" | "detail" | "hero" = "card"): string {
+  const params = size === "hero" ? PHOTO_PARAMS_HERO : size === "detail" ? PHOTO_PARAMS_DETAIL : PHOTO_PARAMS_CARD;
+  const sep = rawUrl.includes("?") ? "&" : "?";
+  return `${rawUrl}${sep}${params}`;
+}
+
 export interface UnsplashPhoto {
-  url: string;           // urls.regular — hotlinked
+  url: string;           // optimized URL (raw + params) — hotlinked to images.unsplash.com
+  rawUrl: string;        // urls.raw — base URL without params
   photographer: string;  // user.name
   profileUrl: string;    // user.links.html
   unsplashId: string;    // photo id
@@ -43,11 +64,13 @@ export async function searchUnsplashPhoto(query: string, timeoutMs = 5000): Prom
     const photo = data.results?.[0];
     if (!photo) return null;
 
+    const rawUrl = photo.urls.raw;
     return {
-      url: photo.urls.regular,
+      url: optimizedUnsplashUrl(rawUrl, "card"),
+      rawUrl,
       photographer: photo.user?.name || "Unknown",
       profileUrl: photo.user?.links?.html || "https://unsplash.com",
-      unsplashId: photo.id,
+      unsplashId: photo.unsplashId || photo.id,
       downloadLocation: photo.links?.download_location || "",
     };
   } catch {
@@ -73,13 +96,17 @@ export async function fetchRandomUnsplashPhotos(query: string, count: number, ti
     if (!res.ok) return [];
 
     const data = await res.json();
-    return (Array.isArray(data) ? data : [data]).map((p: any) => ({
-      url: p.urls?.regular,
-      photographer: p.user?.name || "Unknown",
-      profileUrl: p.user?.links?.html || "https://unsplash.com",
-      unsplashId: p.id,
-      downloadLocation: p.links?.download_location || "",
-    })).filter((p: UnsplashPhoto) => p.url);
+    return (Array.isArray(data) ? data : [data]).map((p: any) => {
+      const rawUrl = p.urls?.raw;
+      return {
+        url: rawUrl ? optimizedUnsplashUrl(rawUrl, "card") : p.urls?.regular,
+        rawUrl: rawUrl || p.urls?.regular,
+        photographer: p.user?.name || "Unknown",
+        profileUrl: p.user?.links?.html || "https://unsplash.com",
+        unsplashId: p.id,
+        downloadLocation: p.links?.download_location || "",
+      };
+    }).filter((p: UnsplashPhoto) => p.url);
   } catch {
     return [];
   }

@@ -195,7 +195,7 @@ export default async function CartaPage({
       {(restaurant as any).isDemo && (
         <>
           <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} context="carta" />
-          <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} />
+          <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} />
         </>
       )}
       <DesktopWrapper
