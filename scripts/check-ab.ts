@@ -16,6 +16,20 @@ async function main() {
     return;
   }
 
+  if (action === "fix-subtitle") {
+    const exp = await prisma.abExperiment.findUnique({ where: { slug: "landing-hero" }, include: { variants: true } });
+    if (!exp) { console.log("No exp"); await prisma.$disconnect(); return; }
+    const sv = exp.variants.find((v) => v.slot === "subtitle" && v.text.includes("aumenta tus ventas"));
+    if (sv) {
+      await prisma.abVariant.update({ where: { id: sv.id }, data: { text: "Transformamos tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes." } });
+      console.log("Subtitle variant updated");
+    } else {
+      console.log("No matching subtitle variant found");
+    }
+    await prisma.$disconnect();
+    return;
+  }
+
   const exp = await prisma.abExperiment.findUnique({
     where: { slug: "landing-hero" },
     include: { variants: true },
