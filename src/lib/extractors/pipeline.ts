@@ -435,8 +435,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // Fill ALL dishes without photos using Unsplash (hotlink, no Supabase)
-    if (process.env.UNSPLASH_ACCESS_KEY) {
+    // Run Unsplash photo fill + translations in parallel (independent: photos→dish.photos, translations→dishTranslation)
+    let translationOk = true;
+    let translationPartial = false;
+
+    const unsplashTask = (async () => {
+      if (!process.env.UNSPLASH_ACCESS_KEY) return;
       const { searchUnsplashPhoto: searchPhoto, triggerUnsplashDownload: triggerDl } = await import("@/lib/unsplash");
       const allDishesDB = await prisma.dish.findMany({
         where: { restaurantId: restaurant.id, isActive: true },
@@ -462,37 +466,29 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           } catch {}
         }));
       }
-    }
+    })();
 
-    // Translate dishes + categories with timeout (awaited, not fire-and-forget)
-    let translationOk = true;
-    let translationPartial = false;
-    if (createdDishes.length > 0) {
+    const translationTask = (async () => {
+      if (createdDishes.length === 0) return;
       try {
         const { translateDishBulk, translateCategoryBulk } = await import("@/lib/ai/translateContent");
 
-        // Load full dish data for bulk translation
         const dishData = await prisma.dish.findMany({
           where: { id: { in: createdDishes.map(d => d.id) } },
           select: { id: true, name: true, description: true },
         });
 
         const translateAll = async () => {
-          // Translate dishes in bulk batches of 12
           let translated = 0;
           for (let i = 0; i < dishData.length; i += 12) {
             const batch = dishData.slice(i, i + 12);
             translated += await translateDishBulk(batch);
           }
-
-          // Translate categories in one bulk call
           const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } });
           await translateCategoryBulk(cats);
-
           return translated;
         };
 
-        // Timeout scales with dish count: 90s base + 3s per dish beyond 30
         const timeoutMs = Math.max(90000, 90000 + (createdDishes.length - 30) * 3000);
         const result = await Promise.race([
           translateAll(),
@@ -515,7 +511,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         console.error(`[Pipeline] Translation failed for ${restaurant.slug}:`, err);
         translationOk = false;
       }
-    }
+    })();
+
+    await Promise.all([unsplashTask, translationTask]);
 
     // If translation incomplete or failed, flag restaurant for backfill
     if (!translationOk || translationPartial) {
