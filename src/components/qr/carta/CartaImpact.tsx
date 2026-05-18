@@ -15,6 +15,7 @@ import { norm } from "@/lib/normalize";
 import ViewSelector from "./ViewSelector";
 import GenioFab from "./GenioFab";
 import FabSpeedDial from "./FabSpeedDial";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import SpicyStamp, { useClientAvoidsSpicy } from "./SpicyStamp";
 import { canAccess, effectivePlan } from "@/lib/plans";
 import { getGuestId } from "@/lib/guestId";
@@ -520,7 +521,7 @@ function ImpactDishCard({
             background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent) 15%, var(--carta-surface)), color-mix(in srgb, var(--carta-accent) 5%, var(--carta-surface)))",
             position: "relative", overflow: "hidden",
           }}>
-            <span style={{ fontSize: "2rem", opacity: 0.4 }}>🍽️</span>
+            <DishPlaceholderIcon size={36} />
             <div style={{
               position: "absolute", inset: 0,
               background: "radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--carta-accent) 12%, transparent), transparent 60%)",
@@ -1208,7 +1209,7 @@ export default function CartaImpact({
       )}
 
       {/* Hero */}
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 72 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}
