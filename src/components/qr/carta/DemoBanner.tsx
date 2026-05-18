@@ -115,6 +115,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
           )}
           <a
             href={`/activar/${restaurantSlug}`}
+            className="demo-activar-btn"
             style={{
               border: 0, borderRadius: 999, height: 38, padding: "0 18px",
               fontSize: 13, fontWeight: 900,
@@ -124,7 +125,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                 ? "0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35)"
                 : "0 10px 24px rgba(168,85,247,.22)",
               animation: highlight ? "activatePulse 1.5s ease-in-out infinite" : undefined,
-              transition: "box-shadow 0.3s ease",
+              transition: "box-shadow 0.3s ease, transform 0.1s ease",
             }}
           >Activar →</a>
           {highlight && (
@@ -133,6 +134,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                 0%, 100% { transform: scale(1); box-shadow: 0 0 0 3px rgba(168,85,247,0.4), 0 10px 24px rgba(168,85,247,.35); }
                 50% { transform: scale(1.08); box-shadow: 0 0 0 6px rgba(168,85,247,0.2), 0 14px 30px rgba(168,85,247,.45); }
               }
+              .demo-activar-btn:active { transform: scale(0.93) !important; }
             `}</style>
           )}
         </div>

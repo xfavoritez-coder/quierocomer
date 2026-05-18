@@ -182,7 +182,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
-              Tu carta actual podría estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)" }}>frenando</span> tus ventas
+              Tu carta actual podría estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)", textDecoration: "underline", textUnderlineOffset: "6px" }}>frenando</span> tus ventas
             </h2>
           </div>
           <div className="pain-grid">

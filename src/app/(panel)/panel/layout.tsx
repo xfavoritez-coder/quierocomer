@@ -580,13 +580,14 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             </span>
             <div style={{ display: "flex", gap: 7 }}>
               <a href={`/qr/${selectedRest.slug}`} style={{ border: "1px solid rgba(255,255,255,.11)", borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "rgba(255,255,255,.07)", color: "rgba(255,255,255,.55)", display: "flex", alignItems: "center", gap: 5, textDecoration: "none", whiteSpace: "nowrap" }}><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Ver carta</a>
-              <a href={`/activar/${selectedRest.slug}`} style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap" }}>Activar →</a>
+              <a href={`/activar/${selectedRest.slug}`} className="demo-activar-btn" style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 13, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", transition: "transform 0.1s ease" }}>Activar →</a>
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center" }}>
             <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se verá tu panel · Al activar queda todo en cero</span>
             <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Así se verá tu panel</span>
-            <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }`}</style>
+            <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }
+.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />
           </div>
         </div>
