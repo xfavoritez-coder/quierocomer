@@ -191,10 +191,10 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 <h3>&ldquo;Mi ticket de mesa <span className="accent">no aumenta</span>&rdquo;</h3>
                 <p>Sin una carta que sugiera, siempre venderás menos.</p>
               </div>
-              <img className="pain-img" src="/landing/yanose.png" alt="Cuenta del restaurante" />
+              <img className="pain-img" src="/landing/yanose.jpg" alt="Cuenta del restaurante" />
             </div>
             <div className="pain-card">
-              <img className="pain-img" src="/landing/3.png" alt="Garzón corriendo" />
+              <img className="pain-img" src="/landing/3.jpg" alt="Garzón corriendo" />
               <div className="pain-text">
                 <h3>&ldquo;Mis garzones <span className="accent">no venden más</span>&rdquo;</h3>
                 <p>No siempre es el garzón, es la carta que no guía ni sugiere.</p>
@@ -205,7 +205,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 <h3>&ldquo;Mis clientes <span className="accent">no vuelven</span>&rdquo;</h3>
                 <p>Sin datos ni contacto, cada cliente que se va es una oportunidad perdida.</p>
               </div>
-              <img className="pain-img" src="/landing/333.png" alt="Cliente yéndose" />
+              <img className="pain-img" src="/landing/333.jpg" alt="Cliente yéndose" />
             </div>
           </div>
         </div>
@@ -230,7 +230,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/11.png" alt="Subir carta" />
+                <img src="/landing/11.jpg" alt="Subir carta" />
               </div>
             </div>
 
@@ -246,7 +246,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/22.png" alt="Transformación" />
+                <img src="/landing/22.jpg" alt="Transformación" />
               </div>
             </div>
 
@@ -262,7 +262,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/qrrr.png" alt="Clientes escanean" />
+                <img src="/landing/qrrr.jpg" alt="Clientes escanean" />
               </div>
             </div>
 
@@ -277,7 +277,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 </div>
               </div>
               <div className="hiw-img-wrap">
-                <img src="/landing/feliz.png" alt="Mejoras toda la experiencia" />
+                <img src="/landing/feliz.jpg" alt="Mejoras toda la experiencia" />
               </div>
             </div>
           </div>
@@ -290,7 +290,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* MIENTRAS TÚ ATIENDES */}
       <section className="mientras-section">
         <div className="mientras-bg">
-          <img src="/landing/si.png" alt="Restaurante" />
+          <img src="/landing/si.jpg" alt="Restaurante" />
           <div className="mientras-overlay" />
         </div>
         <div className="mientras-content">
@@ -448,7 +448,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .nav-cta{padding:11px 20px;background:rgba(232,163,61,.12);border:1px solid rgba(232,163,61,.25);color:var(--cream);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:.04em;transition:.25s}
 .nav-cta:hover{background:var(--amber);color:var(--black)}
 .hero{min-height:100vh;display:flex;align-items:center;position:relative;overflow:hidden;padding:120px 0 80px}
-.hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/fondo4.png');background-size:cover;background-position:center;transform:scale(1.03)}
+.hero-bg{position:absolute;inset:0;background-image:linear-gradient(90deg,rgba(10,9,8,.94) 0%,rgba(10,9,8,.72) 42%,rgba(10,9,8,.26) 100%),url('/landing/fondo4.jpg');background-size:cover;background-position:center;transform:scale(1.03)}
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr;gap:0;max-width:1200px;margin:0 auto;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
@@ -478,7 +478,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .logo-chip span:last-child{color:var(--amber)}
 @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 section{position:relative}
-.problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.png');background-size:cover;background-position:center}
+.problem{padding:130px 0;text-align:center;background:linear-gradient(rgba(10,9,8,.75),rgba(10,9,8,.75)),url('/landing/444.jpg');background-size:cover;background-position:center}
 .problem h2{font-size:clamp(41px,6vw,56px);line-height:1.12;max-width:900px;margin:0 auto 22px}
 .problem p{max-width:650px;margin:0 auto;color:var(--cream-soft);font-size:18px}
 .pains{padding:40px 0 120px;background:var(--black-soft)}

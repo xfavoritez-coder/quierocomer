@@ -23,7 +23,7 @@ const CSS = `
 * { box-sizing: border-box; }
 body { margin: 0; font-family: Inter, -apple-system, sans-serif; background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.16), transparent 30%), radial-gradient(circle at 50% 58%, rgba(232,163,61,.07), transparent 36%), var(--black); color: var(--cream); }
 .page { width: 100%; max-width: 430px; margin: 0 auto; min-height: 100vh; padding: 18px 16px 44px; overflow: hidden; }
-.activar-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 10px clamp(18px,4vw,64px); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(10,9,8,.92), rgba(10,9,8,.15)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.activar-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 14px clamp(18px,4vw,64px); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(10,9,8,.92), rgba(10,9,8,.15)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .activar-nav .logo { font-family: Georgia, serif; font-size: 17px; font-weight: 400; color: var(--cream); display: flex; align-items: center; gap: 8px; letter-spacing: .02em; text-decoration: none; }
 .activar-nav .logo img { height: 16px; width: auto; object-fit: contain; }
 .activar-nav .nav-link { color: var(--cream-soft); font-size: 14px; text-decoration: none; letter-spacing: .04em; }

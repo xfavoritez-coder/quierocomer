@@ -174,14 +174,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
       case 4:
         // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
-          const overlay = document.createElement("div");
-          overlay.style.cssText = "position:fixed;inset:0;z-index:9980;background:rgba(0,0,0,0.82);display:flex;align-items:center;justify-content:center;";
-          overlay.innerHTML = "";
-          document.body.appendChild(overlay);
           sessionStorage.setItem("qc_onboarding_step", "4");
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
-          delay(300, () => { window.location.href = url.toString(); });
+          window.location.href = url.toString();
           return;
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
