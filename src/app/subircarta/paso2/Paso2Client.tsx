@@ -47,7 +47,7 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Force scroll to top — useLayoutEffect runs before paint, before Next.js scroll restoration
+  // Force scroll to top — blast through every timing slot Next.js might use to restore scroll
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     document.documentElement.style.scrollBehavior = "auto";
@@ -56,14 +56,16 @@ export default function Paso2Client() {
     document.body.scrollTop = 0;
   }, []);
   useEffect(() => {
-    // Belt-and-suspenders: also force after paint in case Next.js restores scroll post-layout
     document.documentElement.style.scrollBehavior = "auto";
     window.scrollTo(0, 0);
-    requestAnimationFrame(() => {
+    // Hammer scroll-to-top across multiple frames to beat any async scroll restoration
+    const times = [0, 16, 50, 100, 200, 400];
+    const ids = times.map(ms => setTimeout(() => {
       window.scrollTo(0, 0);
-      setTimeout(() => { window.scrollTo(0, 0); document.documentElement.style.scrollBehavior = ""; }, 50);
-    });
+      if (ms === times[times.length - 1]) document.documentElement.style.scrollBehavior = "";
+    }, ms));
     trackFunnelEvent(leadId, "paso2_loaded");
+    return () => ids.forEach(clearTimeout);
   }, []);
 
   useEffect(() => {
