@@ -21,7 +21,7 @@ const RESTAURANTS: [string, string][] = [
 
 const AB_DEFAULTS = {
   titleText: "Tu carta puede vender mucho m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una que aumenta tus ventas y mejora la experiencia de tus clientes",
+  subtitleText: "Transformamos tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
@@ -434,7 +434,7 @@ const LANDING_CSS = `
   --font-display:'Cormorant Garamond',serif;--font-body:'Inter',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw}
+html,body{scroll-behavior:smooth;overflow-x:hidden;max-width:100vw}
 body{background:var(--black);color:var(--cream);font-family:var(--font-body);font-weight:300;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 body:before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 0.91 0 0 0 0 0.64 0 0 0 0 0.24 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:.25;pointer-events:none;z-index:999;mix-blend-mode:overlay}
 h1,h2,h3{font-family:var(--font-display);font-weight:400;color:var(--cream);letter-spacing:-.01em}
@@ -452,12 +452,12 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr;gap:0;max-width:1200px;margin:0 auto;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
-.hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:820px;margin-left:auto;margin-right:auto;margin-bottom:28px}
+.hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:620px;margin-left:auto;margin-right:auto;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.4}
 .hero-sub-text{font-size:clamp(18px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px;margin-left:auto;margin-right:auto}
-.microcopy{font-size:clamp(16px,2vw,16px);color:var(--cream-soft);margin-top:8px;opacity:.8}
+.microcopy{font-size:clamp(16px,2vw,16px);color:var(--cream-soft);margin-top:8px;opacity:.6}
 .phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
 .phone-frame::before{content:'';position:absolute;top:8px;left:50%;transform:translateX(-50%);width:80px;height:22px;background:#0a0908;border-radius:0 0 14px 14px;z-index:2}
