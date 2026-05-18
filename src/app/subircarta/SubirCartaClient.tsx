@@ -320,7 +320,7 @@ a { color: inherit; text-decoration: none; }
 .shell { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(14,11,8,.86), rgba(14,11,8,.62)); border-radius: 28px; padding: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.38); backdrop-filter: blur(14px); position: relative; overflow: hidden; }
 .centered-shell { max-width: 760px; margin: 0 auto; text-align: center; }
 .shell::before { content: ''; position: absolute; width: 360px; height: 360px; right: -140px; top: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(232,163,61,.16), transparent 70%); filter: blur(8px); pointer-events: none; }
-h1 { font-family: var(--font-display); font-size: clamp(48px, 13vw, 74px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
+h1 { font-family: var(--font-display); font-size: clamp(36px, 9vw, 54px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
 h1 span { color: var(--amber-2); font-style: italic; }
 .method-title { text-align: center; margin: 28px 0 14px; color: var(--cream-2); }
 .first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
@@ -347,8 +347,8 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .below-cta { margin: 10px auto 0; max-width: 520px; }
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
 .cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 70px; } .methods { gap: 14px; } }
-@media (max-width: 390px) { h1 { font-size: 44px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
+@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 52px; } .methods { gap: 14px; } }
+@media (max-width: 390px) { h1 { font-size: 34px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
 `;
