@@ -36,41 +36,60 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email y contraseña requeridos" }, { status: 400 });
     }
 
+    // Try owner first
     const owner = await prisma.restaurantOwner.findFirst({
       where: { email: { equals: email, mode: "insensitive" } },
       include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
 
-    if (!owner) {
-      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+    if (owner) {
+      const valid = await bcrypt.compare(password, owner.passwordHash);
+      if (!valid) return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+
+      if (owner.status === "SUSPENDED") return NextResponse.json({ error: "Cuenta suspendida. Contacta al administrador." }, { status: 403 });
+      if (owner.status === "PENDING") return NextResponse.json({ error: "Cuenta pendiente de aprobación." }, { status: 403 });
+
+      await prisma.restaurantOwner.update({ where: { id: owner.id }, data: { lastLoginAt: new Date() } });
+
+      const token = crypto.randomUUID();
+      const response = NextResponse.json({
+        ok: true,
+        role: owner.role,
+        name: owner.name,
+        restaurants: owner.restaurants,
+        mustChangePassword: owner.mustChangePassword,
+      });
+      setPanelCookies(response, token, owner.role, owner.id);
+      return response;
     }
 
-    const valid = await bcrypt.compare(password, owner.passwordHash);
-    if (!valid) {
-      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
-    }
-
-    if (owner.status === "SUSPENDED") {
-      return NextResponse.json({ error: "Cuenta suspendida. Contacta al administrador." }, { status: 403 });
-    }
-    if (owner.status === "PENDING") {
-      return NextResponse.json({ error: "Cuenta pendiente de aprobación." }, { status: 403 });
-    }
-
-    await prisma.restaurantOwner.update({
-      where: { id: owner.id },
-      data: { lastLoginAt: new Date() },
+    // Try team member
+    const member = await prisma.teamMember.findFirst({
+      where: { email: { equals: email, mode: "insensitive" }, passwordHash: { not: null } },
+      include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true } } },
     });
+
+    if (!member || !member.passwordHash) {
+      return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+    }
+
+    const memberValid = await bcrypt.compare(password, member.passwordHash);
+    if (!memberValid) return NextResponse.json({ error: "Credenciales incorrectas" }, { status: 401 });
+
+    if (member.status === "SUSPENDED") return NextResponse.json({ error: "Cuenta suspendida. Contacta al administrador." }, { status: 403 });
+    if (member.status === "PENDING") return NextResponse.json({ error: "Cuenta pendiente de activación. Revisa tu email." }, { status: 403 });
+
+    await prisma.teamMember.update({ where: { id: member.id }, data: { lastLoginAt: new Date() } });
 
     const token = crypto.randomUUID();
     const response = NextResponse.json({
       ok: true,
-      role: owner.role,
-      name: owner.name,
-      restaurants: owner.restaurants,
-      mustChangePassword: owner.mustChangePassword,
+      role: member.role,
+      name: member.name,
+      restaurants: [member.restaurant],
+      mustChangePassword: false,
     });
-    setPanelCookies(response, token, owner.role, owner.id);
+    setPanelCookies(response, token, member.role, `tm_${member.id}`);
     return response;
   } catch (error) {
     console.error("Panel login error:", error);

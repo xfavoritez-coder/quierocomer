@@ -30,6 +30,27 @@ export async function GET(req: NextRequest) {
       });
     }
 
+    // Team member login (id prefixed with "tm_")
+    if (panelId.startsWith("tm_")) {
+      const memberId = panelId.slice(3);
+      const member = await prisma.teamMember.findUnique({
+        where: { id: memberId },
+        include: { restaurant: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true } } },
+      });
+
+      if (!member) return NextResponse.json({ error: "User not found" }, { status: 401 });
+      if (member.status !== "ACTIVE") return NextResponse.json({ error: "Cuenta no activa" }, { status: 403 });
+
+      const { toteatApiToken, isDemo, ...rest } = member.restaurant;
+      return NextResponse.json({
+        role: member.role,
+        name: member.name,
+        restaurants: [{ ...rest, hasToteat: !!toteatApiToken, isDemo: !!isDemo }],
+        selectedRestaurantId: member.restaurant.id,
+        mustChangePassword: false,
+      });
+    }
+
     const owner = await prisma.restaurantOwner.findUnique({
       where: { id: panelId },
       include: { restaurants: { select: { id: true, name: true, slug: true, logoUrl: true, qrToken: true, plan: true, toteatApiToken: true, isDemo: true } } },
