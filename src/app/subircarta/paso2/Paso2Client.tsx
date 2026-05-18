@@ -144,12 +144,11 @@ export default function Paso2Client() {
     return () => clearInterval(interval);
   }, [animDone]);
 
-  // When animation done, scroll to form and focus
+  // When animation done, focus first input without scrolling
   useEffect(() => {
     if (!animDone) return;
     const t = setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => firstInputRef.current?.focus(), 400);
+      firstInputRef.current?.focus({ preventScroll: true });
     }, 300);
     return () => clearTimeout(t);
   }, [animDone]);
