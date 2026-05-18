@@ -45,7 +45,7 @@ export default function TestsAbPage() {
   useEffect(() => { load(); }, [load]);
 
   const addVariant = async (slug: string, slot: string) => {
-    if (!newText.trim()) return;
+    if (!newText.trim() && slot !== "subtitle") return;
     setBusy(true);
     try {
       const r = await fetch("/api/admin/ab-tests", {
@@ -173,7 +173,7 @@ function SlotSection({
             type="text"
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
-            placeholder={`Nuevo texto para ${SLOT_LABEL[slot].toLowerCase()}`}
+            placeholder={slot === "subtitle" ? `Texto o vacío (sin subtítulo)` : `Nuevo texto para ${SLOT_LABEL[slot].toLowerCase()}`}
             autoFocus
             style={{ flex: 1, padding: "8px 12px", background: "var(--adm-input)", border: "1px solid var(--adm-card-border)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text)", outline: "none" }}
           />
@@ -202,7 +202,7 @@ function SlotSection({
                 const tasa = v.impressions > 0 ? (v.conversions / v.impressions) * 100 : 0;
                 return (
                   <tr key={v.id} style={{ borderBottom: "1px dashed var(--adm-card-border)", opacity: v.isActive ? 1 : 0.5 }}>
-                    <td style={{ padding: "10px 6px", color: "var(--adm-text)" }}>{v.text}</td>
+                    <td style={{ padding: "10px 6px", color: v.text ? "var(--adm-text)" : "var(--adm-text3)", fontStyle: v.text ? "normal" : "italic" }}>{v.text || "(sin subtítulo)"}</td>
                     <td style={{ padding: "10px 6px", textAlign: "right", color: GOLD, fontWeight: 600 }}>
                       {v.isActive ? `${v.trafficSharePct}%` : "—"}
                     </td>
