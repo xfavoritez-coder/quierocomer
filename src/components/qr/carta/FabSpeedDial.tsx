@@ -146,9 +146,10 @@ export default function FabSpeedDial({ children }: Props) {
 
       <style>{`
         @keyframes fabBounceIn {
-          0% { transform: scale(0); opacity: 0; }
-          60% { transform: scale(1.25); opacity: 1; }
-          100% { transform: scale(1); }
+          0% { transform: scale(0) translateY(0); opacity: 0; }
+          50% { transform: scale(1.15) translateY(-4px); opacity: 1; }
+          75% { transform: scale(0.95) translateY(2px); }
+          100% { transform: scale(1) translateY(0); }
         }
       `}</style>
     </div>
