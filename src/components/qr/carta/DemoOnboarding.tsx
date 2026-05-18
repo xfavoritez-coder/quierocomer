@@ -32,7 +32,7 @@ const STEPS: Step[] = [
     title: "Así quedaría",
     body: "Algunas fotos podrían ser referenciales, luego podrás editar todo desde tu panel.",
     showOverlay: false,
-    overlayOpacity: 0.25,
+    overlayOpacity: 0.35,
     buttonLabel: "Siguiente",
   },
   {
@@ -168,11 +168,11 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
       case 4:
         // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
+          sessionStorage.setItem("qc_onboarding_step", "4");
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
-          window.history.replaceState({}, "", url.toString());
-          // Dispatch lang change event so carta re-renders in Spanish
-          window.dispatchEvent(new CustomEvent("demo-onboarding-restore-lang", { detail: { lang: "es" } }));
+          window.location.href = url.toString();
+          return;
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
         setMinimized(false);
