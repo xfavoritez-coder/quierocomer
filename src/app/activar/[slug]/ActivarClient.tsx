@@ -26,7 +26,7 @@ body { margin: 0; font-family: Inter, -apple-system, sans-serif; background: rad
 .activar-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 10px clamp(18px,4vw,64px); display: flex; justify-content: space-between; align-items: center; background: linear-gradient(180deg, rgba(10,9,8,.92), rgba(10,9,8,.15)); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .activar-nav .logo { font-family: Georgia, serif; font-size: 17px; font-weight: 400; color: var(--cream); display: flex; align-items: center; gap: 8px; letter-spacing: .02em; text-decoration: none; }
 .activar-nav .logo img { height: 16px; width: auto; object-fit: contain; }
-.activar-nav .nav-link { color: var(--cream-soft); font-size: 12px; text-decoration: none; letter-spacing: .04em; }
+.activar-nav .nav-link { color: var(--cream-soft); font-size: 14px; text-decoration: none; letter-spacing: .04em; }
 .activar-nav .nav-cta { padding: 8px 14px; background: rgba(232,163,61,.12); border: 1px solid rgba(232,163,61,.25); color: var(--cream); font-size: 12px; font-weight: 700; text-decoration: none; letter-spacing: .04em; border-radius: 4px; }
 .hero { text-align: center; padding-top: 60px; }
 .resto-logo { width: 76px; height: 76px; margin: 0 auto 18px; border-radius: 24px; border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 950; font-size: 20px; color: var(--amber); box-shadow: 0 18px 40px rgba(0,0,0,.45); overflow: hidden; background: #111; }
