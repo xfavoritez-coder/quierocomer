@@ -136,18 +136,24 @@ export default function CartaLista({
   const popularDishIds = popularDishIdsProp ?? new Set<string>();
 
   const heroDishes = useMemo(() => {
-    const recommendedWithPhotos = dishes.filter(
+    // When viewing in non-Spanish lang, prioritize translated dishes
+    const preferTranslated = lang !== "es";
+    const sortT = (arr: typeof dishes) => preferTranslated
+      ? [...arr].sort((a, b) => ((b as any)._hasTranslation ? 1 : 0) - ((a as any)._hasTranslation ? 1 : 0))
+      : arr;
+
+    const recommendedWithPhotos = sortT(dishes.filter(
       (d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]
-    );
+    ));
     if (recommendedWithPhotos.length > 0) return recommendedWithPhotos;
-    const popularWithPhotos = dishes.filter(
+    const popularWithPhotos = sortT(dishes.filter(
       (d) => popularDishIds.has(d.id) && d.photos?.[0]
-    ).slice(0, 3);
+    )).slice(0, 3);
     if (popularWithPhotos.length > 0) return popularWithPhotos;
-    const withPhotos = dishes.filter((d) => d.photos?.[0]);
+    const withPhotos = sortT(dishes.filter((d) => d.photos?.[0]));
     if (withPhotos.length <= 3) return withPhotos;
-    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
-  }, [dishes, popularDishIds]);
+    return withPhotos.slice(0, 3);
+  }, [dishes, popularDishIds, lang]);
 
   const catNames = useMemo(() => { const m: Record<string, string> = {}; for (const c of categories) m[c.id] = c.name; return m; }, [categories]);
   const scoringCtx = useMemo(() => ({ timeOfDay: timeOfDayProp || "LUNCH", weather: weatherProp || "CLEAR", categoryNames: catNames }), [timeOfDayProp, weatherProp, catNames]);

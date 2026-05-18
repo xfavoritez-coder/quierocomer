@@ -97,6 +97,7 @@ export async function getRestaurantBySlug(slug: string, lang: Lang = "es") {
     }
     for (const dish of restaurant.dishes as any[]) {
       const tr = dish.translations?.[0];
+      dish._hasTranslation = !!(tr?.name);
       if (tr?.name) dish.name = tr.name;
       if (tr?.description) dish.description = tr.description;
       // Overlay modifier translations

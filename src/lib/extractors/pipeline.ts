@@ -466,6 +466,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Translate dishes + categories with timeout (awaited, not fire-and-forget)
     let translationOk = true;
+    let translationPartial = false;
     if (createdDishes.length > 0) {
       try {
         const { translateDishBulk, translateCategoryBulk } = await import("@/lib/ai/translateContent");
@@ -501,9 +502,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         if (result === "timeout") {
           console.warn(`[Pipeline] Translation timed out for ${restaurant.slug} (${createdDishes.length} dishes, ${timeoutMs}ms) — marking for backfill`);
           translationOk = false;
-        } else if (result < createdDishes.length) {
-          console.warn(`[Pipeline] Partial translation for ${restaurant.slug}: ${result}/${createdDishes.length} dishes`);
+        } else if (result < createdDishes.length * 0.5) {
+          console.warn(`[Pipeline] Translation too incomplete for ${restaurant.slug}: ${result}/${createdDishes.length} dishes — marking for backfill`);
           translationOk = false;
+        } else if (result < createdDishes.length) {
+          console.warn(`[Pipeline] Partial translation for ${restaurant.slug}: ${result}/${createdDishes.length} dishes — good enough, will backfill rest`);
+          translationPartial = true;
         } else {
           console.log(`[Pipeline] Translated ${result} dishes for ${restaurant.slug}`);
         }
@@ -513,8 +517,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // If translation failed, flag restaurant for backfill and defer email
-    if (!translationOk) {
+    // If translation incomplete or failed, flag restaurant for backfill
+    if (!translationOk || translationPartial) {
       await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
     }
 

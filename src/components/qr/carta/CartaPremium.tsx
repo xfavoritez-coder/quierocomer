@@ -333,23 +333,29 @@ export default function CartaPremium({
   }, [restaurant.id, categories, dishes, qrUser?.id, scoringCtx, profileTrigger]);
 
   const heroDishes = useMemo(() => {
+    // When viewing in non-Spanish lang, prioritize translated dishes
+    const preferTranslated = lang !== "es";
+    const sortT = (arr: typeof dishes) => preferTranslated
+      ? [...arr].sort((a, b) => ((b as any)._hasTranslation ? 1 : 0) - ((a as any)._hasTranslation ? 1 : 0))
+      : arr;
+
     // 1. RECOMMENDED dishes with photos
-    const recommendedWithPhotos = dishes.filter(
+    const recommendedWithPhotos = sortT(dishes.filter(
       (d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]
-    );
+    ));
     if (recommendedWithPhotos.length > 0) return recommendedWithPhotos;
 
     // 2. Popular dishes with photos (up to 3)
-    const popularWithPhotos = dishes.filter(
+    const popularWithPhotos = sortT(dishes.filter(
       (d) => popularDishIds.has(d.id) && d.photos?.[0]
-    ).slice(0, 3);
+    )).slice(0, 3);
     if (popularWithPhotos.length > 0) return popularWithPhotos;
 
     // 3. Fallback: first 3 dishes with photos (by position)
-    const withPhotos = dishes.filter((d) => d.photos?.[0]);
+    const withPhotos = sortT(dishes.filter((d) => d.photos?.[0]));
     if (withPhotos.length <= 3) return withPhotos;
-    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 3);
-  }, [dishes, popularDishIds]);
+    return withPhotos.slice(0, 3);
+  }, [dishes, popularDishIds, lang]);
 
   // Hard rule: si el cliente filtra "_spicy", los picantes SIEMPRE van al final
   // de la categoria, sin importar score, RECOMMENDED, autoRec o popularidad.

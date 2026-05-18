@@ -883,25 +883,31 @@ export default function CartaImpact({
 
   /* ─── Hero dishes ─── */
   const heroDishes = useMemo(() => {
+    // When viewing in non-Spanish lang, prefer dishes that have translations
+    const preferTranslated = lang !== "es";
+    const isTranslated = (d: any) => !preferTranslated || d._hasTranslation !== false;
+
     const recommended = dishes.filter((d) => d.tags?.includes("RECOMMENDED") && d.photos?.[0]);
     const popular = dishes.filter((d) => popularDishIds.has(d.id) && d.photos?.[0] && !d.tags?.includes("RECOMMENDED"));
 
     // Mix: up to 2 recommended + up to 2 popular, intercalated
+    // Prioritize translated dishes first, then fill with untranslated
+    const sortTranslated = (arr: Dish[]) => [...arr].sort((a, b) => (isTranslated(b) ? 1 : 0) - (isTranslated(a) ? 1 : 0));
     const mixed: Dish[] = [];
     const maxEach = 2;
-    const recs = recommended.slice(0, maxEach);
-    const pops = popular.slice(0, maxEach);
+    const recs = sortTranslated(recommended).slice(0, maxEach);
+    const pops = sortTranslated(popular).slice(0, maxEach);
     for (let i = 0; i < Math.max(recs.length, pops.length); i++) {
       if (i < recs.length) mixed.push(recs[i]);
       if (i < pops.length) mixed.push(pops[i]);
     }
     if (mixed.length > 0) return mixed.slice(0, 4);
 
-    // Fallback: any dishes with photos
-    const withPhotos = dishes.filter((d) => d.photos?.[0]);
+    // Fallback: any dishes with photos, translated first
+    const withPhotos = sortTranslated(dishes.filter((d) => d.photos?.[0]));
     if (withPhotos.length <= 4) return withPhotos;
-    return [...withPhotos].sort((a, b) => a.position - b.position).slice(0, 4);
-  }, [dishes, popularDishIds]);
+    return withPhotos.slice(0, 4);
+  }, [dishes, popularDishIds, lang]);
 
   /* ─── Sorted dishes ─── */
   const sortedDishes = useMemo(() => {
