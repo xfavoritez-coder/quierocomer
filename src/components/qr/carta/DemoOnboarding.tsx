@@ -32,6 +32,7 @@ const STEPS: Step[] = [
     title: "Así quedaría",
     body: "Algunas fotos podrían ser referenciales, luego podrás editar todo desde tu panel.",
     showOverlay: false,
+    overlayOpacity: 0.25,
     buttonLabel: "Siguiente",
   },
   {
@@ -187,6 +188,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
         return s;
       }
       if (STEPS[next].showOverlay) { setMinimized(false); setMinimizing(false); }
+      else if (!minimized) {
+        setMinimizing(true);
+        setTimeout(() => { setMinimizing(false); setMinimized(true); }, 220);
+      }
       return next;
     });
   }, []);
@@ -330,7 +335,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
                   background: isLightStep ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.05)",
                   border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.10)",
                   color: isLightStep ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)",
-                  fontSize: "0.78rem", fontWeight: 600,
+                  fontSize: "0.84rem", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
                 }}>← Atrás</button>
@@ -339,7 +344,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
                 borderRadius: 999, padding: "6px 12px",
                 background: isLightStep ? "rgba(243,163,51,0.12)" : "rgba(255,178,45,0.12)",
                 border: isLightStep ? "1px solid rgba(243,163,51,0.3)" : "1px solid rgba(255,178,45,0.2)",
-                color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.78rem", fontWeight: 700,
+                color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.84rem", fontWeight: 700,
                 display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                 fontFamily: "var(--font-dm, sans-serif)",
               }}>{current.buttonLabel || "Siguiente →"}</button>
@@ -377,11 +382,12 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
   return (
     <>
       {/* Overlay — only on steps with showOverlay */}
-      {current.showOverlay && !exiting && (
+      {(current.showOverlay || current.overlayOpacity) && !exiting && (
         <div style={{
           position: "fixed", inset: 0, zIndex: 9990,
           background: `rgba(0,0,0,${current.overlayOpacity ?? 0.55})`,
-          transition: "opacity 0.3s ease",
+          transition: "opacity 0.4s ease",
+          pointerEvents: current.showOverlay ? "auto" : "none",
         }} />
       )}
 
