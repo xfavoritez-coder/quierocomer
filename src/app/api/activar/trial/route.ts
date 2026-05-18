@@ -10,33 +10,45 @@ export async function POST(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { id: true, isDemo: true, subscriptionStatus: true },
+    select: { id: true, isDemo: true, subscriptionStatus: true, needsTranslation: true },
   });
   if (!restaurant || !restaurant.isDemo) return NextResponse.json({ error: "not found" }, { status: 404 });
 
   if (selectedPlan === "FREE") {
-    // Activate as free — just remove demo flag
     await prisma.restaurant.update({
       where: { id: restaurantId },
       data: { isDemo: false, plan: "FREE", weeklyEmailEnabled: true },
     });
-    return NextResponse.json({ ok: true, plan: "FREE" });
+  } else {
+    // Gold or Premium — activate trial
+    const trialEndsAt = new Date();
+    trialEndsAt.setDate(trialEndsAt.getDate() + (selectedPlan === "PREMIUM" ? 30 : 7));
+
+    await prisma.restaurant.update({
+      where: { id: restaurantId },
+      data: {
+        plan: selectedPlan,
+        subscriptionStatus: "TRIALING",
+        trialEndsAt,
+        isDemo: false,
+        weeklyEmailEnabled: true,
+      },
+    });
   }
 
-  // Gold or Premium — activate trial
-  const trialEndsAt = new Date();
-  trialEndsAt.setDate(trialEndsAt.getDate() + (selectedPlan === "PREMIUM" ? 30 : 7));
+  // On activation, ensure 100% of dishes are translated (fire-and-forget)
+  if (restaurant.needsTranslation) {
+    import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
+      translateAllForRestaurant(restaurantId)
+        .then(() => prisma.restaurant.update({ where: { id: restaurantId }, data: { needsTranslation: false } }))
+        .then(() => console.log(`[Activar] Full translation completed for ${restaurantId}`))
+        .catch((err) => console.error(`[Activar] Translation backfill failed for ${restaurantId}:`, err));
+    });
+  }
 
-  await prisma.restaurant.update({
-    where: { id: restaurantId },
-    data: {
-      plan: selectedPlan,
-      subscriptionStatus: "TRIALING",
-      trialEndsAt,
-      isDemo: false,
-      weeklyEmailEnabled: true,
-    },
+  return NextResponse.json({
+    ok: true,
+    plan: selectedPlan,
+    ...(selectedPlan !== "FREE" && { trialEndsAt: new Date(Date.now() + (selectedPlan === "PREMIUM" ? 30 : 7) * 86400000).toISOString() }),
   });
-
-  return NextResponse.json({ ok: true, plan: selectedPlan, trialEndsAt: trialEndsAt.toISOString() });
 }
