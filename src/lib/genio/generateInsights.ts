@@ -18,14 +18,13 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
   const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   // Gather all data in parallel
-  const [restaurant, dishes, categories, sessions, dietCounts, topViewed, topGenio, totalGuests, registeredGuests] = await Promise.all([
+  const [restaurant, dishes, categories, sessions, dietCounts, topViewed, totalGuests, registeredGuests] = await Promise.all([
     prisma.restaurant.findUnique({ where: { id: restaurantId }, select: { name: true } }),
     prisma.dish.findMany({ where: { restaurantId, isActive: true }, include: { category: { select: { name: true } } } }),
     prisma.category.findMany({ where: { restaurantId, isActive: true }, select: { id: true, name: true } }),
     prisma.session.findMany({ where: { restaurantId, startedAt: { gte: thirtyDaysAgo } }, select: { durationMs: true, viewUsed: true, isAbandoned: true, dishesViewed: true }, take: 5000 }),
     prisma.qRUser.groupBy({ by: ["dietType"], where: { dietType: { not: null }, guestProfiles: { some: { sessions: { some: { restaurantId } } } } }, _count: { id: true } }),
     prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: thirtyDaysAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
-    prisma.statEvent.groupBy({ by: ["dishId"], where: { restaurantId, eventType: "GENIO_COMPLETE", dishId: { not: null }, createdAt: { gte: thirtyDaysAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
     prisma.guestProfile.count({ where: { sessions: { some: { restaurantId } } } }),
     prisma.guestProfile.count({ where: { linkedQrUserId: { not: null }, sessions: { some: { restaurantId } } } }),
   ]);
@@ -55,7 +54,6 @@ DATOS DEL LOCAL (últimos 30 días):
 - Platos en carta: ${dishes.length} en ${categories.length} categorías
 - Distribución por categoría: ${Object.entries(categoryDishCounts).map(([k, v]) => `${k}: ${v}`).join(", ")}
 - Platos más vistos: ${topViewed.slice(0, 5).map((t: any) => `${dishMap[t.dishId]?.name || "?"}: ${t._count.id}`).join(", ") || "sin datos"}
-- Platos recomendados por Genio: ${topGenio.map((t: any) => `${dishMap[t.dishId]?.name || "?"}: ${t._count.id}`).join(", ") || "sin datos"}
 - Dietas detectadas: ${dietCounts.map((d: any) => `${d.dietType}: ${d._count.id}`).join(", ") || "sin datos"}
 - Vista preferida: ${Object.entries(viewCounts).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([k, v]) => `${k}: ${v}`).join(", ") || "sin datos"}
 
@@ -64,6 +62,8 @@ REGLAS:
 - Prioriza insights que generen más ingresos
 - Sugiere acciones concretas
 - Si no hay suficientes datos, dilo honestamente
+- NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere o recomienda platos específicos — el Genio solo reordena la carta según preferencias del comensal, no recomienda platos
+- Puedes usar datos de dietas, alérgenos o preferencias de picante para dar contexto
 
 Responde SOLO con un JSON array de 1 elemento, sin markdown:
 [{
