@@ -111,6 +111,45 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Resend invite email for PENDING members
+  if (req.nextUrl.searchParams.get("action") === "resend-invite") {
+    const m = await prisma.teamMember.findUnique({
+      where: { id: memberId },
+      select: { name: true, email: true, status: true, inviteToken: true, restaurant: { select: { name: true } } },
+    });
+    if (!m) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
+    if (m.status !== "PENDING") return NextResponse.json({ error: "Solo se puede reenviar a usuarios pendientes" }, { status: 400 });
+
+    // Regenerate token and extend expiry
+    const inviteToken = m.inviteToken || crypto.randomUUID();
+    await prisma.teamMember.update({
+      where: { id: memberId },
+      data: { inviteToken, inviteExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    });
+    try {
+      const { sendAdminEmail, adminEmailTemplate } = await import("@/lib/email/sendAdminEmail");
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+      await sendAdminEmail({
+        to: m.email,
+        subject: `Te invitaron al equipo de ${m.restaurant.name} · QuieroComer`,
+        html: adminEmailTemplate(`
+          <h2 style="color:#FFD600;font-size:20px;margin:0 0 16px">${m.name}, te invitaron a ${m.restaurant.name}</h2>
+          <p style="color:#c0a060;font-size:15px;line-height:1.6;margin:0 0 24px">
+            Ahora puedes acceder al panel de <strong>${m.restaurant.name}</strong>.
+          </p>
+          <div style="text-align:center">
+            <a href="${baseUrl}/panel/invite?token=${inviteToken}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:15px;font-weight:bold;padding:12px 28px;border-radius:10px;text-decoration:none">
+              Aceptar invitación
+            </a>
+          </div>
+          <p style="color:#5a4028;font-size:12px;margin:24px 0 0">Esta invitación expira en 7 días.</p>
+        `),
+        purpose: "team_invite",
+      });
+    } catch (e) { console.error("[team] resend invite email error:", e); }
+    return NextResponse.json({ ok: true });
+  }
+
   // Reset password: generate new invite token and send email
   if (resetPassword) {
     const inviteToken = crypto.randomUUID();

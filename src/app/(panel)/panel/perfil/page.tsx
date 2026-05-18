@@ -178,7 +178,7 @@ export default function PanelPerfilPage() {
             disabled={savingWeekly}
             style={{
               width: 44, height: 24, borderRadius: 12, border: "none", cursor: savingWeekly ? "wait" : "pointer",
-              position: "relative", background: weeklyEmail ? GOLD : "var(--adm-card-border)",
+              position: "relative", background: weeklyEmail ? GOLD : "var(--adm-toggle-off)",
               transition: "all 0.2s", flexShrink: 0, opacity: savingWeekly ? 0.5 : 1,
             }}
           >

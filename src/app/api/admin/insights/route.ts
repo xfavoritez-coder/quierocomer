@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
     const insights = await prisma.genioInsight.findMany({
       where: { restaurantId: validated, status: "active" },
       orderBy: { priority: "asc" },
+      take: 1,
     });
 
     return NextResponse.json({ insights });

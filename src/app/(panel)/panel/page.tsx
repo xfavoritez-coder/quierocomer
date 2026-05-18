@@ -305,7 +305,7 @@ export default function PanelDashboard() {
         <div style={{ marginBottom: 14 }}>
           <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>🧞 Consejo de la semana</h3>
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {insights.map(ins => {
+            {insights.slice(0, 1).map(ins => {
               const icons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
               return (
                 <div key={ins.id} style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, padding: "16px 18px", boxShadow: "var(--adm-card-shadow)" }}>

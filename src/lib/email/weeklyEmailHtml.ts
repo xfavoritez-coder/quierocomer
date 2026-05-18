@@ -113,16 +113,16 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
   ${data.isDemo ? `
   <!-- Demo banner -->
   <tr><td style="padding:0 0 20px;">
-    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:linear-gradient(135deg, #fff9eb 0%, #fff4d6 100%);border:1px solid rgba(244,166,35,0.2);border-radius:14px;">
+    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f9f6f0;border:1px solid ${GOLD}33;border-radius:14px;">
       <tr><td style="padding:18px 22px;">
         <table cellpadding="0" cellspacing="0" border="0"><tr>
           <td style="vertical-align:top;padding-right:14px;">
-            <div style="width:36px;height:36px;border-radius:10px;background:${GOLD};display:flex;align-items:center;justify-content:center;">
+            <div style="width:36px;height:36px;border-radius:10px;background:${GOLD};text-align:center;line-height:36px;">
               <span style="font-size:16px;line-height:36px;display:block;text-align:center;width:36px;">📊</span>
             </div>
           </td>
           <td style="vertical-align:top;">
-            <span style="font-size:14px;font-weight:700;color:#1a1a1a;display:block;margin-bottom:4px;">Ejemplo de tu informe semanal</span>
+            <span style="font-size:14px;font-weight:700;color:#92400e;display:block;margin-bottom:4px;">Ejemplo de tu informe semanal</span>
             <span style="font-size:12px;color:#8a7550;line-height:1.5;">Cada lunes recibirás un resumen de tus estadísticas con consejos para vender más.</span>
           </td>
         </tr></table>

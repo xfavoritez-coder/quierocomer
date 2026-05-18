@@ -45,7 +45,7 @@ function Toggle({ active, onToggle }: { active: boolean; onToggle: () => void })
       onClick={onToggle}
       style={{
         width: 44, height: 24, borderRadius: 12, border: "none", cursor: "pointer", position: "relative",
-        background: active ? GOLD : "var(--adm-card-border)",
+        background: active ? GOLD : "var(--adm-toggle-off)",
         boxShadow: active ? "0 0 8px rgba(244,166,35,0.3)" : "none",
         transition: "all 0.2s", flexShrink: 0,
       }}

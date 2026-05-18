@@ -41,7 +41,7 @@ function Toggle({ active, onToggle, size = "normal" }: { active: boolean; onTogg
   return (
     <button onClick={onToggle} style={{
       width: w, height: h, borderRadius: h / 2, border: "none", cursor: "pointer", position: "relative",
-      background: active ? GOLD : "var(--adm-card-border)", transition: "all 0.2s", flexShrink: 0,
+      background: active ? GOLD : "var(--adm-toggle-off)", transition: "all 0.2s", flexShrink: 0,
     }}>
       <div style={{
         width: dot, height: dot, borderRadius: "50%", background: "white", position: "absolute", top: pad,
@@ -97,6 +97,7 @@ export default function UsuariosPage() {
   const [editRole, setEditRole] = useState<"ADMIN" | "VIEWER">("ADMIN");
   const [editWeekly, setEditWeekly] = useState(true);
   const [editVisible, setEditVisible] = useState(false);
+  const [resendingInvite, setResendingInvite] = useState(false);
 
   const openEdit = (user: Member) => {
     setEditingUser(user);
@@ -109,6 +110,21 @@ export default function UsuariosPage() {
     requestAnimationFrame(() => setEditVisible(true));
   };
   const closeEdit = () => { setEditVisible(false); setTimeout(() => setEditingUser(null), 250); };
+
+  const resendInvite = async () => {
+    if (!editingUser) return;
+    setResendingInvite(true);
+    try {
+      const res = await fetch(`/api/panel/team?action=resend-invite`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: editingUser.id }),
+      });
+      if (res.ok) toast.success(`Invitación reenviada a ${editingUser.email}`);
+      else toast.error("Error al reenviar");
+    } catch { toast.error("Error de conexión"); }
+    setResendingInvite(false);
+  };
 
   const saveEdit = async () => {
     if (!editingUser) return;
@@ -517,6 +533,16 @@ export default function UsuariosPage() {
 
             {/* Footer actions */}
             <div style={{ padding: "16px 20px", borderTop: "1px solid var(--adm-card-border)", display: "flex", flexDirection: "column", gap: 10 }}>
+              {!isOwner && editingUser.status === "PENDING" && (
+              <button onClick={resendInvite} disabled={resendingInvite} style={{
+                width: "100%", padding: 12, borderRadius: 10, cursor: resendingInvite ? "wait" : "pointer",
+                background: "rgba(244,166,35,0.08)", color: GOLD, fontFamily: F, fontSize: "0.82rem", fontWeight: 600,
+                border: "1px solid rgba(244,166,35,0.2)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                opacity: resendingInvite ? 0.5 : 1,
+              }}>
+                <Mail size={14} /> {resendingInvite ? "Reenviando..." : "Reenviar email de activación"}
+              </button>
+              )}
               {!isOwner && (
               <button onClick={saveEdit} style={{
                 width: "100%", padding: 12, borderRadius: 10, cursor: "pointer",

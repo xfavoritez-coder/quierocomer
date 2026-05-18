@@ -87,71 +87,124 @@ export async function GET(req: NextRequest) {
     if (!r.owner?.email) continue;
 
     try {
-      // Gather real data
-      const [metrics, prevMetrics, topDishes] = await Promise.all([
-        getVisitorMetrics(r.id, oneWeekAgo, now),
-        getVisitorMetrics(r.id, twoWeeksAgo, oneWeekAgo),
-        getTopAttentionDishes(r.id, oneWeekAgo, now),
-      ]);
-
-      // Sessions by hour
-      const sessions = await prisma.session.findMany({
-        where: { restaurantId: r.id, startedAt: { gte: oneWeekAgo, lte: now } },
-        select: { startedAt: true },
-      });
-      const hourBuckets: Record<string, number> = {};
-      for (let h = 10; h <= 23; h++) hourBuckets[String(h)] = 0;
-      for (const s of sessions) {
-        const h = String(new Date(s.startedAt).getHours());
-        if (hourBuckets[h] !== undefined) hourBuckets[h]++;
-      }
-      const visitsByHour = Object.entries(hourBuckets).map(([hour, count]) => ({ hour, count }));
-
-      // Least viewed
-      const leastViewedRaw = await prisma.statEvent.groupBy({
-        by: ["dishId"],
-        where: { restaurantId: r.id, createdAt: { gte: oneWeekAgo }, dishId: { not: null }, eventType: "DISH_VIEW" },
-        _count: { dishId: true },
-        orderBy: { _count: { dishId: "asc" } },
-        take: 3,
-      });
-      const leastDishIds = leastViewedRaw.map(d => d.dishId!);
-      const leastDishes = leastDishIds.length > 0
-        ? await prisma.dish.findMany({ where: { id: { in: leastDishIds } }, select: { id: true, name: true } })
-        : [];
-      const leastViewed = leastViewedRaw.map(d => {
-        const dish = leastDishes.find(dd => dd.id === d.dishId);
-        return { name: dish?.name || "Desconocido", count: d._count.dishId };
-      });
-
-      const totalVisits = metrics.totalVisitors;
-      const prevVisits = prevMetrics.totalVisitors || 1;
-      const visitsDelta = Math.round(((totalVisits - prevVisits) / prevVisits) * 100);
-      const newClients = metrics.birthdaysSaved || 0;
-      const prevClients = prevMetrics.birthdaysSaved || 0;
-      const clientsDelta = prevClients > 0 ? Math.round(((newClients - prevClients) / prevClients) * 100) : 0;
-      const topViewed = (topDishes?.dishes || []).slice(0, 3).map((d: any) => ({
-        name: d.name, count: d.opens, photo: d.photo || null,
-      }));
-
       const ownerName = r.owner.name?.split(" ")[0] || "Hola";
+      let emailHtml: string;
 
-      const emailHtml = buildWeeklyEmailHtml({
-        ownerName,
-        restaurantName: r.name,
-        logoUrl: r.logoUrl,
-        weekLabel: `${weekStart} – ${weekEnd}`,
-        totalVisits,
-        visitsDelta,
-        newClients,
-        clientsDelta,
-        topViewed,
-        leastViewed,
-        visitsByHour,
-        panelUrl: r.isDemo ? `https://quierocomer.cl/api/panel/demo-auth?slug=${r.slug}` : "https://quierocomer.cl/panel",
-        slug: r.slug,
-        isDemo: r.isDemo,
-      });
+      if (r.isDemo) {
+        // Demo restaurants: use fake data based on their real dishes
+        const dishes = await prisma.dish.findMany({
+          where: { restaurantId: r.id, isActive: true },
+          select: { name: true, photos: true },
+          orderBy: { position: "asc" },
+          take: 5,
+        });
+
+        const topViewed = dishes.slice(0, 3).map((d, i) => ({
+          name: d.name, count: [42, 35, 28][i] || 20, photo: d.photos?.[0] || null,
+        }));
+        const leastViewed = dishes.slice(-3).map((d, i) => ({
+          name: d.name, count: [3, 5, 7][i] || 4,
+        }));
+        const visitsByHour = [
+          { hour: "12", count: 18 }, { hour: "13", count: 32 }, { hour: "14", count: 25 },
+          { hour: "19", count: 15 }, { hour: "20", count: 38 }, { hour: "21", count: 42 },
+          { hour: "22", count: 20 },
+        ];
+        const demoInsight = {
+          title: topViewed[0] ? `Destaca ${topViewed[0].name}` : "Tu carta está lista",
+          body: topViewed[0]
+            ? `Tu plato más visto recibe mucha atención pero no está marcado como recomendado. Agrégale la etiqueta para que aparezca primero y veas cómo aumenta tu venta.`
+            : "Al activar empezarás a ver datos reales de cómo interactúan tus clientes con tu carta.",
+        };
+
+        emailHtml = buildWeeklyEmailHtml({
+          ownerName,
+          restaurantName: r.name,
+          logoUrl: r.logoUrl,
+          weekLabel: `${weekStart} – ${weekEnd}`,
+          totalVisits: 147,
+          visitsDelta: 23,
+          newClients: 12,
+          clientsDelta: 15,
+          topViewed,
+          leastViewed,
+          visitsByHour,
+          panelUrl: `https://quierocomer.cl/api/panel/demo-auth?slug=${r.slug}`,
+          slug: r.slug,
+          isDemo: true,
+          insight: demoInsight,
+        });
+      } else {
+        // Real restaurants: use actual data
+        const [metrics, prevMetrics, topDishes] = await Promise.all([
+          getVisitorMetrics(r.id, oneWeekAgo, now),
+          getVisitorMetrics(r.id, twoWeeksAgo, oneWeekAgo),
+          getTopAttentionDishes(r.id, oneWeekAgo, now),
+        ]);
+
+        const sessions = await prisma.session.findMany({
+          where: { restaurantId: r.id, startedAt: { gte: oneWeekAgo, lte: now } },
+          select: { startedAt: true },
+        });
+        const hourBuckets: Record<string, number> = {};
+        for (let h = 10; h <= 23; h++) hourBuckets[String(h)] = 0;
+        for (const s of sessions) {
+          const h = String(new Date(s.startedAt).getHours());
+          if (hourBuckets[h] !== undefined) hourBuckets[h]++;
+        }
+        const visitsByHour = Object.entries(hourBuckets).map(([hour, count]) => ({ hour, count }));
+
+        const leastViewedRaw = await prisma.statEvent.groupBy({
+          by: ["dishId"],
+          where: { restaurantId: r.id, createdAt: { gte: oneWeekAgo }, dishId: { not: null }, eventType: "DISH_VIEW" },
+          _count: { dishId: true },
+          orderBy: { _count: { dishId: "asc" } },
+          take: 3,
+        });
+        const leastDishIds = leastViewedRaw.map(d => d.dishId!);
+        const leastDishes = leastDishIds.length > 0
+          ? await prisma.dish.findMany({ where: { id: { in: leastDishIds } }, select: { id: true, name: true } })
+          : [];
+        const leastViewed = leastViewedRaw.map(d => {
+          const dish = leastDishes.find(dd => dd.id === d.dishId);
+          return { name: dish?.name || "Desconocido", count: d._count.dishId };
+        });
+
+        const totalVisits = metrics.totalVisitors;
+        const prevVisits = prevMetrics.totalVisitors || 1;
+        const visitsDelta = Math.round(((totalVisits - prevVisits) / prevVisits) * 100);
+        const newClients = metrics.birthdaysSaved || 0;
+        const prevClients = prevMetrics.birthdaysSaved || 0;
+        const clientsDelta = prevClients > 0 ? Math.round(((newClients - prevClients) / prevClients) * 100) : 0;
+        const topViewed = (topDishes?.dishes || []).slice(0, 3).map((d: any) => ({
+          name: d.name, count: d.opens, photo: d.photo || null,
+        }));
+
+        // Fetch the top-priority active insight for this restaurant
+        const topInsight = await prisma.genioInsight.findFirst({
+          where: { restaurantId: r.id, status: "active" },
+          orderBy: { priority: "asc" },
+          select: { title: true, body: true },
+        });
+
+        emailHtml = buildWeeklyEmailHtml({
+          ownerName,
+          restaurantName: r.name,
+          logoUrl: r.logoUrl,
+          weekLabel: `${weekStart} – ${weekEnd}`,
+          totalVisits,
+          visitsDelta,
+          newClients,
+          clientsDelta,
+          topViewed,
+          leastViewed,
+          visitsByHour,
+          panelUrl: "https://quierocomer.cl/panel",
+          slug: r.slug,
+          isDemo: false,
+          insight: topInsight || undefined,
+        });
+      }
 
       // Collect all recipients: owner + active team members with email enabled
       const recipients = [r.owner.email];

@@ -242,6 +242,7 @@
   --adm-hover: rgba(255,255,255,0.04);
   --adm-card-shadow: none;
   --adm-select-bg: #1a1a1a;
+  --adm-toggle-off: #444444;
 }
 .theme-light {
   --adm-bg: #FFFFFF;
@@ -258,6 +259,7 @@
   --adm-positive: #10b981;
   --adm-hover: #FFF9ED;
   --adm-select-bg: #FFFFFF;
+  --adm-toggle-off: #d4c9b8;
 }
 
 html, body {

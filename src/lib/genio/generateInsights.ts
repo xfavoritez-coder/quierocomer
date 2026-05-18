@@ -46,7 +46,7 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
   const categoryDishCounts: Record<string, number> = {};
   categories.forEach(c => { categoryDishCounts[c.name] = dishes.filter(d => d.categoryId === c.id).length; });
 
-  const prompt = `Eres el Genio de QuieroComer. Analiza los datos de "${restaurant.name}" y genera exactamente 3 insights accionables.
+  const prompt = `Eres el Genio de QuieroComer. Analiza los datos de "${restaurant.name}" y genera exactamente 1 insight accionable.
 
 DATOS DEL LOCAL (últimos 30 días):
 - Sesiones: ${totalSessions} (${abandonedSessions} abandonadas, ${Math.round((abandonedSessions / Math.max(totalSessions, 1)) * 100)}% abandono)
@@ -65,12 +65,12 @@ REGLAS:
 - Sugiere acciones concretas
 - Si no hay suficientes datos, dilo honestamente
 
-Responde SOLO con un JSON array, sin markdown:
+Responde SOLO con un JSON array de 1 elemento, sin markdown:
 [{
   "type": "menu_gap|segment_opportunity|pricing|engagement",
   "title": "Título corto del insight",
   "body": "Explicación con números y acción sugerida",
-  "priority": 1-3 (1 = más importante)
+  "priority": 1
 }]`;
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -88,7 +88,7 @@ Responde SOLO con un JSON array, sin markdown:
   try {
     const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     const insights: Insight[] = JSON.parse(cleaned);
-    return insights.map(i => ({
+    return insights.slice(0, 1).map(i => ({
       ...i,
       data: { totalSessions, avgDuration, totalGuests, registeredGuests, conversionRate },
     }));
