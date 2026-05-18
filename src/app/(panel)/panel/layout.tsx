@@ -14,7 +14,7 @@ import {
   grossOf,
 } from "@/lib/billing/plans-config";
 
-const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password"];
+const PUBLIC_PATHS = ["/panel/login", "/panel/forgot-password", "/panel/reset-password", "/panel/invite"];
 
 function ForceChangePasswordModal({ onDone }: { onDone: () => void }) {
   const F = "var(--font-display)";
