@@ -58,18 +58,21 @@ DATOS DEL LOCAL (últimos 30 días):
 - Vista preferida: ${Object.entries(viewCounts).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([k, v]) => `${k}: ${v}`).join(", ") || "sin datos"}
 
 REGLAS:
-- Sé específico con números, no genérico
-- Prioriza insights que generen más ingresos
-- Sugiere acciones concretas
+- Solo comenta datos observables: qué platos miran más, patrones de visitas, dietas detectadas, duración de sesiones, vistas preferidas
+- Sé específico con números del local, no genérico
+- NUNCA opines sobre estructura de carta, orden de secciones, mover categorías, destacar en "recomendados", precios o cantidad de platos — eso es decisión del dueño
+- NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere platos — el Genio solo reordena la carta según preferencias del comensal
+- NUNCA menciones cumpleaños captados, registros, conversión ni KPIs técnicos
+- NUNCA uses palabras como bestseller, upselling, engagement, conversión, ticket promedio, cross-selling
+- Tono informativo y positivo, como un dato curioso útil para el dueño
+- Máximo 2-3 frases cortas
 - Si no hay suficientes datos, dilo honestamente
-- NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere o recomienda platos específicos — el Genio solo reordena la carta según preferencias del comensal, no recomienda platos
-- Puedes usar datos de dietas, alérgenos o preferencias de picante para dar contexto
 
 Responde SOLO con un JSON array de 1 elemento, sin markdown:
 [{
   "type": "menu_gap|segment_opportunity|pricing|engagement",
   "title": "Título corto del insight",
-  "body": "Explicación con números y acción sugerida",
+  "body": "Observación con números y dato útil",
   "priority": 1
 }]`;
 
