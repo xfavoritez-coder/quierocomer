@@ -27,7 +27,9 @@ async function generateSingleInsight(restaurantId: string, restaurantName: strin
 
   const dishMap = Object.fromEntries(dishes.map(d => [d.id, d.name]));
   const totalSessions = sessions.length;
-  const avgDuration = Math.round(sessions.reduce((a, s) => a + (s.durationMs || 0), 0) / sessions.length / 1000);
+  const MAX_DUR = 600000; // 10min cap
+  const validSessions = sessions.filter(s => (s.durationMs || 0) > 0 && (s.durationMs || 0) <= MAX_DUR);
+  const avgDuration = validSessions.length ? Math.round(validSessions.reduce((a, s) => a + s.durationMs!, 0) / validSessions.length / 1000) : 0;
 
   const prevTitles = previousInsights.map(i => i.title).join(", ");
 

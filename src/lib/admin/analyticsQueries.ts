@@ -29,7 +29,7 @@ export async function getVisitorMetrics(restaurantId: string | null, from: Date,
     prisma.session.groupBy({ by: ["guestId"], where, _count: true }).then((r) => r.length),
     Promise.resolve(0), // replaced by true returning calculation below
     prisma.session.groupBy({ by: ["guestId"], where: { ...where, converted: true }, _count: true }).then((r) => r.length),
-    prisma.session.aggregate({ where: { ...where, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
+    prisma.session.aggregate({ where: { ...where, durationMs: { gt: 0, lte: 600000 } }, _avg: { durationMs: true } }), // cap 10min — longer = abandoned tab
     prisma.session.findMany({ where, select: { dishesViewed: true }, take: 5000 }),
     prisma.statEvent.groupBy({
       by: ["guestId"],
@@ -299,7 +299,8 @@ export async function getGenioImpact(restaurantId: string | null, from: Date, to
 
   function computeMetrics(sessions: typeof allSessions) {
     if (sessions.length === 0) return { avgDishesViewed: 0, avgDurationMs: 0, conversionRate: 0, returnRate: 0, sessionCount: 0 };
-    const durations = sessions.map((s) => s.durationMs || 0);
+    const MAX_DURATION = 600000; // 10min cap — longer = abandoned tab
+    const durations = sessions.map((s) => Math.min(s.durationMs || 0, MAX_DURATION));
     const dishCounts = sessions.map((s) => Array.isArray(s.dishesViewed) ? (s.dishesViewed as any[]).length : 0);
     const converted = sessions.filter((s) => s.converted).length;
     const returning = sessions.filter((s) => s.isReturningVisitor).length;

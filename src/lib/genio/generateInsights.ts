@@ -36,7 +36,8 @@ export async function generateInsights(restaurantId: string): Promise<Insight[]>
   // Build stats
   const totalSessions = sessions.length;
   const abandonedSessions = sessions.filter(s => s.isAbandoned).length;
-  const avgDuration = sessions.length ? Math.round(sessions.reduce((a, s) => a + (s.durationMs || 0), 0) / sessions.length / 1000) : 0;
+  const MAX_DUR = 600000; // 10min cap
+  const avgDuration = sessions.length ? Math.round(sessions.reduce((a, s) => a + Math.min(s.durationMs || 0, MAX_DUR), 0) / sessions.length / 1000) : 0;
   const conversionRate = totalGuests > 0 ? Math.round((registeredGuests / totalGuests) * 100) : 0;
 
   const viewCounts: Record<string, number> = {};

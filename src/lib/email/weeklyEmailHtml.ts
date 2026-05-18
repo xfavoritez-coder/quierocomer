@@ -179,7 +179,7 @@ export function buildWeeklyEmailHtml(data: WeeklyEmailData): string {
           <td>
             <div style="font-size:11px;color:${GOLD};font-weight:900;letter-spacing:0.1em;text-transform:uppercase;margin:0 0 6px;">Consejo del Genio</div>
             <div style="font-size:14px;font-weight:800;color:#1a1a1a;margin:0 0 6px;">${data.insight.title}</div>
-            <div style="font-size:13px;color:#8a7550;line-height:1.5;">${data.insight.body}</div>
+            <div style="font-size:15px;color:#8a7550;line-height:1.5;">${data.insight.body}</div>
           </td>
         </tr></table>
       </td></tr>
