@@ -100,8 +100,8 @@ export async function POST(req: NextRequest) {
   let body: any;
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   const { experimentSlug, slot, text } = body || {};
-  if (!experimentSlug || !slot || (text === undefined && text === null)) return NextResponse.json({ error: "experimentSlug, slot y text requeridos" }, { status: 400 });
-  if (!text && slot !== "subtitle") return NextResponse.json({ error: "text requerido para este slot" }, { status: 400 });
+  if (!experimentSlug || !slot || (text === undefined || text === null)) return NextResponse.json({ error: "experimentSlug, slot y text requeridos" }, { status: 400 });
+  if (!text && text !== "" && slot !== "subtitle") return NextResponse.json({ error: "text requerido para este slot" }, { status: 400 });
   if (!["title", "subtitle", "cta"].includes(slot)) return NextResponse.json({ error: "slot inválido" }, { status: 400 });
 
   const experiment = await prisma.abExperiment.findUnique({ where: { slug: experimentSlug } });

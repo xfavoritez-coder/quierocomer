@@ -155,9 +155,15 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
         });
         break;
       case 3:
-        // Navigate to English
+        // Navigate to English — show loading overlay while page reloads
         if (!window.location.search.includes("lang=en")) {
-          delay(300, () => {
+          // Show translating overlay
+          const overlay = document.createElement("div");
+          overlay.id = "onboarding-translating";
+          overlay.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;";
+          overlay.innerHTML = `<span style="font-size:28px">🌍</span><span style="font-family:var(--font-dm,sans-serif);font-size:1rem;color:#fff;font-weight:600">Traduciendo carta...</span>`;
+          document.body.appendChild(overlay);
+          delay(400, () => {
             sessionStorage.setItem("qc_onboarding_step", "3");
             const url = new URL(window.location.href);
             url.searchParams.set("lang", "en");
@@ -168,10 +174,14 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
       case 4:
         // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
+          const overlay = document.createElement("div");
+          overlay.style.cssText = "position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;";
+          overlay.innerHTML = `<span style="font-size:28px">🧞</span><span style="font-family:var(--font-dm,sans-serif);font-size:1rem;color:#fff;font-weight:600">Volviendo al español...</span>`;
+          document.body.appendChild(overlay);
           sessionStorage.setItem("qc_onboarding_step", "4");
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
-          window.location.href = url.toString();
+          delay(300, () => { window.location.href = url.toString(); });
           return;
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
@@ -399,8 +409,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
         onPointerUp={onPointerUp}
         style={{
           position: "fixed",
-          left: exiting ? exitTarget.x : pos.x,
-          top: exiting ? exitTarget.y : pos.y,
+          left: exiting ? exitTarget.x : minimizing ? (typeof window !== "undefined" ? window.innerWidth - 80 : 300) : pos.x,
+          top: exiting ? exitTarget.y : minimizing ? (typeof window !== "undefined" ? window.innerHeight - 120 : 600) : pos.y,
           zIndex: 9999,
           width: Math.min(320, typeof window !== "undefined" ? window.innerWidth - 32 : 320),
           background: "rgba(14,14,14,0.97)",
@@ -412,9 +422,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           userSelect: "none",
           touchAction: "none",
           // Exit/minimize animations
-          transform: exiting ? "scale(0.08) rotate(15deg)" : minimizing ? "scale(0.5) translate(60px, 80px)" : "scale(1)",
+          transform: exiting ? "scale(0.08) rotate(15deg)" : minimizing ? "scale(0.4)" : "scale(1)",
           opacity: exiting ? 0 : minimizing ? 0 : 1,
-          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : minimizing ? "all 0.2s cubic-bezier(0.4,0,1,1)" : (dragging ? "none" : "box-shadow 0.2s ease"),
+          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : minimizing ? "all 0.3s cubic-bezier(0.4,0,1,1)" : (dragging ? "none" : "box-shadow 0.2s ease"),
         }}
       >
         {/* Header: genio icon + title + minimize */}
