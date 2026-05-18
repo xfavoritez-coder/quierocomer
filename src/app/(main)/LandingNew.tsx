@@ -182,7 +182,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
-              Tu carta puede estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)" }}>frenando</span> tus ventas
+              Tu carta actual podría estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)" }}>frenando</span> tus ventas
             </h2>
           </div>
           <div className="pain-grid">
@@ -455,8 +455,8 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:820px;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
-.hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;line-height:1.4}
-.hero-sub-text{font-size:clamp(18px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px}
+.hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.4}
+.hero-sub-text{font-size:clamp(18px,2vw,20px);color:var(--cream-soft);margin-bottom:24px;line-height:1.5;max-width:540px;margin-left:auto;margin-right:auto}
 .microcopy{font-size:clamp(16px,2vw,16px);color:var(--cream-soft);margin-top:8px;opacity:.8}
 .phone-demo{width:260px;margin-left:-60px;margin:0 auto;position:relative}
 .phone-frame{background:#0a0908;border-radius:36px;padding:8px;aspect-ratio:9/19;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 80px rgba(232,163,61,.12);border:2px solid rgba(232,163,61,.15);position:relative;overflow:hidden}
@@ -588,7 +588,7 @@ footer{padding:44px 0;background:var(--black);border-top:1px solid var(--gray-de
 .plan-btn-primary{background:var(--amber);color:var(--black);font-weight:700;border:none}
 @media(max-width:900px){
   nav{padding:16px 20px}.logo{font-size:20px}.nav-link{display:none}.nav-cta{font-size:12px;padding:9px 14px;background:var(--amber);color:var(--black)}
-  .hero{padding:70px 0 70px}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
+  .hero{padding:70px 0 70px}.hero-bg{background-position:60% center!important}.hero-grid{grid-template-columns:1fr}.hero-grid>div:first-child{text-align:center}.hero h1{font-size:clamp(44px,12vw,58px)}.phone-demo{display:none}
   .problem,.how-it-works{padding:82px 0}.mientras-section{min-height:300px}.mientras-content{padding:40px 28px;text-align:left;align-items:flex-start}.mientras-bg img{object-position:60% 30%;transform:scale(1.4)}.try-overlay{background:linear-gradient(180deg,rgba(9,8,6,.88),rgba(9,8,6,.95))}.pains{padding:54px 0 50px}.section-head{margin-bottom:42px}.hiw-title{margin-bottom:40px}.hiw-step{grid-template-columns:1fr 120px;gap:10px;padding-bottom:38px}.hiw-img-wrap{aspect-ratio:1/1}.hiw-img-wrap img{height:100%;object-fit:cover;object-position:center 20%}
   .pain-card{grid-template-columns:38% 1fr;gap:10px}.pain-reverse{grid-template-columns:1fr 38%}.pain-img{height:100%;min-height:200px;max-height:230px}.pain-text{padding:16px!important;display:flex;flex-direction:column;justify-content:center;text-align:left}.pain-num{font-size:26px;display:inline}.pain-card h3{font-size:26px;margin-bottom:12px;display:inline;font-weight:700}.pain-card p{font-size:17px}
   .planes-grid{grid-template-columns:1fr}
