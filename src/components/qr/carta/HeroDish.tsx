@@ -44,13 +44,16 @@ export default function HeroDish({ restaurant, heroDishes, qrUser, onProfileOpen
   const hasSlides = heroDishes.length > 0;
   const dish = hasSlides ? heroDishes[current] : null;
 
-  const bgSrc = dish
+  const rawBg = dish
     ? isReal(dish.photos?.[0])
       ? dish.photos[0]
       : FALLBACK_IMG
     : isReal(restaurant.bannerUrl)
       ? restaurant.bannerUrl!
       : FALLBACK_IMG;
+  const bgSrc = rawBg.includes("images.unsplash.com")
+    ? rawBg.split("?")[0] + "?w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress"
+    : rawBg;
 
   // Auto-rotate every 5s
   useEffect(() => {

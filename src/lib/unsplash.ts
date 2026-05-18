@@ -12,19 +12,38 @@
 
 const UNSPLASH_KEY = () => process.env.UNSPLASH_ACCESS_KEY;
 
-/** Imgix params appended to raw Unsplash URLs for optimal delivery */
-const PHOTO_PARAMS_CARD = "w=600&q=80&fm=webp&fit=crop&crop=entropy&auto=compress";
-const PHOTO_PARAMS_DETAIL = "w=1080&q=82&fm=webp&fit=crop&crop=entropy&auto=compress";
-const PHOTO_PARAMS_HERO = "w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress";
+/** Imgix params for each display context */
+const SIZE_PARAMS: Record<string, string> = {
+  thumb: "w=400&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
+  card:  "w=600&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
+  detail:"w=1080&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
+  hero:  "w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
+};
 
 /**
  * Build an optimized Unsplash URL from the raw base URL.
- * Usage: optimizedUrl(rawUrl, "card") → 600px WebP
+ * Only applies to images.unsplash.com URLs; other URLs pass through unchanged.
  */
-export function optimizedUnsplashUrl(rawUrl: string, size: "card" | "detail" | "hero" = "card"): string {
-  const params = size === "hero" ? PHOTO_PARAMS_HERO : size === "detail" ? PHOTO_PARAMS_DETAIL : PHOTO_PARAMS_CARD;
+export function optimizedUnsplashUrl(rawUrl: string, size: "thumb" | "card" | "detail" | "hero" = "card"): string {
+  const params = SIZE_PARAMS[size] || SIZE_PARAMS.card;
   const sep = rawUrl.includes("?") ? "&" : "?";
   return `${rawUrl}${sep}${params}`;
+}
+
+/**
+ * Get the display URL for a dish photo at the right size.
+ * - Unsplash URLs (images.unsplash.com) → applies Imgix params for the requested size
+ * - Other URLs (Supabase, external) → returned as-is
+ *
+ * Usage in components: getDishPhotoUrl(dish.photos[0], "detail")
+ */
+export function getDishPhotoUrl(url: string | null | undefined, size: "thumb" | "card" | "detail" | "hero" = "card"): string {
+  if (!url) return "";
+  // Only optimize Unsplash URLs
+  if (!url.includes("images.unsplash.com")) return url;
+  // Strip existing params to get rawUrl, then apply correct size
+  const rawUrl = url.split("?")[0];
+  return optimizedUnsplashUrl(rawUrl, size);
 }
 
 export interface UnsplashPhoto {

@@ -7,6 +7,8 @@ export interface ExtractedDish {
   category: string;
   diet?: "OMNIVORE" | "VEGAN" | "VEGETARIAN";
   isSpicy?: boolean;
+  /** Unsplash photographer credit (only for referential photos) */
+  photoCredit?: { photographer: string; profileUrl: string; unsplashId: string } | null;
 }
 
 /** Result of a menu extraction */

@@ -177,7 +177,7 @@ Reglas:
       for (const query of [`${d.name} food`, `${d.category} ${d.name} restaurant`, `${d.category} food dish`]) {
         const photo = await searchUnsplashPhoto(query);
         if (photo) {
-          photoMap.set(d.name, photo.url);
+          photoMap.set(d.name, photo.rawUrl);
           creditMap.set(d.name, { photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId });
           triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
           return;
@@ -195,6 +195,7 @@ Reglas:
         description: dish.description || "",
         price: typeof dish.price === "number" ? dish.price : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
         imageUrl: photoMap.get(dish.name) || null,
+        photoCredit: creditMap.get(dish.name) || null,
         category: cat.name || "General",
         diet: dish.diet || "OMNIVORE",
         isSpicy: dish.isSpicy || false,
@@ -354,7 +355,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     }
 
     // Create categories and dishes
-    const createdDishes: { id: string; name: string; description: string | null; externalPhoto: string | null }[] = [];
+    const createdDishes: { id: string; name: string; description: string | null; externalPhoto: string | null; credit: { photographer: string; profileUrl: string; unsplashId: string } | null }[] = [];
     let catPosition = 0;
 
     for (const [catName, catDishes] of categoryMap) {
@@ -399,7 +400,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           name: created.name,
           description: created.description,
           externalPhoto: dish.imageUrl,
-          credit: creditMap.get(dish.name.trim()) || null,
+          credit: dish.photoCredit || null,
         });
       }
     }
@@ -407,19 +408,18 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
     const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
     if (dishesWithPhotos.length > 0) {
-      const { optimizedUnsplashUrl } = await import("@/lib/unsplash");
       const BATCH = 10;
       for (let i = 0; i < dishesWithPhotos.length; i += BATCH) {
         const batch = dishesWithPhotos.slice(i, i + BATCH);
         await Promise.allSettled(
           batch.map(async (dish) => {
-            const credit = (dish as any).credit;
+            const credit = dish.credit;
             const isUnsplash = !!credit; // has credit = came from Unsplash
             let finalUrl: string;
 
             if (isUnsplash) {
-              // Unsplash: hotlink directly, no Supabase re-upload
-              finalUrl = optimizedUnsplashUrl(dish.externalPhoto!, "card");
+              // Unsplash: store rawUrl, components apply size params at render time
+              finalUrl = dish.externalPhoto!;
             } else {
               // Restaurant's own photo: re-upload to Supabase for optimization
               const dishSlug = slugify(dish.name);
@@ -437,7 +437,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Fill ALL dishes without photos using Unsplash (hotlink, no Supabase)
     if (process.env.UNSPLASH_ACCESS_KEY) {
-      const { optimizedUnsplashUrl } = await import("@/lib/unsplash");
+      const { searchUnsplashPhoto: searchPhoto, triggerUnsplashDownload: triggerDl } = await import("@/lib/unsplash");
       const allDishesDB = await prisma.dish.findMany({
         where: { restaurantId: restaurant.id, isActive: true },
         orderBy: { position: "asc" },
@@ -447,17 +447,17 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       if (missing.length > 0) {
         await Promise.allSettled(missing.map(async (d) => {
           try {
-            const photo = await searchUnsplashPhoto(`${d.name} food dish`);
+            const photo = await searchPhoto(`${d.name} food dish`);
             if (photo) {
               await prisma.dish.update({
                 where: { id: d.id },
                 data: {
-                  photos: [optimizedUnsplashUrl(photo.rawUrl, "card")],
+                  photos: [photo.rawUrl],
                   isPhotoReferential: true,
                   photoCredits: [{ photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId }],
                 },
               });
-              triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
+              triggerDl(photo.downloadLocation).catch(() => {});
             }
           } catch {}
         }));

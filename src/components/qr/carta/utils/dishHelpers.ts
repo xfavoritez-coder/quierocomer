@@ -4,8 +4,21 @@ export function isGeniePick(dish: Dish): boolean {
   return dish.tags?.includes("RECOMMENDED") ?? false;
 }
 
-export function getDishPhoto(dish: Dish): string | null {
-  return dish.photos?.[0] ?? null;
+export function getDishPhoto(dish: Dish, size: "thumb" | "card" | "detail" | "hero" = "card"): string | null {
+  const url = dish.photos?.[0] ?? null;
+  if (!url) return null;
+  // Unsplash URLs: apply Imgix params for the right size
+  if (url.includes("images.unsplash.com")) {
+    const rawUrl = url.split("?")[0];
+    const params: Record<string, string> = {
+      thumb: "w=400&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
+      card:  "w=600&q=80&fm=webp&fit=crop&crop=entropy&auto=compress",
+      detail:"w=1080&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
+      hero:  "w=1200&q=85&fm=webp&fit=crop&crop=entropy&auto=compress",
+    };
+    return `${rawUrl}?${params[size] || params.card}`;
+  }
+  return url;
 }
 
 export interface DishesByCategory {

@@ -274,6 +274,12 @@ function DishSlide({
     }
   }, [isActive, restaurantId]);
   const photos = dish.photos?.length ? dish.photos : [];
+  /** Optimize Unsplash URLs for detail view (1080px) */
+  const photoUrl = (url: string, size: "card" | "detail" = "detail") => {
+    if (!url.includes("images.unsplash.com")) return url;
+    const raw = url.split("?")[0];
+    return size === "detail" ? `${raw}?w=1080&q=85&fm=webp&fit=crop&crop=entropy&auto=compress` : `${raw}?w=400&q=80&fm=webp&fit=crop&crop=entropy&auto=compress`;
+  };
   const [photoIndex, setPhotoIndex] = useState(0);
   const [imgLoaded, setImgLoaded] = useState(false);
   useEffect(() => { setImgLoaded(false); }, [photoIndex]);
@@ -337,7 +343,7 @@ function DishSlide({
         )}
         {photos.length > 0 && (
           <Image
-            src={photos[photoIndex]}
+            src={photoUrl(photos[photoIndex])}
             alt={dish.name}
             fill
             className="object-cover object-center"
@@ -349,7 +355,7 @@ function DishSlide({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         {photos.length > 0 && (
           <img
-            src={photos[photoIndex]}
+            src={photoUrl(photos[photoIndex])}
             alt=""
             key={photos[photoIndex]}
             loading="eager"
