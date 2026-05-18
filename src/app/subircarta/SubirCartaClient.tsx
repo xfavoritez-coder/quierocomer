@@ -55,6 +55,7 @@ export default function SubirCartaClient() {
   const [uploadProgress, setUploadProgress] = useState("");
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
@@ -68,12 +69,28 @@ export default function SubirCartaClient() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (files && files.length > 0) {
-      if (files.length > 10) { setError("Máximo 10 fotos."); return; }
+    if (!files || files.length === 0) return;
+
+    if (mode === "photo") {
+      // Accumulate photos instead of replacing
+      const newFiles = Array.from(files);
+      setPhotoFiles(prev => {
+        const combined = [...prev, ...newFiles];
+        if (combined.length > 10) { setError("Máximo 10 fotos."); return prev; }
+        const totalSize = combined.reduce((sum, f) => sum + f.size, 0);
+        if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB. Intenta con menos fotos o más livianas."); return prev; }
+        const totalMB = (totalSize / 1024 / 1024).toFixed(1);
+        setFileName(combined.length === 1 ? combined[0].name : `${combined.length} fotos (${totalMB}MB)`);
+        setError("");
+        return combined;
+      });
+      // Reset input so the same file can be re-selected or camera triggered again
+      e.target.value = "";
+    } else {
+      // PDF mode — single file, replace
       const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
-      if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB. Intenta con menos fotos o más livianas."); return; }
-      const totalMB = (totalSize / 1024 / 1024).toFixed(1);
-      setFileName(files.length === 1 ? files[0].name : `${files.length} fotos (${totalMB}MB)`);
+      if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB."); return; }
+      setFileName(files[0].name);
       setError("");
     }
   };
@@ -96,17 +113,16 @@ export default function SubirCartaClient() {
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
         router.push(`/subircarta/paso2?id=${data.id}`);
       } else {
-        const inputRef = mode === "pdf" ? fileRef : photoRef;
-        const files = inputRef.current?.files;
-        if (!files || files.length === 0) { setError("Selecciona un archivo primero."); return; }
+        const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
+        if (filesToUpload.length === 0) { setError("Selecciona un archivo primero."); return; }
 
         // Compress and upload files one by one with progress
-        const total = Math.min(files.length, 10);
+        const total = Math.min(filesToUpload.length, 10);
         let leadId = "";
         for (let i = 0; i < total; i++) {
           const label = mode === "pdf" ? "archivo" : "foto";
           setUploadProgress(total > 1 ? `Procesando ${label} ${i + 1} de ${total}` : `Procesando ${label}`);
-          const compressed = await compressImage(files[i]);
+          const compressed = await compressImage(filesToUpload[i]);
           const formData = new FormData();
           formData.append("file", compressed);
           if (leadId) formData.append("leadId", leadId);
@@ -117,12 +133,12 @@ export default function SubirCartaClient() {
           });
           const data = await res.json();
           if (!res.ok) {
-            trackFunnelEvent(leadId || data.id, "upload_error", { file: i + 1, of: total, error: data.error, fileName: files[i].name });
-            setError(data.error || `Error al subir ${files[i].name}`); setUploadProgress(""); return;
+            trackFunnelEvent(leadId || data.id, "upload_error", { file: i + 1, of: total, error: data.error, fileName: filesToUpload[i].name });
+            setError(data.error || `Error al subir ${filesToUpload[i].name}`); setUploadProgress(""); return;
           }
           if (!leadId) leadId = data.id;
         }
-        trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(Array.from(files).reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
+        trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
         setUploadProgress("");
         router.push(`/subircarta/paso2?id=${leadId}`);
       }
@@ -245,10 +261,10 @@ export default function SubirCartaClient() {
                     <div className="upload-icon">
                       <svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg>
                     </div>
-                    {fileName ? (
+                    {photoFiles.length > 0 ? (
                       <>
                         <div className="upload-title" style={{ color: "var(--amber-2)" }}>{fileName}</div>
-                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Haz clic para cambiar foto</div>
+                        <div style={{ color: "var(--cream-2, #d4c8b8)", fontSize: "0.8rem", fontWeight: 400, marginTop: 4 }}>Toca para agregar más fotos</div>
                       </>
                     ) : (
                       <>
@@ -259,6 +275,26 @@ export default function SubirCartaClient() {
                     )}
                   </div>
                 </div>
+                {/* Photo thumbnails */}
+                {photoFiles.length > 0 && (
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 12, justifyContent: "center" }}>
+                    {photoFiles.map((f, i) => (
+                      <div key={`${f.name}-${i}`} style={{ position: "relative", width: 64, height: 64, borderRadius: 10, overflow: "hidden", border: "1px solid rgba(255,255,255,.12)" }}>
+                        <img src={URL.createObjectURL(f)} alt={f.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setPhotoFiles(prev => { const next = prev.filter((_, j) => j !== i); setFileName(next.length === 0 ? "" : next.length === 1 ? next[0].name : `${next.length} fotos (${(next.reduce((s, f2) => s + f2.size, 0) / 1024 / 1024).toFixed(1)}MB)`); return next; }); }}
+                          style={{ position: "absolute", top: 2, right: 2, width: 20, height: 20, borderRadius: "50%", background: "rgba(0,0,0,.7)", border: "none", color: "#fff", fontSize: 12, cursor: "pointer", display: "grid", placeItems: "center", lineHeight: 1 }}
+                        >×</button>
+                      </div>
+                    ))}
+                    {photoFiles.length < 10 && (
+                      <div
+                        onClick={(e) => { e.stopPropagation(); photoRef.current?.click(); }}
+                        style={{ width: 64, height: 64, borderRadius: 10, border: "1px dashed rgba(255,255,255,.2)", display: "grid", placeItems: "center", cursor: "pointer", color: "rgba(255,255,255,.4)", fontSize: 24 }}
+                      >+</div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 

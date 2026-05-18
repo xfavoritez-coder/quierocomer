@@ -152,7 +152,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                   opacity: onboardingActive ? 0.5 : 1,
                   transition: "all 0.15s ease",
                 }}
-              ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: onboardingActive ? 0.4 : 1 }}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver panel</a>
+              ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: onboardingActive ? 0.4 : 1 }}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Ver mi panel</a>
               {lockedTooltip === "panel" && (
                 <div style={{
                   position: "absolute", top: "calc(100% + 8px)", right: 0,
@@ -183,7 +183,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
                 display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap",
                 transition: "all 0.15s ease",
               }}
-            >Mi carta</a>
+            >Ver mi carta</a>
           )}
           <div style={{ position: "relative" }}>
             <a
