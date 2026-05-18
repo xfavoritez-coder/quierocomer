@@ -23,14 +23,14 @@ const STEPS: Step[] = [
   {
     icon: "🧞",
     title: "¡Hola! Soy el Genio",
-    body: "Te voy a mostrar en 3 pasos tu nueva carta.",
+    body: "Te mostraré tu nueva carta en 3 pasos.",
     showOverlay: true,
     overlayOpacity: 0.72,
   },
   {
     icon: "📸",
     title: "Una preview",
-    body: "Así quedaría tu nueva carta. Algunas fotos podrían ser referenciales.",
+    body: "Así quedaría tu carta. Pusimos algunas fotos referenciales.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
@@ -43,7 +43,7 @@ const STEPS: Step[] = [
   {
     icon: "🌍",
     title: "Traduzco la carta",
-    body: "Automáticamente al idioma de tus clientes. Así la ven mejor extranjeros y turistas.",
+    body: "Automáticamente al idioma de tus clientes. Español, inglés, portugués o los que quieras.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -164,8 +164,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
           window.history.replaceState({}, "", url.toString());
-          // Force reload to apply Spanish
-          delay(100, () => window.location.reload());
+          // Dispatch lang change event so carta re-renders in Spanish
+          window.dispatchEvent(new CustomEvent("demo-onboarding-restore-lang", { detail: { lang: "es" } }));
         }
         window.dispatchEvent(new Event("demo-onboarding-highlight-activate"));
         setMinimized(false);
