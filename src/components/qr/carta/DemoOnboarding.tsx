@@ -30,7 +30,7 @@ const STEPS: Step[] = [
   {
     icon: "📸",
     title: "Así quedaría",
-    body: "Algunas fotos podrían ser referenciales, luego las cambias desde tu panel.",
+    body: "Algunas fotos podrían ser referenciales, luego podrás editar todo desde tu panel.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
@@ -43,7 +43,7 @@ const STEPS: Step[] = [
   {
     icon: "🌍",
     title: "Traduzco tu carta",
-    body: "Automáticamente al idioma de tus clientes. Español, inglés, portugués o los que quieras.",
+    body: "Escoge cualquier idioma: español, inglés, portugués o los que quieras.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -60,6 +60,7 @@ const STEPS: Step[] = [
 export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
+  const [minimizing, setMinimizing] = useState(false);
   const [exiting, setExiting] = useState(false);
   const [gone, setGone] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -111,7 +112,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
     timersRef.current = [];
     // Auto-minimize on steps without overlay (so user sees the carta)
     if (!STEPS[step].showOverlay) {
-      setMinimized(true);
+      if (!minimized) {
+        setMinimizing(true);
+        setTimeout(() => { setMinimizing(false); setMinimized(true); }, 350);
+      }
     }
     runStepEnter(step);
   }, [step]);
@@ -180,9 +184,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
         triggerExit();
         return s;
       }
-      // Pre-set minimized state to avoid flash between expanded dark → minimized light
-      if (!STEPS[next].showOverlay) setMinimized(true);
-      else setMinimized(false);
+      if (STEPS[next].showOverlay) { setMinimized(false); setMinimizing(false); }
       return next;
     });
   }, []);
@@ -282,7 +284,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           background: isLightStep ? "rgba(255,255,255,0.97)" : "rgba(14,14,14,0.96)",
           border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,178,45,0.15)",
           borderRadius: 16,
-          padding: "14px 16px",
+          padding: "16px 16px 14px",
           boxShadow: isLightStep ? "0 8px 28px rgba(0,0,0,0.12)" : "0 8px 28px rgba(0,0,0,0.5)",
           maxWidth: 300,
           width: 300,
@@ -303,7 +305,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
             fontSize: "0.88rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
-            lineHeight: 1.45, margin: "0 0 8px",
+            lineHeight: 1.45, margin: "4px 0 12px",
           }}>
             {current.body}
           </p>
@@ -401,10 +403,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone }: Props
           cursor: dragging ? "grabbing" : "grab",
           userSelect: "none",
           touchAction: "none",
-          // Exit animation — swoosh into lamp
-          transform: exiting ? "scale(0.08) rotate(15deg)" : "scale(1)",
-          opacity: exiting ? 0 : 1,
-          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : (dragging ? "none" : "box-shadow 0.2s ease"),
+          // Exit/minimize animations
+          transform: exiting ? "scale(0.08) rotate(15deg)" : minimizing ? "scale(0.6) translateY(40px)" : "scale(1)",
+          opacity: exiting ? 0 : minimizing ? 0 : 1,
+          transition: exiting ? "all 0.25s cubic-bezier(0.6,0,1,0.7)" : minimizing ? "all 0.35s cubic-bezier(0.4,0,1,1)" : (dragging ? "none" : "box-shadow 0.2s ease"),
         }}
       >
         {/* Header: genio icon + title + minimize */}
