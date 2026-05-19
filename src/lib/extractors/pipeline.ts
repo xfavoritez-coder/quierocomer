@@ -417,6 +417,16 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Mark lead as READY early — before slow operations (photos, translations)
+    // so a timeout won't mark it FAILED after the restaurant already exists
+    const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`;
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date() },
+    });
+    clearTimeout(pipelineTimeout);
+    console.log(`[Pipeline] Lead ${leadId} READY: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
+
     // Process photos: restaurant-owned → Supabase, Unsplash → hotlink direct
     const dishesWithPhotos = createdDishes.filter((d) => d.externalPhoto);
     if (dishesWithPhotos.length > 0) {
@@ -532,17 +542,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
     }
 
-    const cartaUrl = `https://quierocomer.cl/qr/${restaurant.slug}?t=${qrToken}`;
-
-    clearTimeout(pipelineTimeout);
-
-    // Mark lead as READY and link to restaurant
-    await prisma.lead.update({
-      where: { id: leadId },
-      data: { cartaStatus: "READY", generatedSlug: restaurant.slug, readyAt: new Date() },
-    });
-
-    console.log(`[Pipeline] Lead ${leadId} processed: ${restaurant.name} → ${cartaUrl} (${createdDishes.length} dishes)`);
+    console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
     // Send email with carta link (only if translation succeeded)
     if (lead.email && translationOk) {
