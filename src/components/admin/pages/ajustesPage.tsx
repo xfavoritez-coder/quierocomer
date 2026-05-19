@@ -32,7 +32,7 @@ const ACCENT_OPTIONS = [
   { value: null, label: "Amber", color: "#F4A623" },
   { value: "#C50E2C", label: "Rojo", color: "#C50E2C" },
   { value: "#f472b6", label: "Rosa", color: "#f472b6" },
-  { value: "#4a8db7", label: "Azul", color: "#4a8db7" },
+  { value: "#1a3f8f", label: "Azul", color: "#1a3f8f" },
 ];
 
 const VIEW_OPTIONS = [
