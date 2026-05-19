@@ -99,8 +99,10 @@ export async function POST(req: Request) {
     }
 
     // Check for duplicate: reuse incomplete lead with same URL (not yet processed)
+    // Only reuse if created within the last 30 minutes to avoid stale leads
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
     const existing = await prisma.lead.findFirst({
-      where: { cartaUrl, email: "", cartaStatus: "PENDING" },
+      where: { cartaUrl, email: "", cartaStatus: "PENDING", createdAt: { gte: thirtyMinAgo } },
       orderBy: { createdAt: "desc" },
     });
 

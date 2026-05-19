@@ -53,11 +53,17 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Load Tawk.to chat widget
+  // Load Tawk.to chat widget — hide via CSS first to prevent flash
   useEffect(() => {
     if ((window as any).Tawk_API) return;
+    const style = document.createElement("style");
+    style.textContent = "iframe[title='chat widget'],iframe[src*='tawk.to'],.widget-visible{display:none!important;opacity:0!important;visibility:hidden!important}";
+    document.head.appendChild(style);
     (window as any).Tawk_API = {};
-    (window as any).Tawk_API.onLoad = function () { (window as any).Tawk_API.hideWidget(); };
+    (window as any).Tawk_API.onLoad = function () {
+      (window as any).Tawk_API.hideWidget();
+      style.remove();
+    };
     const s1 = document.createElement("script");
     s1.async = true;
     s1.src = "https://embed.tawk.to/6a0c7aa00454421c389d6a22/1jp0bu0si";
@@ -70,19 +76,28 @@ export default function Paso2Client() {
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     document.documentElement.style.scrollBehavior = "auto";
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   }, []);
   useEffect(() => {
     document.documentElement.style.scrollBehavior = "auto";
-    window.scrollTo(0, 0);
-    // Hammer scroll-to-top across multiple frames to beat any async scroll restoration
-    const times = [0, 16, 50, 100, 200, 400];
+    const scrollUp = () => {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    };
+    scrollUp();
+    // Hammer scroll-to-top across multiple frames and rAF to beat async scroll restoration
+    const times = [0, 16, 50, 100, 200, 400, 800];
     const ids = times.map(ms => setTimeout(() => {
-      window.scrollTo(0, 0);
+      scrollUp();
       if (ms === times[times.length - 1]) document.documentElement.style.scrollBehavior = "";
     }, ms));
+    // Also use rAF chain for the first few frames
+    let rafCount = 0;
+    const raf = () => { scrollUp(); if (++rafCount < 5) requestAnimationFrame(raf); };
+    requestAnimationFrame(raf);
     trackFunnelEvent(leadId, "paso2_loaded");
     return () => ids.forEach(clearTimeout);
   }, []);

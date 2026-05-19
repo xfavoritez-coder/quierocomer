@@ -27,6 +27,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Lead no encontrado." }, { status: 404 });
     }
 
+    // Don't allow overwriting a lead that's already been fully processed
+    if (["READY", "DELIVERED"].includes(existing.cartaStatus || "") && existing.email) {
+      return NextResponse.json({ error: "Esta carta ya fue procesada. Sube una nueva desde el inicio." }, { status: 409 });
+    }
+
     const lead = await prisma.lead.update({
       where: { id },
       data: {

@@ -237,7 +237,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 <div>
                   <h3>La transformamos online</h3>
                   <ul>
-                    <li>Lo hacemos en segundos con IA</li>
+                    <li>En segundos con IA</li>
                     <li>Te mostramos cómo queda</li>
                   </ul>
                 </div>

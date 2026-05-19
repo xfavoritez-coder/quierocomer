@@ -42,11 +42,17 @@ export default function ConfirmacionClient() {
   const imagesLoadedRef = useRef(false);
   const cartaReadyRef = useRef(false);
 
-  // Load Tawk.to chat widget
+  // Load Tawk.to chat widget — hide via CSS first to prevent flash
   useEffect(() => {
     if ((window as any).Tawk_API) return;
+    const style = document.createElement("style");
+    style.textContent = "iframe[title='chat widget'],iframe[src*='tawk.to'],.widget-visible{display:none!important;opacity:0!important;visibility:hidden!important}";
+    document.head.appendChild(style);
     (window as any).Tawk_API = {};
-    (window as any).Tawk_API.onLoad = function () { (window as any).Tawk_API.hideWidget(); };
+    (window as any).Tawk_API.onLoad = function () {
+      (window as any).Tawk_API.hideWidget();
+      style.remove();
+    };
     const s1 = document.createElement("script");
     s1.async = true;
     s1.src = "https://embed.tawk.to/6a0c7aa00454421c389d6a22/1jp0bu0si";
