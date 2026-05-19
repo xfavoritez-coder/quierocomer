@@ -359,15 +359,19 @@ export default function Paso2Client() {
 
               <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                 <div className="field-row">
-                  <input ref={firstInputRef} type="text" placeholder="Nombre del local" value={localName} onChange={(e) => { setLocalName(e.target.value); setError(""); }} />
+                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Nombre del local</label>
+                  <input ref={firstInputRef} type="text" placeholder="Ej: Mi Restaurante" value={localName} onChange={(e) => { setLocalName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <input type="text" placeholder="Tu nombre" value={ownerName} onChange={(e) => { setOwnerName(e.target.value); setError(""); }} />
+                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Tu nombre</label>
+                  <input type="text" placeholder="Ej: Juan Pérez" value={ownerName} onChange={(e) => { setOwnerName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <input type="email" placeholder="Correo electrónico" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
+                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Correo electrónico</label>
+                  <input type="email" placeholder="tu@correo.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
+                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>

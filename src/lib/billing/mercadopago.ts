@@ -216,6 +216,7 @@ export async function createMPSubscription(
 
   const body: Record<string, any> = {
     reason: planConfig.name,
+    payer_email: params.payerEmail,
     external_reference: params.externalReference,
     back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
     auto_recurring: autoRecurring,
