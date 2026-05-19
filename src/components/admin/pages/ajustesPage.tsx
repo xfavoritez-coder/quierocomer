@@ -249,7 +249,7 @@ export default function AjustesPage() {
           <div>
             <h3 style={{ fontFamily: F, fontSize: "0.9rem", fontWeight: 700, color: "var(--adm-text)", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 7 }}>🧞 Consejos semanales del Genio</h3>
             <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: 0 }}>
-              {data.weeklyInsightsEnabled ? "Cada semana recibes consejos personalizados en tu panel de inicio" : "Los consejos semanales no se muestran en el panel de inicio"}
+              {data.weeklyInsightsEnabled ? "Cada semana aparecen en tu inicio del panel consejos personalizados del Genio para mejorar tus ventas" : "Los consejos semanales del Genio no se muestran en el panel de inicio"}
             </p>
           </div>
           <Toggle
