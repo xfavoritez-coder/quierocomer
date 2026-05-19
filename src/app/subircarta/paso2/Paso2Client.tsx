@@ -6,6 +6,7 @@ import { normalizePhone } from "@/lib/normalizePhone";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
+import NavHamburger from "@/components/NavHamburger";
 
 const PROGRESS_STEPS = [
   { label: "Detectando platos y categorías", duration: 3500 },
@@ -53,17 +54,10 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // Load Tawk.to chat widget — hide via CSS first to prevent flash
+  // Load Tawk.to chat widget — visible for support
   useEffect(() => {
     if ((window as any).Tawk_API) return;
-    const style = document.createElement("style");
-    style.textContent = "iframe[title='chat widget'],iframe[src*='tawk.to'],.widget-visible{display:none!important;opacity:0!important;visibility:hidden!important}";
-    document.head.appendChild(style);
     (window as any).Tawk_API = {};
-    (window as any).Tawk_API.onLoad = function () {
-      (window as any).Tawk_API.hideWidget();
-      style.remove();
-    };
     const s1 = document.createElement("script");
     s1.async = true;
     s1.src = "https://embed.tawk.to/6a0c7aa00454421c389d6a22/1jp0bu0si";
@@ -306,7 +300,7 @@ export default function Paso2Client() {
             <img src="/landing/logo.png" alt="" style={{ height: 20, width: "auto", marginRight: -8 }} />
             QuieroComer
           </a>
-          <button onClick={() => { if ((window as any).Tawk_API?.maximize) (window as any).Tawk_API.maximize(); }} style={{ background: "none", border: "none", color: "var(--cream-2)", fontSize: 15, letterSpacing: ".04em", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Ayuda</button>
+          <NavHamburger />
         </nav>
 
         {/* Steps — step 1 done, step 2 active */}
