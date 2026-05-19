@@ -137,7 +137,7 @@ export default function ConfirmacionClient() {
   // Show "you can leave" hint 8s after preview loaded but carta still not ready
   useEffect(() => {
     if (!imagesLoaded || cartaReady) return;
-    const t = setTimeout(() => setCanLeaveHint(true), 8000);
+    const t = setTimeout(() => setCanLeaveHint(true), 6000);
     return () => clearTimeout(t);
   }, [imagesLoaded, cartaReady]);
 

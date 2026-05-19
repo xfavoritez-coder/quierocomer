@@ -62,7 +62,11 @@ export default function SubirCartaClient() {
 
   const normalizedUrl = linkUrl.trim() && !linkUrl.trim().match(/^https?:\/\//) ? `https://${linkUrl.trim()}` : linkUrl.trim();
   const isLinkValid = mode === "link" && (() => {
-    try { new URL(normalizedUrl); return true; } catch { return false; }
+    try {
+      const u = new URL(normalizedUrl);
+      // Must be http/https and have a real domain (contains a dot)
+      return (u.protocol === "http:" || u.protocol === "https:") && u.hostname.includes(".");
+    } catch { return false; }
   })();
 
   const hasFile = (mode === "pdf" || mode === "photo") && !!fileName;

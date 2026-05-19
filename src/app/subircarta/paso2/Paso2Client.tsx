@@ -9,7 +9,7 @@ import PlanesModal from "@/components/PlanesModal";
 
 const PROGRESS_STEPS = [
   { label: "Detectando platos y categorías", duration: 3500 },
-  { label: "Seleccionando platos destacados", duration: 4500 },
+  { label: "Ordenando la información de tu carta", duration: 4500 },
   { label: "Preparando tu nueva carta", duration: 6000 },
 ];
 
@@ -142,7 +142,7 @@ export default function Paso2Client() {
   // Rotate pill meta text during animation
   useEffect(() => {
     if (animDone) return;
-    const interval = setInterval(() => setPillMetaIndex((i) => i + 1), 4000);
+    const interval = setInterval(() => setPillMetaIndex((i) => i + 1), 2800);
     return () => clearInterval(interval);
   }, [animDone]);
 
@@ -245,11 +245,11 @@ export default function Paso2Client() {
 
   const pillLabelTexts = [
     pillLabelBase ? `Revisando ${pillLabelBase}` : "Revisando",
-    "Traduciendo tu carta",
-    "Seleccionando platos destacados",
-    "Configurando las vistas",
     localNameFromUrl ? `Leyendo carta de ${localNameFromUrl}` : "Leyendo tu carta",
     "Extrayendo platos y precios",
+    "Traduciendo a otros idiomas",
+    "Seleccionando platos destacados",
+    "Configurando vistas",
   ];
   const pillLabel = animDone ? pillLabelBase : pillLabelTexts[pillMetaIndex % pillLabelTexts.length];
   const pillMetaTexts = [
