@@ -225,6 +225,23 @@ export default function AjustesPage() {
               </button>
             );
           })}
+          {/* Custom color picker */}
+          {(() => {
+            const customActive = data.cartaAccentColor && !ACCENT_OPTIONS.some(o => o.value === data.cartaAccentColor);
+            return (
+              <button
+                style={{
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  background: "none", border: "none", cursor: "pointer", padding: 4, position: "relative",
+                }}
+              >
+                <label style={{ width: 36, height: 36, borderRadius: "50%", background: customActive ? data.cartaAccentColor! : "conic-gradient(red,yellow,lime,aqua,blue,magenta,red)", border: customActive ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: customActive ? `0 0 0 2px ${data.cartaAccentColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden" }}>
+                  <input type="color" value={data.cartaAccentColor || "#F4A623"} onChange={(e) => save({ cartaAccentColor: e.target.value })} style={{ opacity: 0, position: "absolute", width: 36, height: 36, cursor: "pointer" }} />
+                </label>
+                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: customActive ? 700 : 500, color: customActive ? "var(--adm-text)" : "var(--adm-text3)" }}>Custom</span>
+              </button>
+            );
+          })()}
         </div>
       </div>
 
