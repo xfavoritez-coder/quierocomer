@@ -75,7 +75,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
   useEffect(() => {
     const venue = showcaseVenues[venueIdx];
     if (!venue || venue.dishes.length <= 1) return;
-    const interval = setInterval(() => setHeroIdx(i => (i + 1) % venue.dishes.length), 3000);
+    const interval = setInterval(() => setHeroIdx(i => (i + 1) % venue.dishes.length), 5000);
     return () => clearInterval(interval);
   }, [venueIdx, showcaseVenues]);
 
@@ -101,7 +101,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
       const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ restaurantId: restaurant.id, plan }),
+        body: JSON.stringify({ restaurantId: restaurant.id, plan, skipPromo: true }),
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Error iniciando pago");
@@ -118,15 +118,16 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
+      {/* Header */}
+      <header className="rg-header">
+        <a className="rg-brand" href="/">
+          <img src="/landing/logo.png" alt="" style={{ height: 16 }} />
+          QuieroComer
+        </a>
+        <NavHamburger />
+      </header>
+
       <main className="rg-page">
-        {/* Header */}
-        <header className="rg-header">
-          <a className="rg-brand" href="/">
-            <img src="/landing/logo.png" alt="" style={{ height: 16 }} />
-            QuieroComer
-          </a>
-          <NavHamburger />
-        </header>
 
         {/* Steps */}
         <section className="rg-steps">
@@ -232,7 +233,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
               <div className="rg-done">Activado. Redirigiendo...</div>
             )}
 
-            <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro</div>
+            <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía MercadoPago</div>
           </section>
           </div>
         </section>
@@ -279,8 +280,8 @@ const CSS = `
 :root { --bg:#050505; --card:#11100f; --card-2:#161412; --gold:#f4a623; --gold-soft:#ffc45a; --text:#f5ead8; --muted:#a99d8c; --border:rgba(244,166,35,.28); }
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-gradient(circle at top,rgba(244,166,35,.13),transparent 34%),linear-gradient(180deg,#080706,#030303)!important; color:var(--text)!important; min-height:100vh; }
-.rg-page { width:100%; max-width:480px; margin:0 auto; padding:66px 18px 34px; }
-.rg-header { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:14px clamp(18px,4vw,64px); background:rgba(10,9,8,.92); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); margin-bottom:0; }
+.rg-page { width:100%; max-width:480px; margin:0 auto; padding:86px 18px 34px; }
+.rg-header { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:14px clamp(18px,4vw,64px); background:rgba(10,9,8,.65); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); margin-bottom:0; }
 .rg-brand { display:flex; align-items:center; gap:8px; font-family:Georgia,serif; font-size:18px; font-weight:700; color:var(--text); text-decoration:none; }
 .rg-steps { text-align:center; margin-bottom:26px; }
 .rg-step-pill { display:inline-block; color:var(--gold-soft); border:1px solid var(--border); border-radius:999px; padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:2px; margin-bottom:14px; }
@@ -304,7 +305,7 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 .rg-tabs span.active { color:var(--gold); border-color:var(--gold); }
 .rg-item { display:flex; align-items:center; gap:10px; margin:8px 12px; padding:9px; border-radius:14px; background:#151515; border:1px solid rgba(255,255,255,.06); }
 .rg-item img { width:42px; height:42px; border-radius:10px; object-fit:cover; flex-shrink:0; }
-.rg-item strong { display:block; font-size:12px; }
+.rg-item strong { display:block; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:130px; }
 .rg-item small { color:var(--gold); font-weight:800; }
 .rg-metric { position:absolute; right:-20px; top:92px; background:rgba(14,13,12,.92); border:1px solid var(--border); border-radius:16px; padding:12px; width:145px; box-shadow:0 20px 40px rgba(0,0,0,.45); font-size:12px; }
 .rg-metric strong { color:var(--gold-soft); }
@@ -342,7 +343,7 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 .rg-right-col { }
 @media(min-width:600px) { .rg-mobile-br { display:none; } }
 @media(min-width:860px) {
-  .rg-page { max-width:1020px; padding:34px 32px 50px; }
+  .rg-page { max-width:1020px; padding:96px 32px 50px; }
   .rg-hero { text-align:center; margin-bottom:36px; }
   .rg-hero h1 { font-size:50px; }
   .rg-hero p { margin:0 auto; max-width:420px; }

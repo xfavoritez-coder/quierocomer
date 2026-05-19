@@ -12,11 +12,12 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
         id: true, name: true, slug: true, logoUrl: true,
         categories: { take: 3, orderBy: { position: "asc" }, select: { name: true } },
         dishes: {
-          take: 4,
+          take: 8,
           where: {
             photos: { isEmpty: false },
-            category: { name: { notIn: ["Bebidas", "Bebestibles", "Tragos", "Drinks", "Jugos", "Aguas", "Cervezas", "Vinos", "Beverages"] } },
+            category: { name: { notIn: ["Bebidas", "Bebestibles", "Tragos", "Drinks", "Jugos", "Aguas", "Cervezas", "Vinos", "Beverages", "Líquidos", "Refrescos", "Soft Drinks"] } },
           },
+          orderBy: { position: "asc" },
           select: { name: true, price: true, photos: true, description: true },
         },
       },
@@ -33,7 +34,10 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
     <ActivarClient
       restaurant={{ id: restaurant.id, name: restaurant.name, slug: restaurant.slug!, logoUrl: restaurant.logoUrl }}
       categories={restaurant.categories.map(c => c.name)}
-      dishes={restaurant.dishes.map(d => ({ name: d.name, price: d.price, photo: d.photos[0] || null, description: d.description || "" }))}
+      dishes={restaurant.dishes
+        .filter(d => !/\b(agua|coca.?cola|sprite|fanta|jugo|cerveza|vino|bebida|gaseosa|lata|botella|\d+\s*cc|\d+\s*ml|sin gas|con gas)\b/i.test(d.name))
+        .slice(0, 4)
+        .map(d => ({ name: d.name, price: d.price, photo: d.photos[0] || null, description: d.description || "" }))}
       activeVenues={activeVenues}
     />
   );

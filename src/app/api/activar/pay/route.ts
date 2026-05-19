@@ -21,10 +21,10 @@ import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-
  * No requiere autenticacion — solo funciona para restaurants con isDemo: true.
  */
 export async function POST(req: NextRequest) {
-  let body: { restaurantId?: string; plan?: string };
+  let body: { restaurantId?: string; plan?: string; skipPromo?: boolean };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
-  const { restaurantId, plan } = body;
+  const { restaurantId, plan, skipPromo } = body;
   if (!restaurantId || !plan || !(plan === "GOLD" || plan === "PREMIUM")) {
     return NextResponse.json({ error: "Faltan parámetros" }, { status: 400 });
   }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const promoNet = activationPromoAmount(planKey);
+    const promoNet = skipPromo ? null : activationPromoAmount(planKey);
 
     if (promoNet !== null) {
       // ── Promo: pago unico del primer mes a precio reducido ──

@@ -315,8 +315,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                       ) : (
                         <div style={{ width: 46, height: 46, flexShrink: 0, background: "#1a1a1a" }} />
                       )}
-                      <div style={{ padding: "6px 10px", textAlign: "left" }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: "#E8DDC8", textAlign: "left", display: "flex", alignItems: "center", gap: 3 }}>{i === 1 && <span style={{ color: "#E8A33D", fontSize: 9 }}>★</span>}{d.name}</div>
+                      <div style={{ padding: "6px 10px", textAlign: "left", minWidth: 0, overflow: "hidden" }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: "#E8DDC8", textAlign: "left", display: "flex", alignItems: "center", gap: 3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{i === 1 && <span style={{ color: "#E8A33D", fontSize: 9, flexShrink: 0 }}>★</span>}{d.name}</div>
                         {d.description && <div style={{ fontSize: 8, color: "rgba(255,255,255,.45)", marginTop: 1, textAlign: "left", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 140 }}>{d.description}</div>}
                         <div style={{ fontSize: 10, fontWeight: 800, color: "#E8A33D", marginTop: 2, textAlign: "left" }}>{formatPrice(d.price)}</div>
                       </div>
@@ -346,7 +346,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
           )}
-          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro</div>
+          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía MercadoPago</div>
         </div>
         </div>{/* end activation-flow */}
         </section>{/* end hero */}

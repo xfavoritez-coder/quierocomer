@@ -79,7 +79,10 @@ export async function GET(req: NextRequest) {
       data: { pendingMpPlanId: null },
     });
     const reason = status === "pending" ? "payment_pending" : "payment_rejected";
-    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}?pago=error&reason=${reason}`);
+    // Si tiene lead asociado (vino de subir carta) → /activar, sino → /registrar
+    const hasLead = await prisma.lead.findFirst({ where: { generatedSlug: restaurant.slug }, select: { id: true } });
+    const errorPage = hasLead ? "activar" : "registrar";
+    return NextResponse.redirect(`${baseUrl}/${errorPage}/${restaurant.slug}?pago=error&reason=${reason}`);
   }
 
   const appPlan = planFromFlowId(restaurant.pendingMpPlanId) || "PREMIUM";

@@ -33,13 +33,18 @@ export async function POST(req: NextRequest) {
   let body: { localName?: string; ownerName?: string; email?: string; whatsapp?: string };
   try { body = await req.json(); } catch { return NextResponse.json({ error: "Body inválido" }, { status: 400 }); }
 
-  const { localName, ownerName, email, whatsapp } = body;
-  if (!localName?.trim() || !email?.trim() || !email.includes("@")) {
+  const { localName: rawLocalName, ownerName: rawOwnerName, email, whatsapp } = body;
+  if (!rawLocalName?.trim() || !email?.trim() || !email.includes("@")) {
     return NextResponse.json({ error: "Completa nombre del local y email" }, { status: 400 });
   }
 
+  // Title Case: "horus vegan" → "Horus Vegan"
+  const toTitleCase = (s: string) => s.trim().replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+  const localName = toTitleCase(rawLocalName);
+  const ownerName = rawOwnerName?.trim() ? toTitleCase(rawOwnerName) : undefined;
+
   // Generar slug
-  let slug = localName.trim().toLowerCase()
+  let slug = localName.toLowerCase()
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   if (!slug) slug = "mi-local";
