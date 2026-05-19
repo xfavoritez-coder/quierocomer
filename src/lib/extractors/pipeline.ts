@@ -463,12 +463,21 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     const unsplashTask = (async () => {
       if (!process.env.UNSPLASH_ACCESS_KEY) return;
       const { searchUnsplashPhoto: searchPhoto, triggerUnsplashDownload: triggerDl } = await import("@/lib/unsplash");
+      // Only fetch photos for hero (RECOMMENDED) + first 30% of dishes for demo
+      // Full photo fill happens on activation via backfill
       const allDishesDB = await prisma.dish.findMany({
         where: { restaurantId: restaurant.id, isActive: true },
-        orderBy: { position: "asc" },
-        select: { id: true, name: true, photos: true },
+        orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
+        select: { id: true, name: true, photos: true, tags: true },
       });
-      const missing = allDishesDB.filter(d => !d.photos?.length);
+      const cap = Math.max(15, Math.ceil(allDishesDB.length * 0.3));
+      const heroIds = new Set(allDishesDB.filter(d => d.tags?.includes("RECOMMENDED")).map(d => d.id));
+      const priorityDishes = [
+        ...allDishesDB.filter(d => heroIds.has(d.id)),
+        ...allDishesDB.filter(d => !heroIds.has(d.id)).slice(0, cap),
+      ];
+      const missing = priorityDishes.filter(d => !d.photos?.length);
+      console.log(`[Pipeline] Unsplash: ${missing.length}/${allDishesDB.length} priority dishes need photos`);
       if (missing.length > 0) {
         await Promise.allSettled(missing.map(async (d) => {
           try {

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // On activation, ensure 100% of dishes are translated (fire-and-forget)
+  // On activation, backfill translations + Unsplash photos (fire-and-forget)
   if (restaurant.needsTranslation) {
     import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
       translateAllForRestaurant(restaurantId)
@@ -45,6 +45,37 @@ export async function POST(req: NextRequest) {
         .catch((err) => console.error(`[Activar] Translation backfill failed for ${restaurantId}:`, err));
     });
   }
+
+  // Backfill Unsplash photos for dishes without photos (fire-and-forget)
+  (async () => {
+    try {
+      const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
+      if (!UNSPLASH_KEY) return;
+      const { searchUnsplashPhoto, triggerUnsplashDownload } = await import("@/lib/unsplash");
+      const missing = await prisma.dish.findMany({
+        where: { restaurantId, isActive: true, photos: { equals: [] } },
+        select: { id: true, name: true },
+      });
+      if (missing.length === 0) return;
+      console.log(`[Activar] Backfilling ${missing.length} Unsplash photos for ${restaurantId}`);
+      for (let i = 0; i < missing.length; i += 10) {
+        const batch = missing.slice(i, i + 10);
+        await Promise.allSettled(batch.map(async (d) => {
+          const photo = await searchUnsplashPhoto(`${d.name} food dish`);
+          if (photo) {
+            await prisma.dish.update({
+              where: { id: d.id },
+              data: { photos: [photo.rawUrl], isPhotoReferential: true, photoCredits: [{ photographer: photo.photographer, profileUrl: photo.profileUrl, unsplashId: photo.unsplashId }] },
+            });
+            triggerUnsplashDownload(photo.downloadLocation).catch(() => {});
+          }
+        }));
+      }
+      console.log(`[Activar] Unsplash backfill done for ${restaurantId}`);
+    } catch (err) {
+      console.error(`[Activar] Unsplash backfill failed for ${restaurantId}:`, err);
+    }
+  })();
 
   return NextResponse.json({
     ok: true,
