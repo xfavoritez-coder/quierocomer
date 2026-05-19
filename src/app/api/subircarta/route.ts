@@ -112,7 +112,34 @@ export async function POST(req: Request) {
       select: { id: true, domainPatterns: true, htmlSignatures: true },
     });
 
-    const detectedProviderId = await detectProvider(cartaUrl, providers);
+    let detectedProviderId = await detectProvider(cartaUrl, providers);
+
+    // Auto-create unknown providers so we track every domain that comes in
+    if (!detectedProviderId) {
+      const hostname = new URL(cartaUrl).hostname.toLowerCase().replace(/^www\./, "");
+      const domainName = hostname.split(".").slice(0, -1).join(".") || hostname;
+      const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+      try {
+        const newProvider = await prisma.menuProvider.create({
+          data: {
+            name: displayName,
+            domainPatterns: [hostname],
+            htmlSignatures: [],
+            status: "UNKNOWN",
+            notes: `Auto-detectado desde ${cartaUrl}`,
+          },
+        });
+        detectedProviderId = newProvider.id;
+        console.log(`[SubirCarta] Auto-created provider "${displayName}" (${hostname})`);
+      } catch {
+        // Race condition: provider already exists from concurrent request
+        const existing = await prisma.menuProvider.findFirst({
+          where: { domainPatterns: { has: hostname } },
+          select: { id: true },
+        });
+        if (existing) detectedProviderId = existing.id;
+      }
+    }
 
     const lead = await prisma.lead.create({
       data: {

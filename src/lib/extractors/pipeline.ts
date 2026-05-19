@@ -264,8 +264,19 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     const providerConfig = (lead.detectedProvider as any)?.extractionConfig || null;
     const isFileUpload = !lead.cartaUrl && !!lead.cartaFileUrl;
     const isDocument = lead.cartaType === "DOCUMENT";
+
+    // For file uploads, load the _Document / _Photo global config
+    let fileConfig: any = null;
+    if (isFileUpload) {
+      const configProvider = await prisma.menuProvider.findFirst({
+        where: { name: isDocument ? "_Document" : "_Photo" },
+        select: { extractionConfig: true },
+      });
+      fileConfig = configProvider?.extractionConfig || null;
+    }
+
     const extraction = isFileUpload
-      ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!) : await extractFromImage(lead.cartaFileUrl!))
+      ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!, fileConfig) : await extractFromImage(lead.cartaFileUrl!))
       : await extractMenu(lead.cartaUrl!, providerName, providerConfig);
 
     if (extraction.dishes.length === 0) {
@@ -579,17 +590,43 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       );
     } catch {}
 
+    // Track provider success
+    if (lead.detectedProviderId) {
+      await prisma.menuProvider.update({
+        where: { id: lead.detectedProviderId },
+        data: { successCount: { increment: 1 } },
+      }).catch(() => {});
+    }
+
     return { slug: restaurant.slug, url: cartaUrl };
   } catch (error) {
     clearTimeout(pipelineTimeout);
-    // Mark as FAILED
-    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "FAILED" } });
-    // Notify admin
+    const errorMsg = error instanceof Error ? error.message : String(error);
+
+    // Mark as FAILED with error log
+    await prisma.lead.update({
+      where: { id: leadId },
+      data: { cartaStatus: "FAILED", errorLog: errorMsg.slice(0, 500) },
+    });
+
+    // Track provider failure
+    if (lead.detectedProviderId) {
+      await prisma.menuProvider.update({
+        where: { id: lead.detectedProviderId },
+        data: {
+          failCount: { increment: 1 },
+          lastFailReason: errorMsg.slice(0, 200),
+          lastFailAt: new Date(),
+        },
+      }).catch(() => {});
+    }
+
+    // Notify admin with error details
     try {
       const { sendAdminPush } = await import("@/lib/adminPush");
       await sendAdminPush(
-        "⚠️ Lead sin procesar",
-        `${lead.localName || lead.cartaUrl?.slice(0, 30)} quedó PENDING`,
+        "⚠️ Lead falló",
+        `${lead.localName || lead.cartaUrl?.slice(0, 30)}: ${errorMsg.slice(0, 80)}`,
       );
     } catch {}
     throw error;

@@ -8,9 +8,15 @@ import type { ExtractionResult, ExtractedDish } from "./types";
  * Extract text content from a document file (PDF, Word, Excel).
  * Downloads from URL, parses text, sends to Claude for structuring.
  */
-export async function extractFromDocument(fileUrl: string): Promise<ExtractionResult> {
+export async function extractFromDocument(fileUrl: string, config?: any): Promise<ExtractionResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+
+  const visionThreshold = config?.visionFallbackThreshold ?? 200;
+  const maxTextChars = config?.maxTextChars ?? 30000;
+  const preferVision = config?.preferVision ?? true;
+
+  console.log("[Document] Config:", { visionThreshold, maxTextChars, preferVision });
 
   // Support multiple files (comma-separated URLs)
   const urls = fileUrl.split(",").map(u => u.trim()).filter(Boolean).slice(0, 5);
@@ -31,8 +37,7 @@ export async function extractFromDocument(fileUrl: string): Promise<ExtractionRe
         } catch (e) {
           console.error("[Document] pdf-parse failed:", (e as Error).message);
         }
-        if (!text.trim() && !pdfBuffer) pdfBuffer = buffer;
-        else if (!pdfBuffer) pdfBuffer = buffer;
+        if (!pdfBuffer) pdfBuffer = buffer;
       } else if (ext === "docx" || ext === "doc") {
         text = await extractWordText(buffer);
       } else if (ext === "xlsx" || ext === "xls") {
@@ -49,15 +54,15 @@ export async function extractFromDocument(fileUrl: string): Promise<ExtractionRe
   }
 
   // Fallback: if pdf-parse returned no/little text, send PDF directly to Claude as base64 document
-  if (fullText.trim().length < 200 && pdfBuffer) {
-    console.log("[Document] Text extraction insufficient, using Claude PDF reading fallback");
+  if (fullText.trim().length < visionThreshold && pdfBuffer && preferVision) {
+    console.log(`[Document] Text extraction insufficient (${fullText.trim().length} chars < ${visionThreshold}), using Claude PDF Vision fallback`);
     return extractPdfWithVision(pdfBuffer, apiKey);
   }
 
   if (!fullText.trim()) throw new Error("No text could be extracted from documents");
 
-  // Limit text to ~30KB for Claude (large menus can have many pages)
-  const trimmedText = fullText.slice(0, 30000);
+  // Limit text for Claude
+  const trimmedText = fullText.slice(0, maxTextChars);
 
   // Send to Claude for menu structuring
   const prompt = `Analiza el siguiente texto extraído de un documento de carta/menú de restaurante.

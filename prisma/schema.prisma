@@ -1734,6 +1734,10 @@ model MenuProvider {
   status           MenuProviderStatus
   extractionConfig Json?
   notes            String?
+  successCount     Int                @default(0)
+  failCount        Int                @default(0)
+  lastFailReason   String?
+  lastFailAt       DateTime?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
@@ -1751,6 +1755,7 @@ model Lead {
   cartaFileUrl       String?
   detectedProviderId String?
   cartaStatus        CartaStatus   @default(PENDING)
+  errorLog           String?
   generatedSlug      String?
   preview            Json?
   activated          Boolean       @default(false)
