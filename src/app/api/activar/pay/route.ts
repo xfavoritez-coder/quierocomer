@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
       data: { pendingMpPlanId: planConfig.planId },
     });
 
-    const url = preference.sandboxInitPoint || preference.initPoint;
+    const url = preference.initPoint || preference.sandboxInitPoint;
     return NextResponse.json({ url });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
