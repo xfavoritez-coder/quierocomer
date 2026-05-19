@@ -56,6 +56,7 @@ export default function SubirCartaClient() {
   const [error, setError] = useState("");
   const [fileName, setFileName] = useState("");
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
 
@@ -90,6 +91,7 @@ export default function SubirCartaClient() {
       // PDF mode — single file, replace
       const totalSize = Array.from(files).reduce((sum, f) => sum + f.size, 0);
       if (totalSize > 50 * 1024 * 1024) { setError("El peso total excede 50MB."); return; }
+      setPdfFile(files[0]);
       setFileName(files[0].name);
       setError("");
     }
@@ -188,7 +190,7 @@ export default function SubirCartaClient() {
                   key={m}
                   className={`method${mode === m ? " active" : ""}`}
                   type="button"
-                  onClick={() => { setMode(m); setError(""); setFileName(""); }}
+                  onClick={() => { setMode(m); setError(""); setFileName(""); setPdfFile(null); setPhotoFiles([]); }}
                 >
                   {m === "pdf" && (
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
@@ -226,6 +228,22 @@ export default function SubirCartaClient() {
                     )}
                   </div>
                 </div>
+                {/* PDF file preview */}
+                {pdfFile && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 14, padding: "12px 14px", background: "rgba(255,255,255,.04)", border: "1px solid var(--line)", borderRadius: 14 }}>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(232,163,61,.1)", border: "1px solid rgba(232,163,61,.25)", display: "grid", placeItems: "center", flexShrink: 0 }}>
+                      <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M8 2h8l4 4v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" stroke="var(--amber-2)" strokeWidth="1.8"/><path d="M16 2v4h4M10 10h4M10 14h4" stroke="var(--amber-2)" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--cream)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{pdfFile.name}</div>
+                      <div style={{ fontSize: 11, color: "var(--muted)" }}>{(pdfFile.size / 1024 / 1024).toFixed(1)} MB</div>
+                    </div>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setPdfFile(null); setFileName(""); if (fileRef.current) fileRef.current.value = ""; }}
+                      style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,255,255,.08)", border: "none", color: "var(--cream-2)", fontSize: 14, cursor: "pointer", display: "grid", placeItems: "center", flexShrink: 0 }}
+                    >×</button>
+                  </div>
+                )}
               </div>
             )}
 
