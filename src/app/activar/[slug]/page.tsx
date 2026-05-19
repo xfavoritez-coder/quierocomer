@@ -13,7 +13,10 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
         categories: { take: 3, orderBy: { position: "asc" }, select: { name: true } },
         dishes: {
           take: 4,
-          where: { photos: { isEmpty: false } },
+          where: {
+            photos: { isEmpty: false },
+            category: { name: { notIn: ["Bebidas", "Bebestibles", "Tragos", "Drinks", "Jugos", "Aguas", "Cervezas", "Vinos", "Beverages"] } },
+          },
           select: { name: true, price: true, photos: true, description: true },
         },
       },

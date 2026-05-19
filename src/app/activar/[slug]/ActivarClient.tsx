@@ -115,9 +115,10 @@ h1 em { color: var(--amber); font-style: italic; }
 .tip { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: rgba(232,163,61,.12); color: var(--amber); font-size: 10px; font-weight: 800; font-style: italic; cursor: pointer; flex-shrink: 0; position: relative; -webkit-tap-highlight-color: transparent; }
 .tip.open .tip-text { display: block; }
 .tip-text { display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: #1a1a1a; border: 1px solid rgba(232,163,61,.25); border-radius: 8px; padding: 10px 12px; font-size: 13px; font-weight: 400; font-style: normal; color: var(--cream-soft); width: 200px; text-align: left; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,.5); line-height: 1.4; }
-.plan-btn { width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: var(--cream); padding: 14px 15px; font-weight: 950; cursor: pointer; font-size: 14px; }
-.plan.featured .plan-btn { background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; border: 0; }
-.plan-btn:disabled { opacity: .5; cursor: wait; }
+.plan-btn { width: 100%; border-radius: 999px; border: 1px solid rgba(255,255,255,.16); background: rgba(255,255,255,.06); color: var(--cream); padding: 14px 15px; font-weight: 950; cursor: pointer; font-size: 14px; transition: opacity .2s, transform .2s; }
+.plan-btn:hover:not(:disabled) { transform: translateY(-1px); opacity: .9; }
+.plan.featured .plan-btn { background: linear-gradient(135deg, #ffc44f, #f3a333); color: #100b03; border: 0; box-shadow: 0 12px 28px rgba(245,164,51,.22); }
+.plan-btn:disabled { opacity: .45; cursor: default; }
 .done-msg { text-align: center; padding: 14px 0; }
 .done-msg p { color: #74e49a; font-weight: 700; font-size: 16px; margin: 0; }
 footer { margin-top: 34px; padding-top: 22px; border-top: 1px solid rgba(255,255,255,.08); text-align: center; color: var(--gray-warm); font-size: 12px; line-height: 2; }

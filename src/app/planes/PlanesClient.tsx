@@ -213,7 +213,7 @@ export default function PlanesClient() {
 
               {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
 
-              <button type="submit" disabled={sending} style={{ marginTop: 4, width: "100%", padding: 15, background: modalPlan === "PREMIUM" ? "linear-gradient(135deg,#ffc44f,#f3a333)" : "rgba(255,255,255,.08)", color: modalPlan === "PREMIUM" ? "#100b03" : "#E8DDC8", border: modalPlan === "PREMIUM" ? "none" : "1px solid rgba(255,255,255,.16)", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: sending ? "wait" : "pointer", opacity: sending ? 0.6 : 1 }}>
+              <button type="submit" disabled={sending} style={{ marginTop: 4, width: "100%", padding: 15, background: "linear-gradient(135deg,#ffc44f,#f3a333)", color: "#100b03", border: "none", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: sending ? "wait" : "pointer", opacity: sending ? 0.6 : 1, boxShadow: "0 12px 28px rgba(245,164,51,.22)" }}>
                 {sending ? "Creando..." : "Continuar"}
               </button>
             </form>

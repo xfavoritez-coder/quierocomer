@@ -53,7 +53,7 @@ const PLAN_INFO: Record<string, { label: string; price: string; priceSub: string
 };
 
 export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
-  const [plan, setPlan] = useState("PREMIUM");
+  const [plan, setPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
@@ -62,7 +62,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("plan");
-    if (p && PLAN_INFO[p]) setPlan(p);
+    setPlan(p && PLAN_INFO[p] ? p : "PREMIUM");
     window.history.replaceState({}, "", window.location.pathname);
   }, []);
 
@@ -81,7 +81,8 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
   const venue = showcaseVenues[venueIdx] || null;
   const dishes = venue?.dishes || [];
-  const info = PLAN_INFO[plan] || PLAN_INFO.PREMIUM;
+  const info = PLAN_INFO[plan || "PREMIUM"] || PLAN_INFO.PREMIUM;
+  if (!plan) return <><style dangerouslySetInnerHTML={{ __html: CSS }} /><div style={{ minHeight: "100vh", background: "var(--black)" }} /></>;
 
   const handleActivar = async () => {
     setLoading(true);
@@ -133,7 +134,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
           <div className="rg-step-line">
             <span>✓ Cuenta creada</span>
             <span>✓ Datos completados</span>
-            <span><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", border: "1px solid var(--gold)", color: "var(--gold)", fontSize: 11, fontWeight: 900 }}>3</span> Activar carta</span>
+            <span><span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 18, height: 18, borderRadius: "50%", border: "1px solid var(--gold)", color: "var(--gold)", fontSize: 11, fontWeight: 900, marginRight: 4 }}>3</span> Activar carta</span>
           </div>
         </section>
 
@@ -278,8 +279,8 @@ const CSS = `
 :root { --bg:#050505; --card:#11100f; --card-2:#161412; --gold:#f4a623; --gold-soft:#ffc45a; --text:#f5ead8; --muted:#a99d8c; --border:rgba(244,166,35,.28); }
 * { box-sizing:border-box; margin:0; padding:0; }
 body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-gradient(circle at top,rgba(244,166,35,.13),transparent 34%),linear-gradient(180deg,#080706,#030303)!important; color:var(--text)!important; min-height:100vh; }
-.rg-page { width:100%; max-width:480px; margin:0 auto; padding:22px 18px 34px; }
-.rg-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:26px; }
+.rg-page { width:100%; max-width:480px; margin:0 auto; padding:66px 18px 34px; }
+.rg-header { position:fixed; top:0; left:0; right:0; z-index:100; display:flex; justify-content:space-between; align-items:center; padding:14px clamp(18px,4vw,64px); background:rgba(10,9,8,.92); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); margin-bottom:0; }
 .rg-brand { display:flex; align-items:center; gap:8px; font-family:Georgia,serif; font-size:18px; font-weight:700; color:var(--text); text-decoration:none; }
 .rg-steps { text-align:center; margin-bottom:26px; }
 .rg-step-pill { display:inline-block; color:var(--gold-soft); border:1px solid var(--border); border-radius:999px; padding:8px 18px; font-size:12px; font-weight:800; letter-spacing:2px; margin-bottom:14px; }
