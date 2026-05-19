@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMPSubscription } from "@/lib/billing/mercadopago";
 import type { SubscriptionStatus } from "@prisma/client";
+import crypto from "crypto";
 
 /**
  * POST /api/billing/webhook
@@ -16,6 +17,27 @@ import type { SubscriptionStatus } from "@prisma/client";
  * solo en el payload del webhook.
  */
 export async function POST(req: NextRequest) {
+  // Verificar firma del webhook
+  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+  if (secret) {
+    const xSignature = req.headers.get("x-signature") || "";
+    const xRequestId = req.headers.get("x-request-id") || "";
+    const dataId = req.nextUrl.searchParams.get("data.id") || "";
+
+    const parts = Object.fromEntries(xSignature.split(",").map(p => { const [k, v] = p.trim().split("="); return [k, v]; }));
+    const ts = parts["ts"] || "";
+    const hash = parts["v1"] || "";
+
+    if (hash) {
+      const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`;
+      const expected = crypto.createHmac("sha256", secret).update(manifest).digest("hex");
+      if (expected !== hash) {
+        console.error("[billing/webhook] Firma invalida");
+        return NextResponse.json({ ok: false, error: "invalid_signature" }, { status: 401 });
+      }
+    }
+  }
+
   let payload: { type?: string; action?: string; data?: { id?: string } };
   try { payload = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "Body invalido" }, { status: 400 });
