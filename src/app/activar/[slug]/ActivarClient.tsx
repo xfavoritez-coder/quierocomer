@@ -390,10 +390,10 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               </div>
             </article>
             <article className="benefit">
-              <div className="benefit-icon">🎨</div>
+              <div className="benefit-icon">🧞</div>
               <div className="benefit-content">
-                <strong>Distintas vistas</strong>
-                <p>Impact, Galería y Lista para mostrar tu restaurante como quieras.</p>
+                <strong>Sube el ticket de cada mesa</strong>
+                <p>Sugerimos automáticamente acompañamientos, postres y bebidas según lo que cada cliente está viendo.</p>
               </div>
             </article>
             <article className="benefit">
