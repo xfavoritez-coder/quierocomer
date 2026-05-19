@@ -245,7 +245,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
               <div className="rg-done">Activado. Redirigiendo...</div>
             )}
 
-            <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía MercadoPago</div>
+            <div className="rg-secure"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago</div>
           </section>
           </div>
         </section>
@@ -329,7 +329,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
               <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "#666" }}>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                Pago 100% seguro · vía MercadoPago
+                Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago
               </div>
             </div>
           </div>
