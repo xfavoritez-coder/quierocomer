@@ -59,6 +59,12 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
   const [done, setDone] = useState(false);
   const [venueIdx, setVenueIdx] = useState(0);
   const [heroIdx, setHeroIdx] = useState(0);
+  const [confirmPlan, setConfirmPlan] = useState<"GOLD" | "PREMIUM" | null>(null);
+
+  const PLAN_PRICING: Record<string, { label: string; neto: number; iva: number; total: number }> = {
+    GOLD: { label: "Gold", neto: 35000, iva: 6650, total: 41650 },
+    PREMIUM: { label: "Premium", neto: 49900, iva: 9481, total: 59381 },
+  };
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get("plan");
@@ -85,6 +91,11 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
   if (!plan) return <><style dangerouslySetInnerHTML={{ __html: CSS }} /><div style={{ minHeight: "100vh", background: "var(--black)" }} /></>;
 
   const handleActivar = async () => {
+    if (plan !== "FREE" && !confirmPlan) {
+      setConfirmPlan(plan as "GOLD" | "PREMIUM");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -108,6 +119,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
       window.location.href = data.url;
     } catch (err: any) {
       setError(err?.message || "Hubo un error. Intenta nuevamente.");
+      setConfirmPlan(null);
       setLoading(false);
     }
   };
@@ -257,7 +269,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
         {/* Social proof */}
         <section className="rg-proof">
-          <h2>Restaurantes en Santiago que ya están creciendo con QuieroComer</h2>
+          <h2>Restaurantes en Santiago que ya están creciendo con <span style={{ color: "var(--muted)" }}>QuieroComer</span></h2>
           <div className="rg-logos">
             {showcaseVenues.slice(0, 4).map((v, i) => (
               <a key={i} href={`/qr/${v.slug}`} target="_blank" rel="noopener" className="rg-logo-circle">
@@ -266,12 +278,63 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
             ))}
           </div>
           <div className="rg-alt-link" style={{ marginTop: 16 }}>
-            ¿Ya tienes carta QR o física? <a href="/subircarta" style={{ textDecoration: "underline" }}>Súbela y te la transformamos →</a>
+            ¿Ya tienes carta QR o física?<br /><a href="/subircarta"><span style={{ textDecoration: "underline" }}>Súbela y te la transformamos</span> →</a>
           </div>
         </section>
       </main>
 
       <Footer />
+
+      {/* Modal resumen de pago */}
+      {confirmPlan && (() => {
+        const p = PLAN_PRICING[confirmPlan];
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => { if (!loading) setConfirmPlan(null); }}>
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,.1)", borderRadius: 24, width: "100%", maxWidth: 380, padding: "28px 24px", position: "relative" }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setConfirmPlan(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
+
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>Resumen de pago</div>
+                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Plan {p.label}</h3>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#C9BBA0" }}>
+                  <span>Mensualidad</span>
+                  <span style={{ fontWeight: 700 }}>${p.neto.toLocaleString("es-CL")}</span>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#888" }}>
+                  <span>IVA (19%)</span>
+                  <span>${p.iva.toLocaleString("es-CL")}</span>
+                </div>
+                <div style={{ borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "#E8DDC8" }}>
+                  <span>Total</span>
+                  <span>${p.total.toLocaleString("es-CL")} CLP</span>
+                </div>
+              </div>
+
+              <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 16 }}>
+                Serás redirigido a MercadoPago para completar tu pago de forma segura.
+              </div>
+
+              {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>{error}</div>}
+
+              <button
+                disabled={loading}
+                onClick={() => handleActivar()}
+                style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#ffc44f,#f3a333)", color: "#100b03", border: "none", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.6 : 1, boxShadow: "0 12px 28px rgba(245,164,51,.22)" }}
+              >
+                {loading ? "Redirigiendo a MercadoPago..." : `Pagar $${p.total.toLocaleString("es-CL")} CLP`}
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "#666" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Pago 100% seguro · vía MercadoPago
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }
@@ -331,12 +394,12 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 .rg-feature h3 { font-size:15px; font-weight:800; margin-bottom:5px; }
 .rg-feature p { font-size:14px; color:var(--muted); line-height:1.4; }
 .rg-proof { border:1px solid rgba(244,166,35,.18); background:rgba(255,255,255,.03); border-radius:24px; padding:22px 18px; text-align:center; margin-top:26px; }
-.rg-proof h2 { font-size:18px; color:var(--gold-soft); margin-bottom:18px; font-family:Georgia,serif; font-weight:400; }
+.rg-proof h2 { font-size:18px; color:var(--muted); margin-bottom:18px; font-family:Georgia,serif; font-weight:400; }
 .rg-logos { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; padding:12px 0; }
 .rg-logo-circle { width:66px; height:66px; border-radius:50%; border:1px solid var(--border); display:grid; place-items:center; font-family:Georgia,serif; font-size:10px; color:#eadfce; background:#111; overflow:hidden; }
 .rg-logo-circle img { width:100%; height:100%; object-fit:cover; }
 .rg-alt-link { text-align:center; }
-.rg-alt-link a { color:rgba(160,145,120,.75); font-size:13px; text-decoration:underline; font-weight:500; }
+.rg-alt-link a { color:rgba(160,145,120,.75); font-size:14px; text-decoration:none; font-weight:500; }
 .rg-connector-v { width:1px; height:42px; margin:14px auto 0; background:linear-gradient(to bottom,rgba(255,178,45,0),rgba(255,178,45,.7)); position:relative; z-index:2; }
 .rg-connector-v::after { content:""; position:absolute; bottom:-5px; left:50%; width:9px; height:9px; border-right:1px solid rgba(255,178,45,.85); border-bottom:1px solid rgba(255,178,45,.85); transform:translateX(-50%) rotate(45deg); }
 .rg-connector-h { display:none; }

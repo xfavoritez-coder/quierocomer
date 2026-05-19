@@ -145,6 +145,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [confirmPlan, setConfirmPlan] = useState<"GOLD" | "PREMIUM" | null>(null);
   const [heroIdx, setHeroIdx] = useState(0);
 
   useEffect(() => {
@@ -188,6 +189,11 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   }, []);
 
   const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
+    if (plan !== "FREE" && !confirmPlan) {
+      setConfirmPlan(plan as "GOLD" | "PREMIUM");
+      return;
+    }
+
     setLoading(true);
     setSelectedPlan(plan);
     setError("");
@@ -204,7 +210,6 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
         return;
       }
 
-      // Plan pago: registrar tarjeta + pagar via Flow
       const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -213,12 +218,17 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Error iniciando pago");
 
-      // Redirigir a Webpay
       window.location.href = data.url;
     } catch (err: any) {
       setError(err?.message || "Hubo un error. Intenta nuevamente.");
       setLoading(false);
+      setConfirmPlan(null);
     }
+  };
+
+  const PLAN_PRICING: Record<string, { label: string; neto: number; iva: number; total: number; promo?: { neto: number; iva: number; total: number } }> = {
+    GOLD: { label: "Gold", neto: 35000, iva: 6650, total: 41650 },
+    PREMIUM: { label: "Premium", neto: 49900, iva: 9481, total: 59381, promo: { neto: 4900, iva: 931, total: 5831 } },
   };
 
   return (
@@ -530,6 +540,73 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
       <div style={{ textAlign: "center", color: "rgba(135,125,115,.5)", fontSize: 12, padding: "0 0 24px" }}>
         Creado en Santiago, Chile
       </div>
+
+      {/* Modal resumen de pago */}
+      {confirmPlan && (() => {
+        const p = PLAN_PRICING[confirmPlan];
+        const isPromo = !!p.promo;
+        const charge = isPromo ? p.promo! : p;
+        return (
+          <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.75)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => { if (!loading) setConfirmPlan(null); }}>
+            <div style={{ background: "#111", border: "1px solid rgba(255,255,255,.1)", borderRadius: 24, width: "100%", maxWidth: 380, padding: "28px 24px", position: "relative" }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setConfirmPlan(null)} style={{ position: "absolute", top: 14, right: 16, background: "none", border: "none", color: "#888", fontSize: 20, cursor: "pointer" }}>×</button>
+
+              <div style={{ textAlign: "center", marginBottom: 20 }}>
+                <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>Resumen de pago</div>
+                <h3 style={{ fontFamily: "Georgia,serif", fontSize: 22, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Plan {p.label}</h3>
+              </div>
+
+              <div style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 16, padding: "16px 18px", marginBottom: 16 }}>
+                {isPromo && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#E8A33D" }}>
+                    <span>Primer mes (promo)</span>
+                    <span style={{ fontWeight: 700 }}>${charge.neto.toLocaleString("es-CL")}</span>
+                  </div>
+                )}
+                {!isPromo && (
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#C9BBA0" }}>
+                    <span>Mensualidad</span>
+                    <span style={{ fontWeight: 700 }}>${charge.neto.toLocaleString("es-CL")}</span>
+                  </div>
+                )}
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: 13, color: "#888" }}>
+                  <span>IVA (19%)</span>
+                  <span>${charge.iva.toLocaleString("es-CL")}</span>
+                </div>
+                <div style={{ borderTop: "1px solid rgba(255,255,255,.1)", paddingTop: 10, display: "flex", justifyContent: "space-between", fontSize: 16, fontWeight: 800, color: "#E8DDC8" }}>
+                  <span>Total</span>
+                  <span>${charge.total.toLocaleString("es-CL")} CLP</span>
+                </div>
+              </div>
+
+              {isPromo && (
+                <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 14 }}>
+                  Después del primer mes: ${p.neto.toLocaleString("es-CL")} + IVA/mes
+                </div>
+              )}
+
+              <div style={{ fontSize: 12, color: "#888", textAlign: "center", marginBottom: 16 }}>
+                Serás redirigido a MercadoPago para completar tu pago de forma segura.
+              </div>
+
+              {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center", marginBottom: 10 }}>{error}</div>}
+
+              <button
+                disabled={loading}
+                onClick={() => handleActivar(confirmPlan)}
+                style={{ width: "100%", padding: 15, background: "linear-gradient(135deg,#ffc44f,#f3a333)", color: "#100b03", border: "none", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: loading ? "wait" : "pointer", opacity: loading ? 0.6 : 1, boxShadow: "0 12px 28px rgba(245,164,51,.22)" }}
+              >
+                {loading ? "Redirigiendo a MercadoPago..." : `Pagar $${charge.total.toLocaleString("es-CL")} CLP`}
+              </button>
+
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12, fontSize: 11, color: "#666" }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                Pago 100% seguro · vía MercadoPago
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </>
   );
 }

@@ -23,8 +23,11 @@ export default async function RegistrarPage({ params }: { params: Promise<{ slug
       name: true, slug: true, logoUrl: true,
       categories: { take: 3, orderBy: { position: "asc" }, select: { name: true } },
       dishes: {
-        take: 3,
-        where: { photos: { isEmpty: false }, isActive: true, deletedAt: null },
+        take: 8,
+        where: {
+          photos: { isEmpty: false }, isActive: true, deletedAt: null,
+          category: { name: { notIn: ["Bebidas", "Bebestibles", "Tragos", "Drinks", "Jugos", "Aguas", "Cervezas", "Vinos", "Beverages", "Líquidos", "Refrescos", "Soft Drinks"] } },
+        },
         orderBy: { position: "asc" },
         select: { name: true, price: true, photos: true, description: true },
       },
@@ -39,7 +42,10 @@ export default async function RegistrarPage({ params }: { params: Promise<{ slug
         slug: v.slug!,
         logoUrl: v.logoUrl,
         categories: v.categories.map(c => c.name),
-        dishes: v.dishes.map(d => ({ name: d.name, price: d.price, photo: d.photos[0] || null, description: d.description || "" })),
+        dishes: v.dishes
+          .filter(d => !/\b(agua|coca.?cola|sprite|fanta|jugo|cerveza|vino|bebida|gaseosa|lata|botella|\d+\s*cc|\d+\s*ml|sin gas|con gas)\b/i.test(d.name))
+          .slice(0, 3)
+          .map(d => ({ name: d.name, price: d.price, photo: d.photos[0] || null, description: d.description || "" })),
       }))}
     />
   );
