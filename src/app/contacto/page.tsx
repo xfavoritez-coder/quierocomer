@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+
+const TURNSTILE_SITE_KEY = "0x4AAAAAADSgtS72cIgDXl7r";
 
 export default function ContactoPage() {
   const [nombre, setNombre] = useState("");
@@ -12,11 +14,35 @@ export default function ContactoPage() {
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [cfToken, setCfToken] = useState("");
+  const turnstileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (document.getElementById("cf-turnstile-script")) return;
+    const s = document.createElement("script");
+    s.id = "cf-turnstile-script";
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.async = true;
+    s.onload = () => {
+      if (turnstileRef.current && (window as any).turnstile) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: "dark",
+          callback: (token: string) => setCfToken(token),
+        });
+      }
+    };
+    document.head.appendChild(s);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.includes("@") || !mensaje.trim()) {
       setError("Completa tu correo y mensaje.");
+      return;
+    }
+    if (!cfToken) {
+      setError("Completa la verificación de seguridad.");
       return;
     }
     setSending(true);
@@ -25,7 +51,7 @@ export default function ContactoPage() {
       const res = await fetch("/api/landing/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, nombre, telefono, mensaje }),
+        body: JSON.stringify({ email, nombre, telefono, mensaje, cfToken }),
       });
       if (!res.ok) throw new Error();
       setSent(true);
@@ -59,6 +85,11 @@ export default function ContactoPage() {
         <NavHamburger />
       </nav>
 
+      <div className="contacto-hero">
+        <img src="/landing/og-hero.png" alt="" className="contacto-hero-img" />
+        <div className="contacto-hero-overlay" />
+      </div>
+
       <main className="contacto-main">
         <div className="contacto-glow" />
 
@@ -75,7 +106,7 @@ export default function ContactoPage() {
           ) : (
             <>
               <div className="contacto-header">
-                <div className="contacto-eyebrow">Contacto</div>
+                <div className="contacto-eyebrow">Contáctanos</div>
                 <h1>Hablemos</h1>
                 <p style={{ fontSize: 14, color: "rgba(200,185,160,.4)" }}>Cuéntanos en qué podemos ayudarte.</p>
               </div>
@@ -120,9 +151,11 @@ export default function ContactoPage() {
                   />
                 </div>
 
+                <div ref={turnstileRef} style={{ display: "flex", justifyContent: "center", margin: "4px 0" }} />
+
                 {error && <div className="contacto-error">{error}</div>}
 
-                <button type="submit" className="contacto-submit" disabled={sending}>
+                <button type="submit" className="contacto-submit" disabled={sending || !cfToken}>
                   {sending ? "Enviando..." : "Enviar mensaje"} <span>→</span>
                 </button>
               </form>
@@ -155,7 +188,10 @@ body{background:var(--black)!important;color:var(--cream)!important;font-family:
 .contacto-logo{font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--cream);display:flex;align-items:center;gap:10px;letter-spacing:.02em;text-decoration:none}
 .contacto-back{color:var(--cream-soft);font-size:13px;text-decoration:none;letter-spacing:.04em;transition:.2s}
 .contacto-back:hover{color:var(--amber)}
-.contacto-main{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:100px 20px 60px;position:relative;overflow:hidden}
+.contacto-hero{position:relative;width:100%;height:220px;overflow:hidden;margin-top:0}
+.contacto-hero-img{width:100%;height:100%;object-fit:cover;object-position:center 35%;filter:brightness(.55)}
+.contacto-hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,9,8,.3) 0%,rgba(10,9,8,.95) 85%,var(--black) 100%)}
+.contacto-main{display:flex;align-items:flex-start;justify-content:center;padding:0 20px 60px;position:relative;overflow:hidden;margin-top:-70px;z-index:2}
 .contacto-glow{position:absolute;top:30%;left:50%;transform:translateX(-50%);width:500px;height:500px;background:radial-gradient(circle,rgba(232,163,61,.08),transparent 60%);pointer-events:none}
 .contacto-card{width:min(100%,480px);background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:24px;padding:36px 28px;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.3)}
 .contacto-header{text-align:center;margin-bottom:28px}

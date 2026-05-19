@@ -31,7 +31,7 @@ export default function Footer({ onPlanesClick }: { onPlanesClick?: () => void }
           <a href="/" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Inicio</a>
           <a href="/clientes" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Clientes</a>
           <a href="/planes" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Planes</a>
-          <a href="/contacto" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Contacto</a>
+          <a href="/contacto" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Contáctanos</a>
         </div>
       </div>
     </footer>

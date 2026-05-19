@@ -4,9 +4,26 @@ import { resend } from "@/lib/resend";
 
 const NOTIFY_TO = "favoritez@gmail.com";
 
+const TURNSTILE_SECRET = process.env.TURNSTILE_SECRET_KEY || "0x4AAAAAADSgtZR5ZeWri5oAHTapP1tHRpM";
+
 export async function POST(request: Request) {
   try {
-    const { email, nombre, telefono, mensaje } = await request.json();
+    const { email, nombre, telefono, mensaje, cfToken } = await request.json();
+
+    // Verify Turnstile captcha
+    if (!cfToken) {
+      return NextResponse.json({ error: "Captcha requerido" }, { status: 400 });
+    }
+    const cfRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ secret: TURNSTILE_SECRET, response: cfToken }),
+    });
+    const cfData = await cfRes.json();
+    if (!cfData.success) {
+      return NextResponse.json({ error: "Verificación fallida" }, { status: 403 });
+    }
+
     if (!email || !email.includes("@")) {
       return NextResponse.json({ error: "Email inválido" }, { status: 400 });
     }

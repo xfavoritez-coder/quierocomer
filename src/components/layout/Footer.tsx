@@ -60,7 +60,7 @@ export default function Footer() {
               links: [
                 { label: "Términos y condiciones", href: "/terminos" },
                 { label: "Privacidad",             href: "/privacidad" },
-                { label: "Contacto",               href: "/contacto" },
+                { label: "Contáctanos",            href: "/contacto" },
               ],
             },
           ].map(col => (
