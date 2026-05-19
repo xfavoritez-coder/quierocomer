@@ -417,7 +417,7 @@ function FeaturedSection({
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden",
                     }}>{f.description}</p>
                   )}
-                  <div style={{ fontSize: 19, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.5px" }}>
+                  <div style={{ fontSize: 18, fontWeight: 800, color: "var(--carta-accent)", letterSpacing: "-0.5px" }}>
                     ${(f.discountPrice || f.price)?.toLocaleString("es-CL") ?? ""}
                   </div>
                 </div>
