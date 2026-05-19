@@ -212,7 +212,7 @@ Reglas:
 }
 
 /** Extract menu data based on detected provider */
-async function extractMenu(cartaUrl: string, providerName: string | null): Promise<ExtractionResult> {
+async function extractMenu(cartaUrl: string, providerName: string | null, extractionConfig?: any): Promise<ExtractionResult> {
   // Route to the correct extractor
   switch (providerName) {
     case "Justo":
@@ -226,7 +226,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null): Promi
     case "Gourmedia":
     default:
       // Generic scraper: Jina AI + Claude. Works with any provider.
-      return extractWithScraper(cartaUrl, providerName);
+      return extractWithScraper(cartaUrl, providerName, extractionConfig);
   }
 }
 
@@ -237,7 +237,7 @@ async function extractMenu(cartaUrl: string, providerName: string | null): Promi
 export async function processLead(leadId: string): Promise<{ slug: string; url: string }> {
   const lead = await prisma.lead.findUnique({
     where: { id: leadId },
-    include: { detectedProvider: { select: { name: true } } },
+    include: { detectedProvider: { select: { name: true, extractionConfig: true } } },
   });
 
   if (!lead) throw new Error(`Lead ${leadId} not found`);
@@ -261,11 +261,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
   try {
     const providerName = lead.detectedProvider?.name || null;
+    const providerConfig = (lead.detectedProvider as any)?.extractionConfig || null;
     const isFileUpload = !lead.cartaUrl && !!lead.cartaFileUrl;
     const isDocument = lead.cartaType === "DOCUMENT";
     const extraction = isFileUpload
       ? (isDocument ? await extractFromDocument(lead.cartaFileUrl!) : await extractFromImage(lead.cartaFileUrl!))
-      : await extractMenu(lead.cartaUrl!, providerName);
+      : await extractMenu(lead.cartaUrl!, providerName, providerConfig);
 
     if (extraction.dishes.length === 0) {
       throw new Error("No dishes extracted from the menu");

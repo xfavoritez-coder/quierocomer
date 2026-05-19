@@ -184,20 +184,22 @@ REGLAS: Precios enteros ($8.990→8990). Máximo 5 platos. SOLO JSON.`, 2000, MO
  * Generic scraper: fetches URL (with Jina for SPAs), sends to Claude for extraction.
  * Works with Fudo, Mercat, Gourmedia, and any unknown provider.
  */
-export async function extractWithScraper(cartaUrl: string, providerName?: string | null): Promise<ExtractionResult> {
+export async function extractWithScraper(cartaUrl: string, providerName?: string | null, extractionConfig?: any): Promise<ExtractionResult> {
   const menuUrl = resolveMenuUrl(cartaUrl, providerName);
   const baseUrl = new URL(menuUrl).origin;
-  const needsJina = ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
+  const cfgUseJina = extractionConfig?.useJina === true;
+  const cfgMaxChars = extractionConfig?.maxContentChars || 40000;
+  const needsJina = cfgUseJina || ["Fudo", "Mercat", "Gourmedia", "UberEats", "Queresto"].includes(providerName || "");
 
-  console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "");
+  console.log("[Scraper] Fetching page:", menuUrl, needsJina ? "(Jina forced)" : "", extractionConfig ? `(config: ${JSON.stringify(extractionConfig)})` : "");
   const pageContent = await fetchPage(menuUrl, needsJina);
   console.log("[Scraper] Raw content length:", pageContent.length);
   // If content looks like markdown (from Jina), skip HTML cleaning
   const isMarkdown = pageContent.startsWith("Title:") || pageContent.includes("Markdown Content:") || (pageContent.includes("URL Source:") && !pageContent.includes("<html"));
   const cleaned = isMarkdown ? pageContent : cleanContent(pageContent);
   console.log("[Scraper] Cleaned length:", cleaned.length, isMarkdown ? "(markdown, no cleaning)" : "(HTML cleaned)");
-  const content = cleaned.length > 40000 ? cleaned.slice(0, 40000) : cleaned;
-  console.log("[Scraper] Trimmed to:", content.length, "| Calling Claude...");
+  const content = cleaned.length > cfgMaxChars ? cleaned.slice(0, cfgMaxChars) : cleaned;
+  console.log("[Scraper] Trimmed to:", content.length, `(max: ${cfgMaxChars})`, "| Calling Claude...");
 
   const result = await callClaude(`Analiza esta página de menú de restaurante y extrae toda la información.
 URL: ${cartaUrl}
