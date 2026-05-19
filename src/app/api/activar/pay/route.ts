@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import {
-  createMPCustomer,
-  createMPPreference,
-  createMPSubscription,
-} from "@/lib/billing/mercadopago";
+import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/activar/pay
  * Body: { restaurantId, plan: "GOLD" | "PREMIUM", skipPromo?: boolean }
  *
- * Dos flujos:
- * - Con promo: pago unico del primer mes (Preference) → al completarse,
- *   el return handler crea la suscripcion recurrente desde el dia 30.
- * - Sin promo: suscripcion directa (PreApproval) a precio regular.
+ * Crea una suscripcion en MercadoPago. El usuario registra su tarjeta una vez
+ * y MP cobra automaticamente cada mes.
+ *
+ * - Con promo: primer mes a precio reducido, despues precio regular.
+ * - Sin promo: precio regular desde el inicio.
  */
 export async function POST(req: NextRequest) {
   let body: { restaurantId?: string; plan?: string; skipPromo?: boolean };
@@ -54,39 +51,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Determinar si hay promo para el primer mes
     const promoNet = skipPromo ? null : activationPromoAmount(planKey);
+    const firstAmountGross = promoNet !== null ? grossOf(promoNet) : undefined;
+
+    const subscription = await createMPSubscription({
+      planKey,
+      payerEmail: ownerEmail,
+      externalReference: restaurant.id,
+      backUrl: `${baseUrl}/api/activar/pay/return`,
+      firstAmountGross,
+    });
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
       data: { pendingMpPlanId: planConfig.planId },
     });
 
-    if (promoNet !== null) {
-      // ── Promo: pago unico del primer mes ──
-      const promoGross = grossOf(promoNet);
-      const returnUrl = `${baseUrl}/api/activar/pay/return`;
-
-      const preference = await createMPPreference({
-        title: `${planConfig.name} - Primer mes (promo)`,
-        amountGross: promoGross,
-        externalReference: restaurant.id,
-        payerEmail: ownerEmail,
-        notificationUrl: `${baseUrl}/api/billing/webhook`,
-        backUrls: { success: returnUrl, failure: returnUrl, pending: returnUrl },
-      });
-
-      return NextResponse.json({ url: preference.initPoint || preference.sandboxInitPoint });
-    } else {
-      // ── Sin promo: suscripcion recurrente directa ──
-      const subscription = await createMPSubscription({
-        planKey,
-        payerEmail: ownerEmail,
-        externalReference: restaurant.id,
-        backUrl: `${baseUrl}/api/activar/pay/return`,
-      });
-
-      return NextResponse.json({ url: subscription.initPoint });
-    }
+    return NextResponse.json({ url: subscription.initPoint });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[activar/pay]", msg);

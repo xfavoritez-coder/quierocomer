@@ -162,6 +162,8 @@ export type CreateMPSubscriptionParams = {
   backUrl?: string;
   /** Fecha de inicio de la suscripcion (para diferir el primer cobro) */
   startDate?: Date;
+  /** Monto bruto del primer mes (promo). Si no se provee, cobra regular desde el inicio */
+  firstAmountGross?: number;
 };
 
 export type MPSubscriptionResult = {
@@ -191,23 +193,36 @@ export async function createMPSubscription(
 
   const amountGross = grossOf(planConfig.amountNet);
 
+  const autoRecurring: Record<string, any> = {
+    frequency: 1,
+    frequency_type: "months",
+    transaction_amount: amountGross,
+    currency_id: "CLP",
+  };
+
+  // Primer mes con precio promo: free_trial simula el descuento
+  // MP cobra transaction_amount del free_trial en el primer ciclo,
+  // luego el transaction_amount regular en los siguientes.
+  if (params.firstAmountGross && params.firstAmountGross < amountGross) {
+    autoRecurring.free_trial = {
+      frequency: 1,
+      frequency_type: "months",
+      first_invoice_amount: params.firstAmountGross,
+    };
+  }
+
+  if (params.startDate) {
+    autoRecurring.start_date = params.startDate.toISOString();
+  }
+
   const body: Record<string, any> = {
     reason: planConfig.name,
     payer_email: params.payerEmail,
     external_reference: params.externalReference,
     back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
-    auto_recurring: {
-      frequency: 1,
-      frequency_type: "months",
-      transaction_amount: amountGross,
-      currency_id: "CLP",
-    },
+    auto_recurring: autoRecurring,
     status: "pending",
   };
-
-  if (params.startDate) {
-    body.auto_recurring.start_date = params.startDate.toISOString();
-  }
 
   if (params.cardTokenId) {
     body.card_token_id = params.cardTokenId;
