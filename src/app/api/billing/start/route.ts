@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPCustomer, createMPPreference } from "@/lib/billing/mercadopago";
-import { FLOW_PLANS, grossOf } from "@/lib/billing/plans-config";
+import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
+import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
  * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
  *
- * Crea un pago unico (Preference) en MercadoPago para upgrade de plan.
- * Al completarse, el return handler activa el plan por 30 dias.
+ * Crea una suscripcion recurrente en MercadoPago para upgrade de plan.
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -46,28 +45,19 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const chargeGross = grossOf(planConfig.amountNet);
-    const returnUrl = `${baseUrl}/api/billing/return`;
-
-    const preference = await createMPPreference({
-      title: `${planConfig.name} - Mensualidad`,
-      amountGross: chargeGross,
-      externalReference: restaurant.id,
+    const subscription = await createMPSubscription({
+      planKey: plan,
       payerEmail: owner.email,
-      backUrls: {
-        success: returnUrl,
-        failure: returnUrl,
-        pending: returnUrl,
-      },
+      externalReference: restaurant.id,
+      backUrl: `${baseUrl}/api/billing/return`,
     });
 
     await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { pendingMpPlanId: planConfig.planId },
+      data: { pendingMpPlanId: planConfig.planId, mpSubscriptionId: subscription.id },
     });
 
-    const url = preference.initPoint || preference.sandboxInitPoint;
-    return NextResponse.json({ url });
+    return NextResponse.json({ url: subscription.initPoint });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[billing/start]", msg);
