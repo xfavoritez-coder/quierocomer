@@ -52,7 +52,7 @@ const STEPS: Step[] = [
   {
     icon: "🌍",
     title: "Traduzco tu carta",
-    body: "Escoge cualquier idioma: inglés, español, portugués. Se traduce automáticamente al de tu cliente.",
+    body: "Tradujimos los primeros platos para que lo veas. Al activar, se traduce toda tu carta completa.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -305,9 +305,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   const current = STEPS[Math.min(step, STEPS.length - 1)];
   const stepBody = step === 1
     ? (allPhotosReferential
-      ? "Pusimos fotos referenciales para que veas cómo se vería tu nueva carta."
+      ? "Pusimos fotos referenciales en los primeros platos. Al activar tu carta, se completan todas."
       : hasReferentialPhotos
-        ? "Pusimos algunas fotos referenciales para que veas cómo se vería tu carta nueva."
+        ? "Pusimos algunas fotos referenciales para que veas cómo se vería. Al activar se completan todas."
         : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
     : current.body;
   const isLast = step === STEPS.length - 1;
