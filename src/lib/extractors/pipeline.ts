@@ -459,7 +459,6 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     // Run Unsplash photo fill + translations in parallel (independent: photos→dish.photos, translations→dishTranslation)
     let translationOk = true;
-    let translationPartial = false;
 
     const unsplashTask = (async () => {
       if (!process.env.UNSPLASH_ACCESS_KEY) return;
@@ -495,39 +494,35 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       try {
         const { translateDishBulk, translateCategoryBulk } = await import("@/lib/ai/translateContent");
 
-        const dishData = await prisma.dish.findMany({
+        // Only translate hero dishes (RECOMMENDED) + first 30% of dishes for demo preview
+        // Full translation happens on activation (see /api/activar/trial)
+        const allDishData = await prisma.dish.findMany({
           where: { id: { in: createdDishes.map(d => d.id) } },
-          select: { id: true, name: true, description: true },
+          include: { category: { select: { position: true } } },
+          orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
         });
 
-        const translateAll = async () => {
-          let translated = 0;
-          for (let i = 0; i < dishData.length; i += 12) {
-            const batch = dishData.slice(i, i + 12);
-            translated += await translateDishBulk(batch);
-          }
-          const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } });
-          await translateCategoryBulk(cats);
-          return translated;
-        };
+        // Priority: RECOMMENDED first, then first 30% by category order
+        const recommended = allDishData.filter(d => d.tags?.includes("RECOMMENDED"));
+        const cap = Math.max(10, Math.ceil(allDishData.length * 0.3));
+        const priorityIds = new Set(recommended.map(d => d.id));
+        const remaining = allDishData.filter(d => !priorityIds.has(d.id)).slice(0, cap - recommended.length);
+        const dishData = [...recommended, ...remaining].map(d => ({ id: d.id, name: d.name, description: d.description }));
 
-        const timeoutMs = Math.max(90000, 90000 + (createdDishes.length - 30) * 3000);
-        const result = await Promise.race([
-          translateAll(),
-          new Promise<"timeout">((r) => setTimeout(() => r("timeout"), timeoutMs)),
-        ]);
+        console.log(`[Pipeline] Translating ${dishData.length}/${createdDishes.length} priority dishes for ${restaurant.slug} (${recommended.length} hero + ${remaining.length} first sections)`);
 
-        if (result === "timeout") {
-          console.warn(`[Pipeline] Translation timed out for ${restaurant.slug} (${createdDishes.length} dishes, ${timeoutMs}ms) — marking for backfill`);
+        let translated = 0;
+        for (let i = 0; i < dishData.length; i += 12) {
+          const batch = dishData.slice(i, i + 12);
+          translated += await translateDishBulk(batch);
+        }
+        // Always translate all categories (they're just names, very fast)
+        const cats = await prisma.category.findMany({ where: { restaurantId: restaurant.id }, select: { id: true, name: true } });
+        await translateCategoryBulk(cats);
+
+        console.log(`[Pipeline] Translated ${translated}/${dishData.length} priority dishes for ${restaurant.slug}`);
+        if (translated === 0) {
           translationOk = false;
-        } else if (result < createdDishes.length * 0.5) {
-          console.warn(`[Pipeline] Translation too incomplete for ${restaurant.slug}: ${result}/${createdDishes.length} dishes — marking for backfill`);
-          translationOk = false;
-        } else if (result < createdDishes.length) {
-          console.warn(`[Pipeline] Partial translation for ${restaurant.slug}: ${result}/${createdDishes.length} dishes — good enough, will backfill rest`);
-          translationPartial = true;
-        } else {
-          console.log(`[Pipeline] Translated ${result} dishes for ${restaurant.slug}`);
         }
       } catch (err) {
         console.error(`[Pipeline] Translation failed for ${restaurant.slug}:`, err);
@@ -537,15 +532,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     await Promise.all([unsplashTask, translationTask]);
 
-    // If translation incomplete or failed, flag restaurant for backfill
-    if (!translationOk || translationPartial) {
-      await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
-    }
+    // Always flag for backfill — we only translate ~30% here, full translation on activation
+    await prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: true } }).catch(() => {});
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
-    // Send email with carta link (if translation succeeded or was partial — 50%+ is good enough)
-    if (lead.email && (translationOk || translationPartial)) {
+    // Send email with carta link (priority dishes translated, full backfill on activation)
+    if (lead.email && translationOk) {
       try {
         const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
         const ownerName = lead.ownerName || "Hola";
