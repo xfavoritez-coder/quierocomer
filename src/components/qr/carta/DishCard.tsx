@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import type { Dish } from "@prisma/client";
 import SpicyStamp from "./SpicyStamp";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import { useLang } from "@/contexts/LangContext";
 import { t } from "@/lib/qr/i18n";
 
@@ -43,7 +44,7 @@ function BasicCard({ dish, onClick, averageRating, autoRecommended, recommendati
           <Image src={photo} alt={dish.name} fill className="object-cover" sizes="240px" quality={95} />
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #f5f5f0)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #f5f5f0)))", position: "relative", overflow: "hidden" }}>
-            <span style={{ fontSize: "1.4rem", opacity: 0.35 }}>🍽️</span>
+            <DishPlaceholderIcon size={24} />
             <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 70% 30%, color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent), transparent 60%)" }} />
           </div>
         )}
@@ -142,7 +143,7 @@ function PremiumCard({ dish, onClick, autoRecommended, restaurantName, isPopular
           </>
         ) : (
           <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(145deg, color-mix(in srgb, var(--carta-accent, #F4A623) 12%, var(--carta-surface, #1a1a1a)), color-mix(in srgb, var(--carta-accent, #F4A623) 4%, var(--carta-surface, #1a1a1a)))", position: "relative" }}>
-            <span style={{ fontSize: "2.2rem", opacity: 0.3 }}>🍽️</span>
+            <DishPlaceholderIcon size={36} />
             <div style={{ position: "absolute", inset: 0, background: "radial-gradient(circle at 60% 40%, color-mix(in srgb, var(--carta-accent, #F4A623) 10%, transparent), transparent 60%)" }} />
           </div>
         )}

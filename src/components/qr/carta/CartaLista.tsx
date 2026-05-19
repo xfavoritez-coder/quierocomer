@@ -27,6 +27,7 @@ import type { Restaurant, Category, Dish, RestaurantPromotion } from "@prisma/cl
 import ViewSelector from "./ViewSelector";
 import { groupDishesByCategory, isGeniePick, getDishPhoto } from "./utils/dishHelpers";
 import { trackCartaDishOpenedInList } from "./utils/cartaAnalytics";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 import HeroDish from "./HeroDish";
 import HeroSlim from "./HeroSlim";
 import DishDetail from "./DishDetail";
@@ -752,7 +753,7 @@ function DishListCard({
             <Image src={photo} alt={dish.name} fill className="object-cover" sizes="360px" quality={95} onLoad={() => setImgLoaded(true)} style={{ opacity: imgLoaded ? 1 : 0, transition: "opacity 0.3s ease" }} />
           </>
         ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem" }}>🍽</div>
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}><DishPlaceholderIcon size={28} /></div>
         )}
         {isNew && <span style={{ position: "absolute", top: 6, left: 6, fontSize: "9px", fontWeight: 700, color: "white", background: "var(--carta-accent, #e85530)", padding: "2px 7px", borderRadius: 50, letterSpacing: "0.05em", fontFamily: "var(--font-dm)" }}>NUEVO</span>}
         <SpicyStamp isSpicy={!!(dish as any).isSpicy} size={24} top={6} right={6} />

@@ -103,7 +103,7 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
             style={{
               flex: "0 0 auto", height: 38, padding: "0 14px", borderRadius: 999,
               background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)",
-              color: "#ffb22d", fontSize: 12, fontWeight: 950, letterSpacing: ".8px",
+              color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px",
               cursor: "pointer", display: "flex", alignItems: "center", gap: 5, position: "relative",
             }}
           >

@@ -49,8 +49,7 @@ export default function ModalMesa({ panelActive, onSave, onSaveAndCall, onClose 
 
         {/* Title */}
         <h3
-          className="font-[family-name:var(--font-playfair)]"
-          style={{ fontSize: "1.3rem", fontWeight: 900, color: "white", textAlign: "center", margin: "0 0 6px" }}
+          style={{ fontSize: "1.3rem", fontWeight: 900, color: "white", textAlign: "center", margin: "0 0 6px", fontFamily: "var(--font-dm, inherit)" }}
         >
           ¿En qué mesa estás?
         </h3>

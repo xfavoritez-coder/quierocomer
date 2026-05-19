@@ -8,6 +8,7 @@ import { getGuestId, getSessionId } from "@/lib/guestId";
 import { trackDetailOpen, trackDetailClose, getDbSessionId } from "@/lib/sessionTracker";
 import { useLang } from "@/contexts/LangContext";
 import { getCrossSellDishes } from "./utils/getCrossSellDishes";
+import DishPlaceholderIcon from "./DishPlaceholderIcon";
 
 interface PersonalizationEntry {
   score: number;
@@ -338,7 +339,7 @@ function DishSlide({
       <div ref={photoRef} style={{ position: "relative", width: "100%", height: photos.length > 0 ? "min(55vh, 420px)" : "26vh", overflow: "hidden", zIndex: 0 }}>
         {photos.length === 0 && (
           <div style={{ width: "100%", height: "100%", background: "var(--carta-img-placeholder)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <span style={{ fontSize: "3rem", opacity: 0.2 }}>🍽</span>
+            <DishPlaceholderIcon size={48} />
           </div>
         )}
         {photos.length > 0 && (
