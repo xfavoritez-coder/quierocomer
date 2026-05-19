@@ -52,7 +52,7 @@ const STEPS: Step[] = [
   {
     icon: "🌍",
     title: "Traduzco tu carta",
-    body: "Tradujimos los primeros platos para que lo veas. Al activar, se traduce toda tu carta completa.",
+    body: "Tradujimos los primeros platos para que lo veas. Al activar, se traduce tu carta completa.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
