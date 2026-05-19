@@ -1209,7 +1209,7 @@ export default function CartaImpact({
       )}
 
       {/* Hero */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: 72 }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: 65 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}
