@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
         where: { id: restaurantId },
         select: {
           id: true, name: true, plan: true,
-          flowCustomerId: true, flowSubscriptionId: true, flowPlanId: true,
+          mpCustomerId: true, mpSubscriptionId: true, mpPlanId: true,
           subscriptionStatus: true, trialEndsAt: true, currentPeriodEnd: true, lastPaymentAt: true,
           billingExempt: true,
           billingCompanyName: true,
@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   const restaurant = owner?.restaurants[0];
   if (!restaurant) return NextResponse.json({ error: "No encontrado" }, { status: 404 });
 
-  const flowPlan = restaurant.flowPlanId ? planFromFlowId(restaurant.flowPlanId) : null;
+  const activePlan = restaurant.mpPlanId ? planFromFlowId(restaurant.mpPlanId) : null;
 
   // Adjuntar desglose neto/IVA/bruto a cada plan disponible
   const plansWithIva = Object.fromEntries(
@@ -76,8 +76,9 @@ export async function GET(req: NextRequest) {
     trialEndsAt: restaurant.trialEndsAt,
     currentPeriodEnd: restaurant.currentPeriodEnd,
     lastPaymentAt: restaurant.lastPaymentAt,
-    hasSubscription: !!restaurant.flowSubscriptionId,
-    activeFlowPlan: flowPlan,
+    hasSubscription: !!restaurant.mpSubscriptionId,
+    activePlan,
+    activeFlowPlan: activePlan, // backward-compat con panel pages
     billingExempt: restaurant.billingExempt,
     plans: plansWithIva,
     ivaRate: IVA_RATE,

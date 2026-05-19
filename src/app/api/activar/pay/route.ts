@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
-import { FLOW_PLANS } from "@/lib/billing/plans-config";
+import {
+  createMPCustomer,
+  createMPPreference,
+  createMPSubscription,
+  createMPPlan,
+} from "@/lib/billing/mercadopago";
+import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/activar/pay
  * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
  *
- * Inicia el registro de tarjeta en Flow para un restaurant demo.
- * No requiere autenticación — solo funciona para restaurants con isDemo: true.
+ * Inicia el pago de activacion via MercadoPago para un restaurant demo.
+ *
+ * - Si hay promo (ej: PREMIUM primer mes a $4.900+IVA), crea una Preference
+ *   de pago unico. Al completarse, el return handler crea la suscripcion.
+ * - Si no hay promo (ej: GOLD), crea directamente una suscripcion (PreApproval)
+ *   que cobra el precio regular desde el primer mes.
+ *
+ * No requiere autenticacion — solo funciona para restaurants con isDemo: true.
  */
 export async function POST(req: NextRequest) {
   let body: { restaurantId?: string; plan?: string };
@@ -21,7 +32,7 @@ export async function POST(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    include: { owner: { select: { email: true } } },
+    include: { owner: { select: { email: true, name: true } } },
   });
 
   if (!restaurant || !restaurant.isDemo) {
@@ -33,60 +44,74 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No hay email del dueño. Contacta soporte." }, { status: 400 });
   }
 
-  const planConfig = FLOW_PLANS[plan as "GOLD" | "PREMIUM"];
+  const planKey = plan as "GOLD" | "PREMIUM";
+  const planConfig = FLOW_PLANS[planKey];
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
   try {
-    // Crear o encontrar customer en Flow
-    let flowCustomerId = restaurant.flowCustomerId;
-    if (!flowCustomerId) {
-      try {
-        const customer = await flowPost<{ customerId: string }>("/customer/create", {
-          name: restaurant.name,
-          email: ownerEmail,
-          externalId: restaurant.id,
-        });
-        flowCustomerId = customer.customerId;
-      } catch (createErr: any) {
-        if (!createErr?.message?.includes("There is a customer with this externalId")) throw createErr;
-        const list = await flowPost<{ data: Array<{ customerId: string; externalId: string }> }>(
-          "/customer/list",
-          { filter: ownerEmail, limit: 100 },
-        );
-        const found = list.data?.find((c) => c.externalId === restaurant.id);
-        if (!found) throw createErr;
-        flowCustomerId = found.customerId;
-      }
+    // Crear o encontrar customer en MercadoPago
+    let mpCustomerId = restaurant.mpCustomerId;
+    if (!mpCustomerId) {
+      const customer = await createMPCustomer(
+        ownerEmail,
+        restaurant.owner?.name || restaurant.name,
+      );
+      mpCustomerId = customer.id;
       await prisma.restaurant.update({
         where: { id: restaurant.id },
-        data: { flowCustomerId },
+        data: { mpCustomerId },
       });
     }
 
-    // Registrar tarjeta
-    const register = await flowPost<{ url: string; token: string }>("/customer/register", {
-      customerId: flowCustomerId,
-      url_return: `${baseUrl}/api/activar/pay/return`,
-    });
+    const promoNet = activationPromoAmount(planKey);
 
-    await prisma.restaurant.update({
-      where: { id: restaurant.id },
-      data: {
-        flowRegisterToken: register.token,
-        pendingFlowPlanId: planConfig.planId,
-      },
-    });
+    if (promoNet !== null) {
+      // ── Promo: pago unico del primer mes a precio reducido ──
+      const promoGross = grossOf(promoNet);
 
-    return NextResponse.json({ url: `${register.url}?token=${register.token}` });
+      const returnUrl = `${baseUrl}/api/activar/pay/return`;
+      const preference = await createMPPreference({
+        title: `${planConfig.name} - Primer mes (promo)`,
+        amountGross: promoGross,
+        externalReference: restaurant.id,
+        payerEmail: ownerEmail,
+        notificationUrl: `${baseUrl}/api/activar/pay/webhook`,
+        backUrls: {
+          success: returnUrl,
+          failure: returnUrl,
+          pending: returnUrl,
+        },
+      });
+
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: { pendingMpPlanId: planConfig.planId },
+      });
+
+      return NextResponse.json({ url: preference.initPoint });
+    } else {
+      // ── Sin promo: crear suscripcion directa a precio regular ──
+      // Primero aseguramos que exista un PreApprovalPlan en MP
+      const mpPlan = await createMPPlan(planKey);
+
+      const subscription = await createMPSubscription({
+        planId: mpPlan.id,
+        payerEmail: ownerEmail,
+        externalReference: restaurant.id,
+        backUrl: `${baseUrl}/api/activar/pay/return`,
+      });
+
+      await prisma.restaurant.update({
+        where: { id: restaurant.id },
+        data: { pendingMpPlanId: planConfig.planId },
+      });
+
+      // El init_point de la suscripcion lleva al usuario a MP para pagar
+      return NextResponse.json({ url: subscription.initPoint });
+    }
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
-    let userMessage = msg;
-    if (msg.includes("automatic charge contract")) {
-      userMessage = "Servicio de Cargo Automático no habilitado en Flow.";
-    } else if (err?.code === 7001) {
-      userMessage = "Servicio de Flow no disponible.";
-    }
     console.error("[activar/pay]", msg);
-    return NextResponse.json({ error: userMessage }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

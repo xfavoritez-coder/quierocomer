@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   const restaurant = await prisma.restaurant.findUnique({
     where: { id: restaurantId },
-    select: { id: true, isDemo: true, slug: true, name: true, owner: { select: { email: true } } },
+    select: { id: true, isDemo: true, slug: true, name: true, owner: { select: { email: true, name: true } } },
   });
 
   if (!restaurant || !restaurant.isDemo) {
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
 
   // Fire-and-forget: emails de notificación
   const ownerEmail = restaurant.owner?.email;
-  const ownerName = ownerEmail?.split("@")[0] || "Hola";
+  const ownerName = restaurant.owner?.name || ownerEmail?.split("@")[0] || "Hola";
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
   const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
   const qrLink = `${baseUrl}/qr/${restaurant.slug}`;

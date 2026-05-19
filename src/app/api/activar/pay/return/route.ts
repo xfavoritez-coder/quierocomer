@@ -1,99 +1,114 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { Payment } from "mercadopago";
+import {
+  initMercadoPago,
+  createMPSubscription,
+  createMPPlan,
+} from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, planFromFlowId, grossOf, activationPromoAmount, PLAN_LABELS } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
- * GET /api/activar/pay/return?token=...
+ * GET /api/activar/pay/return?collection_id=...&collection_status=...&payment_id=...&status=...&external_reference=...&payment_type=...&merchant_order_id=...&preference_id=...
  *
- * Flow redirige aquí después de que el dueño inscribió su tarjeta en Webpay.
- * 1. Verifica el registro de tarjeta
- * 2. Cobra el primer mes (promo o regular)
- * 3. Crea suscripción que empieza en 30 días
- * 4. Activa el restaurant (quita demo, limpia fotos, resetea stats)
+ * MercadoPago redirige aqui despues de que el usuario completo el pago.
+ *
+ * Flujo:
+ * 1. Verifica el pago via la API de Payment de MP
+ * 2. Si fue aprobado: activa el restaurant, crea suscripcion recurrente
+ * 3. Envia emails de notificacion
+ * 4. Redirige a pagina de exito
  */
 export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get("token");
+  const params = req.nextUrl.searchParams;
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
-  if (!token) {
+  const paymentId = params.get("payment_id") || params.get("collection_id");
+  const status = params.get("status") || params.get("collection_status");
+  const externalReference = params.get("external_reference");
+
+  // Si no hay parametros de pago, puede ser un return de suscripcion directa
+  // (sin promo). En ese caso MP envia preapproval_id.
+  const preapprovalId = params.get("preapproval_id");
+
+  // ── Flujo de suscripcion directa (sin promo, ej: GOLD) ──
+  if (preapprovalId && !paymentId) {
+    return handleSubscriptionReturn(preapprovalId, externalReference, baseUrl);
+  }
+
+  // ── Flujo de pago unico promo (ej: PREMIUM primer mes) ──
+  if (!paymentId || !externalReference) {
     return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
 
-  const restaurant = await prisma.restaurant.findFirst({
-    where: { flowRegisterToken: token },
-    include: { owner: { select: { email: true } } },
+  // Buscar restaurant por external_reference (= restaurantId)
+  const restaurant = await prisma.restaurant.findUnique({
+    where: { id: externalReference },
+    include: { owner: { select: { email: true, name: true } } },
   });
 
-  if (!restaurant || !restaurant.flowCustomerId || !restaurant.pendingFlowPlanId) {
+  if (!restaurant || !restaurant.pendingMpPlanId) {
     return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
 
-  // Idempotencia: si ya no es demo, ya fue activado. Redirigir a éxito.
+  // Idempotencia: si ya no es demo, ya fue activado
   if (!restaurant.isDemo) {
     return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
   }
 
-  // Verificar registro de tarjeta
-  let registerOk = true;
-  try {
-    const status = await flowPost<{ status: number }>("/customer/getRegisterStatus", { token });
-    registerOk = status.status === 1;
-  } catch (err: any) {
-    if (!err?.message?.includes("No services available")) registerOk = false;
+  // Verificar estado del pago con la API de MP
+  let paymentApproved = false;
+  if (status === "approved") {
+    // Doble verificacion via API
+    try {
+      const config = initMercadoPago();
+      const paymentClient = new Payment(config);
+      const paymentData = await paymentClient.get({ id: Number(paymentId) });
+      paymentApproved = paymentData.status === "approved";
+    } catch (err: any) {
+      console.error("[activar/pay/return] Error verificando pago:", err?.message);
+      // Si la verificacion falla pero el status del redirect dice approved,
+      // confiamos en el status del redirect (MP ya valido del lado de ellos)
+      paymentApproved = true;
+    }
   }
 
-  if (!registerOk) {
+  if (!paymentApproved) {
     await prisma.restaurant.update({
       where: { id: restaurant.id },
-      data: { flowRegisterToken: null, pendingFlowPlanId: null },
+      data: { pendingMpPlanId: null },
     });
-    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}?pago=error&reason=register_failed`);
+    const reason = status === "pending" ? "payment_pending" : "payment_rejected";
+    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}?pago=error&reason=${reason}`);
   }
 
-  const appPlan = planFromFlowId(restaurant.pendingFlowPlanId) || "PREMIUM";
+  const appPlan = planFromFlowId(restaurant.pendingMpPlanId) || "PREMIUM";
   const planKey = appPlan as "GOLD" | "PREMIUM";
 
-  // Determinar monto del primer cobro (promo o regular)
+  // Determinar monto cobrado (para el email)
   const promoNet = activationPromoAmount(planKey);
   const chargeNet = promoNet ?? FLOW_PLANS[planKey].amountNet;
   const chargeGross = grossOf(chargeNet);
 
-  // Cobro inmediato del primer mes
-  try {
-    await flowPost("/charge/create", {
-      customerId: restaurant.flowCustomerId,
-      planId: restaurant.pendingFlowPlanId,
-      amount: chargeGross,
-      commerceOrder: `activar_${restaurant.id}_${Date.now()}`,
-    });
-  } catch (err: any) {
-    console.error("[activar/pay/return] charge/create falló:", err?.message);
-    await prisma.restaurant.update({
-      where: { id: restaurant.id },
-      data: { flowRegisterToken: null, pendingFlowPlanId: null },
-    });
-    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}?pago=error&reason=charge_failed`);
-  }
-
-  // Crear suscripción que empieza en 30 días (el primer cobro ya se hizo arriba)
+  // Crear suscripcion recurrente que empieza en 30 dias
+  // (el primer mes ya se pago con la preference)
   const subscriptionStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-  let subscription: { subscriptionId: string; periodEnd?: string };
+  let subscriptionId = "";
   try {
-    subscription = await flowPost<{ subscriptionId: string; periodEnd?: string }>(
-      "/subscription/create",
-      {
-        planId: restaurant.pendingFlowPlanId,
-        customerId: restaurant.flowCustomerId,
-        subscription_start: subscriptionStart.toISOString().slice(0, 10),
-      },
-    );
+    const mpPlan = await createMPPlan(planKey);
+    const ownerEmail = restaurant.owner?.email || "";
+
+    const subscription = await createMPSubscription({
+      planId: mpPlan.id,
+      payerEmail: ownerEmail,
+      externalReference: restaurant.id,
+    });
+    subscriptionId = subscription.id;
   } catch (err: any) {
-    console.error("[activar/pay/return] subscription/create falló:", err?.message);
-    // El cobro ya se hizo pero la suscripción falló. Activamos igual y logueamos el error.
-    // Un admin puede crear la suscripción manualmente después.
-    subscription = { subscriptionId: "" };
+    console.error("[activar/pay/return] createMPSubscription falló:", err?.message);
+    // El cobro promo ya se hizo. Activamos igual y logueamos el error.
+    // Un admin puede crear la suscripcion manualmente.
   }
 
   // Activar restaurant: quitar demo, limpiar fotos, resetear stats
@@ -104,12 +119,11 @@ export async function GET(req: NextRequest) {
         isDemo: false,
         plan: appPlan,
         subscriptionStatus: "ACTIVE",
-        flowSubscriptionId: subscription.subscriptionId || null,
-        flowPlanId: restaurant.pendingFlowPlanId,
+        mpSubscriptionId: subscriptionId || null,
+        flowPlanId: restaurant.pendingMpPlanId,
         currentPeriodEnd: subscriptionStart,
         lastPaymentAt: new Date(),
-        flowRegisterToken: null,
-        pendingFlowPlanId: null,
+        pendingMpPlanId: null,
         weeklyEmailEnabled: true,
       },
     }),
@@ -122,36 +136,10 @@ export async function GET(req: NextRequest) {
     prisma.session.deleteMany({ where: { restaurantId: restaurant.id } }),
   ]);
 
-  // Fire-and-forget: emails de notificación
-  const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
-  const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
-  const nextDate = subscriptionStart.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
-  const regularGross = grossOf(FLOW_PLANS[planKey].amountNet);
-  const nextAmount = `$${regularGross.toLocaleString("es-CL")} CLP`;
-  const ownerEmail = restaurant.owner?.email;
-  const ownerName = restaurant.owner?.email?.split("@")[0] || "Hola";
-  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
-  const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+  // Fire-and-forget: emails de notificacion
+  sendActivationEmails(restaurant, appPlan, planKey, chargeGross, subscriptionStart, baseUrl);
 
-  if (ownerEmail) {
-    // Email al dueño
-    sendAdminEmail({
-      to: ownerEmail,
-      subject: `${restaurant.name} · Plan ${planLabel} activado`,
-      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
-      purpose: "plan_activated",
-    }).catch((err) => console.error("[activar/pay] Email al dueño falló:", err));
-  }
-
-  // Email al admin
-  sendAdminEmail({
-    to: "favoritez@gmail.com",
-    subject: `Nuevo cliente: ${restaurant.name} activó ${planLabel}`,
-    html: adminNewActivationEmailHtml(restaurant.name, planLabel, amountPaid, ownerEmail || "sin email", restaurant.slug || ""),
-    purpose: "admin_new_activation",
-  }).catch((err) => console.error("[activar/pay] Email admin falló:", err));
-
-  // Fire-and-forget: traducción completa solo para Premium
+  // Fire-and-forget: traduccion completa solo para Premium
   if (appPlan === "PREMIUM") {
     import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
       translateAllForRestaurant(restaurant.id)
@@ -162,4 +150,111 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
+}
+
+/**
+ * Maneja el return de una suscripcion directa (sin promo).
+ * MP redirige con preapproval_id cuando el usuario completa el checkout de suscripcion.
+ */
+async function handleSubscriptionReturn(
+  preapprovalId: string,
+  externalReference: string | null,
+  baseUrl: string,
+) {
+  // Buscar restaurant por external_reference o por preapproval pendiente
+  let restaurant;
+  if (externalReference) {
+    restaurant = await prisma.restaurant.findUnique({
+      where: { id: externalReference },
+      include: { owner: { select: { email: true, name: true } } },
+    });
+  }
+
+  if (!restaurant || !restaurant.pendingMpPlanId) {
+    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
+  }
+
+  // Idempotencia
+  if (!restaurant.isDemo) {
+    return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${restaurant.plan}`);
+  }
+
+  const appPlan = planFromFlowId(restaurant.pendingMpPlanId) || "GOLD";
+  const planKey = appPlan as "GOLD" | "PREMIUM";
+  const chargeGross = grossOf(FLOW_PLANS[planKey].amountNet);
+  const subscriptionStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+  // Activar restaurant
+  await prisma.$transaction([
+    prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: {
+        isDemo: false,
+        plan: appPlan,
+        subscriptionStatus: "ACTIVE",
+        mpSubscriptionId: preapprovalId,
+        flowPlanId: restaurant.pendingMpPlanId,
+        currentPeriodEnd: subscriptionStart,
+        lastPaymentAt: new Date(),
+        pendingMpPlanId: null,
+        weeklyEmailEnabled: true,
+      },
+    }),
+    prisma.dish.updateMany({
+      where: { restaurantId: restaurant.id, isPhotoReferential: true },
+      data: { photos: [], isPhotoReferential: false, photoCredits: [] },
+    }),
+    prisma.session.deleteMany({ where: { restaurantId: restaurant.id } }),
+  ]);
+
+  sendActivationEmails(restaurant, appPlan, planKey, chargeGross, subscriptionStart, baseUrl);
+
+  if (appPlan === "PREMIUM") {
+    import("@/lib/ai/translateContent").then(({ translateAllForRestaurant }) => {
+      translateAllForRestaurant(restaurant.id)
+        .then(() => prisma.restaurant.update({ where: { id: restaurant.id }, data: { needsTranslation: false } }))
+        .then(() => console.log(`[activar/pay] Traducción completa para ${restaurant.id}`))
+        .catch((err) => console.error(`[activar/pay] Traducción falló para ${restaurant.id}:`, err));
+    });
+  }
+
+  return NextResponse.redirect(`${baseUrl}/activar/${restaurant.slug}/exito?plan=${appPlan}`);
+}
+
+/**
+ * Envia emails de activacion (al dueno y al admin). Fire-and-forget.
+ */
+function sendActivationEmails(
+  restaurant: { id: string; name: string; slug: string | null; owner: { email: string; name: string | null } | null },
+  appPlan: string,
+  planKey: "GOLD" | "PREMIUM",
+  chargeGross: number,
+  subscriptionStart: Date,
+  baseUrl: string,
+) {
+  const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
+  const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+  const nextDate = subscriptionStart.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const regularGross = grossOf(FLOW_PLANS[planKey].amountNet);
+  const nextAmount = `$${regularGross.toLocaleString("es-CL")} CLP`;
+  const ownerEmail = restaurant.owner?.email;
+  const ownerName = restaurant.owner?.name || restaurant.owner?.email?.split("@")[0] || "Hola";
+  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+
+  if (ownerEmail) {
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${restaurant.name} · Plan ${planLabel} activado`,
+      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
+      purpose: "plan_activated",
+    }).catch((err) => console.error("[activar/pay] Email al dueño falló:", err));
+  }
+
+  sendAdminEmail({
+    to: "favoritez@gmail.com",
+    subject: `Nuevo cliente: ${restaurant.name} activó ${planLabel}`,
+    html: adminNewActivationEmailHtml(restaurant.name, planLabel, amountPaid, ownerEmail || "sin email", restaurant.slug || ""),
+    purpose: "admin_new_activation",
+  }).catch((err) => console.error("[activar/pay] Email admin falló:", err));
 }

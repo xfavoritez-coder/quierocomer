@@ -471,6 +471,13 @@ model Restaurant {
   flowPlanId           String?            // identificador del plan en Flow (varía por tier)
   pendingFlowPlanId    String?            // plan al que se está inscribiendo (durante el flujo de tarjeta)
   flowRegisterToken    String?            // token de /customer/register en curso
+
+  // Billing (MercadoPago)
+  mpCustomerId         String?            @unique  // MercadoPago customer ID
+  mpSubscriptionId     String?            @unique  // Active subscription/preapproval ID
+  mpPlanId             String?            // MercadoPago plan ID
+  pendingMpPlanId      String?            // Plan being activated
+
   subscriptionStatus   SubscriptionStatus @default(NONE)
   trialEndsAt          DateTime?
   trialReminderSentAt  DateTime?  // marca cuando se envio el email de "te quedan 2 dias", para no mandar duplicados

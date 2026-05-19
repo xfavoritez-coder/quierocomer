@@ -1,71 +1,84 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { getMPSubscription } from "@/lib/billing/mercadopago";
 import type { SubscriptionStatus } from "@prisma/client";
 
 /**
  * POST /api/billing/webhook
  *
- * Flow notifica eventos de subscription/payment a esta URL. La firma viene
- * en el body como `s`, pero los webhooks de Flow generalmente solo mandan
- * un identificador (token o subscriptionId) y hay que ir a consultar el
- * detalle a la API. Hacemos eso para asegurarnos del estado actual.
+ * MercadoPago envia notificaciones de eventos de suscripcion a esta URL.
+ * El payload es JSON con { type, action, data: { id } }.
  *
- * Notas:
- * - Flow puede mandar webhooks de varios eventos: pago exitoso, fallido,
- *   suscripcion cancelada, tarjeta vencida.
- * - El payload no es estable entre eventos, asi que consultamos el estado
- *   real en vez de confiar en el payload.
+ * Tipos relevantes:
+ * - "subscription_preapproval": cambios en el estado de la suscripcion
+ *
+ * Siempre consultamos el estado real en la API de MP para no confiar
+ * solo en el payload del webhook.
  */
 export async function POST(req: NextRequest) {
-  let formData: FormData;
-  try { formData = await req.formData(); } catch {
+  let payload: { type?: string; action?: string; data?: { id?: string } };
+  try { payload = await req.json(); } catch {
     return NextResponse.json({ ok: false, error: "Body invalido" }, { status: 400 });
   }
 
-  const token = (formData.get("token") as string | null) || null;
-  const subscriptionId = (formData.get("subscriptionId") as string | null) || null;
+  const { type, data } = payload;
 
-  if (!token && !subscriptionId) {
+  // Solo procesamos eventos de suscripcion (preapproval)
+  if (type !== "subscription_preapproval" || !data?.id) {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
-  let flowSubId = subscriptionId;
-  if (!flowSubId && token) {
-    try {
-      const status = await flowPost<{ subscriptionMeId?: string }>("/customer/getRegisterStatus", { token });
-      flowSubId = status.subscriptionMeId || null;
-    } catch {/* sigue */}
+  const subscriptionId = data.id;
+
+  // Consultar estado real en MercadoPago
+  let mpSub;
+  try {
+    mpSub = await getMPSubscription(subscriptionId);
+  } catch (err: any) {
+    console.error("[billing/webhook] getMPSubscription fallo:", err?.message);
+    // Retornamos 200 para que MP no reintente indefinidamente
+    return NextResponse.json({ ok: true, error: "fetch_failed" });
   }
-  if (!flowSubId) return NextResponse.json({ ok: true, ignored: true });
 
-  const sub = await flowPost<{
-    subscriptionId: string;
-    status: number;
-    morose: number;
-    next_invoice_date?: string;
-    last_payment_date?: string;
-    cancel_at_period_end?: number;
-  }>("/subscription/get", { subscriptionId: flowSubId });
+  const restaurant = await prisma.restaurant.findFirst({
+    where: { mpSubscriptionId: subscriptionId },
+  });
+  if (!restaurant) {
+    // Podria ser una suscripcion que aun no se asocio (pendiente en /return)
+    return NextResponse.json({ ok: true, ignored: true });
+  }
 
-  const restaurant = await prisma.restaurant.findFirst({ where: { flowSubscriptionId: flowSubId } });
-  if (!restaurant) return NextResponse.json({ ok: true, ignored: true });
-
-  // Mapeo de status Flow:
-  //   0 = inactiva, 1 = activa, 2 = en periodo de prueba, 4 = cancelada
-  // morose: 1 = en mora
-  let appStatus: SubscriptionStatus = "ACTIVE";
-  if (sub.status === 4) appStatus = "CANCELED";
-  else if (sub.status === 2) appStatus = "TRIALING";
-  else if (sub.status === 0) appStatus = "UNPAID";
-  if (sub.morose === 1 && appStatus === "ACTIVE") appStatus = "PAST_DUE";
+  // Mapeo de status MercadoPago → SubscriptionStatus de la app:
+  //   authorized → ACTIVE
+  //   paused     → PAST_DUE
+  //   cancelled  → CANCELED
+  //   pending    → TRIALING
+  let appStatus: SubscriptionStatus;
+  switch (mpSub.status) {
+    case "authorized":
+      appStatus = "ACTIVE";
+      break;
+    case "paused":
+      appStatus = "PAST_DUE";
+      break;
+    case "cancelled":
+      appStatus = "CANCELED";
+      break;
+    case "pending":
+      appStatus = "TRIALING";
+      break;
+    default:
+      appStatus = "UNPAID";
+      break;
+  }
 
   await prisma.restaurant.update({
     where: { id: restaurant.id },
     data: {
       subscriptionStatus: appStatus,
-      currentPeriodEnd: sub.next_invoice_date ? new Date(sub.next_invoice_date) : restaurant.currentPeriodEnd,
-      lastPaymentAt: sub.last_payment_date ? new Date(sub.last_payment_date) : restaurant.lastPaymentAt,
+      currentPeriodEnd: mpSub.nextPaymentDate
+        ? new Date(mpSub.nextPaymentDate)
+        : restaurant.currentPeriodEnd,
     },
   });
 

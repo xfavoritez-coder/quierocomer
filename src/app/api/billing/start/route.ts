@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { createMPCustomer, createMPPlan, createMPSubscription } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
  * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
  *
- * Si el restaurant no tiene flowCustomerId aun, crea el customer en Flow.
- * Luego inicia el registro de tarjeta y devuelve la URL para redirigir
- * al comerciante a Webpay para inscribir su tarjeta.
+ * Crea un plan y suscripcion en MercadoPago con trial de 14 dias.
+ * Devuelve la URL (init_point) para redirigir al comerciante a completar
+ * la inscripcion de su tarjeta en MercadoPago.
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -39,59 +39,44 @@ export async function POST(req: NextRequest) {
   // los completen para emitir la factura electronica.
 
   const planConfig = FLOW_PLANS[plan];
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
   try {
-    let flowCustomerId = restaurant.flowCustomerId;
-    if (!flowCustomerId) {
-      try {
-        const customer = await flowPost<{ customerId: string }>("/customer/create", {
-          name: restaurant.name,
-          email: owner.email,
-          externalId: restaurant.id,
-        });
-        flowCustomerId = customer.customerId;
-      } catch (createErr: any) {
-        // Si Flow dice que ya existe, lo buscamos via /customer/list filtrando por email
-        if (!createErr?.message?.includes("There is a customer with this externalId")) throw createErr;
-        const list = await flowPost<{ data: Array<{ customerId: string; externalId: string }> }>(
-          "/customer/list",
-          { filter: owner.email, limit: 100 }
-        );
-        const found = list.data?.find((c) => c.externalId === restaurant.id);
-        if (!found) throw createErr;
-        flowCustomerId = found.customerId;
-      }
-      // Guardamos inmediatamente para no perderlo si el siguiente paso falla
+    // 1. Asegurar que existe un customer en MercadoPago
+    let mpCustomerId = restaurant.mpCustomerId;
+    if (!mpCustomerId) {
+      const customer = await createMPCustomer(owner.email, restaurant.name);
+      mpCustomerId = customer.id;
       await prisma.restaurant.update({
         where: { id: restaurant.id },
-        data: { flowCustomerId },
+        data: { mpCustomerId },
       });
     }
 
-    const register = await flowPost<{ url: string; token: string }>("/customer/register", {
-      customerId: flowCustomerId,
-      url_return: `${baseUrl}/api/billing/return`,
+    // 2. Crear el plan (PreApprovalPlan) en MercadoPago.
+    //    Cada suscripcion individual se crea con su propio plan para
+    //    mantener trazabilidad. El trial viene configurado en createMPPlan.
+    const mpPlan = await createMPPlan(plan);
+
+    // 3. Crear la suscripcion (PreApproval) asociada al plan
+    const subscription = await createMPSubscription({
+      planId: mpPlan.id,
+      payerEmail: owner.email,
+      externalReference: restaurant.id,
     });
 
+    // 4. Guardar estado pendiente en DB
     await prisma.restaurant.update({
       where: { id: restaurant.id },
       data: {
-        flowRegisterToken: register.token,
-        pendingFlowPlanId: planConfig.planId,
+        pendingMpPlanId: planConfig.planId,
+        mpSubscriptionId: subscription.id,
       },
     });
 
-    return NextResponse.json({ url: `${register.url}?token=${register.token}` });
+    return NextResponse.json({ url: subscription.initPoint });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
-    let userMessage = msg;
-    if (msg.includes("automatic charge contract")) {
-      userMessage = "Falta activar el servicio Cargo Automatico en Flow. Reintenta en unos minutos despues de activarlo.";
-    } else if (err?.code === 7001) {
-      userMessage = "Servicio de Flow no disponible. Verifica la configuracion en el dashboard de Flow.";
-    }
     console.error("[billing/start]", msg);
-    return NextResponse.json({ error: userMessage }, { status: 500 });
+    return NextResponse.json({ error: msg }, { status: 500 });
   }
 }

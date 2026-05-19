@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { flowPost } from "@/lib/billing/flow";
+import { cancelMPSubscription } from "@/lib/billing/mercadopago";
 
 /**
  * POST /api/billing/cancel
  * Body: { restaurantId, atPeriodEnd?: boolean }
  *
- * Por defecto cancela al final del periodo (atPeriodEnd=true), asi el cliente
- * sigue accediendo hasta que vence el mes que ya pago.
+ * Cancela la suscripcion en MercadoPago. El cliente sigue accediendo
+ * hasta que vence el periodo actual (currentPeriodEnd).
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -23,14 +23,11 @@ export async function POST(req: NextRequest) {
     include: { restaurants: { where: { id: restaurantId }, take: 1 } },
   });
   const restaurant = owner?.restaurants[0];
-  if (!restaurant || !restaurant.flowSubscriptionId) {
+  if (!restaurant || !restaurant.mpSubscriptionId) {
     return NextResponse.json({ error: "Sin suscripcion activa" }, { status: 404 });
   }
 
-  await flowPost("/subscription/cancel", {
-    subscriptionId: restaurant.flowSubscriptionId,
-    at_period_end: atPeriodEnd ? 1 : 0,
-  });
+  await cancelMPSubscription(restaurant.mpSubscriptionId);
 
   await prisma.restaurant.update({
     where: { id: restaurant.id },
