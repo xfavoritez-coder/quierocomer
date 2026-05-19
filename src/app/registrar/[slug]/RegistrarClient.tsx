@@ -139,7 +139,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
         {/* Hero text — full width */}
         <section className="rg-hero">
-          <h1>Tu nueva carta <span>ya está casi lista.</span></h1>
+          <h1>Estás a un paso de tener tu nueva <span>carta QR.</span></h1>
           <p>
             Actívala ahora y empieza a recibir en <strong>{restaurant.name}</strong> más clientes con una carta digital profesional.
           </p>

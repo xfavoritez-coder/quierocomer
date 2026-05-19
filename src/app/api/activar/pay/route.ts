@@ -49,18 +49,22 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
   try {
-    // Crear o encontrar customer en MercadoPago
+    // Crear o encontrar customer en MercadoPago (opcional, no bloquea el flujo)
     let mpCustomerId = restaurant.mpCustomerId;
     if (!mpCustomerId) {
-      const customer = await createMPCustomer(
-        ownerEmail,
-        restaurant.owner?.name || restaurant.name,
-      );
-      mpCustomerId = customer.id;
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: { mpCustomerId },
-      });
+      try {
+        const customer = await createMPCustomer(
+          ownerEmail,
+          restaurant.owner?.name || restaurant.name,
+        );
+        mpCustomerId = customer.id;
+        await prisma.restaurant.update({
+          where: { id: restaurant.id },
+          data: { mpCustomerId },
+        });
+      } catch (err: any) {
+        console.warn("[activar/pay] createMPCustomer falló (no bloquea):", err?.message);
+      }
     }
 
     const promoNet = activationPromoAmount(planKey);
@@ -88,7 +92,9 @@ export async function POST(req: NextRequest) {
         data: { pendingMpPlanId: planConfig.planId },
       });
 
-      return NextResponse.json({ url: preference.initPoint });
+      // En sandbox usar sandboxInitPoint, en producción initPoint
+      const url = preference.sandboxInitPoint || preference.initPoint;
+      return NextResponse.json({ url });
     } else {
       // ── Sin promo: crear suscripcion directa a precio regular ──
       // Primero aseguramos que exista un PreApprovalPlan en MP
