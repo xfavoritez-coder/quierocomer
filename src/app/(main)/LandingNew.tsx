@@ -21,7 +21,7 @@ const RESTAURANTS: [string, string][] = [
 ];
 
 const AB_DEFAULTS = {
-  titleText: "Tu carta puede vender mucho m\u00e1s",
+  titleText: "Tu carta puede vender m\u00e1s",
   subtitleText: "Transformamos tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
@@ -134,7 +134,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container hero-grid">
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
-            <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(mucho más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
+            <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(vender más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
             <p className="hero-sub-text">{abSubtitle}</p>
             <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Te mostramos gratis como queda</div>
@@ -179,7 +179,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
             <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(37px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
-              Tu carta actual podría estar<br /><span style={{ color: "var(--cream)" }}>frenando</span> tus ventas
+              Hay algo que está<br />frenando tus ventas
             </h2>
           </div>
           <div className="pain-grid">

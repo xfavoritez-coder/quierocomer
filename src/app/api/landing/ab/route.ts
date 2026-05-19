@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 const EXPERIMENT_SLUG = "landing-hero";
 
 const DEFAULTS = {
-  titleText: "Tu carta puede vender mucho m\u00e1s",
+  titleText: "Tu carta puede vender m\u00e1s",
   subtitleText: "Transformamos tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
