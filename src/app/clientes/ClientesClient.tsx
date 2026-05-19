@@ -4,6 +4,58 @@ import { useEffect, useRef, useState } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
 
+const TESTIMONIALS = [
+  { quote: "Subimos nuestra carta en minutos y nuestros clientes extranjeros por fin pueden leer el menú completo.", name: "Sebastián Rojas", place: "Hand Roll · Santiago", photo: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=120&h=120&q=80" },
+  { quote: "Antes nuestros clientes no sabían qué pedir. Ahora la carta les recomienda y piden más.", name: "Carolina Vega", place: "Horus Vegan · Santiago", photo: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=120&h=120&q=80" },
+  { quote: "Lo mejor es que puedo actualizar precios al instante sin depender de nadie.", name: "Andrés Muñoz", place: "Juana la Brava · Santiago", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80" },
+  { quote: "Nuestros turistas ahora leen la carta en su idioma. Las ventas subieron.", name: "Marco Ricci", place: "Alleria Pizza · Santiago", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&h=120&q=80" },
+  { quote: "En 60 segundos teníamos nuestra carta digital lista. Increíble.", name: "Felipe Torres", place: "Nascosto · Santiago", photo: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=120&h=120&q=80" },
+];
+
+function TestimonialCarousel() {
+  const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrent(c => (c + 1) % TESTIMONIALS.length), 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const t = TESTIMONIALS[current];
+
+  return (
+    <section className="cl-clients-bg" style={{ textAlign: "center", padding: "50px 24px" }}>
+      <div style={{ position: "relative", maxWidth: 540, margin: "0 auto" }}>
+        <img
+          key={`photo-${current}`}
+          src={t.photo} alt=""
+          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(244,166,35,.2)", marginBottom: 18, display: "block", marginLeft: "auto", marginRight: "auto", animation: "clFadeIn .5s ease" }}
+        />
+        <p
+          key={`quote-${current}`}
+          style={{ fontFamily: "'Cormorant Garamond',serif", fontStyle: "italic", fontSize: "clamp(20px,3vw,26px)", lineHeight: 1.4, color: "#F1E3CB", margin: "0 0 18px", minHeight: 80, animation: "clFadeIn .5s ease" }}
+        >
+          &ldquo;{t.quote}&rdquo;
+        </p>
+        <div key={`name-${current}`} style={{ fontSize: 16, fontWeight: 700, color: "#F5EFE2", animation: "clFadeIn .5s ease" }}>{t.name}</div>
+        <div style={{ fontSize: 12, color: "#9B8E7A", marginTop: 2 }}>{t.place}</div>
+      </div>
+      <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 20 }}>
+        {TESTIMONIALS.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrent(i)}
+            style={{
+              width: i === current ? 20 : 6, height: 6, borderRadius: 3,
+              background: i === current ? "#F4A623" : "rgba(255,255,255,.15)",
+              border: "none", cursor: "pointer", transition: "all .3s", padding: 0,
+            }}
+          />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 interface Client {
   name: string;
   slug: string;
@@ -100,41 +152,22 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
           <h2 className="cl-h2">Restaurantes que ya <span className="cl-italic-gold">venden más</span></h2>
           <p className="cl-section-sub">Toca cualquier carta para ver cómo se ve QuieroComer funcionando en restaurantes reales.</p>
 
-          <div className="cl-clients-scroll">
-            {clients.map((c, i) => (
-              <a key={c.slug} href={`/qr/${c.slug}?from=clientes`} target="_blank" rel="noopener"
-                className="cl-client-card" style={{ "--photo": `url('${PHOTOS[i % PHOTOS.length]}')` } as any}>
-                <div className="cl-client-top">
-                  <div className="cl-logo-dot">
-                    {c.logoUrl ? <img src={c.logoUrl} alt="" style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }} /> : c.name.split(" ").map(w => w[0]).join("").slice(0, 2)}
-                  </div>
+          <div className="cl-simple-grid">
+            {clients.slice(0, 4).map((c) => (
+              <a key={c.slug} href={`/qr/${c.slug}?from=clientes`} target="_blank" rel="noopener" className="cl-simple-card">
+                <div className="cl-simple-logo">
+                  {c.logoUrl ? <img src={c.logoUrl} alt={c.name} /> : <span>{c.name.split(" ").map(w => w[0]).join("").slice(0, 2)}</span>}
                 </div>
-                <div className="cl-client-body">
-                  <h3>{c.name}</h3>
-                  <p className="cl-client-meta">Santiago · {c.dishes} platos · {c.categories} categorías</p>
-                  <span className="cl-client-link">Ver carta →</span>
-                </div>
+                <div className="cl-simple-name">{c.name}</div>
+                <div className="cl-simple-meta">{c.dishes} platos · {c.categories} cat.</div>
+                <div className="cl-simple-link">Ver carta →</div>
               </a>
             ))}
           </div>
         </section>
 
-        {/* Testimonial */}
-        <section className="cl-section">
-          <article className="cl-testimonial">
-            <div className="cl-owner-photo">
-              <div className="cl-mini-phone" />
-            </div>
-            <div className="cl-quote-box">
-              <div className="cl-quote-mark">&ldquo;</div>
-              <p className="cl-quote-text">Subimos nuestra carta en minutos y nuestros clientes extranjeros por fin pueden leer el menú completo.</p>
-              <div className="cl-author">
-                <div className="cl-avatar">H</div>
-                <div><strong>Hand Roll</strong><span>Santiago, Chile</span></div>
-              </div>
-            </div>
-          </article>
-        </section>
+        {/* Testimonials carousel */}
+        <TestimonialCarousel />
 
         {/* CTA */}
         <section className="cl-cta">
@@ -163,10 +196,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-hero{position:relative;min-height:580px;padding:140px 0 140px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
 .cl-hero-bg{position:absolute;inset:0;background:url('/landing/clientes2.webp') center 40%/cover;z-index:-3}
 .cl-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,4,3,.15) 0%,rgba(5,4,3,.4) 30%,rgba(5,4,3,.8) 55%,rgba(5,4,3,.95) 75%,rgba(5,4,3,1) 100%),linear-gradient(90deg,rgba(5,4,3,.7) 0%,rgba(5,4,3,.2) 50%,transparent 100%);z-index:-2}
-.cl-hero-content{max-width:1180px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:left;display:flex;flex-direction:column;align-items:flex-start}
+.cl-hero-content{max-width:900px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:left;display:flex;flex-direction:column;align-items:flex-start}
 .cl-hero-glow{position:absolute;width:240px;height:240px;right:-70px;top:110px;border-radius:50%;background:rgba(244,166,35,.18);filter:blur(80px);z-index:-1}
 .cl-eyebrow{color:#F4A623;font-size:11px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;margin-bottom:16px}
-.cl-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:.98;font-weight:400;letter-spacing:-.04em;max-width:600px;text-shadow:0 4px 28px rgba(0,0,0,.45);margin:0 0 20px}
+.cl-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:.98;font-weight:400;letter-spacing:-.04em;max-width:520px;text-shadow:0 4px 28px rgba(0,0,0,.45);margin:0 0 20px}
 .cl-hero-copy{max-width:420px;color:#B7A993;font-size:16px;line-height:1.55;margin:0}
 
 .cl-metrics{margin:-14px clamp(18px,4vw,64px) 58px;position:relative;z-index:5;border:1px solid rgba(244,166,35,.18);border-radius:26px;background:linear-gradient(135deg,rgba(244,166,35,.08),rgba(255,255,255,.035));backdrop-filter:blur(18px);box-shadow:0 22px 60px rgba(0,0,0,.46),inset 0 0 0 1px rgba(255,255,255,.03);overflow:hidden;max-width:980px;margin-left:auto;margin-right:auto}
@@ -176,12 +209,24 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-metric strong{display:block;font-family:'Cormorant Garamond',serif;font-size:34px;line-height:1;font-weight:400;letter-spacing:-.04em}
 .cl-metric span{display:block;margin-top:5px;color:#9B8E7A;font-size:12px;line-height:1.35}
 
-.cl-badges{display:flex;align-items:center;justify-content:center;gap:0;margin:-40px auto 50px;position:relative;z-index:5;max-width:780px;padding:18px 28px;border-radius:20px;border:1px solid rgba(244,166,35,.15);background:rgba(10,8,5,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
+.cl-badges{display:flex;align-items:center;justify-content:center;gap:0;margin:-60px auto 80px;position:relative;z-index:5;max-width:680px;padding:18px 28px;border-radius:20px;border:1px solid rgba(244,166,35,.15);background:rgba(10,8,5,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
 .cl-badge-item{flex:1;text-align:center}
 .cl-badge-num{display:block;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:#F5EFE2;line-height:1}
 .cl-badge-label{display:block;font-size:11px;color:#9B8E7A;margin-top:4px;letter-spacing:.02em}
 .cl-badge-sep{width:1px;height:36px;background:rgba(255,255,255,.08);flex-shrink:0}
-.cl-section{padding:0 clamp(18px,4vw,64px) 70px;max-width:1080px;margin:0 auto}
+@keyframes clFadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.cl-clients-bg{background:rgba(255,255,255,.06);border-top:1px solid rgba(255,255,255,.08);border-bottom:1px solid rgba(255,255,255,.08)}
+.cl-simple-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-top:30px}
+.cl-simple-card{display:flex;flex-direction:column;align-items:center;padding:24px 16px;border-radius:18px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);text-decoration:none;color:#F5EFE2;transition:all .3s}
+.cl-simple-card:hover{border-color:rgba(244,166,35,.25);transform:translateY(-3px)}
+.cl-simple-logo{width:52px;height:52px;border-radius:14px;overflow:hidden;margin-bottom:12px;background:rgba(244,166,35,.1);display:grid;place-items:center}
+.cl-simple-logo img{width:100%;height:100%;object-fit:cover}
+.cl-simple-logo span{color:#F4A623;font-size:16px;font-weight:700}
+.cl-simple-name{font-size:15px;font-weight:600;margin-bottom:4px}
+.cl-simple-meta{font-size:11px;color:#9B8E7A;margin-bottom:10px}
+.cl-simple-link{font-size:12px;color:#F4A623;font-weight:600;opacity:.7;transition:opacity .2s}
+.cl-simple-card:hover .cl-simple-link{opacity:1}
+.cl-section{padding:0 clamp(18px,4vw,64px) 40px;max-width:900px;margin:0 auto}
 .cl-section-center{text-align:center}
 .cl-h2{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,5vw,38px);line-height:1.08;font-weight:400;letter-spacing:-.04em;margin:0}
 .cl-section-sub{color:#9B8E7A;font-size:14px;line-height:1.55;margin:12px auto 0;max-width:420px}
@@ -203,7 +248,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-client-link{color:#F4A623;font-weight:800;font-size:13px}
 
 .cl-testimonial{border:1px solid rgba(244,166,35,.18);border-radius:28px;overflow:hidden;background:linear-gradient(135deg,rgba(244,166,35,.08),rgba(255,255,255,.025));box-shadow:0 22px 70px rgba(0,0,0,.48)}
-.cl-owner-photo{height:250px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.76)),url('https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=900&q=80') center/cover;position:relative}
+.cl-owner-photo{height:180px;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.76)),url('https://images.unsplash.com/photo-1414235077428-338989a2e8c0?auto=format&fit=crop&w=900&q=80') center/cover;position:relative}
 .cl-mini-phone{position:absolute;right:18px;bottom:-34px;width:86px;height:160px;border-radius:18px;background:#080706;border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 42px rgba(0,0,0,.65);transform:rotate(5deg)}
 .cl-quote-box{padding:48px 22px 24px}
 .cl-quote-mark{color:#F4A623;font-family:'Cormorant Garamond',serif;font-size:58px;line-height:.7;margin-bottom:10px}
@@ -214,14 +259,15 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-author strong{display:block;font-size:14px}
 .cl-author span{color:#9B8E7A;font-size:12px}
 
-.cl-cta{text-align:center;padding:20px clamp(22px,4vw,64px) 76px;max-width:1080px;margin:0 auto}
+.cl-cta{text-align:center;padding:60px clamp(22px,4vw,64px) 76px;max-width:1080px;margin:0 auto}
 .cl-cta p{color:#9B8E7A;margin:14px 0 0;font-size:15px}
-.cl-primary-btn{margin-top:28px;display:inline-flex;align-items:center;justify-content:center;min-width:238px;height:58px;border-radius:18px;border:0;background:linear-gradient(135deg,#FFC35B,#F4A623 55%,#D98712);color:#120C04;font-weight:900;font-size:16px;box-shadow:0 18px 60px rgba(244,166,35,.34),inset 0 1px 0 rgba(255,255,255,.38);text-decoration:none;transition:.2s}
+.cl-primary-btn{margin-top:28px;display:inline-flex;align-items:center;justify-content:center;min-width:200px;height:48px;border-radius:14px;border:0;background:linear-gradient(135deg,#FFC35B,#F4A623 55%,#D98712);color:#120C04;font-weight:800;font-size:14px;box-shadow:0 18px 60px rgba(244,166,35,.34),inset 0 1px 0 rgba(255,255,255,.38);text-decoration:none;transition:.2s}
 .cl-primary-btn:hover{transform:translateY(-2px);box-shadow:0 24px 72px rgba(244,166,35,.4)}
 .cl-benefits{display:grid;gap:13px;margin-top:32px}
 .cl-benefit{display:flex;align-items:center;gap:8px;color:#C2B29A;font-size:13px;justify-content:center}
 .cl-benefit-icon{font-size:15px}
 
+@media(max-width:699px){.cl-h1{max-width:320px}.cl-cta .cl-h2{max-width:260px;margin-left:auto;margin-right:auto}}
 @media(min-width:700px){
   .cl-metrics{display:grid;grid-template-columns:repeat(3,1fr)}
   .cl-metric{border-bottom:0;border-right:1px solid rgba(255,255,255,.07)}

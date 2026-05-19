@@ -1,10 +1,18 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
 
 export default function PlanesClient() {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 700);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   // Tip toggle
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -45,14 +53,22 @@ export default function PlanesClient() {
         <NavHamburger />
       </nav>
 
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "110px 20px 60px", position: "relative", overflow: "hidden" }}>
-        <div className="planes-glow" />
-
-        <div className="planes-header">
+      {/* Hero */}
+      <header style={{ position: "relative", minHeight: 540, display: "flex", flexDirection: "column", justifyContent: "center", overflow: "hidden", padding: "60px 0 60px" }}>
+        <div style={{ position: "absolute", inset: 0, backgroundImage: "url('/landing/estoes.png')", backgroundSize: "cover", backgroundPosition: "center bottom", filter: "saturate(.85) brightness(.75)" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(10,9,8,.2) 0%,rgba(10,9,8,.5) 35%,rgba(10,9,8,.9) 70%,#0A0908 100%),linear-gradient(90deg,rgba(10,9,8,.7) 0%,rgba(10,9,8,.2) 50%,transparent 100%)" }} />
+        <div id="pl-hero-text">
+          <style dangerouslySetInnerHTML={{ __html: "#pl-hero-text{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 20px;text-align:center;display:flex;flex-direction:column;align-items:center}" }} />
           <div className="planes-eyebrow">Planes</div>
-          <h1>El plan perfecto para <span>tu restaurante</span></h1>
-          <p>Cambia cuando quieras. Sin permanencia.</p>
+          <h1 id="pl-hero-h1">
+            El plan perfecto para <br className="pl-mobile-br" /><span style={{ color: "#E8A33D", fontStyle: "italic" }}>tu restaurante</span>
+          </h1>
+          <p id="pl-hero-sub">Cambia cuando quieras. Sin permanencia.</p>
+          <style dangerouslySetInnerHTML={{ __html: "#pl-hero-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:1.02;font-weight:400;max-width:480px;margin:0 0 16px}#pl-hero-sub{font-size:15px;color:#B7A993;max-width:380px;line-height:1.5;margin:0}" }} />
         </div>
+      </header>
+
+      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 20px 60px", marginTop: -120, position: "relative", overflow: "hidden" }}>
 
         <div className="qc-plans">
           <article className="qc-plan">
@@ -114,6 +130,10 @@ export default function PlanesClient() {
 }
 
 const STYLES = `
+.pl-hero{position:relative;min-height:480px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;padding:140px 0 80px}
+.pl-hero-bg{position:absolute;inset:0;background:url('/landing/estoes.png') center/cover;filter:saturate(.85) brightness(.75);z-index:-3}
+.pl-hero-after{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,9,8,.2) 0%,rgba(10,9,8,.5) 35%,rgba(10,9,8,.9) 70%,#0A0908 100%),linear-gradient(90deg,rgba(10,9,8,.7) 0%,rgba(10,9,8,.2) 50%,transparent 100%);z-index:-2}
+.pl-hero-content{max-width:1100px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:left}
 body{background:#0A0908!important;color:#E8DDC8!important;font-family:'Inter',sans-serif!important}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:30;opacity:.13;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
 .planes-main{max-width:1100px;margin:0 auto;padding:110px 20px 60px;position:relative;z-index:1}
@@ -148,5 +168,8 @@ body{background:#0A0908!important;color:#E8DDC8!important;font-family:'Inter',sa
 .planes-bottom p{font-size:14px;color:#C9BBA0;opacity:.6}
 .planes-bottom a{color:#E8A33D;text-decoration:none;font-weight:600}
 .planes-bottom a:hover{text-decoration:underline}
+.pl-hero-wrap{position:relative;z-index:2;max-width:1100px;margin:0 auto;padding:0 20px;text-align:center;display:flex;flex-direction:column;align-items:center}
+@media(min-width:700px){.pl-mobile-br{display:none}}
+@media(max-width:699px){.pl-hero-wrap{text-align:left;align-items:flex-start}}
 @media(min-width:768px){.qc-plans{grid-template-columns:repeat(3,1fr)}}
 `;
