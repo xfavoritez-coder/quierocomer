@@ -178,8 +178,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
-            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(36px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
-              Tu carta actual podría estar<br /><span style={{ fontStyle: "italic", color: "var(--cream)", textDecoration: "underline", textUnderlineOffset: "6px" }}>frenando</span> tus ventas
+            <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(37px,7vw,67px)", lineHeight: 1.05, color: "var(--cream)", fontWeight: 500, letterSpacing: "-.02em" }}>
+              Pero tu carta actual podría estar<br /><span style={{ color: "var(--cream)" }}>frenando</span> tus ventas
             </h2>
           </div>
           <div className="pain-grid">
@@ -282,7 +282,15 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </section>
 
 
-      <div className="faq-divider" style={{ margin: "10px auto 0" }} />
+      {/* MID CTA */}
+      <div style={{ textAlign: "center", padding: "66px 20px", background: "linear-gradient(180deg, rgba(232,163,61,.06), rgba(232,163,61,.02))", borderTop: "1px solid rgba(232,163,61,.1)", borderBottom: "1px solid rgba(232,163,61,.1)" }}>
+        <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px,4vw,32px)", color: "var(--cream-soft)", lineHeight: 1.3, marginBottom: 18 }}>
+          ¿Quieres ver cómo queda <span style={{ color: "var(--amber)", fontStyle: "italic" }}>tu carta?</span>
+        </p>
+        <a href="/subircarta" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
+          Súbela · gratis <span style={{ color: "var(--amber)" }}>→</span>
+        </a>
+      </div>
 
       {/* MIENTRAS TÚ ATIENDES */}
       <section className="mientras-section">
@@ -291,7 +299,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           <div className="mientras-overlay" />
         </div>
         <div className="mientras-content">
-          <h2 className="mientras-title">Haz que tus platos<br /><span className="accent" style={{ fontStyle: "italic" }}>se vendan solos.</span></h2>
+          <h2 className="mientras-title">Y haz que tus platos<br /><span className="accent" style={{ fontStyle: "italic" }}>se vendan solos.</span></h2>
           <a href="/subircarta" className="mientras-chip" style={{ textDecoration: "none" }}>
             <div className="mientras-chip-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
@@ -333,7 +341,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta">
         <div className="container">
-          <h2>Tu restaurante puede vender más. <span className="accent" style={{textDecoration:"underline",textUnderlineOffset:"6px"}}>Comienza hoy</span></h2>
+          <h2>Lleva la experiencia de tu restaurante al siguiente nivel</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
           <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>Subir carta · 60 segundos →</a>
         </div>
@@ -532,7 +540,7 @@ section{position:relative}
 .mientras-bg{position:absolute;inset:0}.mientras-bg img{width:100%;height:100%;object-fit:cover;object-position:70% 30%;transform:scale(1.15)}
 .mientras-overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,8,6,.95) 0%,rgba(9,8,6,.7) 45%,rgba(9,8,6,.1) 100%)}
 .mientras-content{position:relative;z-index:2;padding:80px clamp(22px,4vw,64px);text-align:center;max-width:1200px;width:100%;margin:0 auto;display:flex;flex-direction:column;align-items:center}
-.mientras-title{font-family:var(--font-display);font-size:clamp(34px,6vw,56px);max-width:600px;line-height:1.1;font-weight:500;color:var(--cream);margin-bottom:20px}
+.mientras-title{font-family:var(--font-display);font-size:clamp(34px,6vw,56px);max-width:100%;line-height:1.1;font-weight:500;color:var(--cream);margin-bottom:20px}
 .mientras-chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;background:rgba(20,18,14,.75);border:1px solid rgba(232,163,61,.2);border-radius:10px;backdrop-filter:blur(8px)}
 .mientras-chip-icon{width:24px;height:24px;border-radius:50%;background:var(--amber);display:flex;align-items:center;justify-content:center;color:#160e06;flex-shrink:0}
 .mientras-chip-icon svg{width:14px;height:14px}
