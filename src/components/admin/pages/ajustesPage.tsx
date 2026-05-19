@@ -69,6 +69,8 @@ export default function AjustesPage() {
   const [saving, setSaving] = useState(false);
   const [birthdayPerk, setBirthdayPerk] = useState("");
   const [panelTheme, setPanelTheme] = useState("dark");
+  const [customColor, setPersonalizadoColor] = useState("#F4A623");
+  const [customDirty, setPersonalizadoDirty] = useState(false);
 
   useEffect(() => { setPanelTheme(localStorage.getItem("qc_panel_theme") || "dark"); }, []);
 
@@ -225,24 +227,28 @@ export default function AjustesPage() {
               </button>
             );
           })}
-          {/* Custom color picker */}
+          {/* Personalizado color picker */}
           {(() => {
             const customActive = data.cartaAccentColor && !ACCENT_OPTIONS.some(o => o.value === data.cartaAccentColor);
+            const displayColor = customDirty ? customColor : (customActive ? data.cartaAccentColor! : customColor);
             return (
-              <button
-                style={{
-                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
-                  background: "none", border: "none", cursor: "pointer", padding: 4, position: "relative",
-                }}
-              >
-                <label style={{ width: 36, height: 36, borderRadius: "50%", background: customActive ? data.cartaAccentColor! : "conic-gradient(red,yellow,lime,aqua,blue,magenta,red)", border: customActive ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: customActive ? `0 0 0 2px ${data.cartaAccentColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden" }}>
-                  <input type="color" value={data.cartaAccentColor || "#F4A623"} onChange={(e) => save({ cartaAccentColor: e.target.value })} style={{ opacity: 0, position: "absolute", width: 36, height: 36, cursor: "pointer" }} />
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, padding: 4 }}>
+                <label style={{ width: 36, height: 36, borderRadius: "50%", background: customActive || customDirty ? displayColor : "linear-gradient(135deg,#ff6b6b,#ffd93d,#6bcb77,#4d96ff,#9b59b6)", border: (customActive || customDirty) ? "3px solid var(--adm-text)" : "3px solid transparent", boxShadow: (customActive || customDirty) ? `0 0 0 2px ${displayColor}40` : "none", transition: "all 0.2s", cursor: "pointer", display: "block", overflow: "hidden", position: "relative" }}>
+                  <input type="color" value={displayColor} onChange={(e) => { setPersonalizadoColor(e.target.value); setPersonalizadoDirty(true); }} style={{ opacity: 0, position: "absolute", inset: 0, width: "100%", height: "100%", cursor: "pointer" }} />
                 </label>
-                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: customActive ? 700 : 500, color: customActive ? "var(--adm-text)" : "var(--adm-text3)" }}>Custom</span>
-              </button>
+                <span style={{ fontFamily: FB, fontSize: "0.7rem", fontWeight: (customActive || customDirty) ? 700 : 500, color: (customActive || customDirty) ? "var(--adm-text)" : "var(--adm-text3)" }}>Personalizado</span>
+              </div>
             );
           })()}
         </div>
+        {customDirty && (
+          <button
+            onClick={() => { save({ cartaAccentColor: customColor }); setPersonalizadoDirty(false); }}
+            style={{ marginTop: 12, padding: "8px 20px", background: customColor, color: "#0a0a0a", border: "none", borderRadius: 10, fontSize: "0.78rem", fontWeight: 800, fontFamily: F, cursor: "pointer" }}
+          >
+            Aplicar color
+          </button>
+        )}
       </div>
 
       {/* Campanita garzón */}
