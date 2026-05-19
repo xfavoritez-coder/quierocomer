@@ -5,11 +5,11 @@ import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
 
 const TESTIMONIALS = [
-  { quote: "Subimos nuestra carta en minutos y nuestros clientes extranjeros por fin pueden leer el menú completo.", name: "Sebastián Rojas", place: "Hand Roll · Santiago", photo: "https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=120&h=120&q=80" },
-  { quote: "Antes nuestros clientes no sabían qué pedir. Ahora la carta les recomienda y piden más.", name: "Carolina Vega", place: "Horus Vegan · Santiago", photo: "https://images.unsplash.com/photo-1594744803329-e58b31de8bf5?auto=format&fit=crop&w=120&h=120&q=80" },
-  { quote: "Lo mejor es que puedo actualizar precios al instante sin depender de nadie.", name: "Andrés Muñoz", place: "Juana la Brava · Santiago", photo: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=120&h=120&q=80" },
-  { quote: "Nuestros turistas ahora leen la carta en su idioma. Las ventas subieron.", name: "Marco Ricci", place: "Alleria Pizza · Santiago", photo: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=120&h=120&q=80" },
-  { quote: "En 60 segundos teníamos nuestra carta digital lista. Increíble.", name: "Felipe Torres", place: "Nascosto · Santiago", photo: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=120&h=120&q=80" },
+  { quote: "Subimos nuestra carta en minutos y nuestros clientes extranjeros por fin pueden leer el menú completo.", name: "Alfredo Morales", place: "Hand Roll · Santiago", photo: "/landing/owners/handroll.webp" },
+  { quote: "Antes nuestros clientes no sabían qué pedir. Ahora la carta les recomienda y piden más.", name: "Carlos Gómez", place: "Horus Vegan · Santiago", photo: "/landing/owners/horus.webp" },
+  { quote: "Lo mejor es que puedo actualizar precios al instante sin depender de nadie.", name: "Andrés Muñoz", place: "Juana la Brava · Santiago", photo: "/landing/owners/juana.webp" },
+  { quote: "Nuestros turistas ahora leen la carta en su idioma. Las ventas subieron.", name: "Marco Ricci", place: "Alleria Pizza · Santiago", photo: "/landing/owners/alleria.webp" },
+  { quote: "En 60 segundos teníamos nuestra carta digital lista. Increíble.", name: "Felipe Torres", place: "Nascosto · Santiago", photo: "/landing/owners/nascosto.webp" },
 ];
 
 function TestimonialCarousel() {
@@ -28,7 +28,7 @@ function TestimonialCarousel() {
         <img
           key={`photo-${current}`}
           src={t.photo} alt=""
-          style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(244,166,35,.2)", marginBottom: 18, display: "block", marginLeft: "auto", marginRight: "auto", animation: "clFadeIn .5s ease" }}
+          style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "2px solid rgba(244,166,35,.2)", marginBottom: 18, display: "block", marginLeft: "auto", marginRight: "auto", animation: "clFadeIn .5s ease" }}
         />
         <p
           key={`quote-${current}`}
@@ -255,7 +255,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-quote-text{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:21px;line-height:1.45;color:#F1E3CB;letter-spacing:-.02em;margin:0}
 .cl-stars{color:#F4A623;letter-spacing:.18em;margin-top:18px;font-size:14px}
 .cl-author{display:flex;align-items:center;gap:12px;margin-top:20px}
-.cl-avatar{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:rgba(244,166,35,.18);color:#F4A623;font-weight:800}
+.cl-avatar{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:rgba(244,166,35,.18);color:#F4A623;font-weight:800}
 .cl-author strong{display:block;font-size:14px}
 .cl-author span{color:#9B8E7A;font-size:12px}
 
@@ -276,5 +276,6 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
   .cl-testimonial{display:grid;grid-template-columns:.85fr 1.15fr}
   .cl-owner-photo{height:auto}
   .cl-quote-box{padding:44px}
+  .cl-clients-bg img[alt=""]{width:100px!important;height:100px!important}
 }
 `;
