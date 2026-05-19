@@ -544,8 +544,8 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     console.log(`[Pipeline] Lead ${leadId} post-processing done: photos + translations for ${restaurant.name}`);
 
-    // Send email with carta link (only if translation succeeded)
-    if (lead.email && translationOk) {
+    // Send email with carta link (if translation succeeded or was partial — 50%+ is good enough)
+    if (lead.email && (translationOk || translationPartial)) {
       try {
         const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
         const ownerName = lead.ownerName || "Hola";
