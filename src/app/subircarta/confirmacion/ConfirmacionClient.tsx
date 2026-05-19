@@ -232,7 +232,7 @@ export default function ConfirmacionClient() {
                     <>
                       <svg viewBox="0 0 24 24" fill="none" width="32" height="32" style={{ display: "block", margin: "0 auto 4px" }}><rect x="2" y="4" width="20" height="16" rx="3" stroke="var(--amber-2, #E8A33D)" strokeWidth="1.5"/><path d="M2 8l10 6 10-6" stroke="var(--amber-2, #E8A33D)" strokeWidth="1.5"/></svg>
                       <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream, #F2E5CF)", margin: "0 0 3px", letterSpacing: "0.01em" }}>Te avisaremos por correo</p>
-                      <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Puedes cerrar esta página</p>
+                      <p style={{ fontSize: 11, color: "var(--cream, #F2E5CF)", margin: 0, opacity: 0.7 }}>Podría llegar a spam o promociones</p>
                     </>
                   ) : (
                     <>
