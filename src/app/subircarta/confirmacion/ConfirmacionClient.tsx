@@ -42,6 +42,19 @@ export default function ConfirmacionClient() {
   const imagesLoadedRef = useRef(false);
   const cartaReadyRef = useRef(false);
 
+  // Load Tawk.to chat widget
+  useEffect(() => {
+    if ((window as any).Tawk_API) return;
+    (window as any).Tawk_API = {};
+    (window as any).Tawk_API.onLoad = function () { (window as any).Tawk_API.hideWidget(); };
+    const s1 = document.createElement("script");
+    s1.async = true;
+    s1.src = "https://embed.tawk.to/6a0c7aa00454421c389d6a22/1jp0bu0si";
+    s1.charset = "UTF-8";
+    s1.setAttribute("crossorigin", "*");
+    document.head.appendChild(s1);
+  }, []);
+
   // Trigger full processing when confirmation loads
   // Force scroll to top — useLayoutEffect runs before paint, before Next.js scroll restoration
   useLayoutEffect(() => {

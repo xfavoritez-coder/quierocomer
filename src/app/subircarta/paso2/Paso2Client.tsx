@@ -53,6 +53,19 @@ export default function Paso2Client() {
   const formRef = useRef<HTMLFormElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
+  // Load Tawk.to chat widget
+  useEffect(() => {
+    if ((window as any).Tawk_API) return;
+    (window as any).Tawk_API = {};
+    (window as any).Tawk_API.onLoad = function () { (window as any).Tawk_API.hideWidget(); };
+    const s1 = document.createElement("script");
+    s1.async = true;
+    s1.src = "https://embed.tawk.to/6a0c7aa00454421c389d6a22/1jp0bu0si";
+    s1.charset = "UTF-8";
+    s1.setAttribute("crossorigin", "*");
+    document.head.appendChild(s1);
+  }, []);
+
   // Force scroll to top — blast through every timing slot Next.js might use to restore scroll
   useLayoutEffect(() => {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";

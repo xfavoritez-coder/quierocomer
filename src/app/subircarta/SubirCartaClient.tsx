@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
+import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 
 type Mode = "pdf" | "link" | "photo" | null;
@@ -170,7 +171,7 @@ export default function SubirCartaClient() {
             <img src="/landing/logo.png" alt="" style={{ height: 20, width: "auto", marginRight: -8 }} />
             QuieroComer
           </a>
-          <button onClick={() => { if ((window as any).Tawk_API?.maximize) (window as any).Tawk_API.maximize(); }} style={{ background: "none", border: "none", color: "var(--cream-2)", fontSize: 15, letterSpacing: ".04em", cursor: "pointer", display: "flex", alignItems: "center", gap: 6, padding: 0 }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"/></svg>Ayuda</button>
+          <NavHamburger />
         </nav>
 
         <section className="steps" aria-label="Progreso">
@@ -183,7 +184,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Sube tu carta y ve cómo <span>mejora.</span></h1>
+            <h1>Sube tu carta actual y ve cómo <span>mejora.</span></h1>
           </div>
 
           <div className="form-side centered-form">

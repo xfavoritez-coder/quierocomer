@@ -219,7 +219,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">1</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Subes tu carta</h3>
+                  <h3>Subes tu carta actual</h3>
                   <ul>
                     <li>Gratis</li>
                     <li>PDF, link o fotos</li>
@@ -235,10 +235,10 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">2</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>La transformamos</h3>
+                  <h3>La transformamos online</h3>
                   <ul>
-                    <li>Diseño visual</li>
-                    <li>Sugerencias inteligentes</li>
+                    <li>Lo hacemos en segundos con IA</li>
+                    <li>Te mostramos cómo queda</li>
                   </ul>
                 </div>
               </div>
@@ -321,7 +321,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             ].map((item, i) => (
               <div key={i} className={`faq-item${faqOpen === i ? " open" : ""}`}>
                 <div className="faq-q" onClick={() => setFaqOpen(faqOpen === i ? null : i)}>{item.q}</div>
-                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y cuando quieras, ver nuestros <a href="#" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPlanesOpen(true); }} style={{ color: "var(--amber)", textDecoration: "underline", cursor: "pointer" }}>planes</a>.</> : item.a}</div>
+                <div className="faq-a">{item.a === "plan_link" ? <>Sí. Puedes empezar gratis y cuando quieras, ver nuestros <a href="/planes" style={{ color: "var(--amber)", textDecoration: "underline" }}>planes</a>.</> : item.a}</div>
               </div>
             ))}
           </div>
@@ -450,7 +450,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr;gap:0;max-width:1200px;margin:0 auto;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
-.hero h1{font-size:clamp(38px,5vw,68px);line-height:1.02;max-width:620px;margin-left:auto;margin-right:auto;margin-bottom:28px}
+.hero h1{font-size:clamp(38px,5.5vw,82px);line-height:1.02;max-width:620px;margin-left:auto;margin-right:auto;margin-bottom:28px}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.4}
