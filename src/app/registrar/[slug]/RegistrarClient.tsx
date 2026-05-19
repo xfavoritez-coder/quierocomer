@@ -139,7 +139,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
         {/* Hero text — full width */}
         <section className="rg-hero">
-          <h1>Estás a un paso de tener tu nueva <span>carta QR.</span></h1>
+          <h1>Estás a un paso de tener tu nueva <span>carta QR</span></h1>
           <p>
             Actívala ahora y empieza a recibir en <strong>{restaurant.name}</strong> más clientes con una carta digital profesional.
           </p>
@@ -264,7 +264,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
             ))}
           </div>
           <div className="rg-alt-link" style={{ marginTop: 16 }}>
-            <a href="/subircarta">¿Ya tienes carta en otro lugar? Súbela y la importamos →</a>
+            ¿Ya tienes carta QR o física? <a href="/subircarta" style={{ textDecoration: "underline" }}>Súbela y te la transformamos →</a>
           </div>
         </section>
       </main>
@@ -286,7 +286,7 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 .rg-step-line { display:flex; justify-content:center; gap:12px; font-size:12px; color:var(--muted); flex-wrap:wrap; }
 .rg-step-line b { color:var(--gold); }
 .rg-hero { text-align:center; margin-bottom:26px; }
-.rg-hero h1 { font-family:Georgia,serif; font-size:clamp(38px,11vw,62px); line-height:.95; letter-spacing:-1px; margin-bottom:16px; }
+.rg-hero h1 { font-family:Georgia,serif; font-size:clamp(36px,11vw,60px); line-height:.95; letter-spacing:-1px; margin-bottom:16px; }
 .rg-hero h1 span { color:var(--gold); font-style:italic; font-weight:500; }
 .rg-hero p { color:#d8cdbd; font-size:16px; line-height:1.45; max-width:330px; margin:0 auto; }
 .rg-hero p strong { color:var(--gold-soft); }
@@ -330,7 +330,7 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 .rg-feature p { font-size:14px; color:var(--muted); line-height:1.4; }
 .rg-proof { border:1px solid rgba(244,166,35,.18); background:rgba(255,255,255,.03); border-radius:24px; padding:22px 18px; text-align:center; margin-top:26px; }
 .rg-proof h2 { font-size:18px; color:var(--gold-soft); margin-bottom:18px; font-family:Georgia,serif; font-weight:400; }
-.rg-logos { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; }
+.rg-logos { display:flex; justify-content:center; gap:12px; flex-wrap:wrap; padding:12px 0; }
 .rg-logo-circle { width:66px; height:66px; border-radius:50%; border:1px solid var(--border); display:grid; place-items:center; font-family:Georgia,serif; font-size:10px; color:#eadfce; background:#111; overflow:hidden; }
 .rg-logo-circle img { width:100%; height:100%; object-fit:cover; }
 .rg-alt-link { text-align:center; }
@@ -343,7 +343,7 @@ body { font-family:Inter,system-ui,-apple-system,sans-serif; background:radial-g
 @media(min-width:860px) {
   .rg-page { max-width:1020px; padding:34px 32px 50px; }
   .rg-hero { text-align:center; margin-bottom:36px; }
-  .rg-hero h1 { font-size:52px; }
+  .rg-hero h1 { font-size:50px; }
   .rg-hero p { margin:0 auto; max-width:420px; }
   .rg-main-grid { display:grid; grid-template-columns:auto auto; gap:0; align-items:center; justify-content:center; }
   .rg-phone-wrap { width:270px; margin:0; }

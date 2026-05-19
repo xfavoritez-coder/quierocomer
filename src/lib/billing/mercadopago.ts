@@ -188,6 +188,7 @@ export async function createMPSubscription(
       payer_email: params.payerEmail,
       external_reference: params.externalReference,
       back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
+      status: params.cardTokenId ? "authorized" : "pending",
       ...(params.cardTokenId ? { card_token_id: params.cardTokenId } : {}),
     },
   });
