@@ -226,7 +226,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-simple-meta{font-size:11px;color:#9B8E7A;margin-bottom:10px}
 .cl-simple-link{font-size:12px;color:#F4A623;font-weight:600;opacity:.7;transition:opacity .2s}
 .cl-simple-card:hover .cl-simple-link{opacity:1}
-.cl-section{padding:0 clamp(18px,4vw,64px) 40px;max-width:900px;margin:0 auto}
+.cl-section{padding:0 clamp(18px,4vw,64px) 80px;max-width:900px;margin:0 auto}
 .cl-section-center{text-align:center}
 .cl-h2{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,5vw,38px);line-height:1.08;font-weight:400;letter-spacing:-.04em;margin:0}
 .cl-section-sub{color:#9B8E7A;font-size:14px;line-height:1.55;margin:12px auto 0;max-width:420px}
