@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
-import { FLOW_PLANS } from "@/lib/billing/plans-config";
+import { createMPCustomer, createMPPreference } from "@/lib/billing/mercadopago";
+import { FLOW_PLANS, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/billing/start
  * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
  *
- * Crea un plan y suscripcion en MercadoPago con trial de 14 dias.
- * Devuelve la URL (init_point) para redirigir al comerciante a completar
- * la inscripcion de su tarjeta en MercadoPago.
+ * Crea un pago unico (Preference) en MercadoPago para upgrade de plan.
+ * Al completarse, el return handler activa el plan por 30 dias.
  */
 export async function POST(req: NextRequest) {
   const panelId = req.cookies.get("panel_id")?.value;
@@ -33,42 +32,42 @@ export async function POST(req: NextRequest) {
   const restaurant = owner.restaurants[0];
   if (!restaurant) return NextResponse.json({ error: "Restaurant no encontrado" }, { status: 404 });
 
-  // Nota: ya NO bloqueamos por datos de facturacion incompletos. Los pedimos
-  // despues de que el cliente pago el primer mes (asi no espantamos el alta).
-  // El banner en /panel y el email post-pago se encargan de empujar a que
-  // los completen para emitir la factura electronica.
-
   const planConfig = FLOW_PLANS[plan];
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
 
   try {
-    // 1. Asegurar que existe un customer en MercadoPago
-    let mpCustomerId = restaurant.mpCustomerId;
-    if (!mpCustomerId) {
-      const customer = await createMPCustomer(owner.email, restaurant.name);
-      mpCustomerId = customer.id;
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: { mpCustomerId },
-      });
+    // Crear customer si no existe (no bloquea)
+    if (!restaurant.mpCustomerId) {
+      try {
+        const customer = await createMPCustomer(owner.email, restaurant.name);
+        await prisma.restaurant.update({ where: { id: restaurant.id }, data: { mpCustomerId: customer.id } });
+      } catch (err: any) {
+        console.warn("[billing/start] createMPCustomer falló (no bloquea):", err?.message);
+      }
     }
 
-    // 2. Crear la suscripcion (PreApproval) sin plan asociado
-    const subscription = await createMPSubscription({
-      planKey: plan,
-      payerEmail: owner.email,
-      externalReference: restaurant.id,
-    });
+    const chargeGross = grossOf(planConfig.amountNet);
+    const returnUrl = `${baseUrl}/api/billing/return`;
 
-    // 4. Guardar estado pendiente en DB
-    await prisma.restaurant.update({
-      where: { id: restaurant.id },
-      data: {
-        pendingMpPlanId: planConfig.planId,
-        mpSubscriptionId: subscription.id,
+    const preference = await createMPPreference({
+      title: `${planConfig.name} - Mensualidad`,
+      amountGross: chargeGross,
+      externalReference: restaurant.id,
+      payerEmail: owner.email,
+      backUrls: {
+        success: returnUrl,
+        failure: returnUrl,
+        pending: returnUrl,
       },
     });
 
-    return NextResponse.json({ url: subscription.initPoint });
+    await prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: { pendingMpPlanId: planConfig.planId },
+    });
+
+    const url = preference.sandboxInitPoint || preference.initPoint;
+    return NextResponse.json({ url });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[billing/start]", msg);

@@ -3,22 +3,19 @@ import { prisma } from "@/lib/prisma";
 import {
   createMPCustomer,
   createMPPreference,
-  createMPSubscription,
 } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
 /**
  * POST /api/activar/pay
- * Body: { restaurantId, plan: "GOLD" | "PREMIUM" }
+ * Body: { restaurantId, plan: "GOLD" | "PREMIUM", skipPromo?: boolean }
  *
- * Inicia el pago de activacion via MercadoPago para un restaurant demo.
+ * Inicia el pago via MercadoPago Checkout Pro (pago unico).
+ * - Si hay promo y no se salta: cobra precio promo del primer mes.
+ * - Si no hay promo o skipPromo: cobra precio regular del primer mes.
  *
- * - Si hay promo (ej: PREMIUM primer mes a $4.900+IVA), crea una Preference
- *   de pago unico. Al completarse, el return handler crea la suscripcion.
- * - Si no hay promo (ej: GOLD), crea directamente una suscripcion (PreApproval)
- *   que cobra el precio regular desde el primer mes.
- *
- * No requiere autenticacion — solo funciona para restaurants con isDemo: true.
+ * El plan se activa por 30 dias. Antes de vencer se envia recordatorio
+ * con link de renovacion.
  */
 export async function POST(req: NextRequest) {
   let body: { restaurantId?: string; plan?: string; skipPromo?: boolean };
@@ -48,69 +45,46 @@ export async function POST(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
   try {
-    // Crear o encontrar customer en MercadoPago (opcional, no bloquea el flujo)
-    let mpCustomerId = restaurant.mpCustomerId;
-    if (!mpCustomerId) {
+    // Crear o encontrar customer en MercadoPago (opcional, no bloquea)
+    if (!restaurant.mpCustomerId) {
       try {
-        const customer = await createMPCustomer(
-          ownerEmail,
-          restaurant.owner?.name || restaurant.name,
-        );
-        mpCustomerId = customer.id;
-        await prisma.restaurant.update({
-          where: { id: restaurant.id },
-          data: { mpCustomerId },
-        });
+        const customer = await createMPCustomer(ownerEmail, restaurant.owner?.name || restaurant.name);
+        await prisma.restaurant.update({ where: { id: restaurant.id }, data: { mpCustomerId: customer.id } });
       } catch (err: any) {
         console.warn("[activar/pay] createMPCustomer falló (no bloquea):", err?.message);
       }
     }
 
+    // Determinar monto: promo o regular
     const promoNet = skipPromo ? null : activationPromoAmount(planKey);
+    const chargeNet = promoNet ?? planConfig.amountNet;
+    const chargeGross = grossOf(chargeNet);
+    const isPromo = promoNet !== null;
 
-    if (promoNet !== null) {
-      // ── Promo: pago unico del primer mes a precio reducido ──
-      const promoGross = grossOf(promoNet);
+    const title = isPromo
+      ? `${planConfig.name} - Primer mes (promo)`
+      : `${planConfig.name} - Mensualidad`;
 
-      const returnUrl = `${baseUrl}/api/activar/pay/return`;
-      const preference = await createMPPreference({
-        title: `${planConfig.name} - Primer mes (promo)`,
-        amountGross: promoGross,
-        externalReference: restaurant.id,
-        payerEmail: ownerEmail,
-        notificationUrl: `${baseUrl}/api/activar/pay/webhook`,
-        backUrls: {
-          success: returnUrl,
-          failure: returnUrl,
-          pending: returnUrl,
-        },
-      });
+    const returnUrl = `${baseUrl}/api/activar/pay/return`;
+    const preference = await createMPPreference({
+      title,
+      amountGross: chargeGross,
+      externalReference: restaurant.id,
+      payerEmail: ownerEmail,
+      backUrls: {
+        success: returnUrl,
+        failure: returnUrl,
+        pending: returnUrl,
+      },
+    });
 
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: { pendingMpPlanId: planConfig.planId },
-      });
+    await prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: { pendingMpPlanId: planConfig.planId },
+    });
 
-      // En sandbox usar sandboxInitPoint, en producción initPoint
-      const url = preference.sandboxInitPoint || preference.initPoint;
-      return NextResponse.json({ url });
-    } else {
-      // ── Sin promo: crear suscripcion directa a precio regular ──
-      const subscription = await createMPSubscription({
-        planKey,
-        payerEmail: ownerEmail,
-        externalReference: restaurant.id,
-        backUrl: `${baseUrl}/api/activar/pay/return`,
-      });
-
-      await prisma.restaurant.update({
-        where: { id: restaurant.id },
-        data: { pendingMpPlanId: planConfig.planId },
-      });
-
-      // El init_point de la suscripcion lleva al usuario a MP para pagar
-      return NextResponse.json({ url: subscription.initPoint });
-    }
+    const url = preference.sandboxInitPoint || preference.initPoint;
+    return NextResponse.json({ url });
   } catch (err: any) {
     const msg = err?.message || "Error desconocido";
     console.error("[activar/pay]", msg);
