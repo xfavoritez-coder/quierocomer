@@ -116,7 +116,7 @@ export default function ConfirmacionClient() {
     // Show timeout message after 20s ONLY if no preview appeared
     const maxTimeout = setTimeout(() => {
       if (!cartaReadyRef.current && !imagesLoadedRef.current) { setTimedOut(true); trackFunnelEvent(leadId, "confirmacion_timeout"); }
-    }, 20000);
+    }, 11000);
     // Stop polling after 5 minutes max
     const stopTimeout = setTimeout(() => { if (polling) clearInterval(polling); }, 300000);
 
