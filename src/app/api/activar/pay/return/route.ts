@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { flowPost } from "@/lib/billing/flow";
-import { FLOW_PLANS, planFromFlowId, grossOf, activationPromoAmount } from "@/lib/billing/plans-config";
+import { FLOW_PLANS, planFromFlowId, grossOf, activationPromoAmount, PLAN_LABELS } from "@/lib/billing/plans-config";
+import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
 
 /**
  * GET /api/activar/pay/return?token=...
@@ -120,6 +121,35 @@ export async function GET(req: NextRequest) {
     // Borrar sessions demo (cascade borra DishImpressions)
     prisma.session.deleteMany({ where: { restaurantId: restaurant.id } }),
   ]);
+
+  // Fire-and-forget: emails de notificación
+  const planLabel = PLAN_LABELS[appPlan as keyof typeof PLAN_LABELS] || appPlan;
+  const amountPaid = `$${chargeGross.toLocaleString("es-CL")} CLP`;
+  const nextDate = subscriptionStart.toLocaleDateString("es-CL", { day: "numeric", month: "long", year: "numeric" });
+  const regularGross = grossOf(FLOW_PLANS[planKey].amountNet);
+  const nextAmount = `$${regularGross.toLocaleString("es-CL")} CLP`;
+  const ownerEmail = restaurant.owner?.email;
+  const ownerName = restaurant.owner?.email?.split("@")[0] || "Hola";
+  const panelLink = `${baseUrl}/api/panel/demo-auth?slug=${restaurant.slug}`;
+  const qrLink = `${baseUrl}/qr/${restaurant.slug}`;
+
+  if (ownerEmail) {
+    // Email al dueño
+    sendAdminEmail({
+      to: ownerEmail,
+      subject: `${restaurant.name} · Plan ${planLabel} activado`,
+      html: planActivatedEmailHtml(ownerName, restaurant.name, planLabel, amountPaid, nextDate, nextAmount, panelLink, qrLink),
+      purpose: "plan_activated",
+    }).catch((err) => console.error("[activar/pay] Email al dueño falló:", err));
+  }
+
+  // Email al admin
+  sendAdminEmail({
+    to: "favoritez@gmail.com",
+    subject: `Nuevo cliente: ${restaurant.name} activó ${planLabel}`,
+    html: adminNewActivationEmailHtml(restaurant.name, planLabel, amountPaid, ownerEmail || "sin email", restaurant.slug || ""),
+    purpose: "admin_new_activation",
+  }).catch((err) => console.error("[activar/pay] Email admin falló:", err));
 
   // Fire-and-forget: traducción completa solo para Premium
   if (appPlan === "PREMIUM") {

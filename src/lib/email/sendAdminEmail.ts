@@ -220,6 +220,118 @@ export function handoffFreeEmailHtml(
 }
 
 /**
+ * Email al dueño cuando activa un plan pago desde /activar (pago exitoso).
+ */
+export function planActivatedEmailHtml(
+  firstName: string,
+  restaurantName: string,
+  planLabel: string,
+  amountPaid: string,
+  nextChargeDate: string,
+  nextChargeAmount: string,
+  panelLink: string,
+  qrLink: string,
+): string {
+  return adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Plan ${planLabel} activado! 🎉</h2>
+<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
+  ${firstName}, tu carta de <strong style="color:#FFD600">${restaurantName}</strong> ya está funcionando con el plan <strong style="color:#FFD600">${planLabel}</strong>.
+</p>
+
+<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.1em;margin:0 0 10px">💳 Detalle del pago</p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Cobrado hoy:</strong> ${amountPaid}</p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Próximo cobro:</strong> ${nextChargeDate}</p>
+  <p style="color:#c0a060;font-size:15px;margin:0"><strong>Monto mensual:</strong> ${nextChargeAmount}</p>
+</div>
+
+<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Próximos pasos</p>
+  <ol style="color:#c0a060;font-size:14px;line-height:1.8;margin:0 0 0 18px;padding:0">
+    <li>Sube tus fotos reales desde el panel</li>
+    <li>Personaliza precios, descripciones y categorías</li>
+    <li>Imprime tu código QR y ponlo en las mesas</li>
+  </ol>
+</div>
+
+<div style="text-align:center;margin-top:24px">
+  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
+    Entrar a mi panel →
+  </a>
+</div>
+<div style="text-align:center;margin-top:8px">
+  <a href="${qrLink}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver mi carta digital</a>
+</div>
+
+<p style="color:#c0a060;font-size:13px;line-height:1.6;margin:20px 0 0;text-align:center;opacity:0.8">
+  Puedes cancelar o cambiar de plan cuando quieras desde tu panel.<br>¿Dudas? Responde este email.
+</p>`);
+}
+
+/**
+ * Email al dueño cuando activa el plan gratis desde /activar.
+ */
+export function freeActivatedEmailHtml(
+  firstName: string,
+  restaurantName: string,
+  panelLink: string,
+  qrLink: string,
+): string {
+  return adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Tu carta está activa! 🎉</h2>
+<p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
+  ${firstName}, tu carta de <strong style="color:#FFD600">${restaurantName}</strong> ya está lista para que tus clientes la escaneen.
+</p>
+
+<div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Próximos pasos</p>
+  <ol style="color:#c0a060;font-size:14px;line-height:1.8;margin:0 0 0 18px;padding:0">
+    <li>Sube tus fotos reales desde el panel</li>
+    <li>Personaliza precios, descripciones y categorías</li>
+    <li>Imprime tu código QR y ponlo en las mesas</li>
+  </ol>
+</div>
+
+<div style="text-align:center;margin-top:24px">
+  <a href="${panelLink}" style="display:inline-block;background:#F4A623;color:#0D0D0D;font-size:16px;font-weight:bold;padding:14px 32px;border-radius:10px;text-decoration:none;letter-spacing:0.5px;margin-bottom:10px">
+    Entrar a mi panel →
+  </a>
+</div>
+<div style="text-align:center;margin-top:8px">
+  <a href="${qrLink}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver mi carta digital</a>
+</div>
+
+<p style="color:#c0a060;font-size:13px;line-height:1.6;margin:20px 0 0;text-align:center;opacity:0.8">
+  Estás en el plan Gratis. Cuando quieras más, activa Premium desde tu panel.
+</p>`);
+}
+
+/**
+ * Email interno al admin cuando un restaurante activa un plan.
+ */
+export function adminNewActivationEmailHtml(
+  restaurantName: string,
+  planLabel: string,
+  amountCharged: string,
+  ownerEmail: string,
+  slug: string,
+): string {
+  return adminEmailTemplate(`
+<h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:16px;text-align:center">Nuevo cliente activó ${planLabel}</h2>
+<div style="background:#3a2210;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:20px">
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Restaurant:</strong> <span style="color:#FFD600">${restaurantName}</span></p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Plan:</strong> ${planLabel}</p>
+  <p style="color:#c0a060;font-size:15px;margin:0 0 4px"><strong>Cobrado:</strong> ${amountCharged}</p>
+  <p style="color:#c0a060;font-size:15px;margin:0"><strong>Email dueño:</strong> ${ownerEmail}</p>
+</div>
+<div style="text-align:center">
+  <a href="https://quierocomer.cl/qr/${slug}" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver carta</a>
+  &nbsp;·&nbsp;
+  <a href="https://quierocomer.cl/admin/funnel" style="color:#FFD600;font-size:14px;text-decoration:underline">Ver funnel</a>
+</div>`);
+}
+
+/**
  * Email recordatorio cuando el trial está por vencer (≤ 2 días).
  * Se manda una sola vez (cron usa trialReminderSentAt para no duplicar).
  */
