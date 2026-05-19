@@ -176,7 +176,7 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-metric strong{display:block;font-family:'Cormorant Garamond',serif;font-size:34px;line-height:1;font-weight:400;letter-spacing:-.04em}
 .cl-metric span{display:block;margin-top:5px;color:#9B8E7A;font-size:12px;line-height:1.35}
 
-.cl-badges{display:flex;align-items:center;justify-content:center;gap:0;margin:-40px auto 50px;position:relative;z-index:5;max-width:560px;padding:18px 28px;border-radius:20px;border:1px solid rgba(244,166,35,.15);background:rgba(10,8,5,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
+.cl-badges{display:flex;align-items:center;justify-content:center;gap:0;margin:-40px auto 50px;position:relative;z-index:5;max-width:780px;padding:18px 28px;border-radius:20px;border:1px solid rgba(244,166,35,.15);background:rgba(10,8,5,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
 .cl-badge-item{flex:1;text-align:center}
 .cl-badge-num{display:block;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:#F5EFE2;line-height:1}
 .cl-badge-label{display:block;font-size:11px;color:#9B8E7A;margin-top:4px;letter-spacing:.02em}
