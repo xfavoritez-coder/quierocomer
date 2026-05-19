@@ -45,7 +45,7 @@ const dict = {
     viewGallery: "Galería", viewList: "Lista", viewFeed: "Feed", viewSpace: "Espacial", viewImpact: "Impact",
     feedHeroTop: "Top de la casa", feedHeroNew: "Nuevo en la carta", feedHeroTrending: "Plato del momento",
     feedPopular: "Popular hoy", feedNew: "NUEVO",
-    impactCraving: "¿Qué se te antoja?", impactFeatured: "Destacados", impactOffers: "Ofertas", impactMenu: "Menú",
+    impactCraving: "¿Qué se te antoja?", impactFeatured: "Recomendados", impactOffers: "Ofertas", impactMenu: "Menú",
     sortBy: "Ordenar", sortDefault: "Por defecto", sortMostViewed: "Lo más visto", sortMostOrdered: "Lo más pedido", sortPriceAsc: "Precio", sortPriceDesc: "Precio", sortToday: "Hoy", sortLast7Days: "Últimos 7 días",
     chapterOne: "uno", chapterTwo: "dos", chapterThree: "tres",
     chapterFour: "cuatro", chapterFive: "cinco", chapterSix: "seis",
