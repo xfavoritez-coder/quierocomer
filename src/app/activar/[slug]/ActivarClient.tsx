@@ -345,7 +345,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
           )}
-          <div style={{ marginTop: 10, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}>Puedes cancelar o cambiar de plan cuando quieras</div>
+          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro</div>
         </div>
         </div>{/* end activation-flow */}
         </section>{/* end hero */}

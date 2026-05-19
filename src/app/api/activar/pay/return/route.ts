@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `http://${req.headers.get("host")}`;
 
   if (!token) {
-    return NextResponse.redirect(`${baseUrl}/activar?error=no_token`);
+    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
 
   const restaurant = await prisma.restaurant.findFirst({
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
   });
 
   if (!restaurant || !restaurant.flowCustomerId || !restaurant.pendingFlowPlanId) {
-    return NextResponse.redirect(`${baseUrl}/activar?error=not_found`);
+    return NextResponse.redirect(`${baseUrl}/pago-cancelado`);
   }
 
   // Idempotencia: si ya no es demo, ya fue activado. Redirigir a éxito.

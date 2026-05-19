@@ -38,6 +38,12 @@ export default function Paso2Client() {
   const [localName, setLocalName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const formatPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 9);
+    if (d.length <= 1) return d;
+    if (d.length <= 5) return `${d[0]} ${d.slice(1)}`;
+    return `${d[0]} ${d.slice(1, 5)} ${d.slice(5)}`;
+  };
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -354,7 +360,7 @@ export default function Paso2Client() {
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
                       <span style={{ fontWeight: 600 }}>+56</span>
                     </div>
-                    <input type="tel" placeholder="9 1234 5678" value={whatsapp} onChange={(e) => { setWhatsapp(e.target.value); setError(""); setPhoneWarning(""); }} style={{ flex: 1 }} />
+                    <input type="tel" placeholder="9 1234 5678" value={whatsapp} onChange={(e) => { setWhatsapp(formatPhone(e.target.value)); setError(""); setPhoneWarning(""); }} style={{ flex: 1 }} />
                   </div>
                   {phoneWarning && (
                     <div style={{ color: "var(--amber-2)", fontSize: 12, marginTop: 4, textAlign: "left", paddingLeft: 4 }}>
