@@ -46,7 +46,7 @@ const STEPS: Step[] = [
   {
     icon: "🎨",
     title: "Cambia de vista",
-    body: "Tienes 3 distintas para que tus clientes disfruten de una mejor experiencia (la que estás viendo se llama Impact).",
+    body: "Tienes 3 distintas para que tus clientes disfruten de una mejor experiencia (la que estás viendo se llama Impact)",
     showOverlay: false,
   },
   {
