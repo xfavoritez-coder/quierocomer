@@ -70,22 +70,28 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
         <header className="cl-hero">
           <div className="cl-hero-bg" />
           <div className="cl-hero-glow" />
-          <div className="cl-eyebrow">Clientes</div>
-          <h1 className="cl-h1">Restaurantes reales, <span className="cl-italic-gold">resultados reales.</span></h1>
-          <p className="cl-hero-copy">Ya confían en nosotros para que sus clientes disfruten más cada vez que abren la carta.</p>
+          <div className="cl-hero-content">
+            <div className="cl-eyebrow">Clientes</div>
+            <h1 className="cl-h1">Restaurantes reales, <span className="cl-italic-gold">resultados reales.</span></h1>
+            <p className="cl-hero-copy">Ya confían en nosotros para que sus clientes disfruten más cada vez que abren la carta.</p>
+          </div>
         </header>
-        <div style={{ position: "relative", height: 100, marginTop: -35, zIndex: 3 }}>
-          <svg viewBox="0 0 1440 120" preserveAspectRatio="none" style={{ position: "absolute", bottom: 0, left: 0, width: "100%", height: 100 }}>
-            <path d="M0,0 C360,50 1080,50 1440,0 L1440,120 L0,120 Z" fill="#050403" />
-          </svg>
-          <div style={{
-            position: "absolute", left: "50%", top: "25%", transform: "translate(-50%,-50%)",
-            width: 36, height: 36, borderRadius: "50%",
-            border: "1.5px solid #F4A623", background: "rgba(5,4,3,.9)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "#F4A623", zIndex: 4,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 9l6 6 6-6"/></svg>
+
+        {/* Badges */}
+        <div className="cl-badges">
+          <div className="cl-badge-item">
+            <span className="cl-badge-num">{clients.length}+</span>
+            <span className="cl-badge-label">Restaurantes activos</span>
+          </div>
+          <div className="cl-badge-sep" />
+          <div className="cl-badge-item">
+            <span className="cl-badge-num">3</span>
+            <span className="cl-badge-label">Idiomas</span>
+          </div>
+          <div className="cl-badge-sep" />
+          <div className="cl-badge-item">
+            <span className="cl-badge-num">60s</span>
+            <span className="cl-badge-label">Para subir tu carta</span>
           </div>
         </div>
 
@@ -146,7 +152,7 @@ export default function ClientesClient({ clients, totalDishes, totalCategories }
 const STYLES = `
 body{
   margin:0!important;
-  background:radial-gradient(circle at 70% 6%,rgba(244,166,35,.16),transparent 28%),radial-gradient(circle at 12% 28%,rgba(244,166,35,.08),transparent 22%),linear-gradient(180deg,#070604 0%,#050403 48%,#030302 100%)!important;
+  background:#050403!important;
   color:#F5EFE2!important;font-family:Inter,system-ui,-apple-system,sans-serif!important;overflow-x:hidden!important;-webkit-font-smoothing:antialiased;
 }
 body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.35'/%3E%3C/svg%3E");mix-blend-mode:overlay;z-index:0}
@@ -154,8 +160,10 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-page{position:relative;z-index:1}
 .cl-italic-gold{font-style:italic;color:#FFC766}
 
-.cl-hero{position:relative;min-height:580px;padding:140px clamp(22px,4vw,64px) 34px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;max-width:1180px;margin:0 auto}
-.cl-hero-bg{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,4,3,.1) 0%,rgba(5,4,3,.4) 35%,rgba(5,4,3,.85) 65%,rgba(5,4,3,1) 100%),url('/landing/clientes.png') center/cover;filter:saturate(.85) contrast(1.08) brightness(.82);transform:scale(1.02);z-index:-2}
+.cl-hero{position:relative;min-height:580px;padding:140px 0 140px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}
+.cl-hero-bg{position:absolute;inset:0;background:url('/landing/clientes2.webp') center 40%/cover;z-index:-3}
+.cl-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,4,3,.15) 0%,rgba(5,4,3,.4) 30%,rgba(5,4,3,.8) 55%,rgba(5,4,3,.95) 75%,rgba(5,4,3,1) 100%),linear-gradient(90deg,rgba(5,4,3,.7) 0%,rgba(5,4,3,.2) 50%,transparent 100%);z-index:-2}
+.cl-hero-content{max-width:1180px;margin:0 auto;padding:0 clamp(22px,4vw,64px);text-align:left;display:flex;flex-direction:column;align-items:flex-start}
 .cl-hero-glow{position:absolute;width:240px;height:240px;right:-70px;top:110px;border-radius:50%;background:rgba(244,166,35,.18);filter:blur(80px);z-index:-1}
 .cl-eyebrow{color:#F4A623;font-size:11px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;margin-bottom:16px}
 .cl-h1{font-family:'Cormorant Garamond',serif;font-size:clamp(38px,8vw,62px);line-height:.98;font-weight:400;letter-spacing:-.04em;max-width:600px;text-shadow:0 4px 28px rgba(0,0,0,.45);margin:0 0 20px}
@@ -168,6 +176,11 @@ body::before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.18;b
 .cl-metric strong{display:block;font-family:'Cormorant Garamond',serif;font-size:34px;line-height:1;font-weight:400;letter-spacing:-.04em}
 .cl-metric span{display:block;margin-top:5px;color:#9B8E7A;font-size:12px;line-height:1.35}
 
+.cl-badges{display:flex;align-items:center;justify-content:center;gap:0;margin:-40px auto 50px;position:relative;z-index:5;max-width:560px;padding:18px 28px;border-radius:20px;border:1px solid rgba(244,166,35,.15);background:rgba(10,8,5,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 16px 48px rgba(0,0,0,.4)}
+.cl-badge-item{flex:1;text-align:center}
+.cl-badge-num{display:block;font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:400;color:#F5EFE2;line-height:1}
+.cl-badge-label{display:block;font-size:11px;color:#9B8E7A;margin-top:4px;letter-spacing:.02em}
+.cl-badge-sep{width:1px;height:36px;background:rgba(255,255,255,.08);flex-shrink:0}
 .cl-section{padding:0 clamp(18px,4vw,64px) 70px;max-width:1080px;margin:0 auto}
 .cl-section-center{text-align:center}
 .cl-h2{font-family:'Cormorant Garamond',serif;font-size:clamp(30px,5vw,38px);line-height:1.08;font-weight:400;letter-spacing:-.04em;margin:0}
