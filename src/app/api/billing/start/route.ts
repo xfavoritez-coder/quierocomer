@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createMPCustomer, createMPPlan, createMPSubscription } from "@/lib/billing/mercadopago";
+import { createMPCustomer, createMPSubscription } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS } from "@/lib/billing/plans-config";
 
 /**
@@ -52,14 +52,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. Crear el plan (PreApprovalPlan) en MercadoPago.
-    //    Cada suscripcion individual se crea con su propio plan para
-    //    mantener trazabilidad. El trial viene configurado en createMPPlan.
-    const mpPlan = await createMPPlan(plan);
-
-    // 3. Crear la suscripcion (PreApproval) asociada al plan
+    // 2. Crear la suscripcion (PreApproval) sin plan asociado
     const subscription = await createMPSubscription({
-      planId: mpPlan.id,
+      planKey: plan,
       payerEmail: owner.email,
       externalReference: restaurant.id,
     });

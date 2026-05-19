@@ -4,7 +4,6 @@ import { Payment } from "mercadopago";
 import {
   initMercadoPago,
   createMPSubscription,
-  createMPPlan,
 } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, planFromFlowId, grossOf, activationPromoAmount, PLAN_LABELS } from "@/lib/billing/plans-config";
 import { sendAdminEmail, planActivatedEmailHtml, adminNewActivationEmailHtml } from "@/lib/email/sendAdminEmail";
@@ -96,13 +95,13 @@ export async function GET(req: NextRequest) {
   const subscriptionStart = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   let subscriptionId = "";
   try {
-    const mpPlan = await createMPPlan(planKey);
     const ownerEmail = restaurant.owner?.email || "";
 
     const subscription = await createMPSubscription({
-      planId: mpPlan.id,
+      planKey,
       payerEmail: ownerEmail,
       externalReference: restaurant.id,
+      startDate: subscriptionStart,
     });
     subscriptionId = subscription.id;
   } catch (err: any) {

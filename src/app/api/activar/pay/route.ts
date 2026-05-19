@@ -4,7 +4,6 @@ import {
   createMPCustomer,
   createMPPreference,
   createMPSubscription,
-  createMPPlan,
 } from "@/lib/billing/mercadopago";
 import { FLOW_PLANS, activationPromoAmount, grossOf } from "@/lib/billing/plans-config";
 
@@ -97,11 +96,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url });
     } else {
       // ── Sin promo: crear suscripcion directa a precio regular ──
-      // Primero aseguramos que exista un PreApprovalPlan en MP
-      const mpPlan = await createMPPlan(planKey);
-
       const subscription = await createMPSubscription({
-        planId: mpPlan.id,
+        planKey,
         payerEmail: ownerEmail,
         externalReference: restaurant.id,
         backUrl: `${baseUrl}/api/activar/pay/return`,

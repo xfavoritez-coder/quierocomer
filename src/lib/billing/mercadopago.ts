@@ -150,8 +150,8 @@ export async function createMPPlan(planKey: string): Promise<MPPlanResult> {
 // ─── Subscriptions (PreApproval) ────────────────────────────────────────
 
 export type CreateMPSubscriptionParams = {
-  /** ID del PreApprovalPlan creado previamente */
-  planId: string;
+  /** Clave del plan: "GOLD" | "PREMIUM" */
+  planKey: string;
   /** Email del pagador */
   payerEmail: string;
   /** Referencia externa (ej: restaurantId) */
@@ -160,6 +160,8 @@ export type CreateMPSubscriptionParams = {
   cardTokenId?: string;
   /** URL de retorno personalizada. Si no se provee, usa /panel/suscripcion */
   backUrl?: string;
+  /** Fecha de inicio de la suscripcion (para diferir el primer cobro) */
+  startDate?: Date;
 };
 
 export type MPSubscriptionResult = {
@@ -172,8 +174,9 @@ export type MPSubscriptionResult = {
 };
 
 /**
- * Crea una suscripcion (preapproval) asociada a un plan.
- * El cliente sera redirigido al init_point para completar el pago.
+ * Crea una suscripcion (preapproval) SIN plan asociado.
+ * Define la recurrencia inline para que MP genere el init_point
+ * donde el usuario ingresa su tarjeta.
  */
 export async function createMPSubscription(
   params: CreateMPSubscriptionParams,
@@ -182,16 +185,36 @@ export async function createMPSubscription(
   const preApprovalClient = new PreApproval(config);
   const baseUrl = getBaseUrl();
 
-  const result = await preApprovalClient.create({
-    body: {
-      preapproval_plan_id: params.planId,
-      payer_email: params.payerEmail,
-      external_reference: params.externalReference,
-      back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
-      status: params.cardTokenId ? "authorized" : "pending",
-      ...(params.cardTokenId ? { card_token_id: params.cardTokenId } : {}),
+  const key = params.planKey as Exclude<PlanKey, "FREE">;
+  const planConfig = FLOW_PLANS[key];
+  if (!planConfig) throw new Error(`Plan "${params.planKey}" no existe`);
+
+  const amountGross = grossOf(planConfig.amountNet);
+
+  const body: Record<string, any> = {
+    reason: `QuieroComer ${planConfig.name}`,
+    payer_email: params.payerEmail,
+    external_reference: params.externalReference,
+    back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
+    auto_recurring: {
+      frequency: 1,
+      frequency_type: "months",
+      transaction_amount: amountGross,
+      currency_id: "CLP",
     },
-  });
+    status: "pending",
+  };
+
+  if (params.startDate) {
+    body.auto_recurring.start_date = params.startDate.toISOString();
+  }
+
+  if (params.cardTokenId) {
+    body.card_token_id = params.cardTokenId;
+    body.status = "authorized";
+  }
+
+  const result = await preApprovalClient.create({ body });
 
   if (!result.id) {
     throw new Error("MercadoPago no retorno un subscription ID");
