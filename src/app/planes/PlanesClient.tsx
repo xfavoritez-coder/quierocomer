@@ -6,12 +6,50 @@ import NavHamburger from "@/components/NavHamburger";
 
 export default function PlanesClient() {
   const [isMobile, setIsMobile] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalPlan, setModalPlan] = useState<string>("");
+  const [localName, setLocalName] = useState("");
+  const [ownerName, setOwnerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 700);
     check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
+
+  const openModal = (plan: string) => {
+    setModalPlan(plan);
+    setShowModal(true);
+    setError("");
+  };
+
+  const handleRegistrar = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!localName.trim() || !email.includes("@")) {
+      setError("Completa nombre del local y email.");
+      return;
+    }
+    setSending(true);
+    setError("");
+    try {
+      const res = await fetch("/api/activar/registrar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ localName: localName.trim(), ownerName: ownerName.trim(), email: email.trim(), whatsapp: `+56${whatsapp.replace(/\s/g, "").replace(/^\+?56/, "")}` }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.slug) throw new Error(data.error || "Error");
+      window.location.href = `/registrar/${data.slug}?plan=${modalPlan}`;
+    } catch (err: any) {
+      setError(err?.message || "Error al registrar. Intenta de nuevo.");
+      setSending(false);
+    }
+  };
 
   // Tip toggle
   useEffect(() => {
@@ -79,9 +117,9 @@ export default function PlanesClient() {
               <div>✓ Carta digital con QR <span className="qc-tip">i<span className="qc-tip-text">Tu carta lista para que tus clientes la escaneen desde la mesa</span></span></div>
               <div>✓ Vista Lista <span className="qc-tip">i<span className="qc-tip-text">Tus platos organizados por categoría en formato lista clásico</span></span></div>
               <div>✓ Panel para editar tu carta <span className="qc-tip">i<span className="qc-tip-text">Cambia platos, precios, fotos y categorías cuando quieras</span></span></div>
-              <div>✓ Hasta 10 clientes registrados <span className="qc-tip">i<span className="qc-tip-text">Captura datos de hasta 10 clientes que escanean tu carta</span></span></div>
+              <div>✓ Hasta 10 clientes captados <span className="qc-tip">i<span className="qc-tip-text">Captura datos de hasta 10 clientes que escanean tu carta</span></span></div>
             </div>
-            <a href="/subircarta" className="qc-plan-btn">Comenzar gratis</a>
+            <button className="qc-plan-btn" onClick={() => openModal("FREE")}>Comenzar gratis</button>
           </article>
 
           <article className="qc-plan qc-gold">
@@ -96,7 +134,7 @@ export default function PlanesClient() {
               <div>✓ Estadísticas de tu carta <span className="qc-tip">i<span className="qc-tip-text">Ve cuántas personas visitan tu carta, qué platos miran más y en qué horarios</span></span></div>
               <div>✓ Anuncios dentro de la carta <span className="qc-tip">i<span className="qc-tip-text">Destaca platos o muestra banners promocionales que tus clientes ven al navegar</span></span></div>
             </div>
-            <a href="/subircarta" className="qc-plan-btn">Elegir Gold</a>
+            <button className="qc-plan-btn" onClick={() => openModal("GOLD")}>Elegir Gold</button>
           </article>
 
           <article className="qc-plan qc-featured">
@@ -111,18 +149,71 @@ export default function PlanesClient() {
               <div>✓ Botón llamar garzón <span className="qc-tip">i<span className="qc-tip-text">Tus clientes llaman al garzón desde la carta con un toque</span></span></div>
               <div>✓ Carta en varios idiomas <span className="qc-tip">i<span className="qc-tip-text">Tu carta se traduce automáticamente a inglés, portugués y más</span></span></div>
               <div>✓ Cumpleaños automáticos <span className="qc-tip">i<span className="qc-tip-text">El sistema detecta clientes que cumplen años y les envía una invitación especial</span></span></div>
-              <div>✓ Clientes ilimitados <span className="qc-tip">i<span className="qc-tip-text">Registra todos los clientes que escanean tu carta, sin límite</span></span></div>
+              <div>✓ Clientes captados ilimitados <span className="qc-tip">i<span className="qc-tip-text">Registra todos los clientes que escanean tu carta, sin límite</span></span></div>
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
               <div>✓ Integración con Toteat <span className="qc-tip">i<span className="qc-tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
             </div>
-            <a href="/subircarta" className="qc-plan-btn">Activar Premium</a>
+            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Activar Premium</button>
           </article>
         </div>
 
-        <div className="planes-bottom">
-          <p>¿Tienes dudas? <a href="/contacto">Escríbenos</a></p>
+        <div style={{ textAlign: "center", marginTop: 24, padding: "18px 0", borderTop: "1px solid rgba(255,255,255,.06)" }}>
+          <p style={{ fontSize: 14, color: "#C9BBA0", marginBottom: 8 }}>¿Ya tienes tu carta en otra plataforma o de forma física?</p>
+          <a href="/subircarta" style={{ color: "#E8A33D", fontSize: 15, fontWeight: 700, textDecoration: "none" }}>
+            Sube tu carta y la importamos gratis →
+          </a>
         </div>
+
       </main>
+
+      {/* Modal de registro */}
+      {showModal && (
+        <div onClick={() => setShowModal(false)} style={{ position: "fixed", inset: 0, zIndex: 2000, background: "rgba(0,0,0,.7)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ width: "min(100%,400px)", background: "#141210", border: "1px solid rgba(255,255,255,.08)", borderRadius: 24, padding: "32px 24px", position: "relative" }}>
+            <button onClick={() => setShowModal(false)} style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", color: "#9B8E7A", fontSize: 20, cursor: "pointer", lineHeight: 1 }}>×</button>
+
+            <div style={{ textAlign: "center", marginBottom: 20 }}>
+              <div style={{ fontSize: 11, letterSpacing: ".2em", textTransform: "uppercase", color: "#E8A33D", fontWeight: 700, marginBottom: 8 }}>
+                {modalPlan === "FREE" ? "Plan Gratis" : modalPlan === "GOLD" ? "Plan Gold" : "Plan Premium"}
+              </div>
+              <h2 style={{ fontFamily: "Georgia,serif", fontSize: 24, fontWeight: 400, color: "#E8DDC8", margin: 0 }}>Crea tu cuenta</h2>
+              <p style={{ fontSize: 13, color: "#9B8E7A", marginTop: 6 }}>En 30 segundos tienes tu carta lista para agregar tus platos.</p>
+            </div>
+
+            <style dangerouslySetInnerHTML={{ __html: `.qc-modal-input::placeholder{color:rgba(140,125,100,.45)!important}` }} />
+            <form onSubmit={handleRegistrar} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#C9BBA0", letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Nombre del local</label>
+                <input className="qc-modal-input" type="text" placeholder="Pizzería Don Mario" value={localName} onChange={(e) => setLocalName(e.target.value)} required style={{ width: "100%", padding: "12px 14px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 15, outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#C9BBA0", letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Tu nombre</label>
+                <input className="qc-modal-input" type="text" placeholder="Mario González" value={ownerName} onChange={(e) => setOwnerName(e.target.value)} style={{ width: "100%", padding: "12px 14px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 15, outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#C9BBA0", letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 4, display: "block" }}>Correo electrónico</label>
+                <input className="qc-modal-input" type="email" placeholder="tu@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: "100%", padding: "12px 14px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 15, outline: "none" }} />
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 700, color: "#C9BBA0", letterSpacing: ".04em", textTransform: "uppercase", marginBottom: 4, display: "block" }}>WhatsApp</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0, cursor: "default" }}>
+                    <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
+                    <span style={{ fontWeight: 600 }}>+56</span>
+                  </div>
+                  <input className="qc-modal-input" type="tel" placeholder="9 1234 5678" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} required style={{ width: "100%", padding: "12px 14px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 15, outline: "none" }} />
+                </div>
+              </div>
+
+              {error && <div style={{ color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
+
+              <button type="submit" disabled={sending} style={{ marginTop: 4, width: "100%", padding: 15, background: modalPlan === "PREMIUM" ? "linear-gradient(135deg,#ffc44f,#f3a333)" : "rgba(255,255,255,.08)", color: modalPlan === "PREMIUM" ? "#100b03" : "#E8DDC8", border: modalPlan === "PREMIUM" ? "none" : "1px solid rgba(255,255,255,.16)", borderRadius: 999, fontSize: 15, fontWeight: 900, cursor: sending ? "wait" : "pointer", opacity: sending ? 0.6 : 1 }}>
+                {sending ? "Creando..." : "Continuar"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </>
@@ -160,7 +251,7 @@ body{background:#0A0908!important;color:#E8DDC8!important;font-family:'Inter',sa
 .qc-tip{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(232,163,61,.12);color:#E8A33D;font-size:10px;font-weight:800;font-style:italic;cursor:pointer;flex-shrink:0;position:relative;-webkit-tap-highlight-color:transparent}
 .qc-tip.open .qc-tip-text{display:block}
 .qc-tip-text{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1a1a1a;border:1px solid rgba(232,163,61,.25);border-radius:8px;padding:10px 12px;font-size:13px;font-weight:400;font-style:normal;color:#C9BBA0;width:200px;text-align:left;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.5);line-height:1.4}
-.qc-plan-btn{display:block;width:100%;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#E8DDC8;padding:14px 15px;font-weight:950;cursor:pointer;font-size:14px;text-align:center;text-decoration:none;transition:.2s}
+.qc-plan-btn{display:block;width:100%;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#E8DDC8;padding:14px 15px;font-weight:950;cursor:pointer;font-size:14px;text-align:center;text-decoration:none;transition:.2s;font-family:inherit}
 .qc-plan-btn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
 .qc-plan.qc-featured .qc-plan-btn{background:linear-gradient(135deg,#ffc44f,#f3a333);color:#100b03;border:0}
 .qc-plan.qc-featured .qc-plan-btn:hover{background:linear-gradient(135deg,#ffd76b,#f5b84a)}

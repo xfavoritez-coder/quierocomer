@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
+import NavHamburger from "@/components/NavHamburger";
 
 interface Props {
   restaurant: { id: string; name: string; slug: string; logoUrl: string | null };
@@ -223,15 +224,12 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     <>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      {/* Nav — same as /landing */}
       <nav className="activar-nav">
-        <a className="logo" href="/landing">
+        <a className="logo" href="/">
           <img src="/landing/logo.png" alt="" />
           QuieroComer
         </a>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <a className="nav-link" href={`/qr/${restaurant.slug}`}>Ver mi carta</a>
-        </div>
+        <NavHamburger />
       </nav>
 
       <main className="page">
