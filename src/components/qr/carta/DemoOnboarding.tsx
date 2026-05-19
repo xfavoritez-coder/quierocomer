@@ -36,7 +36,7 @@ const STEPS: Step[] = [
   },
   {
     icon: "📸",
-    title: "Así quedaría",
+    title: "Así quedaría tu carta",
     body: "", // set dynamically based on allPhotosReferential
     showOverlay: false,
     overlayOpacity: 0.5,
