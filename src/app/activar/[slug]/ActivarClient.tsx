@@ -169,24 +169,52 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     return () => document.removeEventListener("click", handler);
   }, []);
 
+  const [error, setError] = useState("");
+
+  // Mostrar error si vuelve de pago fallido
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pago") === "error") {
+      const reason = params.get("reason") || "";
+      setError(reason === "charge_failed"
+        ? "No se pudo procesar el cobro. Intenta nuevamente."
+        : "No se pudo completar el pago. Intenta nuevamente.");
+      params.delete("pago"); params.delete("reason");
+      const clean = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+      window.history.replaceState({}, "", clean);
+    }
+  }, []);
+
   const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
-    alert("Estamos trabajando en esto. Pronto podrás activar tu carta.");
-    return;
+    setLoading(true);
+    setSelectedPlan(plan);
+    setError("");
+
     try {
-      const res = await fetch("/api/activar/trial", {
+      if (plan === "FREE") {
+        const res = await fetch("/api/activar/free", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ restaurantId: restaurant.id }),
+        });
+        if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Error"); }
+        window.location.href = `/activar/${restaurant.slug}/exito?plan=FREE`;
+        return;
+      }
+
+      // Plan pago: registrar tarjeta + pagar via Flow
+      const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ restaurantId: restaurant.id, plan }),
       });
-      if (res.ok) {
-        setDone(true);
-        setTimeout(() => {
-          window.location.href = `/panel?slug=${restaurant.slug}`;
-        }, 2000);
-      }
-    } catch {
-      // silently fail
-    } finally {
+      const data = await res.json();
+      if (!res.ok || !data.url) throw new Error(data.error || "Error iniciando pago");
+
+      // Redirigir a Webpay
+      window.location.href = data.url;
+    } catch (err: any) {
+      setError(err?.message || "Hubo un error. Intenta nuevamente.");
       setLoading(false);
     }
   };
@@ -311,12 +339,13 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div className="offer-text">
             Activa multidioma, estadísticas, automatizaciones, capta cumpleaños y más.
           </div>
+          {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
           {!done ? (
             <button className="cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar por $4.900"}
+              {loading && selectedPlan === "PREMIUM" ? "Procesando..." : "Activar por $4.900"}
             </button>
           ) : (
-            <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
+            <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
           )}
           <div style={{ marginTop: 10, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}>Puedes cancelar o cambiar de plan cuando quieras</div>
         </div>

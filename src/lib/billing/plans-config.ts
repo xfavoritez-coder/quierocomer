@@ -39,6 +39,16 @@ export const FLOW_PLANS: Record<Exclude<RestaurantPlan, "FREE">, FlowPlanConfig>
   PREMIUM: { planId: "qc_premium_monthly", name: "QuieroComer Premium", amountNet: 49900, appPlan: "PREMIUM" },
 };
 
+// Precio promocional para activación desde demo (primer mes)
+export const ACTIVATION_PROMO: Partial<Record<Exclude<RestaurantPlan, "FREE">, { amountNet: number; label: string }>> = {
+  PREMIUM: { amountNet: 4900, label: "$4.900 primer mes" },
+};
+
+/** Retorna precio neto promo si existe para el plan, o null. */
+export function activationPromoAmount(plan: Exclude<RestaurantPlan, "FREE">): number | null {
+  return ACTIVATION_PROMO[plan]?.amountNet ?? null;
+}
+
 export function planFromFlowId(planId: string): RestaurantPlan | null {
   for (const cfg of Object.values(FLOW_PLANS)) {
     if (cfg.planId === planId) return cfg.appPlan;
