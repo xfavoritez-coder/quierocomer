@@ -8,9 +8,9 @@ import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
 
 const PROGRESS_STEPS = [
-  { label: "Traduciendo tu carta", duration: 3500 },
+  { label: "Detectando platos y categorías", duration: 3500 },
   { label: "Seleccionando platos destacados", duration: 4500 },
-  { label: "Configurando las vistas", duration: 6000 },
+  { label: "Preparando tu nueva carta", duration: 6000 },
 ];
 
 /** Non-linear easing — slows down around 40% and 75% to feel like real processing */
@@ -245,15 +245,18 @@ export default function Paso2Client() {
 
   const pillLabelTexts = [
     pillLabelBase ? `Revisando ${pillLabelBase}` : "Revisando",
+    "Traduciendo tu carta",
+    "Seleccionando platos destacados",
+    "Configurando las vistas",
     localNameFromUrl ? `Leyendo carta de ${localNameFromUrl}` : "Leyendo tu carta",
     "Extrayendo platos y precios",
   ];
   const pillLabel = animDone ? pillLabelBase : pillLabelTexts[pillMetaIndex % pillLabelTexts.length];
   const pillMetaTexts = [
     cartaType === "LINK" ? "Link recibido · listo para analizar" : cartaType === "PHOTO" ? "Foto recibida · lista para analizar" : "Archivo recibido · listo para analizar",
-    "Traduciendo tu carta...",
-    "Seleccionando platos destacados...",
-    "Configurando las vistas...",
+    "Accediendo a tu carta...",
+    "Detectando categorías...",
+    "Preparando tu nueva carta...",
   ];
   const pillMeta = animDone ? pillMetaTexts[0] : pillMetaTexts[pillMetaIndex % pillMetaTexts.length];
 
