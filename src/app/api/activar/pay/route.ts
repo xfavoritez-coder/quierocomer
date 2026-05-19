@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
       amountGross: chargeGross,
       externalReference: restaurant.id,
       payerEmail: ownerEmail,
+      notificationUrl: `${baseUrl}/api/billing/webhook`,
       backUrls: {
         success: returnUrl,
         failure: returnUrl,
