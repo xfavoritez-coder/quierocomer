@@ -377,6 +377,9 @@ export default function Paso2Client() {
                   <input type="text" placeholder="Tu nombre" value={ownerName} onChange={(e) => { setOwnerName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
+                  <input type="email" placeholder="Correo electrónico" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
+                </div>
+                <div className="field-row">
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
@@ -389,9 +392,6 @@ export default function Paso2Client() {
                       {phoneWarning}
                     </div>
                   )}
-                </div>
-                <div className="field-row">
-                  <input type="email" placeholder="Correo electrónico" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
                 </div>
 
                 {error && (

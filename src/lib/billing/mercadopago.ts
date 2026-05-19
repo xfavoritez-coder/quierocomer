@@ -200,9 +200,8 @@ export async function createMPSubscription(
     currency_id: "CLP",
   };
 
-  // Primer mes con precio promo: free_trial simula el descuento
-  // MP cobra transaction_amount del free_trial en el primer ciclo,
-  // luego el transaction_amount regular en los siguientes.
+  // Primer mes con precio promo via free_trial.first_invoice_amount
+  // MP cobra el monto promo el primer mes y el regular en los siguientes.
   if (params.firstAmountGross && params.firstAmountGross < amountGross) {
     autoRecurring.free_trial = {
       frequency: 1,
@@ -217,7 +216,6 @@ export async function createMPSubscription(
 
   const body: Record<string, any> = {
     reason: planConfig.name,
-    payer_email: params.payerEmail,
     external_reference: params.externalReference,
     back_url: params.backUrl ?? `${baseUrl}/panel/suscripcion`,
     auto_recurring: autoRecurring,
