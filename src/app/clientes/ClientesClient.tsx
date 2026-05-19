@@ -7,7 +7,7 @@ import NavHamburger from "@/components/NavHamburger";
 const TESTIMONIALS = [
   { quote: "Subimos nuestra carta en minutos y nuestros clientes extranjeros por fin pueden leer el menú completo.", name: "Alfredo Morales", place: "Hand Roll · Santiago", photo: "/landing/owners/handroll.webp" },
   { quote: "Antes nuestros clientes no sabían qué pedir. Ahora la carta les recomienda y piden más.", name: "Carlos Gómez", place: "Horus Vegan · Santiago", photo: "/landing/owners/horus.webp" },
-  { quote: "Lo mejor es que puedo actualizar precios al instante sin depender de nadie.", name: "Andrés Muñoz", place: "Juana la Brava · Santiago", photo: "/landing/owners/juana.webp" },
+  { quote: "Lo mejor es que puedo actualizar precios al instante sin depender de nadie.", name: "Javier Urzúa", place: "Juana la Brava · Santiago", photo: "/landing/owners/juana.webp" },
   { quote: "Nuestros turistas ahora leen la carta en su idioma. Las ventas subieron.", name: "Marco Ricci", place: "Alleria Pizza · Santiago", photo: "/landing/owners/alleria.webp" },
   { quote: "En 60 segundos teníamos nuestra carta digital lista. Increíble.", name: "Felipe Torres", place: "Nascosto · Santiago", photo: "/landing/owners/nascosto.webp" },
 ];

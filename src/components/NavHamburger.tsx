@@ -87,7 +87,7 @@ export default function NavHamburger() {
             <div style={{ height: 1, background: "rgba(255,255,255,.06)", margin: "8px 0" }} />
             <a href="/panel" className="nav-menu-item" onClick={() => setMenuOpen(false)}>
               <div className="nav-menu-item-icon">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>
               </div>
               <span className="nav-menu-item-title" style={{ color: "var(--amber, #E8A33D)" }}>Accede a tu panel</span>
             </a>
