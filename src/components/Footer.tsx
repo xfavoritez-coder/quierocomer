@@ -28,9 +28,10 @@ export default function Footer({ onPlanesClick }: { onPlanesClick?: () => void }
           justifyContent: "center",
           flexWrap: "wrap",
         }}>
-          <a href="/landing" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Inicio</a>
-          <a href="/landing#planes" onClick={onPlanesClick ? (e) => { e.preventDefault(); onPlanesClick(); } : undefined} style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Planes</a>
-          <a href="mailto:hola@quierocomer.cl" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Contacto</a>
+          <a href="/" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Inicio</a>
+          <a href="/clientes" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Clientes</a>
+          <a href="/planes" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Planes</a>
+          <a href="/contacto" style={{ color: "#887B68", textDecoration: "none", fontSize: 13 }}>Contacto</a>
         </div>
       </div>
     </footer>

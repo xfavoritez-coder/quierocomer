@@ -274,15 +274,6 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 16. **Alertas de inactividad** — Si la carta no recibe visitas en 7 días, email al dueño con tips: "¿Ya pusiste el QR?", "Comparte tu carta en Instagram".
 
-### Landing / Navegación
-
-27. **Menú hamburguesa en landing (index)** — Reemplazar el botón "Subir carta" del header (arriba a la derecha) por un icono de tres líneas (hamburguesa) que abre un menú con:
-   - Inicio
-   - Productos (tienda de QR físicos)
-   - Planes
-   - Contacto
-   - El CTA "Subir carta" se mantiene dentro del menú o como botón destacado en el body, pero NO en el header
-
 ### Captación
 
 17. **Scraping proactivo** — Buscar restaurantes en Google Maps / Justo / UberEats de una zona, generar carta demo SIN que el dueño la pida, y enviar cold email: "Ya te hicimos tu carta digital, mírala aquí". Outbound agresivo.
