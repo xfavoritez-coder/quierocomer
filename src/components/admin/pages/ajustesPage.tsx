@@ -31,6 +31,7 @@ interface SettingsData {
 const ACCENT_OPTIONS = [
   { value: null, label: "Amber", color: "#F4A623" },
   { value: "#C50E2C", label: "Rojo", color: "#C50E2C" },
+  { value: "#f472b6", label: "Rosa", color: "#f472b6" },
 ];
 
 const VIEW_OPTIONS = [
