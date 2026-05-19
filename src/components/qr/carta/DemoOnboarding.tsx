@@ -305,9 +305,9 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   const current = STEPS[Math.min(step, STEPS.length - 1)];
   const stepBody = step === 1
     ? (allPhotosReferential
-      ? "Pusimos fotos referenciales en los primeros platos. Al activar tu carta, se completan todas."
+      ? "Pusimos fotos referenciales para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
       : hasReferentialPhotos
-        ? "Pusimos algunas fotos referenciales para que veas cómo se vería. Al activar se completan todas."
+        ? "Algunas fotos son referenciales para que veas cómo se vería. Al activar, podrás subir las tuyas."
         : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
     : current.body;
   const isLast = step === STEPS.length - 1;
