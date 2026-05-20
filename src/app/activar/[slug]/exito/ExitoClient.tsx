@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
+import NavHamburger from "@/components/NavHamburger";
 
 interface Props {
   restaurant: { name: string; slug: string; logoUrl: string | null };
@@ -36,6 +37,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
           <img src="/landing/logo.png" alt="" style={{ height: 16 }} />
           QuieroComer
         </a>
+        <NavHamburger />
       </nav>
 
       <main className="exito-main">
@@ -73,8 +75,7 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
 
           <p className="exito-subtitle">
             {restaurant.name} ya tiene su carta digital funcionando.
-            {isPaid && plan === "PREMIUM" && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>Próximo cobro en 30 días · $49.900 + IVA/mes</span></>}
-            {isPaid && plan === "GOLD" && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>Próximo cobro en 30 días · $35.000 + IVA/mes</span></>}
+            {isPaid && plan === "GOLD" && <><br /><span style={{ fontSize: 12, opacity: 0.5 }}>Plan Gold activo</span></>}
           </p>
 
           {/* Próximos pasos */}
@@ -110,7 +111,7 @@ const CSS = `
 :root { --cream:#E8DDC8; --cream-soft:#C9BBA0; --amber:#E8A33D; --black:#0A0908; --gray-warm:#7D7366; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { background: var(--black) !important; color: var(--cream) !important; font-family: Inter, -apple-system, sans-serif !important; overflow-x: hidden !important; }
-.exito-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px clamp(18px,4vw,64px); display: flex; align-items: center; background: rgba(10,9,8,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.exito-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px clamp(18px,4vw,64px); display: flex; justify-content: space-between; align-items: center; background: rgba(10,9,8,.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
 .exito-logo { font-family: Georgia, serif; font-size: 17px; font-weight: 400; color: var(--cream); display: flex; align-items: center; gap: 8px; text-decoration: none; }
 .exito-main { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 80px 16px 60px; position: relative; }
 .exito-glow { position: absolute; top: 25%; left: 50%; transform: translateX(-50%); width: min(500px, 100vw); height: 500px; background: radial-gradient(circle, rgba(232,163,61,.1), transparent 60%); pointer-events: none; }

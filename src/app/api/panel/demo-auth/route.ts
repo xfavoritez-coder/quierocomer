@@ -15,10 +15,10 @@ export async function GET(req: NextRequest) {
   const slug = req.nextUrl.searchParams.get("slug");
   if (!slug) return NextResponse.redirect(new URL("/panel/login", req.url));
 
-  // Find demo restaurant
+  // Find restaurant (demo or recently activated)
   const restaurant = await prisma.restaurant.findFirst({
-    where: { slug, isDemo: true },
-    select: { id: true, ownerId: true },
+    where: { slug },
+    select: { id: true, ownerId: true, isDemo: true },
   });
 
   if (!restaurant) {
@@ -48,8 +48,8 @@ export async function GET(req: NextRequest) {
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", ownerRole, { ...base, httpOnly: true });
   response.cookies.set("panel_id", ownerId, { ...base, httpOnly: true });
-  response.cookies.set("panel_demo", "1", { ...base, httpOnly: false }); // client-readable flag
-  response.cookies.set("panel_demo_slug", slug, { ...base, httpOnly: true }); // which demo restaurant
+  response.cookies.set("panel_demo", restaurant.isDemo ? "1" : "0", { ...base, httpOnly: false });
+  response.cookies.set("panel_demo_slug", slug, { ...base, httpOnly: true });
 
   return response;
 }

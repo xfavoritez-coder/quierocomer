@@ -276,12 +276,21 @@ export function freeActivatedEmailHtml(
   restaurantName: string,
   panelLink: string,
   qrLink: string,
+  credentials?: { email: string; password: string },
 ): string {
   return adminEmailTemplate(`
 <h2 style="color:#FFD600;font-size:22px;margin-top:0;margin-bottom:20px;text-align:center">¡Tu carta está activa! 🎉</h2>
 <p style="color:#c0a060;font-size:16px;line-height:1.7;margin-bottom:20px">
   ${firstName}, tu carta de <strong style="color:#FFD600">${restaurantName}</strong> ya está lista para que tus clientes la escaneen.
 </p>
+
+${credentials ? `
+<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:12px;padding:18px 20px;margin-bottom:24px">
+  <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 12px">Tus datos de acceso al panel</p>
+  <p style="color:#c0a060;font-size:14px;margin:0 0 6px"><strong style="color:#e0d0b0">Email:</strong> ${credentials.email}</p>
+  <p style="color:#c0a060;font-size:14px;margin:0"><strong style="color:#e0d0b0">Contraseña:</strong> ${credentials.password}</p>
+</div>
+` : ""}
 
 <div style="background:#2a1a08;border:1px solid #5a3a18;border-radius:12px;padding:18px 20px;margin-bottom:24px">
   <p style="color:#FFD600;font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;margin:0 0 10px">Próximos pasos</p>

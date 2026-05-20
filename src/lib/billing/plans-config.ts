@@ -11,7 +11,7 @@
  */
 import type { RestaurantPlan } from "@prisma/client";
 
-export const TRIAL_DAYS = 7;
+export const TRIAL_DAYS = 14;
 export const GRACE_DAYS = 7;
 
 export const IVA_RATE = 0.19;

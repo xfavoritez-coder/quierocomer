@@ -91,24 +91,28 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
   if (!plan) return <><style dangerouslySetInnerHTML={{ __html: CSS }} /><div style={{ minHeight: "100vh", background: "var(--black)" }} /></>;
 
   const handleActivar = async () => {
-    if (plan !== "FREE" && !confirmPlan) {
-      setConfirmPlan(plan as "GOLD" | "PREMIUM");
+    // Gold requiere pago → mostrar modal
+    if (plan === "GOLD" && !confirmPlan) {
+      setConfirmPlan("GOLD");
       return;
     }
 
     setLoading(true);
     setError("");
     try {
-      if (plan === "FREE") {
-        const res = await fetch("/api/activar/free", {
+      if (plan === "FREE" || plan === "PREMIUM") {
+        // Free y Premium (trial 14 días) → sin pago
+        const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restaurantId: restaurant.id }),
+          body: JSON.stringify({ restaurantId: restaurant.id, plan }),
         });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Error");
-        window.location.href = `/activar/${restaurant.slug}/exito?plan=FREE`;
+        window.location.href = `/activar/${restaurant.slug}/exito?plan=${plan}`;
         return;
       }
+      // Gold → pago via MercadoPago
       const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -239,7 +243,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
 
             {!done ? (
               <button className="rg-cta" disabled={loading} onClick={handleActivar}>
-                {loading ? "Procesando..." : plan === "FREE" ? "Activar gratis" : `Activar mi carta`}
+                {loading ? "Procesando..." : plan === "FREE" ? "Activar gratis" : plan === "PREMIUM" ? "Probar gratis 14 días" : "Activar mi carta"}
               </button>
             ) : (
               <div className="rg-done">Activado. Redirigiendo...</div>

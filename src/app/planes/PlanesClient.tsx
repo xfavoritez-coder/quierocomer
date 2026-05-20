@@ -146,7 +146,11 @@ export default function PlanesClient() {
           <article className="qc-plan qc-featured">
             <div className="qc-badge">Más elegido</div>
             <h3>Premium</h3>
-            <div className="qc-plan-price">$49.900<small>/mes + IVA</small></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+              <span style={{ background: "#dc2626", color: "#fff", fontSize: 11, fontWeight: 950, padding: "5px 10px", borderRadius: 999, letterSpacing: ".5px" }}>14 días gratis</span>
+              <span style={{ fontSize: 14, color: "#888", textDecoration: "line-through" }}>$49.900/mes</span>
+            </div>
+            <div className="qc-plan-price">$49.900<small>/mes + IVA después del trial</small></div>
             <p>Para restaurantes que quieren vender más.</p>
             <div className="qc-checks">
               <div>✓ Todo lo de Gold</div>
@@ -159,7 +163,7 @@ export default function PlanesClient() {
               <div>✓ Email marketing <span className="qc-tip">i<span className="qc-tip-text">Envía campañas y novedades por email a toda tu base de clientes</span></span></div>
               <div>✓ Integración con Toteat <span className="qc-tip">i<span className="qc-tip-text">Conecta tu POS Toteat para sincronizar carta, ver ventas reales y cruzar datos</span></span></div>
             </div>
-            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Activar Premium</button>
+            <button className="qc-plan-btn" onClick={() => openModal("PREMIUM")}>Probar gratis 14 días</button>
           </article>
         </div>
 

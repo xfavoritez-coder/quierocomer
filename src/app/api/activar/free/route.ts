@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     sendAdminEmail({
       to: ownerEmail,
       subject: `${restaurant.name} · Tu carta está activa`,
-      html: freeActivatedEmailHtml(ownerName, restaurant.name, panelLink, qrLink),
+      html: freeActivatedEmailHtml(ownerName, restaurant.name, panelLink, qrLink, ownerEmail ? { email: ownerEmail, password: `${restaurant.slug}2026` } : undefined),
       purpose: "free_activated",
     }).catch((err) => console.error("[activar/free] Email al dueño falló:", err));
   }

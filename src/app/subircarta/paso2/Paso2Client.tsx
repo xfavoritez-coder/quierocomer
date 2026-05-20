@@ -359,19 +359,19 @@ export default function Paso2Client() {
 
               <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Nombre del local</label>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Nombre del local</label>
                   <input ref={firstInputRef} type="text" placeholder="Ej: Mi Restaurante" value={localName} onChange={(e) => { setLocalName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Tu nombre</label>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Tu nombre</label>
                   <input type="text" placeholder="Ej: Juan Pérez" value={ownerName} onChange={(e) => { setOwnerName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>Correo electrónico</label>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Correo electrónico</label>
                   <input type="email" placeholder="tu@correo.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 11, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 500 }}>WhatsApp</label>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
@@ -397,7 +397,7 @@ export default function Paso2Client() {
                 </button>
               </form>
 
-              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviarte la propuesta.</p>
+              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
 
             </div>
             )}
@@ -459,9 +459,9 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .form-title { text-align: center; margin-bottom: 14px; }
 .form-title h2 { font-family: var(--font-display); font-size: clamp(26px, 7vw, 34px); line-height: 1; letter-spacing: -.03em; font-weight: 500; margin-bottom: 6px; color: var(--cream); }
 .form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
-.field-row { margin-bottom: 8px; }
+.field-row { margin-bottom: 14px; }
 input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; font-size: 15px; }
-input::placeholder { color: rgba(180,165,140,.55) !important; }
+input::placeholder { color: rgba(180,165,140,.35) !important; }
 input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
 .trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
 .trust svg { flex-shrink: 0; color: var(--amber-2); width: 16px; height: 16px; }

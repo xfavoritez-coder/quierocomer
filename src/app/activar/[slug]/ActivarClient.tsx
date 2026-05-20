@@ -189,8 +189,9 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
   }, []);
 
   const handleActivar = async (plan: "FREE" | "GOLD" | "PREMIUM") => {
-    if (plan !== "FREE" && !confirmPlan) {
-      setConfirmPlan(plan as "GOLD" | "PREMIUM");
+    // Gold requiere pago → mostrar modal de confirmación
+    if (plan === "GOLD" && !confirmPlan) {
+      setConfirmPlan("GOLD");
       return;
     }
 
@@ -199,17 +200,20 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
     setError("");
 
     try {
-      if (plan === "FREE") {
-        const res = await fetch("/api/activar/free", {
+      if (plan === "FREE" || plan === "PREMIUM") {
+        // Free y Premium (trial 14 días) → sin pago
+        const endpoint = plan === "FREE" ? "/api/activar/free" : "/api/activar/trial";
+        const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ restaurantId: restaurant.id }),
+          body: JSON.stringify({ restaurantId: restaurant.id, plan }),
         });
         if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error || "Error"); }
-        window.location.href = `/activar/${restaurant.slug}/exito?plan=FREE`;
+        window.location.href = `/activar/${restaurant.slug}/exito?plan=${plan}`;
         return;
       }
 
+      // Gold → pago via MercadoPago
       const res = await fetch("/api/activar/pay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -341,22 +345,21 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
           <div className="flow-arrow" />
 
           <div className="offer" style={{ position: "relative", zIndex: 3, margin: "-4px 6px 0", textAlign: "left" }}>
-          <span className="discount">-90% dcto</span>
-          <div className="offer-label">Oferta plan Premium</div>
-          <span className="old-price">$49.900</span>
-          <div className="new-price">$4.900 <small>CLP primer mes</small></div>
+          <span style={{ position: "absolute", top: 16, right: 16, borderRadius: 999, padding: "8px 12px", background: "#dc2626", color: "#fff", fontSize: 11, fontWeight: 950, letterSpacing: ".5px" }}>14 días gratis</span>
+          <div style={{ color: "#C9BBA0", fontSize: 14, fontWeight: 950, letterSpacing: ".7px", textTransform: "uppercase" as const, marginBottom: 6 }}>Prueba plan Premium</div>
+          <div className="new-price">Gratis <small>por 14 días</small></div>
           <div className="offer-text">
-            Activa multidioma, estadísticas, automatizaciones, capta cumpleaños y más.
+            Activa multidioma, estadísticas, automatizaciones, capta cumpleaños y más.<br />Sin tarjeta, sin compromiso.
           </div>
           {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
           {!done ? (
             <button className="cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-              {loading && selectedPlan === "PREMIUM" ? "Procesando..." : "Activar por $4.900"}
+              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar gratis por 14 días"}
             </button>
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
           )}
-          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline", verticalAlign: "-1px", marginRight: 4 }}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Pago 100% seguro · vía <svg width="12" height="12" viewBox="0 0 48 48" style={{ display: "inline", verticalAlign: "-2px", marginLeft: 3 }}><circle cx="24" cy="24" r="24" fill="#009ee3"/><path d="M15.8 19.5c0-1 .4-1.9 1-2.6a3.7 3.7 0 0 1 2.7-1.1c1 0 1.9.4 2.6 1.1.7.7 1.1 1.6 1.1 2.6v8.9h-7.4v-8.9zm9.8 0c0-1 .4-1.9 1.1-2.6a3.7 3.7 0 0 1 2.6-1.1c1 0 2 .4 2.7 1.1.7.7 1 1.6 1 2.6v8.9h-7.4v-8.9z" fill="#fff"/></svg> MercadoPago</div>
+          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}>Al terminar puedes continuar o pasar al plan gratuito.</div>
         </div>
         </div>{/* end activation-flow */}
         </section>{/* end hero */}
@@ -478,8 +481,8 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <article className="plan featured">
               <div className="badge">Más elegido</div>
               <h3>Premium</h3>
-              <div className="plan-price">$4.900 <small>primer mes</small></div>
-              <span className="strike">$49.900/mes + IVA</span>
+              <div className="plan-price">14 días gratis</div>
+              <span className="strike">Luego $49.900/mes + IVA</span>
               <p>Para restaurantes que quieren vender más.</p>
               <div className="checks">
                 <div>✓ Todo lo de Gold</div>
@@ -494,7 +497,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
               </div>
               {!done ? (
                 <button className="plan-btn" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-                  {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar Premium"}
+                  {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Probar gratis 14 días"}
                 </button>
               ) : selectedPlan === "PREMIUM" ? (
                 <div className="done-msg"><p>Activado.</p></div>
@@ -528,7 +531,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar Premium por $4.900"}
+              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Probar Premium gratis"}
             </button>
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
