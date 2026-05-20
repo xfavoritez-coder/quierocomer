@@ -136,7 +136,7 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
       ]);
       const dishMatches = resDishes?.summary?.matched ?? 0;
       const modMatches = resMods?.summary?.matched ?? 0;
-      setMsg(`Auto-mapeo: ${dishMatches} platos · ${modMatches} modificadores matcheados`);
+      setMsg(`Auto-mapeo completado: ${dishMatches} platos${modMatches > 0 ? ` y ${modMatches} modificadores` : ""} conectados con Toteat.`);
       load();
     } finally { setBusy(false); }
   };
@@ -427,7 +427,7 @@ Quedo atento. Gracias.`;
         borderRadius: 12, padding: "14px 16px",
       }}>
         <p style={{ fontFamily: F, fontSize: "0.88rem", fontWeight: 700, color: allMapped ? "#16a34a" : "#92400e", margin: "0 0 6px" }}>
-          {allMapped ? "✓ Todo listo" : noneMapped ? "⚠ Faltan platos por conectar" : "🔧 Casi listo, te falta poco"}
+          {allMapped ? "✓ Todo conectado" : noneMapped ? "⚠ Ningún plato conectado aún" : `✓ ${data.summary.mapped} de ${data.summary.total} platos conectados`}
         </p>
         {allMapped && (
           <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: 0, lineHeight: 1.5 }}>
@@ -437,7 +437,7 @@ Quedo atento. Gracias.`;
         {someMapped && !allMapped && (
           <>
             <p style={{ fontFamily: FB, fontSize: "0.82rem", color: "var(--adm-text2)", margin: "0 0 6px", lineHeight: 1.5 }}>
-              Conectamos automáticamente <strong>{data.summary.mapped} de {data.summary.total} platos</strong>. Los <strong>{data.summary.unmapped}</strong> que faltan los puedes mapear a mano abajo (sección "Sin mapear"): hacemos match cuando los nombres coinciden, así que si tu plato se llama distinto en Toteat vas a tener que elegir el match manual.
+              {data.summary.unmapped === 1 ? "Falta 1 plato" : `Faltan ${data.summary.unmapped} platos`} por conectar. Si el nombre en tu carta es distinto al de Toteat, elige el match manual en la sección "Sin mapear" abajo.
             </p>
             {lowMapping && (
               <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", margin: "6px 0 0", lineHeight: 1.5 }}>
@@ -488,7 +488,7 @@ Quedo atento. Gracias.`;
         </div>
 
         {msg && (
-          <p style={{ marginTop: 10, padding: "8px 12px", background: "rgba(244,166,35,0.08)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text)" }}>{msg}</p>
+          <p style={{ marginTop: 10, padding: "10px 14px", background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.3)", borderRadius: 8, fontFamily: F, fontSize: "0.82rem", color: "#16a34a", fontWeight: 600 }}>✓ {msg}</p>
         )}
       </div>
 
