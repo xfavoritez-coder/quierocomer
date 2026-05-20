@@ -106,6 +106,11 @@ async function loadCredentialsFromRestaurant(restaurantId: string): Promise<Tote
   return null;
 }
 
+// Short-lived cache for the heavy groupBy query — avoids running it twice
+// when toteat-status fetches both dish and modifier catalogs sequentially.
+const groupByCache = new Map<string, { at: number; data: any[] }>();
+const GROUPBY_TTL = 30_000; // 30s
+
 /**
  * Returns the FULL Toteat product catalog. Merges TWO sources:
  *
@@ -147,11 +152,19 @@ export async function getToteatProductCatalog(
   // 2. Sales-derived catalog — adds anything sold that wasn't in /products.
   const windowDays = opts.windowDaysFallback ?? 90;
   const since = new Date(Date.now() - windowDays * 24 * 60 * 60 * 1000);
-  const grouped = await prisma.toteatSaleProduct.groupBy({
-    by: ["toteatProductId", "productName", "hierarchyName"],
-    where: { sale: { restaurantId, dateClosed: { gte: since } } },
-    _count: { _all: true },
-  });
+  const gbKey = `${restaurantId}|${windowDays}`;
+  const gbHit = groupByCache.get(gbKey);
+  const grouped = gbHit && Date.now() - gbHit.at < GROUPBY_TTL
+    ? gbHit.data
+    : await (async () => {
+        const data = await prisma.toteatSaleProduct.groupBy({
+          by: ["toteatProductId", "productName", "hierarchyName"],
+          where: { sale: { restaurantId, dateClosed: { gte: since } } },
+          _count: { _all: true },
+        });
+        groupByCache.set(gbKey, { at: Date.now(), data });
+        return data;
+      })();
   for (const g of grouped) {
     const existing = merged.get(g.toteatProductId);
     if (existing) {

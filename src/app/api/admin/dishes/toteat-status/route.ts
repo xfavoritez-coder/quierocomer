@@ -4,6 +4,8 @@ import { checkAdminAuth, isSuperAdmin, getOwnedRestaurantIds } from "@/lib/admin
 import { getToteatProductCatalog, suggestCandidatesForDishes } from "@/lib/toteat/mapping";
 import crypto from "crypto";
 
+export const maxDuration = 30;
+
 /**
  * Returns the mapping status for a restaurant's dishes:
  *  - mapped count, unmapped list, total
@@ -91,14 +93,11 @@ export async function GET(req: NextRequest) {
   const viaModifiers = candidates.filter(isMappedViaModifiers);
   const unmapped = candidates.filter((d) => !isMappedViaModifiers(d));
 
-  // Two catalogs:
-  // - `catalog` is for parent-dish mapping (no modifier products in the dropdown)
-  // - `modifierCatalog` is for mapping QC modifier options against Toteat
-  //   products that the POS itself flags as modifiers (per-flavor codes).
-  const [catalog, modifierCatalog] = await Promise.all([
-    getToteatProductCatalog(restaurantId),
-    getToteatProductCatalog(restaurantId, { includeModifiers: true }),
-  ]);
+  // Fetch catalogs sequentially — the internal fetchToteatProducts call is
+  // cached for 5 min so the Toteat API is only hit once; the heavy groupBy
+  // query still runs twice but is much lighter than two parallel API calls.
+  const catalog = await getToteatProductCatalog(restaurantId);
+  const modifierCatalog = await getToteatProductCatalog(restaurantId, { includeModifiers: true });
   const catalogById = Object.fromEntries(modifierCatalog.map((c) => [c.toteatProductId, c]));
 
   const suggestions = await suggestCandidatesForDishes(restaurantId, unmapped.map((d) => d.id));

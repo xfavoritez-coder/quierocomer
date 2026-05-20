@@ -41,7 +41,7 @@ export async function fetchToteatProducts(
 
   const url = `${creds.base}/products?xir=${creds.xir}&xil=${creds.xil}&xiu=${creds.xiu}&xapitoken=${creds.token}&activeProducts=${args.activeOnly !== false ? "true" : "false"}`;
   try {
-    const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+    const res = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" }, signal: AbortSignal.timeout(15_000) });
     const payload: ToteatProductsResponse = await res.json();
     if (payload.ok !== false || (payload.data && payload.data.length > 0)) {
       cache.set(key, { at: Date.now(), payload });
