@@ -343,7 +343,7 @@ export default function ConfirmacionClient() {
                   </div>
                 </div>
                 <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream)", marginBottom: 6 }}>Te avisaremos por correo</p>
-                <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>Normalmente dentro de 1 hora</p>
+                <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>Puedes cerrar esta página</p>
               </>
             ) : (
               <>
