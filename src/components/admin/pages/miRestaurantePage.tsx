@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import PlanGate from "@/components/admin/PlanGate";
@@ -81,6 +82,12 @@ export default function MiRestaurantePage() {
   const [website, setWebsite] = useState("");
   const [schedule, setSchedule] = useState<Record<string, string>>({});
   const [dietType, setDietType] = useState("OMNIVORE");
+  const [highlightDiet, setHighlightDiet] = useState(false);
+  const [highlightIg, setHighlightIg] = useState(false);
+  const dietRef = useRef<HTMLDivElement>(null);
+  const igRef = useRef<HTMLDivElement>(null);
+  const searchParams = useSearchParams();
+  const section = searchParams.get("section");
 
   const rid = selectedRestaurantId;
 
@@ -102,13 +109,31 @@ export default function MiRestaurantePage() {
       setInstagram(d.instagram || "");
       setWebsite(d.website || "");
       setSchedule(d.scheduleJson || {});
-      setDietType(d.dietType || "OMNIVORE");
+      const fromChecklist = section === "cocina" && !localStorage.getItem(`qc_diet_confirmed_${rid}`);
+      setDietType(fromChecklist ? "" : (d.dietType || "OMNIVORE"));
     } catch {}
     setLoading(false);
   }, [rid]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Handle ?section= query param for scroll + highlight (runs after data loads)
+  useEffect(() => {
+    if (loading || !section) return;
+
+    setTimeout(() => {
+      if (section === "cocina" && dietRef.current) {
+        dietRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightDiet(true);
+        setTimeout(() => setHighlightDiet(false), 2500);
+      }
+      if (section === "redes" && igRef.current) {
+        igRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+        setHighlightIg(true);
+        setTimeout(() => setHighlightIg(false), 2500);
+      }
+    }, 300);
+  }, [loading, section, rid]);
 
   const save = async (fields: Record<string, any>) => {
     if (!rid) return;
@@ -131,7 +156,10 @@ export default function MiRestaurantePage() {
     setSaving(false);
   };
 
-  const saveInfo = () => save({ name, description, logoUrl: logoUrl || null, dietType });
+  const saveInfo = () => {
+    save({ name, description, logoUrl: logoUrl || null, dietType });
+    if (rid) localStorage.setItem(`qc_diet_confirmed_${rid}`, "1");
+  };
   const saveContact = () => save({ phone: phone || null, whatsapp: whatsapp || null, address: address || null });
   const saveSocial = () => save({ instagram: instagram || null, website: website || null });
   const saveSchedule = () => save({ scheduleJson: Object.keys(schedule).length > 0 ? schedule : null });
@@ -194,7 +222,8 @@ export default function MiRestaurantePage() {
         </Field>
 
         <Field label="Tipo de cocina">
-          <div style={{ display: "flex", gap: 8 }}>
+          <div ref={dietRef} style={{ display: "flex", gap: 8 }}>
+            {highlightDiet && <style>{`@keyframes dietPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 12px rgba(244,166,35,0.3); } }`}</style>}
             {([
               { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️" },
               { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗" },
@@ -205,11 +234,12 @@ export default function MiRestaurantePage() {
                 <button key={opt.value} onClick={() => setDietType(opt.value)} style={{
                   flex: 1, padding: "10px 8px", borderRadius: 10, cursor: "pointer",
                   background: active ? "rgba(244,166,35,0.12)" : "var(--adm-input)",
-                  border: active ? "1px solid rgba(244,166,35,0.3)" : "1px solid transparent",
+                  border: active ? "1px solid rgba(244,166,35,0.3)" : highlightDiet ? "1px solid rgba(244,166,35,0.2)" : "1px solid transparent",
                   color: active ? GOLD : "var(--adm-text3)",
                   fontFamily: F, fontSize: "0.78rem", fontWeight: active ? 700 : 500,
                   display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                   transition: "all 0.2s",
+                  animation: highlightDiet && !active ? "dietPulse 0.8s ease-in-out infinite" : "none",
                 }}>
                   <span style={{ fontSize: "0.9rem" }}>{opt.icon}</span> {opt.label}
                 </button>
@@ -219,9 +249,10 @@ export default function MiRestaurantePage() {
         </Field>
 
         <Field label="Instagram">
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <span style={{ padding: "10px 10px 10px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "8px 0 0 8px", fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)" }}>@</span>
-            <input value={instagram} onChange={e => setInstagram(e.target.value.replace(/^@/, ""))} style={{ ...inputStyle, borderRadius: "0 8px 8px 0" }} placeholder="tu_usuario" />
+          <div ref={igRef} style={{ display: "flex", alignItems: "center", animation: highlightIg ? "dietPulse 0.8s ease-in-out infinite" : "none", borderRadius: 8 }}>
+            {highlightIg && <style>{`@keyframes dietPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); box-shadow: 0 0 12px rgba(244,166,35,0.3); } }`}</style>}
+            <span style={{ padding: "10px 10px 10px 14px", background: "var(--adm-input)", border: highlightIg ? "1px solid rgba(244,166,35,0.3)" : "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "8px 0 0 8px", fontFamily: FB, fontSize: "0.85rem", color: "var(--adm-text3)" }}>@</span>
+            <input value={instagram} onChange={e => setInstagram(e.target.value.replace(/^@/, ""))} style={{ ...inputStyle, borderRadius: "0 8px 8px 0", ...(highlightIg ? { borderColor: "rgba(244,166,35,0.3)" } : {}) }} placeholder="tu_usuario" />
           </div>
         </Field>
         <Field label="Sitio web">

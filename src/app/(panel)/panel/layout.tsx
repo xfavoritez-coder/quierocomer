@@ -119,7 +119,7 @@ type BillingStatus = {
   billingExempt?: boolean;
 };
 
-function TrialBanner({ restaurantId }: { restaurantId: string | null }) {
+export function TrialBanner({ restaurantId, plan: propPlan, trialEndsAt: propTrialEnds, subscriptionStatus: propStatus }: { restaurantId: string | null; plan?: string; trialEndsAt?: string | null; subscriptionStatus?: string }) {
   const [status, setStatus] = useState<BillingStatus | null>(null);
 
   useEffect(() => {
@@ -130,15 +130,20 @@ function TrialBanner({ restaurantId }: { restaurantId: string | null }) {
       .catch(() => {});
   }, [restaurantId]);
 
-  if (!status) return null;
-  if (status.subscriptionStatus !== "TRIALING") return null;
-  if (status.hasSubscription) return null; // ya inscribio tarjeta
-  if (status.billingExempt) return null;
+  // Use props if available (instant), fall back to fetched status
+  const effectivePlan = status?.plan || propPlan;
+  const effectiveStatus = status?.subscriptionStatus || propStatus;
+  const effectiveTrialEnds = status?.trialEndsAt || propTrialEnds;
+
+  if (!effectivePlan || !effectiveStatus) return null;
+  if (effectiveStatus !== "TRIALING") return null;
+  if (status?.hasSubscription) return null;
+  if (status?.billingExempt) return null;
 
   // Calcular dias restantes
   let daysLeft: number | null = null;
-  if (status.trialEndsAt) {
-    const end = new Date(status.trialEndsAt).getTime();
+  if (effectiveTrialEnds) {
+    const end = new Date(effectiveTrialEnds).getTime();
     const now = Date.now();
     daysLeft = Math.max(0, Math.ceil((end - now) / (24 * 60 * 60 * 1000)));
   }
@@ -150,40 +155,50 @@ function TrialBanner({ restaurantId }: { restaurantId: string | null }) {
   const ctaLabel = "Inscribir tarjeta";
 
   const isUrgent = (daysLeft ?? 999) <= 2;
-  const bg = isUrgent
-    ? "linear-gradient(90deg, #FEE2E2 0%, #FEF3C7 100%)"
-    : "linear-gradient(90deg, #FEF3C7 0%, #FFF8E7 100%)";
-  const border = isUrgent ? "#fca5a5" : "#fcd34d";
-  const fg = isUrgent ? "#991b1b" : "#92400e";
+
+  const isPremium = effectivePlan === "PREMIUM";
+  const planLabel = isPremium ? "Premium" : "Gold";
 
   return (
-    <div style={{
-      display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
-      background: bg, border: `1px solid ${border}`, borderRadius: 10, margin: "12px 16px 0",
-      fontFamily: "var(--font-body)", fontSize: "0.84rem", color: fg,
-    }}>
+    <>
+    <style dangerouslySetInnerHTML={{ __html: `
+      .trial-banner { display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:10px; margin:6px 0 26px; font-size:0.84rem; }
+      .trial-banner.premium { background:rgba(168,85,247,.08); border:1px solid rgba(168,85,247,.2); color:#a855f7; }
+      .trial-banner.gold { background:rgba(232,163,61,.08); border:1px solid rgba(232,163,61,.2); color:#E8A33D; }
+      .trial-banner.urgent { background:rgba(220,38,38,.1); border:1px solid rgba(220,38,38,.25); color:#f87171; }
+      .trial-banner .trial-sub { color:#C9BBA0; }
+      .trial-banner.urgent .trial-sub { color:#fca5a5; }
+      @media (prefers-color-scheme: light) {
+        .trial-banner.premium { background:rgba(168,85,247,.06); border-color:rgba(168,85,247,.25); color:#7c3aed; }
+        .trial-banner.gold { background:rgba(232,163,61,.06); border-color:rgba(232,163,61,.25); color:#b8801a; }
+        .trial-banner.urgent { background:rgba(220,38,38,.06); border-color:rgba(220,38,38,.25); color:#dc2626; }
+        .trial-banner .trial-sub { color:#888; }
+        .trial-banner.urgent .trial-sub { color:#ef4444; }
+      }
+      [data-theme="light"] .trial-banner.premium { background:rgba(168,85,247,.06); border-color:rgba(168,85,247,.25); color:#7c3aed; }
+      [data-theme="light"] .trial-banner.gold { background:rgba(232,163,61,.06); border-color:rgba(232,163,61,.25); color:#b8801a; }
+      [data-theme="light"] .trial-banner.urgent { background:rgba(220,38,38,.06); border-color:rgba(220,38,38,.25); color:#dc2626; }
+      [data-theme="light"] .trial-banner .trial-sub { color:#888; }
+      [data-theme="light"] .trial-banner.urgent .trial-sub { color:#ef4444; }
+    `}} />
+    <div className={`trial-banner ${isUrgent ? "urgent" : isPremium ? "premium" : "gold"}`} style={{ fontFamily: "var(--font-body)" }}>
       <span style={{ fontSize: 20 }}>{isUrgent ? "⏰" : "🎁"}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <p style={{ fontWeight: 700, margin: 0, fontSize: "0.88rem" }}>
           {daysLeft === null
-            ? "Estás en prueba gratis"
+            ? `Estás disfrutando tu plan ${planLabel}`
             : daysLeft === 0
-              ? "¡Tu prueba vence hoy!"
+              ? "Tu prueba termina hoy"
               : daysLeft === 1
                 ? "Te queda 1 día de prueba"
-                : `Te quedan ${daysLeft} días de prueba`}
+                : `Disfruta tu plan ${planLabel} · ${daysLeft} días restantes`}
         </p>
-        <p style={{ margin: "2px 0 0", fontSize: "0.78rem", opacity: 0.85 }}>
-          Inscribe tu tarjeta para no perder tu plan {status.plan === "PREMIUM" ? "Premium" : "Gold"}.
+        <p className="trial-sub" style={{ margin: "2px 0 0", fontSize: "0.78rem", opacity: 0.7 }}>
+          {isUrgent ? "Activa tu suscripción para no perder las funciones." : "Todas las funciones desbloqueadas."}
         </p>
       </div>
-      <a href={ctaHref} style={{
-        padding: "8px 14px", border: "none", borderRadius: 999,
-        background: isUrgent ? "#dc2626" : "#F4A623", color: "#fff",
-        fontFamily: "var(--font-display)", fontSize: "0.78rem", fontWeight: 700,
-        textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
-      }}>{ctaLabel} →</a>
     </div>
+    </>
   );
 }
 
@@ -605,7 +620,6 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
       >
         {!isDemo && (
           <>
-            <TrialBanner restaurantId={selectedRestaurantId} />
             <UpgradeBanner restaurantId={selectedRestaurantId} />
           </>
         )}

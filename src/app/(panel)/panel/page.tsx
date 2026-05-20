@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { Eye, QrCode, Bell, ExternalLink, Cake, Users } from "lucide-react";
 import DemoBanner from "@/components/qr/carta/DemoBanner";
+import { TrialBanner } from "./layout";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -84,6 +85,11 @@ export default function PanelDashboard() {
   const [insightsEnabled, setInsightsEnabled] = useState(true);
   const [restSettings, setRestSettings] = useState<any>(null);
   const [cartaReviewed, setCartaReviewed] = useState(true);
+  const [dietModal, setDietModal] = useState(false);
+  const [igModal, setIgModal] = useState(false);
+  const [dietValue, setDietValue] = useState("");
+  const [igValue, setIgValue] = useState("");
+  const [savingChecklist, setSavingChecklist] = useState(false);
   const welcomeShown = useRef(false);
 
   const selectedRestaurant = restaurants.find(r => r.id === selectedRestaurantId);
@@ -185,13 +191,16 @@ export default function PanelDashboard() {
       </p>
       <style>{`@media (min-width: 768px) { .panel-greeting { display: block !important; } }`}</style>
 
+      {!isDemo && <TrialBanner restaurantId={selectedRestaurantId} plan={restSettings?.plan} trialEndsAt={restSettings?.trialEndsAt} subscriptionStatus={restSettings?.subscriptionStatus} />}
+
       {/* ═══ Setup checklist ═══ */}
       {!isDemo && restSettings && (() => {
         const checks = [
           { key: "logo", label: "Sube el logo de tu local", done: !!restSettings.logoUrl, href: "/panel/mi-restaurante" },
-          { key: "diet", label: "Define el tipo de cocina", done: restSettings.dietType && restSettings.dietType !== "OMNIVORE", href: "/panel/mi-restaurante" },
-          { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, href: "/panel/mi-restaurante" },
+          { key: "diet", label: "Confirma tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
+          { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, modal: "ig" },
           { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
+          { key: "qr", label: "Imprime tus nuevos códigos QR", done: !!localStorage.getItem(`qc_qr_printed_${selectedRestaurantId}`), href: "/panel/qr", btnLabel: "Generar" },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);
@@ -246,13 +255,23 @@ export default function PanelDashboard() {
                       color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
                       whiteSpace: "nowrap",
                     }}>Ya la revisé</button>
+                  ) : (c as any).modal ? (
+                    <button onClick={() => {
+                      if ((c as any).modal === "diet") setDietModal(true);
+                      if ((c as any).modal === "ig") setIgModal(true);
+                    }} style={{
+                      padding: "5px 12px", borderRadius: 999, cursor: "pointer",
+                      background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
+                      color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
+                      whiteSpace: "nowrap",
+                    }}>{(c as any).modal === "ig" ? "Agregar" : "Configurar"}</button>
                   ) : (
-                    <Link href={c.href!} style={{
+                    <Link href={(c as any).href!} style={{
                       padding: "5px 12px", borderRadius: 999, textDecoration: "none",
                       background: `${GOLD}12`, border: `1px solid ${GOLD}30`,
                       color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 700,
                       whiteSpace: "nowrap",
-                    }}>Configurar</Link>
+                    }}>{(c as any).btnLabel || "Configurar"}</Link>
                   ))}
                 </div>
               ))}
@@ -404,6 +423,90 @@ export default function PanelDashboard() {
       )}
 
       </PlanGate>
+
+      {/* Modal: Tipo de cocina */}
+      {dietModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setDietModal(false)}>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, width: "100%", maxWidth: 340, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 4px", textAlign: "center" }}>¿Qué tipo de cocina es?</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", margin: "0 0 16px" }}>Selecciona una opción</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {([
+                { value: "OMNIVORE", label: "Omnívoro", icon: "🍽️", desc: "De todo: carnes, vegetales, mariscos" },
+                { value: "VEGETARIAN", label: "Vegetariano", icon: "🥗", desc: "Sin carnes, con lácteos y huevos" },
+                { value: "VEGAN", label: "Vegano", icon: "🌿", desc: "100% vegetal, sin productos animales" },
+              ]).map(opt => (
+                <button key={opt.value} onClick={() => setDietValue(opt.value)} style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", borderRadius: 12, cursor: "pointer",
+                  background: dietValue === opt.value ? "rgba(244,166,35,0.12)" : "var(--adm-hover)",
+                  border: dietValue === opt.value ? `2px solid ${GOLD}` : "2px solid transparent",
+                  textAlign: "left", transition: "all 0.2s",
+                }}>
+                  <span style={{ fontSize: "1.4rem" }}>{opt.icon}</span>
+                  <div>
+                    <div style={{ fontFamily: F, fontSize: "0.85rem", fontWeight: 700, color: dietValue === opt.value ? GOLD : "var(--adm-text)" }}>{opt.label}</div>
+                    <div style={{ fontFamily: FB, fontSize: "0.72rem", color: "var(--adm-text3)" }}>{opt.desc}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button disabled={!dietValue || savingChecklist} onClick={async () => {
+              if (!selectedRestaurantId || !dietValue) return;
+              setSavingChecklist(true);
+              try {
+                await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
+                  method: "PUT", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ dietType: dietValue }),
+                });
+                localStorage.setItem(`qc_diet_confirmed_${selectedRestaurantId}`, "1");
+                setRestSettings((s: any) => ({ ...s, dietType: dietValue }));
+                setDietModal(false);
+                toast.success("Tipo de cocina guardado");
+              } catch { toast.error("Error al guardar"); }
+              setSavingChecklist(false);
+            }} style={{
+              width: "100%", marginTop: 16, padding: 12, borderRadius: 999, border: "none", cursor: dietValue ? "pointer" : "default",
+              background: dietValue ? GOLD : "var(--adm-hover)", color: dietValue ? "#fff" : "var(--adm-text3)",
+              fontFamily: F, fontSize: "0.85rem", fontWeight: 700, opacity: savingChecklist ? 0.6 : 1,
+            }}>{savingChecklist ? "Guardando..." : "Confirmar"}</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Instagram */}
+      {igModal && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,.6)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setIgModal(false)}>
+          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 20, width: "100%", maxWidth: 340, padding: "24px 20px" }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ fontFamily: F, fontSize: "1rem", fontWeight: 800, color: "var(--adm-text)", margin: "0 0 4px", textAlign: "center" }}>Agrega tu Instagram</h3>
+            <p style={{ fontFamily: FB, fontSize: "0.78rem", color: "var(--adm-text3)", textAlign: "center", margin: "0 0 16px" }}>Aparecerá en tu carta para que tus clientes te sigan</p>
+            <div style={{ display: "flex", alignItems: "center" }}>
+              <span style={{ padding: "12px 10px 12px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderRight: "none", borderRadius: "10px 0 0 10px", fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text3)" }}>@</span>
+              <input value={igValue} onChange={e => setIgValue(e.target.value.replace(/^@/, ""))} placeholder="tu_usuario" style={{
+                flex: 1, padding: "12px 14px", background: "var(--adm-input)", border: "1px solid var(--adm-input-border)", borderLeft: "none", borderRadius: "0 10px 10px 0",
+                fontFamily: FB, fontSize: "0.9rem", color: "var(--adm-text)", outline: "none",
+              }} autoFocus />
+            </div>
+            <button disabled={!igValue.trim() || savingChecklist} onClick={async () => {
+              if (!selectedRestaurantId || !igValue.trim()) return;
+              setSavingChecklist(true);
+              try {
+                await fetch(`/api/admin/locales/${selectedRestaurantId}`, {
+                  method: "PUT", headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ instagram: igValue.trim() }),
+                });
+                setRestSettings((s: any) => ({ ...s, instagram: igValue.trim() }));
+                setIgModal(false);
+                toast.success("Instagram guardado");
+              } catch { toast.error("Error al guardar"); }
+              setSavingChecklist(false);
+            }} style={{
+              width: "100%", marginTop: 16, padding: 12, borderRadius: 999, border: "none", cursor: igValue.trim() ? "pointer" : "default",
+              background: igValue.trim() ? GOLD : "var(--adm-hover)", color: igValue.trim() ? "#fff" : "var(--adm-text3)",
+              fontFamily: F, fontSize: "0.85rem", fontWeight: 700, opacity: savingChecklist ? 0.6 : 1,
+            }}>{savingChecklist ? "Guardando..." : "Guardar"}</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
