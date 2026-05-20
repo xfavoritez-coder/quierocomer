@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
         weatherHumidity: weatherHumidity ?? null,
         userLat: userLat ?? null,
         userLng: userLng ?? null,
-        hour: now.getHours(),
+        hour: chileHourOf(now),
         dayOfWeek: now.getDay(),
       })),
     });

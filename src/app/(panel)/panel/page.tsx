@@ -200,7 +200,6 @@ export default function PanelDashboard() {
           { key: "diet", label: "Confirma tu tipo de cocina", done: !!localStorage.getItem(`qc_diet_confirmed_${selectedRestaurantId}`), modal: "diet" },
           { key: "ig", label: "Agrega tu Instagram", done: !!restSettings.instagram, modal: "ig" },
           { key: "carta", label: "Revisa que tu carta esté bien", done: cartaReviewed, action: true },
-          { key: "qr", label: "Imprime tus nuevos códigos QR", done: !!localStorage.getItem(`qc_qr_printed_${selectedRestaurantId}`), href: "/panel/qr", btnLabel: "Generar" },
         ];
         const doneCount = checks.filter(c => c.done).length;
         const pct = Math.round((doneCount / checks.length) * 100);

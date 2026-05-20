@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/email/sendAdminEmail";
 import { getVisitorMetrics, getTopAttentionDishes } from "@/lib/admin/analyticsQueries";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export const maxDuration = 30;
 
@@ -36,7 +37,7 @@ export async function GET() {
   const hourBuckets: Record<string, number> = {};
   for (let h = 10; h <= 23; h++) hourBuckets[String(h)] = 0;
   for (const s of hourlyRaw) {
-    const h = String(new Date(s.startedAt).getHours());
+    const h = String(chileHourOf(new Date(s.startedAt)));
     if (hourBuckets[h] !== undefined) hourBuckets[h] += s._count;
   }
   const visitsByHour = Object.entries(hourBuckets).map(([hour, count]) => ({ hour, count }));

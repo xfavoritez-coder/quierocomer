@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
     // Total counts
     const totalShown = shownEvents.length;
     const totalClicks = clickEvents.length;
-    const clickRate = totalShown > 0 ? Math.round((totalClicks / totalShown) * 100) : 0;
+    const clickRate = totalShown > 0 ? Math.round((totalClicks / totalShown) * 1000) / 10 : 0;
 
     // Unique sessions that saw suggestions vs clicked
     const sessionsWithSuggestions = new Set(shownEvents.map(e => e.dbSessionId).filter(Boolean)).size;
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
         photo: dishMap[dishId]?.photos?.[0] || null,
         clicks,
         shown: shownByDish[dishId] || 0,
-        rate: shownByDish[dishId] ? Math.round((clicks / shownByDish[dishId]) * 100) : 0,
+        rate: shownByDish[dishId] ? Math.round((clicks / shownByDish[dishId]) * 1000) / 10 : 0,
       }));
 
     // Top pairs
@@ -107,22 +107,36 @@ export async function GET(req: NextRequest) {
 
     // If Toteat, check if clicked suggestions ended up in sales via ToteatSaleProduct
     let salesFromSuggestions = 0;
+    let salesFromSuggestionsDishes: { name: string; photo: string | null; count: number }[] = [];
     if (hasToteat && clickEvents.length > 0) {
       const clickedDishIds = [...new Set(clickEvents.map(e => e.dishId).filter(Boolean))];
       if (clickedDishIds.length > 0) {
         // Find dishes that have toteat mapping, then check sales
         const mappedDishes = await prisma.dish.findMany({
           where: { id: { in: clickedDishIds as string[] }, toteatProductId: { not: null } },
-          select: { toteatProductId: true },
+          select: { id: true, name: true, photos: true, toteatProductId: true },
         });
+        const toteatToDish = new Map(mappedDishes.map(d => [d.toteatProductId!, d]));
         const toteatIds = mappedDishes.map(d => d.toteatProductId!);
         if (toteatIds.length > 0) {
-          salesFromSuggestions = await prisma.toteatSaleProduct.count({
+          const saleProducts = await prisma.toteatSaleProduct.findMany({
             where: {
               toteatProductId: { in: toteatIds },
               sale: { restaurantId: validated, dateClosed: { gte: dateFrom, lte: dateTo } },
             },
+            select: { toteatProductId: true, quantity: true },
           });
+          salesFromSuggestions = saleProducts.length;
+          const salesByProduct: Record<string, number> = {};
+          for (const sp of saleProducts) {
+            salesByProduct[sp.toteatProductId] = (salesByProduct[sp.toteatProductId] || 0) + (sp.quantity || 1);
+          }
+          salesFromSuggestionsDishes = Object.entries(salesByProduct)
+            .map(([toteatId, count]) => {
+              const dish = toteatToDish.get(toteatId);
+              return { name: dish?.name || "Desconocido", photo: dish?.photos?.[0] || null, count };
+            })
+            .sort((a, b) => b.count - a.count);
         }
       }
     }
@@ -137,6 +151,7 @@ export async function GET(req: NextRequest) {
       topPairs,
       hasToteat,
       salesFromSuggestions,
+      salesFromSuggestionsDishes,
     });
   } catch (e: any) {
     if (e.status) return authErrorResponse(e);

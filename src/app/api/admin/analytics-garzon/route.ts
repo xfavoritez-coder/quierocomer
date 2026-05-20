@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkAdminAuth, requireRestaurantForOwner, authErrorResponse, isSuperAdmin } from "@/lib/adminAuth";
+import { chileHourOf } from "@/lib/toteat/timezone";
 
 export async function GET(req: NextRequest) {
   const authErr = checkAdminAuth(req);
@@ -74,7 +75,7 @@ export async function GET(req: NextRequest) {
     // Peak hours
     const hourCounts: Record<number, number> = {};
     weekCalls.forEach(c => {
-      const h = new Date(c.calledAt).getHours();
+      const h = chileHourOf(new Date(c.calledAt));
       hourCounts[h] = (hourCounts[h] || 0) + 1;
     });
     const peakHours = Object.entries(hourCounts)

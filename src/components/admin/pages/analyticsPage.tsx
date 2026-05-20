@@ -289,10 +289,12 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
       {/* ═══ Distribución horaria ═══ */}
       {clientes?.timeOfDay && clientes.totalSessions >= 3 && (() => {
-        const isSingleDay = from === to;
-        const nowH = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
+        const chilNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+        const todayChile = `${chilNow.getFullYear()}-${String(chilNow.getMonth() + 1).padStart(2, "0")}-${String(chilNow.getDate()).padStart(2, "0")}`;
+        const isToday = from === to && from === todayChile;
+        const nowH = isToday ? chilNow.getHours() : 24;
         const slotStartH: Record<string, number> = { MORNING: 6, LUNCH: 11, AFTERNOON: 15, DINNER: 19, LATE: 23 };
-        const filteredTod = isSingleDay ? clientes.timeOfDay.filter((t: any) => (slotStartH[t.key] ?? 0) <= nowH) : clientes.timeOfDay;
+        const filteredTod = isToday ? clientes.timeOfDay.filter((t: any) => (slotStartH[t.key] ?? 0) <= nowH) : clientes.timeOfDay;
         const filteredMax = Math.max(...filteredTod.map((t: any) => t.count), 1);
         if (filteredTod.length === 0) return null;
         return (
@@ -320,11 +322,13 @@ function TabResumen({ rid, from, to }: { rid: string; from: string; to: string }
 
       {/* ═══ Estrellas por horario — qué plato gana en cada momento del día ═══ */}
       {(() => {
-        // If viewing a single day (from === to), filter out future time slots
-        const isSingleDay = from === to;
-        const nowChileHour = isSingleDay ? new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" })).getHours() : 24;
+        // If viewing TODAY (not just any single day), filter out future time slots
+        const chilNow2 = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+        const todayChile2 = `${chilNow2.getFullYear()}-${String(chilNow2.getMonth() + 1).padStart(2, "0")}-${String(chilNow2.getDate()).padStart(2, "0")}`;
+        const isToday2 = from === to && from === todayChile2;
+        const nowChileHour = isToday2 ? chilNow2.getHours() : 24;
         const slotStart: Record<string, number> = { MORNING: 6, LUNCH: 11, AFTERNOON: 15, DINNER: 19, LATE: 23 };
-        const filteredHours = isSingleDay ? popularByHour.filter((p: any) => (slotStart[p.key] ?? 0) <= nowChileHour) : popularByHour;
+        const filteredHours = isToday2 ? popularByHour.filter((p: any) => (slotStart[p.key] ?? 0) <= nowChileHour) : popularByHour;
         if (filteredHours.length === 0) return null;
         return (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 18px", boxShadow: "var(--adm-card-shadow, none)" }}>
@@ -1711,13 +1715,24 @@ function TabSugeridos({ rid, from, to, isDemo }: { rid: string; from: string; to
 
       {data.hasToteat && data.salesFromSuggestions > 0 && (
         <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 14, padding: "16px 20px", boxShadow: "var(--adm-card-shadow, none)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: data.salesFromSuggestionsDishes?.length ? 12 : 0 }}>
             <span style={{ fontSize: "1.2rem" }}>💰</span>
             <div>
               <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 700, margin: 0 }}>{data.salesFromSuggestions} ventas desde sugeridos</p>
               <p style={{ fontFamily: FB, fontSize: "0.75rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Platos que se vendieron después de ser clickeados como sugerencia</p>
             </div>
           </div>
+          {data.salesFromSuggestionsDishes?.map((d: any, i: number) => (
+            <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, marginTop: i > 0 ? 8 : 0 }}>
+              {d.photo ? (
+                <img src={d.photo} alt="" style={{ width: 32, height: 32, borderRadius: 8, objectFit: "cover", flexShrink: 0 }} />
+              ) : (
+                <div style={{ width: 32, height: 32, borderRadius: 8, background: "var(--adm-hover)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem", flexShrink: 0 }}>🍽️</div>
+              )}
+              <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text)", fontWeight: 600, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.name}</span>
+              <span style={{ fontFamily: F, fontSize: "0.75rem", color: "#16a34a", fontWeight: 700, flexShrink: 0 }}>{d.count}x</span>
+            </div>
+          ))}
         </div>
       )}
 
