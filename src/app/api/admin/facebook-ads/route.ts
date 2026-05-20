@@ -4,44 +4,49 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: NextRequest) {
   try {
     const days = parseInt(req.nextUrl.searchParams.get("days") || "30", 10);
+    const source = req.nextUrl.searchParams.get("source") || null; // null = all ad sources
     const since = new Date(Date.now() - days * 86400000);
 
-    // All ad sessions (any utm_source, but primarily facebook_ads)
+    // All ad sessions
     const sessions = await prisma.adSession.findMany({
-      where: { createdAt: { gte: since } },
+      where: {
+        createdAt: { gte: since },
+        ...(source ? { utmSource: source } : {}),
+      },
       orderBy: { createdAt: "desc" },
       take: 500,
     });
 
-    // Funnel visits from ads
-    const adVisits = await prisma.funnelVisit.count({
-      where: { utmSource: { not: null }, createdAt: { gte: since } },
-    });
+    // Funnel visits
+    const [totalVisits, adVisits, adVisitsBySource] = await Promise.all([
+      prisma.funnelVisit.count({ where: { createdAt: { gte: since } } }),
+      prisma.funnelVisit.count({ where: { utmSource: { not: null }, createdAt: { gte: since } } }),
+      prisma.funnelVisit.groupBy({
+        by: ["utmSource"],
+        where: { utmSource: { not: null }, createdAt: { gte: since } },
+        _count: true,
+      }),
+    ]);
 
-    const fbVisits = await prisma.funnelVisit.count({
-      where: { utmSource: "facebook_ads", createdAt: { gte: since } },
-    });
+    const sourceBreakdown: Record<string, number> = {};
+    for (const g of adVisitsBySource) {
+      if (g.utmSource) sourceBreakdown[g.utmSource] = g._count;
+    }
 
-    const totalVisits = await prisma.funnelVisit.count({
-      where: { page: "subircarta", createdAt: { gte: since } },
-    });
+    const filteredSessions = sessions;
+    const totalSessions = filteredSessions.length;
+    const bounced = filteredSessions.filter((s) => s.bounced).length;
+    const converted = filteredSessions.filter((s) => s.converted).length;
+    const avgDuration = totalSessions > 0 ? Math.round(filteredSessions.reduce((s, x) => s + x.duration, 0) / totalSessions) : 0;
+    const avgScroll = totalSessions > 0 ? Math.round(filteredSessions.reduce((s, x) => s + x.maxScroll, 0) / totalSessions) : 0;
+    const avgInteractions = totalSessions > 0 ? Math.round(filteredSessions.reduce((s, x) => s + x.interactions, 0) / totalSessions) : 0;
 
-    // Aggregate stats
-    const fbSessions = sessions.filter((s) => s.utmSource === "facebook_ads");
-    const totalSessions = fbSessions.length;
-    const bounced = fbSessions.filter((s) => s.bounced).length;
-    const converted = fbSessions.filter((s) => s.converted).length;
-    const avgDuration = totalSessions > 0 ? Math.round(fbSessions.reduce((s, x) => s + x.duration, 0) / totalSessions) : 0;
-    const avgScroll = totalSessions > 0 ? Math.round(fbSessions.reduce((s, x) => s + x.maxScroll, 0) / totalSessions) : 0;
-    const avgInteractions = totalSessions > 0 ? Math.round(fbSessions.reduce((s, x) => s + x.interactions, 0) / totalSessions) : 0;
-
-    // Device breakdown
-    const mobile = fbSessions.filter((s) => s.device === "mobile").length;
-    const desktop = fbSessions.filter((s) => s.device === "desktop").length;
+    const mobile = filteredSessions.filter((s) => s.device === "mobile").length;
+    const desktop = filteredSessions.filter((s) => s.device === "desktop").length;
 
     // Campaign breakdown
     const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number }> = {};
-    for (const s of fbSessions) {
+    for (const s of filteredSessions) {
       const key = s.utmCampaign || "(sin campaña)";
       if (!byCampaign[key]) byCampaign[key] = { visits: 0, bounced: 0, converted: 0, avgDuration: 0, avgScroll: 0 };
       byCampaign[key].visits++;
@@ -58,7 +63,7 @@ export async function GET(req: NextRequest) {
 
     // Content/ad breakdown
     const byContent: Record<string, { visits: number; bounced: number; converted: number }> = {};
-    for (const s of fbSessions) {
+    for (const s of filteredSessions) {
       const key = s.utmContent || "(sin contenido)";
       if (!byContent[key]) byContent[key] = { visits: 0, bounced: 0, converted: 0 };
       byContent[key].visits++;
@@ -66,17 +71,17 @@ export async function GET(req: NextRequest) {
       if (s.converted) byContent[key].converted++;
     }
 
-    // Section engagement — which parts of the page were seen
+    // Section engagement
     const sectionCounts: Record<string, number> = {};
-    for (const s of fbSessions) {
+    for (const s of filteredSessions) {
       for (const sec of (s.sectionsViewed || [])) {
         sectionCounts[sec] = (sectionCounts[sec] || 0) + 1;
       }
     }
 
-    // Click heatmap — what elements were clicked
+    // Click heatmap
     const clickCounts: Record<string, number> = {};
-    for (const s of fbSessions) {
+    for (const s of filteredSessions) {
       for (const ev of (s.events as any[] || [])) {
         if (ev.type === "click" && ev.data?.label) {
           const label = ev.data.label.slice(0, 50);
@@ -85,9 +90,16 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Daily breakdown for chart
+    // Landing page breakdown
+    const byLanding: Record<string, number> = {};
+    for (const s of filteredSessions) {
+      const page = (s.landingPage || "/").split("?")[0];
+      byLanding[page] = (byLanding[page] || 0) + 1;
+    }
+
+    // Daily breakdown
     const daily: Record<string, { visits: number; converted: number; bounced: number }> = {};
-    for (const s of fbSessions) {
+    for (const s of filteredSessions) {
       const day = s.createdAt.toISOString().slice(0, 10);
       if (!daily[day]) daily[day] = { visits: 0, converted: 0, bounced: 0 };
       daily[day].visits++;
@@ -101,8 +113,6 @@ export async function GET(req: NextRequest) {
       stats: {
         totalVisits,
         adVisits,
-        fbVisits,
-        fbPctOfTotal: pct(fbVisits, totalVisits),
         totalSessions,
         bounced,
         bounceRate: pct(bounced, totalSessions),
@@ -114,17 +124,21 @@ export async function GET(req: NextRequest) {
         mobile,
         desktop,
       },
+      sourceBreakdown,
+      byLanding,
       byCampaign,
       byContent,
       sectionCounts,
       clickCounts,
       daily,
-      sessions: fbSessions.slice(0, 100).map((s) => ({
+      sessions: filteredSessions.slice(0, 100).map((s) => ({
         id: s.id,
         sessionId: s.sessionId,
+        utmSource: s.utmSource,
         utmCampaign: s.utmCampaign,
         utmContent: s.utmContent,
         device: s.device,
+        landingPage: s.landingPage,
         duration: s.duration,
         maxScroll: s.maxScroll,
         interactions: s.interactions,

@@ -38,6 +38,8 @@ interface Session {
 
 interface Data {
   stats: Stats;
+  sourceBreakdown: Record<string, number>;
+  byLanding: Record<string, number>;
   byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number }>;
   byContent: Record<string, { visits: number; bounced: number; converted: number }>;
   sectionCounts: Record<string, number>;
@@ -50,22 +52,25 @@ export default function FacebookAdsPage() {
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [days, setDays] = useState(30);
+  const [source, setSource] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
-  const fetchData = (d: number) => {
+  const fetchData = (d: number, src: string | null) => {
     setLoading(true);
-    fetch(`/api/admin/facebook-ads?days=${d}`)
+    fetch(`/api/admin/facebook-ads?days=${d}${src ? `&source=${encodeURIComponent(src)}` : ""}`)
       .then((r) => r.json())
       .then(setData)
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(days); }, [days]);
+  useEffect(() => { fetchData(days, source); }, [days, source]);
 
   if (loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   if (!data) return <div style={{ padding: 40, color: "#e85d5d" }}>Error al cargar datos.</div>;
 
-  const { stats, byCampaign, byContent, sectionCounts, clickCounts, daily, sessions } = data;
+  const { stats, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, daily, sessions } = data;
+  const sortedSources = Object.entries(sourceBreakdown).sort((a, b) => b[1] - a[1]);
+  const sortedLandings = Object.entries(byLanding).sort((a, b) => b[1] - a[1]);
 
   const sortedClicks = Object.entries(clickCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
   const sortedSections = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]);
@@ -100,6 +105,35 @@ export default function FacebookAdsPage() {
           ))}
         </div>
       </div>
+
+      {/* Source filter */}
+      {sortedSources.length > 0 && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
+          <button
+            onClick={() => setSource(null)}
+            style={{
+              padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600,
+              background: source === null ? "#6366f1" : "#1a1a1a", color: source === null ? "#fff" : "#888",
+              cursor: "pointer",
+            }}
+          >
+            Todas ({Object.values(sourceBreakdown).reduce((a, b) => a + b, 0)})
+          </button>
+          {sortedSources.map(([src, count]) => (
+            <button
+              key={src}
+              onClick={() => setSource(src)}
+              style={{
+                padding: "5px 12px", borderRadius: 6, border: "none", fontSize: 11, fontWeight: 600,
+                background: source === src ? "#6366f1" : "#1a1a1a", color: source === src ? "#fff" : "#888",
+                cursor: "pointer",
+              }}
+            >
+              {src} ({count})
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Stats overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8, marginBottom: 20 }}>
@@ -172,6 +206,18 @@ export default function FacebookAdsPage() {
         </Section>
       </div>
 
+      {/* Landing pages */}
+      {sortedLandings.length > 0 && (
+        <Section title="Pagina de entrada">
+          {sortedLandings.map(([page, count]) => (
+            <div key={page} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
+              <span style={{ color: "#ccc" }}>{page}</span>
+              <span style={{ color: "#888" }}>{count}</span>
+            </div>
+          ))}
+        </Section>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         {/* Sections viewed */}
         <Section title="Secciones vistas">
@@ -223,6 +269,7 @@ export default function FacebookAdsPage() {
                   </span>
                   {s.device && <span style={{ fontSize: 10, color: "#666" }}>{s.device}</span>}
                   {s.utmCampaign && <span style={{ fontSize: 10, color: "#666", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.utmCampaign}</span>}
+                  {!source && s.utmSource && <span style={{ fontSize: 10, color: "#6366f1" }}>{s.utmSource}</span>}
                 </div>
                 <div style={{ display: "flex", gap: 12, flexShrink: 0, fontSize: 11, color: "#888" }}>
                   <span>{fmtDuration(s.duration)}</span>

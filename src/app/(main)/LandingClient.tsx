@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { initAdTracker } from "@/lib/adTracker";
 import {
   PLAN_FEATURES_DISPLAY,
   PLAN_TAGLINES,
@@ -138,6 +139,30 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  useEffect(() => {
+    // Track ad visitors + register funnel visit with UTM params
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get("utm_source");
+    if (utmSource) {
+      fetch("/api/funnel/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          page: "landing",
+          referrer: document.referrer || null,
+          utmSource,
+          utmMedium: params.get("utm_medium"),
+          utmCampaign: params.get("utm_campaign"),
+          utmContent: params.get("utm_content"),
+          utmTerm: params.get("utm_term"),
+          fbclid: params.get("fbclid"),
+        }),
+        keepalive: true,
+      }).catch(() => {});
+    }
+    initAdTracker();
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nombre || !restaurante || !email || !telefono) { setFormError("Completa todos los campos"); return; }
@@ -183,7 +208,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </nav>
 
       {/* ══════ HERO ══════ */}
-      <section style={{ background: `linear-gradient(to bottom, #CFE2EC 0%, #E8E0CC 55%, ${BG_WARM} 100%)`, paddingTop: 56, position: "relative", overflow: "hidden" }}>
+      <section data-track="hero" style={{ background: `linear-gradient(to bottom, #CFE2EC 0%, #E8E0CC 55%, ${BG_WARM} 100%)`, paddingTop: 56, position: "relative", overflow: "hidden" }}>
         <div style={{ maxWidth: 700, margin: "0 auto", padding: "64px 24px 48px", textAlign: "center", position: "relative" }}>
           <div>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)", padding: "6px 14px", borderRadius: 999, fontSize: "12.5px", color: "#92400e", fontWeight: 700, marginBottom: 20, fontFamily: F, border: "1px solid #F59E0B" }}>
@@ -208,7 +233,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       <DesertSVG />
 
       {/* ══════ LOGOS BAR ══════ */}
-      <section id="casos" style={{ background: "#FDFCFA", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
+      <section id="casos" data-track="casos" style={{ background: "#FDFCFA", borderBottom: "1px solid #eeeae0", padding: "36px 0" }}>
         <p style={{ fontSize: "11.5px", fontWeight: 600, color: "#999", letterSpacing: "1.5px", textTransform: "uppercase", textAlign: "center", marginBottom: 18, padding: "0 24px", fontFamily: F }}>
           Restaurantes que ya confían en QuieroComer
         </p>
@@ -236,7 +261,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ POR QUÉ QUIEROCOMER ══════ */}
-      <section id="como-funciona" style={{ background: "#fff", padding: "64px 24px" }}>
+      <section id="como-funciona" data-track="como-funciona" style={{ background: "#fff", padding: "64px 24px" }}>
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Por qué QuieroComer</p>
@@ -260,7 +285,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ VENDEDOR SILENCIOSO ══════ */}
-      <section id="funcionalidades" style={{ background: BG_WARM, padding: "64px 24px" }}>
+      <section id="funcionalidades" data-track="funcionalidades" style={{ background: BG_WARM, padding: "64px 24px" }}>
         <div style={{ maxWidth: 800, margin: "0 auto", textAlign: "center" }}>
           <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Vendedor silencioso</p>
           <h3 style={{ fontFamily: F, fontSize: "clamp(24px, 3vw, 32px)", fontWeight: 700, letterSpacing: "-0.8px", marginBottom: 10, color: "#111" }}>Sugiere el acompañamiento perfecto en el momento justo</h3>
@@ -300,7 +325,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ TESTIMONIOS ══════ */}
-      <section style={{ background: "#fff", padding: "64px 24px" }}>
+      <section data-track="testimonios" style={{ background: "#fff", padding: "64px 24px" }}>
         <div style={{ maxWidth: 960, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Lo que dicen los restaurantes</p>
@@ -328,7 +353,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ PLANES ══════ */}
-      <section id="planes" style={{ background: BG_WARM, padding: "64px 24px" }}>
+      <section id="planes" data-track="planes" style={{ background: BG_WARM, padding: "64px 24px" }}>
         <div style={{ maxWidth: 1060, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 44 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Planes</p>
@@ -431,7 +456,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ FAQ ══════ */}
-      <section style={{ background: BG_WARM, padding: "64px 24px" }}>
+      <section data-track="faq" style={{ background: BG_WARM, padding: "64px 24px" }}>
         <div style={{ maxWidth: 640, margin: "0 auto" }}>
           <div style={{ textAlign: "center", marginBottom: 36 }}>
             <p style={{ fontSize: 12, color: BRAND, textTransform: "uppercase", letterSpacing: "1.2px", fontWeight: 600, fontFamily: F, marginBottom: 10 }}>Preguntas frecuentes</p>
@@ -448,7 +473,7 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ══════ CTA FINAL ══════ */}
-      <section id="contacto" style={{ background: "#1a1a1a", padding: "80px 24px", textAlign: "center" }}>
+      <section id="contacto" data-track="contacto" style={{ background: "#1a1a1a", padding: "80px 24px", textAlign: "center" }}>
         <div style={{ maxWidth: 480, margin: "0 auto" }}>
           <h2 style={{ fontFamily: F, fontSize: "clamp(26px, 4vw, 36px)", fontWeight: 700, letterSpacing: "-1px", lineHeight: 1.1, marginBottom: 12, color: "#fff" }}>
             ¿Listo para probar la carta que vende por ti?
