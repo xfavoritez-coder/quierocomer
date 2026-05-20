@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { trackPurchase, trackStartTrial } from "@/lib/metaPixel";
 
 interface Props {
   restaurant: { name: string; slug: string; logoUrl: string | null };
@@ -26,7 +27,14 @@ export default function ExitoClient({ restaurant, plan, stillProcessing }: Props
   const [show, setShow] = useState(false);
   const isPaid = plan === "GOLD" || plan === "PREMIUM";
 
-  useEffect(() => { setTimeout(() => setShow(true), 100); }, []);
+  useEffect(() => {
+    setTimeout(() => setShow(true), 100);
+    if (isPaid) {
+      trackPurchase(plan, plan === "GOLD" ? 29900 : 49900);
+    } else {
+      trackStartTrial(plan);
+    }
+  }, []);
 
   return (
     <>

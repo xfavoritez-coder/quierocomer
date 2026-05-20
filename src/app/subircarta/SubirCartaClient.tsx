@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
+import { trackCartaUpload } from "@/lib/metaPixel";
 import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
@@ -118,6 +119,7 @@ export default function SubirCartaClient() {
         const data = await res.json();
         if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
+        trackCartaUpload();
         router.push(`/subircarta/paso2?id=${data.id}`);
       } else {
         const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
@@ -146,6 +148,7 @@ export default function SubirCartaClient() {
           if (!leadId) leadId = data.id;
         }
         trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
+        trackCartaUpload();
         setUploadProgress("");
         router.push(`/subircarta/paso2?id=${leadId}`);
       }

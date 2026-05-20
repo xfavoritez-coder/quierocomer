@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { trackViewPlan, trackLead } from "@/lib/metaPixel";
 
 export default function PlanesClient() {
   const [isMobile, setIsMobile] = useState(false);
@@ -32,6 +33,7 @@ export default function PlanesClient() {
     setModalPlan(plan);
     setShowModal(true);
     setError("");
+    trackViewPlan(plan);
   };
 
   const handleRegistrar = async (e: React.FormEvent) => {
@@ -50,6 +52,7 @@ export default function PlanesClient() {
       });
       const data = await res.json();
       if (!res.ok || !data.slug) throw new Error(data.error || "Error");
+      trackLead({ content_name: `Plan ${modalPlan}` });
       window.location.href = `/registrar/${data.slug}?plan=${modalPlan}`;
     } catch (err: any) {
       setError(err?.message || "Error al registrar. Intenta de nuevo.");

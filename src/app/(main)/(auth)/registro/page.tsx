@@ -3,6 +3,7 @@ import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import { trackRegistration } from "@/lib/metaPixel";
 import { checkEmailTypo } from "@/lib/emailTypo";
 
 function OjoIcon({ visible }: { visible: boolean }) {
@@ -103,6 +104,7 @@ function RegistroContent() {
         if (effectiveConcurso) redirectToPath = `/concursos/${effectiveConcurso}`;
       }
       setRefMsg(msg); setSuccess(true);
+      trackRegistration();
       // Show verification message
       if (!msg) msg = "Revisa tu email para verificar tu cuenta.";
       setRefMsg(msg);

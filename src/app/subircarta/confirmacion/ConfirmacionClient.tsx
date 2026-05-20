@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
+import { trackCartaReady } from "@/lib/metaPixel";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
@@ -106,6 +107,7 @@ export default function ConfirmacionClient() {
             setCartaReady(true);
             cartaReadyRef.current = true;
             trackFunnelEvent(leadId, "carta_ready");
+            trackCartaReady();
             if (data.generatedSlug) setCartaSlug(data.generatedSlug);
             if (polling) { clearInterval(polling); polling = null; }
           }

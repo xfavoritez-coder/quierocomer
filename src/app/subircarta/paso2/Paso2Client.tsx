@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { trackCartaInfo } from "@/lib/metaPixel";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
@@ -209,6 +210,7 @@ export default function Paso2Client() {
       }
 
       trackFunnelEvent(leadId, "paso2_completed");
+      trackCartaInfo();
       router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch (err: any) {
       trackFunnelEvent(leadId, "paso2_error", { error: err?.message || "conexión" });

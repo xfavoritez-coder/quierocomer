@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { trackContact } from "@/lib/metaPixel";
 
 const TURNSTILE_SITE_KEY = "0x4AAAAAADSgtS72cIgDXl7r";
 
@@ -54,6 +55,7 @@ export default function ContactoPage() {
         body: JSON.stringify({ email, nombre, telefono, mensaje, cfToken }),
       });
       if (!res.ok) throw new Error();
+      trackContact();
       setSent(true);
     } catch {
       setError("No se pudo enviar. Intenta de nuevo.");

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { trackStartTrial, trackInitiateCheckout } from "@/lib/metaPixel";
 
 interface ShowcaseVenue {
   name: string; slug: string; logoUrl: string | null;
@@ -109,6 +110,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
           body: JSON.stringify({ restaurantId: restaurant.id, plan }),
         });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || "Error");
+        trackStartTrial(plan);
         window.location.href = `/activar/${restaurant.slug}/exito?plan=${plan}`;
         return;
       }
@@ -120,6 +122,7 @@ export default function RegistrarClient({ restaurant, showcaseVenues }: Props) {
       });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error || "Error iniciando pago");
+      trackInitiateCheckout(plan);
       window.location.href = data.url;
     } catch (err: any) {
       setError(err?.message || "Hubo un error. Intenta nuevamente.");
