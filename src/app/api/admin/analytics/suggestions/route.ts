@@ -105,39 +105,56 @@ export async function GET(req: NextRequest) {
     });
     const hasToteat = !!restaurant?.toteatRestaurantId;
 
-    // If Toteat, check if clicked suggestions ended up in sales via ToteatSaleProduct
+    // If Toteat, check if clicked suggestions actually ended up in sales.
+    // For each click event, look for a sale of that specific dish within 3 hours
+    // after the click — a reasonable window for "click led to purchase".
+    const SALE_WINDOW_MS = 3 * 60 * 60 * 1000; // 3 hours
     let salesFromSuggestions = 0;
     let salesFromSuggestionsDishes: { name: string; photo: string | null; count: number }[] = [];
     if (hasToteat && clickEvents.length > 0) {
       const clickedDishIds = [...new Set(clickEvents.map(e => e.dishId).filter(Boolean))];
       if (clickedDishIds.length > 0) {
-        // Find dishes that have toteat mapping, then check sales
         const mappedDishes = await prisma.dish.findMany({
           where: { id: { in: clickedDishIds as string[] }, toteatProductId: { not: null } },
           select: { id: true, name: true, photos: true, toteatProductId: true },
         });
-        const toteatToDish = new Map(mappedDishes.map(d => [d.toteatProductId!, d]));
-        const toteatIds = mappedDishes.map(d => d.toteatProductId!);
-        if (toteatIds.length > 0) {
-          const saleProducts = await prisma.toteatSaleProduct.findMany({
+        const dishToToteat = new Map(mappedDishes.map(d => [d.id, d]));
+
+        // For each click, find sales of that dish within the time window
+        const matchedSales = new Set<string>(); // saleProduct IDs already counted
+        const salesByDishId: Record<string, number> = {};
+
+        for (const click of clickEvents) {
+          if (!click.dishId) continue;
+          const dish = dishToToteat.get(click.dishId);
+          if (!dish?.toteatProductId) continue;
+
+          const clickTime = new Date(click.createdAt);
+          const windowEnd = new Date(clickTime.getTime() + SALE_WINDOW_MS);
+
+          const candidates = await prisma.toteatSaleProduct.findMany({
             where: {
-              toteatProductId: { in: toteatIds },
-              sale: { restaurantId: validated, dateClosed: { gte: dateFrom, lte: dateTo } },
+              toteatProductId: dish.toteatProductId,
+              sale: { restaurantId: validated, dateClosed: { gte: clickTime, lte: windowEnd } },
             },
-            select: { toteatProductId: true, quantity: true },
+            select: { id: true, quantity: true },
+            take: 5,
           });
-          salesFromSuggestions = saleProducts.length;
-          const salesByProduct: Record<string, number> = {};
-          for (const sp of saleProducts) {
-            salesByProduct[sp.toteatProductId] = (salesByProduct[sp.toteatProductId] || 0) + (sp.quantity || 1);
+
+          for (const sp of candidates) {
+            if (matchedSales.has(sp.id)) continue;
+            matchedSales.add(sp.id);
+            salesByDishId[click.dishId] = (salesByDishId[click.dishId] || 0) + (sp.quantity || 1);
           }
-          salesFromSuggestionsDishes = Object.entries(salesByProduct)
-            .map(([toteatId, count]) => {
-              const dish = toteatToDish.get(toteatId);
-              return { name: dish?.name || "Desconocido", photo: dish?.photos?.[0] || null, count };
-            })
-            .sort((a, b) => b.count - a.count);
         }
+
+        salesFromSuggestions = Object.values(salesByDishId).reduce((s, n) => s + n, 0);
+        salesFromSuggestionsDishes = Object.entries(salesByDishId)
+          .map(([dishId, count]) => {
+            const dish = dishToToteat.get(dishId);
+            return { name: dish?.name || "Desconocido", photo: dish?.photos?.[0] || null, count };
+          })
+          .sort((a, b) => b.count - a.count);
       }
     }
 
