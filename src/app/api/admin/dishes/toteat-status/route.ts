@@ -145,6 +145,7 @@ export async function GET(req: NextRequest) {
       unmapped: unmapped.length,
       mappedPct: dishes.length > 0 ? Math.round((totalEffectivelyMapped / dishes.length) * 100) : 0,
       catalogSize: catalog.length,
+      hasCredentials: !!restaurantInfo?.toteatApiToken,
     },
     mapped: directlyMapped.map((d) => ({
       id: d.id,

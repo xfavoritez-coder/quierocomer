@@ -11,7 +11,7 @@ interface MappedDish { id: string; name: string; photo: string | null; category:
 interface ViaModifiersDish { id: string; name: string; photo: string | null; category: string | null; isManualOverride?: boolean; modifiers: ModifierInfo[]; }
 interface UnmappedDish { id: string; name: string; photo: string | null; category: string | null; suggestion: { score: number; toteatProductId: string; name: string } | null; hasMappedModifiers?: boolean; modifiers: ModifierInfo[]; }
 interface ToteatStatus {
-  summary: { total: number; mapped: number; mappedDirectly?: number; mappedViaModifiers?: number; unmapped: number; mappedPct: number; catalogSize: number };
+  summary: { total: number; mapped: number; mappedDirectly?: number; mappedViaModifiers?: number; unmapped: number; mappedPct: number; catalogSize: number; hasCredentials?: boolean };
   mapped: MappedDish[];
   viaModifiers?: ViaModifiersDish[];
   unmapped: UnmappedDish[];
@@ -180,7 +180,7 @@ export default function ToteatMappingPanel({ restaurantId }: { restaurantId: str
   if (loading) return <div style={{ padding: 24, textAlign: "center", color: "var(--adm-text3)", fontFamily: F }}>Cargando estado de mapeo…</div>;
   if (!data) return <div style={{ padding: 24, color: "#ef4444", fontFamily: F }}>Error al cargar el panel.</div>;
 
-  const noToteat = data.summary.catalogSize === 0;
+  const noToteat = !data.summary.hasCredentials;
 
   if (noToteat) {
     const handleSaveCreds = async () => {
