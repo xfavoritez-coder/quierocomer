@@ -551,6 +551,9 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       try {
         const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
         const ownerName = lead.ownerName || "Hola";
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
+        const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
         await sendAdminEmail({
           to: lead.email,
           subject: `Tu nueva carta ${restaurant.name} está lista`,
@@ -565,17 +568,18 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
                 Transformamos la carta de <strong>${restaurant.name}</strong> en una experiencia digital.
                 Tiene ${createdDishes.length} platos organizados y listos para que tus clientes los vean.
               </p>
-              <a href="${cartaUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
+              <a href="${clickUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
                 Ver mi carta →
               </a>
               <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
                 Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
                 Si tienes preguntas, escríbenos a <a href="mailto:hola@quierocomer.cl" style="color: #E8A33D;">hola@quierocomer.cl</a>
               </p>
+              <img src="${openPixel}" alt="" width="1" height="1" style="display:none" />
             </div>
           `,
         });
-        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED" } });
+        await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
         console.log(`[Pipeline] Email sent to ${lead.email}`);
       } catch (emailErr) {
         console.error("[Pipeline] Email failed:", emailErr);

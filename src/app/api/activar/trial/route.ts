@@ -78,6 +78,14 @@ export async function POST(req: NextRequest) {
     if (r.count > 0) console.log(`[Activar] Cleared ${r.count} Unsplash referential photos for ${restaurantId}`);
   }).catch(() => {});
 
+  // Track activation in Lead funnel
+  if (restaurant.slug) {
+    prisma.lead.updateMany({
+      where: { generatedSlug: restaurant.slug, activatedAt: null },
+      data: { activatedAt: new Date(), activated: true },
+    }).catch(() => {});
+  }
+
   return NextResponse.json({
     ok: true,
     plan: selectedPlan,

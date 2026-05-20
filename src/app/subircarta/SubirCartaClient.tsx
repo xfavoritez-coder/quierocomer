@@ -7,6 +7,7 @@ import { trackCartaUpload } from "@/lib/metaPixel";
 import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
+import { initAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
 
 type Mode = "pdf" | "link" | "photo" | null;
 
@@ -50,7 +51,26 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
 export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
-  useEffect(() => { window.scrollTo(0, 0); }, []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const params = new URLSearchParams(window.location.search);
+    fetch("/api/funnel/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        page: "subircarta",
+        referrer: document.referrer || null,
+        utmSource: params.get("utm_source"),
+        utmMedium: params.get("utm_medium"),
+        utmCampaign: params.get("utm_campaign"),
+        utmContent: params.get("utm_content"),
+        utmTerm: params.get("utm_term"),
+        fbclid: params.get("fbclid"),
+      }),
+      keepalive: true,
+    }).catch(() => {});
+    initAdTracker();
+  }, []);
   const [mode, setMode] = useState<Mode>(null);
   const [linkUrl, setLinkUrl] = useState("");
   const [loading, setLoading] = useState(false);
@@ -120,6 +140,7 @@ export default function SubirCartaClient() {
         if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
         trackCartaUpload();
+        linkAdSessionToLead(data.id);
         router.push(`/subircarta/paso2?id=${data.id}`);
       } else {
         const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
@@ -149,6 +170,7 @@ export default function SubirCartaClient() {
         }
         trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
         trackCartaUpload();
+        linkAdSessionToLead(leadId);
         setUploadProgress("");
         router.push(`/subircarta/paso2?id=${leadId}`);
       }
@@ -192,7 +214,7 @@ export default function SubirCartaClient() {
 
           <div className="form-side centered-form">
             {/* Method selector */}
-            <div className="methods">
+            <div className="methods" data-track="metodos">
               {(["photo", "link", "pdf"] as const).map((m) => (
                 <button
                   key={m}

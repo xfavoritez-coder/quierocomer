@@ -14,5 +14,12 @@ export async function POST(req: NextRequest) {
   const { slug } = await req.json();
   if (!slug) return NextResponse.json({ error: "slug required" }, { status: 400 });
   await prisma.restaurant.update({ where: { slug }, data: { demoOnboardingDone: true } });
+
+  // Track onboarding in Lead funnel
+  prisma.lead.updateMany({
+    where: { generatedSlug: slug, onboardingDoneAt: null },
+    data: { onboardingDoneAt: new Date() },
+  }).catch(() => {});
+
   return NextResponse.json({ done: true });
 }

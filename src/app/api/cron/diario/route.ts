@@ -231,16 +231,17 @@ export async function GET(req: NextRequest) {
                         Transformamos la carta de <strong>${r.name}</strong> en una experiencia digital.
                         Tiene ${dishCount} platos organizados y listos para que tus clientes los vean.
                       </p>
-                      <a href="${cartaUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
+                      <a href="${`https://quierocomer.cl/api/funnel/track/click?lid=${lead.id}&url=${encodeURIComponent(cartaUrl)}`}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
                         Ver mi carta →
                       </a>
                       <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
                         Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
                       </p>
+                      <img src="https://quierocomer.cl/api/funnel/track/open?lid=${lead.id}" alt="" width="1" height="1" style="display:none" />
                     </div>
                   `,
                 });
-                await prisma.lead.update({ where: { id: lead.id }, data: { cartaStatus: "DELIVERED" } });
+                await prisma.lead.update({ where: { id: lead.id }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
                 console.log(`[diario] Sent pending carta-ready email to ${lead.email} for ${r.slug}`);
               } catch (emailErr) {
                 console.error(`[diario] Failed to send backfill email for ${r.slug}:`, emailErr);

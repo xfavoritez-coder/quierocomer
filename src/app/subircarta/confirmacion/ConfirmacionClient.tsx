@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
+import { resumeAdTracker } from "@/lib/adTracker";
 import { trackCartaReady } from "@/lib/metaPixel";
 import { useSearchParams } from "next/navigation";
 import Footer from "@/components/Footer";
@@ -63,6 +64,7 @@ export default function ConfirmacionClient() {
       setTimeout(() => { window.scrollTo(0, 0); document.documentElement.style.scrollBehavior = ""; }, 50);
     });
     trackFunnelEvent(leadId, "confirmacion_loaded");
+    resumeAdTracker();
   }, []);
 
   useEffect(() => {

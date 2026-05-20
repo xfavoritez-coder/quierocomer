@@ -65,5 +65,13 @@ export async function POST(req: NextRequest) {
     purpose: "admin_new_activation",
   }).catch((err) => console.error("[activar/free] Email admin falló:", err));
 
+  // Track activation in Lead funnel
+  if (restaurant.slug) {
+    prisma.lead.updateMany({
+      where: { generatedSlug: restaurant.slug, activatedAt: null },
+      data: { activatedAt: new Date(), activated: true },
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ ok: true, plan: "FREE" });
 }

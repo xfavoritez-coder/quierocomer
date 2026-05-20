@@ -20,18 +20,51 @@ interface Lead {
   completedAt: string | null;
   previewAt: string | null;
   readyAt: string | null;
+  deliveredAt: string | null;
+  emailOpenedAt: string | null;
+  emailClickedAt: string | null;
+  onboardingDoneAt: string | null;
+  panelVisitedAt: string | null;
+  activatedAt: string | null;
   events?: any[];
 }
 
 interface Stats {
+  visitCount: number;
   total: number;
   reachedStep2: number;
   completed: number;
+  delivered: number;
+  emailOpened: number;
+  emailClicked: number;
+  onboardingDone: number;
+  panelVisited: number;
+  activated: number;
   abandoned: number;
-  conversionRate: number;
+  visitToLeadRate: number;
   step2Rate: number;
+  conversionRate: number;
+  deliveredRate: number;
+  openRate: number;
+  clickRate: number;
+  onboardingRate: number;
+  panelRate: number;
+  activatedRate: number;
   byType: { LINK: number; DOCUMENT: number; PHOTO: number };
 }
+
+const FUNNEL_STEPS = [
+  { key: "visitCount", label: "Visitas /subircarta", color: "#6366f1", rateKey: null },
+  { key: "total", label: "Subieron carta", color: "#8b5cf6", rateKey: "visitToLeadRate" },
+  { key: "reachedStep2", label: "Paso 2", color: "#a78bfa", rateKey: "step2Rate" },
+  { key: "completed", label: "Completaron datos", color: "#3b82f6", rateKey: "conversionRate" },
+  { key: "delivered", label: "Email enviado", color: "#06b6d4", rateKey: "deliveredRate" },
+  { key: "emailOpened", label: "Abrieron email", color: "#14b8a6", rateKey: "openRate" },
+  { key: "emailClicked", label: "Click ver carta", color: "#22c55e", rateKey: "clickRate" },
+  { key: "onboardingDone", label: "Onboarding", color: "#84cc16", rateKey: "onboardingRate" },
+  { key: "panelVisited", label: "Visitaron panel", color: "#eab308", rateKey: "panelRate" },
+  { key: "activated", label: "Activaron", color: "#F4A623", rateKey: "activatedRate" },
+] as const;
 
 export default function FunnelPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -39,7 +72,6 @@ export default function FunnelPage() {
   const [loading, setLoading] = useState(true);
   const [pushStatus, setPushStatus] = useState<"idle" | "active" | "denied">("idle");
 
-  // Check if already subscribed on mount
   useEffect(() => {
     if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       navigator.serviceWorker?.getRegistration("/sw-admin.js").then((reg) => {
@@ -85,7 +117,6 @@ export default function FunnelPage() {
 
   useEffect(() => {
     fetchData();
-    // Refresh when page becomes visible (coming back from notification or app switch)
     const onVisible = () => { if (document.visibilityState === "visible") fetchData(); };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
@@ -94,6 +125,8 @@ export default function FunnelPage() {
   if (loading) {
     return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   }
+
+  const maxVal = stats ? Math.max(stats.visitCount, stats.total, 1) : 1;
 
   return (
     <div style={{ maxWidth: 1100, padding: "0 12px" }}>
@@ -111,27 +144,71 @@ export default function FunnelPage() {
             fontSize: 13, fontWeight: 600,
           }}
         >
-          {pushStatus === "active" ? "🔔 Notificaciones activas" : pushStatus === "denied" ? "🔕 Bloqueadas" : "🔔 Activar notificaciones"}
+          {pushStatus === "active" ? "Notificaciones activas" : pushStatus === "denied" ? "Bloqueadas" : "Activar notificaciones"}
         </button>
       </div>
 
-      {/* Stats cards */}
+      {/* Funnel visual */}
+      {stats && (
+        <div style={{ marginBottom: 24, padding: "16px 16px 12px", background: "#111", borderRadius: 14, border: "1px solid #222" }}>
+          {FUNNEL_STEPS.map((step, i) => {
+            const value = stats[step.key as keyof Stats] as number;
+            const rate = step.rateKey ? (stats[step.rateKey as keyof Stats] as number) : null;
+            const barWidth = maxVal > 0 ? Math.max((value / maxVal) * 100, 2) : 2;
+
+            return (
+              <div key={step.key} style={{ marginBottom: i < FUNNEL_STEPS.length - 1 ? 6 : 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                  <span style={{ fontSize: 11, color: "#888", minWidth: 120, textAlign: "right" }}>{step.label}</span>
+                  <div style={{ flex: 1, position: "relative", height: 22, borderRadius: 6, overflow: "hidden", background: "#1a1a1a" }}>
+                    <div style={{
+                      width: `${barWidth}%`,
+                      height: "100%",
+                      background: step.color,
+                      borderRadius: 6,
+                      transition: "width 0.5s ease",
+                      opacity: 0.85,
+                    }} />
+                    <span style={{
+                      position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)",
+                      fontSize: 12, fontWeight: 700, color: "#fff",
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                    }}>
+                      {value}
+                    </span>
+                  </div>
+                  {rate !== null && (
+                    <span style={{ fontSize: 11, color: step.color, fontWeight: 600, minWidth: 36, textAlign: "right" }}>
+                      {rate}%
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Stats cards compactas */}
       {stats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 8, marginBottom: 20 }}>
-          <StatCard label="Total leads" value={stats.total} />
-          <StatCard label="Llegaron al paso 2" value={stats.reachedStep2} suffix={`${stats.step2Rate}%`} />
-          <StatCard label="Completados" value={stats.completed} color="#43d17b" suffix={`${stats.conversionRate}%`} />
-          <StatCard label="Abandonados" value={stats.abandoned} color="#e85d5d" />
-          <StatCard label="Modo Link" value={stats.byType.LINK} />
-          <StatCard label="Modo PDF" value={stats.byType.DOCUMENT} />
-          <StatCard label="Modo Foto" value={stats.byType.PHOTO} />
+          <StatCard label="Visitas" value={stats.visitCount} color="#6366f1" />
+          <StatCard label="Leads" value={stats.total} suffix={`${stats.visitToLeadRate}%`} />
+          <StatCard label="Completados" value={stats.completed} color="#3b82f6" suffix={`${stats.conversionRate}%`} />
+          <StatCard label="Enviados" value={stats.delivered} color="#06b6d4" />
+          <StatCard label="Abiertos" value={stats.emailOpened} color="#14b8a6" suffix={`${stats.openRate}%`} />
+          <StatCard label="Click" value={stats.emailClicked} color="#22c55e" suffix={`${stats.clickRate}%`} />
+          <StatCard label="Activados" value={stats.activated} color="#F4A623" suffix={`${stats.activatedRate}%`} />
+          <StatCard label="Link" value={stats.byType.LINK} />
+          <StatCard label="PDF" value={stats.byType.DOCUMENT} />
+          <StatCard label="Foto" value={stats.byType.PHOTO} />
         </div>
       )}
 
       {/* Leads — mobile cards */}
       <div className="funnel-cards">
         {leads.length === 0 && (
-          <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavía.</div>
+          <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavia.</div>
         )}
         {leads.map((lead) => {
           const date = new Date(lead.createdAt);
@@ -143,20 +220,33 @@ export default function FunnelPage() {
             const d = new Date(iso);
             return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
           };
+          const fmtDate = (iso: string | null) => {
+            if (!iso) return null;
+            const d = new Date(iso);
+            return `${d.getDate()}/${d.getMonth() + 1} ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+          };
           const diffStr = (from: string | null, to: string | null) => {
             if (!from || !to) return null;
             const secs = Math.round((new Date(to).getTime() - new Date(from).getTime()) / 1000);
             if (secs < 60) return `${secs}s`;
-            const mins = Math.floor(secs / 60);
-            const remainSecs = secs % 60;
-            return `${mins}m ${remainSecs}s`;
+            if (secs < 3600) { const m = Math.floor(secs / 60); return `${m}m ${secs % 60}s`; }
+            const h = Math.floor(secs / 3600); const m = Math.floor((secs % 3600) / 60);
+            return `${h}h ${m}m`;
           };
+
+          // Determine furthest stage for badge
+          const stage = lead.activatedAt ? "ACTIVADO" :
+            lead.panelVisitedAt ? "EN PANEL" :
+            lead.onboardingDoneAt ? "ONBOARDING" :
+            lead.emailClickedAt ? "CLICK" :
+            lead.emailOpenedAt ? "ABIERTO" :
+            lead.cartaStatus;
 
           return (
             <div key={lead.id} style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a2a", marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
                 <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{lead.localName || "Sin nombre"}</span>
-                <StatusBadge status={lead.cartaStatus} />
+                <StatusBadge status={stage} />
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 12, color: "#aaa" }}>
                 <span>{dateStr}</span>
@@ -166,12 +256,18 @@ export default function FunnelPage() {
               </div>
               {lead.email && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{lead.email}</div>}
 
-              {/* Timeline de tiempos */}
+              {/* Timeline completo */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", fontSize: 11, marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "#111", border: "1px solid #222" }}>
                 <TimelineStep label="Inicio" time={fmtTime(lead.createdAt)} />
                 <TimelineStep label="Paso 2" time={fmtTime(lead.step2At)} delta={diffStr(lead.createdAt, lead.step2At)} />
                 <TimelineStep label="Preview" time={fmtTime(lead.previewAt)} delta={diffStr(lead.step2At || lead.createdAt, lead.previewAt)} />
                 <TimelineStep label="Lista" time={fmtTime(lead.readyAt)} delta={diffStr(lead.previewAt || lead.createdAt, lead.readyAt)} />
+                <TimelineStep label="Enviado" time={fmtDate(lead.deliveredAt)} />
+                <TimelineStep label="Abierto" time={fmtDate(lead.emailOpenedAt)} delta={diffStr(lead.deliveredAt, lead.emailOpenedAt)} />
+                <TimelineStep label="Click" time={fmtDate(lead.emailClickedAt)} delta={diffStr(lead.deliveredAt, lead.emailClickedAt)} />
+                <TimelineStep label="Onboard" time={fmtDate(lead.onboardingDoneAt)} />
+                <TimelineStep label="Panel" time={fmtDate(lead.panelVisitedAt)} />
+                <TimelineStep label="Activado" time={fmtDate(lead.activatedAt)} color="#F4A623" />
               </div>
 
               {/* Event log */}
@@ -196,13 +292,13 @@ export default function FunnelPage() {
               <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                 {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}
                 {lead.cartaFileUrl && lead.cartaFileUrl.split(",").map((url, i) => (
-                  <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", fontSize: 12, fontWeight: 600 }}>📷 Foto {lead.cartaFileUrl!.includes(",") ? i + 1 : ""}</a>
+                  <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", fontSize: 12, fontWeight: 600 }}>Foto {lead.cartaFileUrl!.includes(",") ? i + 1 : ""}</a>
                 ))}
                 {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
               </div>
             </div>
           );
-            })}
+        })}
       </div>
     </div>
   );
@@ -230,18 +326,25 @@ function TypeBadge({ type }: { type: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = { PENDING: "#f59e0b", PROCESSING: "#3b82f6", READY: "#43d17b", DELIVERED: "#43d17b" };
+  const colors: Record<string, string> = {
+    PENDING: "#f59e0b", PROCESSING: "#3b82f6", READY: "#06b6d4", DELIVERED: "#14b8a6",
+    ABIERTO: "#22c55e", CLICK: "#84cc16", ONBOARDING: "#eab308",
+    "EN PANEL": "#F4A623", ACTIVADO: "#F4A623", FAILED: "#ef4444",
+  };
   return (
-    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${colors[status] || "#666"}22`, color: colors[status] || "#666" }}>
+    <span style={{
+      fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6,
+      background: `${colors[status] || "#666"}22`, color: colors[status] || "#666",
+    }}>
       {status}
     </span>
   );
 }
 
-function TimelineStep({ label, time, delta }: { label: string; time: string | null; delta?: string | null }) {
+function TimelineStep({ label, time, delta, color }: { label: string; time: string | null; delta?: string | null; color?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-      <span style={{ color: time ? "#F4A623" : "#444", fontWeight: 600 }}>{label}</span>
+      <span style={{ color: time ? (color || "#F4A623") : "#444", fontWeight: 600 }}>{label}</span>
       {time ? (
         <span style={{ color: "#888" }}>{time}{delta && <span style={{ color: "#666", marginLeft: 3 }}>({delta})</span>}</span>
       ) : (
@@ -250,6 +353,3 @@ function TimelineStep({ label, time, delta }: { label: string; time: string | nu
     </div>
   );
 }
-
-const th: React.CSSProperties = { padding: "10px 12px", fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: ".04em" };
-const td: React.CSSProperties = { padding: "10px 12px", color: "#ddd" };

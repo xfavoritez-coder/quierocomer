@@ -51,6 +51,15 @@ export async function POST(req: NextRequest) {
 
       await prisma.restaurantOwner.update({ where: { id: owner.id }, data: { lastLoginAt: new Date() } });
 
+      // Track panel visit in Lead funnel (via owner's restaurants slugs)
+      const slugs = owner.restaurants.map((r) => r.slug).filter(Boolean) as string[];
+      if (slugs.length > 0) {
+        prisma.lead.updateMany({
+          where: { generatedSlug: { in: slugs }, panelVisitedAt: null },
+          data: { panelVisitedAt: new Date() },
+        }).catch(() => {});
+      }
+
       const token = crypto.randomUUID();
       const response = NextResponse.json({
         ok: true,

@@ -44,6 +44,12 @@ export async function GET(req: NextRequest) {
   const token = `demo_${crypto.randomUUID()}`;
   const base = { path: "/", maxAge: COOKIE_MAX_AGE, sameSite: "lax" as const, secure: IS_PROD };
 
+  // Track panel visit in Lead funnel
+  prisma.lead.updateMany({
+    where: { generatedSlug: slug, panelVisitedAt: null },
+    data: { panelVisitedAt: new Date() },
+  }).catch(() => {});
+
   const response = NextResponse.redirect(new URL("/panel", req.url));
   response.cookies.set("panel_token", token, { ...base, httpOnly: true });
   response.cookies.set("panel_role", ownerRole, { ...base, httpOnly: true });

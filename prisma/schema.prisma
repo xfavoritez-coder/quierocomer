@@ -1771,6 +1771,12 @@ model Lead {
   completedAt        DateTime?
   previewAt          DateTime?
   readyAt            DateTime?
+  deliveredAt        DateTime?
+  emailOpenedAt      DateTime?
+  emailClickedAt     DateTime?
+  onboardingDoneAt   DateTime?
+  panelVisitedAt     DateTime?
+  activatedAt        DateTime?
   events             Json[]        @default([])
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -1780,4 +1786,60 @@ model Lead {
   @@index([email])
   @@index([detectedProviderId])
   @@index([cartaStatus])
+  @@index([generatedSlug])
+}
+
+model FunnelVisit {
+  id          String   @id @default(cuid())
+  page        String   @default("subircarta")
+  ip          String?
+  userAgent   String?
+  referrer    String?
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+  utmContent  String?
+  utmTerm     String?
+  fbclid      String?
+  sessionId   String?
+  leadId      String?
+  createdAt   DateTime @default(now())
+
+  @@index([page, createdAt])
+  @@index([utmSource, createdAt])
+  @@index([sessionId])
+}
+
+model AdSession {
+  id             String   @id @default(cuid())
+  sessionId      String   @unique
+  utmSource      String
+  utmMedium      String?
+  utmCampaign    String?
+  utmContent     String?
+  utmTerm        String?
+  fbclid         String?
+  ip             String?
+  userAgent      String?
+  referrer       String?
+  landingPage    String?
+  device         String?
+  // Engagement
+  duration       Int      @default(0)
+  maxScroll      Int      @default(0)
+  pageViews      Int      @default(1)
+  interactions   Int      @default(0)
+  sectionsViewed String[] @default([])
+  // Outcome
+  leadId         String?
+  converted      Boolean  @default(false)
+  bounced        Boolean  @default(true)
+  exitPage       String?
+  // Raw event log
+  events         Json[]   @default([])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([utmSource, createdAt])
+  @@index([createdAt])
 }

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { normalizePhone } from "@/lib/normalizePhone";
 import { trackCartaInfo } from "@/lib/metaPixel";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
+import { resumeAdTracker } from "@/lib/adTracker";
 import Footer from "@/components/Footer";
 import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
@@ -82,6 +83,7 @@ export default function Paso2Client() {
     const raf = () => { scrollUp(); if (++rafCount < 5) requestAnimationFrame(raf); };
     requestAnimationFrame(raf);
     trackFunnelEvent(leadId, "paso2_loaded");
+    resumeAdTracker();
     return () => ids.forEach(clearTimeout);
   }, []);
 
