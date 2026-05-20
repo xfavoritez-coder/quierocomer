@@ -22,6 +22,7 @@ interface Stats {
 interface Session {
   id: string;
   sessionId: string;
+  utmSource: string | null;
   utmCampaign: string | null;
   utmContent: string | null;
   device: string | null;
