@@ -74,7 +74,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   const impressionSent = useRef(false);
 
   const openCarta = useCallback((slug: string) => {
-    window.open(`/qr/${slug}?from=landing`, "_blank");
+    window.open(`/qr/${slug}?from=landing&showcase=1`, "_blank");
   }, []);
 
   const openRandomCarta = useCallback(() => {

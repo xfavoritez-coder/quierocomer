@@ -57,10 +57,11 @@ export default async function CartaPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ mesa?: string; t?: string; vista?: string; lang?: string }>;
+  searchParams: Promise<{ mesa?: string; t?: string; vista?: string; lang?: string; showcase?: string }>;
 }) {
   const { slug } = await params;
-  const { mesa: tableId, t: qrToken, vista: urlView, lang: urlLang } = await searchParams;
+  const { mesa: tableId, t: qrToken, vista: urlView, lang: urlLang, showcase } = await searchParams;
+  const isShowcase = showcase === "1";
   const isQrScan = !!(tableId || qrToken);
 
   // Resolve language: URL param > Accept-Language header > fallback (es)
@@ -192,11 +193,14 @@ export default async function CartaPage({
           }
         `}} />
       )}
-      {(restaurant as any).isDemo && (
+      {(restaurant as any).isDemo && !isShowcase && (
         <>
           <DemoBanner restaurantName={restaurant.name} restaurantSlug={slug} restaurantLogo={restaurant.logoUrl} context="carta" />
           <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} />
         </>
+      )}
+      {isShowcase && (
+        <DemoOnboarding restaurantSlug={slug} onboardingDone={false} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} showcaseMode />
       )}
       <DesktopWrapper
         restaurantName={restaurant.name}

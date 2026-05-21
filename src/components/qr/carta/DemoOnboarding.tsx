@@ -10,6 +10,8 @@ interface Props {
   allPhotosReferential?: boolean;
   /** Whether some (but not all) dishes have Unsplash referential photos */
   hasReferentialPhotos?: boolean;
+  /** Showcase mode: show onboarding on real restaurants with skip button, no DB writes */
+  showcaseMode?: boolean;
 }
 
 interface Step {
@@ -66,7 +68,7 @@ const STEPS: Step[] = [
 ];
 
 
-export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential, hasReferentialPhotos }: Props) {
+export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential, hasReferentialPhotos, showcaseMode }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
@@ -101,6 +103,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
     if (onboardingDone) return;
+    // In showcase mode, don't repeat if already seen this session
+    if (showcaseMode && sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
     if (savedStep) {
       sessionStorage.removeItem("qc_onboarding_step");
@@ -110,7 +114,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     } else {
       setStep(0);
     }
-  }, [restaurantSlug, onboardingDone]);
+  }, [restaurantSlug, onboardingDone, showcaseMode]);
 
   // Cleanup timers
   useEffect(() => {
@@ -240,10 +244,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   }, []);
 
   const triggerExit = () => {
-    markSeen();
+    if (!showcaseMode) markSeen();
+    if (showcaseMode) sessionStorage.setItem(`qc_showcase_done_${restaurantSlug}`, "1");
     cleanup();
     setExiting(true);
-    // Faster animation — genio swooshes into lamp position
     setTimeout(() => {
       setGone(true);
       window.dispatchEvent(new Event("demo-onboarding-show-fab"));
@@ -257,7 +261,6 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     window.dispatchEvent(new Event("genio-updated"));
     window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
     window.dispatchEvent(new Event("demo-onboarding-stop-highlight"));
-    // If still in non-Spanish lang, navigate back
     if (window.location.search.includes("lang=") && !window.location.search.includes("lang=es")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("lang");
@@ -385,6 +388,16 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                   display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
                 }}>← Atrás</button>
+              )}
+              {showcaseMode && (
+                <button onClick={triggerExit} style={{
+                  borderRadius: 999, padding: "6px 12px",
+                  background: "transparent",
+                  border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.08)",
+                  color: isLightStep ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
+                  fontSize: "0.78rem", fontWeight: 500, cursor: "pointer",
+                  fontFamily: "var(--font-dm, sans-serif)",
+                }}>Saltar</button>
               )}
               <button onClick={advance} style={{
                 borderRadius: 999, padding: "6px 12px",
@@ -549,6 +562,24 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 }}
               >
                 ← Atrás
+              </button>
+            )}
+            {showcaseMode && (
+              <button
+                onClick={(e) => { e.stopPropagation(); triggerExit(); }}
+                style={{
+                  background: "none",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 999,
+                  padding: "8px 14px",
+                  color: "rgba(255,255,255,0.35)",
+                  fontSize: "0.82rem",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm, sans-serif)",
+                }}
+              >
+                Saltar
               </button>
             )}
             <button
