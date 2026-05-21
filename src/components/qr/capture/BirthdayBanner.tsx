@@ -12,9 +12,10 @@ interface Props {
   restaurantId: string;
   restaurantName?: string;
   birthdayPerk?: string | null;
+  logoUrl?: string | null;
 }
 
-export default function BirthdayBanner({ restaurantId, restaurantName, birthdayPerk }: Props) {
+export default function BirthdayBanner({ restaurantId, restaurantName, birthdayPerk, logoUrl }: Props) {
   const lang = useLang();
   const [variant, setVariant] = useState<{ id: string; text: string } | null>(null);
   const [dismissed, setDismissed] = useState(false);
@@ -157,6 +158,7 @@ export default function BirthdayBanner({ restaurantId, restaurantName, birthdayP
           restaurantId={restaurantId}
           restaurantName={restaurantName}
           birthdayPerk={birthdayPerk}
+          logoUrl={logoUrl}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           abVariant={abVariant}

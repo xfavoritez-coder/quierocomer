@@ -878,7 +878,7 @@ export default function CartaPremium({
         </DishDetailErrorBoundary>
       )}
 
-      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
+      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}
 
       {genioOpen && (
         <GenioOnboarding

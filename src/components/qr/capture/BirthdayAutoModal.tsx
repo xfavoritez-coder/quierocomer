@@ -11,6 +11,7 @@ interface Props {
   restaurantId: string;
   restaurantName?: string;
   birthdayPerk?: string | null;
+  logoUrl?: string | null;
 }
 
 /**
@@ -18,7 +19,7 @@ interface Props {
  * Mounted at top level of carta — doesn't depend on scroll position.
  * Owns the visit counter (increments on mount, checks >= 2).
  */
-export default function BirthdayAutoModal({ restaurantId, restaurantName, birthdayPerk }: Props) {
+export default function BirthdayAutoModal({ restaurantId, restaurantName, birthdayPerk, logoUrl }: Props) {
   const lang = useLang();
   const [modalOpen, setModalOpen] = useState(false);
   const [existingUser, setExistingUser] = useState<{ name: string | null; email: string } | null>(null);
@@ -157,6 +158,7 @@ export default function BirthdayAutoModal({ restaurantId, restaurantName, birthd
           restaurantId={restaurantId}
           restaurantName={restaurantName}
           birthdayPerk={birthdayPerk}
+          logoUrl={logoUrl}
           existingUser={existingUser}
           bannerVariantId={variant?.id}
           abVariant={abVariant}

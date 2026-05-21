@@ -652,7 +652,7 @@ export default function CartaLista({
         @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
       `}</style>
 
-      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} />}
+      {!(restaurant as any).isDemo && <BirthdayAutoModal restaurantId={restaurant.id} restaurantName={restaurant.name} birthdayPerk={(restaurant as any).birthdayPerk} logoUrl={restaurant.logoUrl} />}
 
       {/* Genio */}
       {genioOpen && (

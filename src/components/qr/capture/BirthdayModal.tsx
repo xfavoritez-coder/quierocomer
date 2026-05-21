@@ -29,6 +29,7 @@ interface Props {
   bannerVariantId?: string;
   /** Active multi-armed bandit variant — overrides default i18n copy. */
   abVariant?: AbVariant | null;
+  logoUrl?: string | null;
   onClose: () => void;
   onSuccess?: () => void;
   /** Llamado cuando el usuario guardo su nombre en el step post-cumple. Permite
@@ -38,7 +39,7 @@ interface Props {
 
 type Phase = "form" | "done";
 
-export default function BirthdayModal({ restaurantId, restaurantName, birthdayPerk, existingUser, bannerVariantId, abVariant, onClose, onSuccess, onNameSaved }: Props) {
+export default function BirthdayModal({ restaurantId, restaurantName, birthdayPerk, existingUser, bannerVariantId, abVariant, logoUrl, onClose, onSuccess, onNameSaved }: Props) {
   const lang = useLang();
   // Form state
   const [email, setEmail] = useState(existingUser?.email || "");
@@ -272,6 +273,17 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
           border: "1px solid var(--carta-card-border, transparent)",
         }}
       >
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt=""
+            style={{
+              position: "absolute", top: 14, left: 14,
+              width: 32, height: 32, borderRadius: 8, objectFit: "cover",
+              opacity: 0.15, filter: "grayscale(100%)",
+            }}
+          />
+        )}
         <button
           onClick={handleDismiss}
           style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
