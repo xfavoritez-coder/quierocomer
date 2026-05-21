@@ -12,6 +12,8 @@ interface Props {
   hasReferentialPhotos?: boolean;
   /** Showcase mode: show onboarding on real restaurants with skip button, no DB writes */
   showcaseMode?: boolean;
+  /** Restaurant name for showcase title */
+  restaurantName?: string;
 }
 
 interface Step {
@@ -68,7 +70,7 @@ const STEPS: Step[] = [
 ];
 
 
-export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential, hasReferentialPhotos, showcaseMode }: Props) {
+export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhotosReferential, hasReferentialPhotos, showcaseMode, restaurantName }: Props) {
   const [step, setStep] = useState(-1);
   const [minimized, setMinimized] = useState(false);
   const [minimizing, setMinimizing] = useState(false);
@@ -319,7 +321,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Showcase overrides: adapt copy for visitors from quierocomer.cl
   const current = showcaseMode ? {
     ...baseStep,
-    ...(step === 0 && { title: "Recorre una carta real", body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
+    ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
     ...(step === 2 && { title: "Y esta vista se llama Impact", body: "La carta cuenta con 3 distintas." }),
     ...(step === 3 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
