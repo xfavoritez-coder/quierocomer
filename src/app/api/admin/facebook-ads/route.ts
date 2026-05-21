@@ -50,9 +50,9 @@ export async function GET(req: NextRequest) {
 
     const mobile = filteredSessions.filter((s) => s.device === "mobile").length;
     const desktop = filteredSessions.filter((s) => s.device === "desktop").length;
-    // Sessions where user visited /subircarta (direct landing or navigated from landing)
-    const visitedSubircarta = filteredSessions.filter((s) =>
-      (s.landingPage || "").includes("/subircarta") ||
+    // Sessions that landed on landing page and then navigated to /subircarta
+    const landingSessions = filteredSessions.filter((s) => !(s.landingPage || "").includes("/subircarta"));
+    const visitedSubircarta = landingSessions.filter((s) =>
       s.pageViews > 1 ||
       (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
     ).length;
@@ -67,10 +67,13 @@ export async function GET(req: NextRequest) {
       if (s.converted) byCampaign[key].converted++;
       byCampaign[key].avgDuration += s.duration;
       byCampaign[key].avgScroll += s.maxScroll;
-      const wentToSubircarta = (s.landingPage || "").includes("/subircarta") ||
-        s.pageViews > 1 ||
-        (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
-      if (wentToSubircarta) byCampaign[key].subircarta++;
+      // Count navigated to /subircarta only from non-subircarta landings
+      const landedOnSubircarta = (s.landingPage || "").includes("/subircarta");
+      if (!landedOnSubircarta) {
+        const navigated = s.pageViews > 1 ||
+          (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
+        if (navigated) byCampaign[key].subircarta++;
+      }
     }
     for (const key of Object.keys(byCampaign)) {
       const c = byCampaign[key];
@@ -145,7 +148,7 @@ export async function GET(req: NextRequest) {
         avgScroll,
         avgInteractions,
         visitedSubircarta,
-        visitedSubircartaRate: pct(visitedSubircarta, totalSessions),
+        visitedSubircartaRate: pct(visitedSubircarta, landingSessions.length || totalSessions),
         mobile,
         desktop,
       },
