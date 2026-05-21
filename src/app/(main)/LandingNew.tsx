@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { initAdTracker } from "@/lib/adTracker";
 
 interface Logo {
   slug: string;
@@ -30,6 +31,40 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [planesOpen, setPlanesOpen] = useState(false);
   const [anual, setAnual] = useState(false);
+
+  // Forward UTM params to /subircarta so they survive in-app browser navigation
+  const [subircartaHref, setSubircartaHref] = useState("/subircarta");
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const keep = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term", "utm_id", "fbclid", "gclid"];
+    const forwarded = new URLSearchParams();
+    keep.forEach((k) => { const v = params.get(k); if (v) forwarded.set(k, v); });
+    const qs = forwarded.toString();
+    if (qs) setSubircartaHref(`/subircarta?${qs}`);
+
+    // Track landing visit with UTM params
+    const utmSource = params.get("utm_source");
+    const fbclid = params.get("fbclid");
+    const gclid = params.get("gclid");
+    fetch("/api/funnel/visit", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        page: "landing",
+        referrer: document.referrer || null,
+        utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
+        utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
+        utmCampaign: params.get("utm_campaign") || null,
+        utmContent: params.get("utm_content") || null,
+        utmTerm: params.get("utm_term") || null,
+        fbclid,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+
+    // Init ad tracker for detailed session tracking (Facebook Ads dashboard)
+    initAdTracker();
+  }, []);
 
   // A/B testing state
   const [abTitle, setAbTitle] = useState(AB_DEFAULTS.titleText);
@@ -136,7 +171,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <div className="eyebrow">Para dueños de restaurantes</div>
             <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(vender más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
             <p className="hero-sub-text">{abSubtitle}</p>
-            <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
+            <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Te mostramos gratis como queda</div>
           </div>
         </div>
@@ -287,7 +322,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px,4vw,32px)", color: "var(--cream-soft)", lineHeight: 1.3, marginBottom: 18 }}>
           ¿Quieres ver cómo queda <span style={{ color: "var(--amber)", fontStyle: "italic" }}>tu carta?</span>
         </p>
-        <a href="/subircarta" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
+        <a href={subircartaHref} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
           Súbela · gratis <span style={{ color: "var(--amber)" }}>→</span>
         </a>
       </div>
@@ -300,7 +335,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         </div>
         <div className="mientras-content">
           <h2 className="mientras-title">Y haz que tus platos<br /><span className="accent" style={{ fontStyle: "italic" }}>se vendan solos.</span></h2>
-          <a href="/subircarta" className="mientras-chip" style={{ textDecoration: "none" }}>
+          <a href={subircartaHref} className="mientras-chip" style={{ textDecoration: "none" }}>
             <div className="mientras-chip-icon">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
             </div>
@@ -343,7 +378,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <h2>Lleva la experiencia de tu restaurante al siguiente nivel</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href="/subircarta" className="btn-primary" onClick={trackCtaClick}>Subir carta · 60 segundos →</a>
+          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Subir carta · 60 segundos →</a>
         </div>
       </section>
 
