@@ -25,7 +25,8 @@ interface DashData {
   dietDistribution: { type: string; count: number }[];
   restrictionsList: { name: string; count: number }[];
   genio: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
-  restaurantRanking: { name: string; sessions: number }[];
+  restaurantRanking: { name: string; uniqueGuests: number }[];
+  birthdaysByRestaurant: { name: string; count: number }[];
 }
 
 // ── Shared styles ──
@@ -235,8 +236,16 @@ export default function AdminDashboard() {
       {/* ── Restaurant ranking ── */}
       {data.restaurantRanking.length > 1 && (
         <div style={{ ...card, marginBottom: 16 }}>
-          <h3 style={sectionTitle}>Ranking de locales por sesiones</h3>
-          <BarList items={data.restaurantRanking.map((r, i) => ({ label: `${i + 1}. ${r.name}`, value: r.sessions }))} />
+          <h3 style={sectionTitle}>Ranking de locales por usuarios únicos</h3>
+          <BarList items={data.restaurantRanking.map((r, i) => ({ label: `${i + 1}. ${r.name}`, value: r.uniqueGuests }))} />
+        </div>
+      )}
+
+      {/* ── Birthdays by restaurant ── */}
+      {data.birthdaysByRestaurant && data.birthdaysByRestaurant.length > 0 && (
+        <div style={{ ...card, marginBottom: 16 }}>
+          <h3 style={sectionTitle}>Cumpleaños registrados por local</h3>
+          <BarList items={data.birthdaysByRestaurant.map(r => ({ label: r.name, value: r.count }))} />
         </div>
       )}
 

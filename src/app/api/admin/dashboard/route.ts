@@ -77,10 +77,12 @@ export async function GET(req: NextRequest) {
       genioStartsPeriod,
       genioStepDietPeriod,
       genioCompletePeriod,
-      sessionsByRestaurant,
-      // Global (not period-dependent)
-      dietDistribution,
-      restrictionsRaw,
+      sessionsByRestaurantRaw,
+      // Period-dependent diet/restrictions (from Genio events)
+      genioDietEventsRaw,
+      genioRestrictionEventsRaw,
+      // Birthdays by restaurant
+      birthdaysByRestaurantRaw,
       // Panel compat: today
       todaySessionCount,
       todayUniqueRaw,
@@ -96,6 +98,9 @@ export async function GET(req: NextRequest) {
       genioUsedThisWeek,
       weekTopDishes,
       weekSessions,
+      weekGenioDiet,
+      weekGenioComplete,
+      weekGenioGuestsRaw,
       // Panel: star dish
       lastScan,
       activePromos,
@@ -110,10 +115,13 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: dateFilter } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: dateFilter } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: dateFilter } }),
-      prisma.session.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 20 }),
-      // ── Global ──
-      prisma.qRUser.groupBy({ by: ["dietType"], where: { dietType: { not: null } }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
-      prisma.qRUser.findMany({ where: { restrictions: { isEmpty: false } }, select: { restrictions: true } }),
+      prisma.session.findMany({ where: { ...restaurantFilter, startedAt: dateFilter }, select: { guestId: true, restaurantId: true }, take: 50000 }),
+      // Period-dependent: diet selections from GENIO_STEP_DIET events with metadata
+      prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE" as any, createdAt: dateFilter }, select: { guestId: true } }),
+      // Restrictions: from guests who completed genio in period
+      prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: dateFilter }, select: { guestId: true } }),
+      // Birthdays by restaurant
+      prisma.statEvent.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
       // ── Panel: today ──
       prisma.session.count({ where: { ...restaurantFilter, startedAt: { gte: todayStart } } }),
       prisma.session.findMany({ where: { ...restaurantFilter, startedAt: { gte: todayStart } }, select: { guestId: true }, distinct: ["guestId"] }),
@@ -129,6 +137,11 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: weekAgo } } }),
       prisma.statEvent.groupBy({ by: ["dishId"], where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
       prisma.session.findMany({ where: { ...restaurantFilter, startedAt: { gte: weekAgo } }, select: { durationMs: true, viewUsed: true, deviceType: true }, take: 10000 }),
+      // Week genio funnel for panel
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: { gte: weekAgo } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: { gte: weekAgo } } }),
+      // Week genio guests for diet/restrictions
+      prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE" as any, createdAt: { gte: weekAgo } }, select: { guestId: true } }),
       // ── Panel: misc ──
       prisma.session.findFirst({ where: restaurantFilter, orderBy: { startedAt: "desc" }, select: { startedAt: true } }),
       prisma.promotion.count({ where: { ...restaurantFilter, status: "ACTIVE" } }),
@@ -145,8 +158,23 @@ export async function GET(req: NextRequest) {
       : [];
     const dishMap = Object.fromEntries(dishRecords.map(d => [d.id, d]));
 
-    // Resolve restaurant names
-    const restIds = sessionsByRestaurant.map((r: any) => r.restaurantId);
+    // Compute restaurant ranking by unique guests
+    const restGuestSets: Record<string, Set<string>> = {};
+    for (const s of sessionsByRestaurantRaw) {
+      if (!s.restaurantId || !s.guestId) continue;
+      if (!restGuestSets[s.restaurantId]) restGuestSets[s.restaurantId] = new Set();
+      restGuestSets[s.restaurantId].add(s.guestId);
+    }
+    const restaurantRankingRaw = Object.entries(restGuestSets)
+      .map(([rid, guests]) => ({ restaurantId: rid, uniqueGuests: guests.size }))
+      .sort((a, b) => b.uniqueGuests - a.uniqueGuests)
+      .slice(0, 20);
+
+    // Resolve restaurant names (ranking + birthdays)
+    const restIds = [...new Set([
+      ...restaurantRankingRaw.map(r => r.restaurantId),
+      ...birthdaysByRestaurantRaw.map((r: any) => r.restaurantId),
+    ])];
     const restRecords = restIds.length
       ? await prisma.restaurant.findMany({ where: { id: { in: restIds } }, select: { id: true, name: true } })
       : [];
@@ -168,20 +196,76 @@ export async function GET(req: NextRequest) {
       if (s.durationMs && s.durationMs > 0) { weekTotalDur += s.durationMs; weekDurCount++; }
     }
 
-    // Aggregate restrictions
-    const restrictionCounts: Record<string, number> = {};
-    for (const u of restrictionsRaw) {
-      for (const r of u.restrictions) {
-        if (r && r !== "ninguna") restrictionCounts[r] = (restrictionCounts[r] || 0) + 1;
+    // Diet + restrictions: from guests who used Genio in this period
+    // Get the guest profiles for those who completed genio in period
+    const genioGuestIds = [...new Set(genioDietEventsRaw.filter((e: any) => e.guestId).map((e: any) => e.guestId))];
+    const restrictionGuestIds = [...new Set(genioRestrictionEventsRaw.filter((e: any) => e.guestId).map((e: any) => e.guestId))];
+    const allGenioGuestIds = [...new Set([...genioGuestIds, ...restrictionGuestIds])];
+
+    let dietDistribution: { type: string; count: number }[] = [];
+    let restrictionsList: { name: string; count: number }[] = [];
+
+    if (allGenioGuestIds.length > 0) {
+      const guestProfiles = await prisma.guestProfile.findMany({
+        where: { id: { in: allGenioGuestIds } },
+        select: { preferences: true },
+      });
+
+      const dietCounts: Record<string, number> = {};
+      const restrictionCounts: Record<string, number> = {};
+
+      for (const gp of guestProfiles) {
+        const prefs = gp.preferences as any;
+        if (!prefs) continue;
+        if (prefs.dietType) dietCounts[prefs.dietType] = (dietCounts[prefs.dietType] || 0) + 1;
+        if (Array.isArray(prefs.restrictions)) {
+          for (const r of prefs.restrictions) {
+            if (r && r !== "ninguna") restrictionCounts[r] = (restrictionCounts[r] || 0) + 1;
+          }
+        }
       }
+
+      dietDistribution = Object.entries(dietCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([type, count]) => ({ type, count }));
+      restrictionsList = Object.entries(restrictionCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, count]) => ({ name, count }));
     }
-    const restrictionsList = Object.entries(restrictionCounts)
-      .sort((a, b) => b[1] - a[1])
-      .map(([name, count]) => ({ name, count }));
 
     const uniqueGuests = guestsInPeriod.length;
     const linkedGuestsCount = 0; // simplified — panel uses registeredGuests from total
     const totalGuestsCount = uniqueGuests;
+
+    // Week-based genio funnel for panel
+    const weekGenioStarts = genioUsedThisWeek;
+    const weekGenioDietCount = weekGenioDiet as number;
+    const weekGenioCompleteCount = weekGenioComplete as number;
+
+    // Week diet/restrictions for panel (from guests who completed genio this week)
+    const weekGenioGuestIds = [...new Set((weekGenioGuestsRaw as any[]).filter((e: any) => e.guestId).map((e: any) => e.guestId))];
+    let weekDietDistribution: { type: string; count: number }[] = [];
+    let weekRestrictionsList: { name: string; count: number }[] = [];
+    if (weekGenioGuestIds.length > 0) {
+      const weekGuestProfiles = await prisma.guestProfile.findMany({
+        where: { id: { in: weekGenioGuestIds } },
+        select: { preferences: true },
+      });
+      const wDietCounts: Record<string, number> = {};
+      const wResCounts: Record<string, number> = {};
+      for (const gp of weekGuestProfiles) {
+        const prefs = gp.preferences as any;
+        if (!prefs) continue;
+        if (prefs.dietType) wDietCounts[prefs.dietType] = (wDietCounts[prefs.dietType] || 0) + 1;
+        if (Array.isArray(prefs.restrictions)) {
+          for (const r of prefs.restrictions) {
+            if (r && r !== "ninguna") wResCounts[r] = (wResCounts[r] || 0) + 1;
+          }
+        }
+      }
+      weekDietDistribution = Object.entries(wDietCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => ({ type, count }));
+      weekRestrictionsList = Object.entries(wResCounts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }));
+    }
 
     // Star dish (week)
     const starDishId = weekTopDishes[0]?.dishId;
@@ -205,7 +289,7 @@ export async function GET(req: NextRequest) {
       })),
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
-      dietDistribution: dietDistribution.map(d => ({ type: d.dietType || "Sin definir", count: d._count.id })),
+      dietDistribution,
       restrictionsList,
       genio: {
         starts: genioStartsPeriod,
@@ -214,9 +298,13 @@ export async function GET(req: NextRequest) {
         completionRate: genioStartsPeriod > 0 ? Math.round((genioCompletePeriod / genioStartsPeriod) * 100) : 0,
         dietRate: genioStartsPeriod > 0 ? Math.round((genioStepDietPeriod / genioStartsPeriod) * 100) : 0,
       },
-      restaurantRanking: sessionsByRestaurant.map((r: any) => ({
+      restaurantRanking: restaurantRankingRaw.map(r => ({
         name: restMap[r.restaurantId] || r.restaurantId,
-        sessions: r._count.id,
+        uniqueGuests: r.uniqueGuests,
+      })),
+      birthdaysByRestaurant: (birthdaysByRestaurantRaw as any[]).map((r: any) => ({
+        name: restMap[r.restaurantId] || r.restaurantId,
+        count: r._count.id,
       })),
 
       // ── Panel compat fields (always returned) ──
@@ -232,6 +320,16 @@ export async function GET(req: NextRequest) {
       visitsDelta: visitsLastWeek > 0 ? Math.round(((visitsThisWeek - visitsLastWeek) / visitsLastWeek) * 100) : null,
       weekBirthdays,
       genioUsedThisWeek,
+      // Week genio funnel for panel
+      weekGenio: {
+        starts: weekGenioStarts,
+        dietMarked: weekGenioDietCount,
+        completed: weekGenioCompleteCount,
+        completionRate: weekGenioStarts > 0 ? Math.round((weekGenioCompleteCount / weekGenioStarts) * 100) : 0,
+        dietRate: weekGenioStarts > 0 ? Math.round((weekGenioDietCount / weekGenioStarts) * 100) : 0,
+      },
+      weekDietDistribution,
+      weekRestrictionsList,
       avgSessionDuration: weekDurCount > 0 ? Math.round(weekTotalDur / weekDurCount / 1000) : 0,
       starDish,
       lastScanAt: lastScan?.startedAt || null,

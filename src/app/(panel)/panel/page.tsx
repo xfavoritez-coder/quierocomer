@@ -41,9 +41,9 @@ const DEMO_DATA: DashData = {
   weekBirthdays: 21,
   genioToday: 7,
   todayAvgDuration: 82,
-  genio: { starts: 38, dietMarked: 32, completed: 28, completionRate: 74, dietRate: 84 },
-  dietDistribution: [{ type: "omnivore", count: 45 }, { type: "vegetarian", count: 12 }, { type: "vegan", count: 6 }],
-  restrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
+  weekGenio: { starts: 38, dietMarked: 32, completed: 28, completionRate: 74, dietRate: 84 },
+  weekDietDistribution: [{ type: "omnivore", count: 45 }, { type: "vegetarian", count: 12 }, { type: "vegan", count: 6 }],
+  weekRestrictionsList: [{ name: "gluten", count: 8 }, { name: "lactosa", count: 5 }, { name: "frutos secos", count: 3 }],
 };
 
 const DEMO_INSIGHTS = [
@@ -59,10 +59,10 @@ interface DashData {
   todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
   lastScanAt: string | null; todayUniqueVisitors: number;
   todayBirthdays?: number; weekBirthdays: number; genioToday: number; todayAvgDuration: number;
-  // Genio funnel + diet/restrictions
-  genio?: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
-  dietDistribution?: { type: string; count: number }[];
-  restrictionsList?: { name: string; count: number }[];
+  // Genio funnel + diet/restrictions (week-based)
+  weekGenio?: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
+  weekDietDistribution?: { type: string; count: number }[];
+  weekRestrictionsList?: { name: string; count: number }[];
 }
 
 interface Insight { id: string; type: string; title: string; body: string; priority: number; }
@@ -406,32 +406,32 @@ export default function PanelDashboard() {
 
 
       {/* ═══ Genio — Embudo ═══ */}
-      {data.genio && data.genio.starts > 0 && (
+      {data.weekGenio && data.weekGenio.starts > 0 && (
         <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
           <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 16px" }}>🧞 Genio — Embudo esta semana</h3>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-around", marginBottom: 14 }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: GOLD, letterSpacing: "-0.04em" }}>{data.genio.starts}</div>
+              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: GOLD, letterSpacing: "-0.04em" }}>{data.weekGenio!.starts}</div>
               <div style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2 }}>Abrieron</div>
             </div>
             <span style={{ color: "var(--adm-text3)", fontSize: "1rem" }}>→</span>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#3db89e", letterSpacing: "-0.04em" }}>{data.genio.dietMarked}</div>
+              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#3db89e", letterSpacing: "-0.04em" }}>{data.weekGenio!.dietMarked}</div>
               <div style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2 }}>Marcaron dieta</div>
             </div>
             <span style={{ color: "var(--adm-text3)", fontSize: "1rem" }}>→</span>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#7fbfdc", letterSpacing: "-0.04em" }}>{data.genio.completed}</div>
+              <div style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 900, color: "#7fbfdc", letterSpacing: "-0.04em" }}>{data.weekGenio!.completed}</div>
               <div style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", marginTop: 2 }}>Guardaron</div>
             </div>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             <div style={{ background: "rgba(244,166,35,0.06)", borderRadius: 14, padding: "10px 14px", textAlign: "center" }}>
-              <div style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 900, color: GOLD }}>{data.genio.completionRate}%</div>
+              <div style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 900, color: GOLD }}>{data.weekGenio!.completionRate}%</div>
               <div style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>completaron todo</div>
             </div>
             <div style={{ background: "rgba(61,184,158,0.06)", borderRadius: 14, padding: "10px 14px", textAlign: "center" }}>
-              <div style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 900, color: "#3db89e" }}>{data.genio.dietRate}%</div>
+              <div style={{ fontFamily: F, fontSize: "1.2rem", fontWeight: 900, color: "#3db89e" }}>{data.weekGenio!.dietRate}%</div>
               <div style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)" }}>marcaron su dieta</div>
             </div>
           </div>
@@ -439,24 +439,24 @@ export default function PanelDashboard() {
       )}
 
       {/* ═══ Dietas + Restricciones ═══ */}
-      {((data.dietDistribution && data.dietDistribution.length > 0) || (data.restrictionsList && data.restrictionsList.length > 0)) && (
+      {((data.weekDietDistribution && data.weekDietDistribution.length > 0) || (data.weekRestrictionsList && data.weekRestrictionsList.length > 0)) && (
         <div style={{ border: "1px solid var(--adm-card-border)", borderRadius: 25, background: "var(--adm-card)", padding: "19px 18px", marginBottom: 18, boxShadow: "var(--adm-card-shadow)" }}>
-          {data.dietDistribution && data.dietDistribution.length > 0 && (
+          {data.weekDietDistribution && data.weekDietDistribution.length > 0 && (
             <>
-              <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>🥗 Dietas de tus clientes</h3>
+              <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 12px" }}>🥗 Dietas de tus clientes esta semana</h3>
               {(() => {
                 const LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
                 const COLORS = ["#F4A623", "#3db89e", "#a78bfa"];
-                const total = data.dietDistribution!.reduce((a, d) => a + d.count, 0);
+                const total = data.weekDietDistribution!.reduce((a, d) => a + d.count, 0);
                 return (
                   <>
                     <div style={{ display: "flex", borderRadius: 8, overflow: "hidden", height: 8, marginBottom: 10 }}>
-                      {data.dietDistribution!.map((d, i) => (
+                      {data.weekDietDistribution!.map((d, i) => (
                         <div key={d.type} style={{ width: `${(d.count / total) * 100}%`, background: COLORS[i % COLORS.length], height: "100%" }} />
                       ))}
                     </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginBottom: data.restrictionsList?.length ? 20 : 0 }}>
-                      {data.dietDistribution!.map((d, i) => (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginBottom: data.weekRestrictionsList?.length ? 20 : 0 }}>
+                      {data.weekDietDistribution!.map((d, i) => (
                         <span key={d.type} style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.76rem", color: "var(--adm-text2)" }}>
                           <span style={{ width: 8, height: 8, borderRadius: 2, background: COLORS[i % COLORS.length], flexShrink: 0 }} />
                           {LABELS[d.type] || d.type} ({d.count}) {Math.round((d.count / total) * 100)}%
@@ -468,11 +468,11 @@ export default function PanelDashboard() {
               })()}
             </>
           )}
-          {data.restrictionsList && data.restrictionsList.length > 0 && (
+          {data.weekRestrictionsList && data.weekRestrictionsList.length > 0 && (
             <>
               <h3 style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)", fontWeight: 900, letterSpacing: "0.1em", textTransform: "uppercase", margin: "0 0 10px" }}>⚠️ Restricciones alimentarias</h3>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                {data.restrictionsList.map(r => (
+                {data.weekRestrictionsList!.map(r => (
                   <span key={r.name} style={{
                     fontFamily: F, fontSize: "0.76rem", padding: "5px 12px", borderRadius: 20,
                     background: "rgba(232,85,48,0.08)", border: "1px solid rgba(232,85,48,0.15)",
