@@ -61,59 +61,64 @@ export async function syncRestaurantSales(opts: {
   }
 
   for (const sale of resp.data) {
-    const dateOpen = parseToteatDate(sale.dateOpen);
-    const dateClosed = parseToteatDate(sale.dateClosed);
-    if (!dateOpen || !dateClosed) {
-      out.skipped++;
-      continue;
-    }
+    try {
+      const dateOpen = parseToteatDate(sale.dateOpen);
+      const dateClosed = parseToteatDate(sale.dateClosed);
+      if (!dateOpen || !dateClosed) {
+        out.skipped++;
+        continue;
+      }
 
-    const data = {
-      restaurantId: opts.restaurantId,
-      toteatOrderId: BigInt(sale.orderId),
-      toteatTableId: sale.tableId ?? null,
-      toteatTableName: sale.tableName ?? null,
-      numberClients: sale.numberClients ?? null,
-      toteatWaiterId: sale.waiterId ? BigInt(sale.waiterId) : null,
-      waiterName: sale.waiterName ?? null,
-      dateOpen,
-      dateClosed,
-      total: sale.total ?? 0,
-      payed: sale.payed ?? 0,
-      gratuity: sale.gratuity ?? 0,
-      subtotal: sale.subtotal ?? 0,
-      taxes: sale.taxes ?? 0,
-      fiscalType: sale.fiscalType || null,
-      paymentMethod: sale.paymentForms?.[0]?.method || null,
-      rawJson: sale as any,
-      syncedAt: new Date(),
-    };
+      const data = {
+        restaurantId: opts.restaurantId,
+        toteatOrderId: BigInt(sale.orderId),
+        toteatTableId: sale.tableId != null ? String(sale.tableId) : null,
+        toteatTableName: sale.tableName ?? null,
+        numberClients: sale.numberClients ?? null,
+        toteatWaiterId: sale.waiterId ? BigInt(sale.waiterId) : null,
+        waiterName: sale.waiterName ?? null,
+        dateOpen,
+        dateClosed,
+        total: sale.total ?? 0,
+        payed: sale.payed ?? 0,
+        gratuity: sale.gratuity ?? 0,
+        subtotal: sale.subtotal ?? 0,
+        taxes: sale.taxes ?? 0,
+        fiscalType: sale.fiscalType || null,
+        paymentMethod: sale.paymentForms?.[0]?.method || sale.paymentForms?.[0]?.name || null,
+        rawJson: sale as any,
+        syncedAt: new Date(),
+      };
 
-    const upserted = await prisma.toteatSale.upsert({
-      where: { toteatOrderId: BigInt(sale.orderId) },
-      create: data,
-      update: data,
-    });
-
-    // Replace products on every upsert (cheaper than diff for small N)
-    await prisma.toteatSaleProduct.deleteMany({ where: { saleId: upserted.id } });
-    if (sale.products && sale.products.length > 0) {
-      await prisma.toteatSaleProduct.createMany({
-        data: sale.products.map((p) => ({
-          saleId: upserted.id,
-          toteatProductId: p.id,
-          productName: p.name,
-          hierarchyId: p.hierarchyId || null,
-          hierarchyName: p.hierarchyName || null,
-          quantity: p.quantity ?? 0,
-          netPrice: p.netPrice ?? 0,
-          payed: p.payed ?? 0,
-          taxes: p.taxes ?? 0,
-          discounts: p.discounts ?? 0,
-        })),
+      const upserted = await prisma.toteatSale.upsert({
+        where: { toteatOrderId: BigInt(sale.orderId) },
+        create: data,
+        update: data,
       });
+
+      // Replace products on every upsert (cheaper than diff for small N)
+      await prisma.toteatSaleProduct.deleteMany({ where: { saleId: upserted.id } });
+      if (sale.products && sale.products.length > 0) {
+        await prisma.toteatSaleProduct.createMany({
+          data: sale.products.map((p) => ({
+            saleId: upserted.id,
+            toteatProductId: p.id || "",
+            productName: p.name || "",
+            hierarchyId: p.hierarchyId || null,
+            hierarchyName: p.hierarchyName || null,
+            quantity: p.quantity ?? 0,
+            netPrice: p.netPrice ?? 0,
+            payed: p.payed ?? 0,
+            taxes: p.taxes ?? 0,
+            discounts: p.discounts ?? 0,
+          })),
+        });
+      }
+      out.upserted++;
+    } catch (e: any) {
+      out.skipped++;
+      if (out.skipped <= 3) console.error(`[Toteat sync] Sale ${sale.orderId} failed: ${e.message?.slice(0, 120)}`);
     }
-    out.upserted++;
   }
 
   await prisma.restaurant.update({

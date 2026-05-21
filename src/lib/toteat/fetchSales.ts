@@ -33,7 +33,7 @@ export interface ToteatSale {
   subtotal?: number;
   taxes?: number;
   fiscalType?: string;
-  paymentForms?: { method?: string }[];
+  paymentForms?: { method?: string; name?: string }[];
   products: ToteatProduct[];
 }
 

@@ -560,7 +560,7 @@ model ToteatSale {
   id              String   @id @default(cuid())
   restaurantId    String
   toteatOrderId   BigInt   @unique  // sale.orderId from Toteat
-  toteatTableId   Int?
+  toteatTableId   String?
   toteatTableName String?
   numberClients   Int?
   toteatWaiterId  BigInt?
