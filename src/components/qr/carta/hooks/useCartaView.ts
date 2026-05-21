@@ -60,10 +60,17 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
   // Listen for temporary view changes (demo onboarding) — no persistence, with white flash
   const [demoFading, setDemoFading] = useState<false | "flash" | "reveal">(false);
   useEffect(() => {
+    const defaultView = isValidView(restaurantDefaultView ?? null)
+      ? (restaurantDefaultView as CartaView)
+      : FALLBACK_VIEW;
     const handle = (e: Event) => {
-      const next = (e as CustomEvent).detail?.view;
+      const detail = (e as CustomEvent).detail;
+      const next = detail?.view;
       if (!isValidView(next)) return;
-      // White flash in → switch view at peak → fade out white
+      if (detail?.noFlash) {
+        setViewState(next);
+        return;
+      }
       setDemoFading("flash");
       setTimeout(() => {
         setViewState(next);
@@ -72,9 +79,22 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
         setTimeout(() => setDemoFading(false), 350);
       }, 60);
     };
+    const restore = () => {
+      setDemoFading("flash");
+      setTimeout(() => {
+        setViewState(defaultView);
+        window.scrollTo({ top: 0 });
+        setTimeout(() => setDemoFading("reveal"), 20);
+        setTimeout(() => setDemoFading(false), 350);
+      }, 60);
+    };
     window.addEventListener("demo-onboarding-change-view", handle);
-    return () => window.removeEventListener("demo-onboarding-change-view", handle);
-  }, []);
+    window.addEventListener("demo-onboarding-restore-view", restore);
+    return () => {
+      window.removeEventListener("demo-onboarding-change-view", handle);
+      window.removeEventListener("demo-onboarding-restore-view", restore);
+    };
+  }, [restaurantDefaultView]);
 
   return { view, setView, isReady, demoFading };
 }

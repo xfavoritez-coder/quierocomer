@@ -154,6 +154,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         // Intro — nothing
         break;
       case 1:
+        // In showcase mode, switch to lista view (no flash, it's the first view change)
+        if (showcaseMode) {
+          window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "lista", noFlash: true } }));
+        }
         // Scroll so the category nav sits at the top of the viewport
         delay(300, () => {
           const firstCat = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[id^='cat-']");
@@ -266,6 +270,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     window.dispatchEvent(new Event("genio-updated"));
     window.dispatchEvent(new Event("demo-onboarding-restore-genio"));
     window.dispatchEvent(new Event("demo-onboarding-stop-highlight"));
+    if (showcaseMode) window.dispatchEvent(new Event("demo-onboarding-restore-view"));
     if (window.location.search.includes("lang=") && !window.location.search.includes("lang=es")) {
       const url = new URL(window.location.href);
       url.searchParams.delete("lang");
@@ -322,7 +327,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   } : baseStep;
   const stepBody = step === 1
     ? (showcaseMode
-      ? "Todas sus secciones y categorías. Esta vista se llama \"vista Lista\"."
+      ? "Todas sus secciones y categorías. Esta vista se llama \"Lista\"."
       : allPhotosReferential
         ? "Pusimos fotos referenciales en los primeros platos para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
         : hasReferentialPhotos
@@ -403,7 +408,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                   fontSize: "0.84rem", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
-                }}>← Atrás</button>
+                }}>Atrás</button>
               )}
               {showcaseMode && (
                 <button onClick={triggerExit} style={{
@@ -422,7 +427,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.84rem", fontWeight: 700,
                 display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                 fontFamily: "var(--font-dm, sans-serif)",
-              }}>{current.buttonLabel || "Siguiente →"}</button>
+              }}>{current.buttonLabel || "Siguiente"}</button>
             </div>
           </div>
         </div>
@@ -562,24 +567,6 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
 
           {/* Buttons */}
           <div style={{ display: "flex", gap: 6 }}>
-            {step > 0 && !isLast && !showcaseMode && (
-              <button
-                onClick={(e) => { e.stopPropagation(); goBack(); }}
-                style={{
-                  background: "none",
-                  border: "1px solid rgba(255,255,255,0.10)",
-                  borderRadius: 999,
-                  padding: "8px 14px",
-                  color: "rgba(255,255,255,0.45)",
-                  fontSize: "0.88rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "var(--font-dm, sans-serif)",
-                }}
-              >
-                ← Atrás
-              </button>
-            )}
             {showcaseMode && (
               <button
                 onClick={(e) => { e.stopPropagation(); triggerExit(); }}
@@ -598,6 +585,24 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 Saltar
               </button>
             )}
+            {step > 0 && !isLast && (
+              <button
+                onClick={(e) => { e.stopPropagation(); goBack(); }}
+                style={{
+                  background: "none",
+                  border: "1px solid rgba(255,255,255,0.10)",
+                  borderRadius: 999,
+                  padding: "8px 14px",
+                  color: "rgba(255,255,255,0.45)",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "var(--font-dm, sans-serif)",
+                }}
+              >
+                Atrás
+              </button>
+            )}
             <button
               onClick={(e) => { e.stopPropagation(); advance(); }}
               style={{
@@ -612,7 +617,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 fontFamily: "var(--font-dm, sans-serif)",
               }}
             >
-              {current.buttonLabel || (isLast ? "Ok, gracias" : "Siguiente →")}
+              {current.buttonLabel || (isLast ? "Ok, gracias" : "Siguiente")}
             </button>
           </div>
         </div>
