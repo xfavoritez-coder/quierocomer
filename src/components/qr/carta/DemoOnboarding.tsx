@@ -361,8 +361,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         position: "fixed", right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 9999,
         display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10,
         opacity: exiting ? 0 : 1,
-        transform: exiting ? "scale(0.3) translateY(40px)" : "scale(1) translateY(0)",
-        transition: exiting ? "all 0.3s cubic-bezier(0.6,0,1,0.7)" : "none",
+        transition: exiting ? "opacity 0.35s ease" : "none",
       }}>
         {/* Toast above FAB */}
         <div style={{
