@@ -107,9 +107,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     if (onboardingDone) return;
     // In showcase mode: skip on desktop (unless inside iframe), don't repeat if already seen
     if (showcaseMode) {
-      const isDesktop = window.innerWidth >= 1024 && window.matchMedia("(pointer: fine)").matches;
       const isEmbed = new URLSearchParams(window.location.search).get("embed") === "mobile";
-      if (isDesktop && !isEmbed) return;
+      // On desktop (outside iframe), don't show — the DesktopWrapper will show
+      // the phone mockup with an iframe that has embed=mobile&showcase=1
+      if (!isEmbed && window.innerWidth >= 1024) return;
       if (sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
     }
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
