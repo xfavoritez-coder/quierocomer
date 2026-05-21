@@ -10,6 +10,7 @@ export async function GET() {
     clickUrl: "#",
     openPixel: "#",
     activarUrl: "#",
+    panelUrl: "#",
   });
 
   return new NextResponse(html, {

@@ -556,6 +556,19 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
         const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
         const activarUrl = `${baseUrl}/activar/${restaurant.slug}`;
+        // Try to build auto-login URL if owner exists
+        let panelUrl = `${baseUrl}/panel`;
+        try {
+          const owner = await prisma.restaurantOwner.findFirst({
+            where: { restaurants: { some: { id: restaurant.id } }, status: "ACTIVE" },
+            select: { id: true },
+          });
+          if (owner) {
+            const { buildAutoLoginUrl } = await import("@/lib/email/autoLoginUrl");
+            panelUrl = buildAutoLoginUrl(baseUrl, owner.id);
+          }
+        } catch {}
+
         await sendAdminEmail({
           to: lead.email,
           subject: `Tu nueva carta ${restaurant.name} está lista`,
@@ -568,6 +581,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
             clickUrl,
             openPixel,
             activarUrl,
+            panelUrl,
           }),
         });
         await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
