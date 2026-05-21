@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const [leads, visitCount] = await Promise.all([
+    const [leads, visitCount, recentVisits] = await Promise.all([
       prisma.lead.findMany({
         orderBy: { createdAt: "desc" },
         take: 200,
@@ -12,6 +12,16 @@ export async function GET() {
         },
       }),
       prisma.funnelVisit.count({ where: { page: "subircarta" } }),
+      prisma.funnelVisit.findMany({
+        where: { page: "subircarta" },
+        orderBy: { createdAt: "desc" },
+        take: 200,
+        select: {
+          id: true, ip: true, createdAt: true,
+          utmSource: true, utmMedium: true, utmCampaign: true,
+          referrer: true, userAgent: true,
+        },
+      }),
     ]);
 
     const total = leads.length;
@@ -64,7 +74,23 @@ export async function GET() {
       },
     };
 
-    return NextResponse.json({ leads, stats });
+    // Match visits to leads by IP + close timestamp (within 30 min)
+    const leadIps = new Map<string, string>(); // ip+window -> leadId
+    for (const l of leads) {
+      if (l.ip) {
+        const bucket = Math.floor(new Date(l.createdAt).getTime() / (30 * 60 * 1000));
+        leadIps.set(`${l.ip}:${bucket}`, l.id);
+        leadIps.set(`${l.ip}:${bucket - 1}`, l.id);
+      }
+    }
+
+    const visits = recentVisits.map((v) => {
+      const bucket = Math.floor(new Date(v.createdAt).getTime() / (30 * 60 * 1000));
+      const matchedLeadId = v.ip ? (leadIps.get(`${v.ip}:${bucket}`) || leadIps.get(`${v.ip}:${bucket + 1}`) || null) : null;
+      return { ...v, matchedLeadId };
+    });
+
+    return NextResponse.json({ leads, stats, visits });
   } catch (error) {
     console.error("[Admin Funnel GET]", error);
     return NextResponse.json({ error: "Error al obtener leads." }, { status: 500 });

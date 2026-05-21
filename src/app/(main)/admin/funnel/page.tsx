@@ -73,10 +73,24 @@ const FUNNEL_STEPS = [
   { key: "activated", label: "Activaron", color: "#F4A623", rateKey: "activatedRate" },
 ] as const;
 
+interface Visit {
+  id: string;
+  ip: string | null;
+  createdAt: string;
+  utmSource: string | null;
+  utmMedium: string | null;
+  utmCampaign: string | null;
+  referrer: string | null;
+  userAgent: string | null;
+  matchedLeadId: string | null;
+}
+
 export default function FunnelPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showVisits, setShowVisits] = useState(false);
   const [pushStatus, setPushStatus] = useState<"idle" | "active" | "denied">("idle");
 
   useEffect(() => {
@@ -117,6 +131,7 @@ export default function FunnelPage() {
       .then((r) => r.json())
       .then((data) => {
         setLeads(data.leads || []);
+        setVisits(data.visits || []);
         setStats(data.stats || null);
       })
       .finally(() => setLoading(false));
@@ -227,8 +242,59 @@ export default function FunnelPage() {
         </div>
       )}
 
+      {/* Toggle: Leads vs Visitas */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        <button onClick={() => setShowVisits(false)} style={{
+          padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+          background: !showVisits ? "#F4A623" : "#222", color: !showVisits ? "#0a0a0a" : "#888",
+          fontSize: 13, fontWeight: 600,
+        }}>Leads ({leads.length})</button>
+        <button onClick={() => setShowVisits(true)} style={{
+          padding: "8px 16px", borderRadius: 8, border: "none", cursor: "pointer",
+          background: showVisits ? "#6366f1" : "#222", color: showVisits ? "#fff" : "#888",
+          fontSize: 13, fontWeight: 600,
+        }}>Visitas /subircarta ({visits.length})</button>
+      </div>
+
+      {/* Visitas */}
+      {showVisits && (
+        <div className="funnel-cards" style={{ marginBottom: 20 }}>
+          {visits.length === 0 && (
+            <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay visitas.</div>
+          )}
+          {visits.map((v) => {
+            const date = new Date(v.createdAt);
+            const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
+            const converted = !!v.matchedLeadId;
+            return (
+              <div key={v.id} style={{
+                background: converted ? "rgba(34,197,94,0.06)" : "#1a1a1a",
+                borderRadius: 12, padding: "12px 16px",
+                border: `1px solid ${converted ? "rgba(34,197,94,0.25)" : "#2a2a2a"}`,
+                marginBottom: 6,
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: 13, color: "#aaa" }}>{dateStr}</span>
+                  <span style={{
+                    fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6,
+                    background: converted ? "rgba(34,197,94,0.15)" : "rgba(255,255,255,0.06)",
+                    color: converted ? "#22c55e" : "#666",
+                  }}>{converted ? "Subió carta" : "Solo visitó"}</span>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 12, color: "#888", marginTop: 6 }}>
+                  {v.utmCampaign && <span style={{ color: "#a78bfa" }}>{v.utmCampaign}</span>}
+                  {v.utmSource && <span>{v.utmSource}{v.utmMedium ? ` / ${v.utmMedium}` : ""}</span>}
+                  {v.referrer && <span style={{ color: "#60a5fa" }}>{(() => { try { return new URL(v.referrer).hostname; } catch { return v.referrer; } })()}</span>}
+                  {v.ip && <span style={{ color: "#555" }}>{v.ip}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* Leads — mobile cards */}
-      <div className="funnel-cards">
+      <div className="funnel-cards" style={{ display: showVisits ? "none" : undefined }}>
         {leads.length === 0 && (
           <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavia.</div>
         )}
