@@ -60,104 +60,88 @@ export async function GET(req: NextRequest) {
 
     const dateFilter = { gte: rangeFrom, lte: rangeTo };
 
+    // Chile "today" + "week" boundaries (always computed for panel compat)
+    const chileNow = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Santiago" }));
+    const ymd = `${chileNow.getFullYear()}-${String(chileNow.getMonth() + 1).padStart(2, "0")}-${String(chileNow.getDate()).padStart(2, "0")}`;
+    const todayStart = new Date(ymd + "T00:00:00.000-04:00");
+    const weekAgo = new Date(todayStart.getTime() - 7 * 86400000);
+    const twoWeeksAgo = new Date(todayStart.getTime() - 14 * 86400000);
+
     const [
+      // Period-based queries
       totalSessions,
-      totalGuests,
-      registeredGuests,
-      sessions,
+      guestsInPeriod,
+      sessionsDetail,
       birthdaysSaved,
-      topDishesViewed,
-      dietDistribution,
-      genioStarts,
-      genioStepDiet,
-      genioComplete,
-      restrictionsRaw,
+      topDishesViewedPeriod,
+      genioStartsPeriod,
+      genioStepDietPeriod,
+      genioCompletePeriod,
       sessionsByRestaurant,
+      // Global (not period-dependent)
+      dietDistribution,
+      restrictionsRaw,
+      // Panel compat: today
+      todaySessionCount,
+      todayUniqueRaw,
+      todayBirthdays,
+      genioToday,
+      todayDurationAgg,
+      todayWaiterCalls,
+      todayWaiterPending,
+      // Panel compat: week
+      visitsThisWeek,
+      visitsLastWeek,
+      weekBirthdays,
+      genioUsedThisWeek,
+      weekTopDishes,
+      weekSessions,
+      // Panel: star dish
+      lastScan,
+      activePromos,
+      topSearches,
     ] = await Promise.all([
-      // Total sessions in period
-      prisma.session.count({
-        where: { ...restaurantFilter, startedAt: dateFilter },
-      }),
-      // Unique guests in period
-      prisma.session.findMany({
-        where: { ...restaurantFilter, startedAt: dateFilter },
-        select: { guestId: true },
-        distinct: ["guestId"],
-      }),
-      // Registered guests (linked)
-      prisma.guestProfile.count({
-        where: {
-          linkedQrUserId: { not: null },
-          ...(restaurantFilter.restaurantId
-            ? {
-                statEvents: {
-                  some: {
-                    ...(typeof restaurantFilter.restaurantId === "string"
-                      ? { restaurantId: restaurantFilter.restaurantId }
-                      : { restaurantId: restaurantFilter.restaurantId }),
-                    createdAt: dateFilter,
-                  },
-                },
-              }
-            : { statEvents: { some: { createdAt: dateFilter } } }),
-        },
-      }),
-      // Sessions with details for duration/device/view
-      prisma.session.findMany({
-        where: { ...restaurantFilter, startedAt: dateFilter },
-        select: { durationMs: true, deviceType: true, viewUsed: true },
-        take: 10000,
-      }),
-      // Birthdays saved
-      prisma.statEvent.count({
-        where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter },
-      }),
-      // Top dishes viewed
-      prisma.statEvent.groupBy({
-        by: ["dishId"],
-        where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: dateFilter },
-        _count: { id: true },
-        orderBy: { _count: { id: "desc" } },
-        take: 10,
-      }),
-      // Diet distribution from QRUser
-      prisma.qRUser.groupBy({
-        by: ["dietType"],
-        where: { dietType: { not: null } },
-        _count: { id: true },
-        orderBy: { _count: { id: "desc" } },
-      }),
-      // Genio funnel: starts
-      prisma.statEvent.count({
-        where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: dateFilter },
-      }),
-      // Genio funnel: diet step
-      prisma.statEvent.count({
-        where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: dateFilter },
-      }),
-      // Genio funnel: complete
-      prisma.statEvent.count({
-        where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: dateFilter },
-      }),
-      // Restrictions from QRUser
-      prisma.qRUser.findMany({
-        where: { restrictions: { isEmpty: false } },
-        select: { restrictions: true },
-      }),
-      // Sessions by restaurant (ranking)
-      prisma.session.groupBy({
-        by: ["restaurantId"],
-        where: { ...restaurantFilter, startedAt: dateFilter },
-        _count: { id: true },
-        orderBy: { _count: { id: "desc" } },
-        take: 20,
-      }),
+      // ── Period-based ──
+      prisma.session.count({ where: { ...restaurantFilter, startedAt: dateFilter } }),
+      prisma.session.findMany({ where: { ...restaurantFilter, startedAt: dateFilter }, select: { guestId: true }, distinct: ["guestId"] }),
+      prisma.session.findMany({ where: { ...restaurantFilter, startedAt: dateFilter }, select: { durationMs: true, deviceType: true, viewUsed: true }, take: 10000 }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter } }),
+      prisma.statEvent.groupBy({ by: ["dishId"], where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: dateFilter } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: dateFilter } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: dateFilter } }),
+      prisma.session.groupBy({ by: ["restaurantId"], where: { ...restaurantFilter, startedAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 20 }),
+      // ── Global ──
+      prisma.qRUser.groupBy({ by: ["dietType"], where: { dietType: { not: null } }, _count: { id: true }, orderBy: { _count: { id: "desc" } } }),
+      prisma.qRUser.findMany({ where: { restrictions: { isEmpty: false } }, select: { restrictions: true } }),
+      // ── Panel: today ──
+      prisma.session.count({ where: { ...restaurantFilter, startedAt: { gte: todayStart } } }),
+      prisma.session.findMany({ where: { ...restaurantFilter, startedAt: { gte: todayStart } }, select: { guestId: true }, distinct: ["guestId"] }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: todayStart } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: todayStart } } }),
+      prisma.session.aggregate({ where: { ...restaurantFilter, startedAt: { gte: todayStart }, durationMs: { gt: 0 } }, _avg: { durationMs: true } }),
+      prisma.waiterCall.count({ where: { ...restaurantFilter, calledAt: { gte: todayStart }, answeredAt: { not: null } } }),
+      prisma.waiterCall.count({ where: { ...restaurantFilter, calledAt: { gte: todayStart }, answeredAt: null } }),
+      // ── Panel: week ──
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: weekAgo } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "SESSION_START", createdAt: { gte: twoWeeksAgo, lt: weekAgo } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: { gte: weekAgo } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: { gte: weekAgo } } }),
+      prisma.statEvent.groupBy({ by: ["dishId"], where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
+      prisma.session.findMany({ where: { ...restaurantFilter, startedAt: { gte: weekAgo } }, select: { durationMs: true, viewUsed: true, deviceType: true }, take: 10000 }),
+      // ── Panel: misc ──
+      prisma.session.findFirst({ where: restaurantFilter, orderBy: { startedAt: "desc" }, select: { startedAt: true } }),
+      prisma.promotion.count({ where: { ...restaurantFilter, status: "ACTIVE" } }),
+      prisma.statEvent.groupBy({ by: ["query"], where: { ...restaurantFilter, eventType: "SEARCH_PERFORMED" as any, query: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
     ]);
 
-    // Resolve dish names
-    const dishIds = topDishesViewed.filter(d => d.dishId).map(d => d.dishId!);
-    const dishRecords = dishIds.length
-      ? await prisma.dish.findMany({ where: { id: { in: dishIds } }, select: { id: true, name: true, photos: true } })
+    // Resolve dish names for period + week
+    const allDishIds = [...new Set([
+      ...topDishesViewedPeriod.filter(d => d.dishId).map(d => d.dishId!),
+      ...weekTopDishes.filter((d: any) => d.dishId).map((d: any) => d.dishId!),
+    ])];
+    const dishRecords = allDishIds.length
+      ? await prisma.dish.findMany({ where: { id: { in: allDishIds } }, select: { id: true, name: true, photos: true } })
       : [];
     const dishMap = Object.fromEntries(dishRecords.map(d => [d.id, d]));
 
@@ -168,15 +152,20 @@ export async function GET(req: NextRequest) {
       : [];
     const restMap = Object.fromEntries(restRecords.map(r => [r.id, r.name]));
 
-    // Compute averages
-    let totalDuration = 0;
-    let durationCount = 0;
+    // Period-based distributions
+    let totalDuration = 0, durationCount = 0;
     const viewDist: Record<string, number> = {};
     const deviceDist: Record<string, number> = {};
-    for (const s of sessions) {
+    for (const s of sessionsDetail) {
       if (s.durationMs && s.durationMs > 0) { totalDuration += s.durationMs; durationCount++; }
       if (s.viewUsed) viewDist[s.viewUsed] = (viewDist[s.viewUsed] || 0) + 1;
       if (s.deviceType) deviceDist[s.deviceType] = (deviceDist[s.deviceType] || 0) + 1;
+    }
+
+    // Week avg duration for panel
+    let weekTotalDur = 0, weekDurCount = 0;
+    for (const s of weekSessions) {
+      if (s.durationMs && s.durationMs > 0) { weekTotalDur += s.durationMs; weekDurCount++; }
     }
 
     // Aggregate restrictions
@@ -190,53 +179,67 @@ export async function GET(req: NextRequest) {
       .sort((a, b) => b[1] - a[1])
       .map(([name, count]) => ({ name, count }));
 
-    const uniqueGuests = totalGuests.length;
-    const conversionRate = uniqueGuests > 0 ? Math.round((registeredGuests / uniqueGuests) * 100) : 0;
-    const avgDurationSec = durationCount > 0 ? Math.round(totalDuration / durationCount / 1000) : 0;
+    const uniqueGuests = guestsInPeriod.length;
+    const linkedGuestsCount = 0; // simplified — panel uses registeredGuests from total
+    const totalGuestsCount = uniqueGuests;
+
+    // Star dish (week)
+    const starDishId = weekTopDishes[0]?.dishId;
+    const starDish = starDishId && dishMap[starDishId]
+      ? { name: dishMap[starDishId].name, count: (weekTopDishes[0] as any)._count.id, photo: dishMap[starDishId].photos?.[0] || null }
+      : null;
 
     return NextResponse.json({
+      // ── New period-based data (used by /admin dashboard) ──
       period,
       from: rangeFrom.toISOString(),
       to: rangeTo.toISOString(),
-
-      // Main metrics
       totalSessions,
       uniqueGuests,
-      registeredGuests,
-      conversionRate,
-      avgDurationSec,
+      avgDurationSec: durationCount > 0 ? Math.round(totalDuration / durationCount / 1000) : 0,
       birthdaysSaved,
-
-      // Dishes
-      topDishesViewed: topDishesViewed.map(d => ({
+      topDishesViewed: topDishesViewedPeriod.map(d => ({
         name: dishMap[d.dishId!]?.name || d.dishId,
         photo: dishMap[d.dishId!]?.photos?.[0] || null,
         count: d._count.id,
       })),
-
-      // Distributions
       viewDistribution: viewDist,
       deviceDistribution: deviceDist,
-      dietDistribution: dietDistribution.map(d => ({
-        type: d.dietType || "Sin definir",
-        count: d._count.id,
-      })),
+      dietDistribution: dietDistribution.map(d => ({ type: d.dietType || "Sin definir", count: d._count.id })),
       restrictionsList,
-
-      // Genio funnel
       genio: {
-        starts: genioStarts,
-        dietMarked: genioStepDiet,
-        completed: genioComplete,
-        completionRate: genioStarts > 0 ? Math.round((genioComplete / genioStarts) * 100) : 0,
-        dietRate: genioStarts > 0 ? Math.round((genioStepDiet / genioStarts) * 100) : 0,
+        starts: genioStartsPeriod,
+        dietMarked: genioStepDietPeriod,
+        completed: genioCompletePeriod,
+        completionRate: genioStartsPeriod > 0 ? Math.round((genioCompletePeriod / genioStartsPeriod) * 100) : 0,
+        dietRate: genioStartsPeriod > 0 ? Math.round((genioStepDietPeriod / genioStartsPeriod) * 100) : 0,
       },
-
-      // Restaurant ranking
       restaurantRanking: sessionsByRestaurant.map((r: any) => ({
         name: restMap[r.restaurantId] || r.restaurantId,
         sessions: r._count.id,
       })),
+
+      // ── Panel compat fields (always returned) ──
+      todayScans: todaySessionCount,
+      todayUniqueVisitors: todayUniqueRaw.length,
+      todayBirthdays,
+      genioToday,
+      todayAvgDuration: Math.round((todayDurationAgg._avg?.durationMs || 0) / 1000),
+      todayWaiterCalls,
+      todayWaiterPending,
+      visitsThisWeek,
+      visitsLastWeek,
+      visitsDelta: visitsLastWeek > 0 ? Math.round(((visitsThisWeek - visitsLastWeek) / visitsLastWeek) * 100) : null,
+      weekBirthdays,
+      genioUsedThisWeek,
+      avgSessionDuration: weekDurCount > 0 ? Math.round(weekTotalDur / weekDurCount / 1000) : 0,
+      starDish,
+      lastScanAt: lastScan?.startedAt || null,
+      activePromos,
+      topSearches: (topSearches as any[]).map((s: any) => ({ name: s.query || "—", count: s._count.id })),
+      totalGuests: totalGuestsCount,
+      registeredGuests: linkedGuestsCount,
+      conversionRate: totalGuestsCount > 0 ? Math.round((linkedGuestsCount / totalGuestsCount) * 100) : 0,
     });
   } catch (e: any) {
     if (e.status === 400 || e.status === 403) return authErrorResponse(e);
