@@ -23,7 +23,7 @@ const RESTAURANTS: [string, string][] = [
 
 const AB_DEFAULTS = {
   titleText: "Tu carta puede vender m\u00e1s",
-  subtitleText: "Transformamos tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
+  subtitleText: "Transforma tu carta actual en una herramienta que aumenta tus ventas y mejora la experiencia de tus clientes.",
   ctaText: "Sube tu carta \u00b7 60 segundos \u2192",
 };
 
@@ -172,7 +172,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
             <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(vender más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
             <p className="hero-sub-text">{abSubtitle}</p>
             <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
-            <div className="microcopy">Te mostramos gratis como queda</div>
+            <div className="microcopy">Te mostramos en segundos cómo queda</div>
           </div>
         </div>
       </section>
@@ -189,7 +189,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
 
       {/* LOGOS */}
       <section className="logos-band" data-track="Logos">
-        <div className="logos-eyebrow">Ya trabajan con nosotros</div>
+        <div className="logos-eyebrow">Ya han transformado su carta</div>
         <div className="logos-scroller">
           <div className="logos-track">
             {duplicatedLogos.map((l, i) => (
@@ -247,17 +247,16 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <section className="how-it-works" data-track="Como funciona">
         <div className="container">
           <p className="hiw-eyebrow">Así funciona QuieroComer</p>
-          <h2 className="hiw-title">En 4 pasos, tu carta empieza a vender <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>por ti</span></h2>
+          <h2 className="hiw-title">En 3 pasos, tu carta empieza a vender <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>por ti</span></h2>
 
           <div className="hiw-steps">
             <div className="hiw-step">
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">1</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Subes tu carta actual</h3>
+                  <h3>Subes gratis tu carta actual</h3>
                   <ul>
-                    <li>Gratis</li>
-                    <li>PDF, link o fotos</li>
+                    <li>PDF, link QR, tu web o fotos del menú</li>
                   </ul>
                 </div>
               </div>
@@ -286,22 +285,6 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
               <div className="hiw-step-content">
                 <div className="hiw-num-col"><div className="hiw-num">3</div><div className="hiw-line" /></div>
                 <div>
-                  <h3>Tus clientes la escanean</h3>
-                  <ul>
-                    <li>Experiencia personalizada</li>
-                    <li>Se antojan más</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="hiw-img-wrap">
-                <img src="/landing/qrrr.jpg" alt="Clientes escanean" />
-              </div>
-            </div>
-
-            <div className="hiw-step">
-              <div className="hiw-step-content">
-                <div className="hiw-num-col"><div className="hiw-num">4</div><div className="hiw-line" /></div>
-                <div>
                   <h3>Mejoras toda la experiencia</h3>
                   <ul>
                     <li>Creamos algo único para ti y tu restaurante</li>
@@ -312,6 +295,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
                 <img src="/landing/feliz.jpg" alt="Mejoras toda la experiencia" />
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -323,29 +307,11 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
           ¿Quieres ver cómo queda <span style={{ color: "var(--amber)", fontStyle: "italic" }}>tu carta?</span>
         </p>
         <a href={subircartaHref} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
-          Súbela · gratis <span style={{ color: "var(--amber)" }}>→</span>
+          Sube tu carta <span style={{ color: "var(--amber)" }}>→</span>
         </a>
       </div>
 
       {/* MIENTRAS TÚ ATIENDES */}
-      <section className="mientras-section" data-track="Mientras tanto">
-        <div className="mientras-bg">
-          <img src="/landing/si.jpg" alt="Restaurante" />
-          <div className="mientras-overlay" />
-        </div>
-        <div className="mientras-content">
-          <h2 className="mientras-title">Y haz que tus platos<br /><span className="accent" style={{ fontStyle: "italic" }}>se vendan solos.</span></h2>
-          <a href={subircartaHref} className="mientras-chip" style={{ textDecoration: "none" }}>
-            <div className="mientras-chip-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-            </div>
-            <div>
-              <div className="mientras-chip-stat">+17% ticket promedio</div>
-              <div className="mientras-chip-sub">últimos 30 días</div>
-            </div>
-          </a>
-        </div>
-      </section>
 
 
       {/* FAQ */}
@@ -493,7 +459,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:20px clamp(22px,4vw,
 .hero-glow{position:absolute;inset:auto -15% -30% -15%;height:55%;background:radial-gradient(ellipse at 65% 80%,rgba(232,163,61,.22),transparent 55%),radial-gradient(ellipse at 80% 60%,rgba(200,140,40,.1),transparent 45%)}
 .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr;gap:0;max-width:1200px;margin:0 auto;align-items:center}.hero-grid>div:first-child{text-align:center}
 .eyebrow{font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--amber);font-weight:600;margin-bottom:22px}
-.hero h1{font-size:clamp(38px,5.5vw,82px);line-height:1.02;max-width:620px;margin-left:auto;margin-right:auto;margin-bottom:28px}
+.hero h1{font-size:clamp(38px,5.5vw,82px);line-height:1.02;max-width:620px;margin-left:auto;margin-right:auto;margin-bottom:28px;font-weight:600}
 .btn-primary{display:inline-flex;align-items:center;gap:14px;padding:20px 34px;margin-top:6px;margin-bottom:8px;background:var(--amber);color:var(--black);font-size:16px;font-weight:700;text-decoration:none;border:none;cursor:pointer;transition:.3s;box-shadow:0 20px 60px -20px rgba(232,163,61,.7)}
 .btn-primary:hover{background:var(--amber-bright);transform:translateY(-2px)}
 .hero-ia-text{font-family:var(--font-display);font-style:italic;font-size:clamp(18px,2vw,22px);color:var(--cream-soft);margin-bottom:28px;max-width:540px;margin-left:auto;margin-right:auto;line-height:1.4}
