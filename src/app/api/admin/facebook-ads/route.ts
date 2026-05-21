@@ -50,9 +50,11 @@ export async function GET(req: NextRequest) {
 
     const mobile = filteredSessions.filter((s) => s.device === "mobile").length;
     const desktop = filteredSessions.filter((s) => s.device === "desktop").length;
-    // Sessions where user navigated to /subircarta (page_load event with that path)
+    // Sessions where user visited /subircarta (direct landing or navigated from landing)
     const visitedSubircarta = filteredSessions.filter((s) =>
-      s.pageViews > 1 || (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
+      (s.landingPage || "").includes("/subircarta") ||
+      s.pageViews > 1 ||
+      (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
     ).length;
 
     // Campaign breakdown
