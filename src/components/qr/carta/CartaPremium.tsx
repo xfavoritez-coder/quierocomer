@@ -98,7 +98,7 @@ function ScrollFade({ color = "var(--carta-bg)" }: { color?: string }) {
       style={{
         width: 30,
         height: "100%",
-        background: showFade ? `linear-gradient(to right, transparent, ${color}80)` : "transparent",
+        background: showFade ? `linear-gradient(to right, transparent, ${color}50)` : "transparent",
         zIndex: 1,
         transition: "background 0.2s",
       }}
@@ -756,7 +756,7 @@ export default function CartaPremium({
                   style={{
                     position: "absolute", right: 0, top: 0, bottom: 8, width: 56,
                     pointerEvents: "none",
-                    background: "linear-gradient(to right, transparent 0%, var(--carta-bg) 100%)",
+                    background: "linear-gradient(to right, transparent 0%, var(--carta-bg) 80%)",
                     opacity: 0, transition: "opacity 0.18s ease",
                   }}
                 />
@@ -856,7 +856,7 @@ export default function CartaPremium({
         @keyframes genioFabFloat { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
         @keyframes genioNudgePulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.15); } }
         /* Fade del borde derecho del scroll de cada categoria — solo cuando hay mas cartas */
-        [data-has-more] > .cp-scroll-fade { opacity: 1 !important; }
+        [data-has-more] > .cp-scroll-fade { opacity: 0.6 !important; }
       `}</style>
 
       {selectedDish && (
