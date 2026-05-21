@@ -23,6 +23,7 @@ interface DesktopWrapperProps {
 export default function DesktopWrapper({ restaurantName, slug, children, restaurant, categories, dishes, popularDishIds, tableId, isQrScan, lang, marketingPromos }: DesktopWrapperProps) {
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
   const [fromLanding, setFromLanding] = useState(false);
+  const [isShowcase, setIsShowcase] = useState(false);
 
   useEffect(() => {
     const check = () => {
@@ -34,7 +35,9 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
     check();
     window.addEventListener("resize", check);
     const params = new URLSearchParams(window.location.search);
-    setFromLanding(params.get("from") === "landing");
+    const showcase = params.get("showcase") === "1";
+    setIsShowcase(showcase);
+    setFromLanding(params.get("from") === "landing" || showcase);
     // If embedded as mobile inside phone mockup, force mobile view
     if (params.get("embed") === "mobile") {
       setIsDesktop(false);
@@ -88,7 +91,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
           <div style={styles.phoneFrame}>
             <div style={{ width: "100%", height: "100%", borderRadius: 36, overflow: "hidden" }}>
               <iframe
-                src={`/qr/${slug}?embed=mobile`}
+                src={`/qr/${slug}?embed=mobile${isShowcase ? "&showcase=1" : ""}`}
                 style={{ width: "100%", height: "100%", border: "none", background: "#0a0a0a" }}
                 title={`Carta de ${restaurantName}`}
               />

@@ -312,7 +312,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...(step === 0 && { title: "Mira cómo queda una carta real", body: "Te muestro en 3 pasos lo que hacemos con la carta de un restaurante.", buttonLabel: "Ver" }),
     ...(step === 2 && { body: "Hay 3 vistas para que los clientes disfruten una mejor experiencia. Esta se llama Impact." }),
     ...(step === 3 && { body: "Traducimos la carta completa a varios idiomas de forma automática.", buttonLabel: "Siguiente" }),
-    ...(step === 4 && { title: "Así queda con QuieroComer", body: "Navega la carta como si fueras un cliente. Cuando quieras, sube la tuya.", buttonLabel: "Explorar" }),
+    ...(step === 4 && { title: "Así queda con QuieroComer", body: "Te dejo para que navegues por la carta. Cuando me necesites, solo frota la lámpara.", buttonLabel: "Explorar" }),
   } : baseStep;
   const stepBody = step === 1
     ? (showcaseMode
