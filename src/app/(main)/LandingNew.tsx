@@ -303,7 +303,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* MID CTA */}
       <div style={{ textAlign: "center", padding: "66px 20px", background: "linear-gradient(180deg, rgba(232,163,61,.06), rgba(232,163,61,.02))", borderTop: "1px solid rgba(232,163,61,.1)", borderBottom: "1px solid rgba(232,163,61,.1)" }}>
         <p style={{ fontFamily: "var(--font-display)", fontSize: "clamp(24px,4vw,32px)", color: "var(--cream-soft)", lineHeight: 1.3, marginBottom: 18 }}>
-          ¿Quieres ver cómo queda <span style={{ color: "var(--amber)", fontStyle: "italic" }}>tu carta?</span>
+          ¿Quieres ver cómo <span style={{ color: "var(--amber)", fontStyle: "italic" }}>queda?</span>
         </p>
         <a href={subircartaHref} style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "14px 28px", border: "1px solid rgba(232,163,61,.35)", background: "rgba(232,163,61,.08)", color: "var(--cream)", fontSize: 14, fontWeight: 600, textDecoration: "none", letterSpacing: ".02em", transition: ".25s" }}>
           Sube tu carta <span style={{ color: "var(--amber)" }}>→</span>
@@ -341,9 +341,9 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       {/* FINAL CTA */}
       <section className="final-cta" id="cta" data-track="CTA final">
         <div className="container">
-          <h2>Lleva la experiencia de tu restaurante al siguiente nivel</h2>
+          <h2>Lleva la atención de tu restaurante al siguiente nivel</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Sube tu carta gratis →</a>
+          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Subir carta gratis →</a>
         </div>
       </section>
 
