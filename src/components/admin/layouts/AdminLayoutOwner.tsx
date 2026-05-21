@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, Users, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon } from "lucide-react";
+import { Home, UtensilsCrossed, Tag, Menu, ChevronRight, X, LogOut, Lock, Mail, BarChart3, Bell, ContactRound, UsersRound, Zap, Store, UserCog, Megaphone, CreditCard, Receipt, Settings, Sun, Moon } from "lucide-react";
 
 const F = "var(--font-display)";
 const FB = "var(--font-body)";
@@ -38,7 +38,7 @@ function buildNav(base: string, opts: { hasToteat?: boolean; plan?: string | nul
     ...(showLive ? [{ icon: LiveIcon, label: "Venta en vivo", href: `${base}/live` }] : []),
     { icon: UtensilsCrossed, label: "Mi Carta", href: `${base}/menus` },
     { icon: BarChart3, label: "Analytics", href: `${base}/analytics` },
-    { icon: Users, label: "Clientes", href: `${base}/clientes` },
+    { icon: ContactRound, label: "Clientes", href: `${base}/clientes` },
     { icon: Tag, label: "Ofertas", href: `${base}/promociones` },
     { icon: Megaphone, label: "Anuncios", href: `${base}/anuncios` },
     { icon: Bell, label: "Llamar garzón", href: `${base}/garzon` },
