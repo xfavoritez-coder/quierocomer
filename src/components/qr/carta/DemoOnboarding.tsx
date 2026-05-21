@@ -105,23 +105,29 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
     if (onboardingDone) return;
-    // In showcase mode: skip on desktop (unless inside iframe), don't repeat if already seen
+    const start = () => {
+      const savedStep = sessionStorage.getItem("qc_onboarding_step");
+      if (savedStep) {
+        sessionStorage.removeItem("qc_onboarding_step");
+        const restored = parseInt(savedStep, 10);
+        if (!STEPS[restored]?.showOverlay) setMinimized(true);
+        setStep(restored);
+      } else {
+        setStep(0);
+      }
+    };
     if (showcaseMode) {
       const isEmbed = new URLSearchParams(window.location.search).get("embed") === "mobile";
-      // On desktop (outside iframe), don't show — the DesktopWrapper will show
-      // the phone mockup with an iframe that has embed=mobile&showcase=1
-      if (!isEmbed && window.innerWidth >= 1024) return;
+      if (isEmbed) { start(); return; }
       if (sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
+      // Wait for layout to stabilize — on desktop the DesktopWrapper will take over
+      const t = setTimeout(() => {
+        if (window.innerWidth >= 1024) return;
+        start();
+      }, 150);
+      return () => clearTimeout(t);
     }
-    const savedStep = sessionStorage.getItem("qc_onboarding_step");
-    if (savedStep) {
-      sessionStorage.removeItem("qc_onboarding_step");
-      const restored = parseInt(savedStep, 10);
-      if (!STEPS[restored]?.showOverlay) setMinimized(true);
-      setStep(restored);
-    } else {
-      setStep(0);
-    }
+    start();
   }, [restaurantSlug, onboardingDone, showcaseMode]);
 
   // Cleanup timers
