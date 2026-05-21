@@ -130,14 +130,14 @@ export async function GET(req: NextRequest) {
       byLanding[page] = (byLanding[page] || 0) + 1;
     }
 
-    // Hourly breakdown (all sessions in period, aggregated by hour)
+    // Hourly breakdown (all sessions in period, aggregated by hour in Chile time)
     const hourly: Record<number, { visits: number; bounced: number; converted: number }> = {};
     for (let h = 0; h < 24; h++) hourly[h] = { visits: 0, bounced: 0, converted: 0 };
     for (const s of filteredSessions) {
-      const h = s.createdAt.getHours();
-      hourly[h].visits++;
-      if (s.bounced) hourly[h].bounced++;
-      if (s.converted) hourly[h].converted++;
+      const clHour = parseInt(s.createdAt.toLocaleString("en-US", { timeZone: "America/Santiago", hour: "numeric", hour12: false }), 10);
+      hourly[clHour].visits++;
+      if (s.bounced) hourly[clHour].bounced++;
+      if (s.converted) hourly[clHour].converted++;
     }
 
     // Daily breakdown
