@@ -93,7 +93,7 @@ interface Data {
   stats: Stats;
   sourceBreakdown: Record<string, number>;
   byLanding: Record<string, number>;
-  byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number }>;
+  byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }>;
   byContent: Record<string, { visits: number; bounced: number; converted: number }>;
   sectionCounts: Record<string, number>;
   clickCounts: Record<string, number>;
@@ -238,6 +238,7 @@ export default function FacebookAdsPage() {
               <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
                 <span style={{ color: "#888" }}>{c.visits} vis</span>
                 <span style={{ color: "#ef4444" }}>{c.visits > 0 ? Math.round((c.bounced / c.visits) * 100) : 0}% reb</span>
+                <span style={{ color: "#F4A623", fontWeight: 600 }}>{c.visits > 0 ? Math.round((c.subircarta / c.visits) * 100) : 0}% subir</span>
                 <span style={{ color: "#22c55e" }}>{c.converted} conv</span>
                 <span style={{ color: "#888" }}>{fmtDuration(c.avgDuration)}</span>
               </div>

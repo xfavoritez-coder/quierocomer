@@ -58,15 +58,19 @@ export async function GET(req: NextRequest) {
     ).length;
 
     // Campaign breakdown
-    const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number }> = {};
+    const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }> = {};
     for (const s of filteredSessions) {
       const key = s.utmCampaign || "(sin campaña)";
-      if (!byCampaign[key]) byCampaign[key] = { visits: 0, bounced: 0, converted: 0, avgDuration: 0, avgScroll: 0 };
+      if (!byCampaign[key]) byCampaign[key] = { visits: 0, bounced: 0, converted: 0, avgDuration: 0, avgScroll: 0, subircarta: 0 };
       byCampaign[key].visits++;
       if (s.bounced) byCampaign[key].bounced++;
       if (s.converted) byCampaign[key].converted++;
       byCampaign[key].avgDuration += s.duration;
       byCampaign[key].avgScroll += s.maxScroll;
+      const wentToSubircarta = (s.landingPage || "").includes("/subircarta") ||
+        s.pageViews > 1 ||
+        (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
+      if (wentToSubircarta) byCampaign[key].subircarta++;
     }
     for (const key of Object.keys(byCampaign)) {
       const c = byCampaign[key];
