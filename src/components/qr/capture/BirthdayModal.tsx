@@ -279,8 +279,8 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
             alt=""
             style={{
               position: "absolute", top: 14, left: 14,
-              width: 44, height: 44, borderRadius: 10, objectFit: "cover",
-              opacity: 0.15, filter: "grayscale(100%)",
+              width: 80, height: 80, borderRadius: 16, objectFit: "cover",
+              opacity: 0.1, filter: "grayscale(100%)",
             }}
           />
         )}
