@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Restaurantes reales que ya usan QuieroComer para vender más.",
 };
 
-const REAL_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza", "nascosto-pizzeria"];
+const REAL_SLUGS = ["hand-roll", "horusvegan", "juana-la-brava", "alleria-pizza"];
 
 export default async function ClientesPage() {
   const [restaurants, totalDishes, totalCategories] = await Promise.all([

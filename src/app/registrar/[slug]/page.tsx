@@ -15,7 +15,7 @@ export default async function RegistrarPage({ params }: { params: Promise<{ slug
   // Traer venues activas con platos para el showcase del iPhone
   const showcaseVenues = await prisma.restaurant.findMany({
     where: {
-      slug: { in: ["hand-roll", "horusvegan", "alleria-pizza", "nascosto-pizzeria"] },
+      slug: { in: ["hand-roll", "horusvegan", "alleria-pizza"] },
       isDemo: false,
       logoUrl: { not: null },
     },
