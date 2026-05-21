@@ -321,8 +321,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...baseStep,
     ...(step === 0 && { title: "Recorre una carta real", body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
-    ...(step === 2 && { title: "Y esta vista se llama Impact", body: "La carta cuenta con 3 vistas distintas." }),
-    ...(step === 3 && { title: "Traducimos la carta", body: "A los idiomas que quieras. Se traduce automáticamente al celular de cada persona.", buttonLabel: "Siguiente" }),
+    ...(step === 2 && { title: "Y esta vista se llama Impact", body: "La carta cuenta con 3 distintas." }),
+    ...(step === 3 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
     ...(step === 4 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
   const stepBody = step === 1
@@ -345,7 +345,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   const isLightStep = step >= 2;
 
   // ═══ Minimized state — FAB genio + toast above it ═══
-  if (minimized && !exiting) {
+  if (minimized) {
     return (
       <>
       {globalOnboardingStyle}
@@ -357,7 +357,13 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           pointerEvents: "none",
         }} />
       )}
-      <div style={{ position: "fixed", right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 9999, display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
+      <div style={{
+        position: "fixed", right: 14, bottom: "calc(16px + env(safe-area-inset-bottom))", zIndex: 9999,
+        display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10,
+        opacity: exiting ? 0 : 1,
+        transform: exiting ? "scale(0.3) translateY(40px)" : "scale(1) translateY(0)",
+        transition: exiting ? "all 0.3s cubic-bezier(0.6,0,1,0.7)" : "none",
+      }}>
         {/* Toast above FAB */}
         <div style={{
           background: isLightStep ? "rgba(255,255,255,0.97)" : "rgba(14,14,14,0.96)",
