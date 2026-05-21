@@ -314,14 +314,15 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Showcase overrides: adapt copy for visitors from quierocomer.cl
   const current = showcaseMode ? {
     ...baseStep,
-    ...(step === 0 && { title: "Mira cómo queda una carta real", body: "Te muestro en 3 pasos lo que hacemos con la carta de un restaurante.", buttonLabel: "Ver" }),
-    ...(step === 2 && { body: "Hay 3 vistas para que los clientes disfruten una mejor experiencia. Esta se llama Impact." }),
-    ...(step === 3 && { body: "Traducimos la carta completa a varios idiomas de forma automática.", buttonLabel: "Siguiente" }),
-    ...(step === 4 && { title: "Así queda con QuieroComer", body: "Te dejo para que navegues por la carta. Cuando me necesites, solo frota la lámpara.", buttonLabel: "Explorar" }),
+    ...(step === 0 && { title: "Recorre una carta real", body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
+    ...(step === 1 && { title: "Así se ve una carta real" }),
+    ...(step === 2 && { body: "Y esta vista se llama Impact. La carta cuenta con 3 distintos tipos de vista." }),
+    ...(step === 3 && { title: "Traducimos la carta", body: "A los idiomas que quieras. Se traduce automáticamente al celular de cada persona.", buttonLabel: "Siguiente" }),
+    ...(step === 4 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
   const stepBody = step === 1
     ? (showcaseMode
-      ? "Esta es una carta real transformada por QuieroComer. Navega y mira cómo se ve."
+      ? "Todas sus secciones y categorías. Esta vista se llama \"vista Lista\"."
       : allPhotosReferential
         ? "Pusimos fotos referenciales en los primeros platos para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
         : hasReferentialPhotos
