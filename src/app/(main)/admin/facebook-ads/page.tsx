@@ -97,6 +97,7 @@ interface Data {
   byContent: Record<string, { visits: number; bounced: number; converted: number }>;
   sectionCounts: Record<string, number>;
   clickCounts: Record<string, number>;
+  hourly: Record<number, { visits: number; bounced: number; converted: number }>;
   daily: Record<string, { visits: number; converted: number; bounced: number }>;
   sessions: Session[];
 }
@@ -121,7 +122,7 @@ export default function FacebookAdsPage() {
   if (loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   if (!data) return <div style={{ padding: 40, color: "#e85d5d" }}>Error al cargar datos.</div>;
 
-  const { stats, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, daily, sessions } = data;
+  const { stats, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, hourly, daily, sessions } = data;
   const sortedSources = Object.entries(sourceBreakdown).sort((a, b) => b[1] - a[1]);
   const sortedLandings = Object.entries(byLanding).sort((a, b) => b[1] - a[1]);
 
@@ -143,7 +144,7 @@ export default function FacebookAdsPage() {
           Facebook Ads
         </h1>
         <div style={{ display: "flex", gap: 6 }}>
-          {[7, 14, 30, 90].map((d) => (
+          {[1, 2, 7, 14, 30, 90].map((d) => (
             <button
               key={d}
               onClick={() => setDays(d)}
@@ -153,7 +154,7 @@ export default function FacebookAdsPage() {
                 cursor: "pointer",
               }}
             >
-              {d}d
+              {d === 1 ? "Hoy" : d === 2 ? "Ayer" : `${d}d`}
             </button>
           ))}
         </div>
@@ -203,6 +204,35 @@ export default function FacebookAdsPage() {
         <Card label="Desktop" value={stats.desktop} />
         {stats.ghostSessions > 0 && <Card label="Fantasmas" value={stats.ghostSessions} color="#555" suffix="filtradas" />}
       </div>
+
+      {/* Hourly chart (today) */}
+      {(() => {
+        const hours = Object.entries(hourly || {}).map(([h, d]) => [parseInt(h), d] as [number, { visits: number; bounced: number; converted: number }]).sort((a, b) => a[0] - b[0]);
+        const totalToday = hours.reduce((s, [, d]) => s + d.visits, 0);
+        if (totalToday === 0) return null;
+        const maxH = Math.max(...hours.map(([, d]) => d.visits), 1);
+        const currentHour = new Date().getHours();
+        return (
+          <Section title={`Hoy por hora (${totalToday} visitas)`}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 90, padding: "0 2px" }}>
+              {hours.map(([h, d]) => {
+                const barH = Math.max((d.visits / maxH) * 75, d.visits > 0 ? 4 : 1);
+                return (
+                  <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+                    {d.visits > 0 && <span style={{ fontSize: 8, color: "#888" }}>{d.visits}</span>}
+                    <div style={{
+                      width: "100%", maxWidth: 20, height: barH, borderRadius: 3,
+                      background: d.visits === 0 ? "#1a1a1a" : d.converted > 0 ? "#22c55e" : d.bounced === d.visits ? "#ef444480" : "#3b82f6",
+                      border: h === currentHour ? "1px solid #F4A623" : "none",
+                    }} />
+                    <span style={{ fontSize: 7, color: h === currentHour ? "#F4A623" : "#444" }}>{h}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        );
+      })()}
 
       {/* Daily chart */}
       {sortedDaily.length > 0 && (
