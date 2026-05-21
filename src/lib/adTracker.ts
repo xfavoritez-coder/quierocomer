@@ -19,15 +19,19 @@ let initialized = false;
 function getUtmParams() {
   const params = new URLSearchParams(window.location.search);
   const utmSource = params.get("utm_source");
-  if (!utmSource) return null;
+  const fbclid = params.get("fbclid");
+  const gclid = params.get("gclid");
+
+  // Accept: explicit utm_source OR Facebook fbclid OR Google gclid
+  if (!utmSource && !fbclid && !gclid) return null;
 
   return {
-    utmSource,
-    utmMedium: params.get("utm_medium"),
+    utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
+    utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
     utmCampaign: params.get("utm_campaign"),
     utmContent: params.get("utm_content"),
     utmTerm: params.get("utm_term"),
-    fbclid: params.get("fbclid"),
+    fbclid,
   };
 }
 

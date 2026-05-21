@@ -109,10 +109,14 @@ export async function GET(req: NextRequest) {
 
     const pct = (n: number, base: number) => base > 0 ? Math.round((n / base) * 100) : 0;
 
+    const fbSessions = filteredSessions.filter(s => s.utmSource === "facebook" || s.fbclid).length;
+
     return NextResponse.json({
       stats: {
         totalVisits,
         adVisits,
+        fbVisits: fbSessions,
+        fbPctOfTotal: totalVisits > 0 ? Math.round((fbSessions / totalVisits) * 100) : 0,
         totalSessions,
         bounced,
         bounceRate: pct(bounced, totalSessions),

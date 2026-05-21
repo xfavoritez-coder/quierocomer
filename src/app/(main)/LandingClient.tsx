@@ -143,19 +143,21 @@ export default function LandingClient({ logos }: { logos: Logo[] }) {
     // Track ad visitors + register funnel visit with UTM params
     const params = new URLSearchParams(window.location.search);
     const utmSource = params.get("utm_source");
-    if (utmSource) {
+    const fbclid = params.get("fbclid");
+    const gclid = params.get("gclid");
+    if (utmSource || fbclid || gclid) {
       fetch("/api/funnel/visit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           page: "landing",
           referrer: document.referrer || null,
-          utmSource,
-          utmMedium: params.get("utm_medium"),
+          utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
+          utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
           utmCampaign: params.get("utm_campaign"),
           utmContent: params.get("utm_content"),
           utmTerm: params.get("utm_term"),
-          fbclid: params.get("fbclid"),
+          fbclid,
         }),
         keepalive: true,
       }).catch(() => {});

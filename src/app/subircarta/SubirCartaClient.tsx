@@ -54,18 +54,21 @@ export default function SubirCartaClient() {
   useEffect(() => {
     window.scrollTo(0, 0);
     const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get("utm_source");
+    const fbclid = params.get("fbclid");
+    const gclid = params.get("gclid");
     fetch("/api/funnel/visit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         page: "subircarta",
         referrer: document.referrer || null,
-        utmSource: params.get("utm_source"),
-        utmMedium: params.get("utm_medium"),
+        utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
+        utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
         utmCampaign: params.get("utm_campaign"),
         utmContent: params.get("utm_content"),
         utmTerm: params.get("utm_term"),
-        fbclid: params.get("fbclid"),
+        fbclid,
       }),
       keepalive: true,
     }).catch(() => {});
