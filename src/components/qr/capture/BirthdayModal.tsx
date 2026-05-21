@@ -273,17 +273,6 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
           border: "1px solid var(--carta-card-border, transparent)",
         }}
       >
-        {logoUrl && (
-          <img
-            src={logoUrl}
-            alt=""
-            style={{
-              position: "absolute", top: 32, left: 14,
-              width: 80, height: 80, borderRadius: 16, objectFit: "cover",
-              opacity: 0.1, filter: "grayscale(100%)",
-            }}
-          />
-        )}
         <button
           onClick={handleDismiss}
           style={{ position: "absolute", top: 14, right: 14, background: "none", border: "none", cursor: "pointer" }}
@@ -295,7 +284,10 @@ export default function BirthdayModal({ restaurantId, restaurantName, birthdayPe
         {phase === "form" && (
           <>
             <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <span style={{ fontSize: "2.8rem", display: "block", marginBottom: 10 }}>{isPromoVariant ? "🎁" : "🎂"}</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 10 }}>
+                {logoUrl && <img src={logoUrl} alt="" style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover" }} />}
+                <span style={{ fontSize: "2.8rem" }}>{isPromoVariant ? "🎁" : "🎂"}</span>
+              </div>
               <h3
                 className="font-[family-name:var(--font-playfair)]"
                 style={{ fontSize: "1.4rem", fontWeight: 800, color: "var(--carta-text, #0e0e0e)", lineHeight: 1.2 }}
