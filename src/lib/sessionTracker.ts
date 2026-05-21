@@ -326,6 +326,11 @@ function ensureDbSession() {
 /** Start tracking a session for a restaurant */
 const SESSION_MAX_AGE = 30 * 60_000; // 30 minutes — after this, create a fresh session
 export function startSession(restaurantId: string, tableId?: string, isQrScan?: boolean) {
+  // Don't track sessions for showcase/landing previews
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("showcase") === "1" || params.get("from") === "landing" || params.get("embed") === "mobile") return;
+  }
   lastRestaurantId = restaurantId;
   lastTableId = tableId;
   lastIsQrScan = isQrScan;
