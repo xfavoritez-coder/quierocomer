@@ -316,7 +316,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...baseStep,
     ...(step === 0 && { title: "Recorre una carta real", body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
-    ...(step === 2 && { body: "Y esta vista se llama Impact. La carta cuenta con 3 distintos tipos de vista." }),
+    ...(step === 2 && { title: "Y esta vista se llama Impact", body: "La carta cuenta con 3 vistas distintas." }),
     ...(step === 3 && { title: "Traducimos la carta", body: "A los idiomas que quieras. Se traduce automáticamente al celular de cada persona.", buttonLabel: "Siguiente" }),
     ...(step === 4 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
@@ -562,7 +562,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
 
           {/* Buttons */}
           <div style={{ display: "flex", gap: 6 }}>
-            {step > 0 && !isLast && (
+            {step > 0 && !isLast && !showcaseMode && (
               <button
                 onClick={(e) => { e.stopPropagation(); goBack(); }}
                 style={{
