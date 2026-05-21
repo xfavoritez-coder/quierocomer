@@ -9,6 +9,8 @@ interface Stats {
   fbPctOfTotal: number;
   ghostSessions: number;
   totalSessions: number;
+  visitedSubircarta: number;
+  visitedSubircartaRate: number;
   bounced: number;
   bounceRate: number;
   converted: number;
@@ -192,7 +194,8 @@ export default function FacebookAdsPage() {
         <Card label="Desde FB Ads" value={stats.fbVisits} color="#3b82f6" suffix={`${stats.fbPctOfTotal}%`} />
         <Card label="Sesiones FB" value={stats.totalSessions} color="#6366f1" />
         <Card label="Rebote" value={stats.bounced} color="#ef4444" suffix={`${stats.bounceRate}%`} />
-        <Card label="Convirtieron" value={stats.converted} color="#22c55e" suffix={`${stats.conversionRate}%`} />
+        <Card label="Vieron /subircarta" value={stats.visitedSubircarta} color="#F4A623" suffix={`${stats.visitedSubircartaRate}%`} />
+        <Card label="Subieron carta" value={stats.converted} color="#22c55e" suffix={`${stats.conversionRate}%`} />
         <Card label="Tiempo prom." value={fmtDuration(stats.avgDuration)} color="#eab308" />
         <Card label="Scroll prom." value={`${stats.avgScroll}%`} color="#14b8a6" />
         <Card label="Interacciones" value={stats.avgInteractions} color="#8b5cf6" suffix="prom" />

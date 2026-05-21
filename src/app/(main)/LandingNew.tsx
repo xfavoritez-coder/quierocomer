@@ -163,7 +163,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </nav>
 
       {/* HERO */}
-      <section className="hero">
+      <section className="hero" data-track="Hero">
         <div className="hero-bg" />
         <div className="hero-glow" />
         <div className="container hero-grid">
@@ -188,7 +188,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </div>
 
       {/* LOGOS */}
-      <section className="logos-band">
+      <section className="logos-band" data-track="Logos">
         <div className="logos-eyebrow">Ya trabajan con nosotros</div>
         <div className="logos-scroller">
           <div className="logos-track">
@@ -209,7 +209,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
 
 
       {/* PAINS */}
-      <section className="pains">
+      <section className="pains" data-track="Problemas">
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
             <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginBottom: 14 }}>La realidad</p>
@@ -244,7 +244,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </section>
 
       {/* ASÍ FUNCIONA */}
-      <section className="how-it-works">
+      <section className="how-it-works" data-track="Como funciona">
         <div className="container">
           <p className="hiw-eyebrow">Así funciona QuieroComer</p>
           <h2 className="hiw-title">En 4 pasos, tu carta empieza a vender <span style={{ fontStyle: "italic", fontWeight: 400, color: "var(--amber)" }}>por ti</span></h2>
@@ -328,7 +328,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       </div>
 
       {/* MIENTRAS TÚ ATIENDES */}
-      <section className="mientras-section">
+      <section className="mientras-section" data-track="Mientras tanto">
         <div className="mientras-bg">
           <img src="/landing/si.jpg" alt="Restaurante" />
           <div className="mientras-overlay" />
@@ -349,7 +349,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
 
 
       {/* FAQ */}
-      <section className="faq">
+      <section className="faq" data-track="FAQ">
         <div className="container">
           <div className="section-head" style={{ textAlign: "center", marginBottom: 40 }}>
 <p style={{ fontSize: 13, fontWeight: 600, letterSpacing: ".14em", textTransform: "uppercase" as const, color: "var(--amber)", marginTop: 20, marginBottom: 8, textAlign: "center" }}>Lo que más nos preguntan</p>
@@ -374,7 +374,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
       <div className="faq-divider" />
 
       {/* FINAL CTA */}
-      <section className="final-cta" id="cta">
+      <section className="final-cta" id="cta" data-track="CTA final">
         <div className="container">
           <h2>Lleva la experiencia de tu restaurante al siguiente nivel</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>

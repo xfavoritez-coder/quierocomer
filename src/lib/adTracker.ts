@@ -189,19 +189,19 @@ export function initAdTracker() {
   setTimeout(() => trackSections(), 500);
 }
 
-/** Resume tracking on subsequent pages (paso2, confirmacion) */
-export function resumeAdTracker() {
-  if (initialized || typeof window === "undefined") return;
+/** Resume tracking on subsequent pages (paso2, confirmacion). Returns true if resumed. */
+export function resumeAdTracker(): boolean {
+  if (initialized || typeof window === "undefined") return false;
 
   const stored = sessionStorage.getItem("ad_session");
-  if (!stored) return;
+  if (!stored) return false;
 
   try {
     const data = JSON.parse(stored);
     sessionId = data.sessionId;
-  } catch { return; }
+  } catch { return false; }
 
-  if (!sessionId) return;
+  if (!sessionId) return false;
 
   initialized = true;
   startTime = Date.now();
@@ -230,6 +230,7 @@ export function resumeAdTracker() {
   window.addEventListener("pagehide", () => flush(true));
   flushTimer = setInterval(() => flush(), 15_000);
   setTimeout(() => trackSections(), 500);
+  return true;
 }
 
 /** Link ad session to a lead when they create one */

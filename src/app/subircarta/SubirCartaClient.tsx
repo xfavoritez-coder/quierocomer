@@ -7,9 +7,21 @@ import { trackCartaUpload } from "@/lib/metaPixel";
 import PlanesModal from "@/components/PlanesModal";
 import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
-import { initAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
+import { initAdTracker, resumeAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
+import { normalizePhone } from "@/lib/normalizePhone";
 
 type Mode = "pdf" | "link" | "photo" | null;
+
+/** AbortSignal.timeout polyfill for older WebViews (Instagram Android, etc.) */
+function safeTimeout(ms: number): AbortSignal {
+  try {
+    return AbortSignal.timeout(ms);
+  } catch {
+    const controller = new AbortController();
+    setTimeout(() => controller.abort(new DOMException("TimeoutError", "TimeoutError")), ms);
+    return controller.signal;
+  }
+}
 
 /** Compress image in browser via canvas — returns JPEG blob at max 1600px */
 async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promise<File> {
@@ -54,9 +66,18 @@ export default function SubirCartaClient() {
   useEffect(() => {
     window.scrollTo(0, 0);
     const params = new URLSearchParams(window.location.search);
-    const utmSource = params.get("utm_source");
-    const fbclid = params.get("fbclid");
-    const gclid = params.get("gclid");
+    // Fallback chain: URL params → referrer params → sessionStorage (adTracker)
+    let refParams: URLSearchParams | null = null;
+    try { if (document.referrer) refParams = new URL(document.referrer).searchParams; } catch {}
+    let ssUtms: Record<string, string | null> = {};
+    try { const raw = sessionStorage.getItem("ad_session"); if (raw) ssUtms = JSON.parse(raw); } catch {}
+    const get = (key: string) => params.get(key) || refParams?.get(key) || null;
+    // For UTM fields, also check sessionStorage keys (adTracker stores as camelCase)
+    const utmMap: Record<string, string> = { utm_source: "utmSource", utm_medium: "utmMedium", utm_campaign: "utmCampaign", utm_content: "utmContent", utm_term: "utmTerm", fbclid: "fbclid" };
+    const getUtm = (key: string) => get(key) || (ssUtms as any)[utmMap[key] || key] || null;
+    const utmSource = getUtm("utm_source");
+    const fbclid = getUtm("fbclid");
+    const gclid = get("gclid");
     fetch("/api/funnel/visit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -64,15 +85,16 @@ export default function SubirCartaClient() {
         page: "subircarta",
         referrer: document.referrer || null,
         utmSource: utmSource || (fbclid ? "facebook" : gclid ? "google" : null),
-        utmMedium: params.get("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
-        utmCampaign: params.get("utm_campaign"),
-        utmContent: params.get("utm_content"),
-        utmTerm: params.get("utm_term"),
+        utmMedium: getUtm("utm_medium") || (fbclid ? "paid" : gclid ? "cpc" : null),
+        utmCampaign: getUtm("utm_campaign"),
+        utmContent: getUtm("utm_content"),
+        utmTerm: getUtm("utm_term"),
         fbclid,
       }),
       keepalive: true,
     }).catch(() => {});
-    initAdTracker();
+    // Continue existing ad session from landing, or start new one if direct visit
+    if (!resumeAdTracker()) initAdTracker();
   }, []);
   const [mode, setMode] = useState<Mode>(null);
   const [linkUrl, setLinkUrl] = useState("");
@@ -84,6 +106,22 @@ export default function SubirCartaClient() {
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const photoRef = useRef<HTMLInputElement>(null);
+
+  // Fallback form — shown when navigation to paso2 fails
+  const [fallbackLeadId, setFallbackLeadId] = useState<string | null>(null);
+  const [fbLocalName, setFbLocalName] = useState("");
+  const [fbOwnerName, setFbOwnerName] = useState("");
+  const [fbEmail, setFbEmail] = useState("");
+  const [fbWhatsapp, setFbWhatsapp] = useState("");
+  const [fbLoading, setFbLoading] = useState(false);
+  const [fbError, setFbError] = useState("");
+  const [fbDone, setFbDone] = useState(false);
+  const formatFbPhone = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 9);
+    if (d.length <= 1) return d;
+    if (d.length <= 5) return `${d[0]} ${d.slice(1)}`;
+    return `${d[0]} ${d.slice(1, 5)} ${d.slice(5)}`;
+  };
 
   const normalizedUrl = linkUrl.trim() && !linkUrl.trim().match(/^https?:\/\//) ? `https://${linkUrl.trim()}` : linkUrl.trim();
   const isLinkValid = mode === "link" && (() => {
@@ -126,6 +164,68 @@ export default function SubirCartaClient() {
     }
   };
 
+  /** Try router.push → wait 1s → try location.href → wait 1s → show fallback form */
+  const navigateToPaso2 = (leadId: string) => {
+    const url = `/subircarta/paso2?id=${leadId}`;
+    setUploadProgress("Preparando tu carta");
+    // Also detect if SPA navigation fires by checking pathname after delay
+    try { router.push(url); } catch { /* ignore */ }
+    setTimeout(() => {
+      // Check if SPA navigation worked (pathname changed)
+      if (window.location.pathname.includes("/paso2")) return;
+      // Fallback: hard navigation
+      trackFunnelEvent(leadId, "paso2_nav_fallback", { method: "location" });
+      try { window.location.href = url; } catch { /* ignore */ }
+      // Final fallback: if still here after 1s, show inline form
+      setTimeout(() => {
+        if (window.location.pathname.includes("/paso2")) return;
+        trackFunnelEvent(leadId, "paso2_nav_failed", { method: "fallback_form" });
+        setUploadProgress("");
+        setFallbackLeadId(leadId);
+        setLoading(false);
+      }, 1000);
+    }, 1000);
+  };
+
+  const handleFallbackSubmit = async () => {
+    if (fbLoading || !fallbackLeadId) return;
+    if (!fbLocalName.trim() || !fbOwnerName.trim() || !fbEmail.trim()) {
+      setFbError("Completa los campos obligatorios.");
+      return;
+    }
+    setFbLoading(true);
+    setFbError("");
+    try {
+      const res = await fetch(`/api/subircarta/${fallbackLeadId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          localName: fbLocalName.trim(),
+          ownerName: fbOwnerName.trim(),
+          email: fbEmail.trim(),
+          whatsapp: fbWhatsapp.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setFbError(data.error || "Error al guardar.");
+        return;
+      }
+      // Trigger processing
+      fetch("/api/subircarta/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId: fallbackLeadId }),
+      }).catch(() => {});
+      trackFunnelEvent(fallbackLeadId, "paso2_completed", { via: "fallback_form" });
+      setFbDone(true);
+    } catch {
+      setFbError("Error de conexión. Intenta de nuevo.");
+    } finally {
+      setFbLoading(false);
+    }
+  };
+
   const handleSubmit = async () => {
     if (!ctaEnabled || loading) return;
 
@@ -144,7 +244,7 @@ export default function SubirCartaClient() {
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
         trackCartaUpload();
         linkAdSessionToLead(data.id);
-        router.push(`/subircarta/paso2?id=${data.id}`);
+        navigateToPaso2(data.id);
       } else {
         const filesToUpload = mode === "photo" ? photoFiles : Array.from(fileRef.current?.files || []);
         if (filesToUpload.length === 0) { setError("Selecciona un archivo primero."); return; }
@@ -162,7 +262,7 @@ export default function SubirCartaClient() {
           const res = await fetch("/api/subircarta/upload", {
             method: "POST",
             body: formData,
-            signal: AbortSignal.timeout(30000),
+            signal: safeTimeout(30000),
           });
           const data = await res.json();
           if (!res.ok) {
@@ -175,7 +275,7 @@ export default function SubirCartaClient() {
         trackCartaUpload();
         linkAdSessionToLead(leadId);
         setUploadProgress("");
-        router.push(`/subircarta/paso2?id=${leadId}`);
+        navigateToPaso2(leadId);
       }
     } catch (err: any) {
       const msg = err?.name === "TimeoutError" ? "La subida tardó demasiado. Intenta con menos fotos o más livianas."
@@ -183,7 +283,8 @@ export default function SubirCartaClient() {
         : `Error: ${err?.message || "conexión fallida"}`;
       setError(msg);
     } finally {
-      setLoading(false);
+      // Don't setLoading(false) here — navigateToPaso2 handles it if fallback fires
+      if (!fallbackLeadId) setLoading(false);
     }
   };
 
@@ -376,6 +477,79 @@ export default function SubirCartaClient() {
             </div>
           </div>
         </section>
+
+        {/* Fallback form — shown when navigation to paso2 fails */}
+        {fallbackLeadId && !fbDone && (
+          <section className="shell centered-shell" style={{ marginTop: 24, animation: "fallbackReveal 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+            <div className="centered-form">
+              <div style={{ textAlign: "center", marginBottom: 18 }}>
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "rgba(67,209,123,.12)", border: "1px solid rgba(67,209,123,.3)", display: "grid", placeItems: "center", margin: "0 auto 14px" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="28" height="28"><path d="M5 13l4 4L19 7" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </div>
+                <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 7vw, 36px)", lineHeight: 1, fontWeight: 500, letterSpacing: "-.03em", marginBottom: 8 }}>
+                  ¡Tu carta se subió <span style={{ color: "var(--amber-2)", fontStyle: "italic" }}>correctamente</span>!
+                </h2>
+                <p style={{ color: "var(--cream-2)", fontSize: 14, lineHeight: 1.45, maxWidth: 380, margin: "0 auto" }}>
+                  Déjanos tus datos para enviarte tu nueva carta digital lista.
+                </p>
+              </div>
+
+              <div style={{ display: "grid", gap: 12 }}>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Nombre del local</label>
+                  <input type="text" placeholder="Ej: Mi Restaurante" value={fbLocalName} onChange={(e) => { setFbLocalName(e.target.value); setFbError(""); }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Tu nombre</label>
+                  <input type="text" placeholder="Ej: Juan Pérez" value={fbOwnerName} onChange={(e) => { setFbOwnerName(e.target.value); setFbError(""); }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>Correo electrónico</label>
+                  <input type="email" placeholder="tu@correo.com" value={fbEmail} onChange={(e) => { setFbEmail(e.target.value); setFbError(""); }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" }}>WhatsApp</label>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
+                      <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
+                      <span style={{ fontWeight: 600 }}>+56</span>
+                    </div>
+                    <input type="tel" placeholder="9 1234 5678" value={fbWhatsapp} onChange={(e) => { setFbWhatsapp(formatFbPhone(e.target.value)); setFbError(""); }} style={{ flex: 1 }} />
+                  </div>
+                </div>
+              </div>
+
+              {fbError && (
+                <div style={{ color: "#e85d5d", fontSize: 14, textAlign: "center", marginTop: 10 }}>
+                  {fbError}
+                </div>
+              )}
+
+              <button type="button" className="cta" onClick={handleFallbackSubmit} disabled={fbLoading} style={{ opacity: fbLoading ? 0.6 : 1 }}>
+                {fbLoading ? "Enviando..." : "Recibir mi nueva carta"} <span>→</span>
+              </button>
+              <p style={{ textAlign: "center", color: "var(--muted)", fontSize: 12, marginTop: 10 }}>Solo usaremos tus datos para enviar tu nueva carta.</p>
+            </div>
+          </section>
+        )}
+
+        {/* Fallback success */}
+        {fbDone && (
+          <section className="shell centered-shell" style={{ marginTop: 24, animation: "fallbackReveal 0.6s cubic-bezier(0.16,1,0.3,1) both" }}>
+            <div style={{ textAlign: "center", padding: "20px 0" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "rgba(67,209,123,.12)", border: "1px solid rgba(67,209,123,.3)", display: "grid", placeItems: "center", margin: "0 auto 16px" }}>
+                <svg viewBox="0 0 24 24" fill="none" width="32" height="32"><path d="M5 13l4 4L19 7" stroke="#43d17b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </div>
+              <h2 style={{ fontFamily: "var(--font-display)", fontSize: "clamp(28px, 7vw, 36px)", lineHeight: 1, fontWeight: 500, letterSpacing: "-.03em", marginBottom: 10 }}>
+                ¡Recibimos tu carta!
+              </h2>
+              <p style={{ color: "var(--cream-2)", fontSize: 15, lineHeight: 1.5, maxWidth: 400, margin: "0 auto" }}>
+                Estamos preparando tu nueva carta digital. Te enviaremos todo listo a <strong style={{ color: "var(--cream)" }}>{fbEmail}</strong>.
+              </p>
+              <p style={{ color: "var(--muted)", fontSize: 13, marginTop: 14 }}>Puedes cerrar esta página.</p>
+            </div>
+          </section>
+        )}
       </main>
 
       <Footer onPlanesClick={() => setPlanesOpen(true)} />
@@ -438,4 +612,5 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 @media (max-width: 390px) { h1 { font-size: 40px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
+@keyframes fallbackReveal { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
 `;
