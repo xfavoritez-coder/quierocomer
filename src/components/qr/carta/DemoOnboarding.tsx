@@ -103,8 +103,13 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
     if (onboardingDone) return;
-    // In showcase mode, don't repeat if already seen this session
-    if (showcaseMode && sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
+    // In showcase mode: skip on desktop (unless inside iframe), don't repeat if already seen
+    if (showcaseMode) {
+      const isDesktop = window.innerWidth >= 1024 && window.matchMedia("(pointer: fine)").matches;
+      const isEmbed = new URLSearchParams(window.location.search).get("embed") === "mobile";
+      if (isDesktop && !isEmbed) return;
+      if (sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
+    }
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
     if (savedStep) {
       sessionStorage.removeItem("qc_onboarding_step");
