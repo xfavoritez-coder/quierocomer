@@ -550,34 +550,25 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
     if (lead.email && translationOk) {
       try {
         const { sendAdminEmail } = await import("@/lib/email/sendAdminEmail");
+        const { cartaReadyEmailHtml } = await import("@/lib/email/cartaReadyEmailHtml");
         const ownerName = lead.ownerName || "Hola";
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
         const openPixel = `${baseUrl}/api/funnel/track/open?lid=${leadId}`;
         const clickUrl = `${baseUrl}/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
+        const activarUrl = `${baseUrl}/activar/${restaurant.slug}`;
         await sendAdminEmail({
           to: lead.email,
           subject: `Tu nueva carta ${restaurant.name} está lista`,
           purpose: "funnel_carta_ready",
-          html: `
-            <div style="font-family: system-ui, sans-serif; max-width: 520px; margin: 0 auto; padding: 32px 20px;">
-              ${restaurant.logoUrl ? `<img src="${restaurant.logoUrl}" alt="${restaurant.name}" style="height: 48px; margin-bottom: 20px; border-radius: 50%;" />` : `<img src="https://quierocomer.cl/landing/logo.png" alt="QuieroComer" style="height: 22px; margin-bottom: 24px;" />`}
-              <h1 style="font-size: 24px; font-weight: 700; color: #1a1a1a; margin: 0 0 12px;">
-                ${ownerName}, tu carta está lista
-              </h1>
-              <p style="font-size: 15px; color: #555; line-height: 1.5; margin: 0 0 24px;">
-                Transformamos la carta de <strong>${restaurant.name}</strong> en una experiencia digital.
-                Tiene ${createdDishes.length} platos organizados y listos para que tus clientes los vean.
-              </p>
-              <a href="${clickUrl}" style="display: inline-block; padding: 14px 32px; background: #E8A33D; color: #0e0e0e; font-size: 16px; font-weight: 800; text-decoration: none; border-radius: 12px;">
-                Ver mi carta →
-              </a>
-              <p style="font-size: 13px; color: #999; margin: 24px 0 0; line-height: 1.5;">
-                Este link es tu carta viva. Compártelo con tus clientes o imprímelo en un QR.
-                Si tienes preguntas, escríbenos a <a href="mailto:hola@quierocomer.cl" style="color: #E8A33D;">hola@quierocomer.cl</a>
-              </p>
-              <img src="${openPixel}" alt="" width="1" height="1" style="display:none" />
-            </div>
-          `,
+          html: cartaReadyEmailHtml({
+            ownerName,
+            restaurantName: restaurant.name,
+            logoUrl: restaurant.logoUrl,
+            dishCount: createdDishes.length,
+            clickUrl,
+            openPixel,
+            activarUrl,
+          }),
         });
         await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "DELIVERED", deliveredAt: new Date() } });
         console.log(`[Pipeline] Email sent to ${lead.email}`);

@@ -40,7 +40,7 @@ export const viewport: Viewport = {
 
 export default function QRLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={`${playfair.variable} ${dmSans.variable} ${fraunces.variable} ${bebas.variable}`}>
+    <div className={`${playfair.variable} ${dmSans.variable} ${fraunces.variable} ${bebas.variable}`} style={{ background: "#0a0908", minHeight: "100vh" }}>
       {children}
     </div>
   );
