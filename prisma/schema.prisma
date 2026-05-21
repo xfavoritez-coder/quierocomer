@@ -1776,7 +1776,10 @@ model Lead {
   emailClickedAt     DateTime?
   onboardingDoneAt   DateTime?
   panelVisitedAt     DateTime?
+  activarVisitedAt   DateTime?
   activatedAt        DateTime?
+  ip                 String?
+  city               String?
   events             Json[]        @default([])
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt

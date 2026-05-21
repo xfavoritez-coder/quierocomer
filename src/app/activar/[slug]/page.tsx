@@ -23,12 +23,18 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
       },
     }),
     prisma.restaurant.findMany({
-      where: { slug: { in: ["hand-roll", "horusvegan", "alleria-pizza"] }, logoUrl: { not: null } },
+      where: { slug: { in: ["hand-roll", "horusvegan", "alleria-pizza", "juana-la-brava"] }, logoUrl: { not: null } },
       select: { name: true, slug: true, logoUrl: true, plan: true },
     }),
   ]);
 
   if (!restaurant) return notFound();
+
+  // Track activar page visit
+  prisma.lead.updateMany({
+    where: { generatedSlug: slug, activarVisitedAt: null },
+    data: { activarVisitedAt: new Date() },
+  }).catch(() => {});
 
   return (
     <ActivarClient

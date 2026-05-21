@@ -13,6 +13,8 @@ interface Lead {
   cartaFileUrl: string | null;
   cartaStatus: string;
   generatedSlug: string | null;
+  ip: string | null;
+  city: string | null;
   activated: boolean;
   detectedProvider: { name: string } | null;
   createdAt: string;
@@ -25,6 +27,7 @@ interface Lead {
   emailClickedAt: string | null;
   onboardingDoneAt: string | null;
   panelVisitedAt: string | null;
+  activarVisitedAt: string | null;
   activatedAt: string | null;
   events?: any[];
 }
@@ -39,8 +42,10 @@ interface Stats {
   emailClicked: number;
   onboardingDone: number;
   panelVisited: number;
+  activarVisited: number;
   activated: number;
   abandoned: number;
+  orphanLeads: number;
   visitToLeadRate: number;
   step2Rate: number;
   conversionRate: number;
@@ -49,6 +54,7 @@ interface Stats {
   clickRate: number;
   onboardingRate: number;
   panelRate: number;
+  activarVisitedRate: number;
   activatedRate: number;
   byType: { LINK: number; DOCUMENT: number; PHOTO: number };
 }
@@ -63,6 +69,7 @@ const FUNNEL_STEPS = [
   { key: "emailClicked", label: "Click ver carta", color: "#22c55e", rateKey: "clickRate" },
   { key: "onboardingDone", label: "Onboarding", color: "#84cc16", rateKey: "onboardingRate" },
   { key: "panelVisited", label: "Visitaron panel", color: "#eab308", rateKey: "panelRate" },
+  { key: "activarVisited", label: "Vieron /activar", color: "#f59e0b", rateKey: "activarVisitedRate" },
   { key: "activated", label: "Activaron", color: "#F4A623", rateKey: "activatedRate" },
 ] as const;
 
@@ -205,12 +212,28 @@ export default function FunnelPage() {
         </div>
       )}
 
+      {/* Orphan leads alert */}
+      {stats && stats.orphanLeads > 0 && (
+        <div style={{ marginBottom: 16, padding: "12px 16px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 20 }}>⚠</span>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#f87171" }}>
+              {stats.orphanLeads} lead{stats.orphanLeads > 1 ? "s" : ""} sin datos de contacto
+            </div>
+            <div style={{ fontSize: 12, color: "#888" }}>
+              Subieron carta pero no completaron sus datos. Revisa las tarjetas marcadas en rojo.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Leads — mobile cards */}
       <div className="funnel-cards">
         {leads.length === 0 && (
           <div style={{ padding: 32, textAlign: "center", color: "#666" }}>No hay leads todavia.</div>
         )}
         {leads.map((lead) => {
+          const isOrphan = !lead.email && (lead.cartaUrl || lead.cartaFileUrl) && new Date(lead.createdAt) < new Date(Date.now() - 10 * 60 * 1000);
           const date = new Date(lead.createdAt);
           const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
           const domain = lead.cartaUrl ? (() => { try { return new URL(lead.cartaUrl).hostname; } catch { return lead.cartaUrl; } })() : null;
@@ -236,6 +259,7 @@ export default function FunnelPage() {
 
           // Determine furthest stage for badge
           const stage = lead.activatedAt ? "ACTIVADO" :
+            lead.activarVisitedAt ? "EN ACTIVAR" :
             lead.panelVisitedAt ? "EN PANEL" :
             lead.onboardingDoneAt ? "ONBOARDING" :
             lead.emailClickedAt ? "CLICK" :
@@ -243,13 +267,17 @@ export default function FunnelPage() {
             lead.cartaStatus;
 
           return (
-            <div key={lead.id} style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a2a", marginBottom: 8 }}>
+            <div key={lead.id} style={{ background: isOrphan ? "rgba(239,68,68,0.06)" : "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: `1px solid ${isOrphan ? "rgba(239,68,68,0.3)" : "#2a2a2a"}`, marginBottom: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>{lead.localName || "Sin nombre"}</span>
-                <StatusBadge status={stage} />
+                <span style={{ fontSize: 15, fontWeight: 700, color: "#fff" }}>
+                  {isOrphan && <span style={{ color: "#f87171", marginRight: 6 }}>⚠</span>}
+                  {lead.localName || "Sin nombre"}
+                </span>
+                <StatusBadge status={isOrphan ? "HUÉRFANO" : stage} />
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 12, color: "#aaa" }}>
                 <span>{dateStr}</span>
+                {lead.city && <span style={{ color: "#60a5fa" }}>{lead.city}</span>}
                 {lead.ownerName && <span>{lead.ownerName}</span>}
                 {lead.detectedProvider?.name && <span>{lead.detectedProvider.name}</span>}
                 <TypeBadge type={lead.cartaType} />
@@ -267,6 +295,7 @@ export default function FunnelPage() {
                 <TimelineStep label="Click" time={fmtDate(lead.emailClickedAt)} delta={diffStr(lead.deliveredAt, lead.emailClickedAt)} />
                 <TimelineStep label="Onboard" time={fmtDate(lead.onboardingDoneAt)} />
                 <TimelineStep label="Panel" time={fmtDate(lead.panelVisitedAt)} />
+                <TimelineStep label="/activar" time={fmtDate(lead.activarVisitedAt)} />
                 <TimelineStep label="Activado" time={fmtDate(lead.activatedAt)} color="#F4A623" />
               </div>
 
@@ -329,7 +358,8 @@ function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     PENDING: "#f59e0b", PROCESSING: "#3b82f6", READY: "#06b6d4", DELIVERED: "#14b8a6",
     ABIERTO: "#22c55e", CLICK: "#84cc16", ONBOARDING: "#eab308",
-    "EN PANEL": "#F4A623", ACTIVADO: "#F4A623", FAILED: "#ef4444",
+    "EN PANEL": "#F4A623", "EN ACTIVAR": "#f59e0b", ACTIVADO: "#F4A623", FAILED: "#ef4444",
+    "HUÉRFANO": "#ef4444",
   };
   return (
     <span style={{
