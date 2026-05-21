@@ -344,7 +344,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container">
           <h2>Lleva la experiencia de tu restaurante al siguiente nivel</h2>
           <p style={{ lineHeight: "26px" }}>Sube tu carta. Lo demás, lo hacemos nosotros.</p>
-          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Subir carta · 60 segundos →</a>
+          <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>Sube tu carta gratis →</a>
         </div>
       </section>
 
