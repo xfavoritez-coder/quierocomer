@@ -313,7 +313,57 @@ export async function getGenioImpact(restaurantId: string | null, from: Date, to
     };
   }
 
-  return { withGenio: computeMetrics(withGenio), withoutGenio: computeMetrics(withoutGenio) };
+  // Funnel counts
+  const [genioStarts, genioDietStep, genioComplete] = await Promise.all([
+    prisma.statEvent.count({ where: { ...rf, eventType: "GENIO_START", createdAt: { gte: from, lte: to } } }),
+    prisma.statEvent.count({ where: { ...rf, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: { gte: from, lte: to } } }),
+    prisma.statEvent.count({ where: { ...rf, eventType: "GENIO_COMPLETE", createdAt: { gte: from, lte: to } } }),
+  ]);
+
+  // Diet + restrictions from guests who completed genio in period
+  const completedGuestEvents = await prisma.statEvent.findMany({
+    where: { ...rf, eventType: "GENIO_COMPLETE" as any, createdAt: { gte: from, lte: to } },
+    select: { guestId: true },
+  });
+  const completedGuestIds = [...new Set(completedGuestEvents.filter(e => e.guestId).map(e => e.guestId!))];
+
+  let dietDistribution: { type: string; count: number }[] = [];
+  let restrictionsList: { name: string; count: number }[] = [];
+
+  if (completedGuestIds.length > 0) {
+    const guestProfiles = await prisma.guestProfile.findMany({
+      where: { id: { in: completedGuestIds } },
+      select: { preferences: true },
+    });
+    const dietCounts: Record<string, number> = {};
+    const resCounts: Record<string, number> = {};
+    for (const gp of guestProfiles) {
+      const prefs = gp.preferences as any;
+      if (!prefs) continue;
+      if (prefs.dietType) dietCounts[prefs.dietType] = (dietCounts[prefs.dietType] || 0) + 1;
+      if (Array.isArray(prefs.restrictions)) {
+        for (const r of prefs.restrictions) {
+          if (r && r !== "ninguna") resCounts[r] = (resCounts[r] || 0) + 1;
+        }
+      }
+    }
+    dietDistribution = Object.entries(dietCounts).sort((a, b) => b[1] - a[1]).map(([type, count]) => ({ type, count }));
+    restrictionsList = Object.entries(resCounts).sort((a, b) => b[1] - a[1]).map(([name, count]) => ({ name, count }));
+  }
+
+  return {
+    withGenio: computeMetrics(withGenio),
+    withoutGenio: computeMetrics(withoutGenio),
+    funnel: {
+      starts: genioStarts,
+      dietMarked: genioDietStep,
+      completed: genioComplete,
+      completionRate: genioStarts > 0 ? Math.round((genioComplete / genioStarts) * 100) : 0,
+      dietRate: genioStarts > 0 ? Math.round((genioDietStep / genioStarts) * 100) : 0,
+    },
+    dietDistribution,
+    restrictionsList,
+  };
 }
 
 export async function getPersonalizationMetrics(restaurantId: string | null, from: Date, to: Date) {

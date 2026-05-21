@@ -57,6 +57,15 @@ export interface GenioImpactComparison {
     returnRate: number;
     sessionCount: number;
   };
+  funnel: {
+    starts: number;
+    dietMarked: number;
+    completed: number;
+    completionRate: number;
+    dietRate: number;
+  };
+  dietDistribution: { type: string; count: number }[];
+  restrictionsList: { name: string; count: number }[];
 }
 
 export interface TicketMatch {

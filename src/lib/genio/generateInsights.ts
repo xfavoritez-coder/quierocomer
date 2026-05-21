@@ -65,7 +65,7 @@ REGLAS:
 - Sé específico con números del local, no genérico
 - Puedes sugerir destacar platos de comida, pero NUNCA sugieras destacar bebestibles (café, té, jugos, bebidas), extras ni acompañamientos — eso se maneja con productos sugeridos automáticos
 - NUNCA opines sobre estructura de carta, orden de secciones, mover categorías, precios o cantidad de platos — eso es decisión del dueño
-- Infiere el tipo de restaurante por su nombre y categorías. Si es claramente vegano, vegetariano, de sushi, etc., NO sugieras cosas obvias sobre su identidad (ej: "destaca que tus platos son veganos" a un restaurante vegano) — el dueño ya lo sabe
+- IMPORTANTE: el campo dietType del restaurante indica su tipo de cocina.${dietLabel ? ` Este restaurante es ${dietLabel}, así que TODOS sus platos ya son ${restaurant.dietType === "VEGAN" ? "veganos" : "vegetarianos"} — no sugieras nada sobre dietas veganas/vegetarianas, el dueño ya lo sabe y sus clientes también.` : ""} Si es claramente vegano, vegetariano, de sushi, etc., NO sugieras cosas obvias sobre su identidad ni sobre "oportunidades" en dietas que ya son la base del restaurante
 - NUNCA menciones "recomendaciones del Genio" ni que el Genio sugiere platos — el Genio solo reordena la carta según preferencias del comensal
 - NUNCA menciones cumpleaños captados, registros, conversión ni KPIs técnicos
 - NUNCA uses palabras como bestseller, upselling, engagement, conversión, ticket promedio, cross-selling
