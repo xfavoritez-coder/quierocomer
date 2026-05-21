@@ -399,6 +399,16 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
               ))}
             </div>
             <div style={{ display: "flex", gap: 5 }}>
+              {showcaseMode && (
+                <button onClick={triggerExit} style={{
+                  borderRadius: 999, padding: "6px 12px",
+                  background: "transparent",
+                  border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.08)",
+                  color: isLightStep ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
+                  fontSize: "0.78rem", fontWeight: 500, cursor: "pointer",
+                  fontFamily: "var(--font-dm, sans-serif)",
+                }}>Saltar</button>
+              )}
               {step > 0 && (
                 <button onClick={goBack} style={{
                   borderRadius: 999, padding: "6px 12px",
@@ -409,16 +419,6 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                   display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
                 }}>Atrás</button>
-              )}
-              {showcaseMode && (
-                <button onClick={triggerExit} style={{
-                  borderRadius: 999, padding: "6px 12px",
-                  background: "transparent",
-                  border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.08)",
-                  color: isLightStep ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)",
-                  fontSize: "0.78rem", fontWeight: 500, cursor: "pointer",
-                  fontFamily: "var(--font-dm, sans-serif)",
-                }}>Saltar</button>
               )}
               <button onClick={advance} style={{
                 borderRadius: 999, padding: "6px 12px",
