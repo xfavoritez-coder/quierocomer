@@ -113,10 +113,10 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "BIRTHDAY_SAVED" as any, createdAt: dateFilter } }),
       prisma.statEvent.groupBy({ by: ["dishId"], where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: dateFilter }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 10 }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_START", createdAt: dateFilter } }),
-      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: dateFilter } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: dateFilter } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: dateFilter } }),
       prisma.session.findMany({ where: { ...restaurantFilter, startedAt: dateFilter }, select: { guestId: true, restaurantId: true }, take: 50000 }),
-      // Period-dependent: diet selections from GENIO_STEP_DIET events with metadata
+      // Period-dependent: reaching restrictions step means they selected a diet
       prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE" as any, createdAt: dateFilter }, select: { guestId: true } }),
       // Restrictions: from guests who completed genio in period
       prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: dateFilter }, select: { guestId: true } }),
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
       prisma.statEvent.groupBy({ by: ["dishId"], where: { ...restaurantFilter, eventType: "DISH_VIEW", dishId: { not: null }, createdAt: { gte: weekAgo } }, _count: { id: true }, orderBy: { _count: { id: "desc" } }, take: 5 }),
       prisma.session.findMany({ where: { ...restaurantFilter, startedAt: { gte: weekAgo } }, select: { durationMs: true, viewUsed: true, deviceType: true }, take: 10000 }),
       // Week genio funnel for panel
-      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_DIET" as any, createdAt: { gte: weekAgo } } }),
+      prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_STEP_RESTRICTIONS" as any, createdAt: { gte: weekAgo } } }),
       prisma.statEvent.count({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE", createdAt: { gte: weekAgo } } }),
       // Week genio guests for diet/restrictions
       prisma.statEvent.findMany({ where: { ...restaurantFilter, eventType: "GENIO_COMPLETE" as any, createdAt: { gte: weekAgo } }, select: { guestId: true } }),
