@@ -105,7 +105,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Start immediately (or resume from saved step after lang navigation)
   useEffect(() => {
     if (onboardingDone) return;
-    if (showcaseMode && sessionStorage.getItem(`qc_showcase_done_${restaurantSlug}`)) return;
+    if (showcaseMode && localStorage.getItem("qc_showcase_done")) return;
     const savedStep = sessionStorage.getItem("qc_onboarding_step");
     if (savedStep) {
       sessionStorage.removeItem("qc_onboarding_step");
@@ -250,7 +250,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
 
   const triggerExit = () => {
     if (!showcaseMode) markSeen();
-    if (showcaseMode) sessionStorage.setItem(`qc_showcase_done_${restaurantSlug}`, "1");
+    if (showcaseMode) localStorage.setItem("qc_showcase_done", "1");
     cleanup();
     setExiting(true);
     setTimeout(() => {
