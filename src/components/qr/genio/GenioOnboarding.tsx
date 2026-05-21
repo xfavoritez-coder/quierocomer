@@ -660,7 +660,7 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               );
             })}
           </div>
-          {restrictions.length > 0 && !restrictions.includes("ninguna") && (
+          {restrictions.length > 0 && !restrictions.includes("ninguna") ? (
             <button
               onClick={() => {
                 localStorage.setItem("qr_restrictions", JSON.stringify(restrictions));
@@ -671,6 +671,18 @@ export default function GenioOnboarding({ restaurantId, dishes, categories, onCl
               style={{ ...CTA_STYLE, marginTop: 24, alignSelf: "center", position: "relative", zIndex: 2 }}
             >
               {t(lang, "gContinueBtn")}
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setRestrictions(["ninguna"]);
+                localStorage.setItem("qr_restrictions", JSON.stringify(["ninguna"]));
+                next();
+              }}
+              className="active:scale-95 transition-transform"
+              style={{ marginTop: 24, alignSelf: "center", position: "relative", zIndex: 2, background: "none", border: `1px solid ${G.border}`, color: G.textSecondary, fontSize: "0.95rem", fontWeight: 600, padding: "14px 28px", borderRadius: 999, cursor: "pointer" }}
+            >
+              {t(lang, "gNoRestrictions" as any)}
             </button>
           )}
         </div>
