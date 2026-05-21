@@ -1,245 +1,312 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
-import { Stat, RankList, DistributionBar } from "@/components/admin/DashboardWidgets";
-import Link from "next/link";
 
 const F = "var(--font-display)";
 const GOLD = "#F4A623";
+const PERIODS = [
+  { key: "today", label: "Hoy" },
+  { key: "yesterday", label: "Ayer" },
+  { key: "week", label: "Semana" },
+  { key: "month", label: "Mes" },
+  { key: "custom", label: "Personalizado" },
+] as const;
 
-const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", impact: "Impact" };
+const VIEW_LABELS: Record<string, string> = { premium: "Clásica", lista: "Lista", impact: "Impact", viaje: "Viaje", feed: "Feed" };
 const DIET_LABELS: Record<string, string> = { VEGAN: "Vegano", VEGETARIAN: "Vegetariano", OMNIVORE: "Carnívoro", vegan: "Vegano", vegetarian: "Vegetariano", omnivore: "Carnívoro" };
 
 interface DashData {
-  visitsThisWeek: number; visitsLastWeek: number; visitsDelta: number | null;
-  totalGuests: number; registeredGuests: number; conversionRate: number;
-  avgSessionDuration: number; genioUsedThisWeek: number;
-  viewDistribution: Record<string, number>; deviceDistribution: Record<string, number>;
-  topDishesViewed: { name: string; count: number }[];
-  topDishesByDetailTime: { name: string; count: string }[];
+  period: string; from: string; to: string;
+  totalSessions: number; uniqueGuests: number; registeredGuests: number;
+  conversionRate: number; avgDurationSec: number; birthdaysSaved: number;
+  topDishesViewed: { name: string; photo: string | null; count: number }[];
+  viewDistribution: Record<string, number>;
+  deviceDistribution: Record<string, number>;
   dietDistribution: { type: string; count: number }[];
-  abandonedThisWeek: number; activeThisWeek: number;
-  activeRestaurantsCount: number; topRestaurants: { name: string; visits: number }[];
-  todayScans: number; todayWaiterCalls: number; todayWaiterPending: number;
-  lastScanAt: string | null; activePromos: number; weekDetailViews: number;
-  weekWaiterCalls: number; todayBirthdays?: number; weekBirthdays?: number;
+  restrictionsList: { name: string; count: number }[];
+  genio: { starts: number; dietMarked: number; completed: number; completionRate: number; dietRate: number };
+  restaurantRanking: { name: string; sessions: number }[];
 }
 
-interface Insight { id: string; type: string; title: string; body: string; priority: number; }
+// ── Shared styles ──
+const card: React.CSSProperties = {
+  background: "var(--adm-card)", border: "1px solid var(--adm-card-border)",
+  borderRadius: 16, padding: "20px 22px", boxShadow: "var(--adm-card-shadow, none)",
+};
+const sectionTitle: React.CSSProperties = {
+  fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text3)",
+  textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, margin: "0 0 14px",
+};
+
+function fmtDuration(sec: number) {
+  if (sec < 60) return `${sec}s`;
+  return `${Math.floor(sec / 60)}m ${sec % 60}s`;
+}
+
+function pct(a: number, b: number) {
+  return b > 0 ? Math.round((a / b) * 100) : 0;
+}
+
+// ── Stat card ──
+function StatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
+  return (
+    <div style={card}>
+      <p style={{ fontFamily: F, fontSize: "2rem", fontWeight: 700, color: accent || "var(--adm-stat)", margin: 0, lineHeight: 1.1 }}>{value}</p>
+      <p style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text2)", margin: "6px 0 0" }}>{label}</p>
+      {sub && <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "3px 0 0" }}>{sub}</p>}
+    </div>
+  );
+}
+
+// ── Bar list ──
+function BarList({ items, max: maxOverride }: { items: { label: string; value: number; sub?: string }[]; max?: number }) {
+  const max = maxOverride || items[0]?.value || 1;
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      {items.map((item, i) => (
+        <div key={i}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+            <span style={{ fontFamily: F, fontSize: "0.84rem", color: "var(--adm-text)" }}>{item.label}</span>
+            <span style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2)", fontWeight: 600 }}>{item.value}{item.sub ? ` ${item.sub}` : ""}</span>
+          </div>
+          <div style={{ height: 6, borderRadius: 3, background: "var(--adm-card-border)", overflow: "hidden" }}>
+            <div style={{
+              width: `${Math.min((item.value / max) * 100, 100)}%`, height: "100%", borderRadius: 3,
+              background: i === 0 ? GOLD : `rgba(244,166,35,${0.6 - i * 0.05})`,
+              transition: "width 0.4s ease",
+            }} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Funnel row ──
+function FunnelStep({ label, value, total, color }: { label: string; value: number; total: number; color: string }) {
+  const p = pct(value, total);
+  return (
+    <div style={{ flex: 1, textAlign: "center" }}>
+      <p style={{ fontFamily: F, fontSize: "1.6rem", fontWeight: 700, color, margin: 0 }}>{value}</p>
+      <p style={{ fontFamily: F, fontSize: "0.72rem", color: "var(--adm-text2)", margin: "4px 0 0" }}>{label}</p>
+      <p style={{ fontFamily: F, fontSize: "0.66rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>{p}%</p>
+    </div>
+  );
+}
+
+// ── Distribution pills ──
+function PillDist({ data, labels }: { data: Record<string, number>; labels?: Record<string, string> }) {
+  const total = Object.values(data).reduce((a, b) => a + b, 0);
+  if (!total) return <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>Sin datos</p>;
+  const colors = ["#F4A623", "#3db89e", "#e85530", "#7fbfdc", "#c93010", "#a78bfa"];
+  const entries = Object.entries(data).sort((a, b) => b[1] - a[1]);
+  return (
+    <>
+      <div style={{ display: "flex", borderRadius: 6, overflow: "hidden", height: 8, marginBottom: 14 }}>
+        {entries.map(([key, val], i) => (
+          <div key={key} style={{ width: `${(val / total) * 100}%`, background: colors[i % colors.length], height: "100%" }} />
+        ))}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px" }}>
+        {entries.map(([key, val], i) => (
+          <span key={key} style={{ display: "flex", alignItems: "center", gap: 5, fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2)" }}>
+            <span style={{ width: 8, height: 8, borderRadius: 2, background: colors[i % colors.length], flexShrink: 0 }} />
+            {labels?.[key] || key} ({val}) {Math.round((val / total) * 100)}%
+          </span>
+        ))}
+      </div>
+    </>
+  );
+}
 
 export default function AdminDashboard() {
   const { restaurants, isSuper, loading: sessionLoading, selectedRestaurantId } = useAdminSession();
-  const [filterRestaurant, setFilterRestaurant] = useState<string>("");
+  const [filterRestaurant, setFilterRestaurant] = useState("");
+  const [period, setPeriod] = useState<string>("today");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
   const [data, setData] = useState<DashData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [insights, setInsights] = useState<Insight[]>([]);
-  const [generatingInsights, setGeneratingInsights] = useState(false);
-  const [emailHealth, setEmailHealth] = useState<{ failuresLast24h: number; configured: boolean } | null>(null);
-  const [emailLogsOpen, setEmailLogsOpen] = useState(false);
-  const [emailLogs, setEmailLogs] = useState<{ id: string; to: string; subject: string; errorMsg: string | null; createdAt: string }[]>([]);
-  const [emailLogsLoading, setEmailLogsLoading] = useState(false);
 
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  useEffect(() => {
+  const fetchData = useCallback(() => {
     if (sessionLoading) return;
     setLoading(true);
     const rid = isSuper ? filterRestaurant : selectedRestaurantId;
-    const params = rid ? `?restaurantId=${rid}` : "";
-    Promise.all([
-      fetch(`/api/admin/dashboard${params}`).then(r => r.json()),
-      rid
-        ? fetch(`/api/admin/insights?restaurantId=${rid}`).then(r => r.json())
-        : fetch(`/api/admin/insights?mode=global`).then(r => r.json()),
-    ]).then(([dashData, insightData]) => {
-      if (!dashData.error) setData(dashData);
-      setInsights(insightData.insights || []);
-    }).catch(() => {}).finally(() => setLoading(false));
-    if (isSuper) {
-      fetch("/api/admin/email-health").then(r => r.ok ? r.json() : null).then(d => { if (d) setEmailHealth(d); }).catch(() => {});
-    }
-  }, [filterRestaurant, sessionLoading, selectedRestaurantId, isSuper, refreshKey]);
+    const params = new URLSearchParams();
+    if (rid) params.set("restaurantId", rid);
+    params.set("period", period);
+    if (period === "custom" && customFrom) params.set("from", customFrom);
+    if (period === "custom" && customTo) params.set("to", customTo);
+    fetch(`/api/admin/dashboard?${params}`)
+      .then(r => r.json())
+      .then(d => { if (!d.error) setData(d); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [sessionLoading, isSuper, filterRestaurant, selectedRestaurantId, period, customFrom, customTo]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading || sessionLoading) {
-    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: GOLD, fontFamily: F, fontSize: "0.85rem" }}>🧞 Cargando dashboard...</p></div>;
-  }
-  if (!data) {
-    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ color: "var(--adm-text2)", fontFamily: F }}>Sin datos disponibles</p></div>;
+    return (
+      <div style={{ padding: 60, textAlign: "center" }}>
+        <div style={{ width: 36, height: 36, border: `3px solid ${GOLD}`, borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.8s linear infinite", margin: "0 auto 16px" }} />
+        <p style={{ fontFamily: F, fontSize: "0.85rem", color: "var(--adm-text3)" }}>Cargando dashboard...</p>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </div>
+    );
   }
 
-  const avgMin = Math.floor(data.avgSessionDuration / 60);
-  const avgSec = data.avgSessionDuration % 60;
-  const avgText = avgMin > 0 ? `${avgMin}m ${avgSec}s` : `${avgSec}s`;
+  if (!data) {
+    return <div style={{ padding: 40, textAlign: "center" }}><p style={{ fontFamily: F, color: "var(--adm-text2)" }}>Sin datos disponibles</p></div>;
+  }
+
+  const g = data.genio;
 
   return (
-    <div style={{ maxWidth: 800 }}>
-      <div className="adm-flex-wrap" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 24, gap: 10 }}>
-        <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: 0 }}>Dashboard</h1>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+    <div style={{ maxWidth: 860, margin: "0 auto" }}>
+      {/* ── Header ── */}
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 20 }}>
+        <h1 style={{ fontFamily: F, fontSize: "1.4rem", color: GOLD, margin: 0, fontWeight: 800 }}>Dashboard</h1>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           <select
             value={filterRestaurant}
             onChange={e => setFilterRestaurant(e.target.value)}
-            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.82rem", outline: "none" }}
+            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", outline: "none" }}
           >
             <option value="" style={{ background: "var(--adm-select-bg)" }}>Todos los locales</option>
             {restaurants.map(r => <option key={r.id} value={r.id} style={{ background: "var(--adm-select-bg)" }}>{r.name}</option>)}
           </select>
-          <button onClick={() => setRefreshKey(k => k + 1)} title="Actualizar" style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", color: "var(--adm-text3)" }}>↻</button>
+          <button onClick={fetchData} title="Actualizar" style={{ width: 36, height: 36, borderRadius: 10, border: "1px solid var(--adm-card-border)", background: "var(--adm-select-bg)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", color: "var(--adm-text3)" }}>↻</button>
         </div>
       </div>
 
-      {/* Email health warning */}
-      {emailHealth && (emailHealth.failuresLast24h > 0 || !emailHealth.configured) && (
-        <div
-          onClick={() => {
-            if (emailHealth.configured && emailHealth.failuresLast24h > 0) {
-              setEmailLogsOpen(true);
-              setEmailLogsLoading(true);
-              fetch("/api/admin/email-logs?status=failed")
-                .then(r => r.json())
-                .then(d => setEmailLogs(d.logs || []))
-                .catch(() => {})
-                .finally(() => setEmailLogsLoading(false));
-            }
-          }}
-          style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, padding: "12px 16px", marginBottom: 16, display: "flex", alignItems: "center", gap: 10, cursor: emailHealth.failuresLast24h > 0 ? "pointer" : "default" }}
-        >
-          <span style={{ fontSize: "1.1rem" }}>⚠️</span>
-          <p style={{ fontFamily: F, fontSize: "0.78rem", color: "#ef4444", margin: 0 }}>
-            {!emailHealth.configured
-              ? "Resend API key no configurada."
-              : `${emailHealth.failuresLast24h} email${emailHealth.failuresLast24h > 1 ? "s" : ""} fallido${emailHealth.failuresLast24h > 1 ? "s" : ""} en las últimas 24h. Toca para ver detalles.`}
-          </p>
-        </div>
-      )}
-
-      {/* Email logs modal */}
-      {emailLogsOpen && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }} onClick={() => setEmailLogsOpen(false)}>
-          <div onClick={e => e.stopPropagation()} style={{ background: "var(--adm-card, #1a1a2e)", border: "1px solid var(--adm-card-border, #333)", borderRadius: 16, padding: "20px 24px", maxWidth: 600, width: "100%", maxHeight: "80vh", overflow: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-              <h3 style={{ fontFamily: F, fontSize: "1rem", color: GOLD, margin: 0 }}>Emails fallidos</h3>
-              <button onClick={() => setEmailLogsOpen(false)} style={{ background: "none", border: "none", color: "var(--adm-text3, #888)", fontSize: "1.2rem", cursor: "pointer", padding: 4 }}>✕</button>
-            </div>
-            {emailLogsLoading ? (
-              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2, #aaa)", textAlign: "center", padding: 20 }}>Cargando...</p>
-            ) : emailLogs.length === 0 ? (
-              <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text2, #aaa)", textAlign: "center", padding: 20 }}>Sin emails fallidos pendientes</p>
-            ) : (
-              <>
-                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                  {emailLogs.map(log => (
-                    <div key={log.id} style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)", borderRadius: 10, padding: "10px 14px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 4 }}>
-                        <span style={{ fontFamily: F, fontSize: "0.78rem", color: "var(--adm-text, #eee)", fontWeight: 600 }}>{log.to}</span>
-                        <span style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3, #888)" }}>{new Date(log.createdAt).toLocaleString("es-CL", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
-                      </div>
-                      <p style={{ fontFamily: F, fontSize: "0.74rem", color: "var(--adm-text2, #aaa)", margin: "2px 0" }}>{log.subject}</p>
-                      {log.errorMsg && <p style={{ fontFamily: F, fontSize: "0.7rem", color: "#ef4444", margin: "4px 0 0", wordBreak: "break-all" }}>{log.errorMsg}</p>}
-                    </div>
-                  ))}
-                </div>
-                <button
-                  onClick={async () => {
-                    await fetch("/api/admin/email-logs", {
-                      method: "PUT",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action: "dismiss_all" }),
-                    });
-                    setEmailLogs([]);
-                    setEmailLogsOpen(false);
-                    setEmailHealth(prev => prev ? { ...prev, failuresLast24h: 0 } : prev);
-                  }}
-                  style={{ marginTop: 14, width: "100%", padding: "10px 0", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 10, color: GOLD, fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}
-                >
-                  Marcar como leidos
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Main metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="Visitantes únicos" value={data.totalGuests} />
-        <Stat label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} color="var(--adm-positive)" />
-        <Stat label="Duración promedio" value={avgText} />
-        <Stat label="🧞 Genio usado" value={data.genioUsedThisWeek} color={GOLD} />
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 12, marginBottom: 20 }}>
-        <Stat label="🎂 Cumpleaños hoy" value={data.todayBirthdays ?? 0} sub={`${data.weekBirthdays ?? 0} esta semana`} color="#f472b6" />
-        <Stat label="🔔 Llamadas garzón" value={data.weekWaiterCalls ?? 0} sub="esta semana" />
-        <Stat label="🔍 Detalles abiertos" value={data.weekDetailViews ?? 0} sub="esta semana" />
-        <Stat label="📢 Promos activas" value={data.activePromos ?? 0} />
-      </div>
-
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <DistributionBar title="Vista preferida" data={data.viewDistribution} labels={VIEW_LABELS} />
-        <DistributionBar title="Dispositivo" data={data.deviceDistribution} />
-      </div>
-
-      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
-        <RankList title="🔥 Platos más vistos" items={data.topDishesViewed} />
-        <RankList title="⏱️ Más tiempo en detalle" items={data.topDishesByDetailTime} />
-      </div>
-
-      <DistributionBar title="Tipo de dieta de los clientes" data={Object.fromEntries(data.dietDistribution.map(d => [d.type, d.count]))} labels={DIET_LABELS} />
-
-      {data.topRestaurants.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <RankList title="🏆 Top locales por visitas" items={data.topRestaurants.map(r => ({ name: r.name, count: r.visits }))} />
-          <div style={{ marginTop: 12 }}>
-            <Stat label="Locales activos (últimos 30 días)" value={data.activeRestaurantsCount} color="#7fbfdc" />
-          </div>
-        </div>
-      )}
-
-      {/* Insights */}
-      <div style={{ marginTop: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h2 style={{ fontFamily: F, fontSize: "1rem", color: GOLD, margin: 0 }}>🧞 Insights del Genio</h2>
-          <button
-            onClick={async () => {
-              setGeneratingInsights(true);
-              try {
-                const res = await fetch("/api/admin/insights", {
-                  method: "POST", headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ restaurantId: filterRestaurant || null, action: "generate", mode: filterRestaurant ? undefined : "global" }),
-                });
-                const d = await res.json();
-                if (d.insights) setInsights(d.insights);
-              } catch {} finally { setGeneratingInsights(false); }
+      {/* ── Period selector ── */}
+      <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+        {PERIODS.map(p => (
+          <button key={p.key} onClick={() => setPeriod(p.key)}
+            style={{
+              padding: "7px 16px", borderRadius: 10, border: period === p.key ? `1px solid ${GOLD}` : "1px solid var(--adm-card-border)",
+              background: period === p.key ? "rgba(244,166,35,0.12)" : "var(--adm-card)",
+              color: period === p.key ? GOLD : "var(--adm-text2)",
+              fontFamily: F, fontSize: "0.78rem", fontWeight: 600, cursor: "pointer",
+              transition: "all 0.15s ease",
             }}
-            disabled={generatingInsights}
-            style={{ padding: "6px 14px", background: "rgba(244,166,35,0.1)", border: "1px solid rgba(244,166,35,0.2)", borderRadius: 8, color: GOLD, fontFamily: F, fontSize: "0.72rem", fontWeight: 600, cursor: generatingInsights ? "wait" : "pointer" }}
           >
-            {generatingInsights ? "Analizando..." : "Generar insights"}
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Custom date range */}
+      {period === "custom" && (
+        <div style={{ display: "flex", gap: 8, marginBottom: 16, alignItems: "center" }}>
+          <input type="date" value={customFrom} onChange={e => setCustomFrom(e.target.value)}
+            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", outline: "none" }} />
+          <span style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>→</span>
+          <input type="date" value={customTo} onChange={e => setCustomTo(e.target.value)}
+            style={{ padding: "8px 12px", background: "var(--adm-select-bg)", border: "1px solid var(--adm-card-border)", borderRadius: 10, color: "var(--adm-text)", fontFamily: F, fontSize: "0.8rem", outline: "none" }} />
+          <button onClick={fetchData}
+            style={{ padding: "8px 16px", borderRadius: 10, background: GOLD, color: "#0e0e0e", fontFamily: F, fontSize: "0.78rem", fontWeight: 700, border: "none", cursor: "pointer" }}
+          >
+            Aplicar
           </button>
         </div>
-        {insights.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {insights.map(i => {
-              const typeIcons: Record<string, string> = { menu_gap: "🍽️", segment_opportunity: "👥", pricing: "💰", engagement: "📈", platform: "🌐", comparison: "⚖️", opportunity: "🎯" };
-              return (
-                <div key={i.id} style={{ background: "var(--adm-card)", border: "1px solid rgba(244,166,35,0.12)", borderRadius: 12, padding: "14px 16px", boxShadow: "var(--adm-card-shadow, none)" }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    <span style={{ fontSize: "1.1rem", flexShrink: 0, marginTop: 2 }}>{typeIcons[i.type] || "💡"}</span>
-                    <div>
-                      <p style={{ fontFamily: F, fontSize: "0.88rem", color: "var(--adm-text)", fontWeight: 600, margin: "0 0 4px" }}>{i.title}</p>
-                      <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text2)", lineHeight: 1.5, margin: 0 }}>{i.body}</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+      )}
+
+      {/* ── Main metrics ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 12, marginBottom: 20 }}>
+        <StatCard label="Sesiones" value={data.totalSessions} />
+        <StatCard label="Visitantes únicos" value={data.uniqueGuests} />
+        <StatCard label="Registrados" value={data.registeredGuests} sub={`${data.conversionRate}% conversión`} accent="#3db89e" />
+        <StatCard label="Duración promedio" value={fmtDuration(data.avgDurationSec)} />
+        <StatCard label="Cumpleaños registrados" value={data.birthdaysSaved} accent="#f472b6" />
+      </div>
+
+      {/* ── Top dishes ── */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <h3 style={sectionTitle}>Platos más vistos</h3>
+        {data.topDishesViewed.length > 0 ? (
+          <BarList items={data.topDishesViewed.map(d => ({ label: d.name, value: d.count }))} />
         ) : (
-          <div style={{ background: "var(--adm-card)", border: "1px solid var(--adm-card-border)", borderRadius: 12, padding: "24px 16px", textAlign: "center" }}>
-            <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)" }}>Toca "Generar insights" para que el Genio analice tu data</p>
-          </div>
+          <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>Sin datos</p>
         )}
+      </div>
+
+      {/* ── Restaurant ranking ── */}
+      {data.restaurantRanking.length > 1 && (
+        <div style={{ ...card, marginBottom: 16 }}>
+          <h3 style={sectionTitle}>Ranking de locales por sesiones</h3>
+          <BarList items={data.restaurantRanking.map((r, i) => ({ label: `${i + 1}. ${r.name}`, value: r.sessions }))} />
+        </div>
+      )}
+
+      {/* ── Genio funnel ── */}
+      <div style={{ ...card, marginBottom: 16 }}>
+        <h3 style={sectionTitle}>Genio — Embudo de uso</h3>
+        {g.starts > 0 ? (
+          <>
+            <div style={{ display: "flex", alignItems: "center", gap: 0, marginBottom: 16 }}>
+              <FunnelStep label="Abrieron" value={g.starts} total={g.starts} color={GOLD} />
+              <span style={{ color: "var(--adm-text3)", fontSize: "1.2rem", margin: "0 -4px" }}>→</span>
+              <FunnelStep label="Marcaron dieta" value={g.dietMarked} total={g.starts} color="#3db89e" />
+              <span style={{ color: "var(--adm-text3)", fontSize: "1.2rem", margin: "0 -4px" }}>→</span>
+              <FunnelStep label="Completaron" value={g.completed} total={g.starts} color="#7fbfdc" />
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              <div style={{ flex: 1, background: "rgba(244,166,35,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
+                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: GOLD, margin: 0 }}>{g.completionRate}%</p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Tasa de completado</p>
+              </div>
+              <div style={{ flex: 1, background: "rgba(61,184,158,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
+                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: "#3db89e", margin: 0 }}>{g.dietRate}%</p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Marcaron su dieta</p>
+              </div>
+              <div style={{ flex: 1, background: "rgba(127,191,220,0.06)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
+                <p style={{ fontFamily: F, fontSize: "1.3rem", fontWeight: 700, color: "#7fbfdc", margin: 0 }}>{g.starts - g.completed}</p>
+                <p style={{ fontFamily: F, fontSize: "0.68rem", color: "var(--adm-text3)", margin: "2px 0 0" }}>Abandonaron</p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p style={{ fontFamily: F, fontSize: "0.82rem", color: "var(--adm-text3)", textAlign: "center", padding: "16px 0" }}>Nadie abrió el Genio en este periodo</p>
+        )}
+      </div>
+
+      {/* ── Diet + Restrictions ── */}
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div style={card}>
+          <h3 style={sectionTitle}>Dietas de los clientes</h3>
+          <PillDist data={Object.fromEntries(data.dietDistribution.map(d => [d.type, d.count]))} labels={DIET_LABELS} />
+        </div>
+        <div style={card}>
+          <h3 style={sectionTitle}>Restricciones marcadas</h3>
+          {data.restrictionsList.length > 0 ? (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {data.restrictionsList.map(r => (
+                <span key={r.name} style={{
+                  fontFamily: F, fontSize: "0.76rem", padding: "5px 12px", borderRadius: 20,
+                  background: "rgba(232,85,48,0.08)", border: "1px solid rgba(232,85,48,0.2)", color: "#e85530",
+                }}>
+                  {r.name} <strong>{r.count}</strong>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p style={{ fontFamily: F, fontSize: "0.8rem", color: "var(--adm-text3)" }}>Sin restricciones registradas</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── View + Device distributions ── */}
+      <div className="adm-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <div style={card}>
+          <h3 style={sectionTitle}>Vista preferida</h3>
+          <PillDist data={data.viewDistribution} labels={VIEW_LABELS} />
+        </div>
+        <div style={card}>
+          <h3 style={sectionTitle}>Dispositivo</h3>
+          <PillDist data={data.deviceDistribution} />
+        </div>
       </div>
     </div>
   );
