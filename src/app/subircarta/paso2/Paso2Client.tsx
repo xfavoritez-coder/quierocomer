@@ -430,7 +430,7 @@ body { min-height: 100vh!important; background: linear-gradient(180deg, rgba(9,8
 .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
 a { color: inherit; text-decoration: none; }
 .page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
-.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 24px auto 34px; max-width: 480px; }
+.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 8px auto 12px; max-width: 480px; }
 .step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .step-line { width: 28px; height: 1px; background: rgba(232,163,61,.15); margin: 0 6px; }
 .step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; border: 1px solid rgba(232,163,61,.2); background: transparent; color: var(--muted); }

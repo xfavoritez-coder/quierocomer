@@ -313,7 +313,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Sube tu carta actual y ve cómo <span>mejora.</span></h1>
+            <h1>Sube gratis tu carta y ve cómo <span>mejora.</span></h1>
           </div>
 
           <div className="form-side centered-form">
@@ -330,10 +330,10 @@ export default function SubirCartaClient() {
                     <><svg viewBox="0 0 64 64" fill="none"><path d="M20 8h18l10 10v38H20V8z" stroke="currentColor" strokeWidth="3"/><path d="M38 8v12h10M26 32h16M26 40h16" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo PDF</strong><span>o archivo</span></>
                   )}
                   {m === "link" && (
-                    <><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo link</strong><span>de mi carta QR</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M26 38l12-12M28 18l3-3a11 11 0 0 1 16 16l-4 4M36 46l-3 3a11 11 0 0 1-16-16l4-4" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg><strong>Tengo link</strong><span>de mi carta QR o web</span></>
                   )}
                   {m === "photo" && (
-                    <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>del menú físico</span></>
+                    <><svg viewBox="0 0 64 64" fill="none"><path d="M16 22h8l4-6h8l4 6h8v26H16V22z" stroke="currentColor" strokeWidth="3"/><circle cx="32" cy="35" r="8" stroke="currentColor" strokeWidth="3"/></svg><strong>Tengo foto</strong><span>de mi carta física</span></>
                   )}
                 </button>
               ))}
@@ -468,7 +468,7 @@ export default function SubirCartaClient() {
                 cursor: ctaEnabled && !loading ? "pointer" : "default",
               }}
             >
-              {loading ? <><span>{uploadProgress || "Analizando"}</span><span className="loading-dots" /><span> </span></> : "Analizar mi carta"} <span>→</span>
+              {loading ? <><span>{uploadProgress || "Subiendo"}</span><span className="loading-dots" /><span> </span></> : "Subir mi carta"} <span>→</span>
             </button>
 
           </div>
@@ -597,13 +597,15 @@ a { color: inherit; text-decoration: none; }
 .shell { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(14,11,8,.86), rgba(14,11,8,.62)); border-radius: 28px; padding: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.38); backdrop-filter: blur(14px); position: relative; overflow: hidden; }
 .centered-shell { max-width: 760px; margin: 0 auto; text-align: center; }
 .shell::before { content: ''; position: absolute; width: 360px; height: 360px; right: -140px; top: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(232,163,61,.16), transparent 70%); filter: blur(8px); pointer-events: none; }
-h1 { font-family: var(--font-display); font-size: clamp(38px, 10vw, 56px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
+h1 { font-family: var(--font-display); font-size: clamp(44px, 11.8vw, 67px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
 h1 span { color: var(--amber-2); font-style: italic; }
 .method-title { text-align: center; margin: 28px 0 14px; color: var(--cream-2); }
 .first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
 .centered-form { max-width: 620px; margin: 0 auto; }
 .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 12px 8px; text-align: center; min-height: 100px; display: grid; align-content: center; gap: 6px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.method strong { margin-bottom: -4px; }
+.method span { line-height: 1.1; }
 .method:hover, .method.active { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(232,163,61,.075); }
 .method svg { width: 26px; height: 26px; margin: 0 auto; color: var(--amber-2); }
 .method span { font-size: 13px; color: var(--cream-2); }
@@ -624,7 +626,7 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 .below-cta { margin: 10px auto 0; max-width: 520px; }
 .cta { width: 100%; min-height: 62px; border: 0; border-radius: 18px; background: var(--amber); color: #160e06; font-size: 17px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 18px 58px rgba(232,163,61,.24); cursor: pointer; transition: transform .2s ease, box-shadow .2s ease, opacity .3s ease; margin-top: 20px; }
 .cta:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 24px 72px rgba(232,163,61,.32); }
-@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 36px; } .shell { padding: 46px; } h1 { font-size: 64px; } .methods { gap: 14px; } }
+@media (min-width: 860px) { .page { padding-top: 80px; } .steps { width: 560px; margin: 0 auto 16px; } .shell { padding: 46px; } h1 { font-size: 64px; } .methods { gap: 14px; } }
 @media (max-width: 390px) { h1 { font-size: 40px; } .methods { grid-template-columns: 1fr; } .method { min-height: 98px; } }
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
