@@ -130,19 +130,14 @@ export async function GET(req: NextRequest) {
       byLanding[page] = (byLanding[page] || 0) + 1;
     }
 
-    // Hourly breakdown (today)
-    const now = new Date();
-    const todayStr = now.toISOString().slice(0, 10);
+    // Hourly breakdown (all sessions in period, aggregated by hour)
     const hourly: Record<number, { visits: number; bounced: number; converted: number }> = {};
     for (let h = 0; h < 24; h++) hourly[h] = { visits: 0, bounced: 0, converted: 0 };
     for (const s of filteredSessions) {
-      const d = s.createdAt;
-      if (d.toISOString().slice(0, 10) === todayStr) {
-        const h = d.getHours();
-        hourly[h].visits++;
-        if (s.bounced) hourly[h].bounced++;
-        if (s.converted) hourly[h].converted++;
-      }
+      const h = s.createdAt.getHours();
+      hourly[h].visits++;
+      if (s.bounced) hourly[h].bounced++;
+      if (s.converted) hourly[h].converted++;
     }
 
     // Daily breakdown

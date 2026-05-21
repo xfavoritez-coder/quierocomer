@@ -107,7 +107,7 @@ interface Data {
 export default function FacebookAdsPage() {
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState(30);
+  const [days, setDays] = useState(1);
   const [source, setSource] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
@@ -216,7 +216,7 @@ export default function FacebookAdsPage() {
         const maxH = Math.max(...hours.map(([, d]) => d.visits), 1);
         const currentHour = new Date().getHours();
         return (
-          <Section title={`Hoy por hora (${totalToday} visitas)`}>
+          <Section title={`Visitas por hora (${totalToday})`}>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 90, padding: "0 2px" }}>
               {hours.map(([h, d]) => {
                 const barH = Math.max((d.visits / maxH) * 75, d.visits > 0 ? 4 : 1);
@@ -228,7 +228,7 @@ export default function FacebookAdsPage() {
                       background: d.visits === 0 ? "#1a1a1a" : d.converted > 0 ? "#22c55e" : d.bounced === d.visits ? "#ef444480" : "#3b82f6",
                       border: h === currentHour ? "1px solid #F4A623" : "none",
                     }} />
-                    <span style={{ fontSize: 7, color: h === currentHour ? "#F4A623" : "#444" }}>{h}</span>
+                    <span style={{ fontSize: 8, color: h === currentHour ? "#F4A623" : "#777" }}>{h}</span>
                   </div>
                 );
               })}
