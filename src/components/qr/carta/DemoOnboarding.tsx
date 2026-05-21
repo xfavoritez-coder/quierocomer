@@ -305,13 +305,23 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     body[data-demo-onboarding] [data-demo-banner] { display: none !important; }
   `}</style>;
 
-  const current = STEPS[Math.min(step, STEPS.length - 1)];
+  const baseStep = STEPS[Math.min(step, STEPS.length - 1)];
+  // Showcase overrides: adapt copy for visitors from quierocomer.cl
+  const current = showcaseMode ? {
+    ...baseStep,
+    ...(step === 0 && { title: "Mira cómo queda una carta real", body: "Te muestro en 3 pasos lo que hacemos con la carta de un restaurante.", buttonLabel: "Ver" }),
+    ...(step === 2 && { body: "Hay 3 vistas para que los clientes disfruten una mejor experiencia. Esta se llama Impact." }),
+    ...(step === 3 && { body: "Traducimos la carta completa a varios idiomas de forma automática.", buttonLabel: "Siguiente" }),
+    ...(step === 4 && { title: "Así queda con QuieroComer", body: "Navega la carta como si fueras un cliente. Cuando quieras, sube la tuya.", buttonLabel: "Explorar" }),
+  } : baseStep;
   const stepBody = step === 1
-    ? (allPhotosReferential
-      ? "Pusimos fotos referenciales en los primeros platos para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
-      : hasReferentialPhotos
-        ? "Pusimos algunas fotos referenciales para que veas cómo se vería. Al activar, podrás subir las tuyas."
-        : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
+    ? (showcaseMode
+      ? "Esta es una carta real transformada por QuieroComer. Navega y mira cómo se ve."
+      : allPhotosReferential
+        ? "Pusimos fotos referenciales en los primeros platos para que veas cómo se vería. Al activar, podrás subir tus propias fotos."
+        : hasReferentialPhotos
+          ? "Pusimos algunas fotos referenciales para que veas cómo se vería. Al activar, podrás subir las tuyas."
+          : "Si algo no se guardó como está en tu carta actual, no te preocupes, esto es una muestra. Luego podrás editar desde tu panel.")
     : current.body;
   const isLast = step === STEPS.length - 1;
 
