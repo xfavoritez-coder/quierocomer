@@ -80,13 +80,7 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
       }, 60);
     };
     const restore = () => {
-      setDemoFading("flash");
-      setTimeout(() => {
-        setViewState(defaultView);
-        window.scrollTo({ top: 0 });
-        setTimeout(() => setDemoFading("reveal"), 20);
-        setTimeout(() => setDemoFading(false), 350);
-      }, 60);
+      setViewState(defaultView);
     };
     window.addEventListener("demo-onboarding-change-view", handle);
     window.addEventListener("demo-onboarding-restore-view", restore);
