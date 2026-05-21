@@ -92,7 +92,7 @@ export default function DesktopWrapper({ restaurantName, slug, children, restaur
           <div style={styles.phoneFrame}>
             <div style={{ width: "100%", height: "100%", borderRadius: 36, overflow: "hidden" }}>
               <iframe
-                src={`/qr/${slug}?embed=mobile${isShowcase ? "&showcase=1" : ""}`}
+                src={`/qr/${slug}?embed=mobile`}
                 style={{ width: "100%", height: "100%", border: "none", background: "#0a0a0a" }}
                 title={`Carta de ${restaurantName}`}
               />

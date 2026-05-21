@@ -201,9 +201,6 @@ export default async function CartaPage({
           <DemoOnboarding restaurantSlug={slug} onboardingDone={(restaurant as any).demoOnboardingDone} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} />
         </>
       )}
-      {isShowcase && isEmbed && (
-        <DemoOnboarding restaurantSlug={slug} onboardingDone={false} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} showcaseMode restaurantName={restaurant.name} />
-      )}
       {isShowcase && !isEmbed && (
         <ShowcaseMobileOnly restaurantSlug={slug} allPhotosReferential={(restaurant as any).allPhotosReferential} hasReferentialPhotos={!!(restaurant as any).allPhotosReferential === false && dishes.some((d: any) => d.isPhotoReferential)} restaurantName={restaurant.name} />
       )}
