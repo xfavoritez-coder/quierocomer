@@ -57,6 +57,19 @@ export async function GET(req: NextRequest) {
       (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
     ).length;
 
+    // Logo clicks: sessions where user clicked a restaurant logo (href contains /qr/)
+    const logoClicks: Record<string, number> = {};
+    for (const s of filteredSessions) {
+      for (const ev of (s.events as any[])) {
+        if (ev.type === "click" && ev.data?.href?.includes("/qr/")) {
+          const match = ev.data.href.match(/\/qr\/([^?/]+)/);
+          const slug = match ? match[1] : "desconocido";
+          logoClicks[slug] = (logoClicks[slug] || 0) + 1;
+        }
+      }
+    }
+    const totalLogoClicks = Object.values(logoClicks).reduce((a, b) => a + b, 0);
+
     // Campaign breakdown
     const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }> = {};
     for (const s of filteredSessions) {
@@ -167,6 +180,8 @@ export async function GET(req: NextRequest) {
         mobile,
         desktop,
       },
+      logoClicks,
+      totalLogoClicks,
       sourceBreakdown,
       byLanding,
       byCampaign,

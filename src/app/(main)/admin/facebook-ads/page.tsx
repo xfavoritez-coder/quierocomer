@@ -91,6 +91,8 @@ function parseUA(ua: string | null): { browser: string; os: string; deviceName: 
 
 interface Data {
   stats: Stats;
+  logoClicks: Record<string, number>;
+  totalLogoClicks: number;
   sourceBreakdown: Record<string, number>;
   byLanding: Record<string, number>;
   byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }>;
@@ -122,7 +124,7 @@ export default function FacebookAdsPage() {
   if (loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   if (!data) return <div style={{ padding: 40, color: "#e85d5d" }}>Error al cargar datos.</div>;
 
-  const { stats, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, hourly, daily, sessions } = data;
+  const { stats, logoClicks, totalLogoClicks, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, hourly, daily, sessions } = data;
   const sortedSources = Object.entries(sourceBreakdown).sort((a, b) => b[1] - a[1]);
   const sortedLandings = Object.entries(byLanding).sort((a, b) => b[1] - a[1]);
 
@@ -202,6 +204,7 @@ export default function FacebookAdsPage() {
         <Card label="Interacciones" value={stats.avgInteractions} color="#8b5cf6" suffix="prom" />
         <Card label="Mobile" value={stats.mobile} />
         <Card label="Desktop" value={stats.desktop} />
+        {totalLogoClicks > 0 && <Card label="Vieron carta" value={totalLogoClicks} color="#8b5cf6" suffix={`${stats.totalSessions > 0 ? Math.round((totalLogoClicks / stats.totalSessions) * 100) : 0}%`} />}
         {stats.ghostSessions > 0 && <Card label="Fantasmas" value={stats.ghostSessions} color="#555" suffix="filtradas" />}
       </div>
 
@@ -291,6 +294,20 @@ export default function FacebookAdsPage() {
           ))}
         </Section>
       </div>
+
+      {/* Logo clicks by restaurant */}
+      {totalLogoClicks > 0 && (
+        <Section title={`Clicks en logos (${totalLogoClicks})`}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.entries(logoClicks).sort((a, b) => b[1] - a[1]).map(([slug, count]) => (
+              <div key={slug} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "#1a1a1a", borderRadius: 10, border: "1px solid #2a2a2a" }}>
+                <span style={{ color: "#8b5cf6", fontWeight: 600, fontSize: 13 }}>{slug}</span>
+                <span style={{ color: "#888", fontSize: 12 }}>{count}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
 
       {/* Landing pages */}
       {sortedLandings.length > 0 && (

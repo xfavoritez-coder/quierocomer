@@ -152,6 +152,7 @@ export function initAdTracker() {
     if (closest) {
       const label = closest.textContent?.trim().slice(0, 60) ||
         closest.getAttribute("aria-label") ||
+        closest.getAttribute("title") ||
         closest.tagName;
       const href = closest instanceof HTMLAnchorElement ? closest.href : undefined;
       pushEvent("click", { label, href, tag: closest.tagName });
