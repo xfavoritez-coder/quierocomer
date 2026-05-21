@@ -7,6 +7,7 @@ interface Stats {
   adVisits: number;
   fbVisits: number;
   fbPctOfTotal: number;
+  ghostSessions: number;
   totalSessions: number;
   bounced: number;
   bounceRate: number;
@@ -197,6 +198,7 @@ export default function FacebookAdsPage() {
         <Card label="Interacciones" value={stats.avgInteractions} color="#8b5cf6" suffix="prom" />
         <Card label="Mobile" value={stats.mobile} />
         <Card label="Desktop" value={stats.desktop} />
+        {stats.ghostSessions > 0 && <Card label="Fantasmas" value={stats.ghostSessions} color="#555" suffix="filtradas" />}
       </div>
 
       {/* Daily chart */}

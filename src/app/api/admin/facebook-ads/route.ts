@@ -33,7 +33,14 @@ export async function GET(req: NextRequest) {
       if (g.utmSource) sourceBreakdown[g.utmSource] = g._count;
     }
 
-    const filteredSessions = sessions;
+    // Filter ghost sessions: in-app browsers (IG/FB) that load the page
+    // in background with 0% scroll and <= 2 interactions are not real visits
+    const filteredSessions = sessions.filter((s) => {
+      const ua = s.userAgent || "";
+      const isInAppBrowser = /FBAN|FBAV|FB_IAB|Instagram/i.test(ua);
+      const isGhost = isInAppBrowser && s.maxScroll === 0 && s.interactions <= 2;
+      return !isGhost;
+    });
     const totalSessions = filteredSessions.length;
     const bounced = filteredSessions.filter((s) => s.bounced).length;
     const converted = filteredSessions.filter((s) => s.converted).length;
@@ -109,6 +116,7 @@ export async function GET(req: NextRequest) {
 
     const pct = (n: number, base: number) => base > 0 ? Math.round((n / base) * 100) : 0;
 
+    const ghostSessions = sessions.length - filteredSessions.length;
     const fbSessions = filteredSessions.filter(s => s.utmSource === "facebook" || s.fbclid).length;
 
     return NextResponse.json({
@@ -117,6 +125,7 @@ export async function GET(req: NextRequest) {
         adVisits,
         fbVisits: fbSessions,
         fbPctOfTotal: totalVisits > 0 ? Math.round((fbSessions / totalVisits) * 100) : 0,
+        ghostSessions,
         totalSessions,
         bounced,
         bounceRate: pct(bounced, totalSessions),
