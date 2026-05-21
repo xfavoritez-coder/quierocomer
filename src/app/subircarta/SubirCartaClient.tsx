@@ -471,11 +471,27 @@ export default function SubirCartaClient() {
               {loading ? <><span>{uploadProgress || "Analizando"}</span><span className="loading-dots" /><span> </span></> : "Analizar mi carta"} <span>→</span>
             </button>
 
-            <div className="trust below-cta">
-              <svg viewBox="0 0 24 24" fill="none" style={{ width: 16, height: 16, flexShrink: 0, color: "var(--amber-2)" }}><path d="M7 11V8a5 5 0 0 1 10 0v3M6 11h12v10H6V11z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
-              Tu información está protegida
-            </div>
           </div>
+        </section>
+
+        {/* Social proof — restaurants that already transformed */}
+        <section className="social-proof" data-track="Social proof">
+          <p className="social-proof-title">Ellos ya transformaron su carta</p>
+          <div className="social-proof-logos">
+            {[
+              { slug: "hand-roll", name: "Hand Roll", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/hand-roll/logo.png", color: "#dc2626" },
+              { slug: "horusvegan", name: "Horus Vegan", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/restaurants/horusvegan/logo.png", color: "#1a5f3f" },
+              { slug: "alleria-pizza", name: "Alleria Pizza", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777477859043-9ibluljyt89.png", color: "#c0392b" },
+              { slug: "juana-la-brava", name: "Juana la Brava", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1779212065016-vn71iczuzue.jpg", color: "#7c2d12" },
+              { slug: "nascosto-pizzeria", name: "Nascosto", logo: "https://awbeyxfqtrdfhengabmw.supabase.co/storage/v1/object/public/fotos/logos/1777586747684-596ypo9g4nu.png", color: "#e85530" },
+            ].map((r) => (
+              <a key={r.slug} href={`/qr/${r.slug}`} target="_blank" rel="noopener noreferrer" className="social-proof-logo" title={`Ver carta de ${r.name}`}>
+                <img src={r.logo} alt={r.name} onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; (e.target as HTMLImageElement).nextElementSibling!.removeAttribute("style"); }} />
+                <span className="social-proof-fallback" style={{ display: "none", background: r.color }}>{r.name.split(" ").map(w => w[0]).join("").slice(0, 2)}</span>
+              </a>
+            ))}
+          </div>
+          <p className="social-proof-sub">Toca un logo para ver su carta en vivo</p>
         </section>
 
         {/* Fallback form — shown when navigation to paso2 fails */}
@@ -572,7 +588,7 @@ body { min-height: 100vh!important; background: linear-gradient(180deg, rgba(9,8
 .grain { position: fixed; inset: 0; pointer-events: none; z-index: 30; opacity: .13; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E"); }
 a { color: inherit; text-decoration: none; }
 .page { width: min(100% - 28px, 1120px); margin: 0 auto; padding: 80px 0 34px; position: relative; z-index: 2; }
-.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 24px auto 34px; max-width: 480px; }
+.steps { display: flex; align-items: center; justify-content: center; gap: 0; margin: 8px auto 12px; max-width: 480px; }
 .step { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
 .step-line { width: 28px; height: 1px; background: rgba(232,163,61,.15); margin: 0 6px; }
 .step-number { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; border: 1px solid rgba(232,163,61,.2); background: transparent; color: var(--muted); }
@@ -581,15 +597,15 @@ a { color: inherit; text-decoration: none; }
 .shell { border: 1px solid var(--line); background: linear-gradient(180deg, rgba(14,11,8,.86), rgba(14,11,8,.62)); border-radius: 28px; padding: 24px; box-shadow: 0 28px 90px rgba(0,0,0,.38); backdrop-filter: blur(14px); position: relative; overflow: hidden; }
 .centered-shell { max-width: 760px; margin: 0 auto; text-align: center; }
 .shell::before { content: ''; position: absolute; width: 360px; height: 360px; right: -140px; top: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(232,163,61,.16), transparent 70%); filter: blur(8px); pointer-events: none; }
-h1 { font-family: var(--font-display); font-size: clamp(44px, 11.8vw, 67px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
+h1 { font-family: var(--font-display); font-size: clamp(38px, 10vw, 56px); line-height: .94; font-weight: 500; letter-spacing: -.035em; margin-bottom: 18px; }
 h1 span { color: var(--amber-2); font-style: italic; }
 .method-title { text-align: center; margin: 28px 0 14px; color: var(--cream-2); }
 .first-title { margin-top: 0; color: var(--cream-2); font-weight: 500; font-size: 19px; }
 .centered-form { max-width: 620px; margin: 0 auto; }
 .methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 18px; padding: 16px 10px; text-align: center; min-height: 128px; display: grid; align-content: center; gap: 9px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
+.method { border: 1px solid var(--line); background: rgba(255,255,255,.035); border-radius: 14px; padding: 12px 8px; text-align: center; min-height: 100px; display: grid; align-content: center; gap: 6px; color: var(--cream); cursor: pointer; transition: border-color .2s ease, background .2s ease, transform .2s ease; }
 .method:hover, .method.active { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(232,163,61,.075); }
-.method svg { width: 32px; height: 32px; margin: 0 auto; color: var(--amber-2); }
+.method svg { width: 26px; height: 26px; margin: 0 auto; color: var(--amber-2); }
 .method span { font-size: 13px; color: var(--cream-2); }
 .input-panel { margin-top: 18px; }
 .upload-card { margin-top: 20px; border: 1px dashed rgba(244,189,105,.75); background: radial-gradient(circle at 50% 0%, rgba(232,163,61,.12), transparent 42%), rgba(255,255,255,.035); border-radius: 24px; min-height: 230px; display: grid; place-items: center; text-align: center; padding: 32px 20px; box-shadow: inset 0 0 50px rgba(232,163,61,.055), 0 0 34px rgba(232,163,61,.08); transition: transform .22s ease, border-color .22s ease, background .22s ease; }
@@ -613,4 +629,12 @@ input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,
 @keyframes loadingDots { 0% { content: '.'; } 33% { content: '..'; } 66% { content: '...'; } }
 .loading-dots::after { content: '.'; animation: loadingDots 1.2s steps(1) infinite; }
 @keyframes fallbackReveal { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+.social-proof { text-align: center; margin: 32px auto 0; max-width: 620px; }
+.social-proof-title { font-family: var(--font-display); font-size: 20px; color: var(--cream-2); font-weight: 500; letter-spacing: -.01em; margin-bottom: 16px; }
+.social-proof-logos { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
+.social-proof-logo { width: 52px; height: 52px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(242,229,207,.1); background: rgba(255,255,255,.04); display: grid; place-items: center; transition: transform .2s, border-color .2s; }
+.social-proof-logo:hover { transform: scale(1.1); border-color: rgba(232,163,61,.4); }
+.social-proof-logo img { width: 100%; height: 100%; object-fit: cover; }
+.social-proof-fallback { width: 100%; height: 100%; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 700; letter-spacing: .03em; }
+.social-proof-sub { font-size: 11px; color: rgba(136,123,104,.65); margin-top: 10px; }
 `;
