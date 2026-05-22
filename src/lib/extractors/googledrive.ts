@@ -192,7 +192,8 @@ ${text.slice(0, 30000)}`;
  * Uses pdf-lib to split pages.
  */
 async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promise<string> {
-  const { PDFDocument } = require("pdf-lib") as typeof import("pdf-lib");
+  // eslint-disable-next-line no-eval -- avoid Next.js static analysis bundling pdf-lib
+  const { PDFDocument } = eval('require')("pdf-lib");
   const pdf = await PDFDocument.load(new Uint8Array(buffer));
   const totalPages = pdf.getPageCount();
   console.log(`[GoogleDrive] PDF has ${totalPages} pages, splitting into chunks`);
@@ -206,7 +207,7 @@ async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promis
     const end = Math.min(start + PAGES_PER_CHUNK, totalPages);
     const chunkPdf = await PDFDocument.create();
     const pages = await chunkPdf.copyPages(pdf, Array.from({ length: end - start }, (_, i) => start + i));
-    pages.forEach(p => chunkPdf.addPage(p));
+    pages.forEach((p: any) => chunkPdf.addPage(p));
     const chunkBuf = Buffer.from(await chunkPdf.save());
     const base64 = chunkBuf.toString("base64");
     const sizeMB = (base64.length / 1024 / 1024).toFixed(1);

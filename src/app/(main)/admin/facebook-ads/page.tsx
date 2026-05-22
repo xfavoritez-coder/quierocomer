@@ -112,8 +112,11 @@ export default function FacebookAdsPage() {
   const [source, setSource] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [flashCampaigns, setFlashCampaigns] = useState<Set<string>>(new Set());
+  const [conversionCampaigns, setConversionCampaigns] = useState<Set<string>>(new Set());
+  const [showConfetti, setShowConfetti] = useState(false);
   const [newSessionIds, setNewSessionIds] = useState<Set<string>>(new Set());
   const prevVisitsRef = useRef<Record<string, number>>({});
+  const prevConversionsRef = useRef<Record<string, number>>({});
   const prevSessionIdsRef = useRef<Set<string>>(new Set());
 
   const fetchData = (p: string, src: string | null) => {
@@ -146,7 +149,20 @@ export default function FacebookAdsPage() {
           }
         }
         const visits: Record<string, number> = {};
-        for (const [name, c] of Object.entries(newData.byCampaign)) visits[name] = c.visits;
+        const prevConv = prevConversionsRef.current;
+        const newConv = new Set<string>();
+        for (const [name, c] of Object.entries(newData.byCampaign)) {
+          visits[name] = c.visits;
+          if (Object.keys(prevConv).length > 0 && c.converted > (prevConv[name] || 0)) newConv.add(name);
+        }
+        if (newConv.size > 0) {
+          setConversionCampaigns(newConv);
+          setShowConfetti(true);
+          setTimeout(() => { setConversionCampaigns(new Set()); setShowConfetti(false); }, 5000);
+        }
+        const convs: Record<string, number> = {};
+        for (const [name, c] of Object.entries(newData.byCampaign)) convs[name] = c.converted;
+        prevConversionsRef.current = convs;
         prevVisitsRef.current = visits;
         // Detect new sessions
         if (prevSessionIdsRef.current.size > 0) {
@@ -194,7 +210,26 @@ export default function FacebookAdsPage() {
   };
 
   return (
-    <div style={{ maxWidth: 1100, padding: "0 12px" }}>
+    <div style={{ maxWidth: 1100, padding: "0 12px", position: "relative" }}>
+      {/* Confetti celebration */}
+      {showConfetti && (
+        <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 9999, overflow: "hidden" }}>
+          {Array.from({ length: 40 }).map((_, i) => (
+            <div key={i} style={{
+              position: "absolute",
+              left: `${Math.random() * 100}%`,
+              top: -20,
+              width: Math.random() * 8 + 4,
+              height: Math.random() * 8 + 4,
+              borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+              background: ["#22c55e", "#4ade80", "#86efac", "#fbbf24", "#f59e0b", "#3b82f6", "#a855f7"][Math.floor(Math.random() * 7)],
+              animation: `confettiFall ${2 + Math.random() * 3}s ease-in forwards`,
+              animationDelay: `${Math.random() * 1}s`,
+            }} />
+          ))}
+          <style>{`@keyframes confettiFall { 0% { transform: translateY(0) rotate(0deg); opacity: 1; } 100% { transform: translateY(100vh) rotate(${720}deg); opacity: 0; } }`}</style>
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20, flexWrap: "wrap", gap: 10 }}>
         <h1 style={{ fontFamily: "var(--font-display, Georgia)", fontSize: 22, color: "#3b82f6", margin: 0 }}>
           Facebook Ads
@@ -313,13 +348,14 @@ export default function FacebookAdsPage() {
               {sortedCampaigns.map(([name, c]) => {
                 const barWidth = Math.max((c.visits / maxVis) * 100, 4);
                 const isFlashing = flashCampaigns.has(name);
+                const isNewConversion = conversionCampaigns.has(name);
                 return (
                   <div key={name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span style={{ fontSize: 13, color: isFlashing ? "#6ee7b7" : "#ccc", minWidth: 120, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right", flexShrink: 0, transition: "color 1.5s ease", fontWeight: 500 }}>{name}</span>
+                    <span style={{ fontSize: 13, color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#ccc", minWidth: 120, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right", flexShrink: 0, transition: "color 1.5s ease", fontWeight: isNewConversion ? 800 : 500 }}>{name}</span>
                     <div style={{ flex: 1, position: "relative", height: 28, borderRadius: 6, background: "#1a1a1a", overflow: "hidden" }}>
                       <div style={{
                         width: `${barWidth}%`, height: "100%", borderRadius: 6,
-                        background: isFlashing ? "#6ee7b7" : "#3b82f6", opacity: 0.8,
+                        background: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#3b82f6", opacity: 0.8,
                         transition: "width 1.5s cubic-bezier(0.16,1,0.3,1), background 1.5s ease",
                       }} />
                       {c.subircarta > 0 && (
