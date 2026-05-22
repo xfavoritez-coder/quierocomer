@@ -279,7 +279,7 @@ export default function CartaEsencial({
       if (!el) continue;
       const obs = new IntersectionObserver(
         ([entry]) => { if (entry.isIntersecting) setActiveCategory(cat.id); },
-        { rootMargin: "-40% 0px -50% 0px", threshold: 0 },
+        { rootMargin: "-20% 0px -70% 0px", threshold: 0 },
       );
       obs.observe(el);
       observers.push(obs);

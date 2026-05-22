@@ -71,7 +71,7 @@ ${planLabel ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:10px">
 <h1 style="font-family:Georgia,'Times New Roman',serif;font-size:35px;line-height:1.02;letter-spacing:-0.03em;margin:0;color:#111111">
-  ${restaurantName} ya está listo
+  ${restaurantName}<br/>ya está listo
 </h1>
 </td></tr>
 </table>
@@ -80,7 +80,7 @@ ${planLabel ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:22px">
 <p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
-  ${ownerName}, tu nueva carta QR Inteligente ya está activa. Te recomendamos revisarla para dejarla lista y comenzar a aumentar tus ventas y mejorar la experiencia de tus clientes.
+  ${ownerName}, tu nueva carta QR Inteligente está lista. Ya puedes mostrársela al mundo.
 </p>
 </td></tr>
 </table>
@@ -124,7 +124,7 @@ ${credentials ? `
   </table>
 
   <!-- Password -->
-  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
   <tr>
     <td style="padding:12px 14px">
       <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contraseña</p>
@@ -133,7 +133,17 @@ ${credentials ? `
   </tr>
   </table>
 
-  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiarla en tu primer ingreso al panel.</p>
+  <!-- Public link -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Tu carta pública</p>
+      <a href="${qrLink}" style="font-size:14px;color:#e8930a;font-weight:700;text-decoration:none;word-break:break-word">${qrLink}</a>
+    </td>
+  </tr>
+  </table>
+
+  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiar la contraseña en tu primer ingreso al panel.</p>
 </td></tr>
 </table>
 ` : ""}
@@ -164,8 +174,8 @@ ${credentials ? `
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Sube tus fotos reales</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Agrega imágenes de tus platos desde el panel cuando quieras.</p>
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Mira cómo quedó tu carta</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Revísala tal como la verán tus clientes al escanear el QR.</p>
     </td>
   </tr>
   </table>
@@ -179,8 +189,8 @@ ${credentials ? `
       </tr></table>
     </td>
     <td style="vertical-align:top;padding-left:4px">
-      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Revisa precios y descripciones</p>
-      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Edita textos, categorías y valores. Todo se actualiza en vivo.</p>
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Revisa tus platos</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Edita textos, precios y descripciones. Todo se actualiza al instante.</p>
     </td>
   </tr>
   </table>
