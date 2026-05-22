@@ -30,23 +30,27 @@ export async function extractCanva(cartaUrl: string): Promise<ExtractionResult> 
   const imageUrls = [...content.matchAll(/!\[.*?\]\((https:\/\/media\.canva\.com\/[^\)]+)\)/g)].map(m => m[1]);
   console.log("[Canva] Found", imageUrls.length, "Canva page images");
 
+  // Canva image URLs are temporary (expire in minutes) — download immediately
+  if (imageUrls.length > 0) {
+    console.log("[Canva] Downloading Canva page images immediately (URLs expire)");
+    const images = await downloadImages(imageUrls.slice(0, 8));
+    if (images.length > 0) {
+      console.log("[Canva] Downloaded", images.length, "images, sending to Vision");
+      return extractFromImageBuffers(images, apiKey);
+    }
+  }
+
   // Check if Jina got meaningful text content (prices)
   const pricePattern = /\$[\d.,]+|\d{3,6}/g;
   const prices = (content.match(pricePattern) || []).length;
 
   if (content.length > 500 && prices >= 3) {
-    console.log("[Canva] Jina got", prices, "prices, using text extraction");
+    console.log("[Canva] Using text extraction (", prices, "prices found)");
     return extractFromText(content.slice(0, 40000), apiKey, cleanUrl);
   }
 
-  // Use Canva page images with Claude Vision (most reliable)
-  if (imageUrls.length > 0) {
-    console.log("[Canva] Using Canva page images + Vision");
-    return extractFromCanvaImages(imageUrls.slice(0, 8), apiKey);
-  }
-
   // Last fallback: screenshot
-  console.log("[Canva] No images found, trying screenshot");
+  console.log("[Canva] No images, trying screenshot");
   return extractFromScreenshot(cleanUrl, apiKey);
 }
 
@@ -86,45 +90,46 @@ REGLAS: Precios enteros sin puntos ($8.990→8990). NO inventes platos. SOLO JSO
   return parseClaudeResponse(text);
 }
 
-async function extractFromCanvaImages(imageUrls: string[], apiKey: string): Promise<ExtractionResult> {
-  // Download and encode images
-  const images: { type: "image"; source: { type: "base64"; media_type: string; data: string } }[] = [];
-  for (const url of imageUrls) {
+type ImageBuffer = { data: Buffer; mediaType: string };
+
+async function downloadImages(urls: string[]): Promise<ImageBuffer[]> {
+  const results: ImageBuffer[] = [];
+  await Promise.allSettled(urls.map(async (url) => {
     try {
       const res = await fetch(url, { signal: AbortSignal.timeout(15000) });
-      if (!res.ok) continue;
+      if (!res.ok) return;
       const buffer = Buffer.from(await res.arrayBuffer());
-      if (buffer.length < 500) continue;
-      const contentType = res.headers.get("content-type") || "image/png";
-      const mediaType = contentType.includes("jpeg") || contentType.includes("jpg") ? "image/jpeg" : "image/png";
-      images.push({ type: "image", source: { type: "base64", media_type: mediaType, data: buffer.toString("base64") } });
-      console.log(`[Canva] Downloaded image ${images.length}: ${(buffer.length / 1024).toFixed(0)}KB`);
+      if (buffer.length < 500) return;
+      const ct = res.headers.get("content-type") || "image/png";
+      const mediaType = ct.includes("jpeg") || ct.includes("jpg") ? "image/jpeg" : "image/png";
+      results.push({ data: buffer, mediaType });
+      console.log(`[Canva] Downloaded image ${results.length}: ${(buffer.length / 1024).toFixed(0)}KB`);
     } catch {
-      console.log(`[Canva] Failed to download image: ${url.slice(0, 80)}`);
+      console.log(`[Canva] Failed to download: ${url.slice(0, 60)}`);
     }
-  }
+  }));
+  return results;
+}
 
-  if (images.length === 0) throw new Error("No Canva images could be downloaded");
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 16000,
-      messages: [{
-        role: "user",
-        content: [
-          ...images,
-          { type: "text", text: `Estas ${images.length} imágenes son páginas de una carta/menú de restaurante diseñada en Canva.
+async function extractFromImageBuffers(images: ImageBuffer[], apiKey: string): Promise<ExtractionResult> {
+  const content: any[] = images.map(img => ({
+    type: "image",
+    source: { type: "base64", media_type: img.mediaType, data: img.data.toString("base64") },
+  }));
+  content.push({
+    type: "text",
+    text: `Estas ${images.length} imágenes son páginas de una carta/menú de restaurante diseñada en Canva.
 Extrae TODOS los platos visibles con sus precios y categorías.
 IMPORTANTE: Solo extrae lo que puedas leer claramente. NO inventes platos.
 Responde SOLO con JSON:
 {"restaurantName":"...","categories":[{"name":"...","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}
-Precios enteros sin puntos ($8.990→8990). SOLO JSON.` },
-        ],
-      }],
-    }),
+Precios enteros sin puntos ($8.990→8990). SOLO JSON.`,
+  });
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": apiKey, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model: "claude-sonnet-4-6", max_tokens: 16000, messages: [{ role: "user", content }] }),
   });
 
   if (!res.ok) throw new Error(`Claude Vision error: ${res.status}`);
