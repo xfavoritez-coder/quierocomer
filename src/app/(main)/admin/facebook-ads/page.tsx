@@ -429,9 +429,12 @@ export default function FacebookAdsPage() {
                   )}
 
                   {/* Event timeline */}
-                  <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>Timeline de eventos ({(s.events as any[]).length})</div>
+                  {(() => {
+                    const flatEvents = (s.events as any[]).flat();
+                    return (<>
+                  <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 4 }}>Timeline de eventos ({flatEvents.length})</div>
                   <div style={{ fontSize: 10, color: "#666", fontFamily: "monospace", maxHeight: 240, overflow: "auto", background: "#0a0a0a", borderRadius: 6, padding: "6px 8px" }}>
-                    {(s.events as any[]).map((ev, i) => (
+                    {flatEvents.map((ev: any, i: number) => (
                       <div key={i} style={{ padding: "3px 0", borderBottom: "1px solid #141414", display: "flex", gap: 8 }}>
                         <span style={{ color: "#444", minWidth: 40, textAlign: "right", flexShrink: 0 }}>{typeof ev.ts === "number" ? `+${Math.round(ev.ts / 1000)}s` : ""}</span>
                         <span style={{
@@ -460,6 +463,8 @@ export default function FacebookAdsPage() {
                       </div>
                     ))}
                   </div>
+                  </>);
+                  })()}
                 </div>
               )}
             </div>
