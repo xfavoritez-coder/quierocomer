@@ -179,11 +179,11 @@ const CSS = `
   .fb-sess-metrics { display: flex; gap: 12px; font-size: 12px; color: #666; flex-shrink: 0; padding: 4px 0 0; }
   @media (min-width: 640px) { .fb-sess-metrics { padding: 0; } }
   .fb-sess-detail { margin-top: 10px; padding: 14px; background: #0d0d0d; border-radius: 12px; border: 1px solid #1a1a1a; }
-  .fb-sess-grid { display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 12px; margin-bottom: 12px; padding: 12px; background: #080808; border-radius: 10px; }
+  .fb-sess-grid { display: grid; grid-template-columns: 1fr; gap: 8px; font-size: 12px; margin-bottom: 12px; padding: 12px; background: #141414; border-radius: 10px; }
   @media (min-width: 500px) { .fb-sess-grid { grid-template-columns: 1fr 1fr; gap: 6px 16px; } }
   .fb-detail-row { display: flex; justify-content: space-between; gap: 8px; }
-  .fb-detail-label { color: #444; flex-shrink: 0; }
-  .fb-detail-val { color: #999; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+  .fb-detail-label { color: #aaa; flex-shrink: 0; font-weight: 600; }
+  .fb-detail-val { color: #ccc; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
 
   .fb-utm-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
   .fb-tag { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
@@ -191,12 +191,12 @@ const CSS = `
   .fb-sections-viewed { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; margin-bottom: 12px; }
 
   /* Timeline - scrollable horizontally on mobile */
-  .fb-timeline { font-size: 11px; font-family: monospace; max-height: 280px; overflow: auto; background: #080808; border-radius: 8px; padding: 8px; scrollbar-width: thin; scrollbar-color: #333 transparent; }
+  .fb-timeline { font-size: 11px; font-family: monospace; max-height: 280px; overflow: auto; background: #141414; border-radius: 8px; padding: 8px; scrollbar-width: thin; scrollbar-color: #333 transparent; }
   .fb-timeline-row { padding: 4px 0; border-bottom: 1px solid #111; display: flex; gap: 6px; min-width: 0; }
-  .fb-timeline-ts { color: #444; min-width: 36px; text-align: right; flex-shrink: 0; font-size: 10px; }
+  .fb-timeline-ts { color: #888; min-width: 36px; text-align: right; flex-shrink: 0; font-size: 10px; }
   .fb-timeline-type { font-weight: 700; min-width: 70px; flex-shrink: 0; font-size: 10px; }
   @media (min-width: 480px) { .fb-timeline-type { min-width: 90px; } }
-  .fb-timeline-data { color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 10px; }
+  .fb-timeline-data { color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; font-size: 10px; }
 
   /* Bar charts - full width bars */
   .fb-bar-row { display: flex; flex-direction: column; gap: 4px; padding: 6px 0; border-bottom: 1px solid #141414; }
@@ -252,6 +252,9 @@ export default function FacebookAdsPage() {
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [sessFilter, setSessFilter] = useState("");
+  const [sessPage, setSessPage] = useState(0);
+  const SESS_PER_PAGE = 10;
   const [flashCampaigns, setFlashCampaigns] = useState<Set<string>>(new Set());
   const [conversionCampaigns, setConversionCampaigns] = useState<Set<string>>(new Set());
   const [showConfetti, setShowConfetti] = useState(false);
@@ -523,45 +526,28 @@ export default function FacebookAdsPage() {
             return (
               <div className="fb-section">
                 <div className="fb-section-title">Campanas</div>
-                <div className="fb-campaigns">
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {sortedCampaigns.map(([name, c]) => {
-                    const barWidth = Math.max((c.visits / maxVis) * 100, 6);
+                    const pct = Math.round((c.visits / maxVis) * 100);
                     const isFlashing = flashCampaigns.has(name);
                     const isNewConversion = conversionCampaigns.has(name);
                     return (
-                      <div key={name} className="fb-camp-row">
-                        <span className="fb-camp-name" style={{
-                          color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#bbb",
-                          fontWeight: isNewConversion ? 800 : 500,
-                        }}>{name}</span>
-                        <div className="fb-camp-bar-wrap">
-                          <div className="fb-camp-bar" style={{
-                            width: `${barWidth}%`,
-                            background: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#3b82f6",
-                            opacity: 0.8,
+                      <div key={name}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
+                          <span style={{ fontSize: 12, fontWeight: 600, color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#ccc", transition: "color 1.5s" }}>{name}</span>
+                          <div style={{ display: "flex", gap: 8, fontSize: 11, alignItems: "center" }}>
+                            <span style={{ color: "#888" }}>{c.visits}</span>
+                            {c.subircarta > 0 && <span style={{ color: "#F4A623" }}>{c.subircarta} /sc</span>}
+                            {c.converted > 0 && <span style={{ color: "#4ade80", fontWeight: 700 }}>{c.converted} conv</span>}
+                            <span style={{ color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
+                          </div>
+                        </div>
+                        <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
+                          <div style={{
+                            height: "100%", width: `${pct}%`, borderRadius: 2,
+                            background: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : c.converted > 0 ? "linear-gradient(90deg, #3b82f6, #22c55e)" : "#3b82f6",
+                            transition: "width 1.5s cubic-bezier(.16,1,.3,1), background 1.5s",
                           }} />
-                          {c.subircarta > 0 && (
-                            <div className="fb-camp-overlay" style={{
-                              width: `${Math.max((c.subircarta / maxVis) * 100, 3)}%`,
-                              background: "#F4A623",
-                              opacity: 0.9,
-                            }} />
-                          )}
-                          {c.converted > 0 && (
-                            <div style={{
-                              position: "absolute", left: `${Math.max((c.visits / maxVis) * 100, 6) - Math.max((c.converted / maxVis) * 100, 2)}%`, top: 0,
-                              width: `${Math.max((c.converted / maxVis) * 100, 2)}%`, height: "100%", borderRadius: "0 10px 10px 0",
-                              background: "#22c55e", opacity: 0.95,
-                              transition: "width 1.5s cubic-bezier(.16,1,.3,1), left 1.5s cubic-bezier(.16,1,.3,1)",
-                            }} />
-                          )}
-                          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, fontWeight: 800, color: "#ffffff", zIndex: 2 }}>
-                            {c.visits}{c.subircarta > 0 ? ` · ${Math.round((c.subircarta / c.visits) * 100)}% /sc` : ""}
-                          </span>
-                          <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", fontSize: 11, display: "flex", gap: 8, alignItems: "center", zIndex: 2 }}>
-                            {c.converted > 0 && <span style={{ color: "#4ade80", fontWeight: 800 }}>{c.converted} conv</span>}
-                            <span style={{ color: "#ffffff", opacity: 0.85 }}>{fmtDuration(c.avgDuration)}</span>
-                          </span>
                         </div>
                       </div>
                     );
@@ -571,62 +557,46 @@ export default function FacebookAdsPage() {
             );
           })()}
 
-          {/* Campaign detail + Daily */}
-          <div className="fb-two-col">
-            <div className="fb-section" style={{ marginBottom: 0 }}>
-              <div className="fb-section-title">Por campana</div>
-              {sortedCampaigns.length === 0 && <div className="fb-empty">Sin datos todavia.</div>}
-              {sortedCampaigns.map(([name, c]) => {
-                const bounceRate = c.visits > 0 ? Math.round((c.bounced / c.visits) * 100) : 0;
-                return (
-                  <div key={name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid #141414", gap: 8 }}>
-                    <span style={{ color: "#ccc", fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1, minWidth: 0 }}>{name}</span>
-                    <div style={{ display: "flex", gap: 12, flexShrink: 0, fontSize: 12, alignItems: "center" }}>
-                      <span style={{ color: "#666" }}>{c.visits}</span>
-                      <span style={{ color: bounceRate > 60 ? "#ef4444" : bounceRate > 30 ? "#eab308" : "#555" }}>{bounceRate}%</span>
-                      {c.subircarta > 0 && <span style={{ color: "#F4A623" }}>{c.subircarta} /sc</span>}
-                      <span style={{ color: c.converted > 0 ? "#22c55e" : "#333", fontWeight: c.converted > 0 ? 700 : 400 }}>{c.converted} conv</span>
-                      <span style={{ color: "#444" }}>{fmtDuration(c.avgDuration)}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="fb-section" style={{ marginBottom: 0 }}>
-              <div className="fb-section-title">Por dia</div>
-              {sortedDaily.length === 0 && <div className="fb-empty">Sin datos todavia.</div>}
-              {(() => {
-                const maxDay = Math.max(...sortedDaily.map(([, d]) => d.visits), 1);
-                return sortedDaily.map(([day, d]) => {
-                  const date = new Date(day + "T12:00:00");
-                  const dayName = date.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short" });
-                  const pct = Math.round((d.visits / maxDay) * 100);
-                  return (
-                    <div key={day} style={{ padding: "6px 0", borderBottom: "1px solid #141414" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4, fontSize: 12 }}>
-                        <span style={{ color: "#999" }}>{dayName}</span>
-                        <div style={{ display: "flex", gap: 10, fontSize: 12 }}>
-                          <span style={{ color: "#888" }}>{d.visits}</span>
-                          {d.converted > 0 && <span style={{ color: "#22c55e", fontWeight: 700 }}>{d.converted} conv</span>}
-                          <span style={{ color: "#ef4444", opacity: 0.6 }}>{d.bounced} reb</span>
-                        </div>
-                      </div>
-                      <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
-                        <div style={{ height: "100%", width: `${pct}%`, background: d.converted > 0 ? "#22c55e" : "#3b82f6", borderRadius: 2, transition: "width .5s" }} />
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-          </div>
 
           {/* Sessions */}
           <div className="fb-section">
-            <div className="fb-section-title">Sesiones individuales ({sessions.length})</div>
-            {sessions.length === 0 && <div className="fb-empty">Sin datos todavia.</div>}
-            {sessions.map((s) => {
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
+              <div className="fb-section-title" style={{ marginBottom: 0 }}>Sesiones ({sessions.length})</div>
+              <div style={{ flex: 1, minWidth: 180, maxWidth: 340, position: "relative" }}>
+                <input
+                  type="text"
+                  placeholder="Filtrar: campaña, IP, convertido, subircarta..."
+                  value={sessFilter}
+                  onChange={(e) => { setSessFilter(e.target.value); setSessPage(0); }}
+                  style={{ width: "100%", padding: "8px 32px 8px 12px", borderRadius: 8, border: "1px solid #222", background: "#0a0a0a", color: "#ccc", fontSize: 12, outline: "none", boxSizing: "border-box" }}
+                />
+                {sessFilter && (
+                  <button onClick={() => { setSessFilter(""); setSessPage(0); }} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "#666", fontSize: 16, cursor: "pointer", padding: 0, lineHeight: 1 }}>×</button>
+                )}
+              </div>
+            </div>
+            {(() => {
+              const q = sessFilter.toLowerCase().trim();
+              const filtered = q ? sessions.filter((s) => {
+                const ua = parseUA(s.userAgent);
+                const haystack = [
+                  s.utmCampaign, s.utmSource, s.utmContent, s.utmMedium,
+                  s.ip, s.device, ua.browser, ua.os, ua.deviceName,
+                  s.landingPage, s.exitPage, s.referrer,
+                  s.bounced ? "rebote" : "", s.converted ? "convertido conversion" : "",
+                  s.visitedSubircarta ? "subircarta" : "",
+                  ...s.sectionsViewed,
+                ].filter(Boolean).join(" ").toLowerCase();
+                return haystack.includes(q);
+              }) : sessions;
+              const totalPages = Math.ceil(filtered.length / SESS_PER_PAGE);
+              const page = Math.min(sessPage, Math.max(totalPages - 1, 0));
+              const paged = filtered.slice(page * SESS_PER_PAGE, (page + 1) * SESS_PER_PAGE);
+
+              return (<>
+            {filtered.length === 0 && <div className="fb-empty">{q ? "Sin resultados para ese filtro." : "Sin datos todavia."}</div>}
+            {q && filtered.length > 0 && <div style={{ fontSize: 11, color: "#666", marginBottom: 8 }}>{filtered.length} resultado{filtered.length !== 1 ? "s" : ""}</div>}
+            {paged.map((s) => {
               const isExpanded = expandedSession === s.id;
               const date = new Date(s.createdAt);
               const dateStr = `${date.getDate()}/${date.getMonth() + 1} ${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`;
@@ -671,7 +641,7 @@ export default function FacebookAdsPage() {
                         <DetailRow label="Navegador" value={ua.browser} />
                         <DetailRow label="IP" value={s.ip} />
                         <DetailRow label="Referrer" value={s.referrer ? (s.referrer.length > 40 ? s.referrer.slice(0, 40) + "..." : s.referrer) : "directo"} />
-                        <DetailRow label="Landing" value={s.landingPage?.split("?")[0] || "/"} />
+                        <DetailRow label="Entrada" value={s.landingPage?.split("?")[0] || "/"} />
                         {s.exitPage && <DetailRow label="Salida" value={s.exitPage} />}
                         <DetailRow label="Duracion" value={fmtDuration(s.duration)} color="#eab308" />
                         <DetailRow label="Scroll max" value={`${s.maxScroll}%`} color="#14b8a6" />
@@ -679,18 +649,9 @@ export default function FacebookAdsPage() {
                         <DetailRow label="Paginas" value={String(s.pageViews)} />
                       </div>
 
-                      <div className="fb-utm-tags">
-                        {s.utmSource && <span className="fb-tag" style={{ background: "#6366f115", border: "1px solid #6366f130", color: "#6366f1" }}>source: {s.utmSource}</span>}
-                        {s.utmMedium && <span className="fb-tag" style={{ background: "#3b82f615", border: "1px solid #3b82f630", color: "#3b82f6" }}>medium: {s.utmMedium}</span>}
-                        {s.utmCampaign && <span className="fb-tag" style={{ background: "#eab30815", border: "1px solid #eab30830", color: "#eab308" }}>campaign: {s.utmCampaign}</span>}
-                        {s.utmContent && <span className="fb-tag" style={{ background: "#22c55e15", border: "1px solid #22c55e30", color: "#22c55e" }}>content: {s.utmContent}</span>}
-                        {s.utmTerm && <span className="fb-tag" style={{ background: "#14b8a615", border: "1px solid #14b8a630", color: "#14b8a6" }}>term: {s.utmTerm}</span>}
-                        {s.fbclid && <span className="fb-tag" style={{ background: "#3b82f615", border: "1px solid #3b82f630", color: "#3b82f6" }}>fbclid: {s.fbclid.slice(0, 12)}...</span>}
-                      </div>
-
                       {s.sectionsViewed.length > 0 && (
                         <div style={{ marginBottom: 10 }}>
-                          <span style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".05em" }}>Secciones vistas</span>
+                          <span style={{ fontSize: 10, color: "#999", textTransform: "uppercase", letterSpacing: ".05em" }}>Secciones vistas</span>
                           <div className="fb-sections-viewed">
                             {s.sectionsViewed.map((sec, i) => (
                               <span key={i} className="fb-badge" style={{ background: "#14b8a612", color: "#14b8a6", border: "1px solid #14b8a625" }}>{sec}</span>
@@ -706,12 +667,12 @@ export default function FacebookAdsPage() {
                       {(() => {
                         const flatEvents = (s.events as any[]).flat();
                         return (<>
-                          <div style={{ fontSize: 10, color: "#444", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>Timeline ({flatEvents.length})</div>
+                          <div style={{ fontSize: 10, color: "#999", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>Timeline ({flatEvents.length})</div>
                           <div className="fb-timeline">
                             {flatEvents.map((ev: any, i: number) => (
-                              <div key={i} className="fb-timeline-row">
-                                <span className="fb-timeline-ts">{typeof ev.ts === "number" ? `+${Math.round(ev.ts / 1000)}s` : ""}</span>
-                                <span className="fb-timeline-type" style={{
+                              <div key={i} style={{ padding: "4px 0", borderBottom: "1px solid #1a1a1a", display: "flex", gap: 6, minWidth: 0 }}>
+                                <span style={{ color: "#999", minWidth: 36, textAlign: "right", flexShrink: 0, fontSize: 10 }}>{typeof ev.ts === "number" ? `+${Math.round(ev.ts / 1000)}s` : ""}</span>
+                                <span style={{ fontWeight: 700, minWidth: 70, flexShrink: 0, fontSize: 10,
                                   color: ev.type === "click" ? "#8b5cf6" :
                                     ev.type === "scroll_milestone" ? "#14b8a6" :
                                     ev.type === "section_view" ? "#22c55e" :
@@ -722,7 +683,7 @@ export default function FacebookAdsPage() {
                                 }}>
                                   {ev.type}
                                 </span>
-                                <span className="fb-timeline-data">
+                                <span style={{ color: "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0, fontSize: 10 }}>
                                   {ev.data ? (
                                     ev.type === "click" ? (ev.data.label || "") :
                                     ev.type === "scroll_milestone" ? `${ev.data.pct}%` :
@@ -735,6 +696,12 @@ export default function FacebookAdsPage() {
                               </div>
                             ))}
                           </div>
+                          <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginTop: 10 }}>
+                            {s.utmSource && <span className="fb-tag" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", color: "#777" }}>source: {s.utmSource}</span>}
+                            {s.utmMedium && <span className="fb-tag" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", color: "#777" }}>medium: {s.utmMedium}</span>}
+                            {s.utmCampaign && <span className="fb-tag" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", color: "#777" }}>campaign: {s.utmCampaign}</span>}
+                            {s.utmContent && <span className="fb-tag" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.08)", color: "#777" }}>content: {s.utmContent}</span>}
+                          </div>
                         </>);
                       })()}
                     </div>
@@ -742,6 +709,22 @@ export default function FacebookAdsPage() {
                 </div>
               );
             })}
+            {/* Paginador */}
+            {totalPages > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, padding: "12px 0 4px" }}>
+                <button onClick={() => setSessPage(Math.max(0, page - 1))} disabled={page === 0}
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page === 0 ? "#111" : "#222", color: page === 0 ? "#444" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page === 0 ? "default" : "pointer" }}>
+                  ← Ant
+                </button>
+                <span style={{ fontSize: 12, color: "#666" }}>{page + 1} / {totalPages}</span>
+                <button onClick={() => setSessPage(Math.min(totalPages - 1, page + 1))} disabled={page >= totalPages - 1}
+                  style={{ padding: "6px 14px", borderRadius: 8, border: "none", background: page >= totalPages - 1 ? "#111" : "#222", color: page >= totalPages - 1 ? "#444" : "#ccc", fontSize: 12, fontWeight: 600, cursor: page >= totalPages - 1 ? "default" : "pointer" }}>
+                  Sig →
+                </button>
+              </div>
+            )}
+              </>);
+            })()}
           </div>
 
           {/* Logo clicks */}
@@ -821,8 +804,8 @@ function StatCard({ label, value, color, suffix }: { label: string; value: numbe
 function DetailRow({ label, value, color }: { label: string; value: string | null | undefined; color?: string }) {
   return (
     <div className="fb-detail-row">
-      <span className="fb-detail-label">{label}</span>
-      <span className="fb-detail-val" style={{ color: color || "#888" }}>{value || "—"}</span>
+      <span style={{ color: "#aaa", flexShrink: 0, fontWeight: 600 }}>{label}</span>
+      <span className="fb-detail-val" style={{ color: color || "#ccc" }}>{value || "—"}</span>
     </div>
   );
 }

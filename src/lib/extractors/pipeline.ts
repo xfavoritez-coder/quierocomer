@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { extractJusto } from "./justo";
 import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
+import { extractMiCartaQR } from "./micartaqr";
 import { extractWithScraper } from "./scrape";
 import { extractFromDocument } from "./document";
 import { extractGoogleDrive } from "./googledrive";
@@ -222,6 +223,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractUberEats(cartaUrl);
     case "Queresto":
       return extractQueresto(cartaUrl);
+    case "MiCartaQR":
+      return extractMiCartaQR(cartaUrl);
     case "GoogleDrive":
       return extractGoogleDrive(cartaUrl);
     case "Dropbox":

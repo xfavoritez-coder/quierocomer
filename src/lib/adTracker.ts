@@ -39,9 +39,9 @@ function genSessionId() {
   return `ad_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function pushEvent(type: string, data?: any) {
+function pushEvent(type: string, data?: any, countAsInteraction = false) {
   events.push({ ts: Date.now() - startTime, type, data });
-  interactions++;
+  if (countAsInteraction) interactions++;
 }
 
 function flush(final = false) {
@@ -85,7 +85,7 @@ function trackScroll() {
     // Log milestones
     for (const milestone of [25, 50, 75, 100]) {
       if (prev < milestone && maxScroll >= milestone) {
-        pushEvent("scroll_milestone", { pct: milestone });
+        pushEvent("scroll_milestone", { pct: milestone }, true);
       }
     }
   }
@@ -99,7 +99,7 @@ function trackSections() {
       const name = el.getAttribute("aria-label") || el.getAttribute("data-section") || el.getAttribute("data-track") || "unknown";
       if (!sectionsViewed.has(name)) {
         sectionsViewed.add(name);
-        pushEvent("section_view", { section: name });
+        pushEvent("section_view", { section: name }, true);
       }
     }
   });
@@ -155,7 +155,7 @@ export function initAdTracker() {
         closest.getAttribute("title") ||
         closest.tagName;
       const href = closest instanceof HTMLAnchorElement ? closest.href : undefined;
-      pushEvent("click", { label, href, tag: closest.tagName });
+      pushEvent("click", { label, href, tag: closest.tagName }, true);
     }
   });
 
@@ -166,7 +166,7 @@ export function initAdTracker() {
       pushEvent("input_focus", {
         type: (target as HTMLInputElement).type,
         placeholder: (target as HTMLInputElement).placeholder?.slice(0, 40),
-      });
+      }, true);
     }
   });
 
@@ -220,7 +220,7 @@ export function resumeAdTracker(): boolean {
     const target = e.target as HTMLElement;
     const closest = target.closest("a, button, [role='button'], .method, .upload-card, .cta");
     if (closest) {
-      pushEvent("click", { label: closest.textContent?.trim().slice(0, 60), tag: closest.tagName });
+      pushEvent("click", { label: closest.textContent?.trim().slice(0, 60), tag: closest.tagName }, true);
     }
   });
 

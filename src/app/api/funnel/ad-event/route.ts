@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
         maxScroll: Math.max(existing.maxScroll, maxScroll || 0),
         interactions: existing.interactions + (interactions || 0),
         sectionsViewed: mergedSections,
-        pageViews: existing.pageViews + (newEvents.filter((e: any) => e.type === "page_load").length),
+        pageViews: new Set(
+          [...((existing.events as any[]) || []).flat(), ...newEvents]
+            .filter((e: any) => e.type === "page_load")
+            .map((e: any) => e.data?.page || "/")
+        ).size || 1,
         events: { push: newEvents },
         ...(exitPage && { exitPage }),
         ...(bounced === false && { bounced: false }),

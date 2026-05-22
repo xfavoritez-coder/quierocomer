@@ -303,7 +303,7 @@ export default function SubirCartaClient() {
           <NavHamburger />
         </nav>
 
-        <section className="steps" aria-label="Progreso">
+        <section className="steps" aria-label="Pasos subir carta">
           <div className="step active"><div className="step-number">1</div><span>Subir carta</span></div>
           <div className="step-line" />
           <div className="step"><div className="step-number">2</div><span>Transformación</span></div>
@@ -318,7 +318,7 @@ export default function SubirCartaClient() {
 
           <div className="form-side centered-form">
             {/* Method selector */}
-            <div className="methods" data-track="metodos">
+            <div className="methods" data-track="Elegir metodo (link, foto, PDF)">
               {(["photo", "link", "pdf"] as const).map((m) => (
                 <button
                   key={m}
@@ -475,7 +475,7 @@ export default function SubirCartaClient() {
         </section>
 
         {/* Social proof — restaurants that already transformed */}
-        <section className="social-proof" data-track="Social proof">
+        <section className="social-proof" data-track="Restaurantes que ya usan QC">
           <p className="social-proof-title">Ellos ya transformaron su carta</p>
           <div className="social-proof-logos">
             {[
