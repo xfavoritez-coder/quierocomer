@@ -30,15 +30,23 @@ export default async function ActivarPage({ params }: { params: Promise<{ slug: 
 
   if (!restaurant) return notFound();
 
-  // Track activar page visit
+  // Track activar page visit + get owner name
+  const lead = await prisma.lead.findFirst({
+    where: { generatedSlug: slug },
+    select: { ownerName: true },
+    orderBy: { createdAt: "desc" },
+  });
   prisma.lead.updateMany({
     where: { generatedSlug: slug, activarVisitedAt: null },
     data: { activarVisitedAt: new Date() },
   }).catch(() => {});
 
+  const ownerFirstName = lead?.ownerName?.split(" ")[0] || null;
+
   return (
     <ActivarClient
       restaurant={{ id: restaurant.id, name: restaurant.name, slug: restaurant.slug!, logoUrl: restaurant.logoUrl }}
+      ownerName={ownerFirstName}
       categories={restaurant.categories.map(c => c.name)}
       dishes={restaurant.dishes
         .filter(d => !/\b(agua|coca.?cola|sprite|fanta|jugo|cerveza|vino|bebida|gaseosa|lata|botella|\d+\s*cc|\d+\s*ml|sin gas|con gas)\b/i.test(d.name))

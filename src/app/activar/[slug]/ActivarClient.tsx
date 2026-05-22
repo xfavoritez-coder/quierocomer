@@ -9,6 +9,7 @@ interface Props {
   categories: string[];
   dishes: { name: string; price: number; photo: string | null; description: string }[];
   activeVenues: { name: string; slug: string; logoUrl: string | null; plan?: string }[];
+  ownerName: string | null;
 }
 
 function getInitials(name: string) {
@@ -40,7 +41,7 @@ h1 em { color: var(--amber); font-style: italic; }
 .phone { width: 260px; height: 470px; border-radius: 44px; padding: 12px; background: linear-gradient(145deg, #313131, #060606); border: 1px solid rgba(255,255,255,.18); box-shadow: 0 28px 60px rgba(0,0,0,.6), 0 0 48px rgba(255,174,42,.14); }
 .screen { height: 100%; border-radius: 31px; overflow: hidden; background: #0a0908; display: flex; flex-direction: column; }
 .screen-topbar { display: flex; align-items: center; padding: 6px 12px; background: #0e0e0e; gap: 5px; }
-.screen-header-logo { width: 20px; height: 20px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,.12); background: #222; flex-shrink: 0; }
+.screen-header-logo { width: 20px; height: 20px; border-radius: 50%; overflow: hidden; border: 1px solid rgba(255,255,255,.12); background: #222; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 .screen-header-logo img { width: 100%; height: 100%; object-fit: cover; }
 .screen-header-name { font-size: 10px; font-weight: 700; color: rgba(255,255,255,.85); flex: 1; text-align: left; }
 .screen-lang { width: 16px; height: 16px; border-radius: 50%; overflow: hidden; flex-shrink: 0; }
@@ -141,7 +142,7 @@ footer a { color: var(--gray-warm); text-decoration: none; }
 @media (max-width: 360px) { h1 { font-size: 34px; } .venues { grid-template-columns: 1fr; } }
 `;
 
-export default function ActivarClient({ restaurant, categories, dishes, activeVenues }: Props) {
+export default function ActivarClient({ restaurant, categories, dishes, activeVenues, ownerName }: Props) {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -258,7 +259,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             )}
           </div>
           <div className="eyebrow">Carta de {restaurant.name}</div>
-          <h1>Ya estás listo para <em>activar tu carta</em></h1>
+          <h1>{ownerName ? `${ownerName}, ¿` : "¿"}Listo para activar tu <em>nueva</em> carta?</h1>
           <p className="subtitle">
             No es solo una carta bonita. Es una herramienta para mejorar la experiencia de tu restaurant, vender más y entender mejor a tus clientes.
           </p>
@@ -271,7 +272,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 {/* Top bar — separate from hero */}
                 <div className="screen-topbar">
                   <div className="screen-header-logo">
-                    {restaurant.logoUrl && <img src={restaurant.logoUrl} alt="" />}
+                    {restaurant.logoUrl ? <img src={restaurant.logoUrl} alt="" /> : <span style={{ fontSize: 7, fontWeight: 800, color: "var(--amber)" }}>{getInitials(restaurant.name)}</span>}
                   </div>
                   <div className="screen-header-name">{restaurant.name}</div>
                   <div className="screen-lang">
@@ -344,22 +345,52 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
 
           <div className="flow-arrow" />
 
-          <div className="offer" style={{ position: "relative", zIndex: 3, margin: "-4px 6px 0", textAlign: "left" }}>
-          <span style={{ position: "absolute", top: 16, right: 16, borderRadius: 999, padding: "8px 12px", background: "#dc2626", color: "#fff", fontSize: 11, fontWeight: 950, letterSpacing: ".5px" }}>14 días gratis</span>
-          <div style={{ color: "#C9BBA0", fontSize: 14, fontWeight: 950, letterSpacing: ".7px", textTransform: "uppercase" as const, marginBottom: 6 }}>Prueba plan Premium</div>
-          <div className="new-price">Gratis <small>por 14 días</small></div>
-          <div className="offer-text">
-            Activa multidioma, estadísticas, automatizaciones, capta cumpleaños y más.<br />Sin tarjeta, sin compromiso.
+          <div className="premium-offer">
+          <style dangerouslySetInnerHTML={{ __html: `
+.premium-offer{position:relative;z-index:3;margin:-4px 0 0;text-align:left;overflow:hidden;border-radius:22px;padding:20px 18px 18px;background:radial-gradient(circle at 70% 76%,rgba(245,173,50,.20),transparent 32%),radial-gradient(circle at 12% 95%,rgba(245,173,50,.18),transparent 30%),linear-gradient(145deg,#191817,#0d0d0c);border:1px solid rgba(245,173,50,.48);box-shadow:0 24px 70px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.03)}
+.premium-offer::before{content:"";position:absolute;inset:-60px;background:radial-gradient(circle at 50% 85%,rgba(255,184,56,.28),transparent 38%);filter:blur(18px);pointer-events:none}
+.premium-offer .po-content{position:relative;z-index:2}
+.premium-offer .po-top{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.premium-offer .po-eyebrow{display:flex;align-items:center;gap:8px;color:#c4b5fd;font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:.65rem;max-width:160px}
+.premium-offer .po-pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(245,173,50,.38);background:rgba(245,173,50,.08);color:#ffc85a;padding:8px 12px;border-radius:999px;font-weight:800;font-size:.78rem;box-shadow:0 0 24px rgba(245,173,50,.12);white-space:nowrap}
+.premium-offer h2{font-size:clamp(2.125rem,8.5vw,2.625rem);line-height:.96;font-weight:900;letter-spacing:-.03em;margin:28px 0 28px;font-family:Georgia,serif;color:#f5efe5;text-align:center}
+.premium-offer h2 span{color:#ffc85a;text-shadow:0 0 28px rgba(245,173,50,.25)}
+.premium-offer .po-lead{font-size:clamp(1.1rem,4.5vw,1.4rem);font-weight:700;margin-bottom:22px;color:rgba(255,255,255,.85)}
+.premium-offer .po-lead span{color:#f5ad32}
+.premium-offer .po-value{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;margin-bottom:18px}
+.premium-offer .po-orb{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#ffc85a;background:radial-gradient(circle,rgba(255,200,90,.22),rgba(245,173,50,.07));border:1px solid rgba(245,173,50,.34);box-shadow:inset 0 0 20px rgba(245,173,50,.1);font-size:1rem}
+.premium-offer .po-vtext{margin:0;color:rgba(255,255,255,.85);font-size:clamp(.95rem,3vw,1.15rem);line-height:1.45}
+.premium-offer .po-vtext strong{color:#ffc85a}
+.premium-offer .po-cta{width:100%;border:0;border-radius:999px;padding:14px 16px;background:linear-gradient(180deg,#ffd46b,#f5a72c);color:#080706;font-weight:900;font-size:clamp(.9rem,3vw,1.05rem);box-shadow:0 0 36px rgba(245,173,50,.38),inset 0 1px 0 rgba(255,255,255,.45);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:20px;cursor:pointer;transition:opacity .2s}
+.premium-offer .po-cta:disabled{opacity:.6;cursor:wait}
+.premium-offer .po-trust{display:flex;flex-direction:column;gap:8px;color:rgba(255,255,255,.6);font-size:.82rem}
+.premium-offer .po-trust-item{display:flex;align-items:center;gap:8px}
+.premium-offer .po-trust-item span:first-child{color:#ffc85a;font-size:1rem;flex-shrink:0}
+@media(min-width:768px){.premium-offer{border-radius:30px;padding:34px 34px 28px}.premium-offer .po-top{margin-bottom:32px;align-items:center}.premium-offer .po-eyebrow{font-size:.84rem;max-width:none;letter-spacing:.18em}.premium-offer .po-pill{padding:10px 18px;font-size:.85rem}.premium-offer .po-value{grid-template-columns:58px 1fr;gap:18px;margin-bottom:30px}.premium-offer .po-orb{width:58px;height:58px;font-size:1.45rem}.premium-offer .po-cta{padding:21px 26px}.premium-offer .po-trust{flex-direction:row;justify-content:center;gap:0;font-size:.9rem}.premium-offer .po-trust-item{justify-content:center;padding:0 16px}.premium-offer .po-trust-item+.po-trust-item{border-left:1px solid rgba(245,173,50,.32)}}
+          `}} />
+          <div className="po-content">
+            <div className="po-top">
+              <div className="po-eyebrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="#c4b5fd" style={{ flexShrink: 0 }}><path d="M6 3h12l5 8-11 13L1 11l5-8zm2.3 1.5L5.2 9.7h3.3l1.5-5.2H8.3zm7.4 0h-1.7l1.5 5.2h3.3L15.7 4.5zM12 5.3L10.6 9.7h2.8L12 5.3zm-6.5 5.7l6.5 8.1 6.5-8.1H5.5z"/></svg> Plan Premium</div>
+              <div className="po-pill">🎁 14 días gratis</div>
+            </div>
+
+            <h2>Activa y publica tu <span>nueva carta</span></h2>
+
+            <div className="po-value">
+              <div className="po-orb">✨</div>
+              <p className="po-vtext">Sin tarjeta, sin compromiso. Activamos tu carta <strong>de inmediato</strong>.</p>
+            </div>
+
+            {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
+            {!done ? (
+              <button className="po-cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
+                ⚡ {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar carta gratis"}
+              </button>
+            ) : (
+              <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
+            )}
+
           </div>
-          {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
-          {!done ? (
-            <button className="cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar gratis por 14 días"}
-            </button>
-          ) : (
-            <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
-          )}
-          <div style={{ marginTop: 12, textAlign: "center", color: "var(--gray-warm)", fontSize: 12 }}>Al terminar puedes continuar o pasar al plan gratuito.</div>
         </div>
         </div>{/* end activation-flow */}
         </section>{/* end hero */}
@@ -531,7 +562,7 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
                 opacity: loading ? 0.6 : 1,
               }}
             >
-              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Probar Premium gratis"}
+              {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar gratis"}
             </button>
           ) : (
             <div className="done-msg"><p>Activado. Redirigiendo a tu panel...</p></div>
