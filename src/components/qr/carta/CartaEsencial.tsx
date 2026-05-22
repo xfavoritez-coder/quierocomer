@@ -347,6 +347,20 @@ export default function CartaEsencial({
   /* ─── active category data for hero ─── */
   const activeCat = useMemo(() => categories.find((c) => c.id === activeCategory), [categories, activeCategory]);
 
+  /* ─── hero rotation ─── */
+  const heroDishes = useMemo(() => {
+    const rec = dishes.filter(d => d.tags?.includes("RECOMMENDED"));
+    const pop = dishes.filter(d => popularDishIds.has(d.id) && !rec.some(r => r.id === d.id));
+    const pool = [...rec, ...pop];
+    return pool.length > 0 ? pool.slice(0, 5) : dishes.slice(0, 3);
+  }, [dishes, popularDishIds]);
+  const [heroIdx, setHeroIdx] = useState(0);
+  useEffect(() => {
+    if (heroDishes.length <= 1) return;
+    const timer = setInterval(() => setHeroIdx(i => (i + 1) % heroDishes.length), 5000);
+    return () => clearInterval(timer);
+  }, [heroDishes.length]);
+
   /* ─── onReady ─── */
   useEffect(() => { onReady?.(); }, [readyKey]);
 
@@ -452,9 +466,9 @@ export default function CartaEsencial({
         </div>
       </header>
 
-      {/* ══════ HERO — featured dish card ══════ */}
+      {/* ══════ HERO — featured dish card (rotates) ══════ */}
       {(() => {
-        const heroDish = topPopular[0] || dishes[0];
+        const heroDish = heroDishes[heroIdx];
         if (!heroDish) return null;
         return (
           <section style={{ padding: "20px 18px 12px" }}>
@@ -507,17 +521,30 @@ export default function CartaEsencial({
               <p style={{
                 fontSize: 16, color: C.muted, lineHeight: 1.55, maxWidth: 340, margin: 0,
                 fontFamily: "system-ui, -apple-system, sans-serif",
+                display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
               }}>
                 {heroDish.description || "El favorito de la casa."}
               </p>
-              {/* price */}
-              <strong style={{
-                fontFamily: "Georgia, 'Times New Roman', serif",
-                fontSize: 20, lineHeight: 1, color: C.ink,
-                display: "block", marginTop: 22,
-              }}>
-                ${(heroDish.discountPrice || heroDish.price)?.toLocaleString("es-CL")}
-              </strong>
+              {/* price + dots */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 22 }}>
+                <strong style={{
+                  fontFamily: "Georgia, 'Times New Roman', serif",
+                  fontSize: 20, lineHeight: 1, color: C.ink,
+                }}>
+                  ${(heroDish.discountPrice || heroDish.price)?.toLocaleString("es-CL")}
+                </strong>
+                {heroDishes.length > 1 && (
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {heroDishes.map((_, i) => (
+                      <div key={i} style={{
+                        width: i === heroIdx ? 12 : 5, height: 5, borderRadius: 3,
+                        background: i === heroIdx ? C.gold : isDark ? "rgba(212,168,75,0.3)" : "rgba(184,137,53,0.25)",
+                        transition: "all 0.3s ease",
+                      }} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         );
