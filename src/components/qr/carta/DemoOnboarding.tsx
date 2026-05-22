@@ -34,7 +34,7 @@ const STEPS: Step[] = [
   {
     icon: "🧞",
     title: "¡Hola! Soy el Genio",
-    body: "Te mostraré en 3 pasos tu nueva carta. ¿Listo?",
+    body: "Te mostraré tu nueva carta en 4 pasos. ¿Listo?",
     showOverlay: true,
     overlayOpacity: 0.72,
     buttonLabel: "Sí, vamos",
@@ -44,15 +44,21 @@ const STEPS: Step[] = [
     title: "Así quedaría tu carta",
     body: "", // set dynamically based on allPhotosReferential
     showOverlay: false,
-    overlayOpacity: 0.5,
-    overlayStyle: "vignette",
+    buttonLabel: "Siguiente",
+  },
+  {
+    icon: "✨",
+    title: "¿Sin fotos? No hay problema",
+    body: "Esta vista se llama Esencial. Ideal para comenzar. Es como tu carta física pero con los poderes de una carta QR inteligente.",
+    showOverlay: false,
     buttonLabel: "Siguiente",
   },
   {
     icon: "🎨",
-    title: "Cambia de vista",
-    body: "Tienes 3 vistas para que tus clientes disfruten de una mejor experiencia: Lista, Esencial e Impact",
+    title: "Y con fotos, mira cómo se ve",
+    body: "La vista Impact destaca tus platos con un diseño visual que invita a pedir más.",
     showOverlay: false,
+    buttonLabel: "Traducir",
   },
   {
     icon: "🌍",
@@ -128,7 +134,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Skip if sessionStorage has qc_onboarding_step (= intentional reload for lang switch)
   useEffect(() => {
     if (showcaseMode || gone) return;
-    const stepNames = ["intro", "fotos", "vistas", "idioma", "listo"];
+    const stepNames = ["intro", "fotos", "esencial", "impact", "idioma", "listo"];
     const handleVisibility = () => {
       if (document.visibilityState !== "hidden") return;
       if (sessionStorage.getItem("qc_onboarding_step")) return; // intentional reload, not abandonment
@@ -174,14 +180,13 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         }
         // Scroll so the category nav sits at the top of the viewport
         delay(300, () => {
-          const firstCat = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[id^='cat-']");
+          const firstCat = document.querySelector("[id^='impact-cat-']") || document.querySelector("[id^='lista-cat-']") || document.querySelector("[id^='cat-']") || document.querySelector("[id^='esencial-cat-']");
           if (firstCat) {
             const top = firstCat.getBoundingClientRect().top + window.scrollY - 48;
             window.scrollTo({ top, behavior: "smooth" });
           } else {
             const catNav = document.querySelector("[data-category-nav]");
             if (catNav) {
-              // Find the nav's offset in the document flow (not sticky position)
               let el: HTMLElement | null = catNav as HTMLElement;
               let offset = 0;
               while (el) { offset += el.offsetTop; el = el.offsetParent as HTMLElement | null; }
@@ -193,34 +198,42 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         });
         break;
       case 2:
-        // Change to Impact view
+        // Change to Esencial view (light mode) — for restaurants without photos
+        localStorage.setItem("qc_theme_override", "light");
+        window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "esencial" } }));
+        delay(400, () => window.scrollTo({ top: 0, behavior: "smooth" }));
+        break;
+      case 3:
+        // Change to Impact view (dark mode) — for restaurants with photos
+        localStorage.setItem("qc_theme_override", "dark");
+        const container = document.querySelector(".carta-dark, .carta-light");
+        if (container) { container.classList.remove("carta-light"); container.classList.add("carta-dark"); }
         window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "impact" } }));
         delay(600, () => {
           const menu = document.querySelector("[data-section='menu']") || document.querySelector("[data-section='mood']");
           if (menu) menu.scrollIntoView({ behavior: "smooth", block: "start" });
         });
         break;
-      case 3:
+      case 4:
         // Navigate to English — show loading overlay while page reloads
         if (!window.location.search.includes("lang=en")) {
-          // Show translating overlay
           const overlay = document.createElement("div");
           overlay.id = "onboarding-translating";
           overlay.style.cssText = "position:fixed;inset:0;z-index:9980;background:rgba(0,0,0,0.82);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;";
           overlay.innerHTML = '<span style="font-family:var(--font-dm,sans-serif);font-size:0.95rem;font-weight:600;color:rgba(255,255,255,0.35);letter-spacing:0.02em">Traduciendo carta…</span>';
           document.body.appendChild(overlay);
           delay(400, () => {
-            sessionStorage.setItem("qc_onboarding_step", "3");
+            sessionStorage.setItem("qc_onboarding_step", "4");
             const url = new URL(window.location.href);
             url.searchParams.set("lang", "en");
             window.location.href = url.toString();
           });
         }
         break;
-      case 4:
+      case 5:
         // Last step — restore Spanish, highlight activate
         if (window.location.search.includes("lang=")) {
-          sessionStorage.setItem("qc_onboarding_step", "4");
+          sessionStorage.setItem("qc_onboarding_step", "5");
           const url = new URL(window.location.href);
           url.searchParams.delete("lang");
           window.location.href = url.toString();
@@ -240,7 +253,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         return s;
       }
       if (!showcaseMode) {
-        const stepNames = ["start", "fotos", "vistas", "idioma", "done"];
+        const stepNames = ["start", "fotos", "esencial", "impact", "idioma", "done"];
         trackFunnelEventBySlug(restaurantSlug, `onboard_step_${next}`, { stepName: stepNames[next] || `step_${next}` });
       }
       if (STEPS[next].showOverlay) { setMinimized(false); setMinimizing(false); }
@@ -256,7 +269,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     setStep(s => {
       if (s <= 0) return s;
       // If going back from translated step, restore Spanish
-      if ((s === 3 || s === 4) && window.location.search.includes("lang=en")) {
+      if ((s === 4 || s === 5) && window.location.search.includes("lang=en")) {
         sessionStorage.setItem("qc_onboarding_step", String(s - 1));
         const url = new URL(window.location.href);
         url.searchParams.delete("lang");
@@ -340,11 +353,12 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   // Showcase overrides: adapt copy for visitors from quierocomer.cl
   const current = showcaseMode ? {
     ...baseStep,
-    ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro en 3 pasos cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
+    ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
-    ...(step === 2 && { title: "Y esta vista se llama Impact", body: "La carta cuenta con 3 distintas." }),
-    ...(step === 3 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
-    ...(step === 4 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
+    ...(step === 2 && { title: "Funciona incluso sin fotos", body: "La vista Esencial es profesional y lista para usar. Perfecta para comenzar al instante." }),
+    ...(step === 3 && { title: "Y con fotos, mira cómo se ve", body: "La vista Impact destaca los platos con un diseño visual que invita a pedir más." }),
+    ...(step === 4 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
+    ...(step === 5 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
   const stepBody = step === 1
     ? (showcaseMode
@@ -413,9 +427,11 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
             lineHeight: 1.45, margin: "6px 0 14px",
           }} dangerouslySetInnerHTML={{ __html: stepBody as string }} />
 
-          {/* Bottom: dots + nav */}
+          {/* Bottom: step counter + dots + nav */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", gap: 3 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: isLightStep ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.35)", fontFamily: "system-ui, sans-serif" }}>{step >= 1 && step <= 4 ? `${step} de 4` : ""}</span>
+              <div style={{ display: "flex", gap: 3 }}>
               {STEPS.map((_, i) => (
                 <div key={i} style={{
                   width: i === step ? 10 : 4, height: 4, borderRadius: 2,
@@ -423,6 +439,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                   transition: "all 0.2s ease",
                 }} />
               ))}
+              </div>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
               {showcaseMode && (
@@ -575,8 +592,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
 
         {/* Progress + Actions */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          {/* Dots */}
-          <div style={{ display: "flex", gap: 4 }}>
+          {/* Step counter + Dots */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "rgba(255,255,255,0.35)", fontFamily: "system-ui, sans-serif" }}>{step >= 1 && step <= 4 ? `${step} de 4` : ""}</span>
+            <div style={{ display: "flex", gap: 4 }}>
             {STEPS.map((_, i) => (
               <div
                 key={i}
@@ -589,6 +608,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 }}
               />
             ))}
+            </div>
           </div>
 
           {/* Buttons */}

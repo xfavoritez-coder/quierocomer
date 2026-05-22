@@ -1098,21 +1098,21 @@ export default function CartaImpact({
               {restaurant.name?.charAt(0)?.toUpperCase() || "Q"}
             </div>
           )}
-          <span style={{ fontWeight: 800, fontSize: 17, color: showFixedCatNav ? "var(--carta-text)" : "white", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
+          <span style={{ fontWeight: 800, fontSize: 17, color: showFixedCatNav ? "var(--carta-text)" : "var(--carta-text, white)", letterSpacing: "-0.3px", transition: "color 0.3s ease" }}>
             {restaurant.name}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => { setSearchOpen(true); setTimeout(() => document.getElementById("impact-search-input")?.focus(), 100); }}
-            style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid rgba(255,255,255,0.18)", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "rgba(255,255,255,0.08)", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)", transition: "all 0.3s ease" }}
+            style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", display: "grid", placeItems: "center", cursor: "pointer", backdropFilter: "blur(10px)", transition: "all 0.3s ease" }}
           >
-            <Search size={15} color={showFixedCatNav ? "var(--carta-text)" : "white"} />
+            <Search size={15} color="var(--carta-text, white)" />
           </button>
           {enabledLangs.length > 1 && (
             <div style={{ position: "relative" }}>
-              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid rgba(255,255,255,0.18)", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "rgba(255,255,255,0.08)", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
-                {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "#fff", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
+              <button onClick={() => setLangOpen(!langOpen)} style={{ width: 38, height: 38, borderRadius: "50%", border: showFixedCatNav ? "1px solid var(--impact-chip-inactive-border)" : "1px solid var(--impact-chip-inactive-border, rgba(255,255,255,0.18))", background: showFixedCatNav ? "var(--impact-chip-inactive-bg)" : "var(--impact-chip-inactive-bg, rgba(255,255,255,0.08))", backdropFilter: "blur(10px)", cursor: "pointer", display: "grid", placeItems: "center", transition: "all 0.3s ease" }}>
+                {LANG_FLAG_IMG[lang] ? <img src={LANG_FLAG_IMG[lang]} alt={lang} style={{ width: 22, height: 22, objectFit: "cover", borderRadius: "50%" }} /> : <span style={{ color: "var(--carta-text, #fff)", fontSize: 11, fontWeight: 900 }}>{lang.toUpperCase()}</span>}
               </button>
               <div style={{
                   position: "absolute", top: "calc(100% + 8px)", right: 0, background: "rgba(0,0,0,0.9)",

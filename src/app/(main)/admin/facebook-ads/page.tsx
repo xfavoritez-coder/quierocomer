@@ -554,7 +554,7 @@ export default function FacebookAdsPage() {
                           <span style={{ fontSize: 14, fontWeight: 600, color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#ccc", transition: "color 1.5s" }}>{name}</span>
                           <span style={{ fontSize: 13, color: "#888" }}>{c.visits}</span>
                           {c.subircarta > 0 && <span style={{ fontSize: 13, color: "#F4A623" }}>{c.subircarta} /sc</span>}
-                          {c.converted > 0 && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 700 }}>{c.converted} conv</span>}
+                          {c.converted > 0 && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 700 }}>{c.converted} conv ({Math.round((c.converted / c.visits) * 100)}%)</span>}
                           <span style={{ fontSize: 13, color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
                         </div>
                         {(() => {

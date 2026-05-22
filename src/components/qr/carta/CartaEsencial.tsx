@@ -200,6 +200,16 @@ export default function CartaEsencial({
     cursor: "pointer", color: C.ink, textDecoration: "none",
   };
 
+  /* ─── onboarding active detection ─── */
+  const [onboardingActive, setOnboardingActive] = useState(false);
+  useEffect(() => {
+    const check = () => setOnboardingActive(document.body.hasAttribute("data-demo-onboarding"));
+    check();
+    const obs = new MutationObserver(check);
+    obs.observe(document.body, { attributes: true, attributeFilter: ["data-demo-onboarding"] });
+    return () => obs.disconnect();
+  }, []);
+
   /* ─── lang dropdown ─── */
   const [langOpen, setLangOpen] = useState(false);
 
@@ -373,7 +383,7 @@ export default function CartaEsencial({
       background: C.gradient,
       fontFamily: "Georgia, 'Times New Roman', serif",
       color: C.ink,
-      paddingTop: (restaurant as any).isDemo ? 115 : 0,
+      paddingTop: (restaurant as any).isDemo && !onboardingActive ? 115 : 0,
     }}>
 
       {/* ══════ STICKY HEADER ══════ */}
@@ -392,7 +402,7 @@ export default function CartaEsencial({
           {/* logo circle */}
           <div style={{
             width: 30, height: 30, borderRadius: "50%",
-            background: C.green, display: "flex", alignItems: "center", justifyContent: "center",
+            background: isDark ? "#1a211c" : "#10251a", display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, overflow: "hidden",
             boxShadow: "none",
           }}>
@@ -418,6 +428,11 @@ export default function CartaEsencial({
           </div>
         </div>
         <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+          {(restaurant as any).website && (
+            <a href={(restaurant as any).website} target="_blank" rel="noopener noreferrer" style={circleBtn}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </a>
+          )}
           {(restaurant as any).instagramUrl && (
             <a href={(restaurant as any).instagramUrl} target="_blank" rel="noopener noreferrer" style={circleBtn}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
@@ -629,7 +644,7 @@ export default function CartaEsencial({
 
       {/* ══════ CATEGORY PILLS ══════ */}
       <nav ref={catScrollRef} style={{
-        position: "sticky", top: (restaurant as any).isDemo ? 115 : 0, zIndex: 15,
+        position: onboardingActive ? "relative" : "sticky", top: onboardingActive ? undefined : ((restaurant as any).isDemo ? 115 : 0), zIndex: 15,
         display: "flex", gap: 10, overflowX: "auto", padding: "12px 18px 14px",
         scrollbarWidth: "none", msOverflowStyle: "none" as any,
         WebkitOverflowScrolling: "touch" as any,

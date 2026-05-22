@@ -15,7 +15,7 @@ interface Props {
  * Slim banner for demo restaurants. Always visible at the top.
  * Shows in both carta and panel views when restaurant.isDemo is true.
  */
-const TOTAL_ONBOARDING_STEPS = 5;
+const TOTAL_ONBOARDING_STEPS = 6;
 
 export default function DemoBanner({ restaurantName, restaurantSlug, restaurantLogo, context, onActivate }: Props) {
   const [showTip, setShowTip] = useState(false);

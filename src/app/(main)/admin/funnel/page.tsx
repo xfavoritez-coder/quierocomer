@@ -477,14 +477,15 @@ function OnboardBlock({ events }: { events: any[] }) {
   const steps = events.filter((e: any) => e.action?.startsWith("onboard_step_"));
   const done = events.find((e: any) => e.action === "onboard_done");
   const abandoned = events.find((e: any) => e.action === "abandoned_onboarding");
-  const totalSteps = 5;
+  const totalSteps = 6;
   const completedSteps = done ? totalSteps : steps.length;
   const isComplete = !!done;
 
   const allSteps = [
     { label: "Inicio", event: start },
     { label: "Fotos", event: steps.find((e: any) => e.stepName === "fotos") },
-    { label: "Vistas", event: steps.find((e: any) => e.stepName === "vistas") },
+    { label: "Esencial", event: steps.find((e: any) => e.stepName === "esencial") },
+    { label: "Impact", event: steps.find((e: any) => e.stepName === "impact") },
     { label: "Idioma", event: steps.find((e: any) => e.stepName === "idioma") },
     { label: "Listo", event: done },
   ];
