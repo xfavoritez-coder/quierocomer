@@ -58,7 +58,7 @@ const STEPS: Step[] = [
     title: "Y con fotos, mira cómo se ve",
     body: "La vista Impact destaca tus platos con un diseño visual que invita a pedir más.",
     showOverlay: false,
-    buttonLabel: "Traducir",
+    buttonLabel: "Último paso",
   },
   {
     icon: "🌍",
