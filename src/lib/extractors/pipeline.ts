@@ -609,14 +609,14 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
         const waTrackUrl = `${baseUrl}/api/funnel/track/wa-click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+        const msg = buildCartaReadyMessage({
+          ownerName,
+          restaurantName: restaurant.name,
+          trackUrl: waTrackUrl,
+        });
         const sid = await sendWhatsApp({
           to: lead.whatsapp,
-          body: buildCartaReadyMessage({
-            ownerName,
-            restaurantName: restaurant.name,
-            cartaUrl,
-            trackUrl: waTrackUrl,
-          }),
+          ...msg,
         });
         if (sid) {
           await prisma.lead.update({ where: { id: leadId }, data: { whatsappSentAt: new Date() } });
