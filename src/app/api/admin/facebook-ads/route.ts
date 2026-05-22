@@ -60,9 +60,7 @@ export async function GET(req: NextRequest) {
       if (landed) return true;
       return flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
     };
-    const visitedSubircarta = landingSessions.filter((s) =>
-      flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
-    ).length;
+    const visitedSubircarta = filteredSessions.filter((s) => sessionVisitedSubircarta(s)).length;
 
     // Logo clicks: sessions where user clicked a restaurant logo (href contains /qr/)
     const logoClicks: Record<string, number> = {};
@@ -181,7 +179,7 @@ export async function GET(req: NextRequest) {
         avgScroll,
         avgInteractions,
         visitedSubircarta,
-        visitedSubircartaRate: pct(visitedSubircarta, landingSessions.length || totalSessions),
+        visitedSubircartaRate: pct(visitedSubircarta, totalSessions),
         mobile,
         desktop,
       },
