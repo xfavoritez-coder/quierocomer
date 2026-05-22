@@ -125,16 +125,17 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   }, []);
 
   // Abandonment tracking — beacon on page close during onboarding
+  // Skip if sessionStorage has qc_onboarding_step (= intentional reload for lang switch)
   useEffect(() => {
     if (showcaseMode || gone) return;
     const stepNames = ["intro", "fotos", "vistas", "idioma", "listo"];
-    const handleAbandon = () => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== "hidden") return;
+      if (sessionStorage.getItem("qc_onboarding_step")) return; // intentional reload, not abandonment
       if (step >= 0 && step < STEPS.length) {
         beaconFunnelEvent(restaurantSlug, "abandoned_onboarding", { atStep: step, stepName: stepNames[step] || `step_${step}` });
       }
     };
-    // visibilitychange catches tab close + navigate away on mobile
-    const handleVisibility = () => { if (document.visibilityState === "hidden") handleAbandon(); };
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [step, gone, showcaseMode, restaurantSlug]);
