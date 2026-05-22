@@ -599,7 +599,7 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center" }}>
-            <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se verá tu panel · Al activar queda todo en cero</span>
+            <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se verá tu panel · Pusimos números ficticios</span>
             <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Así se verá tu panel</span>
             <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }
 .demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
