@@ -10,14 +10,17 @@ export async function GET(req: NextRequest) {
   const url = req.nextUrl.searchParams.get("url");
 
   if (lid) {
-    prisma.lead.update({
-      where: { id: lid },
-      data: {
-        whatsappClickedAt: new Date(),
-        // Only set openedVia if not already set (first wins)
-        ...(!await prisma.lead.findUnique({ where: { id: lid }, select: { openedVia: true } }).then(l => l?.openedVia) ? { openedVia: "whatsapp" } : {}),
-      },
-    }).catch(() => {});
+    // Only record click if WhatsApp was actually sent
+    const lead = await prisma.lead.findUnique({ where: { id: lid }, select: { whatsappSentAt: true, openedVia: true } }).catch(() => null);
+    if (lead?.whatsappSentAt) {
+      prisma.lead.update({
+        where: { id: lid },
+        data: {
+          whatsappClickedAt: new Date(),
+          ...(!lead.openedVia ? { openedVia: "whatsapp" } : {}),
+        },
+      }).catch(() => {});
+    }
   }
 
   return NextResponse.redirect(url || "https://quierocomer.cl", { status: 302 });

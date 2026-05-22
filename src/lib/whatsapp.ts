@@ -67,7 +67,14 @@ export async function sendWhatsApp({ to, body, contentSid, contentVariables }: S
       return null;
     }
 
-    console.log(`[WhatsApp] Message sent to ${to}: SID ${data.sid}`);
+    // Twilio acepta el mensaje pero puede fallar despues (template no aprobado, etc.)
+    // Status "failed" o "undelivered" significa que no se envio realmente
+    if (data.status === "failed" || data.status === "undelivered") {
+      console.warn(`[WhatsApp] Message not delivered to ${to}: status=${data.status}, error=${data.error_code}`);
+      return null;
+    }
+
+    console.log(`[WhatsApp] Message queued to ${to}: SID ${data.sid}, status=${data.status}`);
     return data.sid;
   } catch (err) {
     console.error("[WhatsApp] Send failed:", (err as Error).message);
