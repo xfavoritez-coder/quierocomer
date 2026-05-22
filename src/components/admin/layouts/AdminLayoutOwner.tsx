@@ -396,6 +396,13 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
             zoom: 1.03;
           }
         }
+
+        /* Landscape on mobile: hide chrome, full content */
+        @media (max-width: 767px) and (orientation: landscape) {
+          .owl-mobile-header { display: none; }
+          .owl-bottom-nav { display: none; }
+          .owl-main { padding: 12px 16px 12px; min-height: 100vh; }
+        }
       `}</style>
     </div>
   );
