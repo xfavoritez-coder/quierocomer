@@ -183,14 +183,16 @@ export async function GET(req: NextRequest) {
       const doctorAttempts = events.filter((e: any) => e.action?.startsWith("doctor_")).length;
 
       // After 8 doctor interactions total, auto-escalate
-      if (doctorAttempts >= 8) {
+      // 3 corridas max del doctor, cada corrida puede usar varias tools
+      const doctorRuns = events.filter((e: any) => e.action === "doctor_run_summary" || e.action === "doctor_escalated").length;
+      if (doctorRuns >= 3) {
         await prisma.lead.update({
           where: { id: lead.id },
           data: {
             events: {
               push: {
                 action: "doctor_escalated",
-                reason: `Agotó ${doctorAttempts} intentos del doctor sin solución. Requiere intervención humana.`,
+                reason: `Agotó 3 corridas del doctor sin solución. Requiere intervención humana.`,
                 ts: new Date().toISOString(),
               },
             },
@@ -277,7 +279,7 @@ Investiga y arregla este lead. Empieza verificando la URL.`;
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: 1500,
         system: SYSTEM_PROMPT,
         tools: TOOLS,
