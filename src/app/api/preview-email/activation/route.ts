@@ -11,6 +11,7 @@ export async function GET() {
     panelLink: "https://quierocomer.cl/panel",
     qrLink: "https://quierocomer.cl/qr/sushi-master",
     credentials: { email: "dc_daniel_carrizo@hotmail.com", password: "sushi-master2026" },
+    planLabel: "Plan Gold activo",
   });
 
   return new NextResponse(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
@@ -22,130 +23,205 @@ export function activationWelcomeEmailHtml({
   panelLink,
   qrLink,
   credentials,
+  planLabel,
 }: {
   ownerName: string;
   restaurantName: string;
   panelLink: string;
   qrLink: string;
   credentials?: { email: string; password: string };
+  planLabel?: string;
 }): string {
-  const initials = restaurantName.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
 
   return `<html><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body style="background-color:#fefefe;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:0;-webkit-text-size-adjust:100%">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:560px;margin:0 auto;padding:32px 14px">
+<body style="background-color:#fbf6ec;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;margin:0;padding:0;-webkit-text-size-adjust:100%">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:430px;margin:0 auto;padding:24px 16px 32px">
 <tr><td>
 
-<!-- Celebration header -->
+<!-- Celebration icon -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:24px">
-  <p style="font-size:48px;margin:0;line-height:1">🎉</p>
+<tr><td style="text-align:center;padding-bottom:16px">
+  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td width="46" height="46" style="width:46px;height:46px;border-radius:50%;background:#ffffff;text-align:center;vertical-align:middle;font-size:24px;box-shadow:0 12px 30px rgba(120,80,20,0.12)">🎉</td>
+  </tr></table>
 </td></tr>
 </table>
 
 <!-- Main card -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#f9f6f0;border-radius:20px;border:1px solid #e8dcc4">
-<tr><td style="padding:32px 24px">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color:#fffaf1;border-radius:28px;border:1px solid #ead7b7;box-shadow:0 24px 70px rgba(70,45,10,0.10)">
+<tr><td style="padding:28px 22px 24px">
 
-<!-- Welcome title -->
+<!-- Eyebrow badge -->
+${planLabel ? `
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-bottom:6px">
-<h1 style="color:#1a1a1a;font-size:26px;margin:0;font-family:Georgia,serif;line-height:1.2">
-  Bienvenido, ${ownerName}
-</h1>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:24px">
-<p style="color:#8a7550;font-size:16px;line-height:1.6;margin:0">
-  <strong style="color:#e8930a">${restaurantName}</strong> ya está activo.<br/>Es hora de mostrarlo al mundo.
-</p>
-</td></tr>
-</table>
-
-<!-- Divider -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="padding-bottom:22px"><div style="width:40px;height:2px;background:#e8930a;margin:0 auto;border-radius:1px"></div></td></tr>
-</table>
-
-${credentials ? `
-<!-- Credentials box -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #e8dcc4;border-radius:14px;margin-bottom:22px">
-<tr><td style="padding:18px 20px">
-  <p style="color:#92400e;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 12px">Tus datos de acceso</p>
-  <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr>
-      <td style="color:#8a7550;font-size:13px;padding:4px 0;width:90px;vertical-align:top">Email</td>
-      <td style="color:#1a1a1a;font-size:13px;padding:4px 0;font-weight:700">${credentials.email}</td>
-    </tr>
-    <tr>
-      <td style="color:#8a7550;font-size:13px;padding:4px 0;width:90px;vertical-align:top">Contraseña</td>
-      <td style="color:#1a1a1a;font-size:13px;padding:4px 0;font-weight:700">${credentials.password}</td>
-    </tr>
-  </table>
-  <p style="color:#b8a888;font-size:11px;margin:10px 0 0;line-height:1.4">Te recomendamos cambiarla en tu primer ingreso.</p>
+<tr><td style="text-align:center;padding-bottom:16px">
+  <table cellpadding="0" cellspacing="0" border="0" align="center"><tr>
+    <td style="background:#fff3d8;color:#9a5a00;font-size:12px;font-weight:800;letter-spacing:0.04em;text-transform:uppercase;padding:8px 13px;border-radius:50px">
+      ✨ ${planLabel}
+    </td>
+  </tr></table>
 </td></tr>
 </table>
 ` : ""}
 
-<!-- Steps -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #e8dcc4;border-radius:14px;margin-bottom:24px">
-<tr><td style="padding:18px 20px">
-  <p style="color:#92400e;font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.12em;margin:0 0 14px">Tus próximos pasos</p>
-  <table cellpadding="0" cellspacing="0" border="0" width="100%">
-    <tr><td style="padding:8px 0;vertical-align:top;width:32px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr><td style="width:26px;height:26px;border-radius:50%;background:#e8930a;color:#fff;font-size:12px;font-weight:900;text-align:center;vertical-align:middle">1</td></tr></table>
-    </td><td style="padding:8px 0;padding-left:10px;vertical-align:middle">
-      <p style="color:#1a1a1a;font-size:14px;margin:0;font-weight:700">Sube tus fotos reales</p>
-      <p style="color:#8a7550;font-size:13px;margin:2px 0 0">Desde tu panel puedes subir las fotos de tus platos</p>
-    </td></tr>
-    <tr><td style="padding:8px 0;vertical-align:top;width:32px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr><td style="width:26px;height:26px;border-radius:50%;background:#e8930a;color:#fff;font-size:12px;font-weight:900;text-align:center;vertical-align:middle">2</td></tr></table>
-    </td><td style="padding:8px 0;padding-left:10px;vertical-align:middle">
-      <p style="color:#1a1a1a;font-size:14px;margin:0;font-weight:700">Revisa precios y descripciones</p>
-      <p style="color:#8a7550;font-size:13px;margin:2px 0 0">Edita lo que necesites, los cambios se ven al instante</p>
-    </td></tr>
-    <tr><td style="padding:8px 0;vertical-align:top;width:32px">
-      <table cellpadding="0" cellspacing="0" border="0"><tr><td style="width:26px;height:26px;border-radius:50%;background:#e8930a;color:#fff;font-size:12px;font-weight:900;text-align:center;vertical-align:middle">3</td></tr></table>
-    </td><td style="padding:8px 0;padding-left:10px;vertical-align:middle">
-      <p style="color:#1a1a1a;font-size:14px;margin:0;font-weight:700">Imprime tu QR y ponlo en las mesas</p>
-      <p style="color:#8a7550;font-size:13px;margin:2px 0 0">Descarga tu código QR desde el panel</p>
-    </td></tr>
-  </table>
-</td></tr>
-</table>
-
-<!-- CTA buttons -->
+<!-- Title -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
 <tr><td style="text-align:center;padding-bottom:10px">
-  <a href="${panelLink}" style="display:block;background:#e8930a;color:#ffffff;font-size:16px;font-weight:900;padding:15px 0;border-radius:12px;text-decoration:none;letter-spacing:0.3px;font-family:Georgia,serif;text-align:center;max-width:300px;margin:0 auto">
-    Entrar a mi panel →
-  </a>
-</td></tr>
-<tr><td style="text-align:center;padding-bottom:20px">
-  <a href="${qrLink}" style="display:block;background:transparent;color:#8a7550;font-size:14px;font-weight:700;padding:12px 0;border-radius:12px;text-decoration:none;border:2px solid #e8dcc4;font-family:Georgia,serif;text-align:center;max-width:300px;margin:0 auto">
-    Ver mi carta digital
-  </a>
+<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:35px;line-height:1.02;letter-spacing:-0.03em;margin:0;color:#111111">
+  ${restaurantName} ya está listo
+</h1>
 </td></tr>
 </table>
 
-<!-- Support -->
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #e8dcc4">
-<tr><td style="padding-top:18px;text-align:center">
-  <p style="color:#b8a888;font-size:13px;line-height:1.55;margin:0">
-    ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#e8930a;text-decoration:underline">Contáctanos</a>
-  </p>
-</td></tr>
-</table>
-
-</td></tr>
-</table>
-
-<!-- Footer -->
+<!-- Lead text -->
 <table cellpadding="0" cellspacing="0" border="0" width="100%">
-<tr><td style="text-align:center;padding-top:28px">
-<p style="color:#b8a888;font-size:12px;margin:0">QuieroComer.cl · 2026</p>
+<tr><td style="text-align:center;padding-bottom:22px">
+<p style="font-size:15px;color:#7a6547;line-height:1.55;margin:0">
+  ${ownerName}, tu nueva carta QR Inteligente ya está activa. Te recomendamos revisarla para dejarla lista y comenzar a aumentar tus ventas y mejorar la experiencia de tus clientes.
+</p>
+</td></tr>
+</table>
+
+<!-- Primary CTA -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-bottom:12px">
+  <a href="${qrLink}" style="display:block;background:#f7a400;color:#ffffff;font-size:16px;font-weight:800;padding:18px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;box-shadow:0 14px 26px rgba(242,154,0,0.28)">
+    Ver cómo se ve mi carta →
+  </a>
+</td></tr>
+<tr><td style="text-align:center;padding-bottom:8px">
+  <a href="${panelLink}" style="display:block;background:#fffaf1;color:#6c4d22;font-size:16px;font-weight:800;padding:16px 0;border-radius:17px;text-decoration:none;text-align:center;max-width:340px;margin:0 auto;border:1px solid #ead7b7">
+    Entrar al panel
+  </a>
+</td></tr>
+<tr><td style="padding-bottom:22px"></td></tr>
+</table>
+
+${credentials ? `
+<!-- Credentials card -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#f0ebe0;border:1px solid #ead7b7;border-radius:22px;margin-bottom:22px">
+<tr><td style="padding:22px 20px">
+  <table cellpadding="0" cellspacing="0" border="0" width="100%">
+    <tr><td style="text-align:center;padding-bottom:14px">
+      <span style="font-size:22px">🔐</span>
+    </td></tr>
+    <tr><td style="text-align:center;padding-bottom:16px">
+      <p style="font-size:12px;letter-spacing:0.1em;text-transform:uppercase;font-weight:800;color:#92400e;margin:0">Tus datos de acceso</p>
+    </td></tr>
+  </table>
+
+  <!-- Email -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:8px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Email</p>
+      <p style="font-size:14px;color:#111;font-weight:700;margin:0;word-break:break-word">${credentials.email}</p>
+    </td>
+  </tr>
+  </table>
+
+  <!-- Password -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#fffaf1;border:1px solid #ead7b7;border-radius:12px;margin-bottom:12px">
+  <tr>
+    <td style="padding:12px 14px">
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;color:#92400e;margin:0 0 4px">Contraseña</p>
+      <p style="font-size:14px;color:#111;font-weight:700;margin:0;font-family:monospace,sans-serif;letter-spacing:0.5px">${credentials.password}</p>
+    </td>
+  </tr>
+  </table>
+
+  <p style="color:#8a724f;font-size:11px;margin:0;line-height:1.45;text-align:center">Te recomendamos cambiarla en tu primer ingreso al panel.</p>
+</td></tr>
+</table>
+` : ""}
+
+<!-- Steps card -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:rgba(255,255,255,0.44);border:1px solid #ead7b7;border-radius:24px">
+<tr><td style="padding:20px 18px 18px">
+  <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;font-weight:900;color:#e78d00;margin:0 0 6px">Completa tu carta</p>
+
+  <!-- Progress bar -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom:18px">
+  <tr>
+    <td style="padding:6px 0">
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="height:7px;background:#eadcc2;border-radius:50px">
+      <tr><td style="width:33%;background:#f29a00;border-radius:50px;height:7px"></td><td></td></tr>
+      </table>
+    </td>
+    <td style="width:80px;text-align:right;color:#8a724f;font-size:12px;font-weight:700;padding-left:8px">1 de 3</td>
+  </tr>
+  </table>
+
+  <!-- Step 1 -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-bottom:13px">
+  <tr>
+    <td style="width:40px;vertical-align:top;padding-top:2px">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">1</td>
+      </tr></table>
+    </td>
+    <td style="vertical-align:top;padding-left:4px">
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Sube tus fotos reales</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Agrega imágenes de tus platos desde el panel cuando quieras.</p>
+    </td>
+  </tr>
+  </table>
+
+  <!-- Step 2 -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding:13px 0;border-top:1px solid rgba(193,151,82,0.22)">
+  <tr>
+    <td style="width:40px;vertical-align:top;padding-top:2px">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">2</td>
+      </tr></table>
+    </td>
+    <td style="vertical-align:top;padding-left:4px">
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Revisa precios y descripciones</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Edita textos, categorías y valores. Todo se actualiza en vivo.</p>
+    </td>
+  </tr>
+  </table>
+
+  <!-- Step 3 -->
+  <table cellpadding="0" cellspacing="0" border="0" width="100%" style="padding-top:13px;border-top:1px solid rgba(193,151,82,0.22)">
+  <tr>
+    <td style="width:40px;vertical-align:top;padding-top:2px">
+      <table cellpadding="0" cellspacing="0" border="0"><tr>
+        <td width="30" height="30" style="width:30px;height:30px;border-radius:50%;background:#f29a00;color:#fff;font-weight:900;font-size:13px;text-align:center;vertical-align:middle">3</td>
+      </tr></table>
+    </td>
+    <td style="vertical-align:top;padding-left:4px">
+      <p style="font-size:15px;margin:0 0 4px;font-weight:800;color:#111">Imprime tu QR y ponlo en las mesas</p>
+      <p style="margin:0;color:#836a47;font-size:13px;line-height:1.45">Descarga el código desde el panel y comienza a usarlo en tu local.</p>
+    </td>
+  </tr>
+  </table>
+
+</td></tr>
+</table>
+
+<!-- Footer note -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding:18px 8px 0">
+<p style="color:#927955;font-size:12px;line-height:1.5;margin:0">
+  Tu carta ya está creada. Ahora puedes mejorarla, activarla en tus mesas y empezar a medir qué miran tus clientes.
+</p>
+</td></tr>
+</table>
+
+</td></tr>
+</table>
+
+<!-- Contact footer -->
+<table cellpadding="0" cellspacing="0" border="0" width="100%">
+<tr><td style="text-align:center;padding-top:24px">
+<p style="color:#927955;font-size:12px;margin:0">
+  ¿Necesitas ayuda? <a href="https://quierocomer.cl/#contacto" style="color:#f29a00;text-decoration:underline;font-weight:700">Contáctanos</a>
+</p>
+<p style="color:#b8a888;font-size:11px;margin:8px 0 0">QuieroComer.cl · 2026</p>
 </td></tr>
 </table>
 

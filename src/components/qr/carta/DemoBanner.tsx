@@ -104,11 +104,15 @@ export default function DemoBanner({ restaurantName, restaurantSlug, restaurantL
               flex: "0 0 auto", height: 38, padding: "0 14px", borderRadius: 999,
               background: "rgba(255,178,45,.12)", border: "1px solid rgba(255,178,45,.2)",
               color: "#ffb22d", fontSize: 11, fontWeight: 950, letterSpacing: ".8px",
-              cursor: "pointer", display: "flex", alignItems: "center", gap: 5, position: "relative",
+              cursor: "pointer", display: "flex", alignItems: "center", gap: 7, position: "relative",
             }}
           >
+            {restaurantLogo ? (
+              <img src={restaurantLogo} alt="" style={{ width: 20, height: 20, borderRadius: "50%", objectFit: "cover" }} />
+            ) : (
+              <span style={{ width: 20, height: 20, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontSize: 10 }}>🍽</span>
+            )}
             CARTA DEMO
-            <span style={{ width: 14, height: 14, borderRadius: "50%", background: "rgba(255,178,45,.25)", display: "inline-grid", placeItems: "center", fontFamily: "Georgia, serif", fontSize: 9, fontWeight: 700, color: "#ffb22d" }}>i</span>
             {showTip && (
               <>
                 <div onClick={(e) => { e.stopPropagation(); setShowTip(false); }} style={{ position: "fixed", inset: 0, zIndex: 69 }} />

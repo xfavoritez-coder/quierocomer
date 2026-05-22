@@ -34,8 +34,8 @@ const LIGHT = {
   cardBg: "#fffaf2",
   heroBg: "linear-gradient(180deg, #fffaf2 0%, #f5ead8 100%)",
   pillBg: "#fff9ef",
-  pillActive: "#10251a",
-  pillActiveText: "#fff4d9",
+  pillActive: "#1a1a1a",
+  pillActiveText: "#f5ead8",
   searchBg: "#fffaf2",
   circleBtnBg: "#fff7ea",
   tagPopularBg: "rgba(184,137,53,0.12)",
@@ -378,8 +378,6 @@ export default function CartaEsencial({
 
       {/* ══════ STICKY HEADER ══════ */}
       <header style={{
-        position: "sticky",
-        top: 0,
         zIndex: 20,
         display: "flex",
         alignItems: "center",
@@ -631,9 +629,11 @@ export default function CartaEsencial({
 
       {/* ══════ CATEGORY PILLS ══════ */}
       <nav ref={catScrollRef} style={{
-        display: "flex", gap: 10, overflowX: "auto", padding: "14px 18px 18px",
+        position: "sticky", top: (restaurant as any).isDemo ? 115 : 0, zIndex: 15,
+        display: "flex", gap: 10, overflowX: "auto", padding: "12px 18px 14px",
         scrollbarWidth: "none", msOverflowStyle: "none" as any,
         WebkitOverflowScrolling: "touch" as any,
+        background: C.headerBg, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
       }}>
         <style>{`.esencial-cat-scroll::-webkit-scrollbar{display:none}`}</style>
         {categories.filter((c) => c.isActive).sort((a, b) => a.position - b.position).map((cat) => {
@@ -656,8 +656,8 @@ export default function CartaEsencial({
                 padding: "11px 15px",
                 borderRadius: 999,
                 border: isActive ? `1px solid ${C.pillActive}` : `1px solid ${C.line}`,
-                background: isActive ? C.pillActive : C.pillBg,
-                color: isActive ? C.pillActiveText : C.ink,
+                background: isActive ? C.pillActive : "transparent",
+                color: isActive ? C.pillActiveText : C.muted,
                 fontSize: 12, fontWeight: 800,
                 letterSpacing: ".03em",
                 textTransform: "uppercase" as const,
