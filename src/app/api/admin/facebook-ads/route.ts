@@ -77,23 +77,25 @@ export async function GET(req: NextRequest) {
     const totalLogoClicks = Object.values(logoClicks).reduce((a, b) => a + b, 0);
 
     // Campaign breakdown
-    const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }> = {};
+    const byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number; landedSubircarta: number; landedLanding: number }> = {};
     for (const s of filteredSessions) {
       const key = s.utmCampaign || "(sin campaña)";
-      if (!byCampaign[key]) byCampaign[key] = { visits: 0, bounced: 0, converted: 0, avgDuration: 0, avgScroll: 0, subircarta: 0 };
+      if (!byCampaign[key]) byCampaign[key] = { visits: 0, bounced: 0, converted: 0, avgDuration: 0, avgScroll: 0, subircarta: 0, landedSubircarta: 0, landedLanding: 0 };
       byCampaign[key].visits++;
       if (s.bounced) byCampaign[key].bounced++;
       if (s.converted) byCampaign[key].converted++;
       byCampaign[key].avgDuration += s.duration;
       byCampaign[key].avgScroll += s.maxScroll;
-      // Count navigated to /subircarta only from non-subircarta landings
+      // Track landing page + /subircarta visits
       const landedOnSubircarta = (s.landingPage || "").includes("/subircarta");
-      if (!landedOnSubircarta) {
+      if (landedOnSubircarta) {
+        byCampaign[key].landedSubircarta++;
+        byCampaign[key].subircarta++;
+      } else {
+        byCampaign[key].landedLanding++;
         const navigated = s.pageViews > 1 ||
           flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
         if (navigated) byCampaign[key].subircarta++;
-      } else {
-        byCampaign[key].subircarta++;
       }
     }
     for (const key of Object.keys(byCampaign)) {

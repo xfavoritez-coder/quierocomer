@@ -96,7 +96,7 @@ interface Data {
   totalLogoClicks: number;
   sourceBreakdown: Record<string, number>;
   byLanding: Record<string, number>;
-  byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number }>;
+  byCampaign: Record<string, { visits: number; bounced: number; converted: number; avgDuration: number; avgScroll: number; subircarta: number; landedSubircarta: number; landedLanding: number }>;
   byContent: Record<string, { visits: number; bounced: number; converted: number }>;
   sectionCounts: Record<string, number>;
   clickCounts: Record<string, number>;
@@ -247,6 +247,9 @@ export default function FacebookAdsPage() {
               <span style={{ color: "#ccc", flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
               <div style={{ display: "flex", gap: 10, flexShrink: 0 }}>
                 <span style={{ color: "#888" }}>{c.visits} vis</span>
+                <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, background: c.landedSubircarta > c.landedLanding ? "rgba(168,85,247,0.12)" : "rgba(59,130,246,0.12)", color: c.landedSubircarta > c.landedLanding ? "#a855f7" : "#3b82f6", fontWeight: 600 }}>
+                  {c.landedSubircarta > c.landedLanding ? "/subircarta" : "landing"}
+                </span>
                 <span style={{ color: "#ef4444" }}>{c.visits > 0 ? Math.round((c.bounced / c.visits) * 100) : 0}% reb</span>
                 <span style={{ color: "#F4A623", fontWeight: 600 }}>{c.subircarta > 0 ? `${c.subircarta} → /subircarta` : "—"}</span>
                 <span style={{ color: "#22c55e" }}>{c.converted} conv</span>
