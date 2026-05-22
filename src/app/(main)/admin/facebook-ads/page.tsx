@@ -136,7 +136,7 @@ const CSS = `
   /* Hourly chart - scrollable on mobile with bigger bars */
   .fb-hourly-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 4px; margin: 0 -4px; }
   .fb-hourly-wrap::-webkit-scrollbar { display: none; }
-  .fb-hourly { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding: 0 4px; min-width: 500px; }
+  .fb-hourly { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 0 4px; min-width: 500px; }
   .fb-hour-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
   .fb-hour-bar { width: 100%; max-width: 32px; min-width: 14px; border-radius: 5px; transition: height 1.5s cubic-bezier(.16,1,.3,1), background .5s; }
   .fb-hour-count { font-size: 9px; color: #999; font-weight: 700; }
@@ -493,7 +493,7 @@ export default function FacebookAdsPage() {
             const currentHour = new Date().getHours();
             return (
               <div className="fb-section">
-                <div className="fb-section-title">Sesiones por hora ({totalToday})</div>
+                <div className="fb-section-title" style={{ marginBottom: 20 }}>Sesiones por hora ({totalToday})</div>
                 <div className="fb-hourly-wrap">
                   <div className="fb-hourly">
                     {hours.map(([h, d]) => {
@@ -518,8 +518,14 @@ export default function FacebookAdsPage() {
                               {conv > 0 && <div style={{ flex: conv, background: "#22c55e", width: "100%" }} />}
                               <div style={{ flex: solo + sc, background: "#3b82f6", width: "100%" }} />
                             </>}
-                            {d.visits > 0 && <span style={{ position: "absolute", fontSize: 11, fontWeight: 700, color: "#fff" }}>{d.visits}</span>}
+                            {d.visits > 0 && barH >= 18 && <span style={{ position: "absolute", fontSize: 11, fontWeight: 700, color: "#fff" }}>{d.visits}</span>}
                           </div>
+                          {(d.subircarta || 0) > 0 ? (
+                            <div style={{ width: "100%", maxWidth: 28, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
+                              <div style={{ width: "60%", height: Math.max(((d.subircarta || 0) / (d.visits || 1)) * 8, 3), background: "#F4A623", borderRadius: 2 }} />
+                              <span style={{ fontSize: 8, color: "#F4A623", fontWeight: 700 }}>{d.subircarta}</span>
+                            </div>
+                          ) : <div style={{ height: 12 }} />}
                           <span className="fb-hour-label" style={{ color: h === currentHour ? "#F4A623" : "#555", fontWeight: h === currentHour ? 800 : 400 }}>{h}</span>
                         </div>
                       );
