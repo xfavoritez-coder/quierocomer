@@ -111,7 +111,7 @@ export function cartaReadyEmailHtml({
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="border-top:1px solid #e8dcc4">
 <tr><td style="padding-top:18px;text-align:center">
   <p style="color:#b8a888;font-size:12px;line-height:1.55;margin:0">
-    Cualquier duda o consulta puedes responder este correo.
+    Cualquier duda o consulta, no dudes en <a href="https://quierocomer.cl/#contacto" style="color:#E8A33D;text-decoration:underline">contactarnos</a>.
   </p>
 </td></tr>
 </table>
