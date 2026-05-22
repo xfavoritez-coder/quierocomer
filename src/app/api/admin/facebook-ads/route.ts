@@ -5,12 +5,14 @@ export async function GET(req: NextRequest) {
   try {
     const days = parseInt(req.nextUrl.searchParams.get("days") || "30", 10);
     const source = req.nextUrl.searchParams.get("source") || null; // null = all ad sources
+    const untilParam = req.nextUrl.searchParams.get("until"); // ISO date string for end of range
     const since = new Date(Date.now() - days * 86400000);
+    const until = untilParam ? new Date(untilParam) : undefined;
 
     // All ad sessions
     const sessions = await prisma.adSession.findMany({
       where: {
-        createdAt: { gte: since },
+        createdAt: { gte: since, ...(until ? { lt: until } : {}) },
         ...(source ? { utmSource: source } : {}),
       },
       orderBy: { createdAt: "desc" },
@@ -19,11 +21,11 @@ export async function GET(req: NextRequest) {
 
     // Funnel visits
     const [totalVisits, adVisits, adVisitsBySource] = await Promise.all([
-      prisma.funnelVisit.count({ where: { createdAt: { gte: since } } }),
-      prisma.funnelVisit.count({ where: { utmSource: { not: null }, createdAt: { gte: since } } }),
+      prisma.funnelVisit.count({ where: { createdAt: { gte: since, ...(until ? { lt: until } : {}) } } }),
+      prisma.funnelVisit.count({ where: { utmSource: { not: null }, createdAt: { gte: since, ...(until ? { lt: until } : {}) } } }),
       prisma.funnelVisit.groupBy({
         by: ["utmSource"],
-        where: { utmSource: { not: null }, createdAt: { gte: since } },
+        where: { utmSource: { not: null }, createdAt: { gte: since, ...(until ? { lt: until } : {}) } },
         _count: true,
       }),
     ]);

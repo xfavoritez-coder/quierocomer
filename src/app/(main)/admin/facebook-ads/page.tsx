@@ -108,19 +108,32 @@ interface Data {
 export default function FacebookAdsPage() {
   const [data, setData] = useState<Data | null>(null);
   const [loading, setLoading] = useState(true);
-  const [days, setDays] = useState(1);
+  const [period, setPeriod] = useState("today");
   const [source, setSource] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
 
-  const fetchData = (d: number, src: string | null) => {
+  const fetchData = (p: string, src: string | null) => {
     setLoading(true);
-    fetch(`/api/admin/facebook-ads?days=${d}${src ? `&source=${encodeURIComponent(src)}` : ""}`)
+    // Build date range based on period
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    let params = "";
+    if (p === "today") {
+      params = `days=1`;
+    } else if (p === "yesterday") {
+      const yesterdayStart = new Date(todayStart.getTime() - 86400000);
+      params = `days=2&until=${todayStart.toISOString()}`;
+    } else {
+      params = `days=${p}`;
+    }
+    if (src) params += `&source=${encodeURIComponent(src)}`;
+    fetch(`/api/admin/facebook-ads?${params}`)
       .then((r) => r.json())
       .then(setData)
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(days, source); }, [days, source]);
+  useEffect(() => { fetchData(period, source); }, [period, source]);
 
   if (loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   if (!data) return <div style={{ padding: 40, color: "#e85d5d" }}>Error al cargar datos.</div>;
@@ -147,17 +160,24 @@ export default function FacebookAdsPage() {
           Facebook Ads
         </h1>
         <div style={{ display: "flex", gap: 6 }}>
-          {[1, 2, 7, 14, 30, 90].map((d) => (
+          {[
+            { key: "today", label: "Hoy" },
+            { key: "yesterday", label: "Ayer" },
+            { key: "7", label: "7d" },
+            { key: "14", label: "14d" },
+            { key: "30", label: "30d" },
+            { key: "90", label: "90d" },
+          ].map((d) => (
             <button
-              key={d}
-              onClick={() => setDays(d)}
+              key={d.key}
+              onClick={() => setPeriod(d.key)}
               style={{
                 padding: "6px 14px", borderRadius: 8, border: "none", fontSize: 12, fontWeight: 600,
-                background: days === d ? "#3b82f6" : "#1a1a1a", color: days === d ? "#fff" : "#888",
+                background: period === d.key ? "#3b82f6" : "#1a1a1a", color: period === d.key ? "#fff" : "#888",
                 cursor: "pointer",
               }}
             >
-              {d === 1 ? "Hoy" : d === 2 ? "Ayer" : `${d}d`}
+              {d.label}
             </button>
           ))}
         </div>
@@ -192,6 +212,13 @@ export default function FacebookAdsPage() {
         </div>
       )}
 
+      {stats.totalSessions === 0 && (
+        <div style={{ padding: "48px 20px", textAlign: "center", color: "#666", fontSize: 15 }}>
+          Sin datos para este período.
+        </div>
+      )}
+
+      {stats.totalSessions > 0 && <>
       {/* Stats overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8, marginBottom: 20 }}>
         <Card label="Visitas totales" value={stats.totalVisits} />
@@ -444,6 +471,7 @@ export default function FacebookAdsPage() {
           );
         })}
       </Section>
+      </>}
     </div>
   );
 }
