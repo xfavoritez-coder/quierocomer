@@ -46,24 +46,24 @@ const LIGHT = {
 } as const;
 
 const DARK = {
-  bg: "#0a0f0c",
-  paper: "#141a16",
+  bg: "#0e0e0c",
+  paper: "#161614",
   ink: "#e8dcc4",
   muted: "#8a7f72",
   gold: "#d4a84b",
-  goldSoft: "#2a2216",
-  line: "#2a2a24",
+  goldSoft: "#252018",
+  line: "#282622",
   green: "#d4a84b",
   green2: "#c49a3d",
   desc: "#b8ad9e",
-  gradient: "linear-gradient(180deg, #141a16 0%, #0e1410 100%)",
-  headerBg: "rgba(20,26,22,0.92)",
-  cardBg: "#1a211c",
-  heroBg: "linear-gradient(180deg, #1a211c 0%, #16201a 100%)",
-  pillBg: "#1a211c",
+  gradient: "linear-gradient(180deg, #161614 0%, #0e0e0c 100%)",
+  headerBg: "rgba(22,22,20,0.92)",
+  cardBg: "#1c1c19",
+  heroBg: "linear-gradient(180deg, #1c1c19 0%, #181816 100%)",
+  pillBg: "#1c1c19",
   pillActive: "#d4a84b",
-  pillActiveText: "#0a0f0c",
-  searchBg: "#1a211c",
+  pillActiveText: "#0e0e0c",
+  searchBg: "#1c1c19",
   circleBtnBg: "rgba(255,255,255,0.08)",
   tagPopularBg: "rgba(212,168,75,0.15)",
   tagPopularBorder: "rgba(212,168,75,0.3)",
@@ -402,7 +402,7 @@ export default function CartaEsencial({
           {/* logo circle */}
           <div style={{
             width: 30, height: 30, borderRadius: "50%",
-            background: isDark ? "#1a211c" : "#10251a", display: "flex", alignItems: "center", justifyContent: "center",
+            background: isDark ? "#1c1c19" : "#10251a", display: "flex", alignItems: "center", justifyContent: "center",
             flexShrink: 0, overflow: "hidden",
             boxShadow: "none",
           }}>
@@ -489,7 +489,7 @@ export default function CartaEsencial({
               onClick={() => handleDishClick(heroDish)}
               style={{
                 background: isDark
-                  ? "linear-gradient(180deg, #1e2820 0%, #1a231c 100%)"
+                  ? "linear-gradient(180deg, #222220 0%, #1c1c19 100%)"
                   : "linear-gradient(180deg, #fff6e8 0%, #eedcbe 100%)",
                 border: `1px solid ${isDark ? "rgba(212,168,75,0.15)" : "rgba(184,137,53,0.25)"}`,
                 borderRadius: 30,

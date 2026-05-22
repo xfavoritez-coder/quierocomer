@@ -26,7 +26,7 @@ const LIGHT = {
 const DARK = {
   paper: "#e8dcc4", ink: "#e8dcc4", muted: "#8a7f72", gold: "#d4a84b",
   goldSoft: "#2a2216", line: "#2a2a24", desc: "#b8ad9e",
-  sheetBg: "linear-gradient(180deg, #141a16 0%, #0e1410 100%)",
+  sheetBg: "linear-gradient(180deg, #161614 0%, #0e0e0c 100%)",
   backdrop: "rgba(0,0,0,0.65)",
   closeBg: "rgba(255,255,255,0.08)", handleBg: "#2a2a24",
   tagVegan: { color: "#86efac", bg: "rgba(134,239,172,0.1)" },
@@ -34,7 +34,7 @@ const DARK = {
   tagGF: { color: "#fde68a", bg: "rgba(253,230,138,0.1)" },
   allergenColor: "#fca5a5", allergenBg: "rgba(252,165,165,0.08)", allergenBorder: "rgba(252,165,165,0.2)",
   ratingBg: "rgba(212,168,75,0.1)", ratingBorder: "rgba(212,168,75,0.2)",
-  sugBg: "#1a211c", sugBorder: "#2a2a24",
+  sugBg: "#1c1c19", sugBorder: "#282622",
   pillBg: "rgba(255,255,255,0.06)", pillBorder: "#2a2a24",
   recBg: "rgba(212,168,75,0.15)", recBorder: "rgba(212,168,75,0.3)", recColor: "#d4a84b",
 };
