@@ -356,7 +356,7 @@ export default function FunnelPage() {
               {lead.events && lead.events.some((e: any) => e.action && !e.action.startsWith("lead_doctor")) && (
                 <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
                   {lead.events.filter((e: any) => !e.action?.startsWith("lead_doctor")).map((e: any, i: number) => {
-                    const isError = e.action?.includes("error") || e.action?.includes("timeout");
+                    const isError = e.action?.includes("error") || (e.action?.includes("timeout") && !e.action?.includes("confirmacion"));
                     return (
                       <span key={i} style={{
                         fontSize: 10, padding: "2px 6px", borderRadius: 4, fontWeight: 500,
@@ -399,7 +399,7 @@ function StatCard({ label, value, color, suffix }: { label: string; value: numbe
 }
 
 function TypeBadge({ type }: { type: string }) {
-  const colors: Record<string, string> = { LINK: "#3b82f6", DOCUMENT: "#f59e0b", PHOTO: "#8b5cf6" };
+  const colors: Record<string, string> = { LINK: "#3b82f6", DOCUMENT: "#f59e0b", PHOTO: "#ec4899" };
   return (
     <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 6, background: `${colors[type] || "#666"}22`, color: colors[type] || "#666" }}>
       {type}
