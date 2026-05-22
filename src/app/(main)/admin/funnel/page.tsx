@@ -359,18 +359,13 @@ export default function FunnelPage() {
                 <PanelJourneyBlock events={lead.events.filter((e: any) => e.action?.startsWith("panel_"))} />
               )}
 
-              {/* Abandonment badges */}
-              {lead.events && lead.events.filter((e: any) => e.action?.startsWith("abandoned_")).length > 0 && (
+              {/* Abandonment badges (panel only — onboarding abandons shown inside OnboardBlock) */}
+              {lead.events && lead.events.filter((e: any) => e.action === "abandoned_panel" || e.action === "abandoned_carta").length > 0 && (
                 <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {lead.events.filter((e: any) => e.action?.startsWith("abandoned_")).map((e: any, i: number) => (
+                  {lead.events.filter((e: any) => e.action === "abandoned_panel" || e.action === "abandoned_carta").map((e: any, i: number) => (
                     <AbandonmentBadge key={i} event={e} />
                   ))}
                 </div>
-              )}
-
-              {/* Lead Doctor activity — collapsible */}
-              {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
-                <DoctorBlock events={lead.events.filter((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor"))} />
               )}
 
               {/* Event log */}
@@ -400,6 +395,9 @@ export default function FunnelPage() {
                 {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
                 {(lead.cartaStatus === "FAILED" || lead.cartaStatus === "PENDING") && lead.email && (
                   <ReprocessButton leadId={lead.id} onDone={fetchData} />
+                )}
+                {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
+                  <DoctorInline events={lead.events.filter((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor"))} />
                 )}
               </div>
             </div>
@@ -658,6 +656,47 @@ function ReprocessButton({ leadId, onDone }: { leadId: string; onDone: () => voi
   );
 }
 
+function DoctorInline({ events }: { events: any[] }) {
+  const [open, setOpen] = useState(false);
+  const isEscalated = events.some((e: any) => e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human");
+  const isFixed = events.some((e: any) => e.action === "doctor_retry_lead" && e.detail?.includes("exitoso"));
+  return (
+    <>
+      <span onClick={() => setOpen(!open)} style={{
+        fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer",
+        background: isFixed ? "rgba(34,197,94,0.12)" : isEscalated ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.1)",
+        color: isFixed ? "#22c55e" : isEscalated ? "#f87171" : "#a855f7",
+        border: `1px solid ${isFixed ? "rgba(34,197,94,0.2)" : isEscalated ? "rgba(239,68,68,0.2)" : "rgba(168,85,247,0.2)"}`,
+      }}>
+        🩺 {isFixed ? "Resuelto" : isEscalated ? "Escalado" : `${events.length}`}
+      </span>
+      {open && (
+        <div style={{ width: "100%", flexBasis: "100%", marginTop: 6 }}>
+          {events.map((e: any, i: number) => {
+            const isSummary = e.action === "doctor_run_summary" || e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human";
+            const isRetry = e.action === "doctor_retry" || e.action === "doctor_retry_lead" || e.action === "lead_doctor_retry";
+            const isSuccess = e.action === "doctor_retry_lead" && e.detail?.includes("exitoso");
+            const msg = e.detail || e.reason || (e.diagnosis ? `Intento ${e.attempt}: ${e.diagnosis}` : "");
+            if (!msg) return null;
+            return (
+              <div key={i} style={{ fontSize: 11, marginBottom: 4, padding: "4px 0", borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+                <span style={{
+                  fontSize: 9, padding: "1px 5px", borderRadius: 4, fontWeight: 700, marginRight: 6,
+                  background: isSuccess ? "rgba(34,197,94,0.12)" : isSummary ? "rgba(168,85,247,0.15)" : isRetry ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.04)",
+                  color: isSuccess ? "#22c55e" : isSummary ? "#a855f7" : isRetry ? "#60a5fa" : "#888",
+                }}>
+                  {isSuccess ? "OK" : isSummary ? (e.action?.includes("escalat") ? "ESC" : "FIN") : isRetry ? "RETRY" : e.action?.replace("doctor_", "")}
+                </span>
+                <span style={{ color: "#999" }}>{msg.slice(0, 120)}{msg.length > 120 ? "..." : ""}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </>
+  );
+}
+
 function DoctorBlock({ events }: { events: any[] }) {
   const [open, setOpen] = useState(false);
 
@@ -687,8 +726,8 @@ function DoctorBlock({ events }: { events: any[] }) {
         <span style={{ color: "#555", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
       </div>
 
-      {/* Collapsed: show last conclusion */}
-      {!open && lastConclusion && (
+      {/* Collapsed: hidden, click to expand */}
+      {false && !open && lastConclusion && (
         <div style={{ padding: "0 12px 8px", fontSize: 11, color: "#c4b5fd", lineHeight: 1.4 }}>
           {(lastConclusion.detail || lastConclusion.reason || "").slice(0, 150)}{(lastConclusion.detail || lastConclusion.reason || "").length > 150 ? "..." : ""}
         </div>

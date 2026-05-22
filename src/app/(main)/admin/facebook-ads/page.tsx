@@ -130,7 +130,7 @@ const CSS = `
   .fb-card { background: #111; border-radius: 14px; padding: 14px 14px; border: 1px solid #1e1e1e; position: relative; overflow: hidden; }
   .fb-card-val { font-size: 22px; font-weight: 800; line-height: 1.1; transition: color .5s; }
   @media (min-width: 480px) { .fb-card-val { font-size: 26px; } }
-  .fb-card-suffix { font-size: 11px; font-weight: 700; color: #555; margin-left: 3px; }
+  .fb-card-suffix { font-size: 12px; font-weight: 700; color: #bbb; margin-left: 3px; }
   .fb-card-label { font-size: 10px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 
   /* Hourly chart - scrollable on mobile with bigger bars */

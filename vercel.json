@@ -27,10 +27,6 @@
     {
       "path": "/api/cron/weekly-email",
       "schedule": "11 15 * * 1"
-    },
-    {
-      "path": "/api/cron/lead-doctor",
-      "schedule": "0 * * * *"
     }
   ]
 }
