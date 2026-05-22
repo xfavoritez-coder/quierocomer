@@ -221,7 +221,20 @@ export default function ConfirmacionClient() {
             <div
               className={`phone phone-generating${cartaReady ? " phone-ready" : ""}`}
               style={{ position: "relative", cursor: cartaSlug ? "pointer" : "default" }}
-              onClick={() => { if (cartaSlug) window.open(`/qr/${cartaSlug}`, "_blank"); }}
+              onClick={() => {
+                if (cartaSlug) {
+                  trackFunnelEvent(leadId, "carta_clicked_direct");
+                  // Mark as viewed so funnel tracks it even without email click
+                  if (leadId) fetch(`/api/subircarta/event`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ leadId, action: "direct_carta_view" }),
+                    keepalive: true,
+                  }).catch(() => {});
+                  // Also update emailClickedAt/openedAt so funnel shows progress
+                  if (leadId) fetch(`/api/funnel/track/click?lid=${leadId}&url=${encodeURIComponent(`/qr/${cartaSlug}`)}`).catch(() => {});
+                  window.open(`/qr/${cartaSlug}`, "_blank");
+                }
+              }}
             >
               {/* Overlay message */}
               {!modalDismissed && (
