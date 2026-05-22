@@ -344,8 +344,8 @@ export default function ConfirmacionClient() {
                     <span style={{ position: "absolute", bottom: 4, right: -5, fontSize: 5, color: "#F4BD69", animation: "sparkle1 2.2s ease-in-out infinite 0.3s" }}>✦</span>
                   </div>
                 </div>
-                <p style={{ fontSize: 15, fontWeight: 700, color: "var(--cream)", marginBottom: 6 }}>Te avisaremos por correo</p>
-                <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.5 }}>Puedes cerrar esta página</p>
+                <p style={{ fontSize: 17, fontWeight: 700, color: "var(--cream)", marginBottom: 6 }}>Te avisaremos por correo</p>
+                <p style={{ fontSize: 16, color: "var(--muted)", lineHeight: 1.5 }}>Puedes cerrar esta página</p>
               </>
             ) : (
               <>

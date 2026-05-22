@@ -247,6 +247,14 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 ### Retención post-pago
 
 12. **WhatsApp bot de seguimiento** — Además de email, enviar mensajes de re-engagement y onboarding por WhatsApp (tasa apertura 90% vs 20% email). API de WhatsApp Business via Twilio/MessageBird.
+    - **Email bounce recovery** (idea, pendiente definir flujo completo):
+      - Resend tiene webhooks de bounce/complaint — registrar un endpoint que escuche esos eventos
+      - Cuando un email rebota, marcar el Lead con `emailBounced: true`
+      - En el mensaje de WhatsApp que se le envía al dueño después del email (ej: "Tu carta está lista"), revisar si el email rebotó
+      - Si rebotó: agregar al mensaje de WhatsApp algo como "Al parecer hubo un error con tu correo y no pudimos enviarte la carta. ¿Puedes confirmar tu email correcto?"
+      - El dueño responde con el email correcto → actualizar Lead + RestaurantOwner → reenviar el correo original
+      - Pendiente resolver: ¿cómo recibe el dueño el link de corrección si no tiene email ni WhatsApp? ¿Mostrar algo en la página de confirmación? ¿Guardar el WhatsApp como canal de respaldo obligatorio?
+      - Crítico porque ese email recibe credenciales, carta lista, y todas las comunicaciones futuras
 
 13. **Página de estado pública** — `/mi/[slug]` donde el dueño ve su carta sin loguearse (link mágico). Reduce fricción vs pedir login en panel.
 
@@ -281,6 +289,36 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 18. **Landing por ciudad/zona (SEO)** — Páginas tipo "/cartas-digitales-santiago-centro" con restaurantes demo de esa zona como ejemplo. Captura tráfico orgánico local.
 
 19. **Integración con Google Business** — Botón "Ver carta" en la ficha de Google del restaurante. Feature atractivo que el dueño quiere tener.
+
+20. **Outbound masivo WhatsApp + carta auto-generada** — Ahora que tenemos Twilio WhatsApp, podemos hacer captación proactiva automatizada:
+
+    #### Flujo
+    1. **Scraping de locales**: Google Maps API (Places API / Nearby Search) para obtener restaurantes de una zona con nombre, dirección, teléfono, website, fotos, rating
+    2. **Enriquecer datos**: Buscar en internet la carta del local (link Justo/UberEats/web propia) + extraer WhatsApp de su web/RRSS si el de Google no sirve
+    3. **Generar carta automática**: Usar el pipeline existente de /subircarta para crear la carta demo del local SIN que el dueño la pida
+    4. **Enviar WhatsApp vía Twilio**: Mensaje personalizado al dueño con preview de su carta ya lista: "Hola [nombre local], te creamos tu carta digital gratis. Mírala aquí: [link]. Si te gusta, actívala con un click."
+    5. **Tracking**: Registrar el lead como outbound, trackear apertura del link, respuestas por WhatsApp (ya tenemos webhook de replies)
+
+    #### Datos a sacar de Google Maps API
+    - `name`, `formatted_phone_number`, `website`, `formatted_address`
+    - `place_id` para no duplicar
+    - `rating` y `user_ratings_total` (priorizar locales con buen rating)
+    - Fotos del local (para hero de la carta)
+    - `business_status` (filtrar solo OPERATIONAL)
+
+    #### Fuentes de WhatsApp
+    - Google Maps phone (puede ser fijo, no siempre sirve para WA)
+    - Scraping del website del local (buscar links wa.me, íconos WhatsApp)
+    - Instagram bio (muchos ponen su WA ahí)
+    - Facebook page info
+
+    #### Consideraciones
+    - Twilio WhatsApp requiere templates pre-aprobados por Meta para mensajes proactivos (no conversacionales)
+    - Crear template tipo: "Hola {{1}}, creamos una carta digital gratuita para {{2}}. Revísala aquí: {{3}}"
+    - Rate limits: no enviar más de X por hora para no ser marcado como spam
+    - Opt-out: incluir siempre opción de "No me contacten" en el mensaje
+    - Priorizar zonas/comunas específicas para ir testeando conversión antes de escalar
+    - El local que responde positivo entra al funnel normal de activación (/activar/[slug])
 
 ### Técnico / Ops
 

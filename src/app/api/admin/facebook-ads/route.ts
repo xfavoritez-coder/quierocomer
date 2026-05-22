@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req: NextRequest) {
   try {
-    const days = parseInt(req.nextUrl.searchParams.get("days") || "30", 10);
-    const source = req.nextUrl.searchParams.get("source") || null; // null = all ad sources
-    const untilParam = req.nextUrl.searchParams.get("until"); // ISO date string for end of range
-    const since = new Date(Date.now() - days * 86400000);
+    const daysParam = req.nextUrl.searchParams.get("days");
+    const sinceParam = req.nextUrl.searchParams.get("since");
+    const source = req.nextUrl.searchParams.get("source") || null;
+    const untilParam = req.nextUrl.searchParams.get("until");
+    const since = sinceParam ? new Date(sinceParam) : new Date(Date.now() - (parseInt(daysParam || "30", 10)) * 86400000);
     const until = untilParam ? new Date(untilParam) : undefined;
 
     // All ad sessions
