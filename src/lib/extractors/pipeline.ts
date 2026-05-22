@@ -602,6 +602,31 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
+    // Send WhatsApp alongside email
+    if (lead.whatsapp && translationOk) {
+      try {
+        const { sendWhatsApp, buildCartaReadyMessage } = await import("@/lib/whatsapp");
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const waTrackUrl = `${baseUrl}/api/funnel/track/wa-click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
+        const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+        const sid = await sendWhatsApp({
+          to: lead.whatsapp,
+          body: buildCartaReadyMessage({
+            ownerName,
+            restaurantName: restaurant.name,
+            cartaUrl,
+            trackUrl: waTrackUrl,
+          }),
+        });
+        if (sid) {
+          await prisma.lead.update({ where: { id: leadId }, data: { whatsappSentAt: new Date() } });
+          console.log(`[Pipeline] WhatsApp sent to ${lead.whatsapp}`);
+        }
+      } catch (waErr) {
+        console.error("[Pipeline] WhatsApp failed:", waErr);
+      }
+    }
+
     // Notify admin of new lead processed
     try {
       const { sendAdminPush } = await import("@/lib/adminPush");

@@ -25,6 +25,11 @@ interface Lead {
   deliveredAt: string | null;
   emailOpenedAt: string | null;
   emailClickedAt: string | null;
+  emailBouncedAt: string | null;
+  whatsappSentAt: string | null;
+  whatsappOpenedAt: string | null;
+  whatsappClickedAt: string | null;
+  openedVia: string | null;
   onboardingDoneAt: string | null;
   panelVisitedAt: string | null;
   activarVisitedAt: string | null;
@@ -308,7 +313,13 @@ export default function FunnelPage() {
                 {lead.detectedProvider?.name && <span>{lead.detectedProvider.name}</span>}
                 <TypeBadge type={lead.cartaType} />
               </div>
-              {lead.email && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{lead.email}</div>}
+              {lead.email && (
+                <div style={{ fontSize: 12, color: "#888", marginTop: 6, display: "flex", alignItems: "center", gap: 6 }}>
+                  {lead.email}
+                  {lead.emailBouncedAt && <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: "rgba(239,68,68,0.15)", color: "#ef4444", fontWeight: 700 }}>REBOTÓ</span>}
+                  {lead.openedVia && <span style={{ fontSize: 9, padding: "1px 5px", borderRadius: 4, background: lead.openedVia === "whatsapp" ? "rgba(34,197,94,0.15)" : "rgba(59,130,246,0.15)", color: lead.openedVia === "whatsapp" ? "#22c55e" : "#3b82f6", fontWeight: 600 }}>vía {lead.openedVia}</span>}
+                </div>
+              )}
               {lead.whatsapp && <div style={{ fontSize: 12, color: "#22c55e", marginTop: 2 }}>+{lead.whatsapp}</div>}
 
               {/* Error log */}
@@ -324,9 +335,12 @@ export default function FunnelPage() {
                 <TimelineStep label="Paso 2" time={fmtTime(lead.step2At)} delta={diffStr(lead.createdAt, lead.step2At)} />
                 <TimelineStep label="Preview" time={fmtTime(lead.previewAt)} delta={diffStr(lead.step2At || lead.createdAt, lead.previewAt)} />
                 <TimelineStep label="Lista" time={fmtTime(lead.readyAt)} delta={diffStr(lead.previewAt || lead.createdAt, lead.readyAt)} />
-                <TimelineStep label="Enviado" time={fmtDate(lead.deliveredAt)} />
+                <TimelineStep label="Email" time={fmtDate(lead.deliveredAt)} />
+                {lead.emailBouncedAt && <TimelineStep label="Rebotó" time={fmtDate(lead.emailBouncedAt)} color="#ef4444" />}
                 <TimelineStep label="Abierto" time={fmtDate(lead.emailOpenedAt)} delta={diffStr(lead.deliveredAt, lead.emailOpenedAt)} />
                 <TimelineStep label="Click" time={fmtDate(lead.emailClickedAt)} delta={diffStr(lead.deliveredAt, lead.emailClickedAt)} />
+                {lead.whatsappSentAt && <TimelineStep label="WA" time={fmtDate(lead.whatsappSentAt)} color="#22c55e" />}
+                {lead.whatsappClickedAt && <TimelineStep label="WA Click" time={fmtDate(lead.whatsappClickedAt)} color="#22c55e" />}
                 <TimelineStep label="Onboard" time={fmtDate(lead.onboardingDoneAt)} />
                 <TimelineStep label="Panel" time={fmtDate(lead.panelVisitedAt)} />
                 <TimelineStep label="/activar" time={fmtDate(lead.activarVisitedAt)} />

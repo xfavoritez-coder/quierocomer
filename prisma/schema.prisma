@@ -1774,6 +1774,11 @@ model Lead {
   deliveredAt        DateTime?
   emailOpenedAt      DateTime?
   emailClickedAt     DateTime?
+  emailBouncedAt     DateTime?
+  whatsappSentAt     DateTime?
+  whatsappOpenedAt   DateTime?
+  whatsappClickedAt  DateTime?
+  openedVia          String?       // "email" | "whatsapp"
   onboardingDoneAt   DateTime?
   panelVisitedAt     DateTime?
   activarVisitedAt   DateTime?
