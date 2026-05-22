@@ -34,8 +34,8 @@ const LIGHT = {
   cardBg: "#fffaf2",
   heroBg: "linear-gradient(180deg, #fffaf2 0%, #f5ead8 100%)",
   pillBg: "#fff9ef",
-  pillActive: "#1a1a1a",
-  pillActiveText: "#f5ead8",
+  pillActive: "#15241b",
+  pillActiveText: "#fffaf2",
   searchBg: "#fffaf2",
   circleBtnBg: "#fff7ea",
   tagPopularBg: "rgba(184,137,53,0.12)",
@@ -433,8 +433,8 @@ export default function CartaEsencial({
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
             </a>
           )}
-          {(restaurant as any).instagramUrl && (
-            <a href={(restaurant as any).instagramUrl} target="_blank" rel="noopener noreferrer" style={circleBtn}>
+          {(restaurant as any).instagram && (
+            <a href={(restaurant as any).instagram} target="_blank" rel="noopener noreferrer" style={circleBtn}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
             </a>
           )}
@@ -645,7 +645,7 @@ export default function CartaEsencial({
       {/* ══════ CATEGORY PILLS ══════ */}
       <nav ref={catScrollRef} style={{
         position: onboardingActive ? "relative" : "sticky", top: onboardingActive ? undefined : ((restaurant as any).isDemo ? 115 : 0), zIndex: 15,
-        display: "flex", gap: 10, overflowX: "auto", padding: "12px 18px 14px",
+        display: "flex", gap: 10, overflowX: "auto", padding: "24px 18px 14px",
         scrollbarWidth: "none", msOverflowStyle: "none" as any,
         WebkitOverflowScrolling: "touch" as any,
         background: C.headerBg, backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)",
@@ -667,23 +667,22 @@ export default function CartaEsencial({
               }}
               style={{
                 flexShrink: 0,
-                display: "flex", alignItems: "center", gap: 8,
-                padding: "11px 15px",
-                borderRadius: 999,
-                border: isActive ? `1px solid ${C.pillActive}` : `1px solid ${C.line}`,
-                background: isActive ? C.pillActive : "transparent",
-                color: isActive ? C.pillActiveText : C.muted,
-                fontSize: 12, fontWeight: 800,
-                letterSpacing: ".03em",
+                display: "flex", alignItems: "center",
+                padding: "9px 14px",
+                borderRadius: 0,
+                border: "none",
+                background: "transparent",
+                color: isActive ? C.ink : C.muted,
+                fontSize: 12, fontWeight: isActive ? 800 : 500,
+                letterSpacing: ".06em",
                 textTransform: "uppercase" as const,
                 fontFamily: "system-ui, -apple-system, sans-serif",
                 cursor: "pointer",
                 transition: "all 0.2s ease",
                 whiteSpace: "nowrap",
-                boxShadow: "0 8px 20px rgba(92,61,20,.05)",
+                borderBottom: isActive ? `2px solid ${C.gold}` : "2px solid transparent",
               }}
             >
-              <span>{catIcon(cat.name)}</span>
               {cat.name}
             </button>
           );
@@ -742,7 +741,7 @@ export default function CartaEsencial({
               fontSize: 13, fontWeight: 800, letterSpacing: ".16em", textTransform: "uppercase",
               color: C.gold, marginBottom: 4,
             }}>
-              {catIcon(category.name)} {category.name}
+              {category.name}
             </div>
             {(category as any).description && (
               <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.4 }}>
@@ -815,7 +814,7 @@ export default function CartaEsencial({
                   {/* name + price row */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 }}>
                     <span style={{
-                      fontSize: 15, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase",
+                      fontSize: 16, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase",
                       color: C.ink, lineHeight: 1.3, flex: 1, minWidth: 0,
                       fontFamily: "system-ui, -apple-system, sans-serif",
                     }}>
@@ -837,7 +836,7 @@ export default function CartaEsencial({
                   {/* description */}
                   {dish.description && (
                     <p style={{
-                      fontSize: 15, color: C.desc, lineHeight: 1.45, margin: 0,
+                      fontSize: 17, color: C.desc, lineHeight: 1.45, margin: 0,
                       display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, overflow: "hidden",
                     }}>
                       {dish.description}

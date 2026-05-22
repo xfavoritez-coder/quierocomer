@@ -14,10 +14,9 @@ const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const LANG_STORAGE_KEY = "qc_lang";
 
 const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewImpact" | "viewFeed" | "viewEsencial"; Icon: typeof List }[] = [
-  { value: "lista", labelKey: "viewList", Icon: List },
-  { value: "premium", labelKey: "viewGallery", Icon: BookOpen },
-  { value: "impact", labelKey: "viewImpact", Icon: Rocket },
   { value: "esencial", labelKey: "viewEsencial", Icon: FileText },
+  { value: "lista", labelKey: "viewList", Icon: List },
+  { value: "impact", labelKey: "viewImpact", Icon: Rocket },
 ];
 
 interface Props {

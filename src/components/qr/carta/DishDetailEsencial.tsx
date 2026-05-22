@@ -207,28 +207,28 @@ export default function DishDetailEsencial({
           {/* Dish name */}
           <h2 style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: 30, fontWeight: 400, lineHeight: .98,
+            fontSize: 30, fontWeight: 700, lineHeight: .98,
             letterSpacing: "-.03em", margin: "0 0 6px", color: C.ink,
           }}>
             {dish.name}
           </h2>
 
           {/* Price */}
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-            {dish.discountPrice && (
-              <span style={{
-                fontFamily: "Georgia, serif", fontSize: 14,
-                color: C.muted, textDecoration: "line-through",
-              }}>
-                ${dish.price?.toLocaleString("es-CL")}
-              </span>
-            )}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}>
+          {dish.discountPrice && (
             <span style={{
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              fontSize: 20, fontWeight: 500, color: C.ink,
+              fontFamily: "Georgia, serif", fontSize: 14,
+              color: C.muted, textDecoration: "line-through",
             }}>
-              ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
+              ${dish.price?.toLocaleString("es-CL")}
             </span>
+          )}
+          <span style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: 20, fontWeight: 500, color: C.ink,
+          }}>
+            ${(dish.discountPrice || dish.price)?.toLocaleString("es-CL") ?? "—"}
+          </span>
           </div>
 
           {/* Gold divider */}
@@ -254,54 +254,6 @@ export default function DishDetailEsencial({
             {diet === "VEGETARIAN" && <Tag color={C.tagVegan.color} bg={C.tagVegan.bg} icon="🥬" label="Vegetariano" />}
             {isSpicy && <Tag color={C.tagSpicy.color} bg={C.tagSpicy.bg} icon="🌶" label="Picante" />}
             {isGlutenFree && <Tag color={C.tagGF.color} bg={C.tagGF.bg} icon="🌾" label="Sin gluten" />}
-          </div>
-        )}
-
-        {/* Ingredients */}
-        {ingredients.length > 0 && (
-          <div style={{ padding: "0 22px 18px" }}>
-            <h3 style={{
-              fontSize: 11, fontWeight: 800, color: C.gold,
-              letterSpacing: ".16em", textTransform: "uppercase",
-              marginBottom: 10,
-            }}>
-              Ingredientes
-            </h3>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {ingredients.map((ing, i) => (
-                <span key={i} style={{
-                  fontSize: 13, padding: "5px 12px", borderRadius: 999,
-                  background: C.pillBg, border: `1px solid ${C.pillBorder}`,
-                  color: C.desc, fontFamily: "system-ui, sans-serif",
-                }}>
-                  {ing}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Allergens */}
-        {allergens.length > 0 && (
-          <div style={{ padding: "0 22px 18px" }}>
-            <h3 style={{
-              fontSize: 11, fontWeight: 800, color: C.allergenColor,
-              letterSpacing: ".16em", textTransform: "uppercase",
-              marginBottom: 10,
-            }}>
-              Alérgenos
-            </h3>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {allergens.map((a, i) => (
-                <span key={i} style={{
-                  fontSize: 13, padding: "5px 12px", borderRadius: 999,
-                  background: C.allergenBg, border: `1px solid ${C.allergenBorder}`,
-                  color: C.allergenColor, fontWeight: 600, fontFamily: "system-ui, sans-serif",
-                }}>
-                  {a}
-                </span>
-              ))}
-            </div>
           </div>
         )}
 
@@ -350,6 +302,14 @@ export default function DishDetailEsencial({
                     }}>
                       {s.name}
                     </div>
+                    {s.description && (
+                      <div style={{
+                        fontSize: 15, color: C.muted, marginTop: 3,
+                        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                      }}>
+                        {s.description}
+                      </div>
+                    )}
                     {((s as any).dishDiet === "VEGAN" || (s as any).dishDiet === "VEGETARIAN" || (s as any).isSpicy || (s as any).isGlutenFree) && (
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginTop: 5 }}>
                         {(s as any).dishDiet === "VEGAN" && <MiniTag icon="🌿" label="Vegano" isDark={isDarkProp} />}
