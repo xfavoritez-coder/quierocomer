@@ -171,47 +171,6 @@ export default function FunnelPage() {
         </button>
       </div>
 
-      {/* Funnel visual */}
-      {stats && (
-        <div style={{ marginBottom: 24, padding: "16px 16px 12px", background: "#111", borderRadius: 14, border: "1px solid #222" }}>
-          {FUNNEL_STEPS.map((step, i) => {
-            const value = stats[step.key as keyof Stats] as number;
-            const rate = step.rateKey ? (stats[step.rateKey as keyof Stats] as number) : null;
-            const barWidth = maxVal > 0 ? Math.max((value / maxVal) * 100, 2) : 2;
-
-            return (
-              <div key={step.key} style={{ marginBottom: i < FUNNEL_STEPS.length - 1 ? 6 : 0 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-                  <span style={{ fontSize: 11, color: "#888", minWidth: 120, textAlign: "right" }}>{step.label}</span>
-                  <div style={{ flex: 1, position: "relative", height: 22, borderRadius: 6, overflow: "hidden", background: "#1a1a1a" }}>
-                    <div style={{
-                      width: `${barWidth}%`,
-                      height: "100%",
-                      background: step.color,
-                      borderRadius: 6,
-                      transition: "width 0.5s ease",
-                      opacity: 0.85,
-                    }} />
-                    <span style={{
-                      position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)",
-                      fontSize: 12, fontWeight: 700, color: "#fff",
-                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
-                    }}>
-                      {value}
-                    </span>
-                  </div>
-                  {rate !== null && (
-                    <span style={{ fontSize: 11, color: step.color, fontWeight: 600, minWidth: 36, textAlign: "right" }}>
-                      {rate}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Stats cards compactas */}
       {stats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 8, marginBottom: 20 }}>
