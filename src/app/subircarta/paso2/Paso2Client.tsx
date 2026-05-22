@@ -177,8 +177,8 @@ export default function Paso2Client() {
 
   const handleSubmit = async () => {
     if (loading) return;
-    if (!localName.trim() || !ownerName.trim() || !email.trim()) {
-      setError("Completa los campos obligatorios.");
+    if (!localName.trim() || !ownerName.trim() || !email.trim() || !whatsapp.trim()) {
+      setError("Completa todos los campos.");
       return;
     }
 

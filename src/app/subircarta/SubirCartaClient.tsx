@@ -189,8 +189,8 @@ export default function SubirCartaClient() {
 
   const handleFallbackSubmit = async () => {
     if (fbLoading || !fallbackLeadId) return;
-    if (!fbLocalName.trim() || !fbOwnerName.trim() || !fbEmail.trim()) {
-      setFbError("Completa los campos obligatorios.");
+    if (!fbLocalName.trim() || !fbOwnerName.trim() || !fbEmail.trim() || !fbWhatsapp.trim()) {
+      setFbError("Completa todos los campos.");
       return;
     }
     setFbLoading(true);

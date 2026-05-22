@@ -7,6 +7,7 @@ import { extractUberEats } from "./ubereats";
 import { extractQueresto } from "./queresto";
 import { extractWithScraper } from "./scrape";
 import { extractFromDocument } from "./document";
+import { extractGoogleDrive } from "./googledrive";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult, ExtractedDish } from "./types";
 
@@ -221,6 +222,14 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractUberEats(cartaUrl);
     case "Queresto":
       return extractQueresto(cartaUrl);
+    case "GoogleDrive":
+      return extractGoogleDrive(cartaUrl);
+    case "Dropbox":
+    case "OneDrive":
+      // Cloud storage PDFs: treat as generic document via the scraper
+      // (Jina can't render cloud storage; fall through to generic)
+      // For Dropbox: dl=1 param gives direct download, handled by generic extractor
+      return extractWithScraper(cartaUrl, providerName, extractionConfig);
     case "Fudo":
     case "Mercat":
     case "Gourmedia":
@@ -470,12 +479,12 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
         orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
         select: { id: true, name: true, photos: true, tags: true },
       });
-      const cap = Math.max(15, Math.ceil(allDishesDB.length * 0.3));
+      const cap = Math.min(20, Math.ceil(allDishesDB.length * 0.3));
       const heroIds = new Set(allDishesDB.filter(d => d.tags?.includes("RECOMMENDED")).map(d => d.id));
       const priorityDishes = [
         ...allDishesDB.filter(d => heroIds.has(d.id)),
         ...allDishesDB.filter(d => !heroIds.has(d.id)).slice(0, cap),
-      ];
+      ].slice(0, 20);
       const missing = priorityDishes.filter(d => !d.photos?.length);
       console.log(`[Pipeline] Unsplash: ${missing.length}/${allDishesDB.length} priority dishes need photos`);
       if (missing.length > 0) {
@@ -511,12 +520,11 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
           orderBy: [{ category: { position: "asc" } }, { position: "asc" }],
         });
 
-        // Priority: RECOMMENDED first, then first 30% by category order
+        // Priority: RECOMMENDED first, then first dishes by category order, max 10 total
         const recommended = allDishData.filter(d => d.tags?.includes("RECOMMENDED"));
-        const cap = Math.max(10, Math.ceil(allDishData.length * 0.3));
         const priorityIds = new Set(recommended.map(d => d.id));
-        const remaining = allDishData.filter(d => !priorityIds.has(d.id)).slice(0, cap - recommended.length);
-        const dishData = [...recommended, ...remaining].map(d => ({ id: d.id, name: d.name, description: d.description }));
+        const remaining = allDishData.filter(d => !priorityIds.has(d.id)).slice(0, 10 - recommended.length);
+        const dishData = [...recommended, ...remaining].slice(0, 10).map(d => ({ id: d.id, name: d.name, description: d.description }));
 
         console.log(`[Pipeline] Translating ${dishData.length}/${createdDishes.length} priority dishes for ${restaurant.slug} (${recommended.length} hero + ${remaining.length} first sections)`);
 
