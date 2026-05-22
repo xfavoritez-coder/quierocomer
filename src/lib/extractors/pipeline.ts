@@ -263,10 +263,13 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
   await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "PROCESSING" } });
 
   // Safety timeout: if pipeline hangs, mark as FAILED
+  // Google Drive PDFs with many pages need more time (8+ Claude calls)
+  const isCloudStorage = ["GoogleDrive", "Dropbox", "OneDrive"].includes(lead.detectedProvider?.name || "");
+  const timeoutMs = isCloudStorage ? 480000 : 240000; // 8 min for cloud storage, 4 min for others
   const pipelineTimeout = setTimeout(async () => {
     console.error(`[Pipeline] Timeout for lead ${leadId} — marking FAILED`);
-    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "FAILED" } }).catch(() => {});
-  }, 240000); // 4 minutes
+    await prisma.lead.update({ where: { id: leadId }, data: { cartaStatus: "FAILED", errorLog: "Pipeline timeout" } }).catch(() => {});
+  }, timeoutMs);
 
   try {
     const providerName = lead.detectedProvider?.name || null;

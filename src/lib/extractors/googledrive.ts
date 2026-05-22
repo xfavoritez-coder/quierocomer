@@ -199,8 +199,9 @@ async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promis
 
   // Split into chunks of 2 pages to stay under 4.5MB base64 (image-heavy PDFs)
   const PAGES_PER_CHUNK = 2;
-  const chunks: string[] = [];
 
+  // Prepare all chunks first
+  const chunkData: { start: number; end: number; base64: string }[] = [];
   for (let start = 0; start < totalPages; start += PAGES_PER_CHUNK) {
     const end = Math.min(start + PAGES_PER_CHUNK, totalPages);
     const chunkPdf = await PDFDocument.create();
@@ -210,48 +211,54 @@ async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promis
     const base64 = chunkBuf.toString("base64");
     const sizeMB = (base64.length / 1024 / 1024).toFixed(1);
     console.log(`[GoogleDrive] Chunk pages ${start + 1}-${end}: ${sizeMB}MB`);
-
-    // Skip chunks over 4.5MB (Claude limit)
     if (base64.length > 4.5 * 1024 * 1024) {
       console.warn(`[GoogleDrive] Chunk too large (${sizeMB}MB), skipping`);
       continue;
     }
+    chunkData.push({ start, end, base64 });
+  }
 
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "anthropic-beta": "pdfs-2024-09-25",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 16000,
-        messages: [{
-          role: "user",
-          content: [
-            { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-            {
-              type: "text",
-              text: `Analiza estas páginas (${start + 1}-${end} de ${totalPages}) de un menú de restaurante.
+  // Process chunks in parallel (max 3 concurrent)
+  const CONCURRENCY = 3;
+  const chunks: string[] = [];
+  for (let i = 0; i < chunkData.length; i += CONCURRENCY) {
+    const batch = chunkData.slice(i, i + CONCURRENCY);
+    const results = await Promise.allSettled(batch.map(async ({ start, end, base64 }) => {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-beta": "pdfs-2024-09-25",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 16000,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+              {
+                type: "text",
+                text: `Analiza estas páginas (${start + 1}-${end} de ${totalPages}) de un menú de restaurante.
 Extrae TODOS los platos que encuentres. Responde SOLO con JSON:
 ${MENU_JSON_SCHEMA}
 ${RULES}`,
-            },
-          ],
-        }],
-      }),
-      signal: AbortSignal.timeout(120000),
-    });
-
-    if (!res.ok) {
-      console.warn(`[GoogleDrive] Claude error for chunk ${start + 1}-${end}: ${res.status}`);
-      continue;
+              },
+            ],
+          }],
+        }),
+        signal: AbortSignal.timeout(120000),
+      });
+      if (!res.ok) throw new Error(`Claude error: ${res.status}`);
+      const data = await res.json();
+      return data.content?.[0]?.text || "";
+    }));
+    for (const r of results) {
+      if (r.status === "fulfilled" && r.value) chunks.push(r.value);
+      else if (r.status === "rejected") console.warn("[GoogleDrive] Chunk failed:", r.reason?.message);
     }
-    const data = await res.json();
-    const text = data.content?.[0]?.text || "";
-    if (text) chunks.push(text);
   }
 
   if (chunks.length === 0) throw new Error("Claude could not extract from any PDF chunk");
