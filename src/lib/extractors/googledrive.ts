@@ -187,112 +187,60 @@ ${text.slice(0, 30000)}`;
 }
 
 /**
- * Split a large PDF into smaller chunks and send each to Claude as a PDF document.
- * Merges all results into a single response.
- * Uses pdf-lib to split pages.
+ * Send a large PDF to Claude via the PDF beta API.
+ * If the PDF is too large (>4.5MB base64), truncate to fit.
+ * Claude's PDF support handles multi-page documents natively.
  */
 async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promise<string> {
-  // eslint-disable-next-line no-eval -- avoid Next.js static analysis bundling pdf-lib
-  const { PDFDocument } = eval('require')("pdf-lib");
-  const pdf = await PDFDocument.load(new Uint8Array(buffer));
-  const totalPages = pdf.getPageCount();
-  console.log(`[GoogleDrive] PDF has ${totalPages} pages, splitting into chunks`);
+  // Claude PDF beta accepts up to ~4.5MB base64 (~3.3MB raw)
+  const MAX_RAW_SIZE = 3.3 * 1024 * 1024;
+  let pdfBuffer = buffer;
 
-  // Split into chunks of 2 pages to stay under 4.5MB base64 (image-heavy PDFs)
-  const PAGES_PER_CHUNK = 2;
-
-  // Prepare all chunks first
-  const chunkData: { start: number; end: number; base64: string }[] = [];
-  for (let start = 0; start < totalPages; start += PAGES_PER_CHUNK) {
-    const end = Math.min(start + PAGES_PER_CHUNK, totalPages);
-    const chunkPdf = await PDFDocument.create();
-    const pages = await chunkPdf.copyPages(pdf, Array.from({ length: end - start }, (_, i) => start + i));
-    pages.forEach((p: any) => chunkPdf.addPage(p));
-    const chunkBuf = Buffer.from(await chunkPdf.save());
-    const base64 = chunkBuf.toString("base64");
-    const sizeMB = (base64.length / 1024 / 1024).toFixed(1);
-    console.log(`[GoogleDrive] Chunk pages ${start + 1}-${end}: ${sizeMB}MB`);
-    if (base64.length > 4.5 * 1024 * 1024) {
-      console.warn(`[GoogleDrive] Chunk too large (${sizeMB}MB), skipping`);
-      continue;
-    }
-    chunkData.push({ start, end, base64 });
+  if (buffer.length > MAX_RAW_SIZE) {
+    // Truncate the PDF to fit — Claude will read whatever pages fit
+    pdfBuffer = buffer.subarray(0, MAX_RAW_SIZE);
+    console.log(`[GoogleDrive] PDF too large (${(buffer.length/1024/1024).toFixed(1)}MB), truncated to ${(pdfBuffer.length/1024/1024).toFixed(1)}MB`);
   }
 
-  // Process chunks in parallel (max 3 concurrent)
-  const CONCURRENCY = 3;
-  const chunks: string[] = [];
-  for (let i = 0; i < chunkData.length; i += CONCURRENCY) {
-    const batch = chunkData.slice(i, i + CONCURRENCY);
-    const results = await Promise.allSettled(batch.map(async ({ start, end, base64 }) => {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-          "anthropic-beta": "pdfs-2024-09-25",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 16000,
-          messages: [{
-            role: "user",
-            content: [
-              { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-              {
-                type: "text",
-                text: `Analiza estas páginas (${start + 1}-${end} de ${totalPages}) de un menú de restaurante.
-Extrae TODOS los platos que encuentres. Responde SOLO con JSON:
-${MENU_JSON_SCHEMA}
-${RULES}`,
-              },
-            ],
-          }],
-        }),
-        signal: AbortSignal.timeout(120000),
-      });
-      if (!res.ok) throw new Error(`Claude error: ${res.status}`);
-      const data = await res.json();
-      return data.content?.[0]?.text || "";
-    }));
-    for (const r of results) {
-      if (r.status === "fulfilled" && r.value) chunks.push(r.value);
-      else if (r.status === "rejected") console.warn("[GoogleDrive] Chunk failed:", r.reason?.message);
-    }
-  }
+  const base64 = pdfBuffer.toString("base64");
+  console.log(`[GoogleDrive] Sending PDF to Claude: ${(base64.length/1024/1024).toFixed(1)}MB base64`);
 
-  if (chunks.length === 0) throw new Error("Claude could not extract from any PDF chunk");
-
-  // If single chunk, return directly
-  if (chunks.length === 1) return chunks[0];
-
-  // Merge multiple chunks: ask Claude to combine
-  const mergePrompt = `Tienes ${chunks.length} extracciones parciales de un menú de restaurante. Combínalas en un solo JSON, eliminando duplicados.
-Responde SOLO con JSON:
-${MENU_JSON_SCHEMA}
-
-EXTRACCIONES:
-${chunks.map((c, i) => `--- Parte ${i + 1} ---\n${c}`).join("\n\n")}`;
-
-  const mergeRes = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "x-api-key": apiKey,
       "anthropic-version": "2023-06-01",
+      "anthropic-beta": "pdfs-2024-09-25",
       "content-type": "application/json",
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 16000,
-      messages: [{ role: "user", content: mergePrompt }],
+      max_tokens: 32000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
+          {
+            type: "text",
+            text: `Analiza este PDF de carta/menú de restaurante.
+Extrae TODOS los platos que puedas identificar y organízalos por categoría.
+IMPORTANTE: Solo extrae platos reales que estén en el documento. NO inventes.
+Responde SOLO con JSON:
+${MENU_JSON_SCHEMA}
+${RULES}`,
+          },
+        ],
+      }],
     }),
-    signal: AbortSignal.timeout(90000),
+    signal: AbortSignal.timeout(180000),
   });
 
-  if (!mergeRes.ok) throw new Error(`Claude merge error: ${mergeRes.status}`);
-  const mergeData = await mergeRes.json();
-  return mergeData.content?.[0]?.text || chunks[0];
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error(`Claude PDF error: ${res.status} ${errText.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || "";
 }
 
 // ─── JSON parsing (tolerant) ──────────────────────────────────────────────────
