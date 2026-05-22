@@ -625,11 +625,10 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
               <a href={`/activar/${selectedRest.slug}`} className="demo-activar-btn" style={{ border: 0, borderRadius: 999, height: 38, padding: "0 13px", fontSize: 14, fontWeight: 900, background: "linear-gradient(135deg, #f59e0b, #d97706)", color: "#fff", display: "flex", alignItems: "center", textDecoration: "none", whiteSpace: "nowrap", transition: "transform 0.1s ease" }}>Activar →</a>
             </div>
           </div>
-          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center" }}>
-            <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se vería tu panel (datos ficticios, cuando actives quedan en cero)</span>
-            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Datos ficticios · Al activar quedan en cero</span>
-            <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }
-.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
+          <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "7px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center", lineHeight: 1.4 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "block" }}>Así se vería tu panel</span>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>Datos ficticios, cuando actives quedan en cero</span>
+            <style>{`.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />
           </div>
         </div>
