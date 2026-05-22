@@ -16,7 +16,6 @@
  */
 
 import type { ExtractionResult, ExtractedDish } from "./types";
-import { PDFDocument } from "pdf-lib";
 
 // ─── URL detection ────────────────────────────────────────────────────────────
 
@@ -193,6 +192,7 @@ ${text.slice(0, 30000)}`;
  * Uses pdf-lib to split pages.
  */
 async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promise<string> {
+  const { PDFDocument } = require("pdf-lib") as typeof import("pdf-lib");
   const pdf = await PDFDocument.load(new Uint8Array(buffer));
   const totalPages = pdf.getPageCount();
   console.log(`[GoogleDrive] PDF has ${totalPages} pages, splitting into chunks`);
