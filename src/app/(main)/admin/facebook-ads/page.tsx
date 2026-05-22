@@ -383,50 +383,6 @@ export default function FacebookAdsPage() {
         </Section>
       </div>
 
-      {/* Logo clicks by restaurant */}
-      {totalLogoClicks > 0 && (
-        <Section title={`Clicks en logos (${totalLogoClicks})`}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            {Object.entries(logoClicks).sort((a, b) => b[1] - a[1]).map(([slug, count]) => (
-              <div key={slug} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "#1a1a1a", borderRadius: 10, border: "1px solid #2a2a2a" }}>
-                <span style={{ color: "#8b5cf6", fontWeight: 600, fontSize: 13 }}>{slug}</span>
-                <span style={{ color: "#888", fontSize: 12 }}>{count}</span>
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
-        {/* Sections viewed */}
-        <Section title="Secciones vistas">
-          {sortedSections.length === 0 && <Empty />}
-          {sortedSections.map(([name, count]) => (
-            <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
-              <span style={{ color: "#ccc" }}>{name}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <div style={{ width: Math.min((count / (stats.totalSessions || 1)) * 120, 120), height: 8, background: "#14b8a680", borderRadius: 4 }} />
-                <span style={{ color: "#888", minWidth: 30, textAlign: "right" }}>{count}</span>
-              </div>
-            </div>
-          ))}
-        </Section>
-
-        {/* Clicks */}
-        <Section title="Elementos con click">
-          {sortedClicks.length === 0 && <Empty />}
-          {sortedClicks.map(([label, count]) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
-              <span style={{ color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{label}</span>
-              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
-                <div style={{ width: Math.min((count / (sortedClicks[0]?.[1] || 1)) * 80, 80), height: 8, background: "#8b5cf680", borderRadius: 4 }} />
-                <span style={{ color: "#888", minWidth: 24, textAlign: "right" }}>{count}</span>
-              </div>
-            </div>
-          ))}
-        </Section>
-      </div>
-
       {/* Sessions detail */}
       <Section title={`Sesiones individuales (${sessions.length})`}>
         {sessions.length === 0 && <Empty />}
@@ -552,6 +508,48 @@ export default function FacebookAdsPage() {
           );
         })}
       </Section>
+
+      {/* Logo clicks by restaurant */}
+      {totalLogoClicks > 0 && (
+        <Section title={`Clicks en logos (${totalLogoClicks})`}>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            {Object.entries(logoClicks).sort((a, b) => b[1] - a[1]).map(([slug, count]) => (
+              <div key={slug} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", background: "#1a1a1a", borderRadius: 10, border: "1px solid #2a2a2a" }}>
+                <span style={{ color: "#8b5cf6", fontWeight: 600, fontSize: 13 }}>{slug}</span>
+                <span style={{ color: "#888", fontSize: 12 }}>{count}</span>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
+        <Section title="Secciones vistas">
+          {sortedSections.length === 0 && <Empty />}
+          {sortedSections.map(([name, count]) => (
+            <div key={name} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
+              <span style={{ color: "#ccc" }}>{name}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <div style={{ width: Math.min((count / (stats.totalSessions || 1)) * 120, 120), height: 8, background: "#14b8a680", borderRadius: 4 }} />
+                <span style={{ color: "#888", minWidth: 30, textAlign: "right" }}>{count}</span>
+              </div>
+            </div>
+          ))}
+        </Section>
+
+        <Section title="Elementos con click">
+          {sortedClicks.length === 0 && <Empty />}
+          {sortedClicks.map(([label, count]) => (
+            <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
+              <span style={{ color: "#ccc", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flex: 1 }}>{label}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                <div style={{ width: Math.min((count / (sortedClicks[0]?.[1] || 1)) * 80, 80), height: 8, background: "#8b5cf680", borderRadius: 4 }} />
+                <span style={{ color: "#888", minWidth: 24, textAlign: "right" }}>{count}</span>
+              </div>
+            </div>
+          ))}
+        </Section>
+      </div>
       </>}
     </div>
   );

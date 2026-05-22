@@ -104,12 +104,39 @@ function parseJSON(text: string): any {
   if (!match) throw new Error("No JSON found");
   let jsonStr = match[0];
   try { return JSON.parse(jsonStr); } catch {}
-  jsonStr = jsonStr.replace(/,\s*\{[^}]*$/, "").replace(/,\s*"[^"]*$/, "").replace(/,\s*$/, "");
-  let o = 0, c = 0; for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
-  for (let i = 0; i < o - c; i++) jsonStr += "]";
-  o = 0; c = 0; for (const ch of jsonStr) { if (ch === "{") o++; if (ch === "}") c++; }
-  for (let i = 0; i < o - c; i++) jsonStr += "}";
-  return JSON.parse(jsonStr);
+
+  // Aggressive truncation repair:
+  // 1. Remove trailing incomplete entries
+  jsonStr = jsonStr
+    .replace(/,\s*\{[^}]*$/, "")        // trailing incomplete object
+    .replace(/,\s*"[^"]*"?\s*:?\s*[^,}\]]*$/, "") // trailing incomplete key-value
+    .replace(/,\s*"[^"]*$/, "")          // trailing incomplete string
+    .replace(/,\s*$/, "");               // trailing comma
+
+  // 2. Close unclosed strings (find last unescaped quote)
+  const quoteCount = (jsonStr.match(/(?<!\\)"/g) || []).length;
+  if (quoteCount % 2 !== 0) jsonStr += '"';
+
+  // 3. Balance brackets and braces
+  let ob = 0, cb = 0; for (const ch of jsonStr) { if (ch === "[") ob++; if (ch === "]") cb++; }
+  for (let i = 0; i < ob - cb; i++) jsonStr += "]";
+  let oo = 0, co = 0; for (const ch of jsonStr) { if (ch === "{") oo++; if (ch === "}") co++; }
+  for (let i = 0; i < oo - co; i++) jsonStr += "}";
+
+  try { return JSON.parse(jsonStr); } catch {}
+
+  // 4. Last resort: find the longest valid JSON prefix
+  for (let end = jsonStr.length; end > 100; end--) {
+    let attempt = jsonStr.slice(0, end);
+    // Quick balance
+    const bk = (attempt.match(/\[/g) || []).length - (attempt.match(/\]/g) || []).length;
+    const br = (attempt.match(/\{/g) || []).length - (attempt.match(/\}/g) || []).length;
+    for (let i = 0; i < bk; i++) attempt += "]";
+    for (let i = 0; i < br; i++) attempt += "}";
+    try { return JSON.parse(attempt); } catch {}
+  }
+
+  throw new Error("Could not repair truncated JSON from Claude");
 }
 
 /** Resolve the best URL for menu extraction based on provider */
