@@ -397,11 +397,12 @@ export default function AdminLayoutOwner({ name, restaurants, selectedRestaurant
           }
         }
 
-        /* Landscape on mobile: hide chrome, full content */
-        @media (max-width: 767px) and (orientation: landscape) {
+        /* Landscape on mobile: hide all chrome, full content */
+        @media (orientation: landscape) and (max-height: 500px) {
+          .owl-sidebar { display: none; }
           .owl-mobile-header { display: none; }
           .owl-bottom-nav { display: none; }
-          .owl-main { padding: 12px 16px 12px; min-height: 100vh; }
+          .owl-main { margin-left: 0; padding: 12px 16px 12px; min-height: 100vh; }
         }
       `}</style>
     </div>

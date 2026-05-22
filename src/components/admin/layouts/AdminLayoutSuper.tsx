@@ -103,9 +103,10 @@ export default function AdminLayoutSuper({ name, logout, children }: Props) {
           .adm-btn-row { flex-direction: column !important; }
           .adm-btn-row > * { width: 100% !important; flex: none !important; }
         }
-        @media (max-width: 767px) and (orientation: landscape) {
+        @media (orientation: landscape) and (max-height: 500px) {
+          .adm-sidebar { display: none; }
           .adm-mobilebar { display: none; }
-          .adm-main { padding: 12px 16px 12px; }
+          .adm-main { margin-left: 0; padding: 12px 16px 12px; }
         }
       `}</style>
     </div>
