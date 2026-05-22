@@ -369,6 +369,7 @@ Investiga y arregla este lead. Empieza verificando la URL.`;
 async function executeTool(name: string, input: any, lead: any, baseUrl: string): Promise<any> {
   switch (name) {
     case "fetch_url": {
+      // Try direct fetch first
       try {
         const res = await fetch(input.url, {
           headers: { "User-Agent": "Mozilla/5.0 (compatible; QuieroComer/1.0)" },
@@ -382,9 +383,34 @@ async function executeTool(name: string, input: any, lead: any, baseUrl: string)
           finalUrl: res.url,
           htmlPreview: text.slice(0, 8000),
           size: text.length,
+          method: "direct",
         };
-      } catch (err: any) {
-        return { error: err.message, status: 0 };
+      } catch (directErr: any) {
+        // Direct failed (likely IP block/timeout), try via Jina as proxy
+        console.log(`[LeadDoctor] Direct fetch failed: ${directErr.message}. Trying Jina...`);
+        try {
+          const jinaRes = await fetch(`https://r.jina.ai/${input.url}`, {
+            headers: { Accept: "text/plain", "X-No-Cache": "true" },
+            signal: AbortSignal.timeout(15000),
+          });
+          const jinaText = await jinaRes.text();
+          return {
+            status: jinaRes.status,
+            contentType: "text/markdown (via Jina)",
+            finalUrl: input.url,
+            htmlPreview: jinaText.slice(0, 8000),
+            size: jinaText.length,
+            method: "jina_proxy",
+            note: "Direct fetch timed out (likely IP block). Content retrieved via Jina proxy.",
+          };
+        } catch (jinaErr: any) {
+          return {
+            error: `Direct: ${directErr.message}. Jina proxy: ${jinaErr.message}`,
+            status: 0,
+            method: "both_failed",
+            note: "Both direct and Jina proxy failed. Site may be completely down or blocking all automated access.",
+          };
+        }
       }
     }
 
