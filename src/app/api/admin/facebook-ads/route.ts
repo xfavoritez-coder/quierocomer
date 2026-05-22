@@ -51,16 +51,22 @@ export async function GET(req: NextRequest) {
     const mobile = filteredSessions.filter((s) => s.device === "mobile").length;
     const desktop = filteredSessions.filter((s) => s.device === "desktop").length;
     // Sessions that landed on landing page and then navigated to /subircarta
+    const flatEvents = (s: any) => (s.events as any[]).flat();
     const landingSessions = filteredSessions.filter((s) => !(s.landingPage || "").includes("/subircarta"));
+    const sessionVisitedSubircarta = (s: any) => {
+      const landed = (s.landingPage || "").includes("/subircarta");
+      if (landed) return true;
+      return flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
+    };
     const visitedSubircarta = landingSessions.filter((s) =>
       s.pageViews > 1 ||
-      (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
+      flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
     ).length;
 
     // Logo clicks: sessions where user clicked a restaurant logo (href contains /qr/)
     const logoClicks: Record<string, number> = {};
     for (const s of filteredSessions) {
-      for (const ev of (s.events as any[])) {
+      for (const ev of flatEvents(s)) {
         if (ev.type === "click" && ev.data?.href?.includes("/qr/")) {
           const match = ev.data.href.match(/\/qr\/([^?/]+)/);
           const slug = match ? match[1] : "desconocido";
@@ -84,8 +90,10 @@ export async function GET(req: NextRequest) {
       const landedOnSubircarta = (s.landingPage || "").includes("/subircarta");
       if (!landedOnSubircarta) {
         const navigated = s.pageViews > 1 ||
-          (s.events as any[]).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
+          flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
         if (navigated) byCampaign[key].subircarta++;
+      } else {
+        byCampaign[key].subircarta++;
       }
     }
     for (const key of Object.keys(byCampaign)) {
@@ -115,7 +123,7 @@ export async function GET(req: NextRequest) {
     // Click heatmap
     const clickCounts: Record<string, number> = {};
     for (const s of filteredSessions) {
-      for (const ev of (s.events as any[] || [])) {
+      for (const ev of flatEvents(s)) {
         if (ev.type === "click" && ev.data?.label) {
           const label = ev.data.label.slice(0, 50);
           clickCounts[label] = (clickCounts[label] || 0) + 1;
@@ -209,6 +217,7 @@ export async function GET(req: NextRequest) {
         exitPage: s.exitPage,
         leadId: s.leadId,
         events: s.events,
+        visitedSubircarta: sessionVisitedSubircarta(s),
         createdAt: s.createdAt,
         updatedAt: s.updatedAt,
       })),

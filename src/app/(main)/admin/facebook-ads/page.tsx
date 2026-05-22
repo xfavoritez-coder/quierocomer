@@ -46,6 +46,7 @@ interface Session {
   exitPage: string | null;
   leadId: string | null;
   events: any[];
+  visitedSubircarta: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -237,30 +238,6 @@ export default function FacebookAdsPage() {
         );
       })()}
 
-      {/* Daily chart */}
-      {sortedDaily.length > 0 && (
-        <Section title="Visitas diarias">
-          <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 80, padding: "0 4px" }}>
-            {sortedDaily.map(([day, d]) => {
-              const max = Math.max(...sortedDaily.map(([, x]) => x.visits), 1);
-              const h = Math.max((d.visits / max) * 70, 2);
-              return (
-                <div key={day} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                  <span style={{ fontSize: 9, color: "#666" }}>{d.visits}</span>
-                  <div style={{ width: "100%", maxWidth: 28, display: "flex", flexDirection: "column", gap: 1 }}>
-                    {d.converted > 0 && (
-                      <div style={{ height: Math.max((d.converted / max) * 70, 2), background: "#22c55e", borderRadius: 3 }} />
-                    )}
-                    <div style={{ height: h - (d.converted > 0 ? Math.max((d.converted / max) * 70, 2) : 0), background: d.bounced === d.visits ? "#ef444480" : "#3b82f6", borderRadius: 3 }} />
-                  </div>
-                  <span style={{ fontSize: 8, color: "#555", transform: "rotate(-45deg)", whiteSpace: "nowrap" }}>{day.slice(5)}</span>
-                </div>
-              );
-            })}
-          </div>
-        </Section>
-      )}
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         {/* Campaigns */}
         <Section title="Por campaña">
@@ -371,6 +348,11 @@ export default function FacebookAdsPage() {
                   <span style={{ fontSize: 11, padding: "2px 6px", borderRadius: 4, background: s.bounced ? "#ef44441a" : s.converted ? "#22c55e1a" : "#3b82f61a", color: s.bounced ? "#ef4444" : s.converted ? "#22c55e" : "#3b82f6", fontWeight: 600 }}>
                     {s.bounced ? "Rebote" : s.converted ? "Convertido" : "Exploro"}
                   </span>
+                  {s.visitedSubircarta && (
+                    <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "rgba(168,85,247,0.1)", color: "#a855f7", fontWeight: 600, border: "1px solid rgba(168,85,247,0.2)" }}>
+                      /subircarta
+                    </span>
+                  )}
                   <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "#ffffff08", color: "#aaa" }}>
                     {ua.os}{ua.deviceName ? ` · ${ua.deviceName}` : ""}
                   </span>
