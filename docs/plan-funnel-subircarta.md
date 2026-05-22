@@ -328,6 +328,13 @@ Funnel de captación de dueños de restaurantes. El dueño sube su carta (link, 
 
 22. **Monitoreo de salud por proveedor** — Dashboard con % de éxito por extractor en últimos 7 días. Alerta si un proveedor empieza a fallar.
 
+23. **Proxy residencial para extractores** — Algunos sitios (ej: micartaqr.cl) bloquean IPs de datacenter (Vercel/AWS). El pipeline y el Lead Doctor no pueden acceder a estas URLs desde el servidor. Implementar cuando haya más volumen de leads:
+    - Contratar servicio de proxy residencial (Bright Data, ScraperAPI, ~$50/mes)
+    - Agregar fallback en el pipeline: si fetch directo falla por timeout, reintentar via proxy
+    - El Lead Doctor ya tiene fallback con Jina como proxy, pero Jina devuelve markdown (no HTML), así que extractores dedicados que necesitan HTML no funcionan via Jina
+    - Por ahora: leads que fallan por bloqueo de IP se procesan manualmente
+    - Priorizar cuando: +20 leads diarios o +3 proveedores distintos bloqueando
+
 ### Prioridad baja
 
 23. **Pexels como fallback de fotos** — API gratuita 200/hora sin aprobación (vs Unsplash 50/hora demo). Usar cuando Unsplash falla por rate limit. API key: se obtiene en pexels.com/api. Endpoint similar: `https://api.pexels.com/v1/search?query=sushi+food&per_page=1`.
