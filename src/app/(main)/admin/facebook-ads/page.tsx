@@ -130,7 +130,7 @@ const CSS = `
   .fb-card { background: #111; border-radius: 14px; padding: 14px 14px; border: 1px solid #1e1e1e; position: relative; overflow: hidden; }
   .fb-card-val { font-size: 22px; font-weight: 800; line-height: 1.1; transition: color .5s; }
   @media (min-width: 480px) { .fb-card-val { font-size: 26px; } }
-  .fb-card-suffix { font-size: 12px; font-weight: 700; color: #bbb; margin-left: 3px; }
+  .fb-card-suffix { font-size: 13px; font-weight: 800; color: #ddd; margin-left: 3px; }
   .fb-card-label { font-size: 10px; color: #666; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
 
   /* Hourly chart - scrollable on mobile with bigger bars */
@@ -815,7 +815,7 @@ function StatCard({ label, value, color, suffix }: { label: string; value: numbe
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `${color}40`, borderRadius: "14px 14px 0 0" }} />
       <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
         <span className="fb-card-val" style={{ color: color || "#fff" }}>{value}</span>
-        {suffix && <span className="fb-card-suffix">{suffix}</span>}
+        {suffix && <span style={{ fontSize: 13, fontWeight: 800, color: color || "#ddd", marginLeft: 3, opacity: 0.7 }}>{suffix}</span>}
       </div>
       <div className="fb-card-label">{label}</div>
     </div>
