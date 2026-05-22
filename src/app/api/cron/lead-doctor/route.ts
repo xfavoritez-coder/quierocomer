@@ -313,14 +313,15 @@ Investiga y arregla este lead. Empieza verificando la URL.`;
       const result = await executeTool(tool.name, tool.input, lead, baseUrl);
       lastAction = `${tool.name}: ${typeof result === "string" ? result.slice(0, 80) : JSON.stringify(result).slice(0, 80)}`;
 
-      // Log doctor action
+      // Log doctor action with human-readable message
+      const humanMsg = formatToolLog(tool.name, tool.input, result);
       await prisma.lead.update({
         where: { id: lead.id },
         data: {
           events: {
             push: {
               action: `doctor_${tool.name}`,
-              detail: typeof result === "string" ? result.slice(0, 200) : JSON.stringify(result).slice(0, 200),
+              detail: humanMsg,
               ts: new Date().toISOString(),
             },
           },
@@ -578,5 +579,42 @@ async function executeTool(name: string, input: any, lead: any, baseUrl: string)
 
     default:
       return { error: "Unknown tool" };
+  }
+}
+
+// ─── Human-readable log formatting ────────────────────────────
+
+function formatToolLog(toolName: string, input: any, result: any): string {
+  switch (toolName) {
+    case "fetch_url": {
+      if (result.error) {
+        const method = result.method === "both_failed"
+          ? "Intenté fetch directo y proxy Jina, ambos fallaron"
+          : "Fetch directo falló";
+        return `${method}. URL: ${input.url}. Error: ${result.error.slice(0, 100)}. ${result.note || ""}`;
+      }
+      const via = result.method === "jina_proxy" ? " (via proxy Jina)" : "";
+      return `URL accesible${via}. Status ${result.status}, ${result.size} bytes. ${result.note || ""}`;
+    }
+    case "analyze_html_for_menu": {
+      if (!result.patternsFound) return `Analicé el HTML de ${input.url}: no encontré patrones de menú.`;
+      return `Analicé el HTML de ${input.url}: ${result.patternsFound} patrones encontrados. ${result.patterns?.slice(0, 3).join("; ")}. ${result.recommendation || ""}`;
+    }
+    case "list_existing_providers":
+      return `Consulté ${Array.isArray(result) ? result.length : 0} proveedores registrados.`;
+    case "create_provider": {
+      if (result.alreadyExists) return `Proveedor "${result.name}" ya existe (ID: ${result.id}).`;
+      return `Creé nuevo proveedor "${result.name}" (ID: ${result.id}).`;
+    }
+    case "assign_provider_to_lead":
+      return `Asigné proveedor ${input.providerId} al lead ${input.leadId}.`;
+    case "retry_lead": {
+      if (result.success) return `Reintento exitoso. Carta creada: ${result.slug}. Razón: ${input.reason}`;
+      return `Reintento falló. Error: ${result.error?.slice(0, 120)}. Razón del intento: ${input.reason}`;
+    }
+    case "escalate_to_human":
+      return `Escalado a humano. Razón: ${input.reason}`;
+    default:
+      return JSON.stringify(result).slice(0, 200);
   }
 }
