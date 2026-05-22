@@ -4,16 +4,46 @@ import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rat
 import { getCity } from "@/lib/geoip";
 
 /** Try to detect the menu provider: first by domain, then by fetching HTML and scanning for signatures. */
+/** Known redirect domains — we resolve the real URL before detecting provider */
+const REDIRECT_DOMAINS = ["l.instagram.com", "lm.facebook.com", "t.co", "bit.ly", "tinyurl.com", "shorturl.at"];
+
+async function resolveRedirect(url: string): Promise<string> {
+  const hostname = new URL(url).hostname.toLowerCase();
+  if (!REDIRECT_DOMAINS.some(d => hostname.includes(d))) return url;
+  try {
+    const res = await fetch(url, {
+      method: "HEAD",
+      redirect: "follow",
+      signal: AbortSignal.timeout(5000),
+      headers: { "User-Agent": "QuieroComer-Bot/1.0" },
+    });
+    return res.url || url;
+  } catch {
+    // Try extracting from query params (Instagram wraps in ?u=)
+    try {
+      const u = new URL(url);
+      const wrapped = u.searchParams.get("u");
+      if (wrapped) return wrapped;
+    } catch {}
+    return url;
+  }
+}
+
 async function detectProvider(
   cartaUrl: string,
   providers: { id: string; domainPatterns: string[]; htmlSignatures: string[] }[],
-): Promise<string | null> {
-  const hostname = new URL(cartaUrl).hostname.toLowerCase();
+): Promise<{ providerId: string | null; resolvedUrl?: string }> {
+  // Step 0: resolve redirects (Instagram, Facebook, bit.ly, etc.)
+  const resolvedUrl = await resolveRedirect(cartaUrl);
+  const urlChanged = resolvedUrl !== cartaUrl;
+  const hostname = new URL(resolvedUrl).hostname.toLowerCase();
 
-  // Pass 1: domain match
+  if (urlChanged) console.log(`[SubirCarta] Resolved redirect: ${new URL(cartaUrl).hostname} → ${hostname}`);
+
+  // Pass 1: domain match on resolved URL
   for (const p of providers) {
     if (p.domainPatterns.some((pat) => hostname.includes(pat.toLowerCase()))) {
-      return p.id;
+      return { providerId: p.id, resolvedUrl: urlChanged ? resolvedUrl : undefined };
     }
   }
 
@@ -21,18 +51,18 @@ async function detectProvider(
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(cartaUrl, {
+    const res = await fetch(resolvedUrl, {
       signal: controller.signal,
       headers: { "User-Agent": "QuieroComer-Bot/1.0" },
       redirect: "follow",
     });
     clearTimeout(timeout);
 
-    if (!res.ok) return null;
+    if (!res.ok) return { providerId: null, resolvedUrl: urlChanged ? resolvedUrl : undefined };
 
     // Read only first 100KB to avoid downloading huge pages
     const reader = res.body?.getReader();
-    if (!reader) return null;
+    if (!reader) return { providerId: null, resolvedUrl: urlChanged ? resolvedUrl : undefined };
 
     let html = "";
     const decoder = new TextDecoder();
@@ -50,14 +80,14 @@ async function detectProvider(
     const htmlLower = html.toLowerCase();
     for (const p of providers) {
       if (p.htmlSignatures.some((sig) => htmlLower.includes(sig.toLowerCase()))) {
-        return p.id;
+        return { providerId: p.id, resolvedUrl: urlChanged ? resolvedUrl : undefined };
       }
     }
   } catch {
     // Fetch failed (timeout, DNS, etc.) — skip HTML detection
   }
 
-  return null;
+  return { providerId: null, resolvedUrl: urlChanged ? resolvedUrl : undefined };
 }
 
 export async function POST(req: Request) {
@@ -115,11 +145,14 @@ export async function POST(req: Request) {
       select: { id: true, domainPatterns: true, htmlSignatures: true },
     });
 
-    let detectedProviderId = await detectProvider(cartaUrl, providers);
+    const { providerId: detectedProviderIdRaw, resolvedUrl } = await detectProvider(cartaUrl, providers);
+    let detectedProviderId = detectedProviderIdRaw;
+    // If redirect was resolved, use the real URL for extraction
+    const effectiveUrl = resolvedUrl || cartaUrl;
 
     // Auto-create unknown providers so we track every domain that comes in
     if (!detectedProviderId) {
-      const hostname = new URL(cartaUrl).hostname.toLowerCase().replace(/^www\./, "");
+      const hostname = new URL(effectiveUrl).hostname.toLowerCase().replace(/^www\./, "");
       const domainName = hostname.split(".").slice(0, -1).join(".") || hostname;
       const displayName = domainName.charAt(0).toUpperCase() + domainName.slice(1);
       try {
@@ -129,7 +162,7 @@ export async function POST(req: Request) {
             domainPatterns: [hostname],
             htmlSignatures: [],
             status: "UNKNOWN",
-            notes: `Auto-detectado desde ${cartaUrl}`,
+            notes: `Auto-detectado desde ${effectiveUrl}`,
           },
         });
         detectedProviderId = newProvider.id;
@@ -150,7 +183,7 @@ export async function POST(req: Request) {
         ownerName: "",
         email: "",
         cartaType: "LINK",
-        cartaUrl,
+        cartaUrl: effectiveUrl, // Store resolved URL, not the redirect wrapper
         cartaStatus: "PENDING",
         detectedProviderId,
         ip,

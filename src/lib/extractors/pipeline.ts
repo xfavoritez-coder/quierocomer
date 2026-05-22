@@ -10,6 +10,7 @@ import { extractWithScraper } from "./scrape";
 import { extractFromDocument } from "./document";
 import { extractGoogleDrive } from "./googledrive";
 import { extractHeyzine } from "./heyzine";
+import { extractCanva } from "./canva";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult, ExtractedDish } from "./types";
 
@@ -230,6 +231,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractGoogleDrive(cartaUrl);
     case "Heyzine":
       return extractHeyzine(cartaUrl);
+    case "Canva":
+      return extractCanva(cartaUrl);
     case "Dropbox":
     case "OneDrive":
       // Cloud storage PDFs: treat as generic document via the scraper

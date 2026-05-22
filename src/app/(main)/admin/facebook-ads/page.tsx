@@ -550,14 +550,12 @@ export default function FacebookAdsPage() {
                     const isNewConversion = conversionCampaigns.has(name);
                     return (
                       <div key={name}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 3 }}>
-                          <span style={{ fontSize: 12, fontWeight: 600, color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#ccc", transition: "color 1.5s" }}>{name}</span>
-                          <div style={{ display: "flex", gap: 8, fontSize: 11, alignItems: "center" }}>
-                            <span style={{ color: "#888" }}>{c.visits}</span>
-                            {c.subircarta > 0 && <span style={{ color: "#F4A623" }}>{c.subircarta} /sc</span>}
-                            {c.converted > 0 && <span style={{ color: "#4ade80", fontWeight: 700 }}>{c.converted} conv</span>}
-                            <span style={{ color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
-                          </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : "#ccc", transition: "color 1.5s" }}>{name}</span>
+                          <span style={{ fontSize: 13, color: "#888" }}>{c.visits}</span>
+                          {c.subircarta > 0 && <span style={{ fontSize: 13, color: "#F4A623" }}>{c.subircarta} /sc</span>}
+                          {c.converted > 0 && <span style={{ fontSize: 13, color: "#4ade80", fontWeight: 700 }}>{c.converted} conv</span>}
+                          <span style={{ fontSize: 13, color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
                         </div>
                         {(() => {
                           const solo = c.visits - c.subircarta;
