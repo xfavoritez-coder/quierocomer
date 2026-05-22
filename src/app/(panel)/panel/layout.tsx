@@ -490,6 +490,32 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, [isDemoEarly]);
+
+  // ═══ Panel navigation tracking (demo leads) — must be before early returns ═══
+  const prevPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isDemoEarly || !selectedRestEarly?.slug) return;
+    const slug = selectedRestEarly.slug;
+    const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
+    if (prevPathRef.current !== pathname) {
+      trackFunnelEventBySlug(slug, "panel_visit", { section });
+      prevPathRef.current = pathname;
+    }
+  }, [pathname, isDemoEarly, selectedRestEarly?.slug]);
+
+  useEffect(() => {
+    if (!isDemoEarly || !selectedRestEarly?.slug) return;
+    const slug = selectedRestEarly.slug;
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
+        beaconFunnelEvent(slug, "panel_leave", { section });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [pathname, isDemoEarly, selectedRestEarly?.slug]);
+
   const [planModalInitialTab, setPlanModalInitialTab] = useState<"GOLD" | "PREMIUM" | undefined>(undefined);
 
   useEffect(() => {
@@ -564,33 +590,6 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
 
   const selectedRest = selectedRestEarly;
   const isDemo = isDemoEarly;
-
-  // ═══ Panel navigation tracking (demo leads) ═══
-  const prevPathRef = useRef<string | null>(null);
-  useEffect(() => {
-    if (!isDemo || !selectedRest?.slug) return;
-    const slug = selectedRest.slug;
-    // Map pathname to readable section name
-    const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
-    if (prevPathRef.current !== pathname) {
-      trackFunnelEventBySlug(slug, "panel_visit", { section });
-      prevPathRef.current = pathname;
-    }
-  }, [pathname, isDemo, selectedRest?.slug]);
-
-  // Abandonment tracking for panel
-  useEffect(() => {
-    if (!isDemo || !selectedRest?.slug) return;
-    const slug = selectedRest.slug;
-    const handleVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
-        beaconFunnelEvent(slug, "panel_leave", { section });
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [pathname, isDemo, selectedRest?.slug]);
 
   return (
     <SessionContext.Provider value={ctxValue}>
