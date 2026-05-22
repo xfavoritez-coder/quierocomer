@@ -221,15 +221,11 @@ export default function FacebookAdsPage() {
       {stats.totalSessions > 0 && <>
       {/* Stats overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8, marginBottom: 20 }}>
-        <Card label="Visitas totales" value={stats.totalVisits} />
-        <Card label="Desde FB Ads" value={stats.fbVisits} color="#3b82f6" suffix={`${stats.fbPctOfTotal}%`} />
-        <Card label="Sesiones FB" value={stats.totalSessions} color="#6366f1" />
-        <Card label="Rebote" value={stats.bounced} color="#ef4444" suffix={`${stats.bounceRate}%`} />
+        <Card label="Sesiones" value={stats.totalSessions} color="#6366f1" />
         <Card label="Vieron /subircarta" value={stats.visitedSubircarta} color="#F4A623" suffix={`${stats.visitedSubircartaRate}%`} />
         <Card label="Subieron carta" value={stats.converted} color="#22c55e" suffix={`${stats.conversionRate}%`} />
         <Card label="Tiempo prom." value={fmtDuration(stats.avgDuration)} color="#eab308" />
         <Card label="Scroll prom." value={`${stats.avgScroll}%`} color="#14b8a6" />
-        <Card label="Interacciones" value={stats.avgInteractions} color="#8b5cf6" suffix="prom" />
         <Card label="Mobile" value={stats.mobile} />
         <Card label="Desktop" value={stats.desktop} />
         {totalLogoClicks > 0 && <Card label="Vieron carta" value={totalLogoClicks} color="#8b5cf6" suffix={`${stats.totalSessions > 0 ? Math.round((totalLogoClicks / stats.totalSessions) * 100) : 0}%`} />}
