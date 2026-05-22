@@ -8,7 +8,7 @@ const TWILIO_TOKEN = process.env.TWILIO_AUTH_TOKEN;
 const TWILIO_FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
 
 // Template SID for "carta_lista_v2" (approved by Meta)
-const CARTA_LISTA_TEMPLATE = "HX7c7f3408ab130b598c6b47120f9bb9ca";
+const CARTA_LISTA_TEMPLATE = "HX73cbf24831adf5448d0e4eef6cb84f41";
 
 interface SendWhatsAppOptions {
   to: string; // E.164 format: +56912345678
@@ -89,7 +89,7 @@ export function buildCartaReadyMessage({
   trackUrl: string;
 }): { body: string; contentSid: string; contentVariables: Record<string, string> } {
   return {
-    body: `Hola ${ownerName} 👋\n\nTu carta de *${restaurantName}* está lista.\n\nPuedes verla aquí: ${trackUrl}\n\nSi tienes alguna duda, responde este mensaje.\n\n🧞 QuieroComer.cl`,
+    body: `Hola ${ownerName} 👋\n\nTu carta de *${restaurantName}* está lista.\n\nPuedes verla aquí: ${trackUrl}\n\nCualquier cosa no dudes en contactarnos.\n\n✨ QuieroComer.cl`,
     contentSid: CARTA_LISTA_TEMPLATE,
     contentVariables: { "1": ownerName, "2": restaurantName, "3": trackUrl },
   };
