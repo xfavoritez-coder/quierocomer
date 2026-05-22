@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Layers, List, BookOpen, Rocket, LayoutGrid, Sun, Moon, Menu, FileText } from "lucide-react";
+import { Layers, List, BookOpen, Rocket, LayoutGrid, Sun, Moon, Menu, FileText, Eye } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
@@ -219,7 +219,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
           boxShadow: open ? "0 4px 20px rgba(0,0,0,0.2)" : "0 4px 18px rgba(0,0,0,0.2)",
         }}
       >
-        <LayoutGrid size={18} strokeWidth={1.75} color="white" />
+        <Eye size={18} strokeWidth={1.75} color="white" />
       </button>
 
       {/* First-time tip del Genio */}
