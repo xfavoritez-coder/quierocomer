@@ -333,10 +333,26 @@ export default function FunnelPage() {
                 <TimelineStep label="Activado" time={fmtDate(lead.activatedAt)} color="#F4A623" />
               </div>
 
+              {/* Lead Doctor activity */}
+              {lead.events && lead.events.some((e: any) => e.action?.startsWith("lead_doctor")) && (
+                <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 8, background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
+                  <div style={{ fontSize: 10, color: "#a855f7", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>🩺 Lead Doctor</div>
+                  {lead.events.filter((e: any) => e.action?.startsWith("lead_doctor")).map((e: any, i: number) => (
+                    <div key={i} style={{ fontSize: 11, color: e.action === "lead_doctor_retry" ? "#a78bfa" : "#f87171", marginBottom: 3, display: "flex", gap: 6 }}>
+                      <span style={{ color: "#666", flexShrink: 0 }}>{e.ts ? new Date(e.ts).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                      <span>
+                        {e.action === "lead_doctor_retry" && `Intento ${e.attempt}: ${e.diagnosis || e.strategy}`}
+                        {e.action === "lead_doctor_skip" && `Saltado: ${e.reason}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {/* Event log */}
-              {lead.events && lead.events.length > 0 && (
+              {lead.events && lead.events.some((e: any) => e.action && !e.action.startsWith("lead_doctor")) && (
                 <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {lead.events.map((e: any, i: number) => {
+                  {lead.events.filter((e: any) => !e.action?.startsWith("lead_doctor")).map((e: any, i: number) => {
                     const isError = e.action?.includes("error") || e.action?.includes("timeout");
                     return (
                       <span key={i} style={{
