@@ -347,20 +347,9 @@ export default function FunnelPage() {
                 <TimelineStep label="Activado" time={fmtDate(lead.activatedAt)} color="#F4A623" />
               </div>
 
-              {/* Lead Doctor activity */}
-              {lead.events && lead.events.some((e: any) => e.action?.startsWith("lead_doctor")) && (
-                <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 8, background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)" }}>
-                  <div style={{ fontSize: 10, color: "#a855f7", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em", marginBottom: 6 }}>🩺 Lead Doctor</div>
-                  {lead.events.filter((e: any) => e.action?.startsWith("lead_doctor")).map((e: any, i: number) => (
-                    <div key={i} style={{ fontSize: 11, color: e.action === "lead_doctor_retry" ? "#a78bfa" : "#f87171", marginBottom: 3, display: "flex", gap: 6 }}>
-                      <span style={{ color: "#666", flexShrink: 0 }}>{e.ts ? new Date(e.ts).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                      <span>
-                        {e.action === "lead_doctor_retry" && `Intento ${e.attempt}: ${e.diagnosis || e.strategy}`}
-                        {e.action === "lead_doctor_skip" && `Saltado: ${e.reason}`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+              {/* Lead Doctor activity — collapsible */}
+              {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
+                <DoctorBlock events={lead.events.filter((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor"))} />
               )}
 
               {/* Event log */}
@@ -443,6 +432,75 @@ function TimelineStep({ label, time, delta, color }: { label: string; time: stri
         <span style={{ color: "#888" }}>{time}{delta && <span style={{ color: "#666", marginLeft: 3 }}>({delta})</span>}</span>
       ) : (
         <span style={{ color: "#333" }}>—</span>
+      )}
+    </div>
+  );
+}
+
+function DoctorBlock({ events }: { events: any[] }) {
+  const [open, setOpen] = useState(false);
+
+  // Find the last summary/escalation for the collapsed preview
+  const lastConclusion = [...events].reverse().find((e: any) =>
+    e.action === "doctor_run_summary" || e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human"
+  );
+  const isEscalated = events.some((e: any) => e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human");
+  const isFixed = events.some((e: any) => e.action === "doctor_retry_lead" && e.detail?.includes("exitoso"));
+
+  return (
+    <div style={{ marginTop: 8, borderRadius: 8, background: "rgba(168,85,247,0.06)", border: "1px solid rgba(168,85,247,0.15)", overflow: "hidden" }}>
+      <div
+        onClick={() => setOpen(!open)}
+        style={{ padding: "8px 12px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", WebkitTapHighlightColor: "transparent" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, color: "#a855f7", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>🩺 Lead Doctor</span>
+          <span style={{
+            fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700,
+            background: isFixed ? "rgba(34,197,94,0.12)" : isEscalated ? "rgba(239,68,68,0.1)" : "rgba(168,85,247,0.12)",
+            color: isFixed ? "#22c55e" : isEscalated ? "#f87171" : "#a855f7",
+          }}>
+            {isFixed ? "RESUELTO" : isEscalated ? "ESCALADO" : `${events.length} acciones`}
+          </span>
+        </div>
+        <span style={{ color: "#555", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
+      </div>
+
+      {/* Collapsed: show last conclusion */}
+      {!open && lastConclusion && (
+        <div style={{ padding: "0 12px 8px", fontSize: 11, color: "#c4b5fd", lineHeight: 1.4 }}>
+          {(lastConclusion.detail || lastConclusion.reason || "").slice(0, 150)}{(lastConclusion.detail || lastConclusion.reason || "").length > 150 ? "..." : ""}
+        </div>
+      )}
+
+      {/* Expanded: all events */}
+      {open && (
+        <div style={{ padding: "0 12px 10px" }}>
+          {events.map((e: any, i: number) => {
+            const isSummary = e.action === "doctor_run_summary" || e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human";
+            const isRetry = e.action === "doctor_retry" || e.action === "doctor_retry_lead" || e.action === "lead_doctor_retry";
+            const isSuccess = e.action === "doctor_retry_lead" && e.detail?.includes("exitoso");
+            const msg = e.detail || e.reason || (e.diagnosis ? `Intento ${e.attempt}: ${e.diagnosis}` : "");
+            if (!msg) return null;
+            return (
+              <div key={i} style={{ fontSize: 11, marginBottom: 6, padding: "4px 0", borderBottom: "1px solid rgba(168,85,247,0.08)" }}>
+                <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 2 }}>
+                  <span style={{ color: "#555", flexShrink: 0, fontSize: 10 }}>
+                    {e.ts ? new Date(e.ts).toLocaleString("es-CL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : ""}
+                  </span>
+                  <span style={{
+                    fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700,
+                    background: isSuccess ? "rgba(34,197,94,0.12)" : isSummary ? "rgba(168,85,247,0.15)" : isRetry ? "rgba(59,130,246,0.12)" : "rgba(255,255,255,0.04)",
+                    color: isSuccess ? "#22c55e" : isSummary ? "#a855f7" : isRetry ? "#60a5fa" : "#888",
+                  }}>
+                    {isSuccess ? "RESUELTO" : isSummary ? (e.action === "doctor_escalated" || e.action === "doctor_escalate_to_human" ? "ESCALADO" : "CONCLUSION") : isRetry ? "REINTENTO" : e.action?.replace("doctor_", "").replace("lead_doctor_", "")}
+                  </span>
+                </div>
+                <div style={{ color: isSuccess ? "#4ade80" : isSummary ? "#c4b5fd" : "#999", lineHeight: 1.4 }}>{msg}</div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
