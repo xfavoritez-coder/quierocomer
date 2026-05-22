@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
-import { Settings, Moon, Sun, Bell, Palette, Layout, Mail, List, BookOpen, Rocket } from "lucide-react";
+import { Settings, Moon, Sun, Bell, Palette, Layout, Mail, List, BookOpen, Rocket, FileText } from "lucide-react";
 import { useAdminSession } from "@/lib/admin/useAdminSession";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { toast } from "sonner";
@@ -37,7 +37,7 @@ const ACCENT_OPTIONS = [
 
 const VIEW_OPTIONS = [
   { value: "lista", label: "Lista", icon: List },
-  { value: "premium", label: "Galería", icon: BookOpen },
+  { value: "esencial", label: "Esencial", icon: FileText },
   { value: "impact", label: "Impact", icon: Rocket },
 ];
 

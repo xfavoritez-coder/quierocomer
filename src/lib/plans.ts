@@ -8,7 +8,7 @@
 export type Plan = "FREE" | "GOLD" | "PREMIUM";
 
 export type Feature =
-  | "view_gallery"      // Vista galería
+  | "view_gallery"      // Vista esencial (legacy name kept for compatibility)
   | "view_feed"         // Vista feed
   | "view_space"        // Vista espacial
   | "view_selector"     // Selector de vistas + idiomas

@@ -3,11 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-export type CartaView = "premium" | "lista" | "impact" | "feed";
+export type CartaView = "premium" | "lista" | "impact" | "feed" | "esencial";
 
 const STORAGE_KEY = "quierocomer_carta_view";
-const FALLBACK_VIEW: CartaView = "premium";
-const VALID_VIEWS: CartaView[] = ["premium", "lista", "impact", "feed"];
+const FALLBACK_VIEW: CartaView = "lista";
+const VALID_VIEWS: CartaView[] = ["premium", "lista", "impact", "feed", "esencial"];
 
 function isValidView(v: string | null): v is CartaView {
   return v !== null && VALID_VIEWS.includes(v as CartaView);

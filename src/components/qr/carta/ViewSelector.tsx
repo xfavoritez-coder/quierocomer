@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Layers, List, BookOpen, Rocket, LayoutGrid, Sun, Moon, Menu } from "lucide-react";
+import { Layers, List, BookOpen, Rocket, LayoutGrid, Sun, Moon, Menu, FileText } from "lucide-react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCartaView, type CartaView } from "./hooks/useCartaView";
 import { showViewTransition } from "./hooks/useViewTransition";
@@ -13,10 +13,11 @@ import GenioTip from "../genio/GenioTip";
 const TOOLTIP_KEY = "quierocomer_carta_view_tooltip_shown";
 const LANG_STORAGE_KEY = "qc_lang";
 
-const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewImpact" | "viewFeed"; Icon: typeof List }[] = [
+const VIEW_KEYS: { value: CartaView; labelKey: "viewList" | "viewGallery" | "viewImpact" | "viewFeed" | "viewEsencial"; Icon: typeof List }[] = [
   { value: "lista", labelKey: "viewList", Icon: List },
   { value: "premium", labelKey: "viewGallery", Icon: BookOpen },
   { value: "impact", labelKey: "viewImpact", Icon: Rocket },
+  { value: "esencial", labelKey: "viewEsencial", Icon: FileText },
 ];
 
 interface Props {
@@ -137,7 +138,7 @@ export default function ViewSelector({ restaurantId, enabledLangs, plan, default
         >
           {/* View options — 3 in a row */}
           <div style={{ display: "flex", gap: 4, padding: "4px" }}>
-            {VIEW_KEYS.filter(v => plan !== "GOLD" || v.value === "lista" || v.value === "premium").map(({ value, labelKey, Icon }) => {
+            {VIEW_KEYS.filter(v => v.value !== "premium" && (plan !== "GOLD" || v.value === "lista")).map(({ value, labelKey, Icon }) => {
               const label = t(lang, labelKey as any);
               const isActive = view === value;
               return (

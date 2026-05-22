@@ -627,13 +627,13 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "7px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center", lineHeight: 1.4 }}>
             <span style={{ fontSize: 15, fontWeight: 700, color: "#fff", display: "block" }}>Así se verá tu panel</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>(datos ficticios, al activar quedan en cero)</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.85)", display: "block" }}>(datos ficticios, al activar queda en cero)</span>
             <style>{`.demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />
           </div>
         </div>
       )}
-      <div style={{ paddingTop: isDemo ? 44 : 0, background: isDemo ? "var(--adm-card)" : undefined }}>
+      <div style={{ paddingTop: isDemo ? 56 : 0, background: isDemo ? "var(--adm-card)" : undefined }}>
       <AdminLayoutOwner
         name={name}
         restaurants={restaurants}

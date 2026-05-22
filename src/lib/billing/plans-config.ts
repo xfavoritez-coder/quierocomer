@@ -86,7 +86,7 @@ export const PLAN_INHERITS_FROM: Record<Exclude<PlanKey, "FREE">, string> = {
 export const PLAN_FEATURES_DISPLAY: Record<PlanKey, PlanFeatureItem[]> = {
   FREE: [
     { text: "Carta QR digital", tip: "Tus clientes escanean un QR y ven tu carta al instante. Sin app, sin descargas." },
-    { text: "2 vistas de carta", tip: "Muestra tu carta en 2 distintas vistas para que elijas la que mejor represente tu local." },
+    { text: "2 vistas de carta", tip: "Muestra tu carta en vista Lista o Esencial para que elijas la que mejor represente tu local." },
     { text: "Panel autoadministrable", tip: "Editas tu carta cuando quieras desde tu celular o computador: precios, fotos, descripciones, modificadores. Los cambios se ven al instante." },
   ],
   GOLD: [

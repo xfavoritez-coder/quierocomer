@@ -11,6 +11,7 @@ import CartaPremium from "./CartaPremium";
 import CartaLista from "./CartaLista";
 import CartaImpact from "./CartaImpact";
 import CartaFeed from "./CartaFeed";
+import CartaEsencial from "./CartaEsencial";
 import HappyHourBanner, { getActiveHappyHour, applyHappyHourPrices } from "./HappyHourBanner";
 import ProfileDrawer from "../auth/ProfileDrawer";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
@@ -216,9 +217,10 @@ export default function CartaRouter(props: Props) {
 
   // Force view based on plan
   const effectiveView = (() => {
-    if (view === "premium" && !canAccess(plan, "view_gallery")) return "lista";
+    if (view === "premium") return "esencial"; // Galería deprecated, redirect to esencial
     if (view === "feed" && !canAccess(plan, "view_feed")) return "lista";
     if (view === "impact" && !canAccess(plan, "view_space")) return "lista";
+    if (view === "esencial" && !canAccess(plan, "view_gallery")) return "lista";
     return view;
   })();
 
@@ -229,10 +231,10 @@ export default function CartaRouter(props: Props) {
       <FavoritesProvider>
         <HappyHourBanner happyHours={props.happyHours || []} />
         <div style={{ position: "relative" }}>
-          {effectiveView === "premium" && <CartaPremium {...sharedProps} />}
           {effectiveView === "lista" && <CartaLista {...sharedProps} />}
           {effectiveView === "feed" && <CartaFeed {...sharedProps} />}
           {effectiveView === "impact" && <CartaImpact {...sharedProps} />}
+          {effectiveView === "esencial" && <CartaEsencial {...sharedProps} />}
           {demoFading && (
             <div style={{
               position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none",
