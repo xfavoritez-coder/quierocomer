@@ -341,8 +341,17 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
 
     let slug = slugify(cleanedName);
     if (!slug) slug = `local-${Date.now().toString(36)}`;
-    const existing = await prisma.restaurant.findUnique({ where: { slug } });
-    if (existing) slug = `${slug}-${Date.now().toString(36).slice(-4)}`;
+    const existingRest = await prisma.restaurant.findUnique({ where: { slug } });
+
+    // If restaurant already exists with this slug, reuse it instead of creating a duplicate
+    if (existingRest) {
+      console.log(`[Pipeline] Restaurant "${slug}" already exists — reusing (${existingRest.id})`);
+      // Update slug on lead and mark as ready
+      await prisma.lead.update({ where: { id: leadId }, data: { generatedSlug: slug, cartaStatus: "READY", readyAt: new Date() } });
+      clearTimeout(pipelineTimeout);
+      const url = `${process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl"}/qr/${slug}`;
+      return { slug, url };
+    }
 
     // Create restaurant
     const qrToken = crypto.randomUUID().replace(/-/g, "").slice(0, 12);
