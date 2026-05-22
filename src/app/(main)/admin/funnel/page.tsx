@@ -29,6 +29,7 @@ interface Lead {
   panelVisitedAt: string | null;
   activarVisitedAt: string | null;
   activatedAt: string | null;
+  errorLog: string | null;
   events?: any[];
 }
 
@@ -349,6 +350,14 @@ export default function FunnelPage() {
                 <TypeBadge type={lead.cartaType} />
               </div>
               {lead.email && <div style={{ fontSize: 12, color: "#888", marginTop: 6 }}>{lead.email}</div>}
+              {lead.whatsapp && <div style={{ fontSize: 12, color: "#22c55e", marginTop: 2 }}>+{lead.whatsapp}</div>}
+
+              {/* Error log */}
+              {lead.cartaStatus === "FAILED" && lead.errorLog && (
+                <div style={{ marginTop: 8, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", fontSize: 12, color: "#f87171", lineHeight: 1.4 }}>
+                  {lead.errorLog}
+                </div>
+              )}
 
               {/* Timeline completo */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 16px", fontSize: 11, marginTop: 8, padding: "8px 10px", borderRadius: 8, background: "#111", border: "1px solid #222" }}>
