@@ -392,12 +392,15 @@ export default function FunnelPage() {
                 </div>
               )}
 
-              <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
+              <div style={{ display: "flex", gap: 12, marginTop: 8, alignItems: "center", flexWrap: "wrap" }}>
                 {domain && <a href={lead.cartaUrl!} target="_blank" rel="noopener noreferrer" style={{ color: "#F4A623", fontSize: 12, fontWeight: 600 }}>{domain}</a>}
                 {lead.cartaFileUrl && lead.cartaFileUrl.split(",").map((url, i) => (
                   <a key={i} href={url.trim()} target="_blank" rel="noopener noreferrer" style={{ color: "#60a5fa", fontSize: 12, fontWeight: 600 }}>Foto {lead.cartaFileUrl!.includes(",") ? i + 1 : ""}</a>
                 ))}
                 {lead.generatedSlug && <a href={`/qr/${lead.generatedSlug}`} target="_blank" rel="noopener noreferrer" style={{ color: "#43d17b", fontSize: 12, fontWeight: 600 }}>Ver carta</a>}
+                {(lead.cartaStatus === "FAILED" || lead.cartaStatus === "PENDING") && lead.email && (
+                  <ReprocessButton leadId={lead.id} onDone={fetchData} />
+                )}
               </div>
             </div>
           );
@@ -625,6 +628,32 @@ function AbandonmentBadge({ event }: { event: any }) {
     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
       🔴 {label}{detail} · {fmtTime(event.ts)}
     </span>
+  );
+}
+
+function ReprocessButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
+  const [state, setState] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const reprocess = async () => {
+    setState("loading");
+    try {
+      const res = await fetch("/api/subircarta/process", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadId }),
+      });
+      if (res.ok) { setState("ok"); onDone(); }
+      else { setState("error"); setTimeout(() => setState("idle"), 3000); }
+    } catch { setState("error"); setTimeout(() => setState("idle"), 3000); }
+  };
+  return (
+    <button onClick={reprocess} disabled={state === "loading" || state === "ok"} style={{
+      fontSize: 11, fontWeight: 700, padding: "3px 10px", borderRadius: 6, cursor: state === "loading" ? "wait" : "pointer",
+      background: state === "ok" ? "rgba(34,197,94,0.12)" : state === "error" ? "rgba(239,68,68,0.12)" : "rgba(168,85,247,0.12)",
+      color: state === "ok" ? "#22c55e" : state === "error" ? "#f87171" : "#a855f7",
+      border: `1px solid ${state === "ok" ? "rgba(34,197,94,0.25)" : state === "error" ? "rgba(239,68,68,0.25)" : "rgba(168,85,247,0.25)"}`,
+    }}>
+      {state === "loading" ? "Procesando..." : state === "ok" ? "Listo" : state === "error" ? "Error" : "Reprocesar"}
+    </button>
   );
 }
 
