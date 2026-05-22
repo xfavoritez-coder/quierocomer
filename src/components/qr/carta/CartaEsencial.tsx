@@ -734,9 +734,9 @@ export default function CartaEsencial({
 
       {/* ══════ DISH CATEGORIES + CARDS ══════ */}
       {grouped.map(({ category, dishes: catDishes }) => (
-        <section key={category.id} id={`esencial-cat-${category.id}`} style={{ padding: "0 16px 24px" }}>
+        <section key={category.id} id={`esencial-cat-${category.id}`} style={{ padding: "0 18px 24px" }}>
           {/* category header */}
-          <div style={{ padding: "20px 0 12px", borderBottom: `1px solid ${C.line}`, marginBottom: 14 }}>
+          <div style={{ padding: "20px 0 12px", marginLeft: 10, borderBottom: `1px solid ${C.line}`, marginBottom: 14 }}>
             <div style={{
               fontSize: 13, fontWeight: 800, letterSpacing: ".16em", textTransform: "uppercase",
               color: C.gold, marginBottom: 4,
