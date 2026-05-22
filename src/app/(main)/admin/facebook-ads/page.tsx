@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Stats {
   totalVisits: number;
@@ -111,17 +111,20 @@ export default function FacebookAdsPage() {
   const [period, setPeriod] = useState("today");
   const [source, setSource] = useState<string | null>(null);
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
+  const [flashCampaigns, setFlashCampaigns] = useState<Set<string>>(new Set());
+  const [newSessionIds, setNewSessionIds] = useState<Set<string>>(new Set());
+  const prevVisitsRef = useRef<Record<string, number>>({});
+  const prevSessionIdsRef = useRef<Set<string>>(new Set());
 
   const fetchData = (p: string, src: string | null) => {
-    setLoading(true);
-    // Build date range based on period
+    const isFirst = !prevVisitsRef.current || Object.keys(prevVisitsRef.current).length === 0;
+    if (isFirst) setLoading(true);
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     let params = "";
     if (p === "today") {
       params = `days=1`;
     } else if (p === "yesterday") {
-      const yesterdayStart = new Date(todayStart.getTime() - 86400000);
       params = `days=2&until=${todayStart.toISOString()}`;
     } else {
       params = `days=${p}`;
@@ -129,13 +132,50 @@ export default function FacebookAdsPage() {
     if (src) params += `&source=${encodeURIComponent(src)}`;
     fetch(`/api/admin/facebook-ads?${params}`)
       .then((r) => r.json())
-      .then(setData)
+      .then((newData: Data) => {
+        // Detect campaigns with new visits
+        const prev = prevVisitsRef.current;
+        if (Object.keys(prev).length > 0) {
+          const changed = new Set<string>();
+          for (const [name, c] of Object.entries(newData.byCampaign)) {
+            if (c.visits > (prev[name] || 0)) changed.add(name);
+          }
+          if (changed.size > 0) {
+            setFlashCampaigns(changed);
+            setTimeout(() => setFlashCampaigns(new Set()), 4000);
+          }
+        }
+        const visits: Record<string, number> = {};
+        for (const [name, c] of Object.entries(newData.byCampaign)) visits[name] = c.visits;
+        prevVisitsRef.current = visits;
+        // Detect new sessions
+        if (prevSessionIdsRef.current.size > 0) {
+          const newIds = new Set<string>();
+          for (const s of newData.sessions) {
+            if (!prevSessionIdsRef.current.has(s.id)) newIds.add(s.id);
+          }
+          if (newIds.size > 0) {
+            setNewSessionIds(newIds);
+            setTimeout(() => setNewSessionIds(new Set()), 3000);
+          }
+        }
+        prevSessionIdsRef.current = new Set(newData.sessions.map((s: any) => s.id));
+        setData(newData);
+      })
       .finally(() => setLoading(false));
   };
 
   useEffect(() => { fetchData(period, source); }, [period, source]);
 
-  if (loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
+  // Auto-refresh every 30s + on tab focus
+  useEffect(() => {
+    const interval = setInterval(() => fetchData(period, source), 30000);
+    const onVisible = () => { if (document.visibilityState === "visible") fetchData(period, source); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(interval); document.removeEventListener("visibilitychange", onVisible); };
+  }, [period, source]);
+
+  if (!data && loading) return <div style={{ padding: 40, color: "#aaa" }}>Cargando...</div>;
   if (!data) return <div style={{ padding: 40, color: "#e85d5d" }}>Error al cargar datos.</div>;
 
   const { stats, logoClicks, totalLogoClicks, sourceBreakdown, byLanding, byCampaign, byContent, sectionCounts, clickCounts, hourly, daily, sessions } = data;
@@ -221,6 +261,7 @@ export default function FacebookAdsPage() {
       {stats.totalSessions > 0 && <>
       {/* Stats overview */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 8, marginBottom: 20 }}>
+        <Card label="Visitas" value={stats.totalVisits} />
         <Card label="Sesiones" value={stats.totalSessions} color="#6366f1" />
         <Card label="Vieron /subircarta" value={stats.visitedSubircarta} color="#F4A623" suffix={`${stats.visitedSubircartaRate}%`} />
         <Card label="Subieron carta" value={stats.converted} color="#22c55e" suffix={`${stats.conversionRate}%`} />
@@ -241,23 +282,67 @@ export default function FacebookAdsPage() {
         const currentHour = new Date().getHours();
         return (
           <Section title={`Visitas por hora (${totalToday})`}>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: 1, height: 90, padding: "0 2px" }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 120, padding: "0 4px" }}>
               {hours.map(([h, d]) => {
-                const barH = Math.max((d.visits / maxH) * 75, d.visits > 0 ? 4 : 1);
+                const barH = Math.max((d.visits / maxH) * 100, d.visits > 0 ? 6 : 2);
                 return (
-                  <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                    {d.visits > 0 && <span style={{ fontSize: 8, color: "#888" }}>{d.visits}</span>}
+                  <div key={h} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    {d.visits > 0 && <span style={{ fontSize: 10, color: "#aaa", fontWeight: 600 }}>{d.visits}</span>}
                     <div style={{
-                      width: "100%", maxWidth: 20, height: barH, borderRadius: 3,
+                      width: "100%", maxWidth: 24, height: barH, borderRadius: 4,
                       background: d.visits === 0 ? "#1a1a1a" : d.converted > 0 ? "#22c55e" : d.bounced === d.visits ? "#ef444480" : "#3b82f6",
-                      border: h === currentHour ? "1px solid #F4A623" : "none",
+                      border: h === currentHour ? "2px solid #F4A623" : "none",
+                      transition: "height 1.5s cubic-bezier(0.16,1,0.3,1), background 0.5s ease",
                     }} />
-                    <span style={{ fontSize: 8, color: h === currentHour ? "#F4A623" : "#777" }}>{h}</span>
+                    <span style={{ fontSize: 10, color: h === currentHour ? "#F4A623" : "#888", fontWeight: h === currentHour ? 700 : 400 }}>{h}</span>
                   </div>
                 );
               })}
             </div>
           </Section>
+        );
+      })()}
+
+      {/* Campaign chart */}
+      {sortedCampaigns.length > 0 && (() => {
+        const maxVis = Math.max(...sortedCampaigns.map(([, c]) => c.visits), 1);
+        return (
+          <div style={{ background: "#111", borderRadius: 14, border: "1px solid #222", padding: "18px 20px", marginBottom: 16 }}>
+            <div style={{ fontSize: 13, color: "#aaa", textTransform: "uppercase", letterSpacing: ".06em", marginBottom: 16, fontWeight: 600 }}>Campañas</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {sortedCampaigns.map(([name, c]) => {
+                const barWidth = Math.max((c.visits / maxVis) * 100, 4);
+                const isFlashing = flashCampaigns.has(name);
+                return (
+                  <div key={name} style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span style={{ fontSize: 13, color: isFlashing ? "#6ee7b7" : "#ccc", minWidth: 120, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "right", flexShrink: 0, transition: "color 1.5s ease", fontWeight: 500 }}>{name}</span>
+                    <div style={{ flex: 1, position: "relative", height: 28, borderRadius: 6, background: "#1a1a1a", overflow: "hidden" }}>
+                      <div style={{
+                        width: `${barWidth}%`, height: "100%", borderRadius: 6,
+                        background: isFlashing ? "#6ee7b7" : "#3b82f6", opacity: 0.8,
+                        transition: "width 1.5s cubic-bezier(0.16,1,0.3,1), background 1.5s ease",
+                      }} />
+                      {c.subircarta > 0 && (
+                        <div style={{
+                          position: "absolute", left: 0, top: 0,
+                          width: `${Math.max((c.subircarta / maxVis) * 100, 2)}%`, height: "100%", borderRadius: 6,
+                          background: "#F4A623", opacity: 0.9,
+                          transition: "width 1.5s cubic-bezier(0.16,1,0.3,1)",
+                        }} />
+                      )}
+                      <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 13, fontWeight: 800, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.6)" }}>
+                        {c.visits}{c.subircarta > 0 ? ` · ${Math.round((c.subircarta / c.visits) * 100)}% /sc` : ""}
+                      </span>
+                      <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, display: "flex", gap: 8, alignItems: "center" }}>
+                        {c.converted > 0 && <span style={{ color: "#4ade80", fontWeight: 800 }}>{c.converted} conv</span>}
+                        <span style={{ color: "rgba(255,255,255,0.5)" }}>{fmtDuration(c.avgDuration)}</span>
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         );
       })()}
 
@@ -352,7 +437,7 @@ export default function FacebookAdsPage() {
           const ua = parseUA(s.userAgent);
 
           return (
-            <div key={s.id} style={{ borderBottom: "1px solid #1a1a1a", padding: "10px 0" }}>
+            <div key={s.id} style={{ borderBottom: "1px solid #1a1a1a", padding: "10px 0", transition: "background 1.5s ease, border-color 1.5s ease", background: newSessionIds.has(s.id) ? "rgba(110,231,183,0.06)" : "transparent", borderLeft: newSessionIds.has(s.id) ? "3px solid #6ee7b7" : "3px solid transparent" }}>
               <div
                 onClick={() => setExpandedSession(isExpanded ? null : s.id)}
                 style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", gap: 8 }}
@@ -474,12 +559,12 @@ export default function FacebookAdsPage() {
 
 function Card({ label, value, color, suffix }: { label: string; value: number | string; color?: string; suffix?: string }) {
   return (
-    <div style={{ background: "#1a1a1a", borderRadius: 12, padding: "14px 16px", border: "1px solid #2a2a2a" }}>
+    <div style={{ background: "#1a1a1a", borderRadius: 14, padding: "18px 20px", border: "1px solid #2a2a2a", transition: "transform 0.3s ease" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-        <span style={{ fontSize: 22, fontWeight: 700, color: color || "#fff" }}>{value}</span>
-        {suffix && <span style={{ fontSize: 12, color: "#666" }}>{suffix}</span>}
+        <span style={{ fontSize: 28, fontWeight: 800, color: color || "#fff", transition: "color 0.5s ease" }}>{value}</span>
+        {suffix && <span style={{ fontSize: 14, color: "#777", fontWeight: 600 }}>{suffix}</span>}
       </div>
-      <div style={{ fontSize: 11, color: "#888", marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: 13, color: "#999", marginTop: 4 }}>{label}</div>
     </div>
   );
 }
