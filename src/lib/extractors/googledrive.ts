@@ -15,7 +15,7 @@
  *   6. Structure the extracted text into ExtractedDish[] via Claude.
  */
 
-import type { ExtractionResult, ExtractedDish } from "./types";
+import type { ExtractionResult } from "./types";
 
 // ─── URL detection ────────────────────────────────────────────────────────────
 
@@ -136,200 +136,6 @@ async function downloadDriveFile(fileId: string): Promise<{ buffer: Buffer; cont
   return { buffer, contentType };
 }
 
-// ─── PDF text extraction ──────────────────────────────────────────────────────
-
-async function extractPdfText(buffer: Buffer): Promise<string> {
-  const mod = await import("pdf-parse");
-  const pdfParse = (mod as any).default || mod;
-  const result = await pdfParse(buffer);
-  return result.text || "";
-}
-
-// ─── Claude helpers ───────────────────────────────────────────────────────────
-
-const MENU_JSON_SCHEMA = `{"restaurantName":"...","categories":[{"name":"...","type":"food"|"drink"|"dessert","dishes":[{"name":"...","description":"...","price":8990,"diet":"OMNIVORE"|"VEGAN"|"VEGETARIAN","isSpicy":false}]}]}`;
-
-const RULES = `Reglas:
-- Precios enteros sin puntos ($8.990→8990). Si no hay precio, pon 0.
-- No inventes platos, solo extrae lo que está en el documento.
-- Si hay secciones/títulos que parecen categorías, úsalas.
-- SOLO JSON.`;
-
-async function claudeExtractFromText(text: string, apiKey: string): Promise<any> {
-  const prompt = `Analiza el siguiente texto extraído de un documento de carta/menú de restaurante.
-Extrae TODOS los platos que puedas identificar y organízalos por categoría.
-IMPORTANTE: Solo extrae platos reales que estén en el texto. NO inventes ni agregues platos.
-Responde SOLO con JSON:
-${MENU_JSON_SCHEMA}
-${RULES}
-
-TEXTO DEL DOCUMENTO:
-${text.slice(0, 30000)}`;
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 16000,
-      messages: [{ role: "user", content: prompt }],
-    }),
-    signal: AbortSignal.timeout(90000),
-  });
-
-  if (!res.ok) throw new Error(`Claude error: ${res.status}`);
-  const data = await res.json();
-  return data.content?.[0]?.text || "";
-}
-
-/**
- * Send a large PDF to Claude via the PDF beta API.
- * If the PDF is too large (>4.5MB base64), truncate to fit.
- * Claude's PDF support handles multi-page documents natively.
- */
-async function claudeExtractFromLargePdf(buffer: Buffer, apiKey: string): Promise<string> {
-  // Claude PDF beta accepts up to ~4.5MB base64 (~3.3MB raw)
-  const MAX_RAW_SIZE = 3.3 * 1024 * 1024;
-  let pdfBuffer = buffer;
-
-  if (buffer.length > MAX_RAW_SIZE) {
-    // Truncate the PDF to fit — Claude will read whatever pages fit
-    pdfBuffer = buffer.subarray(0, MAX_RAW_SIZE);
-    console.log(`[GoogleDrive] PDF too large (${(buffer.length/1024/1024).toFixed(1)}MB), truncated to ${(pdfBuffer.length/1024/1024).toFixed(1)}MB`);
-  }
-
-  const base64 = pdfBuffer.toString("base64");
-  console.log(`[GoogleDrive] Sending PDF to Claude: ${(base64.length/1024/1024).toFixed(1)}MB base64`);
-
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": apiKey,
-      "anthropic-version": "2023-06-01",
-      "anthropic-beta": "pdfs-2024-09-25",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 32000,
-      messages: [{
-        role: "user",
-        content: [
-          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } },
-          {
-            type: "text",
-            text: `Analiza este PDF de carta/menú de restaurante.
-Extrae TODOS los platos que puedas identificar y organízalos por categoría.
-IMPORTANTE: Solo extrae platos reales que estén en el documento. NO inventes.
-Responde SOLO con JSON:
-${MENU_JSON_SCHEMA}
-${RULES}`,
-          },
-        ],
-      }],
-    }),
-    signal: AbortSignal.timeout(180000),
-  });
-
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    throw new Error(`Claude PDF error: ${res.status} ${errText.slice(0, 200)}`);
-  }
-  const data = await res.json();
-  return data.content?.[0]?.text || "";
-}
-
-// ─── JSON parsing (tolerant) ──────────────────────────────────────────────────
-
-function parseClaudeJson(raw: string): any {
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error("No JSON found in Claude response");
-
-  try {
-    return JSON.parse(match[0]);
-  } catch {
-    // Try to repair truncated JSON
-    let jsonStr = match[0].replace(/,\s*\{[^}]*$/, "").replace(/,\s*$/, "");
-    let o = 0, c = 0;
-    for (const ch of jsonStr) { if (ch === "[") o++; if (ch === "]") c++; }
-    for (let i = 0; i < o - c; i++) jsonStr += "]";
-    let oo = 0, cc = 0;
-    for (const ch of jsonStr) { if (ch === "{") oo++; if (ch === "}") cc++; }
-    for (let i = 0; i < oo - cc; i++) jsonStr += "}";
-    return JSON.parse(jsonStr);
-  }
-}
-
-// ─── Unsplash photos (best-effort) ───────────────────────────────────────────
-
-async function fetchUnsplashPhotos(
-  parsed: any,
-): Promise<Map<string, string>> {
-  const photoMap = new Map<string, string>();
-  const UNSPLASH_KEY = process.env.UNSPLASH_ACCESS_KEY;
-  if (!UNSPLASH_KEY) return photoMap;
-
-  const allDishes = (parsed.categories || [])
-    .flatMap((c: any) => (c.dishes || []).map((d: any) => ({ name: d.name, category: c.name })))
-    .filter((d: any) => d.name)
-    .slice(0, 15);
-
-  await Promise.allSettled(
-    allDishes.map(async (d: any) => {
-      try {
-        for (const query of [
-          `${d.name} food`,
-          `${d.category} ${d.name} restaurant`,
-          `${d.category} food dish`,
-        ]) {
-          const res = await fetch(
-            `https://api.unsplash.com/search/photos?query=${encodeURIComponent(query)}&per_page=1&orientation=landscape`,
-            {
-              headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` },
-              signal: AbortSignal.timeout(5000),
-            },
-          );
-          if (res.ok) {
-            const data = await res.json();
-            const url = data.results?.[0]?.urls?.regular;
-            if (url) { photoMap.set(d.name, url); return; }
-          }
-        }
-      } catch {}
-    }),
-  );
-
-  return photoMap;
-}
-
-// ─── Build ExtractedDish[] from parsed JSON ───────────────────────────────────
-
-function buildDishes(parsed: any, photoMap: Map<string, string>): ExtractedDish[] {
-  const dishes: ExtractedDish[] = [];
-  for (const cat of (parsed.categories || [])) {
-    for (const dish of (cat.dishes || [])) {
-      if (!dish.name) continue;
-      dishes.push({
-        name: dish.name.trim(),
-        description: dish.description || "",
-        price:
-          typeof dish.price === "number"
-            ? dish.price
-            : parseInt(String(dish.price).replace(/\D/g, ""), 10) || 0,
-        imageUrl: photoMap.get(dish.name) || null,
-        category: cat.name || "General",
-        diet: dish.diet || "OMNIVORE",
-        isSpicy: dish.isSpicy || false,
-      });
-    }
-  }
-  return dishes;
-}
-
 // ─── Main extractor ───────────────────────────────────────────────────────────
 
 /**
@@ -337,9 +143,6 @@ function buildDishes(parsed: any, photoMap: Map<string, string>): ExtractedDish[
  * Automatically converts the preview URL to a direct download and processes the PDF.
  */
 export async function extractGoogleDrive(cartaUrl: string): Promise<ExtractionResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
-
   const fileId = extractFileId(cartaUrl);
   if (!fileId) throw new Error(`Could not extract file ID from Google Drive URL: ${cartaUrl}`);
 
@@ -361,38 +164,23 @@ export async function extractGoogleDrive(cartaUrl: string): Promise<ExtractionRe
     );
   }
 
-  // Try text extraction first
-  let text = "";
-  try {
-    text = await extractPdfText(buffer);
-    console.log(`[GoogleDrive] pdf-parse extracted ${text.trim().length} chars`);
-  } catch (e) {
-    console.warn("[GoogleDrive] pdf-parse failed:", (e as Error).message);
-  }
+  // Upload to Supabase temp storage so extractFromDocument can fetch it
+  const { supabase } = await import("@/lib/supabase");
+  const tempPath = `temp/gdrive-${fileId}-${Date.now()}.pdf`;
+  const { error: uploadErr } = await supabase.storage.from("fotos").upload(tempPath, buffer, { contentType: "application/pdf", upsert: true });
+  if (uploadErr) throw new Error(`Failed to upload PDF to temp storage: ${uploadErr.message}`);
 
-  // If text extraction gave enough content, use Claude text path
-  const TEXT_THRESHOLD = 200;
-  let rawResponse: string;
+  const { data: urlData } = supabase.storage.from("fotos").getPublicUrl(tempPath);
+  const publicUrl = urlData.publicUrl;
+  console.log(`[GoogleDrive] Uploaded to temp storage: ${publicUrl}`);
 
-  if (text.trim().length >= TEXT_THRESHOLD) {
-    rawResponse = await claudeExtractFromText(text, apiKey);
-  } else {
-    // Fallback: split PDF into chunks and send each to Claude
-    console.log("[GoogleDrive] Text insufficient, using chunked PDF Vision fallback");
-    rawResponse = await claudeExtractFromLargePdf(buffer, apiKey);
-  }
+  // Use the document extractor which handles text + vision fallback
+  const { extractFromDocument } = await import("./document");
+  const result = await extractFromDocument(publicUrl);
 
-  const parsed = parseClaudeJson(rawResponse);
+  // Cleanup temp file (fire-and-forget)
+  supabase.storage.from("fotos").remove([tempPath]).catch(() => {});
 
-  const photoMap = await fetchUnsplashPhotos(parsed);
-  const dishes = buildDishes(parsed, photoMap);
-
-  console.log(`[GoogleDrive] Extracted ${dishes.length} dishes from file ${fileId}`);
-
-  return {
-    restaurantName: parsed.restaurantName || "Restaurante",
-    dishes,
-    logoUrl: null,
-    bannerUrl: null,
-  };
+  console.log(`[GoogleDrive] Extracted ${result.dishes.length} dishes from file ${fileId}`);
+  return result;
 }
