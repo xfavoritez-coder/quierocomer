@@ -86,7 +86,7 @@ function cleanContent(html: string): string {
   return cleaned;
 }
 
-async function callClaude(prompt: string, maxTokens = 16000, model = MODEL_FULL): Promise<string> {
+async function callClaude(prompt: string, maxTokens = 32000, model = MODEL_FULL): Promise<string> {
   const apiKey = getApiKey();
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
   const res = await fetch("https://api.anthropic.com/v1/messages", {
