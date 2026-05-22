@@ -141,12 +141,13 @@ export async function GET(req: NextRequest) {
 
     // Hourly breakdown (all sessions in period, aggregated by hour in Chile time)
     const hourly: Record<number, { visits: number; bounced: number; converted: number }> = {};
-    for (let h = 0; h < 24; h++) hourly[h] = { visits: 0, bounced: 0, converted: 0 };
+    for (let h = 0; h < 24; h++) hourly[h] = { visits: 0, bounced: 0, converted: 0, subircarta: 0 };
     for (const s of filteredSessions) {
       const clHour = parseInt(s.createdAt.toLocaleString("en-US", { timeZone: "America/Santiago", hour: "numeric", hour12: false }), 10);
       hourly[clHour].visits++;
       if (s.bounced) hourly[clHour].bounced++;
       if (s.converted) hourly[clHour].converted++;
+      if (sessionVisitedSubircarta(s)) hourly[clHour].subircarta++;
     }
 
     // Daily breakdown

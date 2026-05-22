@@ -134,7 +134,18 @@ Estos son los extractores dedicados que existen (case en el switch de extractMen
 - El extractor genérico (Jina+Claude) funciona para la mayoría de sitios que renderizan con JS
 - Si una URL responde 200 y tiene contenido de menú, SIEMPRE debería poder extraerse
 - No escales a humano sin haber intentado al menos: verificar URL, analizar HTML, crear/asignar proveedor, y reintentar
-- Sé conciso en tus razonamientos`;
+- Sé conciso en tus razonamientos
+
+## Sobre timeouts en fetch_url
+- Si fetch_url da timeout, el sitio probablemente BLOQUEA IPs de datacenter/cloud (Vercel/AWS)
+- Esto NO es un error transitorio — reintentar fetch_url dará el mismo resultado
+- En este caso: escala a humano explicando que la URL funciona desde IP residencial pero no desde el servidor
+- NO intentes fetch_url más de 2 veces si ambas dan timeout — es bloqueo, no error temporal
+
+## Sobre intentos previos
+- SIEMPRE revisa los intentos previos del doctor antes de actuar
+- Si ya intentaste algo y falló, NO lo repitas — prueba algo diferente
+- Si ya detectaste que la URL da timeout 2+ veces, escala directamente`;
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -171,9 +182,21 @@ export async function GET(req: NextRequest) {
       const events = (lead.events as any[]) || [];
       const doctorAttempts = events.filter((e: any) => e.action?.startsWith("doctor_")).length;
 
-      // After 8 doctor interactions total, escalate
+      // After 8 doctor interactions total, auto-escalate
       if (doctorAttempts >= 8) {
-        results.push({ leadId: lead.id, name: lead.localName, action: "max_doctor_attempts", success: false });
+        await prisma.lead.update({
+          where: { id: lead.id },
+          data: {
+            events: {
+              push: {
+                action: "doctor_escalated",
+                reason: `Agotó ${doctorAttempts} intentos del doctor sin solución. Requiere intervención humana.`,
+                ts: new Date().toISOString(),
+              },
+            },
+          },
+        }).catch(() => {});
+        results.push({ leadId: lead.id, name: lead.localName, action: "escalated: max intentos agotados", success: false });
         continue;
       }
 
@@ -321,6 +344,20 @@ Investiga y arregla este lead. Empieza verificando la URL.`;
 
     messages.push({ role: "user", content: toolResults });
   }
+
+  // Always log a summary event when the agent finishes without resolving
+  await prisma.lead.update({
+    where: { id: lead.id },
+    data: {
+      events: {
+        push: {
+          action: "doctor_run_summary",
+          detail: `No resuelto. Última acción: ${lastAction}`,
+          ts: new Date().toISOString(),
+        },
+      },
+    },
+  }).catch(() => {});
 
   return { leadId: lead.id, name: lead.localName, action: lastAction, success: false };
 }

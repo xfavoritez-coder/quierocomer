@@ -473,8 +473,7 @@ export default function FacebookAdsPage() {
         {stats.totalSessions > 0 && <>
           {/* Stats */}
           <div className="fb-stats">
-            <StatCard label="Visitas" value={stats.totalVisits} color="#3b82f6" />
-            <StatCard label="Sesiones" value={stats.totalSessions} color="#6366f1" />
+            <StatCard label="Sesiones" value={stats.totalSessions} color="#3b82f6" />
             <StatCard label="/subircarta" value={stats.visitedSubircarta} color="#F4A623" suffix={`${stats.visitedSubircartaRate}%`} />
             <StatCard label="Convertidos" value={stats.converted} color="#22c55e" suffix={`${stats.conversionRate}%`} />
             <StatCard label="Tiempo" value={fmtDuration(stats.avgDuration)} color="#eab308" />
@@ -487,28 +486,40 @@ export default function FacebookAdsPage() {
 
           {/* Hourly */}
           {(() => {
-            const hours = Object.entries(hourly || {}).map(([h, d]) => [parseInt(h), d] as [number, { visits: number; bounced: number; converted: number }]).sort((a, b) => a[0] - b[0]);
+            const hours = Object.entries(hourly || {}).map(([h, d]) => [parseInt(h), d] as [number, { visits: number; bounced: number; converted: number; subircarta: number }]).sort((a, b) => a[0] - b[0]);
             const totalToday = hours.reduce((s, [, d]) => s + d.visits, 0);
             if (totalToday === 0) return null;
             const maxH = Math.max(...hours.map(([, d]) => d.visits), 1);
             const currentHour = new Date().getHours();
             return (
               <div className="fb-section">
-                <div className="fb-section-title">Visitas por hora ({totalToday})</div>
+                <div className="fb-section-title">Sesiones por hora ({totalToday})</div>
                 <div className="fb-hourly-wrap">
                   <div className="fb-hourly">
                     {hours.map(([h, d]) => {
                       const barH = Math.max((d.visits / maxH) * 90, d.visits > 0 ? 8 : 3);
-                      const bg = d.visits === 0 ? "#1a1a1a" : d.converted > 0 ? "#22c55e" : d.bounced === d.visits ? "#ef444480" : "#3b82f6";
+                      const solo = d.visits - (d.subircarta || 0);
+                      const sc = (d.subircarta || 0) - d.converted;
+                      const conv = d.converted;
+                      const total = d.visits || 1;
                       return (
                         <div key={h} className="fb-hour-col">
-                          {d.visits > 0 && <span className="fb-hour-count">{d.visits}</span>}
+                          {conv > 0 && <span style={{ fontSize: 12, color: "#22c55e", fontWeight: 800 }}>{conv}</span>}
+                          {d.visits > 0 && !conv && <span style={{ fontSize: 11, color: "#999", fontWeight: 700 }}>{d.visits}</span>}
                           <div className="fb-hour-bar" style={{
                             height: barH,
-                            background: bg,
+                            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                             border: h === currentHour ? "2px solid #F4A623" : "none",
                             boxShadow: h === currentHour ? "0 0 8px rgba(244,166,35,.3)" : "none",
-                          }} />
+                            background: d.visits === 0 ? "#1a1a1a" : undefined,
+                            overflow: "hidden", position: "relative",
+                          }}>
+                            {d.visits > 0 && <>
+                              {conv > 0 && <div style={{ flex: conv, background: "#22c55e", width: "100%" }} />}
+                              <div style={{ flex: solo + sc, background: "#3b82f6", width: "100%" }} />
+                            </>}
+                            {d.visits > 0 && <span style={{ position: "absolute", fontSize: 11, fontWeight: 700, color: "#fff" }}>{d.visits}</span>}
+                          </div>
                           <span className="fb-hour-label" style={{ color: h === currentHour ? "#F4A623" : "#555", fontWeight: h === currentHour ? 800 : 400 }}>{h}</span>
                         </div>
                       );
@@ -525,7 +536,7 @@ export default function FacebookAdsPage() {
             const maxVis = Math.max(...sortedCampaigns.map(([, c]) => c.visits), 1);
             return (
               <div className="fb-section">
-                <div className="fb-section-title">Campanas</div>
+                <div className="fb-section-title">Sesiones por campana</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {sortedCampaigns.map(([name, c]) => {
                     const pct = Math.round((c.visits / maxVis) * 100);
@@ -542,13 +553,19 @@ export default function FacebookAdsPage() {
                             <span style={{ color: "#555" }}>{fmtDuration(c.avgDuration)}</span>
                           </div>
                         </div>
-                        <div style={{ height: 4, background: "#1a1a1a", borderRadius: 2, overflow: "hidden" }}>
-                          <div style={{
-                            height: "100%", width: `${pct}%`, borderRadius: 2,
-                            background: isNewConversion ? "#22c55e" : isFlashing ? "#6ee7b7" : c.converted > 0 ? "linear-gradient(90deg, #3b82f6, #22c55e)" : "#3b82f6",
-                            transition: "width 1.5s cubic-bezier(.16,1,.3,1), background 1.5s",
-                          }} />
-                        </div>
+                        {(() => {
+                          const solo = c.visits - c.subircarta;
+                          const sc = c.subircarta - c.converted;
+                          const conv = c.converted;
+                          const total = c.visits || 1;
+                          return (
+                            <div style={{ display: "flex", height: 4, borderRadius: 2, overflow: "hidden", background: "#1a1a1a", width: `${pct}%`, transition: "width 1.5s cubic-bezier(.16,1,.3,1)" }}>
+                              {solo > 0 && <div style={{ width: `${(solo / total) * 100}%`, background: isFlashing ? "#6ee7b7" : "#3b82f6", transition: "width 1s" }} />}
+                              {sc > 0 && <div style={{ width: `${(sc / total) * 100}%`, background: "#F4A623", transition: "width 1s" }} />}
+                              {conv > 0 && <div style={{ width: `${(conv / total) * 100}%`, background: isNewConversion ? "#4ade80" : "#22c55e", transition: "width 1s" }} />}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
