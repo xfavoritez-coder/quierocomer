@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
+import { getCity } from "@/lib/geoip";
 
 export const maxDuration = 60;
 
@@ -79,7 +80,13 @@ export async function POST(req: NextRequest) {
         cartaType,
         cartaFileUrl: urlData.publicUrl,
         cartaStatus: "PENDING",
+        ip,
       },
+    });
+
+    // Resolve city in background (fire-and-forget)
+    getCity(ip).then((city) => {
+      if (city) prisma.lead.update({ where: { id: lead.id }, data: { city } }).catch(() => {});
     });
 
     return NextResponse.json({ id: lead.id, cartaFileUrl: urlData.publicUrl, cartaType });

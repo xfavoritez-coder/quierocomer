@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { rateLimit, RATE_LIMITS, getClientIp, formatRetryAfter } from "@/lib/rateLimit";
+import { getCity } from "@/lib/geoip";
 
 /** Try to detect the menu provider: first by domain, then by fetching HTML and scanning for signatures. */
 async function detectProvider(
@@ -152,7 +153,13 @@ export async function POST(req: Request) {
         cartaUrl,
         cartaStatus: "PENDING",
         detectedProviderId,
+        ip,
       },
+    });
+
+    // Resolve city in background (fire-and-forget)
+    getCity(ip).then((city) => {
+      if (city) prisma.lead.update({ where: { id: lead.id }, data: { city } }).catch(() => {});
     });
 
     return NextResponse.json({ id: lead.id, detectedProviderId });
