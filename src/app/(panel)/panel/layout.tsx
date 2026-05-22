@@ -1,10 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { usePanelSession } from "@/lib/admin/usePanelSession";
 import { SessionContext } from "@/lib/admin/SessionContext";
 import AdminLayoutOwner from "@/components/admin/layouts/AdminLayoutOwner";
 import { toast } from "sonner";
+import { trackFunnelEventBySlug, beaconFunnelEvent } from "@/lib/funnelTracker";
 import {
   PLAN_FEATURES_DISPLAY,
   PLAN_INHERITS_FROM,
@@ -564,6 +565,33 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
   const selectedRest = selectedRestEarly;
   const isDemo = isDemoEarly;
 
+  // ═══ Panel navigation tracking (demo leads) ═══
+  const prevPathRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isDemo || !selectedRest?.slug) return;
+    const slug = selectedRest.slug;
+    // Map pathname to readable section name
+    const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
+    if (prevPathRef.current !== pathname) {
+      trackFunnelEventBySlug(slug, "panel_visit", { section });
+      prevPathRef.current = pathname;
+    }
+  }, [pathname, isDemo, selectedRest?.slug]);
+
+  // Abandonment tracking for panel
+  useEffect(() => {
+    if (!isDemo || !selectedRest?.slug) return;
+    const slug = selectedRest.slug;
+    const handleVisibility = () => {
+      if (document.visibilityState === "hidden") {
+        const section = pathname.replace("/panel", "").replace(/^\//, "") || "inicio";
+        beaconFunnelEvent(slug, "panel_leave", { section });
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [pathname, isDemo, selectedRest?.slug]);
+
   return (
     <SessionContext.Provider value={ctxValue}>
       {isDemo && selectedRest && (
@@ -599,8 +627,8 @@ export default function PanelLayout({ children }: { children: React.ReactNode })
             </div>
           </div>
           <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, transform: "translateY(100%)", padding: "9px 14px", background: "linear-gradient(135deg, #f59e0b, #d97706)", textAlign: "center" }}>
-            <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se verá tu panel · Pusimos números ficticios</span>
-            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Así se verá tu panel</span>
+            <span className="demo-ribbon-full" style={{ fontSize: 13, fontWeight: 700, color: "#fff" }}>Así se vería tu panel (datos ficticios, cuando actives quedan en cero)</span>
+            <span className="demo-ribbon-short" style={{ fontSize: 13, fontWeight: 700, color: "#fff", display: "none" }}>Datos ficticios · Al activar quedan en cero</span>
             <style>{`@media (max-width: 420px) { .demo-ribbon-full { display: none !important; } .demo-ribbon-short { display: inline !important; } }
 .demo-activar-btn:active { transform: scale(0.93) !important; }`}</style>
             <span style={{ position: "absolute", right: 44, top: -5, width: 0, height: 0, borderLeft: "6px solid transparent", borderRight: "6px solid transparent", borderBottom: "6px solid #d97706" }} />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { trackFunnelEventBySlug, beaconFunnelEvent } from "@/lib/funnelTracker";
 
 interface Props {
   restaurantSlug: string;
@@ -114,6 +115,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
       setStep(restored);
     } else {
       setStep(0);
+      if (!showcaseMode) trackFunnelEventBySlug(restaurantSlug, "onboard_start");
     }
   }, [restaurantSlug, onboardingDone, showcaseMode]);
 
@@ -121,6 +123,21 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   useEffect(() => {
     return () => { timersRef.current.forEach(clearTimeout); };
   }, []);
+
+  // Abandonment tracking — beacon on page close during onboarding
+  useEffect(() => {
+    if (showcaseMode || gone) return;
+    const stepNames = ["intro", "fotos", "vistas", "idioma", "listo"];
+    const handleAbandon = () => {
+      if (step >= 0 && step < STEPS.length) {
+        beaconFunnelEvent(restaurantSlug, "abandoned_onboarding", { atStep: step, stepName: stepNames[step] || `step_${step}` });
+      }
+    };
+    // visibilitychange catches tab close + navigate away on mobile
+    const handleVisibility = () => { if (document.visibilityState === "hidden") handleAbandon(); };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [step, gone, showcaseMode, restaurantSlug]);
 
   // Step enter actions
   useEffect(() => {
@@ -221,6 +238,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         triggerExit();
         return s;
       }
+      if (!showcaseMode) {
+        const stepNames = ["start", "fotos", "vistas", "idioma", "done"];
+        trackFunnelEventBySlug(restaurantSlug, `onboard_step_${next}`, { stepName: stepNames[next] || `step_${next}` });
+      }
       if (STEPS[next].showOverlay) { setMinimized(false); setMinimizing(false); }
       else if (!minimized) {
         setMinimizing(true);
@@ -228,7 +249,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
       }
       return next;
     });
-  }, []);
+  }, [showcaseMode, restaurantSlug]);
 
   const goBack = useCallback(() => {
     setStep(s => {
@@ -249,7 +270,10 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
   }, []);
 
   const triggerExit = () => {
-    if (!showcaseMode) markSeen();
+    if (!showcaseMode) {
+      markSeen();
+      trackFunnelEventBySlug(restaurantSlug, "onboard_done");
+    }
     if (showcaseMode) localStorage.setItem("qc_showcase_done", "1");
     cleanup();
     setExiting(true);

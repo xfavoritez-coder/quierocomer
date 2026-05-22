@@ -15,6 +15,7 @@ interface Lead {
   generatedSlug: string | null;
   ip: string | null;
   city: string | null;
+  device: string | null;
   activated: boolean;
   detectedProvider: { name: string } | null;
   createdAt: string;
@@ -309,6 +310,7 @@ export default function FunnelPage() {
               <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px", fontSize: 12, color: "#aaa" }}>
                 <span>{dateStr}</span>
                 {lead.city && <span style={{ color: "#60a5fa" }}>{lead.city}</span>}
+                {lead.device && <DeviceBadge device={lead.device} />}
                 {lead.ownerName && <span>{lead.ownerName}</span>}
                 {lead.detectedProvider?.name && <span>{lead.detectedProvider.name}</span>}
                 <TypeBadge type={lead.cartaType} />
@@ -346,6 +348,25 @@ export default function FunnelPage() {
                 <TimelineStep label="/activar" time={fmtDate(lead.activarVisitedAt)} />
                 <TimelineStep label="Activado" time={fmtDate(lead.activatedAt)} color="#F4A623" />
               </div>
+
+              {/* Onboarding journey — collapsible */}
+              {lead.events && lead.events.some((e: any) => e.action?.startsWith("onboard_")) && (
+                <OnboardBlock events={lead.events.filter((e: any) => e.action?.startsWith("onboard_") || e.action === "abandoned_onboarding")} />
+              )}
+
+              {/* Panel journey — collapsible */}
+              {lead.events && lead.events.some((e: any) => e.action?.startsWith("panel_")) && (
+                <PanelJourneyBlock events={lead.events.filter((e: any) => e.action?.startsWith("panel_"))} />
+              )}
+
+              {/* Abandonment badges */}
+              {lead.events && lead.events.filter((e: any) => e.action?.startsWith("abandoned_")).length > 0 && (
+                <div style={{ marginTop: 8, display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {lead.events.filter((e: any) => e.action?.startsWith("abandoned_")).map((e: any, i: number) => (
+                    <AbandonmentBadge key={i} event={e} />
+                  ))}
+                </div>
+              )}
 
               {/* Lead Doctor activity — collapsible */}
               {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
@@ -398,6 +419,16 @@ function StatCard({ label, value, color, suffix }: { label: string; value: numbe
   );
 }
 
+function DeviceBadge({ device }: { device: string }) {
+  const icon = device === "mobile" ? "📱" : device === "tablet" ? "📱" : "💻";
+  const label = device === "mobile" ? "Mobile" : device === "tablet" ? "Tablet" : "Desktop";
+  return (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: "2px 6px", borderRadius: 6, background: "rgba(255,255,255,0.06)", color: "#888" }}>
+      {icon} {label}
+    </span>
+  );
+}
+
 function TypeBadge({ type }: { type: string }) {
   const colors: Record<string, string> = { LINK: "#3b82f6", DOCUMENT: "#f59e0b", PHOTO: "#ec4899" };
   return (
@@ -434,6 +465,166 @@ function TimelineStep({ label, time, delta, color }: { label: string; time: stri
         <span style={{ color: "#333" }}>—</span>
       )}
     </div>
+  );
+}
+
+function OnboardBlock({ events }: { events: any[] }) {
+  const [open, setOpen] = useState(false);
+  const start = events.find((e: any) => e.action === "onboard_start");
+  const steps = events.filter((e: any) => e.action?.startsWith("onboard_step_"));
+  const done = events.find((e: any) => e.action === "onboard_done");
+  const abandoned = events.find((e: any) => e.action === "abandoned_onboarding");
+  const totalSteps = 5;
+  const completedSteps = done ? totalSteps : steps.length;
+  const isComplete = !!done;
+
+  const allSteps = [
+    { label: "Inicio", event: start },
+    { label: "Fotos", event: steps.find((e: any) => e.stepName === "fotos") },
+    { label: "Vistas", event: steps.find((e: any) => e.stepName === "vistas") },
+    { label: "Idioma", event: steps.find((e: any) => e.stepName === "idioma") },
+    { label: "Listo", event: done },
+  ];
+
+  const fmtTime = (ts: string) => {
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+  };
+  const diffStr = (from: string, to: string) => {
+    const secs = Math.round((new Date(to).getTime() - new Date(from).getTime()) / 1000);
+    if (secs < 0) return "";
+    if (secs < 60) return `${secs}s`;
+    const m = Math.floor(secs / 60);
+    return `${m}m ${secs % 60}s`;
+  };
+
+  return (
+    <div style={{ marginTop: 8, borderRadius: 8, background: "rgba(132,204,22,0.06)", border: "1px solid rgba(132,204,22,0.15)", overflow: "hidden" }}>
+      <div onClick={() => setOpen(!open)} style={{ padding: "8px 12px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, color: "#84cc16", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>🧞 Onboarding</span>
+          <span style={{
+            fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700,
+            background: isComplete ? "rgba(34,197,94,0.12)" : abandoned ? "rgba(239,68,68,0.1)" : "rgba(132,204,22,0.12)",
+            color: isComplete ? "#22c55e" : abandoned ? "#f87171" : "#84cc16",
+          }}>
+            {isComplete ? `${totalSteps}/${totalSteps} COMPLETO` : abandoned ? `Abandonó paso ${(abandoned.atStep ?? 0) + 1}` : `${completedSteps}/${totalSteps}`}
+          </span>
+        </div>
+        <span style={{ color: "#555", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
+      </div>
+      {open && (
+        <div style={{ padding: "0 12px 10px", display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 11 }}>
+          {allSteps.map((s, i) => {
+            const prev = i > 0 ? allSteps[i - 1].event : null;
+            const delta = s.event && prev ? diffStr(prev.ts, s.event.ts) : null;
+            return (
+              <div key={s.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ color: s.event ? "#84cc16" : "#444", fontWeight: 600 }}>{s.label}</span>
+                {s.event ? (
+                  <span style={{ color: "#888" }}>{fmtTime(s.event.ts)}{delta && <span style={{ color: "#666", marginLeft: 3 }}>({delta})</span>}</span>
+                ) : (
+                  <span style={{ color: "#333" }}>—</span>
+                )}
+              </div>
+            );
+          })}
+          {abandoned && !done && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "#f87171" }}>
+                Cerró en {abandoned.stepName || `paso ${(abandoned.atStep ?? 0) + 1}`} · {fmtTime(abandoned.ts)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PanelJourneyBlock({ events }: { events: any[] }) {
+  const [open, setOpen] = useState(false);
+  const visits = events.filter((e: any) => e.action === "panel_visit");
+  const leave = events.filter((e: any) => e.action === "panel_leave").pop();
+  const sections = visits.map((v: any) => v.section || "inicio");
+  const uniqueSections = [...new Set(sections)];
+
+  const fmtTime = (ts: string) => {
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}:${d.getSeconds().toString().padStart(2, "0")}`;
+  };
+  const diffStr = (from: string, to: string) => {
+    const secs = Math.round((new Date(to).getTime() - new Date(from).getTime()) / 1000);
+    if (secs < 0) return "";
+    if (secs < 60) return `${secs}s`;
+    if (secs < 3600) { const m = Math.floor(secs / 60); return `${m}m ${secs % 60}s`; }
+    const h = Math.floor(secs / 3600); const m = Math.floor((secs % 3600) / 60);
+    return `${h}h ${m}m`;
+  };
+
+  const firstVisit = visits[0];
+  const lastEvent = leave || visits[visits.length - 1];
+  const totalTime = firstVisit && lastEvent ? diffStr(firstVisit.ts, lastEvent.ts) : null;
+
+  const SECTION_LABELS: Record<string, string> = {
+    inicio: "Inicio", menus: "Mi Carta", analytics: "Analytics", clientes: "Clientes",
+    promociones: "Ofertas", anuncios: "Anuncios", garzon: "Garzón", campanias: "Email Mkt",
+    usuarios: "Usuarios", ajustes: "Ajustes", live: "Venta en vivo",
+  };
+
+  return (
+    <div style={{ marginTop: 8, borderRadius: 8, background: "rgba(234,179,8,0.06)", border: "1px solid rgba(234,179,8,0.15)", overflow: "hidden" }}>
+      <div onClick={() => setOpen(!open)} style={{ padding: "8px 12px", cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 10, color: "#eab308", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>📊 Panel</span>
+          <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700, background: "rgba(234,179,8,0.12)", color: "#eab308" }}>
+            {uniqueSections.length} sección{uniqueSections.length !== 1 ? "es" : ""}{totalTime ? ` · ${totalTime}` : ""}
+          </span>
+        </div>
+        <span style={{ color: "#555", fontSize: 10 }}>{open ? "▲" : "▼"}</span>
+      </div>
+      {open && (
+        <div style={{ padding: "0 12px 10px", display: "flex", flexWrap: "wrap", gap: "4px 14px", fontSize: 11 }}>
+          {visits.map((v: any, i: number) => {
+            const prev = i > 0 ? visits[i - 1] : null;
+            const delta = prev ? diffStr(prev.ts, v.ts) : null;
+            const label = SECTION_LABELS[v.section] || v.section;
+            return (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                <span style={{ color: "#eab308", fontWeight: 600 }}>{label}</span>
+                <span style={{ color: "#888" }}>{fmtTime(v.ts)}{delta && <span style={{ color: "#666", marginLeft: 3 }}>({delta})</span>}</span>
+              </div>
+            );
+          })}
+          {leave && (
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <span style={{ fontSize: 9, padding: "1px 6px", borderRadius: 4, fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "#f87171" }}>
+                Salió de {SECTION_LABELS[leave.section] || leave.section} · {fmtTime(leave.ts)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AbandonmentBadge({ event }: { event: any }) {
+  const fmtTime = (ts: string) => {
+    const d = new Date(ts);
+    return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  };
+  const LABELS: Record<string, string> = {
+    abandoned_onboarding: "Abandonó onboarding",
+    abandoned_panel: "Abandonó panel",
+    abandoned_carta: "Abandonó carta",
+  };
+  const label = LABELS[event.action] || event.action.replace("abandoned_", "Abandonó ");
+  const detail = event.stepName ? ` (${event.stepName})` : event.section ? ` (${event.section})` : "";
+  return (
+    <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
+      🔴 {label}{detail} · {fmtTime(event.ts)}
+    </span>
   );
 }
 

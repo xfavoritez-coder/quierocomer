@@ -1,6 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
+function parseDevice(ua: string): string {
+  const l = ua.toLowerCase();
+  if (/mobile|android|iphone|ipod|windows phone|opera mini|iemobile/i.test(l)) return "mobile";
+  if (/ipad|tablet|kindle|silk|playbook/i.test(l)) return "tablet";
+  return "desktop";
+}
+
 export async function GET() {
   try {
     const [leads, visitCount, recentVisits] = await Promise.all([
@@ -84,13 +91,24 @@ export async function GET() {
       }
     }
 
+    // Build reverse map: leadId -> userAgent from matched visit
+    const leadDevice = new Map<string, string>();
     const visits = recentVisits.map((v) => {
       const bucket = Math.floor(new Date(v.createdAt).getTime() / (30 * 60 * 1000));
       const matchedLeadId = v.ip ? (leadIps.get(`${v.ip}:${bucket}`) || leadIps.get(`${v.ip}:${bucket + 1}`) || null) : null;
+      if (matchedLeadId && v.userAgent && !leadDevice.has(matchedLeadId)) {
+        leadDevice.set(matchedLeadId, parseDevice(v.userAgent));
+      }
       return { ...v, matchedLeadId };
     });
 
-    return NextResponse.json({ leads, stats, visits });
+    // Enrich leads with device type
+    const enrichedLeads = leads.map((l) => ({
+      ...l,
+      device: leadDevice.get(l.id) || null,
+    }));
+
+    return NextResponse.json({ leads: enrichedLeads, stats, visits });
   } catch (error) {
     console.error("[Admin Funnel GET]", error);
     return NextResponse.json({ error: "Error al obtener leads." }, { status: 500 });

@@ -9,6 +9,7 @@ import { extractMiCartaQR } from "./micartaqr";
 import { extractWithScraper } from "./scrape";
 import { extractFromDocument } from "./document";
 import { extractGoogleDrive } from "./googledrive";
+import { extractHeyzine } from "./heyzine";
 import { detectDishFlags } from "@/lib/utils/detectDishFlags";
 import type { ExtractionResult, ExtractedDish } from "./types";
 
@@ -227,6 +228,8 @@ async function extractMenu(cartaUrl: string, providerName: string | null, extrac
       return extractMiCartaQR(cartaUrl);
     case "GoogleDrive":
       return extractGoogleDrive(cartaUrl);
+    case "Heyzine":
+      return extractHeyzine(cartaUrl);
     case "Dropbox":
     case "OneDrive":
       // Cloud storage PDFs: treat as generic document via the scraper
