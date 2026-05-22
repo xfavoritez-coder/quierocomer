@@ -59,7 +59,6 @@ export async function GET(req: NextRequest) {
       return flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
     };
     const visitedSubircarta = landingSessions.filter((s) =>
-      s.pageViews > 1 ||
       flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"))
     ).length;
 
@@ -93,8 +92,7 @@ export async function GET(req: NextRequest) {
         byCampaign[key].subircarta++;
       } else {
         byCampaign[key].landedLanding++;
-        const navigated = s.pageViews > 1 ||
-          flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
+        const navigated = flatEvents(s).some((e: any) => e.type === "page_load" && e.data?.page?.includes("/subircarta"));
         if (navigated) byCampaign[key].subircarta++;
       }
     }

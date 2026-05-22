@@ -289,18 +289,6 @@ export default function FacebookAdsPage() {
         </Section>
       )}
 
-      {/* Landing pages */}
-      {sortedLandings.length > 0 && (
-        <Section title="Pagina de entrada">
-          {sortedLandings.map(([page, count]) => (
-            <div key={page} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", fontSize: 12 }}>
-              <span style={{ color: "#ccc" }}>{page}</span>
-              <span style={{ color: "#888" }}>{count}</span>
-            </div>
-          ))}
-        </Section>
-      )}
-
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
         {/* Sections viewed */}
         <Section title="Secciones vistas">
