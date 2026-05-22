@@ -13,12 +13,19 @@ export async function POST(req: NextRequest) {
     where: { id: restaurantId },
     select: { id: true, isDemo: true, slug: true, name: true, subscriptionStatus: true, needsTranslation: true, owner: { select: { email: true, name: true } } },
   });
-  if (!restaurant || !restaurant.isDemo) return NextResponse.json({ error: "not found" }, { status: 404 });
+  if (!restaurant || !restaurant.isDemo) return NextResponse.json({ error: "not found or already activated" }, { status: 404 });
+
+  // Guard: atomically set isDemo=false to prevent double activation
+  const { count } = await prisma.restaurant.updateMany({
+    where: { id: restaurantId, isDemo: true },
+    data: { isDemo: false },
+  });
+  if (count === 0) return NextResponse.json({ error: "already activated" }, { status: 409 });
 
   if (selectedPlan === "FREE") {
     await prisma.restaurant.update({
       where: { id: restaurantId },
-      data: { isDemo: false, plan: "FREE", weeklyEmailEnabled: true },
+      data: { plan: "FREE", weeklyEmailEnabled: true },
     });
   } else {
     // Gold or Premium — activate trial
@@ -31,7 +38,6 @@ export async function POST(req: NextRequest) {
         plan: selectedPlan,
         subscriptionStatus: "TRIALING",
         trialEndsAt,
-        isDemo: false,
         weeklyEmailEnabled: true,
       },
     });
