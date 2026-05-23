@@ -643,7 +643,7 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       try {
         const { sendWhatsApp, buildCartaReadyMessage } = await import("@/lib/whatsapp");
         const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
-        const waTrackUrl = `${baseUrl}/api/funnel/track/wa-click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
+        const waTrackUrl = `${baseUrl}/c/${restaurant.slug}`;
         const ownerName = (lead.ownerName || "Hola").split(" ")[0];
         const msg = buildCartaReadyMessage({
           ownerName,
