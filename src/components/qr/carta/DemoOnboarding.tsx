@@ -49,7 +49,7 @@ const STEPS: Step[] = [
   {
     icon: "✨",
     title: "¿Sin fotos? No hay problema",
-    body: "Tienes 3 distintas vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos pero con los poderes de una carta QR inteligente.",
+    body: "Tienes 3 vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos pero con los poderes de una carta QR inteligente.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
@@ -366,7 +366,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...baseStep,
     ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
-    ...(step === 2 && { title: "¿Sin fotos? No hay problema", body: "Tienes 3 distintas vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos pero con los poderes de una carta QR inteligente." }),
+    ...(step === 2 && { title: "¿Sin fotos? No hay problema", body: "Tienes 3 vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos pero con los poderes de una carta QR inteligente." }),
     ...(step === 3 && { title: "Y esta vista se llama Impact", body: "Para destacar tus platos con fotos y un diseño visual que invita a pedir más." }),
     ...(step === 4 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
     ...(step === 5 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
