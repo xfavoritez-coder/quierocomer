@@ -116,6 +116,12 @@ async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
           .toBuffer();
         base64 = jpegBuffer.toString("base64");
       } catch {
+        // Skip unsupported formats (HEIC, TIFF, etc.) that Claude can't read
+        const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
+        if (["heic", "heif", "tiff", "bmp", "svg"].includes(ext)) {
+          console.log(`[Image] Skipping unsupported format: ${ext}`);
+          continue;
+        }
         base64 = buffer.toString("base64");
         if (url.endsWith(".png")) mediaType = "image/png";
         else if (url.endsWith(".webp")) mediaType = "image/webp";
