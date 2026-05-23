@@ -399,6 +399,7 @@ export default function FunnelPage() {
                 {lead.events && lead.events.some((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor")) && (
                   <DoctorInline events={lead.events.filter((e: any) => e.action?.startsWith("doctor_") || e.action?.startsWith("lead_doctor"))} />
                 )}
+                <DeleteButton leadId={lead.id} onDone={fetchData} />
               </div>
             </div>
           );
@@ -627,6 +628,32 @@ function AbandonmentBadge({ event }: { event: any }) {
     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 4, fontWeight: 700, background: "rgba(239,68,68,0.1)", color: "#f87171", border: "1px solid rgba(239,68,68,0.2)" }}>
       🔴 {label}{detail} · {fmtTime(event.ts)}
     </span>
+  );
+}
+
+function DeleteButton({ leadId, onDone }: { leadId: string; onDone: () => void }) {
+  const [state, setState] = useState<"idle" | "confirm" | "loading">("idle");
+  const del = async () => {
+    setState("loading");
+    try {
+      const res = await fetch(`/api/subircarta/${leadId}`, { method: "DELETE" });
+      if (res.ok) onDone();
+      else setState("idle");
+    } catch { setState("idle"); }
+  };
+  if (state === "confirm") return (
+    <span style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+      <button onClick={del} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#f87171", border: "1px solid rgba(239,68,68,0.25)" }}>Confirmar</button>
+      <button onClick={() => setState("idle")} style={{ fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "#888", border: "1px solid rgba(255,255,255,0.1)" }}>No</button>
+    </span>
+  );
+  return (
+    <button onClick={() => setState("confirm")} disabled={state === "loading"} style={{
+      fontSize: 10, fontWeight: 700, padding: "3px 8px", borderRadius: 6, cursor: "pointer",
+      background: "transparent", color: "#555", border: "1px solid rgba(255,255,255,0.08)",
+    }}>
+      {state === "loading" ? "..." : "✕"}
+    </button>
   );
 }
 
