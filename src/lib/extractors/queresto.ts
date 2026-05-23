@@ -57,7 +57,15 @@ export async function extractQueresto(cartaUrl: string): Promise<ExtractionResul
     const imgUrls = imgMatches.map((m) => m[1]).filter((u) => u.includes("/items/"));
     // Match images to dishes by position (best effort)
     for (let i = 0; i < Math.min(dishes.length, imgUrls.length); i++) {
-      dishes[i].imageUrl = imgUrls[i];
+      // Upgrade to high quality: replace thumbnail params with HD
+      dishes[i].imageUrl = imgUrls[i].replace(/w=\d+,h=\d+/, "w=800,h=800");
+    }
+  }
+
+  // Also upgrade any images from JSON-LD that have small dimensions
+  for (const d of dishes) {
+    if (d.imageUrl && d.imageUrl.includes("cdn.bistrify.app/cdn-cgi/image/")) {
+      d.imageUrl = d.imageUrl.replace(/w=\d+,h=\d+/, "w=800,h=800");
     }
   }
 
