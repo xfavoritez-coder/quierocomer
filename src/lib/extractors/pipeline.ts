@@ -704,6 +704,33 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }).catch(() => {});
     }
 
+    // If provider has a failMessage, send it via WhatsApp to the lead
+    if (lead.whatsapp && lead.detectedProviderId) {
+      try {
+        const provider = await prisma.menuProvider.findUnique({ where: { id: lead.detectedProviderId }, select: { extractionConfig: true } });
+        const failMsg = (provider?.extractionConfig as any)?.failMessage;
+        if (failMsg) {
+          const SID = process.env.TWILIO_ACCOUNT_SID;
+          const TOKEN = process.env.TWILIO_AUTH_TOKEN;
+          const FROM = process.env.TWILIO_WHATSAPP_FROM || "whatsapp:+14155238886";
+          if (SID && TOKEN) {
+            const phone = lead.whatsapp.startsWith("+") ? lead.whatsapp : `+${lead.whatsapp}`;
+            const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${SID}/Messages.json`, {
+              method: "POST",
+              headers: { "Authorization": "Basic " + Buffer.from(`${SID}:${TOKEN}`).toString("base64"), "Content-Type": "application/x-www-form-urlencoded" },
+              body: new URLSearchParams({ From: FROM, To: `whatsapp:${phone}`, Body: `Hola ${(lead.ownerName || "").split(" ")[0] || ""}. ${failMsg}` }),
+              signal: AbortSignal.timeout(10000),
+            });
+            const data = await res.json();
+            if (data.sid) {
+              await prisma.lead.update({ where: { id: leadId }, data: { whatsappSentAt: new Date() } });
+              console.log(`[Pipeline] Sent failMessage WA to ${phone}`);
+            }
+          }
+        }
+      } catch {}
+    }
+
     // Notify admin with error details
     try {
       const { sendAdminPush } = await import("@/lib/adminPush");
