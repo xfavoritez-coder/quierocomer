@@ -62,8 +62,8 @@ const STEPS: Step[] = [
   },
   {
     icon: "🌍",
-    title: "Tu carta en varios idiomas",
-    body: "Hemos traducido al inglés tus primeros platos para que lo veas. Al activar, se traduce tu carta completa a los idiomas que quieras.",
+    title: "Traducimos tu carta a varios idiomas",
+    body: "Hemos dejado los primeros platos en inglés para que lo veas. Al activar, tu carta se traduce completa.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
@@ -469,7 +469,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                   background: isLightStep ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.05)",
                   border: isLightStep ? "1px solid rgba(0,0,0,0.08)" : "1px solid rgba(255,255,255,0.10)",
                   color: isLightStep ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)",
-                  fontSize: "0.84rem", fontWeight: 600,
+                  fontSize: "0.9rem", fontWeight: 600,
                   display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                   fontFamily: "var(--font-dm, sans-serif)",
                 }}>Atrás</button>
@@ -478,7 +478,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
                 borderRadius: 999, padding: "6px 12px",
                 background: isLightStep ? "rgba(243,163,51,0.12)" : "rgba(255,178,45,0.12)",
                 border: isLightStep ? "1px solid rgba(243,163,51,0.3)" : "1px solid rgba(255,178,45,0.2)",
-                color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.84rem", fontWeight: 700,
+                color: isLightStep ? "#c67b00" : "#ffb22d", fontSize: "0.9rem", fontWeight: 700,
                 display: "flex", alignItems: "center", gap: 3, cursor: "pointer",
                 fontFamily: "var(--font-dm, sans-serif)",
               }}>{current.buttonLabel || "Siguiente"}</button>
