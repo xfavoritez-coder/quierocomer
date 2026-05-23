@@ -550,6 +550,7 @@ model Restaurant {
 
   announcements         Announcement[]
   dishSuggestions        DishSuggestion[]
+  whatsappMessages      WhatsAppMessage[]
 
   @@index([ownerId])
 }
@@ -1793,11 +1794,37 @@ model Lead {
   updatedAt          DateTime      @updatedAt
 
   detectedProvider   MenuProvider? @relation(fields: [detectedProviderId], references: [id])
+  whatsappMessages   WhatsAppMessage[]
 
   @@index([email])
   @@index([detectedProviderId])
   @@index([cartaStatus])
   @@index([generatedSlug])
+}
+
+enum WhatsAppDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model WhatsAppMessage {
+  id           String            @id @default(cuid())
+  phone        String
+  direction    WhatsAppDirection
+  body         String
+  leadId       String?
+  restaurantId String?
+  twilioSid    String?           @unique
+  status       String            @default("received")
+  profileName  String?
+  createdAt    DateTime          @default(now())
+
+  lead       Lead?       @relation(fields: [leadId], references: [id])
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id])
+
+  @@index([phone, createdAt])
+  @@index([leadId])
+  @@index([restaurantId])
 }
 
 model FunnelVisit {
