@@ -197,23 +197,30 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           }
         });
         break;
-      case 2:
-        // Change to Esencial view (light mode) — for restaurants without photos
+      case 2: {
+        // Change to Esencial view (light mode) — flash black (dark→light transition)
         localStorage.setItem("qc_theme_override", "light");
+        const containerToLight = document.querySelector(".carta-dark, .carta-light");
+        if (containerToLight) { containerToLight.classList.remove("carta-dark"); containerToLight.classList.add("carta-light"); }
+        document.body.setAttribute("data-onboarding-flash", "black");
         window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "esencial" } }));
-        delay(400, () => window.scrollTo({ top: 0, behavior: "smooth" }));
+        delay(400, () => { window.scrollTo({ top: 0, behavior: "smooth" }); document.body.removeAttribute("data-onboarding-flash"); });
         break;
-      case 3:
-        // Change to Impact view (dark mode) — for restaurants with photos
+      }
+      case 3: {
+        // Change to Impact view (dark mode) — flash white (light→dark transition)
         localStorage.setItem("qc_theme_override", "dark");
-        const container = document.querySelector(".carta-dark, .carta-light");
-        if (container) { container.classList.remove("carta-light"); container.classList.add("carta-dark"); }
+        const containerToDark = document.querySelector(".carta-dark, .carta-light");
+        if (containerToDark) { containerToDark.classList.remove("carta-light"); containerToDark.classList.add("carta-dark"); }
+        document.body.setAttribute("data-onboarding-flash", "white");
         window.dispatchEvent(new CustomEvent("demo-onboarding-change-view", { detail: { view: "impact" } }));
         delay(600, () => {
           const menu = document.querySelector("[data-section='menu']") || document.querySelector("[data-section='mood']");
           if (menu) menu.scrollIntoView({ behavior: "smooth", block: "start" });
+          document.body.removeAttribute("data-onboarding-flash");
         });
         break;
+      }
       case 4:
         // Navigate to English — show loading overlay while page reloads
         if (!window.location.search.includes("lang=en")) {
