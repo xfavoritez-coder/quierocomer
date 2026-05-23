@@ -13,6 +13,7 @@ interface Variant {
   impressions: number;
   conversions: number;
   conversionRate: number;
+  deepConversions: number;
   trafficSharePct: number;
 }
 
@@ -192,7 +193,8 @@ function SlotSection({
                 <th style={{ padding: "8px 6px", textAlign: "left", fontWeight: 600 }}>Texto</th>
                 <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Tráfico</th>
                 <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Impresiones</th>
-                <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Conversiones</th>
+                <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Conv</th>
+                <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600, color: "#a855f7" }}>Leads</th>
                 <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Tasa</th>
                 <th style={{ padding: "8px 6px", textAlign: "right", fontWeight: 600 }}>Estado</th>
               </tr>
@@ -208,6 +210,7 @@ function SlotSection({
                     </td>
                     <td style={{ padding: "10px 6px", textAlign: "right", color: "var(--adm-text2)" }}>{v.impressions}</td>
                     <td style={{ padding: "10px 6px", textAlign: "right", color: "var(--adm-text2)" }}>{v.conversions}</td>
+                    <td style={{ padding: "10px 6px", textAlign: "right", color: v.deepConversions > 0 ? "#a855f7" : "var(--adm-text3)", fontWeight: 600 }}>{v.deepConversions || "—"}</td>
                     <td style={{ padding: "10px 6px", textAlign: "right", color: tasa > 0 ? "#16a34a" : "var(--adm-text3)", fontWeight: 600 }}>
                       {v.impressions > 0 ? `${tasa.toFixed(1)}%` : "—"}
                     </td>

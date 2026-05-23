@@ -53,6 +53,14 @@ export interface VariantStats {
  * conversions accumulate the winning variant gets exponentially more
  * traffic — but losing variants keep getting some exploration.
  */
+/**
+ * Minimum exploration rate: 15% of the time pick a random variant
+ * regardless of Thompson Sampling. This ensures all variants get
+ * enough impressions to converge properly.
+ */
+const EXPLORATION_RATE = 0.15;
+const MIN_IMPRESSIONS_FOR_TS = 20; // Use pure random until each variant has at least this many
+
 export function pickByThompsonSampling<T>(
   variants: { id: string; data: T }[],
   statsByVariantId: Map<string, VariantStats>,
@@ -60,6 +68,21 @@ export function pickByThompsonSampling<T>(
   if (variants.length === 0) throw new Error("pickByThompsonSampling: empty variants");
   if (variants.length === 1) return variants[0];
 
+  // If any variant has fewer than MIN_IMPRESSIONS, pick it to ensure exploration
+  const underexplored = variants.filter(v => {
+    const s = statsByVariantId.get(v.id);
+    return !s || s.impressions < MIN_IMPRESSIONS_FOR_TS;
+  });
+  if (underexplored.length > 0) {
+    return underexplored[Math.floor(Math.random() * underexplored.length)];
+  }
+
+  // Epsilon-greedy: explore randomly EXPLORATION_RATE% of the time
+  if (Math.random() < EXPLORATION_RATE) {
+    return variants[Math.floor(Math.random() * variants.length)];
+  }
+
+  // Thompson Sampling
   let best = variants[0];
   let bestSample = -1;
   for (const v of variants) {

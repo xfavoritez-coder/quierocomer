@@ -6,7 +6,8 @@ import { sampleBeta } from "@/lib/ab/sampling";
 
 const EXPERIMENTS = [
   { slug: "birthday-modal", impressionEvent: "BIRTHDAY_MODAL_AUTO_SHOWN", conversionEvent: "BIRTHDAY_SAVED" },
-  { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK" },
+  { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK", deepConversionEvent: "LANDING_LEAD_CREATED" },
+  { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED" },
 ] as const;
 
 /**
@@ -29,6 +30,25 @@ export async function GET(req: NextRequest) {
       expCfg.conversionEvent,
     );
     if (!experiment) continue;
+
+    // Deep conversions (leads created from landing)
+    const deepConversionEvent = (expCfg as any).deepConversionEvent;
+    let deepStats: Map<string, number> | null = null;
+    if (deepConversionEvent) {
+      deepStats = new Map();
+      const deepEvents = await prisma.statEvent.findMany({
+        where: { eventType: deepConversionEvent, metadata: { path: ["abExperiment"], equals: expCfg.slug } },
+        select: { metadata: true },
+      });
+      for (const e of deepEvents) {
+        const m = e.metadata as any;
+        if (!m) continue;
+        for (const slot of ["title", "subtitle", "cta"]) {
+          const id = m[`${slot}Id`];
+          if (id) deepStats.set(id, (deepStats.get(id) || 0) + 1);
+        }
+      }
+    }
 
     const slots = ["title", "subtitle", "cta"] as const;
     const slotData: Record<string, any> = {};
@@ -66,6 +86,7 @@ export async function GET(req: NextRequest) {
             impressions: v.impressions,
             conversions: v.conversions,
             conversionRate: cr,
+            deepConversions: deepStats?.get(v.id) || 0,
             trafficSharePct: v.isActive ? Math.round(((wins.get(v.id) || 0) / N) * 100) : 0,
           };
         });

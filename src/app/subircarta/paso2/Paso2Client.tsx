@@ -212,6 +212,18 @@ export default function Paso2Client() {
       }
 
       trackFunnelEvent(leadId, "paso2_completed");
+      // Track A/B landing conversion (lead created)
+      try {
+        const abRaw = localStorage.getItem("qc_ab_landing");
+        if (abRaw) {
+          const abIds = JSON.parse(abRaw);
+          fetch("/api/qr/stat-events", {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ eventType: "LANDING_LEAD_CREATED", metadata: { abExperiment: "landing-hero", ...abIds } }),
+            keepalive: true,
+          }).catch(() => {});
+        }
+      } catch {}
       trackCartaInfo();
       router.push(`/subircarta/confirmacion?id=${leadId}`);
     } catch (err: any) {

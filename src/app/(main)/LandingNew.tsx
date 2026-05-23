@@ -94,6 +94,7 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         if (d.subtitleText) setAbSubtitle(d.subtitleText);
         if (d.ctaText) setAbCta(d.ctaText);
         abIds.current = { titleId: d.titleId || null, subtitleId: d.subtitleId || null, ctaId: d.ctaId || null };
+        try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
 
         // Track impression
         if (!impressionSent.current) {
