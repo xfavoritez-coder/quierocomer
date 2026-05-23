@@ -9,6 +9,7 @@ import NavHamburger from "@/components/NavHamburger";
 import { trackFunnelEvent } from "@/lib/funnelTracker";
 import { initAdTracker, resumeAdTracker, linkAdSessionToLead } from "@/lib/adTracker";
 import { normalizePhone } from "@/lib/normalizePhone";
+import { parseAbText } from "@/lib/ab/parseAbText";
 
 type Mode = "pdf" | "link" | "photo" | null;
 
@@ -332,7 +333,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>{abTitle}</h1>
+            <h1>{parseAbText(abTitle)}</h1>
           </div>
 
           <div className="form-side centered-form">

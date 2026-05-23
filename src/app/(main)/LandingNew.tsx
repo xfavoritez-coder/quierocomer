@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Footer from "@/components/Footer";
 import NavHamburger from "@/components/NavHamburger";
+import { parseAbText } from "@/lib/ab/parseAbText";
 import { initAdTracker } from "@/lib/adTracker";
 
 interface Logo {
@@ -169,8 +170,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container hero-grid">
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
-            <h1 dangerouslySetInnerHTML={{ __html: abTitle.replace(/(vender más|vendiera sola\?|Cómo la muestras, sí\.)/i, '<span class="accent">$1</span>') }} />
-            <p className="hero-sub-text">{abSubtitle}</p>
+            <h1>{parseAbText(abTitle)}</h1>
+            <p className="hero-sub-text">{parseAbText(abSubtitle)}</p>
             <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Te mostramos en segundos cómo queda</div>
           </div>
