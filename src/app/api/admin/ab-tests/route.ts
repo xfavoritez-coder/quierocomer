@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
 
   const out = [];
   for (const expCfg of EXPERIMENTS) {
+    try {
     const { experiment, variants } = await getExperimentVariantsWithStats(
       expCfg.slug,
       expCfg.impressionEvent,
@@ -107,6 +108,9 @@ export async function GET(req: NextRequest) {
       slots: slotData,
       currentBest: winning,
     });
+    } catch (e) {
+      console.error(`[AB Tests] Error loading experiment ${expCfg.slug}:`, e);
+    }
   }
 
   return NextResponse.json({ experiments: out });
