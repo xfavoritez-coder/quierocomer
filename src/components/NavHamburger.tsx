@@ -102,7 +102,7 @@ export default function NavHamburger() {
               </span>
             </div>
             <p style={{ textAlign: "center", fontSize: 11, color: "rgba(255,255,255,0.2)", margin: 0 }}>
-              © {new Date().getFullYear()} · Hecho en Chile 🇨🇱
+              © {new Date().getFullYear()} · Hecho en Chile <span style={{ opacity: 0.5 }}>🇨🇱</span>
             </p>
           </div>
         </div>

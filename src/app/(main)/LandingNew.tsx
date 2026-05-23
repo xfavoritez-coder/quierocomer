@@ -67,8 +67,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
   }, []);
 
   // A/B testing state
-  const [abTitle, setAbTitle] = useState(AB_DEFAULTS.titleText);
-  const [abSubtitle, setAbSubtitle] = useState(AB_DEFAULTS.subtitleText);
+  const [abTitle, setAbTitle] = useState("");
+  const [abSubtitle, setAbSubtitle] = useState("");
   const [abCta, setAbCta] = useState(AB_DEFAULTS.ctaText);
   const abIds = useRef<{ titleId: string | null; subtitleId: string | null; ctaId: string | null }>({ titleId: null, subtitleId: null, ctaId: null });
   const impressionSent = useRef(false);
@@ -91,8 +91,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
     fetch(url)
       .then((r) => r.json())
       .then((d) => {
-        if (d.titleText) setAbTitle(d.titleText);
-        if (d.subtitleText) setAbSubtitle(d.subtitleText);
+        setAbTitle(d.titleText || AB_DEFAULTS.titleText);
+        setAbSubtitle(d.subtitleText || AB_DEFAULTS.subtitleText);
         if (d.ctaText) setAbCta(d.ctaText);
         abIds.current = { titleId: d.titleId || null, subtitleId: d.subtitleId || null, ctaId: d.ctaId || null };
         try { localStorage.setItem("qc_ab_landing", JSON.stringify(abIds.current)); } catch {}
@@ -170,8 +170,8 @@ export default function LandingNew({ logos }: { logos: Logo[] }) {
         <div className="container hero-grid">
           <div>
             <div className="eyebrow">Para dueños de restaurantes</div>
-            <h1>{parseAbText(abTitle)}</h1>
-            <p className="hero-sub-text">{parseAbText(abSubtitle)}</p>
+            <h1 style={{ opacity: abTitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abTitle)}</h1>
+            <p className="hero-sub-text" style={{ opacity: abSubtitle ? 1 : 0, transition: "opacity 0.3s ease" }}>{parseAbText(abSubtitle)}</p>
             <a href={subircartaHref} className="btn-primary" onClick={trackCtaClick}>{abCta}</a>
             <div className="microcopy">Te mostramos en segundos cómo queda</div>
           </div>
