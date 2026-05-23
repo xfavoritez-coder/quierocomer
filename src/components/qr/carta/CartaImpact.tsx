@@ -1208,8 +1208,15 @@ export default function CartaImpact({
         </div>
       )}
 
+      {/* Announcement banner — above hero */}
+      {announcements && announcements.length > 0 && (
+        <div style={{ position: "relative", zIndex: 2, marginTop: 65 }}>
+          <AnnouncementBanner announcements={announcements} />
+        </div>
+      )}
+
       {/* Hero */}
-      <div style={{ position: "relative", zIndex: 1, marginTop: 65 }}>
+      <div style={{ position: "relative", zIndex: 1, marginTop: announcements && announcements.length > 0 ? 0 : 65 }}>
         <ImpactHeroSlider
           heroDishes={heroDishes}
           restaurant={restaurant}
@@ -1334,12 +1341,6 @@ export default function CartaImpact({
         </section>
       )}
 
-      {/* Announcement banner */}
-      {announcements && announcements.length > 0 && (
-        <div style={{ position: "relative", zIndex: 1 }}>
-          <AnnouncementBanner announcements={announcements} />
-        </div>
-      )}
 
       {/* Personalizing overlay — hidden during demo onboarding, fades out */}
       {!(restaurant as any).isDemo && (
