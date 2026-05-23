@@ -541,7 +541,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .form-title h2 { font-family: var(--font-display); font-size: clamp(26px, 7vw, 34px); line-height: 1; letter-spacing: -.03em; font-weight: 500; margin-bottom: 6px; color: var(--cream); }
 .form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
 .field-row { margin-bottom: 14px; }
-input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; font-size: 17px; }
+input { width: 100%; height: 58px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 18px; font: inherit; outline: none; font-size: 19px; }
 input::placeholder { color: rgba(180,165,140,.35) !important; }
 input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
 .trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }
