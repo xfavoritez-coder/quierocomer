@@ -56,14 +56,14 @@ const STEPS: Step[] = [
   {
     icon: "🎨",
     title: "Y esta vista se llama Impact",
-    body: "Para destacar tus platos con fotos y un diseño visual que invita a pedir más.",
+    body: "Ideal para destacar tus platos con fotos.",
     showOverlay: false,
     buttonLabel: "Último paso",
   },
   {
     icon: "🌍",
-    title: "Traducimos tu carta a varios idiomas",
-    body: "Hemos dejado los primeros platos en inglés para que lo veas. Al activar, tu carta se traduce completa.",
+    title: "Por último, traducimos tu carta a varios idiomas",
+    body: "Por ahora dejamos los primeros en inglés, al activar se traduce completa.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
