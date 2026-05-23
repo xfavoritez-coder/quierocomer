@@ -620,9 +620,30 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }
     }
 
-    // WhatsApp disabled — Meta template not yet approved, Twilio queues but never delivers.
-    // Re-enable once HX73cbf24831adf5448d0e4eef6cb84f41 is approved in Meta Business Manager.
-    // if (lead.whatsapp && translationOk) { ... }
+    // Send WhatsApp alongside email
+    if (lead.whatsapp && translationOk) {
+      try {
+        const { sendWhatsApp, buildCartaReadyMessage } = await import("@/lib/whatsapp");
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quierocomer.cl";
+        const waTrackUrl = `${baseUrl}/api/funnel/track/wa-click?lid=${leadId}&url=${encodeURIComponent(cartaUrl)}`;
+        const ownerName = (lead.ownerName || "Hola").split(" ")[0];
+        const msg = buildCartaReadyMessage({
+          ownerName,
+          restaurantName: restaurant.name,
+          trackUrl: waTrackUrl,
+        });
+        const sid = await sendWhatsApp({
+          to: lead.whatsapp,
+          ...msg,
+        });
+        if (sid) {
+          await prisma.lead.update({ where: { id: leadId }, data: { whatsappSentAt: new Date() } });
+          console.log(`[Pipeline] WhatsApp sent to ${lead.whatsapp}`);
+        }
+      } catch (waErr) {
+        console.error("[Pipeline] WhatsApp failed:", waErr);
+      }
+    }
 
     // Notify admin of new lead processed
     try {
