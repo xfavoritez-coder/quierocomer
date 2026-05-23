@@ -51,6 +51,9 @@ export default function Paso2Client() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [phoneWarning, setPhoneWarning] = useState("");
+  const [emailWarning, setEmailWarning] = useState("");
+  const [emailWarningType, setEmailWarningType] = useState<"active" | "demo" | null>(null);
+  const [emailWarningDismissed, setEmailWarningDismissed] = useState(false);
   const [planesOpen, setPlanesOpen] = useState(false);
 
   const formRef = useRef<HTMLFormElement>(null);
@@ -185,6 +188,30 @@ export default function Paso2Client() {
     setLoading(true);
     setError("");
     setPhoneWarning("");
+
+    // Check for duplicate email (active non-demo restaurant)
+    if (!emailWarningDismissed) {
+      try {
+        const checkRes = await fetch(`/api/subircarta/check-email?email=${encodeURIComponent(email.trim())}`);
+        if (checkRes.ok) {
+          const checkData = await checkRes.json();
+          if (checkData.hasActive) {
+            setEmailWarning("Ya tienes una carta activa con este correo.");
+            setEmailWarningType("active");
+            setLoading(false);
+            return;
+          }
+          if (checkData.isDemo) {
+            setEmailWarning("Ya tienes una carta en proceso con este correo.");
+            setEmailWarningType("demo");
+            setLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // If check fails, proceed anyway
+      }
+    }
 
     const rawWa = whatsapp.trim();
     const normalizedWa = rawWa ? normalizePhone(rawWa) : null;
@@ -375,19 +402,19 @@ export default function Paso2Client() {
 
               <form ref={formRef} onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Nombre del local</label>
+                  <label style={{ display: "block", fontSize: 15, color: "var(--muted)", marginBottom: 5, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Nombre del local</label>
                   <input ref={firstInputRef} type="text" placeholder="Ej: Mi Restaurante" value={localName} onChange={(e) => { setLocalName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Tu nombre</label>
+                  <label style={{ display: "block", fontSize: 15, color: "var(--muted)", marginBottom: 5, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Tu nombre</label>
                   <input type="text" placeholder="Ej: Juan Pérez" value={ownerName} onChange={(e) => { setOwnerName(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Correo electrónico</label>
+                  <label style={{ display: "block", fontSize: 15, color: "var(--muted)", marginBottom: 5, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>Correo electrónico</label>
                   <input type="email" placeholder="tu@correo.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(""); }} />
                 </div>
                 <div className="field-row">
-                  <label style={{ display: "block", fontSize: 13, color: "var(--muted)", marginBottom: 4, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>WhatsApp</label>
+                  <label style={{ display: "block", fontSize: 15, color: "var(--muted)", marginBottom: 5, paddingLeft: 2, fontWeight: 700, textAlign: "left" as const }}>WhatsApp</label>
                   <div style={{ display: "flex", gap: 6 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 5, padding: "0 10px", background: "rgba(0,0,0,.4)", border: "1px solid rgba(255,255,255,.08)", borderRadius: 12, color: "#E8DDC8", fontSize: 14, flexShrink: 0 }}>
                       <svg width="20" height="14" viewBox="0 0 20 14" style={{ borderRadius: 2, flexShrink: 0 }}><rect width="20" height="7" fill="#fff"/><rect y="7" width="20" height="7" fill="#D52B1E"/><rect width="7" height="7" fill="#0039A6"/><polygon points="3.5,1.5 4.1,3.3 6,3.3 4.5,4.4 5,6.2 3.5,5.1 2,6.2 2.5,4.4 1,3.3 2.9,3.3" fill="#fff"/></svg>
@@ -401,6 +428,44 @@ export default function Paso2Client() {
                     </div>
                   )}
                 </div>
+
+                {emailWarning && !emailWarningDismissed && (
+                  <div style={{ background: "rgba(232,163,61,.1)", border: "1px solid rgba(232,163,61,.3)", borderRadius: 14, padding: "16px 18px", marginBottom: 12, textAlign: "left", fontSize: 14, color: "var(--cream-2)", lineHeight: 1.5 }}>
+                    <div style={{ fontWeight: 600 }}>{emailWarning}</div>
+                    {emailWarningType === "active" && (
+                      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Si quieres acceder a tu panel, recupera tu contraseña.</p>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                          <a href="/panel/forgot-password" style={{
+                            display: "inline-block", padding: "8px 16px", borderRadius: 10,
+                            background: "var(--amber-2, #E8A33D)", color: "#0e0c0a",
+                            fontSize: 13, fontWeight: 700, textDecoration: "none",
+                          }}>Recuperar contraseña</a>
+                          <button type="button" onClick={() => { setEmailWarningDismissed(true); setEmailWarning(""); }} style={{
+                            background: "none", border: "1px solid rgba(255,255,255,.12)", borderRadius: 10,
+                            padding: "8px 14px", color: "var(--muted)", fontSize: 13, cursor: "pointer",
+                          }}>Crear otro local</button>
+                        </div>
+                      </div>
+                    )}
+                    {emailWarningType === "demo" && (
+                      <div style={{ marginTop: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                        <p style={{ fontSize: 13, color: "var(--muted)", margin: 0 }}>Revisa tu correo, ya te enviamos un link para ver tu carta.</p>
+                        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                          <a href="/panel" style={{
+                            display: "inline-block", padding: "8px 16px", borderRadius: 10,
+                            background: "var(--amber-2, #E8A33D)", color: "#0e0c0a",
+                            fontSize: 13, fontWeight: 700, textDecoration: "none",
+                          }}>Ir a mi panel</a>
+                          <button type="button" onClick={() => { setEmailWarningDismissed(true); setEmailWarning(""); }} style={{
+                            background: "none", border: "1px solid rgba(255,255,255,.12)", borderRadius: 10,
+                            padding: "8px 14px", color: "var(--muted)", fontSize: 13, cursor: "pointer",
+                          }}>Crear otro local</button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <div style={{ color: "#e85d5d", fontSize: 14, textAlign: "center", marginBottom: 8 }}>
@@ -476,7 +541,7 @@ h1 span { color: var(--amber-2); font-style: italic; }
 .form-title h2 { font-family: var(--font-display); font-size: clamp(26px, 7vw, 34px); line-height: 1; letter-spacing: -.03em; font-weight: 500; margin-bottom: 6px; color: var(--cream); }
 .form-sub { color: var(--muted); font-size: 13px; line-height: 1.4; margin-bottom: 20px; }
 .field-row { margin-bottom: 14px; }
-input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; font-size: 15px; }
+input { width: 100%; height: 56px; border-radius: 16px; border: 1px solid var(--line); background: rgba(0,0,0,.32); color: var(--cream); padding: 0 16px; font: inherit; outline: none; font-size: 17px; }
 input::placeholder { color: rgba(180,165,140,.35) !important; }
 input:focus { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(232,163,61,.1); }
 .trust { display: flex; justify-content: center; align-items: center; gap: 6px; color: var(--cream-2); font-size: 13px; margin: 22px 0 18px; }

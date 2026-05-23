@@ -252,6 +252,13 @@ export default function SubirCartaClient() {
 
     try {
       if (mode === "link") {
+        // Block own URLs — this is already a QuieroComer menu
+        if (normalizedUrl.includes("quierocomer.cl")) {
+          setError("Esta ya es una carta en QuieroComer. Si necesitas editarla, accede a tu panel.");
+          setLoading(false);
+          return;
+        }
+
         const res = await fetch("/api/subircarta", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
