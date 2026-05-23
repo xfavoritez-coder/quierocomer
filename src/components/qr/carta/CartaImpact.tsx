@@ -1210,7 +1210,7 @@ export default function CartaImpact({
 
       {/* Announcement banner — above hero */}
       {announcements && announcements.length > 0 && (
-        <div style={{ position: "relative", zIndex: 2, marginTop: 65 }}>
+        <div style={{ position: "relative", zIndex: 2, marginTop: 65, marginBottom: 16 }}>
           <AnnouncementBanner announcements={announcements} />
         </div>
       )}
