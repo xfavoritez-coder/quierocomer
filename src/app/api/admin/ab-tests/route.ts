@@ -4,11 +4,11 @@ import { checkAdminAuth, isSuperAdmin } from "@/lib/adminAuth";
 import { getExperimentVariantsWithStats } from "@/lib/ab/getExperimentStats";
 import { sampleBeta } from "@/lib/ab/sampling";
 
-const EXPERIMENTS = [
+const EXPERIMENTS: { slug: string; impressionEvent: string; conversionEvent: string; deepConversionEvent?: string }[] = [
   { slug: "birthday-modal", impressionEvent: "BIRTHDAY_MODAL_AUTO_SHOWN", conversionEvent: "BIRTHDAY_SAVED" },
   { slug: "landing-hero", impressionEvent: "LANDING_VIEWED", conversionEvent: "LANDING_CTA_CLICK", deepConversionEvent: "LANDING_LEAD_CREATED" },
   { slug: "subircarta-hero", impressionEvent: "SUBIRCARTA_VIEWED", conversionEvent: "SUBIRCARTA_CARTA_UPLOADED" },
-] as const;
+];
 
 /**
  * Lists every A/B experiment with per-variant stats and the current
@@ -32,12 +32,12 @@ export async function GET(req: NextRequest) {
     if (!experiment) continue;
 
     // Deep conversions (leads created from landing)
-    const deepConversionEvent = (expCfg as any).deepConversionEvent;
+    const deepConversionEvent = expCfg.deepConversionEvent;
     let deepStats: Map<string, number> | null = null;
     if (deepConversionEvent) {
       deepStats = new Map();
       const deepEvents = await prisma.statEvent.findMany({
-        where: { eventType: deepConversionEvent, metadata: { path: ["abExperiment"], equals: expCfg.slug } },
+        where: { eventType: deepConversionEvent as any, metadata: { path: ["abExperiment"], equals: expCfg.slug } },
         select: { metadata: true },
       });
       for (const e of deepEvents) {
