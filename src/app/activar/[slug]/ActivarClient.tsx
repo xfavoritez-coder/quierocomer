@@ -377,14 +377,14 @@ export default function ActivarClient({ restaurant, categories, dishes, activeVe
             <h2>Activa y publica tu <span>nueva carta</span></h2>
 
             <div className="po-value">
-              <div className="po-orb">✨</div>
+              <div className="po-orb">🚀</div>
               <p className="po-vtext">Sin tarjeta, sin compromiso. Activamos tu carta <strong>de inmediato</strong>.</p>
             </div>
 
             {error && <div style={{ background: "rgba(232,80,80,.12)", border: "1px solid rgba(232,80,80,.3)", borderRadius: 12, padding: "10px 14px", marginBottom: 10, color: "#e85d5d", fontSize: 13, textAlign: "center" }}>{error}</div>}
             {!done ? (
               <button className="po-cta" disabled={loading} onClick={() => handleActivar("PREMIUM")}>
-                ⚡ {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar carta gratis"}
+                {loading && selectedPlan === "PREMIUM" ? "Activando..." : "Activar carta gratis"}
               </button>
             ) : (
               <div className="done-msg"><p>Activado. Redirigiendo...</p></div>
