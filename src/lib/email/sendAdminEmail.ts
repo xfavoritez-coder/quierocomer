@@ -14,7 +14,7 @@ interface SendEmailOptions {
 
 export async function sendAdminEmail({ to, subject, html, purpose = "other" }: SendEmailOptions) {
   try {
-    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html });
+    const { data, error } = await resend.emails.send({ from: FROM, to, subject, html, headers: { "Content-Type": "text/html; charset=UTF-8" } });
 
     if (error) {
       const errorMsg = error.message || JSON.stringify(error);
@@ -44,7 +44,7 @@ export async function sendAdminEmail({ to, subject, html, purpose = "other" }: S
 
 /** Wrap content in the branded admin email template */
 export function adminEmailTemplate(content: string): string {
-  return `<html><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
+  return `<html><head><meta charset="UTF-8"></head><body style="background-color:#0D0D0D;font-family:Georgia,serif;margin:0;padding:0">
 <div style="max-width:640px;margin:0 auto;padding:40px 16px">
 <div style="text-align:center;margin-bottom:16px">
 <p style="font-size:32px;margin:0">🧞</p>
