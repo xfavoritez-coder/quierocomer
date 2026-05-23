@@ -434,7 +434,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           {/* Description */}
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "1rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
+            fontSize: "1rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.6)",
             lineHeight: 1.45, margin: "6px 0 14px",
           }} dangerouslySetInnerHTML={{ __html: stepBody as string }} />
 
