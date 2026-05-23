@@ -49,14 +49,14 @@ const STEPS: Step[] = [
   {
     icon: "✨",
     title: "¿Sin fotos? No hay problema",
-    body: "Esta vista se llama Esencial. Ideal para comenzar. Es como tu carta física pero con los poderes de una carta QR inteligente.",
+    body: "Tienes 3 distintas vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos.",
     showOverlay: false,
     buttonLabel: "Siguiente",
   },
   {
     icon: "🎨",
-    title: "Y con fotos, mira cómo se ve",
-    body: "La vista Impact destaca tus platos con un diseño visual que invita a pedir más.",
+    title: "Y esta vista se llama Impact",
+    body: "Para destacar tus platos con fotos y un diseño visual que invita a pedir más.",
     showOverlay: false,
     buttonLabel: "Último paso",
   },
@@ -366,8 +366,8 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
     ...baseStep,
     ...(step === 0 && { title: `Recorre la carta de ${restaurantName || "un restaurante"}`, body: "Te muestro cómo es una carta QuieroComer.", buttonLabel: "Ver" }),
     ...(step === 1 && { title: "Así se ve una carta real" }),
-    ...(step === 2 && { title: "Funciona incluso sin fotos", body: "La vista Esencial es profesional y lista para usar. Perfecta para comenzar al instante." }),
-    ...(step === 3 && { title: "Y con fotos, mira cómo se ve", body: "La vista Impact destaca los platos con un diseño visual que invita a pedir más." }),
+    ...(step === 2 && { title: "¿Sin fotos? No hay problema", body: "Tienes 3 distintas vistas, esta se llama \"Esencial\", ideal para comenzar sin fotos." }),
+    ...(step === 3 && { title: "Y esta vista se llama Impact", body: "Para destacar tus platos con fotos y un diseño visual que invita a pedir más." }),
     ...(step === 4 && { title: "Traducimos la carta", body: "A varios idiomas. Por ejemplo, ahora está en inglés.", buttonLabel: "Finalizar" }),
     ...(step === 5 && { title: "Así es una carta QuieroComer", body: "Te dejo para que navegues por ella. Si me necesitas nuevamente, solo frota la lámpara.", buttonLabel: "Listo" }),
   } : baseStep;
@@ -434,7 +434,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
           {/* Description */}
           <p style={{
             fontFamily: "var(--font-dm, sans-serif)",
-            fontSize: "0.95rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
+            fontSize: "1rem", color: isLightStep ? "rgba(0,0,0,0.72)" : "rgba(255,255,255,0.45)",
             lineHeight: 1.45, margin: "6px 0 14px",
           }} dangerouslySetInnerHTML={{ __html: stepBody as string }} />
 
@@ -583,7 +583,7 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
         {/* Body */}
         <p style={{
           fontFamily: "var(--font-dm, sans-serif)",
-          fontSize: "1.05rem",
+          fontSize: "1.1rem",
           color: "rgba(255,255,255,0.5)",
           lineHeight: 1.45,
           margin: "0 0 18px",
