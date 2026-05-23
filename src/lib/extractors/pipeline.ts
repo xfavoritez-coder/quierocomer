@@ -704,11 +704,22 @@ export async function processLead(leadId: string): Promise<{ slug: string; url: 
       }).catch(() => {});
     }
 
-    // If provider has a failMessage, send it via WhatsApp to the lead
-    if (lead.whatsapp && lead.detectedProviderId) {
+    // Send WhatsApp on failure: provider failMessage OR generic URL error
+    if (lead.whatsapp) {
       try {
-        const provider = await prisma.menuProvider.findUnique({ where: { id: lead.detectedProviderId }, select: { extractionConfig: true } });
-        const failMsg = (provider?.extractionConfig as any)?.failMessage;
+        let failMsg: string | null = null;
+
+        // Check provider-specific failMessage
+        if (lead.detectedProviderId) {
+          const provider = await prisma.menuProvider.findUnique({ where: { id: lead.detectedProviderId }, select: { extractionConfig: true } });
+          failMsg = (provider?.extractionConfig as any)?.failMessage || null;
+        }
+
+        // Generic: URL inaccessible or no dishes extracted
+        if (!failMsg && (errorMsg.includes("No se pudo acceder") || errorMsg.includes("Failed to fetch"))) {
+          failMsg = "No pudimos acceder al link que nos compartiste. ¿Podrías subir una foto de tu carta o el PDF directamente? Puedes hacerlo aquí: quierocomer.cl/subircarta 😊";
+        }
+
         if (failMsg) {
           const SID = process.env.TWILIO_ACCOUNT_SID;
           const TOKEN = process.env.TWILIO_AUTH_TOKEN;
