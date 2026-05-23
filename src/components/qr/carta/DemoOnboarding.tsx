@@ -170,9 +170,13 @@ export default function DemoOnboarding({ restaurantSlug, onboardingDone, allPhot
 
   const runStepEnter = (s: number) => {
     switch (s) {
-      case 0:
-        // Intro — nothing
+      case 0: {
+        // Intro — ensure dark mode
+        localStorage.setItem("qc_theme_override", "dark");
+        const initContainer = document.querySelector(".carta-dark, .carta-light");
+        if (initContainer) { initContainer.classList.remove("carta-light"); initContainer.classList.add("carta-dark"); }
         break;
+      }
       case 1:
         // In showcase mode, switch to lista view (no flash, it's the first view change)
         if (showcaseMode) {
