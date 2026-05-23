@@ -12,6 +12,9 @@ import { normalizePhone } from "@/lib/normalizePhone";
 
 type Mode = "pdf" | "link" | "photo" | null;
 
+// A/B test state for hero
+interface AbData { titleId: string | null; titleText: string; ctaId: string | null; ctaText: string }
+
 /** AbortSignal.timeout polyfill for older WebViews (Instagram Android, etc.) */
 function safeTimeout(ms: number): AbortSignal {
   try {
@@ -63,6 +66,20 @@ async function compressImage(file: File, maxSize = 1600, quality = 0.85): Promis
 export default function SubirCartaClient() {
   const router = useRouter();
   const [planesOpen, setPlanesOpen] = useState(false);
+  const [abTitle, setAbTitle] = useState("Sube gratis tu carta y ve cómo mejora.");
+  const abIds = useRef<{ titleId: string | null; ctaId: string | null }>({ titleId: null, ctaId: null });
+  useEffect(() => {
+    fetch("/api/subircarta/ab").then(r => r.json()).then(d => {
+      if (d.titleText) setAbTitle(d.titleText);
+      abIds.current = { titleId: d.titleId || null, ctaId: d.ctaId || null };
+      // Track impression
+      fetch("/api/qr/stat-events", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ eventType: "SUBIRCARTA_VIEWED", metadata: { abExperiment: "subircarta-hero", titleId: d.titleId, ctaId: d.ctaId } }),
+        keepalive: true,
+      }).catch(() => {});
+    }).catch(() => {});
+  }, []);
   useEffect(() => {
     window.scrollTo(0, 0);
     const params = new URLSearchParams(window.location.search);
@@ -242,6 +259,7 @@ export default function SubirCartaClient() {
         const data = await res.json();
         if (!res.ok) { trackFunnelEvent(data.id, "paso1_error", { mode, error: data.error }); setError(data.error || "Error al procesar tu carta."); return; }
         trackFunnelEvent(data.id, "paso1_completed", { mode: "link", url: normalizedUrl });
+        if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(data.id);
         navigateToPaso2(data.id);
@@ -272,6 +290,7 @@ export default function SubirCartaClient() {
           if (!leadId) leadId = data.id;
         }
         trackFunnelEvent(leadId, "paso1_completed", { mode, files: total, totalMB: +(filesToUpload.reduce((s, f) => s + f.size, 0) / 1024 / 1024).toFixed(1) });
+        if (abIds.current.titleId) fetch("/api/qr/stat-events", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ eventType: "SUBIRCARTA_CARTA_UPLOADED", metadata: { abExperiment: "subircarta-hero", ...abIds.current } }), keepalive: true }).catch(() => {});
         trackCartaUpload();
         linkAdSessionToLead(leadId);
         setUploadProgress("");
@@ -313,7 +332,7 @@ export default function SubirCartaClient() {
 
         <section className="shell centered-shell">
           <div className="center-copy">
-            <h1>Sube gratis tu carta y ve<br className="desktop-break" /> cómo <span>mejora.</span></h1>
+            <h1>{abTitle}</h1>
           </div>
 
           <div className="form-side centered-form">
