@@ -172,7 +172,11 @@ export default function Paso2Client() {
   useEffect(() => {
     if (!animDone) return;
     const t = setTimeout(() => {
-      formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      const el = formRef.current;
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY - 90;
+        window.scrollTo({ top, behavior: "smooth" });
+      }
       setTimeout(() => firstInputRef.current?.focus(), 400);
     }, 300);
     return () => clearTimeout(t);
