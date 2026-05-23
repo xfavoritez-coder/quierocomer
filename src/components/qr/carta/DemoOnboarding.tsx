@@ -62,8 +62,8 @@ const STEPS: Step[] = [
   },
   {
     icon: "🌍",
-    title: "Por último, traducimos tu carta a varios idiomas",
-    body: "Por ahora dejamos los primeros en inglés, al activar se traduce completa.",
+    title: "Traducimos tu carta",
+    body: "Dejamos tus primeros platos en inglés para que lo veas. Al activar, se traduce completa a varios idiomas.",
     showOverlay: false,
     buttonLabel: "Finalizar",
   },
