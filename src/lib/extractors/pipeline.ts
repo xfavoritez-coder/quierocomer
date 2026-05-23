@@ -115,16 +115,28 @@ async function extractFromImage(imageUrl: string): Promise<ExtractionResult> {
           .resize({ width: 1600, height: 1600, fit: "inside", withoutEnlargement: true })
           .toBuffer();
         base64 = jpegBuffer.toString("base64");
-      } catch {
-        // Skip unsupported formats (HEIC, TIFF, etc.) that Claude can't read
-        const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
-        if (["heic", "heif", "tiff", "bmp", "svg"].includes(ext)) {
-          console.log(`[Image] Skipping unsupported format: ${ext}`);
-          continue;
+      } catch (sharpErr) {
+        // Sharp failed — try without resize (some formats need simpler pipeline)
+        try {
+          const fallbackBuffer = await sharp(buffer).jpeg({ quality: 80 }).toBuffer();
+          base64 = fallbackBuffer.toString("base64");
+          console.log(`[Image] Sharp resize failed, converted without resize: ${url.slice(-30)}`);
+        } catch {
+          // Truly unsupported — skip SVG/BMP but try sending others as-is
+          const ext = url.split("?")[0].split(".").pop()?.toLowerCase() || "";
+          if (["svg", "bmp"].includes(ext)) {
+            console.log(`[Image] Skipping unsupported format: ${ext}`);
+            continue;
+          }
+          // For HEIC/HEIF: if sharp can't handle it, skip (local dev) — in production sharp supports it
+          if (["heic", "heif"].includes(ext)) {
+            console.log(`[Image] HEIC conversion failed (likely local dev without libvips HEIF support). Skipping: ${url.slice(-30)}`);
+            continue;
+          }
+          base64 = buffer.toString("base64");
+          if (url.endsWith(".png")) mediaType = "image/png";
+          else if (url.endsWith(".webp")) mediaType = "image/webp";
         }
-        base64 = buffer.toString("base64");
-        if (url.endsWith(".png")) mediaType = "image/png";
-        else if (url.endsWith(".webp")) mediaType = "image/webp";
       }
       images.push({ type: "image", source: { type: "base64", media_type: mediaType, data: base64 } });
     } catch {}
