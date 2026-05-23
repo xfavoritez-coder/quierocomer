@@ -219,8 +219,10 @@ export default function Paso2Client() {
 
     const rawWa = whatsapp.trim();
     const normalizedWa = rawWa ? normalizePhone(rawWa) : null;
-    if (rawWa && !normalizedWa) {
-      setPhoneWarning("No pudimos validar este número. Se guardará sin WhatsApp.");
+    if (!normalizedWa) {
+      setError("Ingresa un número de WhatsApp válido.");
+      setLoading(false);
+      return;
     }
 
     try {
