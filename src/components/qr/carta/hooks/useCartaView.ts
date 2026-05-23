@@ -75,9 +75,9 @@ export function useCartaView(restaurantDefaultView?: string | null, serverView?:
       setTimeout(() => {
         setViewState(next);
         window.scrollTo({ top: 0 });
-        setTimeout(() => setDemoFading("reveal"), 20);
-        setTimeout(() => setDemoFading(false), 350);
-      }, 60);
+        setTimeout(() => setDemoFading("reveal"), 200);
+        setTimeout(() => setDemoFading(false), 800);
+      }, 150);
     };
     const restore = () => {
       setViewState(defaultView);
